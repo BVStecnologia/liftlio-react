@@ -16,24 +16,75 @@ const fadeIn = keyframes`
   }
 `;
 
+const DashboardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+`;
+
 const PageTitle = styled.h1`
   font-size: ${props => props.theme.fontSizes['2xl']};
-  font-weight: ${props => props.theme.fontWeights.bold};
-  margin-bottom: 24px;
+  font-weight: ${props => props.theme.fontWeights.semiBold};
   color: ${props => props.theme.colors.text};
-  position: relative;
-  display: inline-block;
+  margin: 0;
+`;
+
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 12px;
+`;
+
+const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost' }>`
+  padding: ${props => props.variant === 'ghost' ? '8px 12px' : '10px 16px'};
+  border-radius: ${props => props.theme.radius.md};
+  font-size: ${props => props.theme.fontSizes.sm};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all ${props => props.theme.transitions.default};
   
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -6px;
-    left: 0;
-    width: 40%;
-    height: 4px;
-    background: ${props => props.theme.colors.gradient.primary};
-    border-radius: 2px;
-  }
+  ${props => {
+    if (props.variant === 'primary') {
+      return `
+        background: ${props.theme.colors.gradient.primary};
+        color: white;
+        border: none;
+        box-shadow: ${props.theme.shadows.sm};
+        
+        &:hover {
+          box-shadow: ${props.theme.shadows.md};
+          transform: translateY(-2px);
+        }
+      `;
+    } else if (props.variant === 'secondary') {
+      return `
+        background: ${props.theme.colors.gradient.secondary};
+        color: white;
+        border: none;
+        box-shadow: ${props.theme.shadows.sm};
+        
+        &:hover {
+          box-shadow: ${props.theme.shadows.md};
+          transform: translateY(-2px);
+        }
+      `;
+    } else {
+      return `
+        background: transparent;
+        color: ${props.theme.colors.darkGrey};
+        border: 1px solid ${props.theme.colors.grey};
+        
+        &:hover {
+          background: ${props.theme.colors.lightGrey};
+          border-color: ${props.theme.colors.darkGrey};
+          color: ${props.theme.colors.text};
+        }
+      `;
+    }
+  }}
 `;
 
 const StatsContainer = styled.div`
@@ -47,8 +98,7 @@ const StatCard = styled(Card)`
 `;
 
 const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  display: flex;
   gap: 20px;
   margin-bottom: 30px;
   animation: ${fadeIn} 0.6s ease-out forwards;
@@ -58,6 +108,7 @@ const StatDisplay = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 4px;
 `;
 
 const StatContent = styled.div`
@@ -71,34 +122,139 @@ const StatValue = styled.div`
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   letter-spacing: -0.5px;
+`;
+
+const StatGrowth = styled.div<{ positive?: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  font-size: ${props => props.theme.fontSizes.xs};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  color: ${props => props.positive ? props.theme.colors.success : props.theme.colors.error};
+  background-color: ${props => props.positive ? 'rgba(0, 201, 136, 0.1)' : 'rgba(255, 64, 87, 0.1)'};
+  padding: 4px 8px;
+  border-radius: ${props => props.theme.radius.pill};
+  margin-left: 12px;
+  
+  svg {
+    margin-right: 4px;
+  }
 `;
 
 const StatLabel = styled.div`
   color: ${props => props.theme.colors.darkGrey};
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.theme.fontWeights.medium};
+  display: flex;
+  align-items: center;
 `;
 
 const StatIcon = styled.div<{ bgColor: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  height: 50px;
+  width: 56px;
+  height: 56px;
   border-radius: ${props => props.theme.radius.lg};
   background: ${props => props.bgColor};
   color: white;
   font-size: 1.5rem;
   box-shadow: ${props => props.theme.shadows.md};
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background: linear-gradient(45deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 60%);
+    z-index: 1;
+    transform: translateX(-100%) rotate(45deg);
+    animation: shine 3s infinite;
+  }
+  
+  @keyframes shine {
+    0% {
+      transform: translateX(-100%) rotate(45deg);
+    }
+    20%, 100% {
+      transform: translateX(100%) rotate(45deg);
+    }
+  }
+`;
+
+const GlassmorphicCard = styled.div`
+  margin: 40px 0;
+  padding: 30px;
+  border-radius: ${props => props.theme.radius.xl};
+  background: ${props => props.theme.colors.gradient.glass};
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: ${props => props.theme.shadows.glass};
+  animation: ${fadeIn} 0.8s ease-out forwards;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+    opacity: 0.5;
+  }
+`;
+
+const InsightTitle = styled.h3`
+  font-size: ${props => props.theme.fontSizes.xl};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  color: ${props => props.theme.colors.text};
+  margin-bottom: 16px;
+`;
+
+const InsightText = styled.p`
+  font-size: ${props => props.theme.fontSizes.md};
+  line-height: 1.6;
+  color: ${props => props.theme.colors.text};
+  margin-bottom: 24px;
+`;
+
+const QuickActionButton = styled.button`
+  padding: 10px 20px;
+  background: ${props => props.theme.colors.gradient.accent};
+  color: white;
+  border: none;
+  border-radius: ${props => props.theme.radius.pill};
+  font-size: ${props => props.theme.fontSizes.sm};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  cursor: pointer;
+  box-shadow: ${props => props.theme.shadows.sm};
+  transition: all ${props => props.theme.transitions.default};
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${props => props.theme.shadows.glow};
+  }
+  
+  svg {
+    font-size: 1rem;
+  }
 `;
 
 const KeywordTable = styled.div`
   margin-top: 30px;
   background: white;
-  border-radius: ${props => props.theme.radius.lg};
-  box-shadow: ${props => props.theme.shadows.md};
+  border-radius: ${props => props.theme.radius.md};
+  box-shadow: ${props => props.theme.shadows.sm};
   overflow: hidden;
   animation: ${fadeIn} 0.8s ease-out forwards;
 `;
@@ -273,6 +429,7 @@ type ChartType = 'area' | 'line';
 
 const Overview: React.FC = () => {
   const [chartType, setChartType] = useState<ChartType>('area');
+  const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month' | 'year'>('week');
   
   const renderStatsIcon = (iconName: keyof typeof FaIcons, bgColor: string) => {
     return (
@@ -284,34 +441,27 @@ const Overview: React.FC = () => {
   
   return (
     <div>
-      <PageTitle>Dashboard Overview</PageTitle>
+      <DashboardHeader>
+        <PageTitle>Dashboard Overview</PageTitle>
+      </DashboardHeader>
       
       <StatsGrid>
-        <Card elevation="medium" hoverEffect={true}>
+        <Card elevation="medium">
           <StatDisplay>
             <StatContent>
               <StatLabel>Engagements posted</StatLabel>
               <StatValue>55</StatValue>
             </StatContent>
-            {renderStatsIcon('FaComments', 'linear-gradient(135deg, #5e35b1 0%, #8561c5 100%)')}
+            {renderStatsIcon('FaComments', 'linear-gradient(135deg, #673AB7 0%, #9575CD 100%)')}
           </StatDisplay>
         </Card>
-        <Card elevation="medium" hoverEffect={true}>
+        <Card elevation="medium">
           <StatDisplay>
             <StatContent>
               <StatLabel>LEDs Posted</StatLabel>
               <StatValue>0</StatValue>
             </StatContent>
-            {renderStatsIcon('FaVideo', 'linear-gradient(135deg, #00A9DB 0%, #81d4fa 100%)')}
-          </StatDisplay>
-        </Card>
-        <Card elevation="medium" hoverEffect={true}>
-          <StatDisplay>
-            <StatContent>
-              <StatLabel>Total Views</StatLabel>
-              <StatValue>281,615</StatValue>
-            </StatContent>
-            {renderStatsIcon('FaEye', 'linear-gradient(135deg, #00C781 0%, #82ffc9 100%)')}
+            {renderStatsIcon('FaVideo', 'linear-gradient(135deg, #673AB7 0%, #9575CD 100%)')}
           </StatDisplay>
         </Card>
       </StatsGrid>
@@ -320,20 +470,25 @@ const Overview: React.FC = () => {
         title="Performance Analytics" 
         icon="FaChartLine" 
         elevation="medium" 
-        collapsible={true}
         headerAction={
           <ChartOptions>
             <ChartOption 
-              active={chartType === 'area'} 
-              onClick={() => setChartType('area')}
+              active={timeframe === 'week'} 
+              onClick={() => setTimeframe('week')}
             >
-              Area Chart
+              Week
             </ChartOption>
             <ChartOption 
-              active={chartType === 'line'} 
-              onClick={() => setChartType('line')}
+              active={timeframe === 'month'} 
+              onClick={() => setTimeframe('month')}
             >
-              Line Chart
+              Month
+            </ChartOption>
+            <ChartOption 
+              active={timeframe === 'year'} 
+              onClick={() => setTimeframe('year')}
+            >
+              Year
             </ChartOption>
           </ChartOptions>
         }
@@ -344,16 +499,16 @@ const Overview: React.FC = () => {
               <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#5e35b1" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#5e35b1" stopOpacity={0.2}/>
+                    <stop offset="5%" stopColor="#4E0EB3" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#4E0EB3" stopOpacity={0.2}/>
                   </linearGradient>
                   <linearGradient id="colorEngagement" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8561c5" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#8561c5" stopOpacity={0.2}/>
+                    <stop offset="5%" stopColor="#7F3CEF" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#7F3CEF" stopOpacity={0.2}/>
                   </linearGradient>
                   <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00C781" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#00C781" stopOpacity={0.2}/>
+                    <stop offset="5%" stopColor="#00C988" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#00C988" stopOpacity={0.2}/>
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="name" />
@@ -372,26 +527,28 @@ const Overview: React.FC = () => {
                   type="monotone" 
                   dataKey="views" 
                   name="Views"
-                  stroke="#5e35b1" 
+                  stroke="#4E0EB3" 
                   fillOpacity={1} 
                   fill="url(#colorViews)" 
-                  activeDot={{ r: 8, strokeWidth: 0 }}
+                  activeDot={{ r: 8, strokeWidth: 0, fill: "#4E0EB3", boxShadow: "0 0 10px #4E0EB3" }}
                 />
                 <Area 
                   type="monotone" 
                   dataKey="engagement" 
                   name="Engagement"
-                  stroke="#8561c5" 
+                  stroke="#7F3CEF" 
                   fillOpacity={1} 
                   fill="url(#colorEngagement)" 
+                  activeDot={{ r: 6, strokeWidth: 0 }}
                 />
                 <Area 
                   type="monotone" 
                   dataKey="leads" 
                   name="Leads"
-                  stroke="#00C781" 
+                  stroke="#00C988" 
                   fillOpacity={1} 
                   fill="url(#colorLeads)" 
+                  activeDot={{ r: 6, strokeWidth: 0 }}
                 />
               </AreaChart>
             ) : (
@@ -412,26 +569,28 @@ const Overview: React.FC = () => {
                   type="monotone" 
                   dataKey="views" 
                   name="Views"
-                  stroke="#5e35b1" 
+                  stroke="#4E0EB3" 
                   strokeWidth={3}
-                  dot={{ r: 4, strokeWidth: 0 }}
-                  activeDot={{ r: 8, strokeWidth: 0 }}
+                  dot={{ r: 4, strokeWidth: 0, fill: "#4E0EB3" }}
+                  activeDot={{ r: 8, strokeWidth: 0, fill: "#4E0EB3" }}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="engagement" 
                   name="Engagement"
-                  stroke="#8561c5" 
+                  stroke="#7F3CEF" 
                   strokeWidth={3}
-                  dot={{ r: 4, strokeWidth: 0 }}
+                  dot={{ r: 4, strokeWidth: 0, fill: "#7F3CEF" }}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: "#7F3CEF" }}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="leads" 
                   name="Leads"
-                  stroke="#00C781" 
+                  stroke="#00C988" 
                   strokeWidth={3}
-                  dot={{ r: 4, strokeWidth: 0 }}
+                  dot={{ r: 4, strokeWidth: 0, fill: "#00C988" }}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: "#00C988" }}
                 />
               </LineChart>
             )}
@@ -439,53 +598,53 @@ const Overview: React.FC = () => {
         </ChartContainer>
       </Card>
       
-      <Card title="Keyword Performance" icon="FaHashtag" elevation="medium">
-        <KeywordTable>
-          <TableHeader>
-            <TableCell>Keywords</TableCell>
-            <TableCell>Sentiment</TableCell>
-            <TableCell>Views</TableCell>
-            <TableCell>Videos</TableCell>
-            <TableCell>Likes</TableCell>
-            <TableCell>Top Video</TableCell>
-            <TableCell>Category</TableCell>
-            <TableCell>Audience</TableCell>
-          </TableHeader>
-          
-          {keywordsData.map(keyword => (
-            <TableRow key={keyword.id}>
-              <KeywordCell>{keyword.keyword}</KeywordCell>
-              <TableCell>
-                <SentimentIndicator 
-                  percentage={keyword.sentiment} 
-                  size="small"
-                  animated={true} 
-                  showIcon={true}
-                />
-              </TableCell>
-              <NumericCell>{keyword.views.toLocaleString()}</NumericCell>
-              <NumericCell>{keyword.videos}</NumericCell>
-              <NumericCell>{keyword.likes}</NumericCell>
-              <TableCell>
-                <VideoLinks>
-                  {keyword.topVideos.map((video, index) => (
-                    <VideoLink href="#" key={index}>
-                      {React.createElement(FaIcons.FaPlayCircle)}
-                      {video}
-                    </VideoLink>
-                  ))}
-                </VideoLinks>
-              </TableCell>
-              <TableCell>
-                <CategoryTag>{keyword.category}</CategoryTag>
-              </TableCell>
-              <TableCell>
-                <AudienceTag>{keyword.audience}</AudienceTag>
-              </TableCell>
-            </TableRow>
-          ))}
-        </KeywordTable>
-      </Card>
+      {/* Glassmorph card removed to match the reference image */}
+      
+      <KeywordTable>
+        <TableHeader>
+          <TableCell>Keywords</TableCell>
+          <TableCell>Sentiment</TableCell>
+          <TableCell>Views</TableCell>
+          <TableCell>Videos</TableCell>
+          <TableCell>Likes</TableCell>
+          <TableCell>Top Video</TableCell>
+          <TableCell>Category</TableCell>
+          <TableCell>Audience</TableCell>
+        </TableHeader>
+        
+        {keywordsData.map(keyword => (
+          <TableRow key={keyword.id}>
+            <KeywordCell>{keyword.keyword}</KeywordCell>
+            <TableCell>
+              <SentimentIndicator 
+                percentage={keyword.sentiment} 
+                size="small"
+                animated={true} 
+                showIcon={true}
+              />
+            </TableCell>
+            <NumericCell>{keyword.views.toLocaleString()}</NumericCell>
+            <NumericCell>{keyword.videos}</NumericCell>
+            <NumericCell>{keyword.likes}</NumericCell>
+            <TableCell>
+              <VideoLinks>
+                {keyword.topVideos.map((video, index) => (
+                  <VideoLink href="#" key={index}>
+                    {React.createElement(FaIcons.FaPlayCircle)}
+                    {video}
+                  </VideoLink>
+                ))}
+              </VideoLinks>
+            </TableCell>
+            <TableCell>
+              <CategoryTag>{keyword.category}</CategoryTag>
+            </TableCell>
+            <TableCell>
+              <AudienceTag>{keyword.audience}</AudienceTag>
+            </TableCell>
+          </TableRow>
+        ))}
+      </KeywordTable>
     </div>
   );
 };

@@ -16,13 +16,13 @@ interface CardProps {
 
 const pulseAnimation = keyframes`
   0% {
-    box-shadow: 0 0 0 0 rgba(94, 53, 177, 0.4);
+    box-shadow: 0 0 0 0 rgba(45, 29, 66, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(94, 53, 177, 0);
+    box-shadow: 0 0 0 10px rgba(45, 29, 66, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(94, 53, 177, 0);
+    box-shadow: 0 0 0 0 rgba(45, 29, 66, 0);
   }
 `;
 
@@ -35,7 +35,7 @@ const elevationStyles = {
   `,
   high: css`
     box-shadow: ${props => props.theme.shadows.lg};
-    border: 1px solid rgba(94, 53, 177, 0.1);
+    border: 1px solid rgba(45, 29, 66, 0.1);
   `
 };
 
@@ -67,22 +67,7 @@ const CardContainer = styled.div<{
     }
   `}
   
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: ${props => props.theme.colors.gradient.primary};
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.4s ease;
-  }
-  
-  &:hover::before {
-    transform: scaleX(1);
-  }
+  /* Removing the animated border to match the reference image */
 `;
 
 const CardHeader = styled.div`

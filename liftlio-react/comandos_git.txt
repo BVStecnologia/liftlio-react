@@ -1,0 +1,20 @@
+# Cria um arquivo de instruções Git na pasta atual
+cat > comandos_git.txt << 'EOL'
+# COMANDOS GIT PARA O PROJETO LIFTLIO
+
+# PUXAR ATUALIZAÇÕES DO GITHUB
+git pull
+
+# ENVIAR ALTERAÇÕES PARA O GITHUB
+git add .
+git commit -m "Descrição das alterações"
+git push
+
+# VERIFICAR STATUS
+git status
+
+# VER HISTÓRICO DE ALTERAÇÕES
+git log --oneline
+EOL
+
+echo "Arquivo de comandos Git criado com sucesso: comandos_git.txt"

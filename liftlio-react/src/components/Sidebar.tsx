@@ -7,72 +7,56 @@ import * as FaIcons from 'react-icons/fa';
 const SidebarContainer = styled.aside`
   width: 240px;
   height: 100%;
-  background: linear-gradient(180deg, #2e1259 0%, #3d1c70 100%);
+  background: #2D1D42; /* Dark purple from reference */
   color: #fff;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  box-shadow: 3px 0 10px rgba(0, 0, 0, 0.2);
+  box-shadow: ${props => props.theme.shadows.lg};
   position: relative;
-  z-index: 2;
+  z-index: ${props => props.theme.zIndices.sticky};
+  transition: width ${props => props.theme.transitions.default};
 `;
 
 const Logo = styled.div`
-  padding: 24px 20px;
+  padding: 24px;
   font-size: 1.5rem;
-  font-weight: bold;
-  background: rgba(0, 0, 0, 0.15);
+  font-weight: ${props => props.theme.fontWeights.bold};
   margin-bottom: 20px;
   display: flex;
   align-items: center;
-  
-  &::before {
-    content: '';
-    display: block;
-    width: 8px;
-    height: 24px;
-    background: #8561c5;
-    margin-right: 12px;
-    border-radius: 4px;
-  }
+  letter-spacing: -0.5px;
 `;
 
 const NavContainer = styled.nav`
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 10px 0;
+  padding: 0;
 `;
+
+// Removed ProjectSelector from Sidebar as it's now in Header
+
+// Removed ProjectName as well
 
 const NavItem = styled(NavLink)`
   display: flex;
   align-items: center;
-  padding: 15px 20px;
+  padding: 15px 24px;
   color: rgba(255, 255, 255, 0.7);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all ${props => props.theme.transitions.default};
   position: relative;
-  overflow: hidden;
+  text-decoration: none;
   
   &:hover {
     background-color: rgba(255, 255, 255, 0.1);
     color: white;
-    transform: translateX(4px);
   }
   
   &.active {
-    background: rgba(133, 97, 197, 0.25);
     color: white;
-    border-left: 4px solid #8561c5;
-    
-    &::after {
-      content: '';
-      position: absolute;
-      right: 0;
-      height: 100%;
-      width: 6px;
-      background-color: #8561c5;
-      top: 0;
-    }
+    background-color: rgba(255, 255, 255, 0.15);
+    border-left: 4px solid ${props => props.theme.colors.tertiary};
   }
 
   svg {
@@ -95,19 +79,59 @@ const NavItemIcon = styled.span`
   font-size: 1.2rem;
 `;
 
+const AddButton = styled.button`
+  background: ${props => props.theme.colors.gradient.accent};
+  color: white;
+  border: none;
+  border-radius: ${props => props.theme.radius.sm};
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: ${props => props.theme.shadows.sm};
+  transition: all ${props => props.theme.transitions.springy};
+  
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: ${props => props.theme.shadows.glow};
+  }
+`;
+
+// Removing user section as per the reference image
+
 const navItems = [
-  { path: '/', label: 'Overview', icon: 'FaHome' },
-  { path: '/monitoring', label: 'Monitoring', icon: 'FaChartBar' },
+  { path: '/', label: 'Dashboard', icon: 'FaHome' },
+  { path: '/monitoring', label: 'Analytics', icon: 'FaChartLine' },
   { path: '/mentions', label: 'Mentions', icon: 'FaComments' },
+  { path: '/youtube-monitoring', label: 'Monitoring', icon: 'FaYoutube' },
   { path: '/settings', label: 'Settings', icon: 'FaCog' },
   { path: '/integrations', label: 'Integrations', icon: 'FaPlug' }
 ];
 
+type Project = {
+  id: string;
+  name: string;
+  company: string;
+  link: string;
+  audience: string;
+};
+
 const Sidebar: React.FC = () => {
+  const [selectedProject] = React.useState({
+    id: '1',
+    name: 'Project 1',
+    company: 'Acme Corp',
+    link: 'www.acme.com',
+    audience: 'Tech professionals'
+  });
+  
   return (
     <IconContext.Provider value={{ style: { marginRight: '10px' } }}>
       <SidebarContainer>
         <Logo>Sales Advocate</Logo>
+        
         <NavContainer>
           {navItems.map(item => (
             <NavItem 
@@ -122,7 +146,6 @@ const Sidebar: React.FC = () => {
             </NavItem>
           ))}
         </NavContainer>
-        <Divider />
       </SidebarContainer>
     </IconContext.Provider>
   );

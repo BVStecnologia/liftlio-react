@@ -58,7 +58,7 @@ const ProgressCircle = styled.svg<{ percentage: number; animated: boolean }>`
   
   circle {
     fill: none;
-    stroke-width: 8;
+    stroke-width: 6;
     stroke-linecap: round;
     stroke-dasharray: 283;
     stroke-dashoffset: ${props => 283 - (283 * props.percentage) / 100};
@@ -119,10 +119,11 @@ const getSentimentIcon = (percentage: number) => {
 };
 
 const getSentimentColor = (percentage: number, theme: any) => {
-  if (percentage >= 80) return theme.colors.sentiment.positive;
-  if (percentage >= 50) return theme.colors.success;
-  if (percentage >= 40) return theme.colors.sentiment.neutral;
-  return theme.colors.sentiment.negative;
+  if (percentage >= 80) return '#00C781'; // Green
+  if (percentage >= 70) return '#34CDBB'; // Teal
+  if (percentage >= 60) return '#68AEFF'; // Blue
+  if (percentage >= 50) return '#FFAA15'; // Yellow
+  return '#FF4040'; // Red
 };
 
 const SentimentIndicator: React.FC<SentimentIndicatorProps> = ({ 
