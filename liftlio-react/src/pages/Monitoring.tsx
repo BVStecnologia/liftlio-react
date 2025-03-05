@@ -1,14 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Card from '../components/Card';
-import { FaYoutube, FaCheck, FaBell, FaChartLine, FaFilter, FaInfoCircle, FaThumbsUp, FaComment, FaEye } from 'react-icons/fa';
+import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 
-const PageTitle = styled.h1`
+// Container with modern styling
+const PageContainer = styled.div`
+  padding: 16px;
+  max-width: 1600px;
+  margin: 0 auto;
+`;
+
+// Alert notification for disconnected account
+const AlertNotification = styled.div`
+  display: flex;
+  align-items: center;
+  background: ${props => props.theme.colors.warningLight};
+  border: 1px solid ${props => props.theme.colors.warning};
+  border-radius: ${props => props.theme.radius.lg};
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  
+  svg {
+    color: ${props => props.theme.colors.warning};
+    margin-right: 12px;
+    font-size: 20px;
+  }
+`;
+
+const AlertText = styled.div`
+  color: ${props => props.theme.colors.text};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  flex: 1;
+`;
+
+const AlertButton = styled.button`
+  background: transparent;
+  border: none;
+  color: ${props => props.theme.colors.warning};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  cursor: pointer;
+  margin-left: 16px;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const PageTitle = styled.div`
   font-size: ${props => props.theme.fontSizes['2xl']};
   font-weight: ${props => props.theme.fontWeights.bold};
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   color: ${props => props.theme.colors.text};
   display: flex;
   align-items: center;
@@ -16,122 +59,147 @@ const PageTitle = styled.h1`
   svg {
     margin-right: 12px;
     color: #FF0000; /* YouTube red */
+    font-size: 28px;
   }
 `;
 
-const ChartContainer = styled.div`
-  margin-bottom: 30px;
-`;
-
-const ChartHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-`;
-
-const ChartTitle = styled.h3`
-  font-size: ${props => props.theme.fontSizes.lg};
-  font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.text};
-`;
-
-const TimeframeSelect = styled.select`
-  padding: 8px 12px;
-  border: 1px solid ${props => props.theme.colors.grey};
-  border-radius: ${props => props.theme.radius.md};
-  background-color: white;
-  font-size: ${props => props.theme.fontSizes.sm};
-  cursor: pointer;
-`;
-
-const StatsGrid = styled.div`
+// Grid of metric cards
+const MetricsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-`;
-
-const StatCard = styled(Card)`
-  padding: 20px;
-  transition: all 0.3s ease;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
   
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: ${props => props.theme.shadows.lg};
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
   }
-`;
-
-const StatValue = styled.div`
-  font-size: ${props => props.theme.fontSizes['3xl']};
-  font-weight: ${props => props.theme.fontWeights.bold};
-  color: ${props => props.theme.colors.primary};
-  margin-bottom: 5px;
-`;
-
-const StatLabel = styled.div`
-  color: ${props => props.theme.colors.darkGrey};
-  font-size: ${props => props.theme.fontSizes.sm};
-  display: flex;
-  align-items: center;
   
-  svg {
-    margin-right: 8px;
-  }
-`;
-
-const StatChange = styled.span<{ positive: boolean }>`
-  color: ${props => props.positive ? props.theme.colors.success : props.theme.colors.error};
-  font-weight: ${props => props.theme.fontWeights.medium};
-  font-size: ${props => props.theme.fontSizes.sm};
-  margin-left: 10px;
-`;
-
-const GridLayout = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 30px;
-  
-  @media (max-width: 1024px) {
+  @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
 `;
 
-const ChannelList = styled.div`
+const MetricCard = styled.div`
+  background: white;
+  border-radius: ${props => props.theme.radius.lg};
+  padding: 20px;
+  box-shadow: ${props => props.theme.shadows.sm};
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 20px;
-`;
-
-const ChannelCard = styled.div<{ active: boolean }>`
-  display: flex;
-  align-items: center;
-  padding: 15px;
-  border-radius: ${props => props.theme.radius.md};
-  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.grey};
-  background: ${props => props.active ? props.theme.colors.primaryLight : 'white'};
-  cursor: pointer;
-  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
   
   &:hover {
-    border-color: ${props => props.theme.colors.primary};
-    background: ${props => props.active ? props.theme.colors.primaryLight : props.theme.colors.lightGrey};
+    transform: translateY(-5px);
+    box-shadow: ${props => props.theme.shadows.md};
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: ${props => props.color || props.theme.colors.primary};
   }
 `;
 
-const ChannelIcon = styled.div`
-  width: 50px;
-  height: 50px;
-  background: #FF0000;
-  border-radius: 50%;
+const MetricIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: ${props => props.theme.radius.md};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${props => props.color ? `${props.color}20` : `${props.theme.colors.primary}20`};
+  color: ${props => props.color || props.theme.colors.primary};
+  margin-bottom: 12px;
+`;
+
+const MetricLabel = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  color: ${props => props.theme.colors.darkGrey};
+  margin-bottom: 8px;
+`;
+
+const MetricValue = styled.div`
+  font-size: ${props => props.theme.fontSizes['3xl']};
+  font-weight: ${props => props.theme.fontWeights.bold};
+  color: ${props => props.theme.colors.text};
+  margin-bottom: 8px;
+`;
+
+// Channels section styling
+const ChannelsSection = styled.div`
+  margin-top: 32px;
+`;
+
+const SectionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+`;
+
+const SectionTitle = styled.h2`
+  font-size: ${props => props.theme.fontSizes.xl};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  color: ${props => props.theme.colors.text};
+  margin: 0;
+`;
+
+const ChannelsList = styled.div`
+  background: white;
+  border-radius: ${props => props.theme.radius.lg};
+  box-shadow: ${props => props.theme.shadows.sm};
+  overflow: hidden;
+`;
+
+const ChannelCard = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+  transition: all 0.2s ease;
+  position: relative;
+  
+  &:hover {
+    background: ${props => props.theme.colors.lightGrey}20;
+  }
+  
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const ChannelRank = styled.div`
+  width: 28px;
+  height: 28px;
+  border-radius: ${props => props.theme.radius.circle};
+  background: ${props => props.theme.colors.primary};
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 15px;
-  font-size: 24px;
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  margin-right: 16px;
+`;
+
+const ChannelAvatar = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: ${props => props.theme.radius.circle};
+  overflow: hidden;
+  margin-right: 16px;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const ChannelInfo = styled.div`
@@ -141,430 +209,595 @@ const ChannelInfo = styled.div`
 const ChannelName = styled.div`
   font-weight: ${props => props.theme.fontWeights.semiBold};
   font-size: ${props => props.theme.fontSizes.md};
+  margin-bottom: 4px;
+  color: ${props => props.theme.colors.text};
 `;
 
 const ChannelStats = styled.div`
-  color: ${props => props.theme.colors.darkGrey};
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+const StatItem = styled.div`
+  display: flex;
+  align-items: center;
   font-size: ${props => props.theme.fontSizes.sm};
-  margin-top: 4px;
-`;
-
-const ChannelStatus = styled.div<{ status: string }>`
-  padding: 4px 8px;
-  border-radius: ${props => props.theme.radius.sm};
-  font-size: ${props => props.theme.fontSizes.xs};
-  background: ${props => 
-    props.status === 'active' ? props.theme.colors.successLight : 
-    props.status === 'pending' ? props.theme.colors.warningLight : 
-    props.theme.colors.lightGrey};
-  color: ${props => 
-    props.status === 'active' ? props.theme.colors.success : 
-    props.status === 'pending' ? props.theme.colors.warning : 
-    props.theme.colors.darkGrey};
-  display: flex;
-  align-items: center;
-  width: fit-content;
+  color: ${props => props.theme.colors.darkGrey};
   
   svg {
-    margin-right: 4px;
-    font-size: 10px;
+    margin-right: 6px;
+    font-size: 14px;
   }
 `;
 
-const ActionButton = styled.button`
-  background: ${props => props.theme.colors.primary};
-  color: white;
+const ExpandButton = styled.button`
+  background: transparent;
   border: none;
-  border-radius: ${props => props.theme.radius.md};
-  padding: 8px 16px;
-  font-weight: ${props => props.theme.fontWeights.medium};
+  color: ${props => props.theme.colors.darkGrey};
   cursor: pointer;
   transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  margin-top: 20px;
-  
-  svg {
-    margin-right: 8px;
-  }
+  padding: 8px;
+  border-radius: ${props => props.theme.radius.circle};
   
   &:hover {
-    background: ${props => props.theme.colors.primaryDark};
-  }
-`;
-
-const TabsContainer = styled.div`
-  display: flex;
-  border-bottom: 1px solid ${props => props.theme.colors.grey};
-  margin-bottom: 20px;
-`;
-
-const Tab = styled.button<{ active: boolean }>`
-  padding: 12px 20px;
-  background: none;
-  border: none;
-  border-bottom: 3px solid ${props => props.active ? props.theme.colors.primary : 'transparent'};
-  font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.regular};
-  color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.darkGrey};
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
+    background: ${props => props.theme.colors.lightGrey};
     color: ${props => props.theme.colors.primary};
   }
 `;
 
-const FilterBar = styled.div`
+// Analytics Charts section
+const AnalyticsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin-top: 24px;
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ChartContainer = styled(Card)`
+  padding: 20px;
+`;
+
+const ChartHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 `;
 
-const FilterGroup = styled.div`
-  display: flex;
-  gap: 10px;
-`;
-
-const FilterButton = styled.button`
-  padding: 8px 16px;
-  background: white;
-  border: 1px solid ${props => props.theme.colors.grey};
-  border-radius: ${props => props.theme.radius.md};
-  font-size: ${props => props.theme.fontSizes.sm};
+const ChartTitle = styled.h3`
+  font-size: ${props => props.theme.fontSizes.lg};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  color: ${props => props.theme.colors.text};
+  margin: 0;
   display: flex;
   align-items: center;
-  cursor: pointer;
   
   svg {
     margin-right: 8px;
-  }
-  
-  &:hover {
-    background: ${props => props.theme.colors.lightGrey};
+    color: ${props => props.theme.colors.primary};
   }
 `;
 
-const SearchInput = styled.input`
-  padding: 8px 16px;
-  border: 1px solid ${props => props.theme.colors.grey};
-  border-radius: ${props => props.theme.radius.md};
-  width: 250px;
+const TimeframeButtons = styled.div`
+  display: flex;
+  background: ${props => props.theme.colors.lightGrey};
+  border-radius: ${props => props.theme.radius.pill};
+  padding: 4px;
 `;
 
-const InfoTooltip = styled.div`
-  display: inline-flex;
-  align-items: center;
-  margin-left: 8px;
-  color: ${props => props.theme.colors.darkGrey};
+const TimeButton = styled.button<{ active: boolean }>`
+  background: ${props => props.active ? 'white' : 'transparent'};
+  border: none;
+  border-radius: ${props => props.theme.radius.pill};
+  padding: 6px 12px;
+  font-size: ${props => props.theme.fontSizes.xs};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.darkGrey};
   cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: ${props => props.active ? props.theme.shadows.sm : 'none'};
   
   &:hover {
     color: ${props => props.theme.colors.primary};
   }
 `;
 
-// Sample data for YouTube channels
-const channels = [
-  { 
+// Upcoming videos section
+const UpcomingVideosSection = styled.div`
+  margin-top: 24px;
+`;
+
+const VideoCard = styled.div`
+  background: white;
+  border-radius: ${props => props.theme.radius.lg};
+  overflow: hidden;
+  box-shadow: ${props => props.theme.shadows.sm};
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: ${props => props.theme.shadows.md};
+  }
+`;
+
+const VideoThumbnail = styled.div`
+  position: relative;
+  height: 180px;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 50%);
+  }
+`;
+
+const VideoInfo = styled.div`
+  padding: 16px;
+`;
+
+const VideoTitle = styled.div`
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  font-size: ${props => props.theme.fontSizes.md};
+  margin-bottom: 8px;
+  color: ${props => props.theme.colors.text};
+`;
+
+const VideoDetails = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const VideoStats = styled.div`
+  display: flex;
+  gap: 12px;
+`;
+
+const VideoStat = styled.div`
+  display: flex;
+  align-items: center;
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.darkGrey};
+  
+  svg {
+    margin-right: 4px;
+  }
+`;
+
+const PublishDate = styled.div`
+  font-size: ${props => props.theme.fontSizes.xs};
+  color: ${props => props.theme.colors.darkGrey};
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 4px;
+  }
+`;
+
+// Sample data
+const channelData = [
+  {
     id: 1,
-    name: 'Tech Enthusiast',
-    subscribers: '1.2M',
-    views: '45M',
-    category: 'Technology',
-    status: 'active',
-    lastVideo: '2 days ago',
-    engagementRate: '8.2%'
+    rank: 1,
+    name: "Chill Flow",
+    avatar: "https://via.placeholder.com/48",
+    videos: 15,
+    comments: 35,
+    engagement: 19
   },
-  { 
+  {
     id: 2,
-    name: 'LED Master',
-    subscribers: '850K',
-    views: '32M',
-    category: 'DIY & Crafts',
-    status: 'active',
-    lastVideo: '1 week ago',
-    engagementRate: '6.5%'
+    rank: 2,
+    name: "Target Hit",
+    avatar: "https://via.placeholder.com/48",
+    videos: 13,
+    comments: 32,
+    engagement: 12
   },
-  { 
+  {
     id: 3,
-    name: 'Light It Up',
-    subscribers: '2.4M',
-    views: '78M',
-    category: 'Home Improvement',
-    status: 'pending',
-    lastVideo: '3 days ago',
-    engagementRate: '9.1%'
+    rank: 3,
+    name: "Writing and wisdom",
+    avatar: "https://via.placeholder.com/48",
+    videos: 9,
+    comments: 16,
+    engagement: 9
   },
-  { 
+  {
     id: 4,
-    name: 'DIY Electronics',
-    subscribers: '620K',
-    views: '18M',
-    category: 'Technology',
-    status: 'active',
-    lastVideo: '4 days ago',
-    engagementRate: '7.3%'
+    rank: 4,
+    name: "Tech Innovations",
+    avatar: "https://via.placeholder.com/48",
+    videos: 22,
+    comments: 41,
+    engagement: 15
   },
-  { 
+  {
     id: 5,
-    name: 'Smart Home Guide',
-    subscribers: '1.8M',
-    views: '56M',
-    category: 'Tech Reviews',
-    status: 'inactive',
-    lastVideo: '2 weeks ago',
-    engagementRate: '5.9%'
+    rank: 5,
+    name: "Future Insights",
+    avatar: "https://via.placeholder.com/48",
+    videos: 7,
+    comments: 19,
+    engagement: 8
   }
 ];
 
-// Sample engagement data
+const videoData = [
+  {
+    id: 1,
+    thumbnail: "https://via.placeholder.com/300x180",
+    title: "How to Master YouTube Algorithm in 2025",
+    views: 12450,
+    likes: 1845,
+    comments: 376,
+    publishDate: "2025-02-15"
+  },
+  {
+    id: 2,
+    thumbnail: "https://via.placeholder.com/300x180",
+    title: "10 Tips for Growing Your Channel Fast",
+    views: 8750,
+    likes: 1243,
+    comments: 198,
+    publishDate: "2025-03-01"
+  },
+  {
+    id: 3,
+    thumbnail: "https://via.placeholder.com/300x180",
+    title: "Content Creation Secrets Nobody Shares",
+    views: 15280,
+    likes: 2341,
+    comments: 412,
+    publishDate: "2025-03-10"
+  }
+];
+
 const engagementData = [
-  { date: 'Jan', comments: 145, likes: 1250, views: 25000 },
-  { date: 'Feb', comments: 165, likes: 1560, views: 28000 },
-  { date: 'Mar', comments: 180, likes: 1980, views: 32000 },
-  { date: 'Apr', comments: 220, likes: 2150, views: 38000 },
-  { date: 'May', comments: 310, likes: 2840, views: 45000 },
-  { date: 'Jun', comments: 290, likes: 2650, views: 42000 },
-  { date: 'Jul', comments: 350, likes: 3100, views: 50000 }
+  { date: 'Jan', views: 25000, likes: 1250, comments: 145 },
+  { date: 'Feb', views: 28000, likes: 1560, comments: 165 },
+  { date: 'Mar', views: 32000, likes: 1980, comments: 180 },
+  { date: 'Apr', views: 38000, likes: 2150, comments: 220 },
+  { date: 'May', views: 45000, likes: 2840, comments: 310 },
+  { date: 'Jun', views: 42000, likes: 2650, comments: 290 },
+  { date: 'Jul', views: 50000, likes: 3100, comments: 350 }
 ];
 
-// Video performance data
-const videoPerformanceData = [
-  { name: 'LED Project Tutorial', views: 145000, comments: 1250, likes: 12500, retention: 68 },
-  { name: 'RGB Light Setup Guide', views: 98000, comments: 820, likes: 8900, retention: 72 },
-  { name: 'Best LEDs for 2024', views: 210000, comments: 1850, likes: 18200, retention: 65 },
-  { name: 'Smart LED Installation', views: 85000, comments: 740, likes: 7600, retention: 70 },
-  { name: 'LED Troubleshooting', views: 120000, comments: 1340, likes: 10800, retention: 63 }
-];
-
-const COLORS = ['#4caf50', '#ffc107', '#f44336', '#2196f3', '#9c27b0', '#ff9800'];
-
-const YoutubeMonitoring: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [selectedChannel, setSelectedChannel] = useState(1);
+const Monitoring: React.FC = () => {
+  const [timeframe, setTimeframe] = useState("month");
+  const [showAlert, setShowAlert] = useState(true);
+  const [expandedChannel, setExpandedChannel] = useState<number | null>(null);
+  
+  const toggleExpand = (channelId: number) => {
+    if (expandedChannel === channelId) {
+      setExpandedChannel(null);
+    } else {
+      setExpandedChannel(channelId);
+    }
+  };
   
   return (
-    <div>
+    <PageContainer>
+      {showAlert && (
+        <div>
+          <AlertNotification>
+            <IconComponent icon={FaIcons.FaExclamationTriangle} />
+            <AlertText>
+              YouTube account disconnected, please reauthorize in integrations
+            </AlertText>
+            <AlertButton onClick={() => setShowAlert(false)}>
+              Dismiss
+            </AlertButton>
+          </AlertNotification>
+        </div>
+      )}
+      
       <PageTitle>
-        <IconComponent icon={FaYoutube} />
-        YouTube Monitoring
+        <IconComponent icon={FaIcons.FaYoutube} />
+        Video post monitoring
       </PageTitle>
       
-      <TabsContainer>
-        <Tab active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>Overview</Tab>
-        <Tab active={activeTab === 'channels'} onClick={() => setActiveTab('channels')}>Channels</Tab>
-        <Tab active={activeTab === 'videos'} onClick={() => setActiveTab('videos')}>Videos</Tab>
-        <Tab active={activeTab === 'comments'} onClick={() => setActiveTab('comments')}>Comments</Tab>
-        <Tab active={activeTab === 'automation'} onClick={() => setActiveTab('automation')}>Automation</Tab>
-      </TabsContainer>
+      <MetricsGrid>
+        <MetricCard color="#673AB7">
+          <MetricIcon color="#673AB7">
+            <IconComponent icon={FaIcons.FaChartLine} />
+          </MetricIcon>
+          <MetricLabel>Channels</MetricLabel>
+          <MetricValue>20/40</MetricValue>
+        </MetricCard>
+        
+        <MetricCard color="#00C781">
+          <MetricIcon color="#00C781">
+            <IconComponent icon={FaIcons.FaVideo} />
+          </MetricIcon>
+          <MetricLabel>Videos</MetricLabel>
+          <MetricValue>150</MetricValue>
+        </MetricCard>
+        
+        <MetricCard color="#FF4081">
+          <MetricIcon color="#FF4081">
+            <IconComponent icon={FaIcons.FaHeart} />
+          </MetricIcon>
+          <MetricLabel>Reactions</MetricLabel>
+          <MetricValue>150</MetricValue>
+        </MetricCard>
+        
+        <MetricCard color="#2196F3">
+          <MetricIcon color="#2196F3">
+            <IconComponent icon={FaIcons.FaCommentAlt} />
+          </MetricIcon>
+          <MetricLabel>Comment today</MetricLabel>
+          <MetricValue>150</MetricValue>
+        </MetricCard>
+      </MetricsGrid>
       
-      {activeTab === 'overview' && (
-        <>
-          <StatsGrid>
-            <StatCard>
-              <StatLabel>
-                <IconComponent icon={FaEye} />
-                Total Views
-              </StatLabel>
-              <StatValue>3.2M</StatValue>
-              <StatChange positive={true}>+18.5%</StatChange>
-            </StatCard>
-            
-            <StatCard>
-              <StatLabel>
-                <IconComponent icon={FaThumbsUp} />
-                Total Likes
-              </StatLabel>
-              <StatValue>284K</StatValue>
-              <StatChange positive={true}>+22.1%</StatChange>
-            </StatCard>
-            
-            <StatCard>
-              <StatLabel>
-                <IconComponent icon={FaComment} />
-                Comments Posted
-              </StatLabel>
-              <StatValue>1,845</StatValue>
-              <StatChange positive={true}>+15.4%</StatChange>
-            </StatCard>
-            
-            <StatCard>
-              <StatLabel>
-                <IconComponent icon={FaChartLine} />
-                Engagement Rate
-              </StatLabel>
-              <StatValue>7.6%</StatValue>
-              <StatChange positive={false}>-0.8%</StatChange>
-            </StatCard>
-          </StatsGrid>
-          
-          <ChartContainer>
-            <Card>
-              <ChartHeader>
-                <ChartTitle>Engagement Metrics</ChartTitle>
-                <TimeframeSelect>
-                  <option value="7days">Last 7 days</option>
-                  <option value="1month">Last month</option>
-                  <option value="3months" selected>Last 3 months</option>
-                  <option value="6months">Last 6 months</option>
-                  <option value="1year">Last year</option>
-                </TimeframeSelect>
-              </ChartHeader>
+      <ChannelsSection>
+        <SectionHeader>
+          <SectionTitle>Channels</SectionTitle>
+        </SectionHeader>
+        
+        <ChannelsList>
+          {channelData.map((channel) => (
+            <div key={channel.id}>
+              <ChannelCard>
+                <ChannelRank>{channel.rank}</ChannelRank>
+                <ChannelAvatar>
+                  <img src={channel.avatar} alt={channel.name} />
+                </ChannelAvatar>
+                <ChannelInfo>
+                  <ChannelName>{channel.name}</ChannelName>
+                  <ChannelStats>
+                    <StatItem>
+                      <IconComponent icon={FaIcons.FaVideo} />
+                      {channel.videos} videos
+                    </StatItem>
+                    <StatItem>
+                      <IconComponent icon={FaIcons.FaComment} />
+                      {channel.comments} comments
+                    </StatItem>
+                    <StatItem>
+                      <IconComponent icon={FaIcons.FaChartBar} />
+                      {channel.engagement} engagement
+                    </StatItem>
+                  </ChannelStats>
+                </ChannelInfo>
+                <ExpandButton onClick={() => toggleExpand(channel.id)}>
+                  <IconComponent icon={expandedChannel === channel.id ? FaIcons.FaChevronUp : FaIcons.FaChevronDown} />
+                </ExpandButton>
+              </ChannelCard>
               
-              <div style={{ height: 300 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={engagementData}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Area 
-                      type="monotone" 
-                      dataKey="views" 
-                      stroke="#5e35b1" 
-                      fill="rgba(94, 53, 177, 0.2)" 
-                      name="Views" 
-                      activeDot={{ r: 8 }} 
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="likes" 
-                      stroke="#4caf50" 
-                      fill="rgba(76, 175, 80, 0.2)" 
-                      name="Likes" 
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="comments" 
-                      stroke="#ff9800" 
-                      fill="rgba(255, 152, 0, 0.2)" 
-                      name="Comments" 
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
-          </ChartContainer>
-          
-          <ChartContainer>
-            <Card>
-              <ChartHeader>
-                <ChartTitle>Video Performance</ChartTitle>
-                <InfoTooltip>
-                  <IconComponent icon={FaInfoCircle} />
-                </InfoTooltip>
-              </ChartHeader>
-              
-              <div style={{ height: 400 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={videoPerformanceData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    layout="vertical"
-                  >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <XAxis type="number" />
-                    <YAxis type="category" dataKey="name" width={150} />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="views" name="Views" fill="#5e35b1" />
-                    <Bar dataKey="likes" name="Likes" fill="#4caf50" />
-                    <Bar dataKey="comments" name="Comments" fill="#ff9800" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
-          </ChartContainer>
-        </>
-      )}
-      
-      {activeTab === 'channels' && (
-        <>
-          <FilterBar>
-            <FilterGroup>
-              <FilterButton>
-                <IconComponent icon={FaFilter} />
-                Filter
-              </FilterButton>
-              <FilterButton>
-                Status
-              </FilterButton>
-              <FilterButton>
-                Category
-              </FilterButton>
-            </FilterGroup>
-            <SearchInput placeholder="Search channels..." />
-          </FilterBar>
-          
-          <Card>
-            <ChannelList>
-              {channels.map(channel => (
-                <ChannelCard 
-                  key={channel.id} 
-                  active={selectedChannel === channel.id}
-                  onClick={() => setSelectedChannel(channel.id)}
-                >
-                  <ChannelIcon>
-                    <IconComponent icon={FaYoutube} />
-                  </ChannelIcon>
-                  <ChannelInfo>
-                    <ChannelName>{channel.name}</ChannelName>
-                    <ChannelStats>{channel.subscribers} subscribers • {channel.views} views</ChannelStats>
-                    <ChannelStatus status={channel.status}>
-                      {channel.status === 'active' && <IconComponent icon={FaCheck} />}
-                      {channel.status === 'pending' && <IconComponent icon={FaBell} />}
-                      {channel.status.charAt(0).toUpperCase() + channel.status.slice(1)}
-                    </ChannelStatus>
-                  </ChannelInfo>
-                  <div>
-                    <StatValue style={{ fontSize: '1.5rem' }}>{channel.engagementRate}</StatValue>
-                    <StatLabel>Engagement</StatLabel>
+              {expandedChannel === channel.id && (
+                <div style={{ background: "#f9f9f9", padding: "16px" }}>
+                  <div style={{ padding: "0 0 0 60px" }}>
+                    <h4>Latest Activity</h4>
+                    <p>This channel has posted 3 new videos in the last 7 days.</p>
+                    <div style={{ display: "flex", gap: "16px" }}>
+                      <button>View Channel</button>
+                      <button>See Analytics</button>
+                    </div>
                   </div>
-                </ChannelCard>
-              ))}
-            </ChannelList>
-            
-            <ActionButton>
-              <IconComponent icon={FaYoutube} />
-              Add New Channel
-            </ActionButton>
-          </Card>
-        </>
-      )}
+                </div>
+              )}
+            </div>
+          ))}
+        </ChannelsList>
+      </ChannelsSection>
       
-      {activeTab === 'videos' && (
-        <div>
-          <Card>
-            <ChartTitle>Videos ready for comment automation</ChartTitle>
-            {/* Video list would go here */}
-          </Card>
-        </div>
-      )}
+      <AnalyticsGrid>
+        <ChartContainer>
+          <ChartHeader>
+            <ChartTitle>
+              <IconComponent icon={FaIcons.FaChartArea} />
+              Engagement Overview
+            </ChartTitle>
+            <TimeframeButtons>
+              <TimeButton 
+                active={timeframe === "week"} 
+                onClick={() => setTimeframe("week")}
+              >
+                Week
+              </TimeButton>
+              <TimeButton 
+                active={timeframe === "month"} 
+                onClick={() => setTimeframe("month")}
+              >
+                Month
+              </TimeButton>
+              <TimeButton 
+                active={timeframe === "quarter"} 
+                onClick={() => setTimeframe("quarter")}
+              >
+                Quarter
+              </TimeButton>
+              <TimeButton 
+                active={timeframe === "year"} 
+                onClick={() => setTimeframe("year")}
+              >
+                Year
+              </TimeButton>
+            </TimeframeButtons>
+          </ChartHeader>
+          
+          <div style={{ height: 300 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={engagementData}
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#673AB7" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#673AB7" stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="colorLikes" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#FF4081" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#FF4081" stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="colorComments" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#00C781" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#00C781" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} />
+                <YAxis axisLine={false} tickLine={false} />
+                <Tooltip 
+                  contentStyle={{
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="views" 
+                  stroke="#673AB7" 
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorViews)" 
+                  name="Views"
+                  activeDot={{ r: 6 }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="likes" 
+                  stroke="#FF4081" 
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorLikes)" 
+                  name="Likes"
+                  activeDot={{ r: 6 }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="comments" 
+                  stroke="#00C781" 
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorComments)" 
+                  name="Comments"
+                  activeDot={{ r: 6 }}
+                />
+                <Legend 
+                  verticalAlign="top" 
+                  height={36} 
+                  iconType="circle"
+                  wrapperStyle={{
+                    paddingBottom: '20px'
+                  }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartContainer>
+        
+        <ChartContainer>
+          <ChartHeader>
+            <ChartTitle>
+              <IconComponent icon={FaIcons.FaChartPie} />
+              Content Distribution
+            </ChartTitle>
+          </ChartHeader>
+          
+          <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'Tutorials', value: 45 },
+                    { name: 'Reviews', value: 25 },
+                    { name: 'Vlogs', value: 15 },
+                    { name: 'Interviews', value: 15 }
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={90}
+                  paddingAngle={5}
+                  dataKey="value"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  <Cell fill="#673AB7" />
+                  <Cell fill="#FF4081" />
+                  <Cell fill="#00C781" />
+                  <Cell fill="#2196F3" />
+                </Pie>
+                <Tooltip 
+                  formatter={(value) => [`${value}%`, 'Percentage']}
+                  contentStyle={{
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartContainer>
+      </AnalyticsGrid>
       
-      {activeTab === 'comments' && (
-        <div>
-          <Card>
-            <ChartTitle>Comment Templates & Automation</ChartTitle>
-            {/* Comment management interface would go here */}
-          </Card>
+      <UpcomingVideosSection>
+        <SectionHeader>
+          <SectionTitle>Upcoming Videos</SectionTitle>
+        </SectionHeader>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+          {videoData.map(video => (
+            <div key={video.id}>
+              <VideoCard>
+                <VideoThumbnail>
+                  <img src={video.thumbnail} alt={video.title} />
+                </VideoThumbnail>
+                <VideoInfo>
+                  <VideoTitle>{video.title}</VideoTitle>
+                  <VideoDetails>
+                    <VideoStats>
+                      <VideoStat>
+                        <IconComponent icon={FaIcons.FaEye} />
+                        {video.views.toLocaleString()}
+                      </VideoStat>
+                      <VideoStat>
+                        <IconComponent icon={FaIcons.FaThumbsUp} />
+                        {video.likes.toLocaleString()}
+                      </VideoStat>
+                      <VideoStat>
+                        <IconComponent icon={FaIcons.FaComment} />
+                        {video.comments.toLocaleString()}
+                      </VideoStat>
+                    </VideoStats>
+                  </VideoDetails>
+                  <PublishDate>
+                    <IconComponent icon={FaIcons.FaCalendarAlt} />
+                    {new Date(video.publishDate).toLocaleDateString()}
+                  </PublishDate>
+                </VideoInfo>
+              </VideoCard>
+            </div>
+          ))}
         </div>
-      )}
-      
-      {activeTab === 'automation' && (
-        <div>
-          <Card>
-            <ChartTitle>Automation Rules</ChartTitle>
-            {/* Automation rules interface would go here */}
-          </Card>
-        </div>
-      )}
-    </div>
+      </UpcomingVideosSection>
+    </PageContainer>
   );
 };
 
-export default YoutubeMonitoring;
+export default Monitoring;
