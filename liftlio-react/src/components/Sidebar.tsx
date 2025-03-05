@@ -148,6 +148,55 @@ const Divider = styled.div`
   margin: 10px 12px;
 `;
 
+const UpgradeButton = styled.div`
+  margin-top: auto;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #8a54ff 0%, #4facfe 100%);
+  color: white;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 12px;
+  margin: 24px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 15px rgba(79, 172, 254, 0.3), 
+              0 0 15px rgba(138, 84, 255, 0.2) inset;
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.5px;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgba(255, 255, 255, 0.2) 50%, 
+      transparent 100%);
+    transition: left 0.7s ease;
+  }
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 20px rgba(79, 172, 254, 0.4),
+                0 0 20px rgba(138, 84, 255, 0.3) inset;
+    
+    &::before {
+      left: 100%;
+    }
+  }
+  
+  svg {
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.7));
+  }
+`;
+
 const NavItemIcon = styled.span`
   display: inline-flex;
   align-items: center;
@@ -180,7 +229,6 @@ const AddButton = styled.button`
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: 'FaHome' },
-  { path: '/monitoring', label: 'Analytics', icon: 'FaChartLine' },
   { path: '/mentions', label: 'Mentions', icon: 'FaComments' },
   { path: '/youtube-monitoring', label: 'Monitoring', icon: 'FaYoutube' },
   { path: '/settings', label: 'Settings', icon: 'FaCog' },
@@ -222,6 +270,15 @@ const Sidebar: React.FC = () => {
               {item.label}
             </NavItem>
           ))}
+          
+          <div style={{ marginTop: 'auto', marginBottom: '24px' }}>
+            <UpgradeButton>
+              <NavItemIcon>
+                <IconComponent icon={FaIcons.FaCrown} />
+              </NavItemIcon>
+              Upgrade
+            </UpgradeButton>
+          </div>
         </NavContainer>
       </SidebarContainer>
     </IconContext.Provider>
