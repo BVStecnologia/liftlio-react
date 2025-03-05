@@ -1,13 +1,52 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import styled, { keyframes, css } from 'styled-components';
 import Card from '../components/Card';
 import { IconContext } from 'react-icons';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, 
+  Tooltip as RechartsTooltip, ResponsiveContainer, 
+  BarChart, Bar, Legend, Cell 
+} from 'recharts';
+
+// Animation keyframes
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const pulse = keyframes`
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+`;
+
+const shimmer = keyframes`
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+`;
 
 // Page title with improved styling
 const PageContainer = styled.div`
   padding: 16px;
+  animation: ${fadeIn} 0.6s ease-out forwards;
 `;
 
 const PageTitle = styled.h1`
@@ -17,21 +56,60 @@ const PageTitle = styled.h1`
   color: ${props => props.theme.colors.text};
   display: flex;
   align-items: center;
+  position: relative;
   
   svg {
     margin-right: 12px;
     color: ${props => props.theme.colors.primary};
+    animation: ${pulse} 3s infinite;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -8px;
+    width: 60px;
+    height: 3px;
+    background: ${props => props.theme.colors.gradient.primary};
+    border-radius: 3px;
   }
 `;
 
 // Improved tab design
 const TabContainer = styled.div`
   display: flex;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
   background: #f0f0f5;
   border-radius: ${props => props.theme.radius.pill};
   padding: 5px;
   width: fit-content;
+  box-shadow: ${props => props.theme.shadows.sm};
+  position: relative;
+  animation: ${fadeIn} 0.8s ease-out forwards;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    bottom: -5px;
+    left: -5px;
+    background: linear-gradient(90deg, 
+      rgba(135, 97, 197, 0.05), 
+      rgba(79, 172, 254, 0.05), 
+      rgba(135, 97, 197, 0.05));
+    border-radius: ${props => props.theme.radius.pill};
+    z-index: -1;
+    animation: ${shimmer} 3s infinite linear;
+    background-size: 200% 100%;
+  }
+`;
+
+const tabHoverEffect = css`
+  &::after {
+    transform: scaleX(1);
+  }
 `;
 
 const Tab = styled.button<{ active: boolean }>`
@@ -42,11 +120,41 @@ const Tab = styled.button<{ active: boolean }>`
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.normal};
   color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.darkGrey};
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   box-shadow: ${props => props.active ? props.theme.shadows.sm : 'none'};
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    width: 80%;
+    height: 3px;
+    background: ${props => props.theme.colors.gradient.primary};
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.3s ease;
+    border-radius: 3px;
+    opacity: ${props => props.active ? 1 : 0};
+  }
+  
+  ${props => props.active && tabHoverEffect}
   
   &:hover {
     background: ${props => props.active ? props.theme.colors.white : 'rgba(255, 255, 255, 0.5)'};
+    transform: translateY(-2px);
+    
+    &::after {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+  }
+  
+  &:active {
+    transform: translateY(1px);
   }
 `;
 
@@ -54,11 +162,30 @@ const Tab = styled.button<{ active: boolean }>`
 const MentionsContainer = styled(Card)`
   border-radius: ${props => props.theme.radius.lg};
   overflow: hidden;
+  animation: ${fadeIn} 1s ease-out forwards;
+  box-shadow: ${props => props.theme.shadows.lg};
+  border: 1px solid rgba(135, 97, 197, 0.1);
+  
+  &:hover {
+    box-shadow: ${props => props.theme.shadows.xl};
+    transition: box-shadow 0.3s ease;
+  }
 `;
 
 const MentionsTable = styled.div`
   width: 100%;
   border-spacing: 0;
+`;
+
+const tableAppear = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 `;
 
 const TableHeader = styled.div`
@@ -71,23 +198,50 @@ const TableHeader = styled.div`
   font-size: ${props => props.theme.fontSizes.sm};
   text-transform: uppercase;
   letter-spacing: 1px;
+  background: linear-gradient(to right, rgba(135, 97, 197, 0.03), rgba(255, 255, 255, 0), rgba(135, 97, 197, 0.03));
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(5px);
 `;
 
-const TableRow = styled.div`
+const TableRow = styled.div<{ index?: number }>`
   display: grid;
   grid-template-columns: 2.5fr 1fr 2.5fr 3fr 1fr;
   padding: 20px;
   border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
   align-items: stretch;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
+  animation: ${tableAppear} 0.5s ease-out forwards;
+  animation-delay: ${props => (props.index || 0) * 0.1}s;
+  opacity: 0;
   
   &:hover {
     background-color: rgba(135, 97, 197, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    z-index: 1;
   }
   
   &:last-child {
     border-bottom: none;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0;
+    background: ${props => props.theme.colors.gradient.primary};
+    opacity: 0.1;
+    transition: width 0.3s ease;
+  }
+  
+  &:hover::after {
+    width: 4px;
   }
 `;
 
@@ -104,11 +258,45 @@ const VideoCell = styled(TableCell)`
   align-items: center;
 `;
 
+// Video thumbnail animations
+const playButtonPulse = keyframes`
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.9;
+  }
+`;
+
+const glow = keyframes`
+  0% {
+    box-shadow: 0 0 5px rgba(135, 97, 197, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(135, 97, 197, 0.8), 0 0 30px rgba(135, 97, 197, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(135, 97, 197, 0.5);
+  }
+`;
+
 const VideoThumbnailWrapper = styled.div`
   position: relative;
   margin-bottom: 12px;
   display: flex;
   justify-content: center;
+  transform: perspective(800px) rotateY(0deg);
+  transition: transform 0.5s ease;
+  
+  &:hover {
+    transform: perspective(800px) rotateY(5deg);
+  }
 `;
 
 const VideoThumbnail = styled.div`
@@ -119,16 +307,45 @@ const VideoThumbnail = styled.div`
   overflow: hidden;
   position: relative;
   box-shadow: ${props => props.theme.shadows.md};
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      120deg,
+      rgba(135, 97, 197, 0) 40%,
+      rgba(135, 97, 197, 0.2) 50%,
+      rgba(135, 97, 197, 0) 60%
+    );
+    z-index: 2;
+    transform: translateX(-100%);
+    transition: transform 0.8s ease;
+  }
   
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
+    transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
   }
   
-  &:hover img {
-    transform: scale(1.05);
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: ${props => props.theme.shadows.lg};
+    animation: ${glow} 2s infinite;
+    
+    &::before {
+      transform: translateX(100%);
+    }
+    
+    img {
+      transform: scale(1.1);
+    }
   }
   
   &::after {
@@ -139,17 +356,17 @@ const VideoThumbnail = styled.div`
     transform: translate(-50%, -50%);
     width: 0;
     height: 0;
-    border-top: 12px solid transparent;
-    border-left: 24px solid white;
-    border-bottom: 12px solid transparent;
+    border-top: 15px solid transparent;
+    border-left: 30px solid white;
+    border-bottom: 15px solid transparent;
     opacity: 0.9;
-    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.6));
     transition: all 0.3s ease;
+    z-index: 3;
   }
   
   &:hover::after {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.1);
+    animation: ${playButtonPulse} 2s infinite;
   }
 `;
 
@@ -232,6 +449,80 @@ const LedScoreLabel = styled.div`
   color: ${props => props.theme.colors.darkGrey};
   margin-bottom: 8px;
   font-weight: ${props => props.theme.fontWeights.medium};
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background: ${props => props.theme.colors.gradient.primary};
+    transition: width 0.3s ease;
+  }
+  
+  ${LedScoreWrapper}:hover &::after {
+    width: 80%;
+  }
+`;
+
+// LED Score animations
+const scoreGlow = keyframes`
+  0% {
+    box-shadow: 0 0 10px rgba(0, 199, 129, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 199, 129, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(0, 199, 129, 0.5);
+  }
+`;
+
+const scoreRipple = keyframes`
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+`;
+
+const LEDScoreBadgeContainer = styled.div`
+  position: relative;
+`;
+
+const ScoreRipple = styled.div<{ score: number }>`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: ${props => {
+    if (props.score >= 80) return 'rgba(0, 199, 129, 0.3)';
+    if (props.score >= 60) return 'rgba(153, 199, 129, 0.3)';
+    if (props.score >= 40) return 'rgba(255, 170, 21, 0.3)';
+    if (props.score >= 20) return 'rgba(255, 140, 64, 0.3)';
+    return 'rgba(255, 64, 64, 0.3)';
+  }};
+  z-index: 1;
+  animation: ${scoreRipple} 2s infinite;
+  opacity: 0;
+  
+  ${LEDScoreBadgeContainer}:hover & {
+    opacity: 1;
+  }
+`;
+
+const LedScoreText = styled.div`
+  position: relative;
+  z-index: 2;
 `;
 
 const LedScoreBadge = styled.div<{ score: number }>`
@@ -254,24 +545,47 @@ const LedScoreBadge = styled.div<{ score: number }>`
   }};
   box-shadow: ${props => props.theme.shadows.md};
   position: relative;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  z-index: 2;
   
   &:hover {
-    transform: scale(1.05);
+    transform: scale(1.1) rotate(5deg);
     box-shadow: ${props => props.theme.shadows.lg};
+    animation: ${props => props.score >= 80 
+      ? css`${scoreGlow} 2s infinite` 
+      : 'none'};
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background: inherit;
+    z-index: -1;
+    filter: blur(10px);
+    opacity: 0.7;
+    transition: all 0.3s ease;
+  }
+  
+  &:hover::before {
+    opacity: 0.9;
+    filter: blur(15px);
   }
   
   &::after {
     content: '';
     position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
+    top: 5px;
+    left: 5px;
+    width: 15px;
+    height: 15px;
     border-radius: 50%;
-    background: transparent;
-    border: 2px solid transparent;
-    opacity: 0.5;
+    background: rgba(255, 255, 255, 0.5);
+    filter: blur(1px);
   }
 `;
 
@@ -752,6 +1066,17 @@ const mentionsData = [
   }
 ];
 
+// Chart data for the analytics section
+const analyticsData = [
+  { day: 'Mon', mentions: 65, responses: 55 },
+  { day: 'Tue', mentions: 78, responses: 70 },
+  { day: 'Wed', mentions: 52, responses: 48 },
+  { day: 'Thu', mentions: 91, responses: 80 },
+  { day: 'Fri', mentions: 44, responses: 36 },
+  { day: 'Sat', mentions: 59, responses: 45 },
+  { day: 'Sun', mentions: 86, responses: 75 }
+];
+
 // Analytics section styles
 const AnalyticsSection = styled.div`
   margin-top: 30px;
@@ -759,6 +1084,30 @@ const AnalyticsSection = styled.div`
   background: white;
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.md};
+  animation: ${fadeIn} 1s ease-out forwards;
+  animation-delay: 0.4s;
+  opacity: 0;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+      rgba(135, 97, 197, 0.03) 0%, 
+      rgba(255, 255, 255, 0) 50%, 
+      rgba(79, 172, 254, 0.03) 100%);
+    z-index: 0;
+  }
+  
+  & > * {
+    position: relative;
+    z-index: 1;
+  }
 `;
 
 const AnalyticsHeader = styled.div`
@@ -868,44 +1217,30 @@ const StatTrend = styled.div<{ increasing?: boolean }>`
 
 const ChartSection = styled.div`
   display: flex;
-  height: 300px;
+  height: 400px;
   background: ${props => props.theme.colors.white};
   border-radius: ${props => props.theme.radius.md};
   border: 1px solid ${props => props.theme.colors.lightGrey};
   overflow: hidden;
   position: relative;
-`;
-
-const ChartBars = styled.div`
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  height: 100%;
-  width: 100%;
-  padding: 20px;
-`;
-
-const ChartBar = styled.div<{ height: number; color: string }>`
-  width: 40px;
-  height: ${props => props.height}%;
-  background: ${props => props.color};
-  border-radius: 8px 8px 0 0;
-  position: relative;
-  transition: all 0.3s ease;
+  box-shadow: ${props => props.theme.shadows.md};
+  animation: ${fadeIn} 1.2s ease-out forwards;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   
   &:hover {
-    transform: scaleY(1.05);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: ${props => props.theme.shadows.lg};
+    transform: translateY(-5px);
   }
   
-  &::after {
-    content: '${props => props.height}%';
+  &::before {
+    content: '';
     position: absolute;
-    top: -25px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 12px;
-    color: ${props => props.theme.colors.darkGrey};
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: ${props => props.theme.colors.gradient.primary};
+    opacity: 0.7;
   }
 `;
 
@@ -1007,9 +1342,12 @@ const Mentions: React.FC = () => {
         <TypeCell>
           <LedScoreWrapper>
             <LedScoreLabel>{mention.type}</LedScoreLabel>
-            <LedScoreBadge score={mention.score}>
-              {mention.score}%
-            </LedScoreBadge>
+            <LEDScoreBadgeContainer>
+              <ScoreRipple score={mention.score} />
+              <LedScoreBadge score={mention.score}>
+                <LedScoreText>{mention.score}%</LedScoreText>
+              </LedScoreBadge>
+            </LEDScoreBadgeContainer>
           </LedScoreWrapper>
         </TypeCell>
       );
@@ -1019,9 +1357,12 @@ const Mentions: React.FC = () => {
       <TypeCell>
         <LedScoreWrapper>
           <LedScoreLabel>{mention.type}</LedScoreLabel>
-          <LedScoreBadge score={mention.score}>
-            {mention.score}%
-          </LedScoreBadge>
+          <LEDScoreBadgeContainer>
+            <ScoreRipple score={mention.score} />
+            <LedScoreBadge score={mention.score}>
+              <LedScoreText>{mention.score}%</LedScoreText>
+            </LedScoreBadge>
+          </LEDScoreBadgeContainer>
         </LedScoreWrapper>
       </TypeCell>
     );
@@ -1099,8 +1440,8 @@ const Mentions: React.FC = () => {
                 </div>
               </TableRow>
             ) : (
-              filteredData.map(mention => (
-                <TableRow key={mention.id}>
+              filteredData.map((mention, index) => (
+                <TableRow key={mention.id} index={index}>
                   <VideoCell>
                     <VideoThumbnailWrapper>
                       <VideoThumbnail>
@@ -1307,25 +1648,77 @@ const Mentions: React.FC = () => {
           </StatsGrid>
           
           <ChartSection>
-            <ChartBars>
-              <ChartBar height={65} color={`linear-gradient(180deg, #673AB7 0%, #8561C5 100%)`} />
-              <ChartBar height={78} color={`linear-gradient(180deg, #673AB7 0%, #8561C5 100%)`} />
-              <ChartBar height={52} color={`linear-gradient(180deg, #673AB7 0%, #8561C5 100%)`} />
-              <ChartBar height={91} color={`linear-gradient(180deg, #673AB7 0%, #8561C5 100%)`} />
-              <ChartBar height={44} color={`linear-gradient(180deg, #673AB7 0%, #8561C5 100%)`} />
-              <ChartBar height={59} color={`linear-gradient(180deg, #673AB7 0%, #8561C5 100%)`} />
-              <ChartBar height={86} color={`linear-gradient(180deg, #673AB7 0%, #8561C5 100%)`} />
-            </ChartBars>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={analyticsData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f5" />
+                <XAxis dataKey="day" axisLine={false} tickLine={false} />
+                <YAxis axisLine={false} tickLine={false} />
+                <RechartsTooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    border: 'none'
+                  }}
+                  cursor={{ fill: 'rgba(135, 97, 197, 0.05)' }}
+                />
+                <Legend verticalAlign="top" height={40} />
+                <Bar 
+                  dataKey="mentions" 
+                  name="Mentions" 
+                  fill="#8561C5" 
+                  radius={[4, 4, 0, 0]}
+                  animationDuration={1500}
+                  animationEasing="ease-in-out"
+                >
+                  {analyticsData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={`url(#mentionsGradient-${index})`} 
+                    />
+                  ))}
+                </Bar>
+                <Bar 
+                  dataKey="responses" 
+                  name="Responses" 
+                  fill="#4facfe" 
+                  radius={[4, 4, 0, 0]}
+                  animationDuration={1500}
+                  animationEasing="ease-in-out"
+                  animationBegin={300}
+                >
+                  {analyticsData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={`url(#responsesGradient-${index})`} 
+                    />
+                  ))}
+                </Bar>
+                <defs>
+                  {analyticsData.map((entry, index) => (
+                    <linearGradient 
+                      key={`mentionsGradient-${index}`}
+                      id={`mentionsGradient-${index}`} 
+                      x1="0" y1="0" x2="0" y2="1"
+                    >
+                      <stop offset="0%" stopColor="#9575CD" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#673AB7" stopOpacity={0.9} />
+                    </linearGradient>
+                  ))}
+                  {analyticsData.map((entry, index) => (
+                    <linearGradient 
+                      key={`responsesGradient-${index}`}
+                      id={`responsesGradient-${index}`} 
+                      x1="0" y1="0" x2="0" y2="1"
+                    >
+                      <stop offset="0%" stopColor="#4facfe" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#00f2fe" stopOpacity={0.9} />
+                    </linearGradient>
+                  ))}
+                </defs>
+              </BarChart>
+            </ResponsiveContainer>
           </ChartSection>
-          <ChartLabels>
-            <ChartLabel>Mon</ChartLabel>
-            <ChartLabel>Tue</ChartLabel>
-            <ChartLabel>Wed</ChartLabel>
-            <ChartLabel>Thu</ChartLabel>
-            <ChartLabel>Fri</ChartLabel>
-            <ChartLabel>Sat</ChartLabel>
-            <ChartLabel>Sun</ChartLabel>
-          </ChartLabels>
         </AnalyticsSection>
       </PageContainer>
       
