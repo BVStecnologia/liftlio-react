@@ -434,6 +434,7 @@ const Overview: React.FC = () => {
   const renderStatsIcon = (iconName: keyof typeof FaIcons, bgColor: string) => {
     return (
       <StatIcon bgColor={bgColor}>
+        {/* @ts-ignore - IconType typings issue */}
         {React.createElement(FaIcons[iconName])}
       </StatIcon>
     );
@@ -530,7 +531,7 @@ const Overview: React.FC = () => {
                   stroke="#4E0EB3" 
                   fillOpacity={1} 
                   fill="url(#colorViews)" 
-                  activeDot={{ r: 8, strokeWidth: 0, fill: "#4E0EB3", boxShadow: "0 0 10px #4E0EB3" }}
+                  activeDot={{ r: 8, strokeWidth: 0, fill: "#4E0EB3" }}
                 />
                 <Area 
                   type="monotone" 
@@ -630,6 +631,7 @@ const Overview: React.FC = () => {
               <VideoLinks>
                 {keyword.topVideos.map((video, index) => (
                   <VideoLink href="#" key={index}>
+                    {/* @ts-ignore - IconType typings issue */}
                     {React.createElement(FaIcons.FaPlayCircle)}
                     {video}
                   </VideoLink>

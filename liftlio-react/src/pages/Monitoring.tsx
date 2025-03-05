@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Card from '../components/Card';
 import { FaYoutube, FaCheck, FaBell, FaChartLine, FaFilter, FaInfoCircle, FaThumbsUp, FaComment, FaEye } from 'react-icons/fa';
+import { IconComponent } from '../utils/IconHelper';
 
 const PageTitle = styled.h1`
   font-size: ${props => props.theme.fontSizes['2xl']};
@@ -346,7 +347,7 @@ const YoutubeMonitoring: React.FC = () => {
   return (
     <div>
       <PageTitle>
-        <FaYoutube />
+        <IconComponent icon={FaYoutube} />
         YouTube Monitoring
       </PageTitle>
       
@@ -363,7 +364,7 @@ const YoutubeMonitoring: React.FC = () => {
           <StatsGrid>
             <StatCard>
               <StatLabel>
-                <FaEye />
+                <IconComponent icon={FaEye} />
                 Total Views
               </StatLabel>
               <StatValue>3.2M</StatValue>
@@ -372,7 +373,7 @@ const YoutubeMonitoring: React.FC = () => {
             
             <StatCard>
               <StatLabel>
-                <FaThumbsUp />
+                <IconComponent icon={FaThumbsUp} />
                 Total Likes
               </StatLabel>
               <StatValue>284K</StatValue>
@@ -381,7 +382,7 @@ const YoutubeMonitoring: React.FC = () => {
             
             <StatCard>
               <StatLabel>
-                <FaComment />
+                <IconComponent icon={FaComment} />
                 Comments Posted
               </StatLabel>
               <StatValue>1,845</StatValue>
@@ -390,7 +391,7 @@ const YoutubeMonitoring: React.FC = () => {
             
             <StatCard>
               <StatLabel>
-                <FaChartLine />
+                <IconComponent icon={FaChartLine} />
                 Engagement Rate
               </StatLabel>
               <StatValue>7.6%</StatValue>
@@ -455,7 +456,7 @@ const YoutubeMonitoring: React.FC = () => {
               <ChartHeader>
                 <ChartTitle>Video Performance</ChartTitle>
                 <InfoTooltip>
-                  <FaInfoCircle />
+                  <IconComponent icon={FaInfoCircle} />
                 </InfoTooltip>
               </ChartHeader>
               
@@ -487,7 +488,7 @@ const YoutubeMonitoring: React.FC = () => {
           <FilterBar>
             <FilterGroup>
               <FilterButton>
-                <FaFilter />
+                <IconComponent icon={FaFilter} />
                 Filter
               </FilterButton>
               <FilterButton>
@@ -509,14 +510,14 @@ const YoutubeMonitoring: React.FC = () => {
                   onClick={() => setSelectedChannel(channel.id)}
                 >
                   <ChannelIcon>
-                    <FaYoutube />
+                    <IconComponent icon={FaYoutube} />
                   </ChannelIcon>
                   <ChannelInfo>
                     <ChannelName>{channel.name}</ChannelName>
                     <ChannelStats>{channel.subscribers} subscribers • {channel.views} views</ChannelStats>
                     <ChannelStatus status={channel.status}>
-                      {channel.status === 'active' && <FaCheck />}
-                      {channel.status === 'pending' && <FaBell />}
+                      {channel.status === 'active' && <IconComponent icon={FaCheck} />}
+                      {channel.status === 'pending' && <IconComponent icon={FaBell} />}
                       {channel.status.charAt(0).toUpperCase() + channel.status.slice(1)}
                     </ChannelStatus>
                   </ChannelInfo>
@@ -529,7 +530,7 @@ const YoutubeMonitoring: React.FC = () => {
             </ChannelList>
             
             <ActionButton>
-              <FaYoutube />
+              <IconComponent icon={FaYoutube} />
               Add New Channel
             </ActionButton>
           </Card>

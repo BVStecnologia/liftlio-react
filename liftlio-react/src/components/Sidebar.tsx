@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 import { IconContext } from 'react-icons';
 import * as FaIcons from 'react-icons/fa';
+import { IconComponent } from '../utils/IconHelper';
 
 const SidebarContainer = styled.aside`
   width: 240px;
@@ -140,7 +141,7 @@ const Sidebar: React.FC = () => {
               className={({ isActive }) => isActive ? 'active' : ''}
             >
               <NavItemIcon>
-                {React.createElement(FaIcons[item.icon as keyof typeof FaIcons])}
+                <IconComponent icon={FaIcons[item.icon as keyof typeof FaIcons]} />
               </NavItemIcon>
               {item.label}
             </NavItem>

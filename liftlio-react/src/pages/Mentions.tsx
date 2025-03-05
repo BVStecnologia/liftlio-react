@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import Card from '../components/Card';
 import { IconContext } from 'react-icons';
 import { FaHeart, FaPencilAlt } from 'react-icons/fa';
+import { IconComponent } from '../utils/IconHelper';
 
 const PageTitle = styled.h1`
   font-size: ${props => props.theme.fontSizes['2xl']};
@@ -216,8 +217,8 @@ const mentionsData = [
 const Mentions: React.FC = () => {
   const [activeTab, setActiveTab] = useState('posted');
   
-  const renderIcon = (IconComponent: React.ComponentType) => {
-    return <IconComponent />;
+  const renderIcon = (Icon: any) => {
+    return <IconComponent icon={Icon} />;
   };
   
   return (

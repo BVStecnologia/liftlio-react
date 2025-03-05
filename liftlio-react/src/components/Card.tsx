@@ -1,6 +1,8 @@
 import React, { ReactNode, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import * as FaIcons from 'react-icons/fa';
+import { IconType } from 'react-icons';
+import { renderIcon } from '../utils/IconHelper';
 
 interface CardProps {
   children: ReactNode;
@@ -171,7 +173,8 @@ const Card: React.FC<CardProps> = ({
           <CardTitleWrapper>
             {icon && (
               <CardIcon>
-                {React.createElement(FaIcons[icon])}
+                {/* Renderizando o ícone de forma segura usando o helper */}
+                {icon && FaIcons[icon] ? renderIcon(FaIcons[icon] as IconType) : null}
               </CardIcon>
             )}
             {title && <CardTitle>{title}</CardTitle>}
@@ -180,9 +183,11 @@ const Card: React.FC<CardProps> = ({
             {headerAction}
             {collapsible && (
               <CollapseButton onClick={toggleCollapse}>
-                {React.createElement(
-                  collapsed ? FaIcons.FaChevronDown : FaIcons.FaChevronUp
-                )}
+                {/* Usando os componentes de ícone seguros com tipagem correta */}
+                {collapsed ? 
+                  renderIcon(FaIcons.FaChevronDown) : 
+                  renderIcon(FaIcons.FaChevronUp)
+                }
               </CollapseButton>
             )}
           </CardActions>

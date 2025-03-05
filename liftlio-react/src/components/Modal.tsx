@@ -1,6 +1,7 @@
 import React, { ReactNode, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import * as FaIcons from 'react-icons/fa';
+import { IconComponent } from '../utils/IconHelper';
 
 const fadeIn = keyframes`
   from {
@@ -166,7 +167,7 @@ const Modal: React.FC<ModalProps> = ({
         <ModalHeader>
           <ModalTitle>{title}</ModalTitle>
           <CloseButton onClick={onClose}>
-            {React.createElement(FaIcons.FaTimes)}
+            <IconComponent icon={FaIcons.FaTimes} />
           </CloseButton>
         </ModalHeader>
         <ModalBody>

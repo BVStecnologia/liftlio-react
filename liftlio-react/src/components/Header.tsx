@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import * as FaIcons from 'react-icons/fa';
 import ProjectModal from './ProjectModal';
+import { IconComponent } from '../utils/IconHelper';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -197,38 +198,38 @@ const Header: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <ProjectSelector>
             <ProjectIcon>
-              {React.createElement(FaIcons.FaProjectDiagram)}
+              <IconComponent icon={FaIcons.FaProjectDiagram} />
             </ProjectIcon>
             {currentProject}
             <span style={{ marginLeft: '8px' }}>
-              {React.createElement(FaIcons.FaAngleDown)}
+              <IconComponent icon={FaIcons.FaAngleDown} />
             </span>
           </ProjectSelector>
           
           <SearchBar>
             <input type="text" placeholder="Search..." />
             <span className="search-icon">
-              {React.createElement(FaIcons.FaSearch)}
+              <IconComponent icon={FaIcons.FaSearch} />
             </span>
           </SearchBar>
         </div>
         
         <RightSection>
           <AddProjectButton onClick={() => setShowProjectModal(true)}>
-            {React.createElement(FaIcons.FaPlus)}
+            <IconComponent icon={FaIcons.FaPlus} />
             Add new project
           </AddProjectButton>
           
           <NotificationBadge>
-            {React.createElement(FaIcons.FaBell)}
+            <IconComponent icon={FaIcons.FaBell} />
           </NotificationBadge>
           
           <UserProfile>
             <span className="user-icon">
-              {React.createElement(FaIcons.FaUserCircle)}
+              <IconComponent icon={FaIcons.FaUserCircle} />
             </span>
             <span className="dropdown-icon">
-              {React.createElement(FaIcons.FaAngleDown)}
+              <IconComponent icon={FaIcons.FaAngleDown} />
             </span>
           </UserProfile>
         </RightSection>

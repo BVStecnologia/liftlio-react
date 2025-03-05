@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import Card from '../components/Card';
 import { IconContext } from 'react-icons';
 import { FaCog, FaUser, FaBell, FaPalette, FaShieldAlt } from 'react-icons/fa';
+import { IconComponent } from '../utils/IconHelper';
 
 const PageTitle = styled.h1`
   font-size: ${props => props.theme.fontSizes['2xl']};
@@ -297,8 +298,8 @@ const Settings: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState(colors[0].value);
   const [isDarkMode, setIsDarkMode] = useState(false);
   
-  const renderIcon = (IconComponent: React.ComponentType) => {
-    return <IconComponent />;
+  const renderIcon = (Icon: any) => {
+    return <IconComponent icon={Icon} />;
   };
   
   return (

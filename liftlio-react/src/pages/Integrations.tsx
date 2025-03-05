@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import Card from '../components/Card';
 import { IconContext } from 'react-icons';
 import { FaYoutube, FaReddit, FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaPlug, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
+import { IconComponent } from '../utils/IconHelper';
 
 const PageTitle = styled.h1`
   font-size: ${props => props.theme.fontSizes['2xl']};
@@ -179,8 +180,8 @@ const integrations = [
 ];
 
 const Integrations: React.FC = () => {
-  const renderIcon = (IconComponent: React.ComponentType) => {
-    return <IconComponent />;
+  const renderIcon = (Icon: any) => {
+    return <IconComponent icon={Icon} />;
   };
   
   return (

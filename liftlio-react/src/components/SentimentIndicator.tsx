@@ -1,6 +1,7 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
 import * as FaIcons from 'react-icons/fa';
+import { IconComponent } from '../utils/IconHelper';
 
 interface SentimentIndicatorProps {
   percentage: number;
@@ -146,7 +147,7 @@ const SentimentIndicator: React.FC<SentimentIndicatorProps> = ({
           cx="50"
           cy="50"
           r="45"
-          stroke={sentimentColor}
+          stroke={String(sentimentColor)}
         />
       </ProgressCircle>
       
@@ -154,7 +155,7 @@ const SentimentIndicator: React.FC<SentimentIndicatorProps> = ({
         <SentimentText>{percentage}%</SentimentText>
         {showIcon && (
           <IconWrapper size={size}>
-            {React.createElement(SentimentIcon)}
+            <IconComponent icon={SentimentIcon} />
           </IconWrapper>
         )}
       </SentimentCircle>
