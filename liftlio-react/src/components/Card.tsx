@@ -69,7 +69,24 @@ const CardContainer = styled.div<{
     }
   `}
   
-  /* Removing the animated border to match the reference image */
+  @media (max-width: 768px) {
+    padding: ${props => props.padding ? 
+      `calc(${props.padding} * 0.85)` : 
+      '20px'
+    };
+    border-radius: ${props => props.theme.radius.md};
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  @media (max-width: 480px) {
+    padding: ${props => props.padding ? 
+      `calc(${props.padding} * 0.7)` : 
+      '16px'
+    };
+    border-radius: 16px;
+    margin-bottom: 16px;
+  }
 `;
 
 const CardHeader = styled.div`
@@ -79,6 +96,19 @@ const CardHeader = styled.div`
   margin-bottom: 20px;
   padding-bottom: 12px;
   border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+  
+  @media (max-width: 768px) {
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
 `;
 
 const CardTitleWrapper = styled.div`
@@ -104,6 +134,14 @@ const CardTitle = styled.h3`
   font-weight: ${props => props.theme.fontWeights.semiBold};
   color: ${props => props.theme.colors.text};
   margin: 0;
+  
+  @media (max-width: 768px) {
+    font-size: ${props => props.theme.fontSizes.md};
+  }
+  
+  @media (max-width: 480px) {
+    font-size: ${props => props.theme.fontSizes.sm};
+  }
 `;
 
 const CardContent = styled.div<{ collapsed: boolean }>`
@@ -138,6 +176,11 @@ const CardActions = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+  
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: flex-end;
+  }
 `;
 
 const Card: React.FC<CardProps> = ({ 

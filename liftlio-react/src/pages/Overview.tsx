@@ -59,6 +59,15 @@ const PageContainer = styled.div`
   padding: 24px;
   position: relative;
   overflow: hidden;
+  
+  @media (max-width: 768px) {
+    padding: 16px 12px;
+    overflow-x: hidden;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px 8px;
+  }
 `;
 
 // Enhanced dashboard header
@@ -68,6 +77,19 @@ const DashboardHeader = styled.div`
   align-items: center;
   margin-bottom: 32px;
   animation: ${fadeIn} 0.5s ease-out forwards;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+    width: 100%;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 20px;
+    padding: 0 4px;
+  }
 `;
 
 const PageTitle = styled.h1`
@@ -82,11 +104,31 @@ const PageTitle = styled.h1`
   svg {
     color: ${props => props.theme.colors.primary};
   }
+  
+  @media (max-width: 768px) {
+    font-size: ${props => props.theme.fontSizes['2xl']};
+    gap: 10px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: ${props => props.theme.fontSizes.xl};
+    gap: 8px;
+  }
 `;
 
 const ActionButtons = styled.div`
   display: flex;
   gap: 12px;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
 `;
 
 // Enhanced button styles with variants
@@ -102,6 +144,16 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost' | 'ou
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
   overflow: hidden;
+  
+  @media (max-width: 768px) {
+    padding: ${props => props.variant === 'ghost' ? '7px 10px' : '8px 14px'};
+    font-size: ${props => props.theme.fontSizes.xs};
+  }
+  
+  @media (max-width: 480px) {
+    padding: ${props => props.variant === 'ghost' ? '6px 8px' : '7px 12px'};
+    flex: ${props => props.variant === 'primary' ? '1' : 'initial'};
+  }
   
   &::after {
     content: '';
@@ -186,10 +238,17 @@ const OverviewGrid = styled.div`
   
   @media (max-width: 1200px) {
     grid-template-columns: repeat(6, 1fr);
+    gap: 20px;
   }
   
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 12px;
+    margin-bottom: 24px;
   }
 `;
 
@@ -324,6 +383,11 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
 const ChartCard = styled(StatCard)`
   padding: 0;
   overflow: hidden;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    overflow-x: auto;
+  }
 `;
 
 const ChartHeader = styled.div`
@@ -332,6 +396,17 @@ const ChartHeader = styled.div`
   align-items: center;
   padding: 20px 24px;
   border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+  
+  @media (max-width: 768px) {
+    padding: 16px 20px;
+  }
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+  }
 `;
 
 const ChartTitle = styled.h3`
@@ -355,11 +430,25 @@ const ChartBody = styled.div`
 const ChartContainer = styled.div`
   height: 350px;
   width: 100%;
+  
+  @media (max-width: 768px) {
+    height: 300px;
+  }
+  
+  @media (max-width: 480px) {
+    height: 250px;
+  }
 `;
 
 const ChartOptions = styled.div`
   display: flex;
   gap: 10px;
+  
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+  }
 `;
 
 const ChartOption = styled.button<{ active: boolean }>`
@@ -372,6 +461,12 @@ const ChartOption = styled.button<{ active: boolean }>`
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.medium};
   cursor: pointer;
   transition: all 0.2s ease;
+  
+  @media (max-width: 480px) {
+    padding: 6px 10px;
+    font-size: ${props => props.theme.fontSizes.xs};
+    flex: 1;
+  }
   
   &:hover {
     border-color: ${props => props.theme.colors.primary};
@@ -386,6 +481,11 @@ const ChartTabs = styled.div`
   gap: 0;
   border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
   margin-bottom: 16px;
+  
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
 `;
 
 const ChartTab = styled.button<{ active: boolean }>`
@@ -399,6 +499,17 @@ const ChartTab = styled.button<{ active: boolean }>`
   cursor: pointer;
   transition: all 0.2s ease;
   
+  @media (max-width: 768px) {
+    padding: 10px 16px;
+    font-size: ${props => props.theme.fontSizes.xs};
+  }
+  
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    flex-grow: 1;
+    text-align: center;
+  }
+  
   &:hover {
     color: ${props => props.theme.colors.primary};
   }
@@ -409,9 +520,19 @@ const KeywordTable = styled.div`
   background: white;
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.sm};
-  overflow: hidden;
+  overflow-x: auto;
   animation: ${fadeIn} 0.8s ease-out forwards;
   margin-top: 32px;
+  
+  @media (max-width: 768px) {
+    margin-top: 24px;
+    border-radius: ${props => props.theme.radius.md};
+  }
+  
+  @media (max-width: 480px) {
+    margin-top: 20px;
+    border-radius: ${props => props.theme.radius.sm};
+  }
 `;
 
 const TableHeader = styled.div`
@@ -427,6 +548,11 @@ const TableHeader = styled.div`
   @media (max-width: 1200px) {
     display: none;
   }
+  
+  @media (max-width: 768px) {
+    padding: 12px 16px;
+    font-size: ${props => props.theme.fontSizes.xs};
+  }
 `;
 
 const TableRow = styled.div`
@@ -436,6 +562,7 @@ const TableRow = styled.div`
   border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
   align-items: center;
   transition: all 0.2s ease;
+  min-width: 1000px;
   
   &:hover {
     background-color: ${props => props.theme.colors.background};
@@ -451,6 +578,12 @@ const TableRow = styled.div`
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
+    padding: 14px 20px;
+  }
+  
+  @media (max-width: 768px) {
+    min-width: 950px;
+    padding: 12px 16px;
   }
 `;
 
@@ -562,6 +695,16 @@ const QuickStat = styled.div`
     transform: translateY(-5px);
     box-shadow: ${props => props.theme.shadows.md};
   }
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 14px;
+  }
 `;
 
 const QuickStatValue = styled.div`
@@ -614,6 +757,12 @@ const ContentHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
 `;
 
 const ContentTitle = styled.h2`
@@ -628,6 +777,15 @@ const ContentTitle = styled.h2`
   svg {
     color: ${props => props.theme.colors.primary};
   }
+  
+  @media (max-width: 768px) {
+    font-size: ${props => props.theme.fontSizes.lg};
+  }
+  
+  @media (max-width: 480px) {
+    font-size: ${props => props.theme.fontSizes.md};
+    gap: 8px;
+  }
 `;
 
 // Search and filter components
@@ -635,12 +793,26 @@ const SearchBar = styled.div`
   display: flex;
   gap: 12px;
   margin-bottom: 24px;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 8px;
+  }
 `;
 
 const SearchInput = styled.div`
   position: relative;
   flex: 1;
   max-width: 400px;
+  
+  @media (max-width: 768px) {
+    max-width: 100%;
+  }
 `;
 
 const SearchIcon = styled.div`

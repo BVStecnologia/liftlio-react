@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 import { IconContext } from 'react-icons';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 
-const SidebarContainer = styled.aside`
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+const SidebarContainer = styled.aside<{ isOpen: boolean }>`
   width: 240px;
   height: 100%;
   background: #2D1D42; /* Dark purple from reference */
@@ -14,13 +19,37 @@ const SidebarContainer = styled.aside`
   flex-direction: column;
   overflow-y: auto;
   box-shadow: ${props => props.theme.shadows.lg};
-  position: relative;
-  z-index: ${props => props.theme.zIndices.sticky};
-  transition: width ${props => props.theme.transitions.default};
+  z-index: 1000; /* Higher z-index to appear above header */
+  transition: transform 0.3s ease-in-out;
+  
+  @media (min-width: 769px) {
+    position: relative;
+  }
+  
+  @media (max-width: 768px) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 85%;
+    max-width: 300px;
+    transform: translateX(${props => props.isOpen ? '0' : '-105%'});
+    box-shadow: ${props => props.isOpen ? '0 0 24px rgba(0, 0, 0, 0.25)' : 'none'};
+  }
+  
+  @media (max-width: 480px) {
+    width: 90%;
+  }
+  
+  @media (max-width: 400px) {
+    width: 100%;
+    max-width: none;
+  }
 `;
 
 const Logo = styled.div`
-  padding: 24px;
+  padding: 32px 24px;
+  margin-top: 12px;
   font-size: 1.8rem;
   font-weight: 600;
   margin-bottom: 20px;
@@ -33,6 +62,18 @@ const Logo = styled.div`
   transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
   color: #fff;
   text-transform: uppercase;
+  
+  @media (max-width: 768px) {
+    padding: 30px 20px;
+    margin-top: 8px;
+    font-size: 1.6rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 26px 16px;
+    margin-top: 6px;
+    font-size: 1.4rem;
+  }
   
   &::before {
     content: '';
@@ -132,6 +173,7 @@ const NavContainer = styled.nav`
   flex-direction: column;
   flex: 1;
   padding: 0;
+  margin-top: 10px;
 `;
 
 // Removed ProjectSelector from Sidebar as it's now in Header
@@ -147,6 +189,16 @@ const NavItem = styled(NavLink)`
   position: relative;
   text-decoration: none;
   overflow: hidden;
+  
+  @media (max-width: 768px) {
+    padding: 14px 20px;
+    font-size: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+    font-size: 0.95rem;
+  }
   
   &::before {
     content: '';
@@ -225,18 +277,38 @@ const Divider = styled.div`
 
 const PremiumSection = styled.div`
   margin-top: auto;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
   padding: 0 16px;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 28px;
+    padding: 0 14px;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 24px;
+    padding: 0 12px;
+  }
 `;
 
 const PremiumBadge = styled.div`
   background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  padding: 16px;
+  padding: 20px 16px;
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(5px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  
+  @media (max-width: 768px) {
+    padding: 18px 14px;
+    border-radius: 10px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 16px 12px;
+    border-radius: 8px;
+  }
   
   &::before {
     content: '';
@@ -281,7 +353,7 @@ const PremiumBadge = styled.div`
 const PremiumTitle = styled.div`
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   color: rgba(255, 255, 255, 0.9);
   display: flex;
   align-items: center;
@@ -293,14 +365,26 @@ const PremiumTitle = styled.div`
     color: #FFC107;
     filter: drop-shadow(0 0 3px rgba(255, 193, 7, 0.5));
   }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 10px;
+  }
 `;
 
 const PremiumFeatures = styled.div`
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.7);
   position: relative;
   z-index: 2;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 18px;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 16px;
+  }
 `;
 
 const PremiumFeature = styled.div`
@@ -317,6 +401,7 @@ const PremiumFeature = styled.div`
 
 const UpgradeButton = styled.div`
   padding: 14px 0;
+  margin-top: 5px;
   background: linear-gradient(135deg, #8a54ff 0%, #4facfe 100%);
   color: white;
   font-weight: 700;
@@ -333,6 +418,20 @@ const UpgradeButton = styled.div`
   overflow: hidden;
   letter-spacing: 0.5px;
   z-index: 2;
+  
+  @media (max-width: 768px) {
+    padding: 12px 0;
+    font-size: 0.95rem;
+    border-radius: 8px;
+    margin-top: 4px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 10px 0;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    margin-top: 3px;
+  }
   
   &::before {
     content: '';
@@ -707,7 +806,29 @@ const Tooltip = styled.div<{ visible: boolean }>`
   }
 `;
 
-const Sidebar: React.FC = () => {
+const SidebarOverlay = styled.div<{ isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 999; /* Just below sidebar but above everything else */
+  opacity: ${props => props.isOpen ? 1 : 0};
+  visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  pointer-events: ${props => props.isOpen ? 'all' : 'none'};
+  
+  @media (min-width: 769px) {
+    display: none;
+  }
+`;
+
+/* Removed Close Button as requested */
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
   const [selectedProject] = useState({
     id: '1',
     name: 'Project 1',
@@ -718,94 +839,117 @@ const Sidebar: React.FC = () => {
   
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   
+  // Handle click outside on mobile
+  useEffect(() => {
+    const handleEscKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [onClose]);
+  
   return (
-    <IconContext.Provider value={{ style: { marginRight: '10px' } }}>
-      <SidebarContainer>
-        <Logo><span data-text="Liftlio">Liftlio</span></Logo>
-        
-        <NavContainer>
-          {navItems.map(item => (
-            <NavItem 
-              key={item.path}
-              to={item.path} 
-              className={({ isActive }) => isActive ? 'active' : ''}
-              onMouseEnter={() => setHoveredItem(item.path)}
-              onMouseLeave={() => setHoveredItem(null)}
-              aria-label={item.label}
-              title={item.label}
-              style={{ position: 'relative' }}
-            >
-              <NavItemIcon>
-                <IconComponent icon={FaIcons[item.icon as keyof typeof FaIcons]} />
-              </NavItemIcon>
-              {item.label}
-              <Tooltip visible={hoveredItem === item.path}>
-                {item.label}
-              </Tooltip>
-            </NavItem>
-          ))}
+    <>
+      <SidebarOverlay isOpen={isOpen} onClick={onClose} />
+      <IconContext.Provider value={{ style: { marginRight: '10px' } }}>
+        <SidebarContainer isOpen={isOpen}>
+          {/* Removed close button */}
+          <Logo><span data-text="Liftlio">Liftlio</span></Logo>
           
-          <PremiumSection>
-            <PremiumBadge>
-              <div className="rocket-path"></div>
-              <PremiumTitle>
-                <IconComponent icon={FaIcons.FaCrown} />
-                Liftlio Premium
-              </PremiumTitle>
-              
-              <PremiumFeatures>
-                <PremiumFeature>
-                  <IconComponent icon={FaIcons.FaCheckCircle} />
-                  Access to advanced features
-                </PremiumFeature>
-                <PremiumFeature>
-                  <IconComponent icon={FaIcons.FaCheckCircle} />
-                  Detailed engagement reports
-                </PremiumFeature>
-                <PremiumFeature>
-                  <IconComponent icon={FaIcons.FaCheckCircle} />
-                  Priority 24/7 support
-                </PremiumFeature>
-              </PremiumFeatures>
-              
-              <UpgradeButton
-                onMouseEnter={() => setHoveredItem('upgrade')}
+          <NavContainer>
+            {navItems.map(item => (
+              <NavItem 
+                key={item.path}
+                to={item.path} 
+                className={({ isActive }) => isActive ? 'active' : ''}
+                onMouseEnter={() => setHoveredItem(item.path)}
                 onMouseLeave={() => setHoveredItem(null)}
-                aria-label="Upgrade to Premium"
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    // Handle upgrade click
-                    console.log('Upgrade clicked');
+                aria-label={item.label}
+                title={item.label}
+                style={{ position: 'relative' }}
+                onClick={() => {
+                  if (window.innerWidth <= 768 && onClose) {
+                    onClose();
                   }
                 }}
               >
-                <span className="crown-icon">
-                  <IconComponent icon={FaIcons.FaCrown} />
-                </span>
-                <span className="upgrade-text">Upgrade Now</span>
-                <Tooltip visible={hoveredItem === 'upgrade'}>
-                  Unlock Liftlio's full potential!
+                <NavItemIcon>
+                  <IconComponent icon={FaIcons[item.icon as keyof typeof FaIcons]} />
+                </NavItemIcon>
+                {item.label}
+                <Tooltip visible={hoveredItem === item.path}>
+                  {item.label}
                 </Tooltip>
-                <div className="rocket">
-                  <div className="rocket-body"></div>
-                  <div className="rocket-window"></div>
-                  <div className="fins">
-                    <div className="fin-left"></div>
-                    <div className="fin-right"></div>
+              </NavItem>
+            ))}
+          
+            <PremiumSection>
+              <PremiumBadge>
+                <div className="rocket-path"></div>
+                <PremiumTitle>
+                  <IconComponent icon={FaIcons.FaCrown} />
+                  Liftlio Premium
+                </PremiumTitle>
+                
+                <PremiumFeatures>
+                  <PremiumFeature>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    Access to advanced features
+                  </PremiumFeature>
+                  <PremiumFeature>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    Detailed engagement reports
+                  </PremiumFeature>
+                  <PremiumFeature>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    Priority 24/7 support
+                  </PremiumFeature>
+                </PremiumFeatures>
+                
+                <UpgradeButton
+                  onMouseEnter={() => setHoveredItem('upgrade')}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  aria-label="Upgrade to Premium"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      // Handle upgrade click
+                      console.log('Upgrade clicked');
+                    }
+                  }}
+                >
+                  <span className="crown-icon">
+                    <IconComponent icon={FaIcons.FaCrown} />
+                  </span>
+                  <span className="upgrade-text">Upgrade Now</span>
+                  <Tooltip visible={hoveredItem === 'upgrade'}>
+                    Unlock Liftlio's full potential!
+                  </Tooltip>
+                  <div className="rocket">
+                    <div className="rocket-body"></div>
+                    <div className="rocket-window"></div>
+                    <div className="fins">
+                      <div className="fin-left"></div>
+                      <div className="fin-right"></div>
+                    </div>
+                    <div className="fire"></div>
+                    <div className="smoke-particle"></div>
+                    <div className="smoke-particle"></div>
+                    <div className="smoke-particle"></div>
                   </div>
-                  <div className="fire"></div>
-                  <div className="smoke-particle"></div>
-                  <div className="smoke-particle"></div>
-                  <div className="smoke-particle"></div>
-                </div>
-              </UpgradeButton>
-            </PremiumBadge>
-          </PremiumSection>
-        </NavContainer>
-      </SidebarContainer>
-    </IconContext.Provider>
+                </UpgradeButton>
+              </PremiumBadge>
+            </PremiumSection>
+          </NavContainer>
+        </SidebarContainer>
+      </IconContext.Provider>
+    </>
   );
 };
 

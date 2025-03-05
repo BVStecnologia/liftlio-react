@@ -14,7 +14,7 @@ const HeaderContainer = styled.header`
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   position: sticky;
   top: 0;
-  z-index: ${props => props.theme.zIndices.sticky};
+  z-index: 900; /* High but lower than sidebar (1000) */
   backdrop-filter: blur(10px);
   background-color: rgba(255, 255, 255, 0.95);
 
