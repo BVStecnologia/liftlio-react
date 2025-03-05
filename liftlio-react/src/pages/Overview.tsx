@@ -782,8 +782,9 @@ type DataViewType = 'overview' | 'performance' | 'traffic' | 'keywords';
 
 // Helper function to render icons safely
 const renderIcon = (iconName: string) => {
-  const IconComponent = FaIcons[iconName as keyof typeof FaIcons] as IconType;
-  return IconComponent ? <IconComponent /> : null;
+  const Icon = FaIcons[iconName as keyof typeof FaIcons] as IconType;
+  // Use the imported IconComponent helper instead of direct createElement
+  return Icon ? <IconComponent icon={Icon} /> : null;
 };
 
 // Main component
