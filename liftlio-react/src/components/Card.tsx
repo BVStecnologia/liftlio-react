@@ -14,6 +14,7 @@ interface CardProps {
   icon?: keyof typeof FaIcons;
   headerAction?: ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 const pulseAnimation = keyframes`
@@ -192,7 +193,8 @@ const Card: React.FC<CardProps> = ({
   collapsible = false,
   icon,
   headerAction,
-  className
+  className,
+  style
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [hoverEffect] = useState(elevation === 'high');
@@ -210,6 +212,7 @@ const Card: React.FC<CardProps> = ({
       elevation={elevation}
       hoverEffect={hoverEffect}
       className={className}
+      style={style}
     >
       {(title || collapsible || headerAction) && (
         <CardHeader>

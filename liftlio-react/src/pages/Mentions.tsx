@@ -47,6 +47,14 @@ const shimmer = keyframes`
 const PageContainer = styled.div`
   padding: 16px;
   animation: ${fadeIn} 0.6s ease-out forwards;
+  
+  @media (max-width: 768px) {
+    padding: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 8px;
+  }
 `;
 
 const PageTitle = styled.h1`
@@ -74,6 +82,16 @@ const PageTitle = styled.h1`
     background: ${props => props.theme.colors.gradient.primary};
     border-radius: 3px;
   }
+  
+  @media (max-width: 768px) {
+    font-size: ${props => props.theme.fontSizes.xl};
+    margin-bottom: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: ${props => props.theme.fontSizes.lg};
+    margin-bottom: 16px;
+  }
 `;
 
 // Improved tab design
@@ -87,6 +105,7 @@ const TabContainer = styled.div`
   box-shadow: ${props => props.theme.shadows.sm};
   position: relative;
   animation: ${fadeIn} 0.8s ease-out forwards;
+  white-space: nowrap;
   
   &::before {
     content: '';
@@ -104,6 +123,18 @@ const TabContainer = styled.div`
     animation: ${shimmer} 3s infinite linear;
     background-size: 200% 100%;
   }
+  
+  @media (max-width: 768px) {
+    margin-bottom: 24px;
+    width: 100%;
+    max-width: 100%;
+    justify-content: space-between;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 20px;
+    padding: 4px;
+  }
 `;
 
 const tabHoverEffect = css`
@@ -118,43 +149,52 @@ const Tab = styled.button<{ active: boolean }>`
   border: none;
   border-radius: ${props => props.theme.radius.pill};
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.normal};
-  color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.darkGrey};
+  color: ${props => props.active ? '#6b46c1' : props.theme.colors.darkGrey};
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  box-shadow: ${props => props.active ? props.theme.shadows.sm : 'none'};
+  box-shadow: ${props => props.active ? '0 2px 4px rgba(0, 0, 0, 0.05)' : 'none'};
   position: relative;
   overflow: hidden;
   z-index: 1;
+  white-space: nowrap;
+  flex: 1;
   
   &::after {
     content: '';
     position: absolute;
-    bottom: 0;
-    left: 10%;
-    width: 80%;
-    height: 3px;
-    background: ${props => props.theme.colors.gradient.primary};
-    transform: scaleX(0);
-    transform-origin: center;
-    transition: transform 0.3s ease;
-    border-radius: 3px;
-    opacity: ${props => props.active ? 1 : 0};
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: ${props => props.active ? '#6b46c1' : 'transparent'};
+    transition: background 0.3s ease;
+    opacity: 1;
   }
   
   ${props => props.active && tabHoverEffect}
   
   &:hover {
-    background: ${props => props.active ? props.theme.colors.white : 'rgba(255, 255, 255, 0.5)'};
-    transform: translateY(-2px);
+    background: ${props => props.active ? props.theme.colors.white : 'rgba(255, 255, 255, 0.8)'};
+    color: #6b46c1;
     
     &::after {
-      transform: scaleX(1);
-      opacity: 1;
+      background: #6b46c1;
+      opacity: ${props => props.active ? 1 : 0.5};
     }
   }
   
   &:active {
     transform: translateY(1px);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 8px 16px;
+    font-size: ${props => props.theme.fontSizes.sm};
+  }
+  
+  @media (max-width: 480px) {
+    padding: 6px 12px;
+    font-size: ${props => props.theme.fontSizes.xs};
   }
 `;
 
@@ -175,6 +215,8 @@ const MentionsContainer = styled(Card)`
 const MentionsTable = styled.div`
   width: 100%;
   border-spacing: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 `;
 
 const tableAppear = keyframes`
@@ -193,16 +235,27 @@ const TableHeader = styled.div`
   grid-template-columns: 2.5fr 1fr 2.5fr 3fr 1fr;
   padding: 16px 20px;
   border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
-  color: ${props => props.theme.colors.darkGrey};
+  color: #4a5568;
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  font-size: ${props => props.theme.fontSizes.sm};
+  font-size: 13px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  background: linear-gradient(to right, rgba(135, 97, 197, 0.03), rgba(255, 255, 255, 0), rgba(135, 97, 197, 0.03));
+  letter-spacing: 0.5px;
+  background: #f8f9fa;
   position: sticky;
   top: 0;
   z-index: 10;
-  backdrop-filter: blur(5px);
+  min-width: 1000px;
+  
+  div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 12px 16px;
+    font-size: 12px;
+  }
 `;
 
 const TableRow = styled.div<{ index?: number }>`
@@ -216,6 +269,7 @@ const TableRow = styled.div<{ index?: number }>`
   animation: ${tableAppear} 0.5s ease-out forwards;
   animation-delay: ${props => (props.index || 0) * 0.1}s;
   opacity: 0;
+  min-width: 1000px;
   
   &:hover {
     background-color: rgba(135, 97, 197, 0.05);
@@ -242,6 +296,10 @@ const TableRow = styled.div<{ index?: number }>`
   
   &:hover::after {
     width: 4px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 16px;
   }
 `;
 
@@ -309,6 +367,16 @@ const VideoThumbnail = styled.div`
   box-shadow: ${props => props.theme.shadows.md};
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   
+  @media (max-width: 768px) {
+    width: 180px;
+    height: 100px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 160px;
+    height: 90px;
+  }
+  
   &::before {
     content: '';
     position: absolute;
@@ -374,6 +442,14 @@ const VideoInfo = styled.div`
   display: flex;
   flex-direction: column;
   width: 210px;
+  
+  @media (max-width: 768px) {
+    width: 180px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 160px;
+  }
 `;
 
 const VideoTitle = styled.h3`
@@ -389,6 +465,16 @@ const VideoTitle = styled.h3`
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  
+  @media (max-width: 768px) {
+    font-size: ${props => props.theme.fontSizes.sm};
+    margin-bottom: 6px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: ${props => props.theme.fontSizes.xs};
+    margin-bottom: 4px;
+  }
 `;
 
 const VideoStats = styled.div`
@@ -471,24 +557,25 @@ const LedScoreLabel = styled.div`
 // LED Score animations
 const scoreGlow = keyframes`
   0% {
-    box-shadow: 0 0 10px rgba(0, 199, 129, 0.5);
+    box-shadow: 0 0 5px rgba(0, 199, 129, 0.3);
   }
   50% {
-    box-shadow: 0 0 20px rgba(0, 199, 129, 0.8);
+    box-shadow: 0 0 10px rgba(0, 199, 129, 0.5);
   }
   100% {
-    box-shadow: 0 0 10px rgba(0, 199, 129, 0.5);
+    box-shadow: 0 0 5px rgba(0, 199, 129, 0.3);
   }
 `;
 
-const scoreRipple = keyframes`
+const scorePulse = keyframes`
   0% {
-    transform: scale(0.8);
-    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
   }
   100% {
-    transform: scale(1.5);
-    opacity: 0;
+    transform: scale(1);
   }
 `;
 
@@ -505,19 +592,13 @@ const ScoreRipple = styled.div<{ score: number }>`
   height: 70px;
   border-radius: 50%;
   background: ${props => {
-    if (props.score >= 80) return 'rgba(0, 199, 129, 0.3)';
-    if (props.score >= 60) return 'rgba(153, 199, 129, 0.3)';
-    if (props.score >= 40) return 'rgba(255, 170, 21, 0.3)';
-    if (props.score >= 20) return 'rgba(255, 140, 64, 0.3)';
-    return 'rgba(255, 64, 64, 0.3)';
+    if (props.score >= 80) return 'rgba(0, 199, 129, 0.15)';
+    if (props.score >= 60) return 'rgba(153, 199, 129, 0.15)';
+    if (props.score >= 40) return 'rgba(255, 170, 21, 0.15)';
+    if (props.score >= 20) return 'rgba(255, 140, 64, 0.15)';
+    return 'rgba(255, 64, 64, 0.15)';
   }};
   z-index: 1;
-  animation: ${scoreRipple} 2s infinite;
-  opacity: 0;
-  
-  ${LEDScoreBadgeContainer}:hover & {
-    opacity: 1;
-  }
 `;
 
 const LedScoreText = styled.div`
@@ -533,8 +614,8 @@ const LedScoreBadge = styled.div<{ score: number }>`
   height: 70px;
   border-radius: 50%;
   color: white;
-  font-weight: ${props => props.theme.fontWeights.bold};
-  font-size: 1.3rem;
+  font-weight: 600;
+  font-size: 1.25rem;
   background: ${props => {
     // Dynamic gradient based on score
     if (props.score >= 80) return 'linear-gradient(135deg, #00C781 0%, #82ffc9 100%)';
@@ -543,17 +624,15 @@ const LedScoreBadge = styled.div<{ score: number }>`
     if (props.score >= 20) return 'linear-gradient(135deg, #FF8C40 0%, #ffb27e 100%)';
     return 'linear-gradient(135deg, #FF4040 0%, #ff9b9b 100%)';
   }};
-  box-shadow: ${props => props.theme.shadows.md};
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all 0.3s ease;
   z-index: 2;
+  animation: ${scorePulse} 4s ease-in-out infinite;
   
   &:hover {
-    transform: scale(1.1) rotate(5deg);
-    box-shadow: ${props => props.theme.shadows.lg};
-    animation: ${props => props.score >= 80 
-      ? css`${scoreGlow} 2s infinite` 
-      : 'none'};
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
   
   &::before {
@@ -717,15 +796,15 @@ const ResponseInfo = styled.div<{ status?: string }>`
   display: flex;
   flex-direction: column;
   background: white;
-  border-radius: ${props => props.theme.radius.md};
+  border-radius: 8px;
   padding: 16px;
   width: 90%;
   position: relative;
-  box-shadow: ${props => props.theme.shadows.sm};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border-left: 4px solid ${props => 
-    props.status === 'scheduled' ? props.theme.colors.warning : 
-    props.status === 'posted' ? props.theme.colors.success : 
-    props.theme.colors.tertiary};
+    props.status === 'scheduled' ? '#e69819' : 
+    props.status === 'posted' ? '#38a169' : 
+    '#6b46c1'};
 `;
 
 const ResponseStatusBadge = styled.div<{ status?: string }>`
@@ -733,22 +812,23 @@ const ResponseStatusBadge = styled.div<{ status?: string }>`
   top: -10px;
   right: 15px;
   padding: 4px 12px;
-  border-radius: ${props => props.theme.radius.pill};
-  font-size: ${props => props.theme.fontSizes.xs};
+  border-radius: 4px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-weight: ${props => props.theme.fontWeights.semiBold};
+  font-weight: 600;
   color: white;
   background: ${props => 
-    props.status === 'scheduled' ? props.theme.colors.warning : 
-    props.status === 'posted' ? props.theme.colors.success : 
-    props.theme.colors.tertiary};
-  box-shadow: ${props => props.theme.shadows.sm};
+    props.status === 'scheduled' ? '#e69819' : 
+    props.status === 'posted' ? '#38a169' : 
+    '#6b46c1'};
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   
   svg {
     margin-right: 4px;
+    font-size: 10px;
   }
 `;
 
@@ -1108,6 +1188,18 @@ const AnalyticsSection = styled.div`
     position: relative;
     z-index: 1;
   }
+  
+  @media (max-width: 768px) {
+    margin-top: 24px;
+    padding: 20px;
+    border-radius: ${props => props.theme.radius.md};
+  }
+  
+  @media (max-width: 480px) {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: ${props => props.theme.radius.sm};
+  }
 `;
 
 const AnalyticsHeader = styled.div`
@@ -1115,6 +1207,17 @@ const AnalyticsHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 16px;
+  }
 `;
 
 const AnalyticsTitle = styled.h2`
@@ -1135,6 +1238,17 @@ const TimeframeSelector = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  @media (max-width: 480px) {
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
 `;
 
 const TimeframeButton = styled.button<{ active?: boolean }>`
@@ -1157,6 +1271,16 @@ const StatsGrid = styled.div`
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 24px;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 `;
 
 const StatCard = styled.div`
@@ -1241,6 +1365,14 @@ const ChartSection = styled.div`
     height: 5px;
     background: ${props => props.theme.colors.gradient.primary};
     opacity: 0.7;
+  }
+  
+  @media (max-width: 768px) {
+    height: 300px;
+  }
+  
+  @media (max-width: 480px) {
+    height: 250px;
   }
 `;
 

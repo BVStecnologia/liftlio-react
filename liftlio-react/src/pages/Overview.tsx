@@ -145,6 +145,12 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost' | 'ou
   position: relative;
   overflow: hidden;
   
+  .filter-text {
+    @media (max-width: 480px) {
+      display: none;
+    }
+  }
+  
   @media (max-width: 768px) {
     padding: ${props => props.variant === 'ghost' ? '7px 10px' : '8px 14px'};
     font-size: ${props => props.theme.fontSizes.xs};
@@ -296,10 +302,22 @@ const StatDisplay = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  
+  @media (max-width: 992px) and (min-width: 768px) {
+    flex-direction: column;
+    
+    > div:first-child {
+      margin-bottom: 12px;
+    }
+  }
 `;
 
 const StatContent = styled.div`
   flex: 1;
+  
+  @media (max-width: 992px) and (min-width: 768px) {
+    width: 100%;
+  }
 `;
 
 const StatValue = styled.div`
@@ -311,6 +329,11 @@ const StatValue = styled.div`
   color: transparent;
   margin-bottom: 8px;
   letter-spacing: -0.5px;
+  word-break: break-word;
+  
+  @media (max-width: 992px) and (min-width: 768px) {
+    font-size: ${props => props.theme.fontSizes['3xl']};
+  }
 `;
 
 const StatGrowth = styled.div<{ positive?: boolean }>`
@@ -322,10 +345,18 @@ const StatGrowth = styled.div<{ positive?: boolean }>`
   background-color: ${props => props.positive ? 'rgba(0, 201, 136, 0.1)' : 'rgba(255, 64, 87, 0.1)'};
   padding: 4px 8px;
   border-radius: ${props => props.theme.radius.pill};
-  margin-left: 12px;
+  margin-left: 8px;
+  margin-top: 4px;
+  white-space: nowrap;
   
   svg {
     margin-right: 4px;
+    flex-shrink: 0;
+  }
+  
+  @media (max-width: 992px) and (min-width: 768px) {
+    padding: 3px 6px;
+    font-size: 10px;
   }
 `;
 
@@ -335,6 +366,11 @@ const StatLabel = styled.div`
   font-weight: ${props => props.theme.fontWeights.medium};
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  
+  @media (max-width: 992px) and (min-width: 768px) {
+    font-size: ${props => props.theme.fontSizes.xs};
+  }
 `;
 
 const StatIconContainer = styled.div`
@@ -376,6 +412,18 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
   svg {
     position: relative;
     z-index: 2;
+    width: 22px;
+    height: 22px;
+  }
+  
+  @media (max-width: 992px) and (min-width: 768px) {
+    width: 48px;
+    height: 48px;
+    
+    svg {
+      width: 18px;
+      height: 18px;
+    }
   }
 `;
 
@@ -521,8 +569,10 @@ const KeywordTable = styled.div`
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.sm};
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   animation: ${fadeIn} 0.8s ease-out forwards;
   margin-top: 32px;
+  width: 100%;
   
   @media (max-width: 768px) {
     margin-top: 24px;
@@ -544,6 +594,7 @@ const TableHeader = styled.div`
   font-weight: ${props => props.theme.fontWeights.semiBold};
   color: ${props => props.theme.colors.darkGrey};
   font-size: ${props => props.theme.fontSizes.sm};
+  min-width: 1000px;
   
   @media (max-width: 1200px) {
     display: none;
@@ -616,6 +667,14 @@ const VideoLinks = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  
+  @media (max-width: 1200px) {
+    gap: 6px;
+  }
+  
+  @media (max-width: 768px) {
+    gap: 4px;
+  }
 `;
 
 const VideoLink = styled.a`
@@ -635,6 +694,16 @@ const VideoLink = styled.a`
     margin-right: 6px;
     font-size: 0.9rem;
   }
+  
+  @media (max-width: 1200px) {
+    font-size: ${props => props.theme.fontSizes.xs};
+  }
+  
+  @media (max-width: 768px) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `;
 
 // Tags styling
@@ -651,6 +720,16 @@ const CategoryTag = styled.span`
   text-overflow: ellipsis;
   overflow: hidden;
   max-width: 100%;
+  
+  @media (max-width: 1200px) {
+    padding: 5px 10px;
+    font-size: calc(${props => props.theme.fontSizes.xs} - 1px);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 4px 8px;
+    max-width: 80px;
+  }
 `;
 
 const AudienceTag = styled.span`
@@ -664,6 +743,16 @@ const AudienceTag = styled.span`
   text-overflow: ellipsis;
   overflow: hidden;
   max-width: 100%;
+  
+  @media (max-width: 1200px) {
+    padding: 3px 8px;
+    font-size: calc(${props => props.theme.fontSizes.xs} - 1px);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 2px 6px;
+    max-width: 100px;
+  }
 `;
 
 // Quick stat components
@@ -762,6 +851,11 @@ const ContentHeader = styled.div`
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+    width: 100%;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 20px;
   }
 `;
 
@@ -797,11 +891,14 @@ const SearchBar = styled.div`
   @media (max-width: 768px) {
     width: 100%;
     margin-bottom: 16px;
+    flex-direction: row;
+    align-items: center;
   }
   
   @media (max-width: 480px) {
     flex-direction: column;
     gap: 8px;
+    margin-bottom: 12px;
   }
 `;
 
@@ -811,7 +908,12 @@ const SearchInput = styled.div`
   max-width: 400px;
   
   @media (max-width: 768px) {
+    max-width: 70%;
+  }
+  
+  @media (max-width: 480px) {
     max-width: 100%;
+    width: 100%;
   }
 `;
 
@@ -1275,14 +1377,33 @@ const Overview: React.FC = () => {
         </ChartBody>
       </ChartCard>
       
+      {/* Add spacing between chart and keywords section */}
+      <div style={{ marginTop: '40px' }}></div>
+      
       {/* Keywords Insights Section */}
-      <ContentHeader>
-        <ContentTitle>
-          <IconComponent icon={FaIcons.FaHashtag} />
-          Keywords & Insights
+      <ContentHeader style={{ 
+        marginBottom: '40px',
+        display: 'flex', 
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'space-between' 
+      }}>
+        <ContentTitle style={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          gap: '12px',
+          fontSize: '22px',
+          color: '#2d2d2d'
+        }}>
+          <IconComponent icon={FaIcons.FaHashtag} style={{ color: '#6b46c1' }} />
+          <span style={{ fontWeight: 600 }}>Keywords & Insights</span>
         </ContentTitle>
         <SearchBar>
-          <SearchInput>
+          <SearchInput style={{
+            height: '46px',
+            borderRadius: '14px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+          }}>
             <SearchIcon>
               <IconComponent icon={FaIcons.FaSearch} />
             </SearchIcon>
@@ -1291,83 +1412,263 @@ const Overview: React.FC = () => {
               placeholder="Search keywords..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                fontSize: '15px'
+              }}
             />
           </SearchInput>
-          <Button variant="ghost">
-            <IconComponent icon={FaIcons.FaFilter} />
-            Filter
+          <Button variant="ghost" style={{
+            height: '46px',
+            background: '#f8f8f8',
+            borderRadius: '14px',
+            padding: '0 20px',
+            marginLeft: '12px',
+            fontWeight: 500,
+            color: '#555'
+          }}>
+            <IconComponent icon={FaIcons.FaFilter} style={{ marginRight: '8px' }} />
+            <span className="filter-text">Filter</span>
           </Button>
         </SearchBar>
       </ContentHeader>
       
-      <KeywordTable>
-        <TableHeader>
-          <TableCell>Keywords</TableCell>
-          <TableCell>Sentiment</TableCell>
-          <TableCell>Views</TableCell>
-          <TableCell>Videos</TableCell>
-          <TableCell>Likes</TableCell>
-          <TableCell>Top Videos</TableCell>
-          <TableCell>Category</TableCell>
-          <TableCell>Audience</TableCell>
-        </TableHeader>
-        
-        {filteredKeywords.length === 0 ? (
-          <TableRow>
-            <div style={{ 
-              gridColumn: '1 / -1', 
-              padding: '40px 0', 
-              textAlign: 'center',
-              color: '#6c757d'
-            }}>
+      {/* Spacing is now handled by the marginBottom in ContentHeader */}
+      
+      {/* Desktop version - table format */}
+      <div style={{ display: 'none' }} className="desktop-keywords-table">
+        <KeywordTable>
+          <TableHeader>
+            <TableCell>Keywords</TableCell>
+            <TableCell>Sentiment</TableCell>
+            <TableCell>Views</TableCell>
+            <TableCell>Videos</TableCell>
+            <TableCell>Likes</TableCell>
+            <TableCell>Top Videos</TableCell>
+            <TableCell>Category</TableCell>
+            <TableCell>Audience</TableCell>
+          </TableHeader>
+          
+          {filteredKeywords.length === 0 ? (
+            <TableRow>
               <div style={{ 
-                fontSize: '48px', 
-                color: '#ccc', 
-                marginBottom: '16px',
-                display: 'flex',
-                justifyContent: 'center' 
+                gridColumn: '1 / -1', 
+                padding: '40px 0', 
+                textAlign: 'center',
+                color: '#6c757d'
               }}>
-                <IconComponent icon={FaIcons.FaSearch} />
+                <div style={{ 
+                  fontSize: '48px', 
+                  color: '#ccc', 
+                  marginBottom: '16px',
+                  display: 'flex',
+                  justifyContent: 'center' 
+                }}>
+                  <IconComponent icon={FaIcons.FaSearch} />
+                </div>
+                <h3>No keywords found</h3>
+                <p>Try adjusting your search criteria</p>
               </div>
-              <h3>No keywords found</h3>
-              <p>Try adjusting your search criteria</p>
-            </div>
-          </TableRow>
-        ) : (
-          filteredKeywords.map(keyword => (
-            <TableRow key={keyword.id}>
-              <KeywordCell>{keyword.keyword}</KeywordCell>
-              <TableCell>
-                <SentimentIndicator 
-                  percentage={keyword.sentiment} 
-                  size="small"
-                  animated={true} 
-                  showIcon={true}
-                />
-              </TableCell>
-              <NumericCell>{keyword.views.toLocaleString()}</NumericCell>
-              <NumericCell>{keyword.videos}</NumericCell>
-              <NumericCell>{keyword.likes}</NumericCell>
-              <TableCell>
-                <VideoLinks>
-                  {keyword.topVideos.map((video, index) => (
-                    <VideoLink href="#" key={index}>
-                      <IconComponent icon={FaIcons.FaPlayCircle} />
-                      {video}
-                    </VideoLink>
-                  ))}
-                </VideoLinks>
-              </TableCell>
-              <TableCell>
-                <CategoryTag>{keyword.category}</CategoryTag>
-              </TableCell>
-              <TableCell>
-                <AudienceTag>{keyword.audience}</AudienceTag>
-              </TableCell>
             </TableRow>
-          ))
+          ) : (
+            filteredKeywords.map(keyword => (
+              <TableRow key={keyword.id}>
+                <KeywordCell>{keyword.keyword}</KeywordCell>
+                <TableCell>
+                  <SentimentIndicator 
+                    percentage={keyword.sentiment} 
+                    size="small"
+                    animated={true} 
+                    showIcon={true}
+                  />
+                </TableCell>
+                <NumericCell>{keyword.views.toLocaleString()}</NumericCell>
+                <NumericCell>{keyword.videos}</NumericCell>
+                <NumericCell>{keyword.likes}</NumericCell>
+                <TableCell>
+                  <VideoLinks>
+                    {keyword.topVideos.map((video, index) => (
+                      <VideoLink href="#" key={index}>
+                        <IconComponent icon={FaIcons.FaPlayCircle} />
+                        {video}
+                      </VideoLink>
+                    ))}
+                  </VideoLinks>
+                </TableCell>
+                <TableCell>
+                  <CategoryTag>{keyword.category}</CategoryTag>
+                </TableCell>
+                <TableCell>
+                  <AudienceTag>{keyword.audience}</AudienceTag>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </KeywordTable>
+      </div>
+      
+      {/* Mobile version - card format */}
+      <div className="mobile-keywords-cards" style={{ marginTop: '40px' }}>
+        {filteredKeywords.length === 0 ? (
+          <div style={{ 
+            padding: '40px 0', 
+            textAlign: 'center',
+            color: '#6c757d',
+            background: 'white',
+            borderRadius: '12px',
+            marginBottom: '16px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+          }}>
+            <div style={{ 
+              fontSize: '48px', 
+              color: '#ccc', 
+              marginBottom: '16px',
+              display: 'flex',
+              justifyContent: 'center' 
+            }}>
+              <IconComponent icon={FaIcons.FaSearch} />
+            </div>
+            <h3>No keywords found</h3>
+            <p>Try adjusting your search criteria</p>
+          </div>
+        ) : (
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: '16px',
+            width: '100%'
+          }}>
+            {filteredKeywords.map(keyword => (
+              <Card 
+                key={keyword.id} 
+                elevation="low" 
+                padding="16px" 
+                fullWidth 
+                style={{ 
+                  marginBottom: '0',
+                  borderLeft: `4px solid ${keyword.sentiment > 65 ? '#4caf50' : keyword.sentiment > 35 ? '#ff9800' : '#f44336'}`,
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  height: '100%'
+                }}
+                className="keyword-card"
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                  <h3 style={{ 
+                    fontSize: '18px', 
+                    margin: '0 0 12px 0', 
+                    fontWeight: 600,
+                    color: '#2d2d2d',
+                  }}>
+                    {keyword.keyword}
+                  </h3>
+                  
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    marginBottom: '12px',
+                  }}>
+                    <span style={{ 
+                      fontSize: '13px', 
+                      color: '#666', 
+                      display: 'flex', 
+                      alignItems: 'center' 
+                    }}>
+                      Sentiment: 
+                      <span style={{ 
+                        color: keyword.sentiment > 65 ? '#4caf50' : keyword.sentiment > 35 ? '#ff9800' : '#f44336',
+                        fontWeight: 'bold',
+                        marginLeft: '4px'
+                      }}>
+                        {keyword.sentiment}%
+                      </span>
+                    </span>
+                    <SentimentIndicator 
+                      percentage={keyword.sentiment} 
+                      size="small"
+                      animated={false} 
+                      showIcon={true}
+                    />
+                  </div>
+                  
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '1fr 1fr 1fr', 
+                    gap: '8px', 
+                    marginBottom: '12px',
+                  }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ 
+                        fontSize: '20px', 
+                        fontWeight: 'bold',
+                        color: '#4a6cf7'
+                      }}>
+                        {keyword.views.toLocaleString()}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#555' }}>Views</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ 
+                        fontSize: '20px', 
+                        fontWeight: 'bold',
+                        color: '#4a6cf7'
+                      }}>
+                        {keyword.videos}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#555' }}>Videos</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ 
+                        fontSize: '20px', 
+                        fontWeight: 'bold',
+                        color: '#4a6cf7'
+                      }}>
+                        {keyword.likes}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#555' }}>Likes</div>
+                    </div>
+                  </div>
+                  
+                  <div style={{ 
+                    marginBottom: '12px',
+                    flex: '1 0 auto'
+                  }}>
+                    <p style={{
+                      fontSize: '13px',
+                      margin: '0 0 6px 0',
+                      fontWeight: 500,
+                      color: '#555'
+                    }}>
+                      Top Videos:
+                    </p>
+                    <VideoLinks>
+                      {keyword.topVideos.slice(0, 3).map((video, index) => (
+                        <VideoLink href="#" key={index} style={{
+                          padding: '4px 0',
+                          fontSize: '12px'
+                        }}>
+                          <IconComponent icon={FaIcons.FaPlayCircle} style={{ color: '#4a6cf7' }} />
+                          {video}
+                        </VideoLink>
+                      ))}
+                    </VideoLinks>
+                  </div>
+                  
+                  <div style={{ 
+                    display: 'flex', 
+                    flexDirection: 'row',
+                    gap: '8px',
+                    flexWrap: 'wrap',
+                    marginTop: 'auto'
+                  }}>
+                    <CategoryTag>{keyword.category}</CategoryTag>
+                    <AudienceTag>{keyword.audience}</AudienceTag>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
         )}
-      </KeywordTable>
+      </div>
     </PageContainer>
   );
 };
