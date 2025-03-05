@@ -66,13 +66,19 @@ const Logo = styled.div`
   @media (max-width: 768px) {
     padding: 30px 20px;
     margin-top: 8px;
-    font-size: 1.6rem;
+    font-size: 1.8rem;
   }
   
   @media (max-width: 480px) {
-    padding: 26px 16px;
+    padding: 28px 16px;
     margin-top: 6px;
-    font-size: 1.4rem;
+    font-size: 2rem;
+  }
+  
+  @media (max-width: 400px) {
+    padding: 30px 16px;
+    margin-top: 6px;
+    font-size: 2.2rem;
   }
   
   &::before {
@@ -88,7 +94,7 @@ const Logo = styled.div`
     transition: width 0.5s ease;
   }
   
-  /* Glowing particles */
+  /* Glowing text with thin elegant effect */
   span {
     position: relative;
     z-index: 2;
@@ -98,39 +104,55 @@ const Logo = styled.div`
     -webkit-background-clip: text;
     color: transparent;
     animation: gradientShift 8s linear infinite;
+    /* Fine, thin text outline */
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
   }
   
-  /* Ambient glow particles */
+  /* Thin glowing line underneath */
   &::after {
     content: '';
     position: absolute;
-    width: 100%;
-    height: 100%;
-    background-image: radial-gradient(circle at 30% 50%, rgba(110, 66, 229, 0.1) 0%, transparent 45%),
-                      radial-gradient(circle at 70% 50%, rgba(79, 172, 254, 0.1) 0%, transparent 45%);
-    opacity: 0;
-    transition: opacity 0.6s ease;
+    width: 40%;
+    height: 1px;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.7), 
+      transparent
+    );
+    opacity: 0.5;
+    transition: all 0.4s ease;
     z-index: 1;
-    pointer-events: none;
   }
   
   &:hover {
-    text-shadow: 0 0 15px rgba(79, 172, 254, 0.6), 0 0 25px rgba(79, 172, 254, 0.4);
     letter-spacing: 2px;
-    
-    &::before {
-      width: 100%;
-      background: linear-gradient(90deg, transparent, rgba(110, 66, 229, 0.2), transparent);
-      animation: pulse 2s infinite;
-    }
-    
-    &::after {
-      opacity: 1;
-      animation: shimmer 3s infinite alternate;
-    }
     
     span {
       animation: gradientShift 4s linear infinite;
+      /* Enhanced but still thin glow on hover */
+      text-shadow: 0 0 2px rgba(255, 255, 255, 0.4), 
+                  0 0 10px rgba(79, 172, 254, 0.2);
+    }
+    
+    &::before {
+      width: 100%;
+      background: linear-gradient(90deg, transparent, rgba(110, 66, 229, 0.1), transparent);
+      animation: pulse 3s infinite;
+    }
+    
+    &::after {
+      width: 70%;
+      opacity: 0.8;
+      height: 1px;
+      box-shadow: 0 0 4px rgba(79, 172, 254, 0.5);
+      background: linear-gradient(90deg, 
+        transparent, 
+        rgba(79, 172, 254, 0.8), 
+        transparent
+      );
     }
   }
   
@@ -191,13 +213,18 @@ const NavItem = styled(NavLink)`
   overflow: hidden;
   
   @media (max-width: 768px) {
-    padding: 14px 20px;
-    font-size: 1rem;
+    padding: 16px 22px;
+    font-size: 1.1rem;
   }
   
   @media (max-width: 480px) {
-    padding: 12px 16px;
-    font-size: 0.95rem;
+    padding: 18px 24px;
+    font-size: 1.2rem;
+  }
+  
+  @media (max-width: 400px) {
+    padding: 20px 26px;
+    font-size: 1.3rem;
   }
   
   &::before {
@@ -282,12 +309,17 @@ const PremiumSection = styled.div`
   
   @media (max-width: 768px) {
     margin-bottom: 28px;
-    padding: 0 14px;
+    padding: 0 16px;
   }
   
   @media (max-width: 480px) {
-    margin-bottom: 24px;
-    padding: 0 12px;
+    margin-bottom: 26px;
+    padding: 0 16px;
+  }
+  
+  @media (max-width: 400px) {
+    margin-bottom: 28px;
+    padding: 0 18px;
   }
 `;
 
@@ -301,13 +333,18 @@ const PremiumBadge = styled.div`
   border: 1px solid rgba(255, 255, 255, 0.1);
   
   @media (max-width: 768px) {
-    padding: 18px 14px;
+    padding: 20px 16px;
     border-radius: 10px;
   }
   
   @media (max-width: 480px) {
-    padding: 16px 12px;
-    border-radius: 8px;
+    padding: 22px 18px;
+    border-radius: 10px;
+  }
+  
+  @media (max-width: 400px) {
+    padding: 24px 20px;
+    border-radius: 12px;
   }
   
   &::before {
@@ -366,8 +403,27 @@ const PremiumTitle = styled.div`
     filter: drop-shadow(0 0 3px rgba(255, 193, 7, 0.5));
   }
   
+  @media (max-width: 768px) {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  
   @media (max-width: 480px) {
-    margin-bottom: 10px;
+    font-size: 18px;
+    margin-bottom: 14px;
+    
+    svg {
+      font-size: 1.1em;
+    }
+  }
+  
+  @media (max-width: 400px) {
+    font-size: 20px;
+    margin-bottom: 16px;
+    
+    svg {
+      font-size: 1.2em;
+    }
   }
 `;
 
@@ -380,10 +436,17 @@ const PremiumFeatures = styled.div`
   
   @media (max-width: 768px) {
     margin-bottom: 18px;
+    font-size: 13px;
   }
   
   @media (max-width: 480px) {
-    margin-bottom: 16px;
+    margin-bottom: 18px;
+    font-size: 14px;
+  }
+  
+  @media (max-width: 400px) {
+    margin-bottom: 20px;
+    font-size: 16px;
   }
 `;
 
@@ -396,6 +459,32 @@ const PremiumFeature = styled.div`
   svg {
     color: #4facfe;
     font-size: 10px;
+  }
+  
+  @media (max-width: 768px) {
+    margin-bottom: 8px;
+    gap: 10px;
+    
+    svg {
+      font-size: 12px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 10px;
+    gap: 12px;
+    
+    svg {
+      font-size: 14px;
+    }
+  }
+  
+  @media (max-width: 400px) {
+    margin-bottom: 12px;
+    
+    svg {
+      font-size: 16px;
+    }
   }
 `;
 
@@ -420,17 +509,24 @@ const UpgradeButton = styled.div`
   z-index: 2;
   
   @media (max-width: 768px) {
-    padding: 12px 0;
-    font-size: 0.95rem;
-    border-radius: 8px;
-    margin-top: 4px;
+    padding: 14px 0;
+    font-size: 1rem;
+    border-radius: 10px;
+    margin-top: 6px;
   }
   
   @media (max-width: 480px) {
-    padding: 10px 0;
-    font-size: 0.9rem;
-    border-radius: 6px;
-    margin-top: 3px;
+    padding: 16px 0;
+    font-size: 1.1rem;
+    border-radius: 10px;
+    margin-top: 8px;
+  }
+  
+  @media (max-width: 400px) {
+    padding: 18px 0;
+    font-size: 1.2rem;
+    border-radius: 12px;
+    margin-top: 10px;
   }
   
   &::before {

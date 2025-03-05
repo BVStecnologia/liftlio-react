@@ -68,9 +68,89 @@ const MobileNavToggle = styled.button`
   z-index: 1001; /* Higher than sidebar (1000) to always be visible */
   border: none;
   font-size: 1.4rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  
+  /* Light beam animation */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: lightBeam 3s infinite;
+    z-index: 0;
+  }
+  
+  /* Inner circle pulse effect */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulseCircle 2s infinite;
+    z-index: 0;
+  }
+  
+  /* Icon position above animations */
+  svg {
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8));
+    transition: transform 0.3s ease;
+  }
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${props => props.theme.shadows.lg};
+    background: linear-gradient(145deg, #3a2655, #2D1D42);
+    
+    svg {
+      transform: scale(1.1);
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.9));
+    }
+    
+    &::before {
+      animation: lightBeam 1.5s infinite;
+    }
+  }
   
   &:active {
     transform: scale(0.95);
+  }
+  
+  @keyframes lightBeam {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+  
+  @keyframes pulseCircle {
+    0% {
+      width: 0;
+      height: 0;
+      opacity: 1;
+    }
+    100% {
+      width: 120%;
+      height: 120%;
+      opacity: 0;
+    }
   }
   
   @media (min-width: 769px) {
@@ -78,10 +158,19 @@ const MobileNavToggle = styled.button`
   }
   
   @media (max-width: 480px) {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     bottom: 16px;
     right: 16px;
+    font-size: 1.6rem;
+  }
+  
+  @media (max-width: 400px) {
+    width: 70px;
+    height: 70px;
+    bottom: 20px;
+    right: 20px;
+    font-size: 1.8rem;
   }
 `;
 

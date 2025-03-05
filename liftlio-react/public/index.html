@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#282c34" />
     <meta
       name="description"
       content="Web site created using create-react-app"
@@ -24,7 +24,23 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>React App</title>
+    <title>Liftlio</title>
+    <!-- Modern gradient effect for browser tab -->
+    <style>
+      @keyframes gradientAnimation {
+        0% { background-position: 0% 50% }
+        50% { background-position: 100% 50% }
+        100% { background-position: 0% 50% }
+      }
+      
+      @media (prefers-color-scheme: dark) {
+        html {
+          background: linear-gradient(-45deg, #282c34, #21232a, #1a1c20, #61dafb);
+          background-size: 400% 400%;
+          animation: gradientAnimation 15s ease infinite;
+        }
+      }
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

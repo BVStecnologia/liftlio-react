@@ -56,8 +56,13 @@ const ProjectSelector = styled.div`
   }
 
   @media (max-width: 480px) {
-    font-size: 0.8rem;
-    padding: 6px 12px;
+    font-size: 0.85rem;
+    padding: 8px 14px;
+  }
+  
+  @media (max-width: 400px) {
+    font-size: 0.9rem;
+    padding: 10px 16px;
   }
 `;
 
@@ -159,11 +164,20 @@ const NotificationBadge = styled.div`
   }
 
   @media (max-width: 480px) {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     
     svg {
-      font-size: 1.1rem;
+      font-size: 1.2rem;
+    }
+  }
+  
+  @media (max-width: 400px) {
+    width: 40px;
+    height: 40px;
+    
+    svg {
+      font-size: 1.3rem;
     }
   }
 `;
@@ -197,8 +211,13 @@ const NotificationPopup = styled(PopupMenu)`
   }
 
   @media (max-width: 480px) {
-    width: 260px;
-    right: -100px;
+    width: 280px;
+    right: -80px;
+  }
+  
+  @media (max-width: 400px) {
+    width: 300px;
+    right: -60px;
   }
 `;
 
@@ -295,10 +314,18 @@ const UserProfile = styled.div`
   }
 
   @media (max-width: 480px) {
-    padding: 4px 8px;
+    padding: 5px 9px;
     
     .user-icon {
-      font-size: 1.8rem;
+      font-size: 2rem;
+    }
+  }
+  
+  @media (max-width: 400px) {
+    padding: 6px 10px;
+    
+    .user-icon {
+      font-size: 2.2rem;
     }
   }
 `;
@@ -326,7 +353,11 @@ const UserPopup = styled(PopupMenu)`
   }
 
   @media (max-width: 480px) {
-    width: 190px;
+    width: 200px;
+  }
+  
+  @media (max-width: 400px) {
+    width: 220px;
   }
 `;
 
@@ -386,11 +417,21 @@ const AddProjectButton = styled.button`
   }
 
   @media (max-width: 480px) {
-    padding: 5px 8px;
-    font-size: 0.75rem;
+    padding: 6px 10px;
+    font-size: 0.8rem;
     
     svg {
       font-size: 0.8rem;
+    }
+  }
+  
+  @media (max-width: 400px) {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    
+    svg {
+      font-size: 0.9rem;
     }
   }
 `;
@@ -488,7 +529,11 @@ const ProjectsDropdown = styled.div`
   }
 
   @media (max-width: 480px) {
-    width: 240px;
+    width: 260px;
+  }
+  
+  @media (max-width: 400px) {
+    width: 280px;
   }
 `;
 
