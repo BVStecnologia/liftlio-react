@@ -21,12 +21,88 @@ const SidebarContainer = styled.aside`
 
 const Logo = styled.div`
   padding: 24px;
-  font-size: 1.5rem;
-  font-weight: ${props => props.theme.fontWeights.bold};
+  font-size: 1.8rem;
+  font-weight: 600;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
-  letter-spacing: -0.5px;
+  justify-content: center;
+  letter-spacing: 1px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+  color: #fff;
+  text-transform: uppercase;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(110, 66, 229, 0.1), transparent);
+    transform: translateX(-50%);
+    z-index: -1;
+    transition: width 0.5s ease;
+  }
+  
+  /* Glowing particles */
+  span {
+    position: relative;
+    z-index: 2;
+  }
+  
+  /* Ambient glow particles */
+  &::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: radial-gradient(circle at 30% 50%, rgba(110, 66, 229, 0.1) 0%, transparent 45%),
+                      radial-gradient(circle at 70% 50%, rgba(79, 172, 254, 0.1) 0%, transparent 45%);
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    z-index: 1;
+    pointer-events: none;
+  }
+  
+  &:hover {
+    text-shadow: 0 0 15px rgba(79, 172, 254, 0.6), 0 0 25px rgba(79, 172, 254, 0.4);
+    letter-spacing: 2px;
+    
+    &::before {
+      width: 100%;
+      background: linear-gradient(90deg, transparent, rgba(110, 66, 229, 0.2), transparent);
+      animation: pulse 2s infinite;
+    }
+    
+    &::after {
+      opacity: 1;
+      animation: shimmer 3s infinite alternate;
+    }
+  }
+  
+  @keyframes pulse {
+    0% {
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 0.8;
+    }
+    100% {
+      opacity: 0.4;
+    }
+  }
+  
+  @keyframes shimmer {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 100% 0%;
+    }
+  }
 `;
 
 const NavContainer = styled.nav`
@@ -131,7 +207,7 @@ const Sidebar: React.FC = () => {
   return (
     <IconContext.Provider value={{ style: { marginRight: '10px' } }}>
       <SidebarContainer>
-        <Logo>Sales Advocate</Logo>
+        <Logo><span data-text="Liftlio">Liftlio</span></Logo>
         
         <NavContainer>
           {navItems.map(item => (
