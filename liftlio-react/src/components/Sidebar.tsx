@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 import { IconContext } from 'react-icons';
@@ -51,6 +51,12 @@ const Logo = styled.div`
   span {
     position: relative;
     z-index: 2;
+    background: linear-gradient(90deg, #fff, #99aaff, #fff);
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: gradientShift 8s linear infinite;
   }
   
   /* Ambient glow particles */
@@ -81,6 +87,10 @@ const Logo = styled.div`
       opacity: 1;
       animation: shimmer 3s infinite alternate;
     }
+    
+    span {
+      animation: gradientShift 4s linear infinite;
+    }
   }
   
   @keyframes pulse {
@@ -103,6 +113,18 @@ const Logo = styled.div`
       background-position: 100% 0%;
     }
   }
+  
+  @keyframes gradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
 `;
 
 const NavContainer = styled.nav`
@@ -121,24 +143,77 @@ const NavItem = styled(NavLink)`
   align-items: center;
   padding: 15px 24px;
   color: rgba(255, 255, 255, 0.7);
-  transition: all ${props => props.theme.transitions.default};
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
   text-decoration: none;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: ${props => props.theme.colors.tertiary};
+    transform: translateX(-4px);
+    transition: transform 0.3s ease;
+    opacity: 0;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.05);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.3s ease;
+    z-index: -1;
+  }
   
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
     color: white;
+    
+    &::after {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
+    
+    svg {
+      transform: translateX(2px) scale(1.15);
+      filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
+    }
+  }
+  
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5) inset;
   }
   
   &.active {
     color: white;
     background-color: rgba(255, 255, 255, 0.15);
-    border-left: 4px solid ${props => props.theme.colors.tertiary};
+    padding-left: 28px;
+    
+    &::before {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    
+    svg {
+      transform: scale(1.15);
+      filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
+    }
   }
 
   svg {
     margin-right: 12px;
     font-size: 1.2rem;
+    transition: all 0.3s ease;
   }
 `;
 
@@ -148,17 +223,107 @@ const Divider = styled.div`
   margin: 10px 12px;
 `;
 
-const UpgradeButton = styled.div`
+const PremiumSection = styled.div`
   margin-top: auto;
-  padding: 16px 24px;
+  margin-bottom: 24px;
+  padding: 0 16px;
+`;
+
+const PremiumBadge = styled.div`
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle at center,
+      rgba(138, 84, 255, 0.15) 0%,
+      rgba(79, 172, 254, 0.05) 30%,
+      transparent 70%
+    );
+    opacity: 0.8;
+    transform: rotate(45deg);
+    z-index: 0;
+    animation: rotateBg 10s linear infinite;
+  }
+  
+  /* For the rocket flying path */
+  .rocket-path {
+    position: absolute;
+    width: 3px;
+    height: 100%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    z-index: 1;
+  }
+  
+  @keyframes rotateBg {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const PremiumTitle = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 2;
+  
+  svg {
+    color: #FFC107;
+    filter: drop-shadow(0 0 3px rgba(255, 193, 7, 0.5));
+  }
+`;
+
+const PremiumFeatures = styled.div`
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  position: relative;
+  z-index: 2;
+`;
+
+const PremiumFeature = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  
+  svg {
+    color: #4facfe;
+    font-size: 10px;
+  }
+`;
+
+const UpgradeButton = styled.div`
+  padding: 14px 0;
   background: linear-gradient(135deg, #8a54ff 0%, #4facfe 100%);
   color: white;
   font-weight: 700;
   text-align: center;
-  border-radius: 12px;
-  margin: 24px 20px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -167,6 +332,7 @@ const UpgradeButton = styled.div`
   position: relative;
   overflow: hidden;
   letter-spacing: 0.5px;
+  z-index: 2;
   
   &::before {
     content: '';
@@ -182,18 +348,263 @@ const UpgradeButton = styled.div`
     transition: left 0.7s ease;
   }
   
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(138, 84, 255, 0.8) 0%, rgba(79, 172, 254, 0.8) 100%);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  /* Rocket Animation Elements */
+  .rocket {
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+  
+  .rocket-body {
+    position: absolute;
+    width: 8px;
+    height: 22px;
+    background: #FFC107;
+    border-radius: 50% 50% 0 0;
+    bottom: 0;
+    left: 6px;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+  }
+  
+  .rocket-window {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: white;
+    top: 4px;
+    left: 8px;
+    z-index: 1;
+  }
+  
+  .fins {
+    position: absolute;
+    bottom: 0;
+    width: 20px;
+    height: 6px;
+  }
+  
+  .fin-left {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 5px;
+    height: 10px;
+    background: #FF5722;
+    border-radius: 0 0 0 100%;
+  }
+  
+  .fin-right {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 5px;
+    height: 10px;
+    background: #FF5722;
+    border-radius: 0 0 100% 0;
+  }
+  
+  .fire {
+    position: absolute;
+    bottom: -10px;
+    left: 8px;
+    width: 4px;
+    height: 12px;
+    background: linear-gradient(to bottom, #FF9800, #FF5722);
+    border-radius: 0 0 20px 20px;
+    opacity: 0;
+  }
+  
+  .fire::before {
+    content: '';
+    position: absolute;
+    left: -2px;
+    width: 8px;
+    height: 8px;
+    bottom: -4px;
+    background: linear-gradient(to bottom, #FF5722, transparent);
+    border-radius: 0 0 20px 20px;
+  }
+  
+  .smoke-particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    bottom: -20px;
+    opacity: 0;
+    
+    &:nth-child(1) {
+      left: 7px;
+      width: 6px;
+      height: 6px;
+    }
+    
+    &:nth-child(2) {
+      left: 12px;
+      width: 4px;
+      height: 4px;
+      animation-delay: 0.2s;
+    }
+    
+    &:nth-child(3) {
+      left: 4px;
+      width: 5px;
+      height: 5px;
+      animation-delay: 0.4s;
+    }
+  }
+  
   &:hover {
     transform: translateY(-3px);
     box-shadow: 0 12px 20px rgba(79, 172, 254, 0.4),
                 0 0 20px rgba(138, 84, 255, 0.3) inset;
+    letter-spacing: 0.8px;
     
     &::before {
       left: 100%;
     }
+    
+    &::after {
+      opacity: 1;
+    }
+    
+    .crown-icon {
+      transform: scale(1.2) rotate(5deg);
+      animation: shineIcon 2s infinite;
+    }
+    
+    .upgrade-text {
+      background-position: 0%;
+    }
+    
+    /* Rocket Animation on Hover */
+    .rocket {
+      opacity: 1;
+      bottom: 30px;
+      animation: launchRocket 2s ease forwards;
+    }
+    
+    .fire {
+      opacity: 1;
+      animation: flicker 0.1s infinite alternate;
+    }
+    
+    .smoke-particle {
+      animation: smoke 1.8s ease-out forwards;
+    }
+    
+    .smoke-particle:nth-child(1) {
+      animation-delay: 0.1s;
+    }
+    
+    .smoke-particle:nth-child(2) {
+      animation-delay: 0.3s;
+    }
+    
+    .smoke-particle:nth-child(3) {
+      animation-delay: 0.5s;
+    }
   }
   
-  svg {
+  &:active {
+    transform: translateY(-1px) scale(0.98);
+    box-shadow: 0 5px 10px rgba(79, 172, 254, 0.2),
+                0 0 10px rgba(138, 84, 255, 0.2) inset;
+  }
+  
+  .crown-icon {
+    margin-right: 8px;
     filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.7));
+    transition: all 0.3s ease;
+    color: #FFC107;
+  }
+  
+  .upgrade-text {
+    background: linear-gradient(to right, #fff, #FFC107, #fff);
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    transition: all 0.5s ease;
+    background-position: 100%;
+  }
+  
+  @keyframes shineIcon {
+    0% {
+      filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.7));
+    }
+    50% {
+      filter: drop-shadow(0 0 6px rgba(255, 193, 7, 0.9));
+    }
+    100% {
+      filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.7));
+    }
+  }
+  
+  @keyframes launchRocket {
+    0% {
+      bottom: -15px;
+      opacity: 0;
+    }
+    20% {
+      bottom: 15px;
+      opacity: 1;
+    }
+    40% {
+      opacity: 1;
+    }
+    100% {
+      bottom: 300px;
+      opacity: 0;
+      transform: translateX(-50%) rotate(5deg);
+    }
+  }
+  
+  @keyframes flicker {
+    0% {
+      height: 12px;
+      opacity: 0.8;
+    }
+    100% {
+      height: 14px;
+      opacity: 1;
+    }
+  }
+  
+  @keyframes smoke {
+    0% {
+      bottom: -15px;
+      opacity: 0;
+    }
+    20% {
+      opacity: 0.8;
+    }
+    80% {
+      opacity: 0.3;
+    }
+    100% {
+      bottom: 120px;
+      opacity: 0;
+      transform: translateX(10px) scale(3);
+    }
   }
 `;
 
@@ -203,6 +614,28 @@ const NavItemIcon = styled.span`
   justify-content: center;
   margin-right: 12px;
   font-size: 1.2rem;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: ${props => props.theme.colors.tertiary};
+    border-radius: 50%;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    transition: transform 0.3s ease;
+    opacity: 0;
+  }
+  
+  .active & {
+    &::after {
+      transform: translateX(-50%) scale(1);
+      opacity: 1;
+    }
+  }
 `;
 
 const AddButton = styled.button`
@@ -243,14 +676,47 @@ type Project = {
   audience: string;
 };
 
+const Tooltip = styled.div<{ visible: boolean }>`
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  opacity: ${props => props.visible ? 1 : 0};
+  visibility: ${props => props.visible ? 'visible' : 'hidden'};
+  transition: all 0.2s ease;
+  pointer-events: none;
+  margin-left: 10px;
+  white-space: nowrap;
+  z-index: 999;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -6px;
+    transform: translateY(-50%);
+    border-width: 6px 6px 6px 0;
+    border-style: solid;
+    border-color: transparent rgba(0, 0, 0, 0.8) transparent transparent;
+  }
+`;
+
 const Sidebar: React.FC = () => {
-  const [selectedProject] = React.useState({
+  const [selectedProject] = useState({
     id: '1',
     name: 'Project 1',
     company: 'Acme Corp',
     link: 'www.acme.com',
     audience: 'Tech professionals'
   });
+  
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   
   return (
     <IconContext.Provider value={{ style: { marginRight: '10px' } }}>
@@ -263,22 +729,80 @@ const Sidebar: React.FC = () => {
               key={item.path}
               to={item.path} 
               className={({ isActive }) => isActive ? 'active' : ''}
+              onMouseEnter={() => setHoveredItem(item.path)}
+              onMouseLeave={() => setHoveredItem(null)}
+              aria-label={item.label}
+              title={item.label}
+              style={{ position: 'relative' }}
             >
               <NavItemIcon>
                 <IconComponent icon={FaIcons[item.icon as keyof typeof FaIcons]} />
               </NavItemIcon>
               {item.label}
+              <Tooltip visible={hoveredItem === item.path}>
+                {item.label}
+              </Tooltip>
             </NavItem>
           ))}
           
-          <div style={{ marginTop: 'auto', marginBottom: '24px' }}>
-            <UpgradeButton>
-              <NavItemIcon>
+          <PremiumSection>
+            <PremiumBadge>
+              <div className="rocket-path"></div>
+              <PremiumTitle>
                 <IconComponent icon={FaIcons.FaCrown} />
-              </NavItemIcon>
-              Upgrade
-            </UpgradeButton>
-          </div>
+                Liftlio Premium
+              </PremiumTitle>
+              
+              <PremiumFeatures>
+                <PremiumFeature>
+                  <IconComponent icon={FaIcons.FaCheckCircle} />
+                  Access to advanced features
+                </PremiumFeature>
+                <PremiumFeature>
+                  <IconComponent icon={FaIcons.FaCheckCircle} />
+                  Detailed engagement reports
+                </PremiumFeature>
+                <PremiumFeature>
+                  <IconComponent icon={FaIcons.FaCheckCircle} />
+                  Priority 24/7 support
+                </PremiumFeature>
+              </PremiumFeatures>
+              
+              <UpgradeButton
+                onMouseEnter={() => setHoveredItem('upgrade')}
+                onMouseLeave={() => setHoveredItem(null)}
+                aria-label="Upgrade to Premium"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    // Handle upgrade click
+                    console.log('Upgrade clicked');
+                  }
+                }}
+              >
+                <span className="crown-icon">
+                  <IconComponent icon={FaIcons.FaCrown} />
+                </span>
+                <span className="upgrade-text">Upgrade Now</span>
+                <Tooltip visible={hoveredItem === 'upgrade'}>
+                  Unlock Liftlio's full potential!
+                </Tooltip>
+                <div className="rocket">
+                  <div className="rocket-body"></div>
+                  <div className="rocket-window"></div>
+                  <div className="fins">
+                    <div className="fin-left"></div>
+                    <div className="fin-right"></div>
+                  </div>
+                  <div className="fire"></div>
+                  <div className="smoke-particle"></div>
+                  <div className="smoke-particle"></div>
+                  <div className="smoke-particle"></div>
+                </div>
+              </UpgradeButton>
+            </PremiumBadge>
+          </PremiumSection>
         </NavContainer>
       </SidebarContainer>
     </IconContext.Provider>
