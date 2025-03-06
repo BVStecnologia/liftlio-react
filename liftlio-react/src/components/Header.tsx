@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import * as FaIcons from 'react-icons/fa';
 import ProjectModal from './ProjectModal';
 import { IconComponent } from '../utils/IconHelper';
+import { useAuth } from '../context/AuthContext';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -570,6 +571,7 @@ type Project = {
 };
 
 const Header: React.FC = () => {
+  const { user, signOut } = useAuth();
   const [currentProject, setCurrentProject] = useState('Projeto 1');
   const [currentLanguage, setCurrentLanguage] = useState('EN');
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -609,6 +611,14 @@ const Header: React.FC = () => {
   const handleLanguageChange = (lang: string) => {
     setCurrentLanguage(lang);
     setShowLanguageMenu(false);
+  };
+  
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
   };
   
   // Close dropdowns when clicking outside
@@ -721,8 +731,8 @@ const Header: React.FC = () => {
                   <span className="user-avatar">
                     <IconComponent icon={FaIcons.FaUserCircle} />
                   </span>
-                  <h4>John Doe</h4>
-                  <p>john.doe@example.com</p>
+                  <h4>{user?.user_metadata?.full_name || user?.email || 'Usuário'}</h4>
+                  <p>{user?.email || ''}</p>
                 </UserInfo>
                 <PopupMenuItem>
                   <IconComponent icon={FaIcons.FaUser} />
@@ -732,7 +742,7 @@ const Header: React.FC = () => {
                   <IconComponent icon={FaIcons.FaCog} />
                   Settings
                 </PopupMenuItem>
-                <PopupMenuItem>
+                <PopupMenuItem onClick={handleLogout}>
                   <IconComponent icon={FaIcons.FaSignOutAlt} />
                   Logout
                 </PopupMenuItem>

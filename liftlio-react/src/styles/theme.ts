@@ -1,4 +1,5 @@
-export const theme = {
+// Base theme object with shared properties
+const baseTheme = {
   colors: {
     primary: '#2D1D42', // Dark purple (from sidebar)
     secondary: '#673AB7', // Medium purple
@@ -103,3 +104,35 @@ export const theme = {
     '3xl': '64px'
   }
 };
+
+// Light theme - using the base theme
+export const lightTheme = {
+  ...baseTheme,
+  colors: {
+    ...baseTheme.colors,
+    background: '#f7f7f9',
+    white: '#ffffff',
+    text: '#1a1f36',
+    lightGrey: '#e9ecef',
+    grey: '#ced4da',
+    darkGrey: '#6c757d',
+  }
+};
+
+// Dark theme - custom dark version
+export const darkTheme = {
+  ...baseTheme,
+  colors: {
+    ...baseTheme.colors,
+    primary: '#351F4A',       // Slightly lighter dark purple for dark mode
+    background: '#1a1f36',    // Dark background
+    white: '#121212',         // Almost black
+    text: '#f7f7f9',          // Light text
+    lightGrey: '#2d3748',     // Darker grey
+    grey: '#4a5568',          // Mid dark grey
+    darkGrey: '#a0aec0',      // Lighter grey for dark mode
+  }
+};
+
+// Export the original theme for backward compatibility
+export const theme = baseTheme;

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import styled, { ThemeProvider } from 'styled-components';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import styled, { ThemeProvider, keyframes } from 'styled-components';
 import GlobalStyle from './styles/GlobalStyle';
 import { theme } from './styles/theme';
 import Sidebar from './components/Sidebar';
@@ -11,8 +11,12 @@ import Mentions from './pages/Mentions';
 import Settings from './pages/Settings';
 import Integrations from './pages/Integrations';
 import YoutubeMonitoring from './pages/YoutubeMonitoring';
+import LoginPage from './pages/LoginPage';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from './utils/IconHelper';
+import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const AppContainer = styled.div`
   display: flex;
@@ -184,35 +188,147 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
-      <Router>
-        <AppContainer>
-          {/* Sidebar - desktop mode it's controlled by media query, mobile by state */}
-          <Sidebar 
-            isOpen={sidebarOpen} 
-            onClose={() => setSidebarOpen(false)} 
-          />
-          <MainContent>
-            <Header />
-            <ContentWrapper>
-              <Routes>
-                <Route path="/" element={<Overview />} />
-                <Route path="/monitoring" element={<Monitoring />} />
-                <Route path="/mentions" element={<Mentions />} />
-                <Route path="/youtube-monitoring" element={<YoutubeMonitoring />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/integrations" element={<Integrations />} />
-              </Routes>
-            </ContentWrapper>
-          </MainContent>
-          
-          {/* Mobile navigation toggle button - always shows hamburger icon */}
-          <MobileNavToggle onClick={toggleSidebar}>
-            <IconComponent icon={FaIcons.FaBars} />
-          </MobileNavToggle>
-        </AppContainer>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/*" element={
+              <ProtectedLayout 
+                sidebarOpen={sidebarOpen} 
+                toggleSidebar={toggleSidebar}
+              />
+            } />
+          </Routes>
+        </Router>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
+
+// Componente de layout protegido
+const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean, toggleSidebar: () => void }) => {
+  const { user, loading } = useAuth();
+  
+  // Aguardar o carregamento antes de decidir redirecionar
+  if (loading) {
+    const spinAnimation = keyframes`
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    `;
+    
+    const LoadingContainer = styled.div`
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    `;
+    
+    const Spinner = styled.div`
+      font-size: 2rem;
+      animation: ${spinAnimation} 1.5s linear infinite;
+      display: inline-block;
+    `;
+    
+    const LoadingText = styled.div`
+      margin-top: 1rem;
+    `;
+    
+    return (
+      <LoadingContainer>
+        <Spinner>⟳</Spinner>
+        <LoadingText>Carregando...</LoadingText>
+      </LoadingContainer>
+    );
+  }
+  
+  // Redirecionar para login se não estiver autenticado
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Se chegou aqui, o usuário está autenticado e o carregamento foi concluído
+  return (
+    <AppContainer>
+      {/* Sidebar - desktop mode it's controlled by media query, mobile by state */}
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onClose={() => toggleSidebar()} 
+      />
+      <MainContent>
+        <Header />
+        <ContentWrapper>
+          <Routes>
+            <Route path="/" element={<Overview />} />
+            <Route path="/monitoring" element={<Monitoring />} />
+            <Route path="/mentions" element={<Mentions />} />
+            <Route path="/youtube-monitoring" element={<YoutubeMonitoring />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/integrations" element={<Integrations />} />
+          </Routes>
+        </ContentWrapper>
+      </MainContent>
+      
+      {/* Mobile navigation toggle button - always shows hamburger icon */}
+      <MobileNavToggle onClick={toggleSidebar}>
+        <IconComponent icon={FaIcons.FaBars} />
+      </MobileNavToggle>
+    </AppContainer>
+  );
+}
+
+// Componente para lidar com callbacks de autenticação
+const AuthCallback = () => {
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+  
+  useEffect(() => {
+    // Quando os dados de autenticação forem carregados
+    if (!loading) {
+      // Redirecionar para a página principal se estiver autenticado
+      if (user) {
+        navigate('/', { replace: true });
+      } else {
+        // Se não estiver autenticado após o callback, redirecionar para o login
+        navigate('/login', { replace: true });
+      }
+    }
+  }, [user, loading, navigate]);
+  
+  const spinAnimation = keyframes`
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  `;
+  
+  const LoadingContainer = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+    background-color: ${props => props.theme.colors.background};
+  `;
+  
+  const Spinner = styled.div`
+    font-size: 2.5rem;
+    color: ${props => props.theme.colors.primary};
+    animation: ${spinAnimation} 1.5s linear infinite;
+    display: inline-block;
+  `;
+  
+  const LoadingText = styled.div`
+    margin-top: 1rem;
+    color: ${props => props.theme.colors.darkGrey};
+    font-size: 1.125rem;
+  `;
+  
+  return (
+    <LoadingContainer>
+      <Spinner>⟳</Spinner>
+      <LoadingText>Verificando autenticação...</LoadingText>
+    </LoadingContainer>
+  );
+};
 
 export default App;
