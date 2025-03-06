@@ -7,6 +7,14 @@ import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
 import { supabase } from '../lib/supabaseClient';
 
+// Import the MobileNavToggle from App.tsx
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+/* Removed MobileMenuButton - now using floating button from App.tsx */
+
 const HeaderContainer = styled.header`
   display: flex;
   justify-content: space-between;
@@ -33,7 +41,7 @@ const ProjectSelector = styled.div`
   background: linear-gradient(135deg, #2D1D42, #3b2659);
   color: white;
   padding: 10px 18px;
-  border-radius: ${props => props.theme.radius.md};
+  border-radius: 8px; /* Menos arredondado */
   cursor: pointer;
   font-weight: ${props => props.theme.fontWeights.medium};
   box-shadow: 0 4px 15px rgba(35, 16, 54, 0.3), 
@@ -231,7 +239,7 @@ const NotificationBadge = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 8px; /* Menos arredondado */
   transition: all 0.2s ease;
   
   &:hover {
@@ -392,7 +400,7 @@ const UserProfile = styled.div`
   align-items: center;
   cursor: pointer;
   padding: 4px;
-  border-radius: ${props => props.theme.radius.md};
+  border-radius: 8px; /* Menos arredondado */
   position: relative;
   transition: all 0.2s ease;
   
@@ -775,7 +783,7 @@ const LanguageSelector = styled.div`
   display: flex;
   align-items: center;
   padding: 6px 10px;
-  border-radius: ${props => props.theme.radius.md};
+  border-radius: 8px; /* Menos arredondado */
   transition: all 0.2s ease;
   
   &:hover {
@@ -971,7 +979,11 @@ type Project = {
   audience: string;
 };
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  toggleSidebar: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const { user, signOut } = useAuth();
   const { currentProject, setCurrentProject, projects } = useProject();
   const [currentLanguage, setCurrentLanguage] = useState('EN');

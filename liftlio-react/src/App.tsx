@@ -39,10 +39,6 @@ const MainContent = styled.main`
   overflow-y: auto;
   background-color: ${props => props.theme.colors.background};
   width: 100%;
-  
-  @media (max-width: 768px) {
-    padding-bottom: 60px; /* Space for mobile navigation button */
-  }
 `;
 
 const ContentWrapper = styled.div`
@@ -57,127 +53,130 @@ const ContentWrapper = styled.div`
   }
 `;
 
-const MobileNavToggle = styled.button`
+const FloatingMenuButton = styled.button`
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2D1D42, #3b2659);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 15px rgba(35, 16, 54, 0.3), 
+              inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: ${props => props.theme.colors.primary};
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: ${props => props.theme.shadows.md};
-  z-index: 1001; /* Higher than sidebar (1000) to always be visible */
-  border: none;
-  font-size: 1.4rem;
+  z-index: 999;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.35s cubic-bezier(0.17, 0.67, 0.29, 0.96);
+  isolation: isolate;
   
-  /* Light beam animation */
+  /* Edge highlight */
   &::before {
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.4),
-      transparent
-    );
-    animation: lightBeam 3s infinite;
-    z-index: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      rgba(255, 255, 255, 0) 0%, 
+      rgba(255, 255, 255, 0.2) 50%, 
+      rgba(255, 255, 255, 0) 100%);
+    opacity: 0.6;
+    z-index: 1;
   }
   
-  /* Inner circle pulse effect */
+  /* Light beam */
   &::after {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    animation: pulseCircle 2s infinite;
-    z-index: 0;
+    width: 1.2px;
+    height: 130%;
+    top: -15%;
+    left: -10%;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.05) 10%,
+      rgba(255, 255, 255, 0.8) 50%,
+      rgba(255, 255, 255, 0.05) 90%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(20deg);
+    z-index: 2;
+    box-shadow: 0 0 20px rgba(202, 125, 255, 0.7),
+                0 0 40px rgba(202, 125, 255, 0.25);
+    filter: blur(0.3px);
+    opacity: 0.7;
+    animation: navButtonBeam 6s cubic-bezier(0.17, 0.67, 0.29, 0.96) infinite;
+    animation-delay: 1s;
+  }
+  
+  @keyframes navButtonBeam {
+    0% {
+      left: -5%;
+      opacity: 0;
+      transform: rotate(20deg) translateY(0);
+    }
+    10% {
+      opacity: 0.7;
+    }
+    60% {
+      opacity: 0.7;
+    }
+    100% {
+      left: 105%;
+      opacity: 0;
+      transform: rotate(20deg) translateY(0);
+    }
   }
   
   /* Icon position above animations */
   svg {
     position: relative;
-    z-index: 2;
-    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8));
-    transition: transform 0.3s ease;
+    z-index: 3;
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.3));
+    transition: all 0.3s ease;
+    font-size: 1.5rem;
   }
   
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${props => props.theme.shadows.lg};
-    background: linear-gradient(145deg, #3a2655, #2D1D42);
+    transform: translateY(-2px) scale(1.01);
+    background: linear-gradient(135deg, #341f4c, #432e65);
+    box-shadow: 0 7px 20px rgba(35, 16, 54, 0.4), 
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+                0 0 15px rgba(131, 58, 244, 0.2);
     
-    svg {
-      transform: scale(1.1);
-      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.9));
+    &::after {
+      animation-duration: 3.8s;
+      box-shadow: 0 0 25px rgba(202, 125, 255, 0.8),
+                  0 0 50px rgba(202, 125, 255, 0.3);
     }
     
     &::before {
-      animation: lightBeam 1.5s infinite;
+      opacity: 0.9;
+    }
+    
+    svg {
+      transform: scale(1.15);
+      filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
     }
   }
   
   &:active {
-    transform: scale(0.95);
+    transform: translateY(0) scale(0.99);
+    box-shadow: 0 2px 10px rgba(35, 16, 54, 0.3), 
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   }
   
-  @keyframes lightBeam {
-    0% {
-      left: -100%;
-    }
-    100% {
-      left: 100%;
-    }
-  }
-  
-  @keyframes pulseCircle {
-    0% {
-      width: 0;
-      height: 0;
-      opacity: 1;
-    }
-    100% {
-      width: 120%;
-      height: 120%;
-      opacity: 0;
-    }
-  }
-  
-  @media (min-width: 769px) {
-    display: none;
-  }
-  
-  @media (max-width: 480px) {
-    width: 64px;
-    height: 64px;
-    bottom: 16px;
-    right: 16px;
-    font-size: 1.6rem;
-  }
-  
-  @media (max-width: 400px) {
-    width: 70px;
-    height: 70px;
-    bottom: 20px;
-    right: 20px;
-    font-size: 1.8rem;
+  @media (max-width: 768px) {
+    display: flex;
   }
 `;
+
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -288,7 +287,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
         onClose={() => toggleSidebar()} 
       />
       <MainContent>
-        <Header />
+        <Header toggleSidebar={toggleSidebar} />
         <ContentWrapper>
           <Routes>
             <Route path="/" element={<Overview />} />
@@ -301,10 +300,10 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
         </ContentWrapper>
       </MainContent>
       
-      {/* Mobile navigation toggle button - always shows hamburger icon */}
-      <MobileNavToggle onClick={toggleSidebar}>
+      {/* Floating hamburger menu button for mobile */}
+      <FloatingMenuButton onClick={toggleSidebar}>
         <IconComponent icon={FaIcons.FaBars} />
-      </MobileNavToggle>
+      </FloatingMenuButton>
     </AppContainer>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { IconContext } from 'react-icons';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
@@ -10,17 +10,21 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
+const slideIn = keyframes`
+  from { transform: translateX(-105%); opacity: 0.5; }
+  to { transform: translateX(0); opacity: 1; }
+`;
+
 const SidebarContainer = styled.aside<{ isOpen: boolean }>`
   width: 240px;
   height: 100%;
-  background: #2D1D42; /* Dark purple from reference */
+  background: linear-gradient(160deg, #2D1D42, #231536); /* Dark purple gradient */
   color: #fff;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   box-shadow: ${props => props.theme.shadows.lg};
   z-index: 1000; /* Higher z-index to appear above header */
-  transition: transform 0.3s ease-in-out;
   
   @media (min-width: 769px) {
     position: relative;
@@ -35,6 +39,27 @@ const SidebarContainer = styled.aside<{ isOpen: boolean }>`
     max-width: 300px;
     transform: translateX(${props => props.isOpen ? '0' : '-105%'});
     box-shadow: ${props => props.isOpen ? '0 0 24px rgba(0, 0, 0, 0.25)' : 'none'};
+    transition: transform 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67), box-shadow 0.3s ease;
+    animation: ${props => props.isOpen ? slideIn : 'none'} 0.35s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    
+    /* Edge highlight when opened */
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+      width: 1px;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.1) 30%,
+        rgba(255, 255, 255, 0.1) 70%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      opacity: ${props => props.isOpen ? 0.8 : 0};
+      transition: opacity 0.4s ease;
+    }
   }
   
   @media (max-width: 480px) {
@@ -902,6 +927,11 @@ const Tooltip = styled.div<{ visible: boolean }>`
   }
 `;
 
+const overlayFadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
 const SidebarOverlay = styled.div<{ isOpen: boolean }>`
   position: fixed;
   top: 0;
@@ -912,9 +942,10 @@ const SidebarOverlay = styled.div<{ isOpen: boolean }>`
   z-index: 999; /* Just below sidebar but above everything else */
   opacity: ${props => props.isOpen ? 1 : 0};
   visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
+  transition: visibility 0.3s ease;
+  animation: ${props => props.isOpen ? overlayFadeIn : 'none'} 0.3s ease;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
   pointer-events: ${props => props.isOpen ? 'all' : 'none'};
   
   @media (min-width: 769px) {
