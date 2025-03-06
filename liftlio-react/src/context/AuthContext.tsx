@@ -48,10 +48,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (provider === 'google') {
         // Para login com Google, precisamos garantir que o redirecionamento volte para a página inicial
+        // Determine the correct redirect URL based on environment
+        let redirectUrl = `${window.location.origin}/auth/callback`;
+        
+        // If we're in production at liftlio.fly.dev
+        if (window.location.hostname === 'liftlio.fly.dev') {
+          // Using only the origin without the path to handle Google's redirect peculiarities
+          redirectUrl = 'https://liftlio.fly.dev';
+          
+          // Add explicit site URL to localStorage for cross-domain validation
+          localStorage.setItem('siteUrl', 'https://liftlio.fly.dev');
+        } else {
+          // Store the development URL
+          localStorage.setItem('siteUrl', window.location.origin);
+        }
+        
+        console.log('Using redirect URL:', redirectUrl);
+        
         const { error } = await supabase.auth.signInWithOAuth({
           provider,
           options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
+            redirectTo: redirectUrl,
           },
         })
         

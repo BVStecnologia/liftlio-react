@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import * as FaIcons from 'react-icons/fa';
 import ProjectModal from './ProjectModal';
 import { IconComponent } from '../utils/IconHelper';
@@ -30,27 +30,116 @@ const HeaderContainer = styled.header`
 const ProjectSelector = styled.div`
   display: flex;
   align-items: center;
-  background: #2D1D42; /* Same as sidebar color */
+  background: linear-gradient(135deg, #2D1D42, #3b2659);
   color: white;
   padding: 10px 18px;
   border-radius: ${props => props.theme.radius.md};
   cursor: pointer;
   font-weight: ${props => props.theme.fontWeights.medium};
-  box-shadow: ${props => props.theme.shadows.sm};
-  transition: all ${props => props.theme.transitions.default};
+  box-shadow: 0 4px 15px rgba(35, 16, 54, 0.3), 
+              inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transition: all 0.35s cubic-bezier(0.17, 0.67, 0.29, 0.96);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  backdrop-filter: blur(4px);
+  
+  /* Edge highlight */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      rgba(255, 255, 255, 0) 0%, 
+      rgba(255, 255, 255, 0.2) 50%, 
+      rgba(255, 255, 255, 0) 100%);
+    opacity: 0.6;
+    z-index: 1;
+  }
+  
+  /* Light beam */
+  &::after {
+    content: '';
+    position: absolute;
+    width: 1.2px;
+    height: 130%;
+    top: -15%;
+    left: -10%;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.05) 10%,
+      rgba(255, 255, 255, 0.8) 50%,
+      rgba(255, 255, 255, 0.05) 90%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(20deg);
+    z-index: 2;
+    box-shadow: 0 0 20px rgba(202, 125, 255, 0.7),
+                0 0 40px rgba(202, 125, 255, 0.25);
+    filter: blur(0.3px);
+    opacity: 0.7;
+    animation: projectSelectorBeam 6s cubic-bezier(0.17, 0.67, 0.29, 0.96) infinite;
+    animation-delay: 1s;
+  }
+  
+  @keyframes projectSelectorBeam {
+    0% {
+      left: -5%;
+      opacity: 0;
+      transform: rotate(20deg) translateY(0);
+    }
+    10% {
+      opacity: 0.7;
+    }
+    60% {
+      opacity: 0.7;
+    }
+    100% {
+      left: 105%;
+      opacity: 0;
+      transform: rotate(20deg) translateY(0);
+    }
+  }
   
   &:hover {
-    transform: translateY(-2px);
-    background: #3a2655; /* Slightly lighter version of sidebar color */
-    box-shadow: ${props => props.theme.shadows.md};
+    transform: translateY(-2px) scale(1.01);
+    background: linear-gradient(135deg, #341f4c, #432e65);
+    box-shadow: 0 7px 20px rgba(35, 16, 54, 0.4), 
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+                0 0 15px rgba(131, 58, 244, 0.2);
+    
+    &::after {
+      animation-duration: 3.8s;
+      box-shadow: 0 0 25px rgba(202, 125, 255, 0.8),
+                  0 0 50px rgba(202, 125, 255, 0.3);
+    }
+    
+    &::before {
+      opacity: 0.9;
+    }
   }
   
   &:active {
-    transform: translateY(0);
+    transform: translateY(0) scale(0.99);
+    box-shadow: 0 2px 10px rgba(35, 16, 54, 0.3), 
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   }
   
   svg {
     margin-left: 8px;
+    position: relative;
+    z-index: 3;
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.3));
+  }
+
+  span, div {
+    position: relative;
+    z-index: 3;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
   }
 
   @media (max-width: 768px) {
@@ -302,7 +391,7 @@ const UserProfile = styled.div`
   display: flex;
   align-items: center;
   cursor: pointer;
-  padding: 6px 10px;
+  padding: 4px;
   border-radius: ${props => props.theme.radius.md};
   position: relative;
   transition: all 0.2s ease;
@@ -310,26 +399,13 @@ const UserProfile = styled.div`
   &:hover {
     background-color: rgba(0, 0, 0, 0.05);
   }
-  
-  .user-icon {
-    font-size: 2rem;
-    color: ${props => props.theme.colors.primary};
-  }
 
   @media (max-width: 480px) {
-    padding: 5px 9px;
-    
-    .user-icon {
-      font-size: 2rem;
-    }
+    padding: 3px;
   }
   
   @media (max-width: 400px) {
-    padding: 6px 10px;
-    
-    .user-icon {
-      font-size: 2.2rem;
-    }
+    padding: 4px;
   }
 `;
 
@@ -364,6 +440,142 @@ const UserPopup = styled(PopupMenu)`
   }
 `;
 
+const UserAvatar = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #231036, #3d2956);
+  position: relative;
+  box-shadow: 0 2px 15px rgba(35, 16, 54, 0.4);
+  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  isolation: isolate;
+  
+  span {
+    color: white;
+    font-weight: ${props => props.theme.fontWeights.semibold};
+    font-size: 1.3rem;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 3;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+  
+  /* Ambient inner glow */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle at 30% 30%,
+      rgba(131, 58, 244, 0.15) 0%,
+      rgba(76, 0, 139, 0.03) 60%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    z-index: 1;
+  }
+  
+  /* Primary light beam */
+  &::after {
+    content: '';
+    position: absolute;
+    width: 1.5px;
+    height: 100%;
+    top: 0;
+    bottom: 0;
+    left: -10%;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.05) 10%,
+      rgba(255, 255, 255, 0.9) 50%,
+      rgba(255, 255, 255, 0.05) 90%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    z-index: 2;
+    box-shadow: 0 0 12px rgba(131, 58, 244, 0.8),
+                0 0 30px rgba(131, 58, 244, 0.3);
+    opacity: 0.9;
+    filter: blur(0.4px);
+    animation: luxScanMove 4.5s cubic-bezier(0.3, 0, 0.2, 1) infinite;
+    animation-delay: 0.2s;
+  }
+  
+  /* Secondary subtle lights */
+  &:before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 70% 20%, rgba(131, 58, 244, 0.15) 0%, transparent 25%),
+      radial-gradient(circle at 30% 80%, rgba(76, 0, 139, 0.1) 0%, transparent 20%);
+    z-index: 1;
+  }
+  
+  /* Holographic rim light effect */
+  &:after {
+    box-shadow: 
+      inset 0 0 2px rgba(255, 255, 255, 0.4),
+      0 0 12px rgba(131, 58, 244, 0.8),
+      0 0 30px rgba(131, 58, 244, 0.3);
+  }
+  
+  @keyframes luxScanMove {
+    0% {
+      left: -10%;
+      opacity: 0;
+      transform: skewX(-15deg);
+    }
+    15% {
+      opacity: 0.9;
+      transform: skewX(-15deg);
+    }
+    80% {
+      opacity: 0.9;
+      transform: skewX(-5deg);
+    }
+    100% {
+      left: 110%;
+      opacity: 0;
+      transform: skewX(-5deg);
+    }
+  }
+  
+  &:hover {
+    box-shadow: 0 5px 20px rgba(35, 16, 54, 0.6), 0 0 15px rgba(131, 58, 244, 0.4);
+    transform: translateY(-1px) scale(1.03);
+    background: linear-gradient(145deg, #2a1340, #44305f);
+    
+    &::after {
+      animation-duration: 2.8s;
+      box-shadow: 0 0 20px rgba(131, 58, 244, 0.9),
+                  0 0 40px rgba(131, 58, 244, 0.4);
+    }
+    
+    span {
+      text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    width: 36px;
+    height: 36px;
+  }
+  
+  &.profile-large {
+    width: 60px;
+    height: 60px;
+    
+    span {
+      font-size: 1.8rem;
+    }
+  }
+`;
+
 const UserInfo = styled.div`
   padding: 18px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -382,10 +594,10 @@ const UserInfo = styled.div`
     color: ${props => props.theme.colors.darkGrey};
   }
   
-  .user-avatar {
-    font-size: 3rem;
-    color: ${props => props.theme.colors.primary || '#2D1D42'};
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  .profile-avatar {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
   }
 `;
 
@@ -396,21 +608,139 @@ const AddProjectButton = styled.button`
   padding: 8px 14px;
   border-radius: ${props => props.theme.radius.md};
   border: none;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(131, 58, 244, 0.15);
   color: white;
   font-weight: ${props => props.theme.fontWeights.medium};
   font-size: ${props => props.theme.fontSizes.sm};
   margin-right: 20px; /* Position it at the header right section */
   cursor: pointer;
-  transition: all ${props => props.theme.transitions.default};
+  transition: all 0.35s cubic-bezier(0.24, 0.4, 0.12, 1);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  backdrop-filter: blur(4px);
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 3px 10px rgba(35, 16, 54, 0.25),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+              0 0 0 0 rgba(131, 58, 244, 0.3);
+  
+  /* Subtle inner gradient */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.1) 0%, 
+      rgba(255, 255, 255, 0) 100%);
+    z-index: 1;
+  }
+  
+  /* Light beam */
+  &::after {
+    content: '';
+    position: absolute;
+    width: 1px;
+    height: 160%;
+    top: -30%;
+    left: -10%;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.03) 10%,
+      rgba(255, 255, 255, 0.9) 50%,
+      rgba(255, 255, 255, 0.03) 90%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(25deg);
+    z-index: 2;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5),
+                0 0 30px rgba(131, 58, 244, 0.3);
+    opacity: 0.7;
+    filter: blur(0.2px);
+    animation: addButtonBeam 5.2s cubic-bezier(0.25, 0.1, 0.15, 1) infinite;
+    animation-delay: 1.5s;
+  }
+  
+  @keyframes addButtonBeam {
+    0% {
+      left: -10%;
+      opacity: 0;
+      transform: rotate(25deg);
+    }
+    15% {
+      opacity: 0.7;
+    }
+    80% {
+      opacity: 0.7;
+    }
+    100% {
+      left: 110%;
+      opacity: 0;
+      transform: rotate(25deg);
+    }
+  }
+  
+  /* Glowing border on hover */
+  &:after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: ${props => props.theme.radius.md};
+    padding: 1px;
+    background: linear-gradient(
+      135deg, 
+      rgba(131, 58, 244, 0) 0%, 
+      rgba(131, 58, 244, 0.4) 100%
+    );
+    mask: linear-gradient(#fff 0 0) content-box, 
+          linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
   
   &:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(131, 58, 244, 0.2);
+    box-shadow: 0 5px 15px rgba(35, 16, 54, 0.35),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+                0 0 15px rgba(131, 58, 244, 0.2);
+    transform: translateY(-2px) scale(1.01);
+                
+    &::after {
+      animation-duration: 2.8s;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.6),
+                  0 0 40px rgba(131, 58, 244, 0.4);
+    }
+    
+    &:after {
+      opacity: 1;
+    }
+    
+    svg {
+      filter: drop-shadow(0 0 4px rgba(131, 58, 244, 0.6));
+      transform: scale(1.1);
+    }
+  }
+  
+  &:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 8px rgba(35, 16, 54, 0.2),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+  
+  svg, span {
+    position: relative;
+    z-index: 3;
+    transition: all 0.3s ease;
   }
   
   svg {
     margin-right: 6px;
     font-size: 0.9rem;
+    filter: drop-shadow(0 0 2px rgba(131, 58, 244, 0.4));
   }
 
   @media (max-width: 768px) {
@@ -540,27 +870,96 @@ const ProjectsDropdown = styled.div`
   }
 `;
 
+const projectItemHover = keyframes`
+  0% {
+    width: 0;
+    left: 0;
+    right: auto;
+  }
+  100% {
+    width: 100%;
+    left: 0;
+    right: auto;
+  }
+`;
+
 const ProjectItem = styled.div`
   padding: 14px 18px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.17, 0.67, 0.29, 0.96);
   display: flex;
   align-items: center;
-  border-left: 3px solid transparent;
+  border-left: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+  
+  &:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 1px;
+    background: linear-gradient(to right, 
+      rgba(131, 58, 244, 0.7) 0%, 
+      rgba(131, 58, 244, 0.3) 50%,
+      rgba(131, 58, 244, 0.1) 100%);
+    transition: width 0.4s cubic-bezier(0.17, 0.67, 0.29, 0.96);
+    z-index: 2;
+  }
   
   &:hover {
-    background-color: rgba(45, 29, 66, 0.05);
-    border-left: 3px solid ${props => props.theme.colors.primary || '#2D1D42'};
+    background-color: rgba(131, 58, 244, 0.03);
+    border-left: 2px solid #843af4;
+    
+    &:before {
+      width: 100%;
+      animation: ${projectItemHover} 0.5s cubic-bezier(0.17, 0.67, 0.29, 0.96);
+    }
+    
+    svg {
+      color: #843af4;
+      filter: drop-shadow(0 0 3px rgba(131, 58, 244, 0.3));
+      transform: scale(1.1);
+    }
   }
   
   &:active {
-    background-color: rgba(45, 29, 66, 0.08);
+    background-color: rgba(131, 58, 244, 0.06);
   }
   
   svg {
     margin-right: 12px;
     font-size: 1rem;
     color: ${props => props.theme.colors.primary || '#2D1D42'};
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+  }
+  
+  /* Light beam */
+  &::after {
+    content: '';
+    position: absolute;
+    width: 1px;
+    height: 0;
+    left: 0;
+    top: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(131, 58, 244, 0.7) 0%,
+      rgba(131, 58, 244, 0.1) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease, height 0.3s cubic-bezier(0.17, 0.67, 0.29, 0.96);
+    z-index: 1;
+    box-shadow: 0 0 8px rgba(131, 58, 244, 0.3);
+  }
+  
+  &:hover::after {
+    opacity: 1;
+    height: 100%;
+    transition: opacity 0.2s ease, height 0.4s cubic-bezier(0.17, 0.67, 0.29, 0.96);
   }
 `;
 
@@ -721,18 +1120,6 @@ const Header: React.FC = () => {
         </div>
         
         <RightSection>
-          {projects.length === 0 ? (
-            <AddProjectButton onClick={() => setShowProjectModal(true)}>
-              <IconComponent icon={FaIcons.FaPlus} />
-              Create Project
-            </AddProjectButton>
-          ) : (
-            <AddProjectButton onClick={() => setShowProjectModal(true)}>
-              <IconComponent icon={FaIcons.FaPlus} />
-              New Project
-            </AddProjectButton>
-          )}
-          
           <div ref={notificationsRef} style={{ position: 'relative' }}>
             <NotificationBadge onClick={() => setShowNotifications(!showNotifications)}>
               <IconComponent icon={FaIcons.FaBell} />
@@ -777,17 +1164,23 @@ const Header: React.FC = () => {
           
           <div ref={userMenuRef} style={{ position: 'relative' }}>
             <UserProfile onClick={() => setShowUserMenu(!showUserMenu)}>
-              <span className="user-icon">
-                <IconComponent icon={FaIcons.FaUserCircle} />
-              </span>
+              <UserAvatar>
+                <span>
+                  {(user?.user_metadata?.full_name || user?.email || 'U').charAt(0)}
+                </span>
+              </UserAvatar>
             </UserProfile>
             
             {showUserMenu && (
               <UserPopup>
                 <UserInfo>
-                  <span className="user-avatar">
-                    <IconComponent icon={FaIcons.FaUserCircle} />
-                  </span>
+                  <div className="profile-avatar">
+                    <UserAvatar className="profile-large">
+                      <span>
+                        {(user?.user_metadata?.full_name || user?.email || 'U').charAt(0)}
+                      </span>
+                    </UserAvatar>
+                  </div>
                   <h4>{user?.user_metadata?.full_name || user?.email || 'Usuário'}</h4>
                   <p>{user?.email || ''}</p>
                 </UserInfo>

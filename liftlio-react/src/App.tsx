@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import styled, { ThemeProvider, keyframes } from 'styled-components';
 import GlobalStyle from './styles/GlobalStyle';
 import { theme } from './styles/theme';
@@ -186,6 +186,34 @@ function App() {
     setSidebarOpen(!sidebarOpen);
   };
 
+  // Root-level authentication handling
+  // This handles tokens that arrive on any path, not just the callback path
+  useEffect(() => {
+    // Check if we have an auth token in the URL hash
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      console.log('Detected auth token, processing directly...');
+      
+      // Load the Supabase client here to process the token
+      import('./lib/supabaseClient').then(({ supabase }) => {
+        // The hash contains the session information - let's process it
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        
+        if (accessToken) {
+          console.log('Found access token, setting session...');
+          
+          // Let Supabase handle the token
+          supabase.auth.getSession().then(({ data }) => {
+            console.log('Session checked:', data.session ? 'Found' : 'Not found');
+            
+            // If we got a session, all is good - no redirect needed
+            // The auth provider will handle the user state
+          });
+        }
+      });
+    }
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
@@ -284,20 +312,63 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
 // Componente para lidar com callbacks de autenticação
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading } = useAuth();
   
   useEffect(() => {
-    // Quando os dados de autenticação forem carregados
-    if (!loading) {
-      // Redirecionar para a página principal se estiver autenticado
-      if (user) {
-        navigate('/', { replace: true });
-      } else {
-        // Se não estiver autenticado após o callback, redirecionar para o login
+    // Log all details for debugging
+    console.log('AuthCallback: Running authentication callback handler');
+    console.log('Current location:', window.location.href);
+    console.log('User state:', user ? 'Logged in' : 'Not logged in');
+    console.log('Loading state:', loading);
+    
+    // Check if there's an access token in the URL hash (direct hash redirect)
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      console.log('Found access token in URL hash, processing...');
+      
+      try {
+        // Need to manually process the hash for Supabase
+        const hashParams = new URLSearchParams(
+          window.location.hash.substring(1) // remove the # character
+        );
+        
+        if (hashParams.get('access_token')) {
+          console.log('Successfully extracted access token');
+          
+          // Let Supabase handle the token
+          import('./lib/supabaseClient').then(({ supabase }) => {
+            // Check current session
+            supabase.auth.getSession().then(({ data: sessionData }) => {
+              if (sessionData.session) {
+                console.log('Active session found, redirecting to home');
+                navigate('/', { replace: true });
+              } else {
+                console.log('No active session, trying to establish one...');
+                
+                // Force a refresh based on the URL tokens
+                setTimeout(() => {
+                  navigate('/', { replace: true });
+                }, 1000);
+              }
+            });
+          });
+        }
+      } catch (error) {
+        console.error('Error processing auth callback:', error);
         navigate('/login', { replace: true });
       }
+    } else {
+      // Normal callback handling
+      if (!loading) {
+        console.log('Standard callback flow, user:', user ? 'Found' : 'Not found');
+        if (user) {
+          navigate('/', { replace: true });
+        } else {
+          navigate('/login', { replace: true });
+        }
+      }
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, location]);
   
   const spinAnimation = keyframes`
     0% { transform: rotate(0deg); }

@@ -7,8 +7,41 @@
     <meta name="theme-color" content="#282c34" />
     <meta
       name="description"
-      content="Web site created using create-react-app"
+      content="Liftlio - Monitor your brand's online presence"
     />
+    <!-- Add support for Supabase authentication redirects -->
+    <script>
+      // Special handling for OAuth redirects
+      if (window.location.hash && window.location.hash.includes('access_token')) {
+        console.log('Auth redirect detected:', window.location.href);
+        
+        // CRITICAL: Check if we were redirected to the wrong domain (localhost vs production)
+        const storedSiteUrl = localStorage.getItem('siteUrl');
+        const currentUrl = window.location.origin;
+        
+        if (storedSiteUrl && !currentUrl.includes(storedSiteUrl)) {
+          console.log('CRITICAL: Detected incorrect domain redirect. Actual:', currentUrl, 'Expected:', storedSiteUrl);
+          // Replace the current domain with the stored domain
+          const correctUrl = window.location.href.replace(currentUrl, storedSiteUrl);
+          console.log('Redirecting to correct domain:', correctUrl);
+          window.location.replace(correctUrl);
+          return; // Stop execution to avoid double redirects
+        }
+        // If we're at the root and not at the callback path, redirect to the callback
+        else if (window.location.pathname === '/' || window.location.pathname === '') {
+          console.log('Redirecting hash to proper callback handler');
+          window.location.href = '/auth/callback' + window.location.hash;
+        } 
+        // If we're in a popup window, post a message to the parent
+        else if (window.opener) {
+          console.log('Sending auth data to parent window');
+          window.opener.postMessage({ 
+            type: 'supabase.auth.callback', 
+            hash: window.location.hash 
+          }, window.location.origin);
+        }
+      }
+    </script>
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <!--
       manifest.json provides metadata used when your web app is installed on a
