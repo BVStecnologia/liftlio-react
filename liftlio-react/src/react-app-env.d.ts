@@ -36,6 +36,36 @@ declare module '@supabase/supabase-js' {
       signInWithPassword: (credentials: { email: string; password: string }) => Promise<{ error: Error | null }>;
       signUp: (credentials: { email: string; password: string }) => Promise<{ error: Error | null }>;
       signOut: () => Promise<{ error: Error | null }>;
+      getUser: () => Promise<{ data: { user: User | null }; error: Error | null }>;
+    };
+    from: (table: string) => {
+      select: (columns?: string) => any;
+      insert: (values: any) => any;
+      update: (values: any) => any;
+      delete: () => any;
+      eq: (column: string, value: any) => any;
+      neq: (column: string, value: any) => any;
+      gt: (column: string, value: any) => any;
+      lt: (column: string, value: any) => any;
+      gte: (column: string, value: any) => any;
+      lte: (column: string, value: any) => any;
+      is: (column: string, value: any) => any;
+      in: (column: string, values: any[]) => any;
+      contains: (column: string, value: any) => any;
+      containedBy: (column: string, value: any) => any;
+      rangeLt: (column: string, range: any) => any;
+      rangeGt: (column: string, range: any) => any;
+      rangeGte: (column: string, range: any) => any;
+      rangeLte: (column: string, range: any) => any;
+      overlap: (column: string, value: any) => any;
+      textSearch: (column: string, query: string, options?: any) => any;
+      filter: (column: string, operator: string, value: any) => any;
+      match: (query: any) => any;
+      single: () => any;
+      order: (column: string, options?: any) => any;
+      limit: (count: number) => any;
+      range: (from: number, to: number) => any;
+      maybeSingle: () => any;
     };
   }
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Modal from './Modal';
 
@@ -92,18 +92,40 @@ type Project = {
 };
 
 type ProjectModalProps = {
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
-  onSave: (project: Project) => void;
+  onSave?: (project: Project) => void;
+  onCreateProject?: (project: Project) => void;
+  existingProjects?: any[];
+  onSelectProject?: (project: any) => void;
+  selectedProject?: any;
 };
 
-const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, onSave }) => {
+const ProjectModal: React.FC<ProjectModalProps> = ({ 
+  isOpen = false, 
+  onClose, 
+  onSave, 
+  onCreateProject, 
+  existingProjects = [], 
+  onSelectProject,
+  selectedProject 
+}) => {
+  const [activeTab, setActiveTab] = useState('create');
   const [projectForm, setProjectForm] = useState({
     name: '',
     company: '',
     link: '',
     audience: ''
   });
+  
+  // Definir a aba ativa com base na existência de projetos
+  useEffect(() => {
+    if (existingProjects && existingProjects.length > 0) {
+      setActiveTab('list');
+    } else {
+      setActiveTab('create');
+    }
+  }, [existingProjects]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -119,7 +141,13 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, onSave }) 
       id: Date.now().toString(),
       ...projectForm
     };
-    onSave(newProject);
+    
+    if (onSave) {
+      onSave(newProject);
+    } else if (onCreateProject) {
+      onCreateProject(newProject);
+    }
+    
     resetForm();
   };
   
@@ -140,65 +168,157 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, onSave }) 
   const modalFooter = (
     <>
       <Button variant="secondary" onClick={handleClose}>Cancel</Button>
-      <Button variant="primary" onClick={handleSubmit}>Create</Button>
+      {activeTab === 'create' ? (
+        <Button variant="primary" onClick={handleSubmit}>Create Project</Button>
+      ) : (
+        <Button variant="primary" onClick={() => setActiveTab('create')}>New Project</Button>
+      )}
     </>
   );
   
+  // Estilos adicionais
+  const TabContainer = styled.div`
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 1px solid ${props => props.theme.colors.grey};
+  `;
+
+  const Tab = styled.button<{ active: boolean }>`
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid ${props => props.active ? props.theme.colors.primary : 'transparent'};
+    color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.darkGrey};
+    font-weight: ${props => props.active ? '600' : '400'};
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      color: ${props => props.theme.colors.primary};
+    }
+  `;
+
+  const ProjectList = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+  `;
+
+  const ProjectCard = styled.div<{ active?: boolean }>`
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.grey};
+    background-color: ${props => props.active ? 'rgba(45, 29, 66, 0.05)' : 'white'};
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: rgba(45, 29, 66, 0.05);
+      border-color: ${props => props.theme.colors.primary};
+    }
+  `;
+
+  const ProjectTitle = styled.h3`
+    margin: 0 0 5px 0;
+    font-size: 16px;
+  `;
+
+  const ProjectDescription = styled.p`
+    margin: 0;
+    font-size: 14px;
+    color: ${props => props.theme.colors.darkGrey};
+  `;
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Add New Project"
+      title="Manage Projects"
       footer={modalFooter}
     >
-      <Form onSubmit={handleSubmit}>
-        <FormGroup>
-          <Label htmlFor="name">Project Name</Label>
-          <Input
-            id="name"
-            name="name"
-            value={projectForm.name}
-            onChange={handleChange}
-            placeholder="Project 1"
-            required
-          />
-        </FormGroup>
-        
-        <FormGroup>
-          <Label htmlFor="company">Company or Product Name</Label>
-          <Input
-            id="company"
-            name="company"
-            value={projectForm.company}
-            onChange={handleChange}
-            placeholder="Company or product name"
-            required
-          />
-        </FormGroup>
-        
-        <FormGroup>
-          <Label htmlFor="link">Project Link</Label>
-          <Input
-            id="link"
-            name="link"
-            value={projectForm.link}
-            onChange={handleChange}
-            placeholder="www.example.com"
-          />
-        </FormGroup>
-        
-        <FormGroup>
-          <Label htmlFor="audience">Audience Description</Label>
-          <TextArea
-            id="audience"
-            name="audience"
-            value={projectForm.audience}
-            onChange={handleChange}
-            placeholder="Describe the behavior of the target audience"
-            required
-          />
-        </FormGroup>
-      </Form>
+      <TabContainer>
+        <Tab 
+          active={activeTab === 'list'} 
+          onClick={() => setActiveTab('list')}
+        >
+          My Projects
+        </Tab>
+        <Tab 
+          active={activeTab === 'create'} 
+          onClick={() => setActiveTab('create')}
+        >
+          Create New
+        </Tab>
+      </TabContainer>
+
+      {activeTab === 'create' ? (
+        <Form onSubmit={handleSubmit}>
+          <FormGroup>
+            <Label htmlFor="name">Project Name</Label>
+            <Input
+              id="name"
+              name="name"
+              value={projectForm.name}
+              onChange={handleChange}
+              placeholder="Project 1"
+              required
+            />
+          </FormGroup>
+          
+          <FormGroup>
+            <Label htmlFor="company">Description</Label>
+            <TextArea
+              id="company"
+              name="company"
+              value={projectForm.company}
+              onChange={handleChange}
+              placeholder="Briefly describe your project"
+              required
+            />
+          </FormGroup>
+          
+          <FormGroup>
+            <Label htmlFor="link">Project Link (optional)</Label>
+            <Input
+              id="link"
+              name="link"
+              value={projectForm.link}
+              onChange={handleChange}
+              placeholder="www.example.com"
+            />
+          </FormGroup>
+          
+          <FormGroup>
+            <Label htmlFor="audience">Keywords (optional)</Label>
+            <TextArea
+              id="audience"
+              name="audience"
+              value={projectForm.audience}
+              onChange={handleChange}
+              placeholder="Keywords separated by commas"
+            />
+          </FormGroup>
+        </Form>
+      ) : (
+        <ProjectList>
+          {existingProjects && existingProjects.length > 0 ? (
+            existingProjects.map(project => (
+              <ProjectCard 
+                key={project.id} 
+                active={selectedProject && selectedProject.id === project.id}
+                onClick={() => onSelectProject && onSelectProject(project)}
+              >
+                <ProjectTitle>{project["Project name"]}</ProjectTitle>
+                <ProjectDescription>{project.description || "No description"}</ProjectDescription>
+              </ProjectCard>
+            ))
+          ) : (
+            <div>No projects found. Create a new project.</div>
+          )}
+        </ProjectList>
+      )}
     </Modal>
   );
 };

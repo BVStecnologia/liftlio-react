@@ -4,6 +4,8 @@ import * as FaIcons from 'react-icons/fa';
 import ProjectModal from './ProjectModal';
 import { IconComponent } from '../utils/IconHelper';
 import { useAuth } from '../context/AuthContext';
+import { useProject } from '../context/ProjectContext';
+import { supabase } from '../lib/supabaseClient';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -572,25 +574,34 @@ type Project = {
 
 const Header: React.FC = () => {
   const { user, signOut } = useAuth();
-  const [currentProject, setCurrentProject] = useState('Projeto 1');
+  const { currentProject, setCurrentProject, loadUserProjects } = useProject();
   const [currentLanguage, setCurrentLanguage] = useState('EN');
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showProjectsDropdown, setShowProjectsDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [projects, setProjects] = useState<any[]>([]);
   
   const projectsRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const languageRef = useRef<HTMLDivElement>(null);
   
-  // Mock data for dropdowns
-  const projects = [
-    { id: '1', name: 'Project 1' },
-    { id: '2', name: 'Project 2' },
-    { id: '3', name: 'Project 3' }
-  ];
+  // Carregar projetos
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const projectList = await loadUserProjects();
+      setProjects(projectList);
+      
+      // Se não houver projeto atual e existir projetos, seleciona o primeiro
+      if (!currentProject && projectList.length > 0) {
+        setCurrentProject(projectList[0]);
+      }
+    };
+    
+    fetchProjects();
+  }, []);
   
   const notifications = [
     { id: '1', title: 'New mention', message: 'Your product was mentioned on Twitter', time: '2 hours ago' },
@@ -598,13 +609,42 @@ const Header: React.FC = () => {
     { id: '3', title: 'Weekly report', message: 'Your weekly report is ready', time: '1 day ago' }
   ];
   
-  const handleAddProject = (project: Project) => {
-    console.log('Novo projeto:', project);
-    setShowProjectModal(false);
+  const handleAddProject = async (project: Project) => {
+    try {
+      // Get current user email
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      if (!currentUser || !currentUser.email) {
+        console.error("User not authenticated");
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from('Projeto')
+        .insert([{ 
+          "Project name": project.name,
+          description: project.company, // using company field as description
+          "User id": currentUser.id,
+          "user": currentUser.email
+        }])
+        .select();
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        const newProject = data[0];
+        setProjects([...projects, newProject]);
+        setCurrentProject(newProject);
+      }
+      
+      setShowProjectModal(false);
+    } catch (error) {
+      console.error("Error creating project:", error);
+    }
   };
   
-  const handleProjectSelect = (project: { id: string, name: string }) => {
-    setCurrentProject(project.name);
+  const handleProjectSelect = (project: any) => {
+    setCurrentProject(project);
     setShowProjectsDropdown(false);
   };
   
@@ -653,28 +693,54 @@ const Header: React.FC = () => {
               <ProjectIcon>
                 <IconComponent icon={FaIcons.FaProjectDiagram} />
               </ProjectIcon>
-              {currentProject}
+              {currentProject ? currentProject["Project name"] || "Select a project" : "Select a project"}
             </ProjectSelector>
             
             {showProjectsDropdown && (
               <ProjectsDropdown>
                 <PopupHeader>Your Projects</PopupHeader>
-                {projects.map(project => (
-                  <ProjectItem key={project.id} onClick={() => handleProjectSelect(project)}>
-                    <IconComponent icon={FaIcons.FaFolder} />
-                    {project.name}
-                  </ProjectItem>
-                ))}
+                {projects.length > 0 ? (
+                  <>
+                    {projects.map(project => (
+                      <ProjectItem key={project.id} onClick={() => handleProjectSelect(project)}>
+                        <IconComponent icon={FaIcons.FaFolder} />
+                        {project["Project name"]}
+                      </ProjectItem>
+                    ))}
+                    <ProjectItem onClick={() => setShowProjectModal(true)} style={{borderTop: '1px solid rgba(0,0,0,0.1)', marginTop: '10px', paddingTop: '15px'}}>
+                      <IconComponent icon={FaIcons.FaPlus} />
+                      New Project
+                    </ProjectItem>
+                  </>
+                ) : (
+                  <>
+                    <ProjectItem>
+                      <IconComponent icon={FaIcons.FaExclamationCircle} />
+                      No projects found
+                    </ProjectItem>
+                    <ProjectItem onClick={() => setShowProjectModal(true)} style={{borderTop: '1px solid rgba(0,0,0,0.1)', marginTop: '10px', paddingTop: '15px'}}>
+                      <IconComponent icon={FaIcons.FaPlus} />
+                      Create Project
+                    </ProjectItem>
+                  </>
+                )}
               </ProjectsDropdown>
             )}
           </div>
         </div>
         
         <RightSection>
-          <AddProjectButton onClick={() => setShowProjectModal(true)}>
-            <IconComponent icon={FaIcons.FaPlus} />
-            Add new project
-          </AddProjectButton>
+          {projects.length === 0 ? (
+            <AddProjectButton onClick={() => setShowProjectModal(true)}>
+              <IconComponent icon={FaIcons.FaPlus} />
+              Create Project
+            </AddProjectButton>
+          ) : (
+            <AddProjectButton onClick={() => setShowProjectModal(true)}>
+              <IconComponent icon={FaIcons.FaPlus} />
+              New Project
+            </AddProjectButton>
+          )}
           
           <div ref={notificationsRef} style={{ position: 'relative' }}>
             <NotificationBadge onClick={() => setShowNotifications(!showNotifications)}>

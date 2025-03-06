@@ -17,6 +17,7 @@ import { IconComponent } from './utils/IconHelper';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import { ProjectProvider } from './context/ProjectContext';
 
 const AppContainer = styled.div`
   display: flex;
@@ -189,18 +190,20 @@ function App() {
     <ThemeProvider theme={theme}>
       <GlobalStyle />
       <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/*" element={
-              <ProtectedLayout 
-                sidebarOpen={sidebarOpen} 
-                toggleSidebar={toggleSidebar}
-              />
-            } />
-          </Routes>
-        </Router>
+        <ProjectProvider>
+          <Router>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/*" element={
+                <ProtectedLayout 
+                  sidebarOpen={sidebarOpen} 
+                  toggleSidebar={toggleSidebar}
+                />
+              } />
+            </Routes>
+          </Router>
+        </ProjectProvider>
       </AuthProvider>
     </ThemeProvider>
   );
