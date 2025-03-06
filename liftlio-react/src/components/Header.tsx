@@ -574,34 +574,25 @@ type Project = {
 
 const Header: React.FC = () => {
   const { user, signOut } = useAuth();
-  const { currentProject, setCurrentProject, loadUserProjects } = useProject();
+  const { currentProject, setCurrentProject, projects } = useProject();
   const [currentLanguage, setCurrentLanguage] = useState('EN');
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showProjectsDropdown, setShowProjectsDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
-  const [projects, setProjects] = useState<any[]>([]);
   
   const projectsRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const languageRef = useRef<HTMLDivElement>(null);
   
-  // Carregar projetos
+  // Auto-select first project if none is selected
   useEffect(() => {
-    const fetchProjects = async () => {
-      const projectList = await loadUserProjects();
-      setProjects(projectList);
-      
-      // Se não houver projeto atual e existir projetos, seleciona o primeiro
-      if (!currentProject && projectList.length > 0) {
-        setCurrentProject(projectList[0]);
-      }
-    };
-    
-    fetchProjects();
-  }, []);
+    if (!currentProject && projects.length > 0) {
+      setCurrentProject(projects[0]);
+    }
+  }, [currentProject, projects, setCurrentProject]);
   
   const notifications = [
     { id: '1', title: 'New mention', message: 'Your product was mentioned on Twitter', time: '2 hours ago' },
@@ -632,9 +623,9 @@ const Header: React.FC = () => {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        const newProject = data[0];
-        setProjects([...projects, newProject]);
-        setCurrentProject(newProject);
+        // We don't need to update projects array manually anymore
+        // due to real-time subscription, but we should set this as current
+        setCurrentProject(data[0]);
       }
       
       setShowProjectModal(false);

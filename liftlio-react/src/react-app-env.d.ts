@@ -67,6 +67,10 @@ declare module '@supabase/supabase-js' {
       range: (from: number, to: number) => any;
       maybeSingle: () => any;
     };
+    channel: (topic: string) => {
+      on: (type: string, config: any, callback: (payload: any) => void) => any;
+      subscribe: () => any;
+    };
   }
 
   export function createClient(url: string, key: string): SupabaseClient;
