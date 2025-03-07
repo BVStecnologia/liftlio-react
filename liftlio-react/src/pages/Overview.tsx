@@ -52,6 +52,102 @@ const float = keyframes`
   }
 `;
 
+// Signal animation keyframe
+const signalPulse = keyframes`
+  0% {
+    transform: scale(0);
+    opacity: 0.8;
+  }
+  70% {
+    opacity: 0;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+`;
+
+// LED flow animation keyframe
+const ledFlow = keyframes`
+  0%, 15% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  20%, 30% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  35%, 100% {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+`;
+
+// Modern digital pulse animation
+const digitalPulse = keyframes`
+  0% {
+    background-position: -20px 0;
+    opacity: 0.05;
+  }
+  50% {
+    opacity: 0.15;
+  }
+  100% {
+    background-position: 20px 0;
+    opacity: 0.05;
+  }
+`;
+
+// Ultra subtle card highlight animation
+const subtleHighlight = keyframes`
+  0% {
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05);
+  }
+  50% {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+  100% {
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05);
+  }
+`;
+
+// Minimal tech interface scan
+const interfaceScan = keyframes`
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.08;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+`;
+
+// Gentle indicator pulse
+const indicatorPulse = keyframes`
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+`;
+
+// Border top highlight effect
+const borderGlow = keyframes`
+  0%, 100% {
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.05);
+  }
+  50% {
+    box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.1);
+  }
+`;
+
 // Page container with max width and centering
 const PageContainer = styled.div`
   max-width: 1600px;
@@ -303,8 +399,8 @@ const OverviewGrid = styled.div`
   }
 `;
 
-// Enhanced stat card
-const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number }>`
+// Enhanced stat card with modern tech-inspired design
+const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number; active?: boolean }>`
   background: white;
   border-radius: ${props => props.theme.radius.lg};
   padding: 24px;
@@ -314,35 +410,58 @@ const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number }>`
   overflow: hidden;
   grid-column: span ${props => props.gridSpan || 3};
   animation: ${fadeIn} 0.6s ease-out forwards;
-  transform: ${props => props.cardIndex !== undefined ? `scale(${1 - props.cardIndex * 0.03})` : 'scale(1)'};
+  transform: ${props => props.cardIndex !== undefined 
+    ? `scale(${1 - props.cardIndex * 0.01}) ${props.active ? 'translateY(-1px)' : 'translateY(0)'}`
+    : 'scale(1)'
+  };
   z-index: ${props => props.cardIndex !== undefined ? 10 - props.cardIndex : 1};
   
   ${props => props.cardIndex !== undefined && props.cardIndex > 0 ? `
     &::before {
       content: '';
       position: absolute;
-      top: -15px;
-      left: ${43 + props.cardIndex * 2}%;
-      width: 14%;
-      height: 15px;
-      background: linear-gradient(to bottom, rgba(220, 220, 220, 0.8) 0%, rgba(255, 255, 255, 0) 100%);
+      top: -8px;
+      left: ${45 + props.cardIndex * 2}%;
+      width: 10%;
+      height: 8px;
+      background: linear-gradient(to bottom, rgba(240, 240, 240, 0.5) 0%, rgba(255, 255, 255, 0) 100%);
       clip-path: polygon(0% 0%, 45% 100%, 55% 100%, 100% 0%);
       z-index: 0;
-      opacity: ${0.9 - props.cardIndex * 0.2};
+      opacity: ${0.6 - props.cardIndex * 0.1};
     }
   ` : ''}
   
   &:hover {
-    transform: translateY(-5px) ${props => props.cardIndex !== undefined ? `scale(${1 - props.cardIndex * 0.02})` : 'scale(1)'};
+    transform: translateY(-2px) ${props => props.cardIndex !== undefined ? `scale(${1 - props.cardIndex * 0.01})` : 'scale(1)'};
     box-shadow: ${props => props.theme.shadows.md};
   }
 
-  border-top: ${props => props.cardIndex !== undefined ? `4px solid rgba(${
-    props.cardIndex === 0 ? '33, 150, 243, 0.8' :
-    props.cardIndex === 1 ? '76, 175, 80, 0.75' :
-    props.cardIndex === 2 ? '103, 58, 183, 0.7' :
-    '255, 122, 48, 0.65'
+  border-top: ${props => props.cardIndex !== undefined ? `3px solid rgba(${
+    props.cardIndex === 0 ? '33, 150, 243, 0.7' :  // Blue for Reach
+    props.cardIndex === 1 ? '255, 122, 48, 0.7' :  // Orange for Activities
+    props.cardIndex === 2 ? '103, 58, 183, 0.7' :  // Purple for Engagements
+    '76, 175, 80, 0.7'                             // Green for LEDs
   })` : 'none'};
+  
+  animation: ${props => props.active && props.cardIndex !== undefined ? subtleHighlight : 'none'} 4s ease-in-out infinite;
+  animation-delay: ${props => props.cardIndex !== undefined ? `${props.cardIndex * 0.2}s` : '0s'};
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: rgba(${props => 
+      props.cardIndex === 0 ? '33, 150, 243' :  // Blue for Reach
+      props.cardIndex === 1 ? '255, 122, 48' :  // Orange for Activities
+      props.cardIndex === 2 ? '103, 58, 183' :  // Purple for Engagements
+      '76, 175, 80'                             // Green for LEDs
+    }, ${props => props.active ? 0.8 : 0.7});
+    animation: ${props => props.active && props.cardIndex !== undefined ? borderGlow : 'none'} 3s ease infinite;
+    animation-delay: ${props => props.cardIndex !== undefined ? `${props.cardIndex * 0.3}s` : '0s'};
+  }
   
   @media (max-width: 1200px) {
     grid-column: span ${props => Math.min(props.gridSpan || 3, 6)};
@@ -390,6 +509,185 @@ const FunnelArrowIcon = styled.div<{ index: number }>`
   
   @media (max-width: 1200px) {
     display: none;
+  }
+`;
+
+// Modern tech indicator - ultra subtle and elegant
+const LedSignalDot = styled.div<{ index: number; active: boolean }>`
+  position: absolute;
+  top: ${props => (40 + props.index * 2)}%;
+  right: -6px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: ${props => 
+    props.index === 0 ? '#2196F3' : // Blue for Reach
+    props.index === 1 ? '#FF7A30' : // Orange for Activities
+    props.index === 2 ? '#673AB7' : // Purple for Engagements
+    '#4CAF50'         // Green for LEDs
+  };
+  z-index: 15;
+  opacity: ${props => props.active ? 0.8 : 0};
+  box-shadow: 0 0 3px ${props => 
+    props.index === 0 ? 'rgba(33, 150, 243, 0.5)' : // Blue for Reach
+    props.index === 1 ? 'rgba(255, 122, 48, 0.5)' : // Orange for Activities
+    props.index === 2 ? 'rgba(103, 58, 183, 0.5)' : // Purple for Engagements
+    'rgba(76, 175, 80, 0.5)'         // Green for LEDs
+  };
+  transition: all 0.3s ease;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid ${props => 
+      props.index === 0 ? 'rgba(33, 150, 243, 0.3)' : // Blue for Reach
+      props.index === 1 ? 'rgba(255, 122, 48, 0.3)' : // Orange for Activities
+      props.index === 2 ? 'rgba(103, 58, 183, 0.3)' : // Purple for Engagements
+      'rgba(76, 175, 80, 0.3)'         // Green for LEDs
+    };
+    transform: translate(-50%, -50%);
+    opacity: ${props => props.active ? 0.4 : 0};
+    transition: opacity 0.3s ease;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: inherit;
+    animation: ${props => props.active ? indicatorPulse : 'none'} 2.5s ease-in-out infinite;
+  }
+  
+  @media (max-width: 1200px) {
+    display: none;
+  }
+`;
+
+// Modern data connection - extremely minimal
+const LedConnectionLine = styled.div<{ index: number; active: boolean }>`
+  position: absolute;
+  top: ${props => (40 + props.index * 2)}%;
+  right: -6px;
+  width: ${props => props.index < 3 ? '26px' : '0px'};
+  height: 1px;
+  background: ${props => 
+    props.index === 0 ? 'rgba(33, 150, 243, 0.3)' : // Blue for Reach
+    props.index === 1 ? 'rgba(255, 122, 48, 0.3)' : // Orange for Activities
+    'rgba(103, 58, 183, 0.3)'         // Purple for Engagements
+  };
+  z-index: 5;
+  opacity: ${props => props.active ? 0.6 : 0};
+  transition: opacity 0.3s ease, width 0.3s ease;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      ${props => 
+        props.index === 0 ? 'rgba(33, 150, 243, 0.4)' : // Blue for Reach
+        props.index === 1 ? 'rgba(255, 122, 48, 0.4)' : // Orange for Activities
+        'rgba(103, 58, 183, 0.4)'         // Purple for Engagements
+      } 50%,
+      transparent 100%
+    );
+    background-size: 25px 100%;
+    animation: ${props => props.active ? digitalPulse : 'none'} 2s linear infinite;
+  }
+  
+  @media (max-width: 1200px) {
+    display: none;
+  }
+`;
+
+// Ultra minimal data particle
+const FlowParticle = styled.div<{ index: number; active: boolean }>`
+  position: absolute;
+  top: ${props => (40 + props.index * 2)}%;
+  right: -20px;
+  width: 2px;
+  height: 1px;
+  background-color: ${props => 
+    props.index === 0 ? '#2196F3' : // Blue for Reach
+    props.index === 1 ? '#FF7A30' : // Orange for Activities
+    props.index === 2 ? '#673AB7' : // Purple for Engagements
+    '#4CAF50'         // Green for LEDs
+  };
+  z-index: 12;
+  opacity: ${props => props.active ? 0.7 : 0};
+  box-shadow: 0 0 2px ${props => 
+    props.index === 0 ? 'rgba(33, 150, 243, 0.7)' : // Blue for Reach 
+    props.index === 1 ? 'rgba(255, 122, 48, 0.7)' : // Orange for Activities
+    props.index === 2 ? 'rgba(103, 58, 183, 0.7)' : // Purple for Engagements
+    'rgba(76, 175, 80, 0.7)'         // Green for LEDs
+  };
+  animation: ${ledFlow} 1.8s linear infinite;
+  animation-delay: ${props => props.index * 0.3}s;
+  
+  @media (max-width: 1200px) {
+    display: none;
+  }
+`;
+
+// Extremely subtle card highlight effect
+const CardEnergyEffect = styled.div<{ index: number; active: boolean }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+  transition: opacity 0.3s ease;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      ${props => 
+        props.index === 0 ? 'rgba(33, 150, 243, 0.02)' : // Blue for Reach
+        props.index === 1 ? 'rgba(255, 122, 48, 0.02)' : // Orange for Activities
+        props.index === 2 ? 'rgba(103, 58, 183, 0.02)' : // Purple for Engagements
+        'rgba(76, 175, 80, 0.02)'         // Green for LEDs
+      } 50%,
+      transparent 100%
+    );
+    opacity: ${props => props.active ? 1 : 0};
+    animation: ${props => props.active ? interfaceScan : 'none'} 3s ease-in-out infinite;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 3px; /* Position below the border-top */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 0 0 ${props => props.theme.radius.lg} ${props => props.theme.radius.lg};
+    opacity: ${props => props.active ? 0.7 : 0};
+    transition: opacity 0.3s ease;
   }
 `;
 
@@ -1019,7 +1317,7 @@ const Input = styled.input`
   }
 `;
 
-// Enhanced data objects
+// Enhanced data objects with optimized color psychology
 const statsCards = [
   {
     id: 1,
@@ -1035,7 +1333,7 @@ const statsCards = [
     title: 'Activities',
     value: '128',
     icon: 'FaShareAlt',
-    color: 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)',
+    color: 'linear-gradient(135deg, #FF7A30 0%, #FFA07A 100%)',  // Changed to orange for energy/activity
     description: 'Total activities this month',
     trend: { value: '+28%', positive: true }
   },
@@ -1053,7 +1351,7 @@ const statsCards = [
     title: 'LEDs',
     value: '0',
     icon: 'FaShoppingCart',
-    color: 'linear-gradient(135deg, #FF7A30 0%, #FFA07A 100%)',
+    color: 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)',  // Changed to green for success/conversion
     description: 'LEDs Posted',
     trend: null
   }
@@ -1148,6 +1446,97 @@ const Overview: React.FC = () => {
   const [dataView, setDataView] = useState<DataViewType>('overview');
   const [searchTerm, setSearchTerm] = useState('');
   
+  // LED Animation States
+  const [activeLeds, setActiveLeds] = useState<Record<number, boolean>>({
+    0: false, // Reach
+    1: false, // Activities
+    2: false, // Total Engagements
+    3: false  // LEDs
+  });
+  
+  // Data flow animation - more subtle and professional tech-inspired sequence
+  useEffect(() => {
+    // Initial delay to start animation after component mounts
+    const startDelay = setTimeout(() => {
+      // Professional data flow effect
+      const sequence = [
+        // Standard flow pattern - sequential activation
+        () => setActiveLeds(prev => ({ ...prev, 0: true, 1: false, 2: false, 3: false })),
+        () => setActiveLeds(prev => ({ ...prev, 0: true, 1: true, 2: false, 3: false })),
+        () => setActiveLeds(prev => ({ ...prev, 0: true, 1: true, 2: true, 3: false })),
+        () => setActiveLeds(prev => ({ ...prev, 0: true, 1: true, 2: true, 3: true })),
+        
+        // Hold the complete data path briefly 
+        () => setActiveLeds(prev => ({ ...prev, 0: true, 1: true, 2: true, 3: true })),
+        
+        // Sequential deactivation
+        () => setActiveLeds(prev => ({ ...prev, 0: false, 1: true, 2: true, 3: true })),
+        () => setActiveLeds(prev => ({ ...prev, 0: false, 1: false, 2: true, 3: true })),
+        () => setActiveLeds(prev => ({ ...prev, 0: false, 1: false, 2: false, 3: true })),
+        () => setActiveLeds(prev => ({ ...prev, 0: false, 1: false, 2: false, 3: false })),
+        
+        // Brief pause
+        () => setActiveLeds(prev => ({ ...prev, 0: false, 1: false, 2: false, 3: false })),
+
+        // Secondary data processing pattern - shows individual processing
+        () => setActiveLeds(prev => ({ ...prev, 0: true, 1: false, 2: false, 3: false })),
+        () => setActiveLeds(prev => ({ ...prev, 0: false, 1: true, 2: false, 3: false })),
+        () => setActiveLeds(prev => ({ ...prev, 0: false, 1: false, 2: true, 3: false })),
+        () => setActiveLeds(prev => ({ ...prev, 0: false, 1: false, 2: false, 3: true })),
+        () => setActiveLeds(prev => ({ ...prev, 0: false, 1: false, 2: false, 3: false })),
+
+        // End of processing cycle
+        () => setActiveLeds(prev => ({ ...prev, 0: false, 1: false, 2: false, 3: false }))
+      ];
+      
+      // More professional timing sequence (in ms)
+      const timings = [
+        0,     // Start at Reach
+        800,   // Activate Activities
+        1600,  // Activate Total Engagements
+        2400,  // Activate LEDs
+        
+        4000,  // Hold complete data path
+        
+        5500,  // Start sequential shutdown
+        6000,  // Continue shutdown 
+        6500,  // Continue shutdown
+        7000,  // Complete shutdown
+        
+        9000,  // Pause before next pattern
+        
+        11000, // Individual component processing - Reach
+        12000, // Individual component processing - Activities
+        13000, // Individual component processing - Total Engagements
+        14000, // Individual component processing - LEDs
+        15000, // End individual processing
+        
+        18000  // Reset for next cycle
+      ];
+      
+      // Setup the animation sequence
+      const timers = sequence.map((action, index) => 
+        setTimeout(action, timings[index])
+      );
+      
+      // Create an interval to repeat the entire sequence
+      const interval = setInterval(() => {
+        sequence.forEach((action, index) => 
+          setTimeout(action, timings[index])
+        );
+      }, 20000); // Repeat every 20 seconds for a more professional, less distracting cycle
+      
+      // Cleanup all timers on component unmount
+      return () => {
+        clearTimeout(startDelay);
+        timers.forEach(timer => clearTimeout(timer));
+        clearInterval(interval);
+      };
+    }, 3000); // Longer initial delay for a less distracting start
+    
+    return () => clearTimeout(startDelay);
+  }, []);
+  
   // Filter keywords based on search term
   const filteredKeywords = keywordsData.filter(keyword => 
     searchTerm === '' || 
@@ -1183,13 +1572,60 @@ const Overview: React.FC = () => {
       {/* Stats Overview Grid */}
       <OverviewGrid>
         {statsCards.map((stat, index) => (
-          <StatCard key={stat.id} gridSpan={3} cardIndex={index}>
+          <StatCard 
+            key={stat.id} 
+            gridSpan={3} 
+            cardIndex={index}
+            active={!!activeLeds[index as keyof typeof activeLeds]}
+          >
+            {/* Card inner energy effect */}
+            <CardEnergyEffect 
+              index={index} 
+              active={!!activeLeds[index as keyof typeof activeLeds]} 
+            />
+            
+            {/* LED Animation Elements */}
+            {index < 3 && (
+              <>
+                {/* LED Signal Dot */}
+                <LedSignalDot 
+                  index={index} 
+                  active={!!activeLeds[index as keyof typeof activeLeds]} 
+                />
+                
+                {/* Connection Line */}
+                <LedConnectionLine 
+                  index={index} 
+                  active={!!activeLeds[index as keyof typeof activeLeds] && 
+                         !!activeLeds[(index + 1) as keyof typeof activeLeds]} 
+                />
+                
+                {/* Flow Particle */}
+                <FlowParticle 
+                  index={index} 
+                  active={!!activeLeds[index as keyof typeof activeLeds] && 
+                         !!activeLeds[(index + 1) as keyof typeof activeLeds]} 
+                />
+              </>
+            )}
+            
+            {/* Last card only needs the signal dot */}
+            {index === 3 && (
+              <LedSignalDot 
+                index={index} 
+                active={!!activeLeds[index as keyof typeof activeLeds]} 
+              />
+            )}
+            
             <StatDisplay>
               <StatContent>
                 <StatCardTitle>
                   {stat.title}
                 </StatCardTitle>
-                <StatValue>{stat.value}</StatValue>
+                {/* StatValue without any color-changing effects */}
+                <StatValue>
+                  {stat.value}
+                </StatValue>
                 <StatLabel>
                   {stat.description}
                   {stat.trend && (
@@ -1204,6 +1640,13 @@ const Overview: React.FC = () => {
                 <StatIcon 
                   bgColor={stat.color} 
                   animationDelay={`${index * 0.2}s`}
+                  style={{
+                    filter: activeLeds[index as keyof typeof activeLeds] ? 
+                      'brightness(1.05)' : 'none',
+                    transition: 'all 0.4s ease',
+                    transform: activeLeds[index as keyof typeof activeLeds] ? 'scale(1.02)' : 'scale(1)',
+                    opacity: activeLeds[index as keyof typeof activeLeds] ? 1 : 0.9
+                  }}
                 >
                   {stat.title === 'Total Engagements' && <IconComponent icon={FaIcons.FaComments} />}
                   {stat.title === 'LEDs' && <IconComponent icon={FaIcons.FaShoppingCart} />}
