@@ -436,32 +436,13 @@ const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number; active?: bo
     box-shadow: ${props => props.theme.shadows.md};
   }
 
-  border-top: ${props => props.cardIndex !== undefined ? `3px solid rgba(${
-    props.cardIndex === 0 ? '33, 150, 243, 0.7' :  // Blue for Reach
-    props.cardIndex === 1 ? '255, 122, 48, 0.7' :  // Orange for Activities
-    props.cardIndex === 2 ? '103, 58, 183, 0.7' :  // Purple for Engagements
-    '76, 175, 80, 0.7'                             // Green for LEDs
-  })` : 'none'};
+  border-left: ${props => props.cardIndex !== undefined ? `4px solid rgba(103, 58, 183, 0.7)` : 'none'}; // Consistent purple left border for all cards
+  border-top: none; // No top border
   
   animation: ${props => props.active && props.cardIndex !== undefined ? subtleHighlight : 'none'} 4s ease-in-out infinite;
   animation-delay: ${props => props.cardIndex !== undefined ? `${props.cardIndex * 0.2}s` : '0s'};
   
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background-color: rgba(${props => 
-      props.cardIndex === 0 ? '33, 150, 243' :  // Blue for Reach
-      props.cardIndex === 1 ? '255, 122, 48' :  // Orange for Activities
-      props.cardIndex === 2 ? '103, 58, 183' :  // Purple for Engagements
-      '76, 175, 80'                             // Green for LEDs
-    }, ${props => props.active ? 0.8 : 0.7});
-    animation: ${props => props.active && props.cardIndex !== undefined ? borderGlow : 'none'} 3s ease infinite;
-    animation-delay: ${props => props.cardIndex !== undefined ? `${props.cardIndex * 0.3}s` : '0s'};
-  }
+  /* Removed top border effect */
   
   @media (max-width: 1200px) {
     grid-column: span ${props => Math.min(props.gridSpan || 3, 6)};
@@ -808,6 +789,8 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
 const ChartCard = styled(StatCard)`
   padding: 0;
   overflow: hidden;
+  border-left: 4px solid rgba(103, 58, 183, 0.7); /* Purple left border for all components */
+  border-top: none;
   
   @media (max-width: 768px) {
     width: 100%;
@@ -950,6 +933,8 @@ const KeywordTable = styled.div`
   animation: ${fadeIn} 0.8s ease-out forwards;
   margin-top: 32px;
   width: 100%;
+  /* No top border for Keywords & Insights table */
+  position: relative;
   
   @media (max-width: 768px) {
     margin-top: 24px;
@@ -1658,7 +1643,10 @@ const Overview: React.FC = () => {
           </StatCard>
         ))}
         
-        <StatCard gridSpan={6}>
+        <StatCard 
+          gridSpan={6}
+          style={{ borderLeft: '4px solid rgba(103, 58, 183, 0.7)', borderTop: 'none' }} /* Purple left border */
+        >
           <StatCardTitle>
             <IconComponent icon={FaIcons.FaChartPie} />
             Traffic Sources
@@ -1695,7 +1683,10 @@ const Overview: React.FC = () => {
           </ChartContainer>
         </StatCard>
         
-        <StatCard gridSpan={6}>
+        <StatCard 
+          gridSpan={6}
+          style={{ borderLeft: '4px solid rgba(103, 58, 183, 0.7)', borderTop: 'none' }} /* Purple left border */
+        >
           <StatCardTitle>
             <IconComponent icon={FaIcons.FaChartBar} />
             Weekly Performance
@@ -2070,7 +2061,8 @@ const Overview: React.FC = () => {
                 fullWidth 
                 style={{ 
                   marginBottom: '0',
-                  borderLeft: `4px solid ${keyword.sentiment > 65 ? '#4caf50' : keyword.sentiment > 35 ? '#ff9800' : '#f44336'}`,
+                  /* No top border for Keywords cards */
+                  borderLeft: `4px solid rgba(103, 58, 183, 0.7)`, /* Purple for all components */
                   transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                   height: '100%'
                 }}
