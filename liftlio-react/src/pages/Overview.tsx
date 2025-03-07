@@ -241,6 +241,51 @@ const OverviewGrid = styled.div`
   grid-template-columns: repeat(12, 1fr);
   gap: 24px;
   margin-bottom: 32px;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    width: 65%;
+    height: 5px;
+    left: 50%;
+    top: 54%;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, 
+      rgba(33, 150, 243, 0.6) 0%, 
+      rgba(76, 175, 80, 0.5) 33%, 
+      rgba(103, 58, 183, 0.4) 66%, 
+      rgba(255, 122, 48, 0.3) 100%);
+    border-radius: 10px;
+    z-index: 0;
+    filter: blur(6px);
+    opacity: 0.5;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    
+    @media (max-width: 1200px) {
+      display: none;
+    }
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    width: 65%;
+    height: 60px;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 0;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0) 70%
+    );
+    
+    @media (max-width: 1200px) {
+      display: none;
+    }
+  }
   
   @media (max-width: 1200px) {
     grid-template-columns: repeat(6, 1fr);
@@ -259,7 +304,7 @@ const OverviewGrid = styled.div`
 `;
 
 // Enhanced stat card
-const StatCard = styled.div<{ gridSpan?: number }>`
+const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number }>`
   background: white;
   border-radius: ${props => props.theme.radius.lg};
   padding: 24px;
@@ -269,11 +314,35 @@ const StatCard = styled.div<{ gridSpan?: number }>`
   overflow: hidden;
   grid-column: span ${props => props.gridSpan || 3};
   animation: ${fadeIn} 0.6s ease-out forwards;
+  transform: ${props => props.cardIndex !== undefined ? `scale(${1 - props.cardIndex * 0.03})` : 'scale(1)'};
+  z-index: ${props => props.cardIndex !== undefined ? 10 - props.cardIndex : 1};
+  
+  ${props => props.cardIndex !== undefined && props.cardIndex > 0 ? `
+    &::before {
+      content: '';
+      position: absolute;
+      top: -15px;
+      left: ${43 + props.cardIndex * 2}%;
+      width: 14%;
+      height: 15px;
+      background: linear-gradient(to bottom, rgba(220, 220, 220, 0.8) 0%, rgba(255, 255, 255, 0) 100%);
+      clip-path: polygon(0% 0%, 45% 100%, 55% 100%, 100% 0%);
+      z-index: 0;
+      opacity: ${0.9 - props.cardIndex * 0.2};
+    }
+  ` : ''}
   
   &:hover {
-    transform: translateY(-5px);
+    transform: translateY(-5px) ${props => props.cardIndex !== undefined ? `scale(${1 - props.cardIndex * 0.02})` : 'scale(1)'};
     box-shadow: ${props => props.theme.shadows.md};
   }
+
+  border-top: ${props => props.cardIndex !== undefined ? `4px solid rgba(${
+    props.cardIndex === 0 ? '33, 150, 243, 0.8' :
+    props.cardIndex === 1 ? '76, 175, 80, 0.75' :
+    props.cardIndex === 2 ? '103, 58, 183, 0.7' :
+    '255, 122, 48, 0.65'
+  })` : 'none'};
   
   @media (max-width: 1200px) {
     grid-column: span ${props => Math.min(props.gridSpan || 3, 6)};
@@ -281,7 +350,16 @@ const StatCard = styled.div<{ gridSpan?: number }>`
   
   @media (max-width: 768px) {
     grid-column: 1 / -1;
+    &::before {
+      display: none;
+    }
   }
+`;
+
+const FunnelArrow = keyframes`
+  0% { transform: translateX(0) translateY(0); opacity: 0.4; }
+  50% { transform: translateX(6px) translateY(0); opacity: 0.9; }
+  100% { transform: translateX(0) translateY(0); opacity: 0.4; }
 `;
 
 const StatCardTitle = styled.h3`
@@ -292,9 +370,26 @@ const StatCardTitle = styled.h3`
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
   
   svg {
     color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const FunnelArrowIcon = styled.div<{ index: number }>`
+  position: absolute;
+  right: -18px;
+  top: 40%;
+  font-size: 24px;
+  color: rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  opacity: ${props => 0.8 - props.index * 0.2};
+  animation: ${FunnelArrow} 2s ease-in-out infinite;
+  animation-delay: ${props => props.index * 0.3}s;
+  
+  @media (max-width: 1200px) {
+    display: none;
   }
 `;
 
@@ -381,9 +476,9 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: ${props => props.theme.radius.lg};
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
   background: ${props => props.bgColor};
   color: white;
   font-size: 1.5rem;
@@ -393,36 +488,20 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
   animation: ${float} 6s ease-in-out infinite;
   animation-delay: ${props => props.animationDelay || '0s'};
   
-  &::before {
-    content: '';
-    position: absolute;
-    top: -10px;
-    left: -10px;
-    right: -10px;
-    bottom: -10px;
-    background: linear-gradient(90deg, 
-      rgba(255,255,255,0) 0%, 
-      rgba(255,255,255,0.3) 50%, 
-      rgba(255,255,255,0) 100%);
-    background-size: 200% 100%;
-    animation: ${shimmer} 3s infinite linear;
-    z-index: 1;
-  }
-  
   svg {
     position: relative;
     z-index: 2;
-    width: 22px;
-    height: 22px;
+    width: 26px;
+    height: 26px;
   }
   
   @media (max-width: 992px) and (min-width: 768px) {
-    width: 48px;
-    height: 48px;
+    width: 54px;
+    height: 54px;
     
     svg {
-      width: 18px;
-      height: 18px;
+      width: 22px;
+      height: 22px;
     }
   }
 `;
@@ -944,6 +1023,24 @@ const Input = styled.input`
 const statsCards = [
   {
     id: 1,
+    title: 'Reach',
+    value: '8.9K',
+    icon: 'FaUsers',
+    color: 'linear-gradient(135deg, #2196F3 0%, #03A9F4 100%)',
+    description: 'People reached',
+    trend: { value: '+5%', positive: true }
+  },
+  {
+    id: 2,
+    title: 'Activities',
+    value: '128',
+    icon: 'FaShareAlt',
+    color: 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)',
+    description: 'Total activities this month',
+    trend: { value: '+28%', positive: true }
+  },
+  {
+    id: 3,
     title: 'Total Engagements',
     value: '55',
     icon: 'FaComments',
@@ -952,31 +1049,13 @@ const statsCards = [
     trend: { value: '+12%', positive: true }
   },
   {
-    id: 2,
+    id: 4,
     title: 'LEDs',
     value: '0',
-    icon: 'FaVideo',
-    color: 'linear-gradient(135deg, #FF5722 0%, #FF9800 100%)',
+    icon: 'FaShoppingCart',
+    color: 'linear-gradient(135deg, #FF7A30 0%, #FFA07A 100%)',
     description: 'LEDs Posted',
     trend: null
-  },
-  {
-    id: 3,
-    title: 'Activities',
-    value: '128',
-    icon: 'FaChartLine',
-    color: 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)',
-    description: 'Total activities this month',
-    trend: { value: '+28%', positive: true }
-  },
-  {
-    id: 4,
-    title: 'Reach',
-    value: '8.9K',
-    icon: 'FaUsers',
-    color: 'linear-gradient(135deg, #2196F3 0%, #03A9F4 100%)',
-    description: 'People reached',
-    trend: { value: '+5%', positive: true }
   }
 ];
 
@@ -1104,7 +1183,7 @@ const Overview: React.FC = () => {
       {/* Stats Overview Grid */}
       <OverviewGrid>
         {statsCards.map((stat, index) => (
-          <StatCard key={stat.id} gridSpan={3}>
+          <StatCard key={stat.id} gridSpan={3} cardIndex={index}>
             <StatDisplay>
               <StatContent>
                 <StatCardTitle>
@@ -1126,7 +1205,10 @@ const Overview: React.FC = () => {
                   bgColor={stat.color} 
                   animationDelay={`${index * 0.2}s`}
                 >
-                  <IconComponent icon={FaIcons[stat.icon as keyof typeof FaIcons]} />
+                  {stat.title === 'Total Engagements' && <IconComponent icon={FaIcons.FaComments} />}
+                  {stat.title === 'LEDs' && <IconComponent icon={FaIcons.FaShoppingCart} />}
+                  {stat.title === 'Activities' && <IconComponent icon={FaIcons.FaShareAlt} />}
+                  {stat.title === 'Reach' && <IconComponent icon={FaIcons.FaUsers} />}
                 </StatIcon>
               </StatIconContainer>
             </StatDisplay>
