@@ -6,6 +6,8 @@ import { IconType } from 'react-icons';
 import Card from '../components/Card';
 import SentimentIndicator from '../components/SentimentIndicator';
 import { IconComponent } from '../utils/IconHelper';
+import { useDashboardData } from '../hooks/useDashboardData';
+import { useProject } from '../context/ProjectContext';
 
 // Animation keyframes
 const fadeIn = keyframes`
@@ -1302,114 +1304,7 @@ const Input = styled.input`
   }
 `;
 
-// Enhanced data objects with optimized color psychology
-const statsCards = [
-  {
-    id: 1,
-    title: 'Reach',
-    value: '8.9K',
-    icon: 'FaUsers',
-    color: 'linear-gradient(135deg, #2196F3 0%, #03A9F4 100%)',
-    description: 'People reached',
-    trend: { value: '+5%', positive: true }
-  },
-  {
-    id: 2,
-    title: 'Activities',
-    value: '128',
-    icon: 'FaShareAlt',
-    color: 'linear-gradient(135deg, #FF7A30 0%, #FFA07A 100%)',  // Changed to orange for energy/activity
-    description: 'Total activities this month',
-    trend: { value: '+28%', positive: true }
-  },
-  {
-    id: 3,
-    title: 'Total Engagements',
-    value: '55',
-    icon: 'FaComments',
-    color: 'linear-gradient(135deg, #673AB7 0%, #9575CD 100%)',
-    description: 'Engagements posted',
-    trend: { value: '+12%', positive: true }
-  },
-  {
-    id: 4,
-    title: 'LEDs',
-    value: '0',
-    icon: 'FaShoppingCart',
-    color: 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)',  // Changed to green for success/conversion
-    description: 'LEDs Posted',
-    trend: null
-  }
-];
-
-// Sample data for charts and graphs
-const chartData = [
-  { name: 'Feb 24', views: 15000, engagement: 7000, leads: 1200 },
-  { name: 'Feb 25', views: 13000, engagement: 6000, leads: 1000 },
-  { name: 'Feb 26', views: 12000, engagement: 7500, leads: 1300 },
-  { name: 'Feb 27', views: 13500, engagement: 8000, leads: 1400 },
-  { name: 'Feb 28', views: 16000, engagement: 9500, leads: 1800 },
-  { name: 'Mar 1', views: 19000, engagement: 11000, leads: 2100 },
-  { name: 'Mar 2', views: 22000, engagement: 13000, leads: 2700 },
-];
-
-const pieChartData = [
-  { name: 'YouTube', value: 55, color: '#FF0000' },
-  { name: 'Google', value: 25, color: '#4285F4' },
-  { name: 'Social Media', value: 15, color: '#4CAF50' },
-  { name: 'Direct', value: 5, color: '#FFC107' },
-];
-
-const keywordsData = [
-  {
-    id: 1,
-    keyword: 'ai product reviews',
-    sentiment: 82.5,
-    views: 23221,
-    videos: 4,
-    likes: 97,
-    comments: 8,
-    topVideos: ['AI Product Review Guide', 'Best AI Products 2025', 'AI Tools Comparison'],
-    category: 'AI Content Creation',
-    audience: 'Affiliate marketers'
-  },
-  {
-    id: 2,
-    keyword: 'ai affiliate marketing',
-    sentiment: 83.75,
-    views: 138917,
-    videos: 4,
-    likes: 1400,
-    comments: 48,
-    topVideos: ['AI Affiliate Marketing Guide', 'Passive Income with AI', '$5K/Month AI Strategy'],
-    category: 'AI-Powered Affiliate',
-    audience: 'Affiliate marketers'
-  },
-  {
-    id: 3,
-    keyword: 'passive income with ai',
-    sentiment: 68.75,
-    views: 119477,
-    videos: 4,
-    likes: 1281,
-    comments: 48,
-    topVideos: ['Passive Income Strategies', 'AI Automation for Income', 'Recurring Revenue with AI'],
-    category: 'AI Business Strategy',
-    audience: 'Digital entrepreneur'
-  },
-  {
-    id: 4,
-    keyword: 'ai copywriting tools',
-    sentiment: 76.25,
-    views: 84312,
-    videos: 3,
-    likes: 923,
-    comments: 37,
-    topVideos: ['Best AI Writing Tools', 'AI Copywriting Guide', 'Content Creation with AI'],
-    category: 'AI Tools',
-    audience: 'Content creators'
-  }
-];
+// Tipos e configurações para os cards serão definidos dinamicamente com base nos dados reais
 
 // Component types
 type ChartType = 'area' | 'line' | 'bar';
@@ -1425,9 +1320,22 @@ const renderIcon = (iconName: string) => {
 
 // Main component
 const Overview: React.FC = () => {
-  // States
+  const { currentProject } = useProject();
+  
+  // Use o hook personalizado para buscar dados do Supabase
+  const { 
+    loading, 
+    error, 
+    statsData, 
+    performanceData, 
+    trafficSources, 
+    keywordsTable, 
+    timeframe,
+    setTimeframe
+  } = useDashboardData();
+  
+  // States originais que ainda são necessários
   const [chartType, setChartType] = useState<ChartType>('area');
-  const [timeframe, setTimeframe] = useState<TimeframeType>('week');
   const [dataView, setDataView] = useState<DataViewType>('overview');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -1522,8 +1430,783 @@ const Overview: React.FC = () => {
     return () => clearTimeout(startDelay);
   }, []);
   
+  // Modern business-focused loading animation
+  const GlowPulse = keyframes`
+    0% { box-shadow: 0 0 20px rgba(33, 150, 243, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(33, 150, 243, 0.5); }
+    100% { box-shadow: 0 0 20px rgba(33, 150, 243, 0.3); }
+  `;
+
+  const CountUp = keyframes`
+    from { width: 0%; }
+    to { width: 100%; }
+  `;
+  
+  const DealPulse = keyframes`
+    0% { transform: scale(0.96); }
+    50% { transform: scale(1); }
+    100% { transform: scale(0.96); }
+  `;
+
+  const DataFlow = keyframes`
+    0% { stroke-dashoffset: 1000; }
+    100% { stroke-dashoffset: 0; }
+  `;
+
+  const LoadingAnimation = styled.div`
+    width: 100%;
+    height: 70vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background: white;
+    overflow: hidden;
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes progress {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.7; }
+      50% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.7; }
+    }
+    
+    @keyframes glow {
+      0% { box-shadow: 0 0 20px rgba(33, 150, 243, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(33, 150, 243, 0.5); }
+      100% { box-shadow: 0 0 20px rgba(33, 150, 243, 0.3); }
+    }
+  `;
+
+  const LoadingPulse = keyframes`
+    0% { transform: scale(0.95); opacity: 0.7; }
+    50% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.7; }
+  `;
+
+  const LoadingBars = keyframes`
+    0% { height: 5%; }
+    50% { height: 85%; }
+    100% { height: 5%; }
+  `;
+  
+  const StockTicker = keyframes`
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  `;
+
+  const LoadingText = styled.div`
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #1976D2;
+    margin-bottom: 40px;
+    background: linear-gradient(90deg, #1976D2, #2196F3, #00BCD4, #0288D1);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: ${shimmer} 2s linear infinite;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #2196F3, transparent);
+      animation: ${CountUp} 2s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+    }
+  `;
+
+  const LoadingChart = styled.div`
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 6px;
+    height: 150px;
+    width: 300px;
+    padding: 20px;
+    position: relative;
+    background: rgba(236, 239, 241, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    perspective: 1000px;
+    transform-style: preserve-3d;
+    transform: rotateX(10deg);
+  `;
+
+  const LoadingBar = styled.div<{ delay: number }>`
+    width: 16px;
+    background: linear-gradient(180deg, #1976D2, #2196F3);
+    border-radius: 4px 4px 0 0;
+    animation: ${LoadingBars} 1.3s ease-in-out infinite;
+    animation-delay: ${props => props.delay}s;
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+    position: relative;
+    z-index: 2;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 0 0 4px 4px;
+    }
+  `;
+
+  const LeadCount = styled.div`
+    position: absolute;
+    top: -30px;
+    right: 20px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1976D2;
+    background: #E3F2FD;
+    padding: 3px 12px;
+    border-radius: 20px;
+    border: 2px solid rgba(33, 150, 243, 0.3);
+    box-shadow: 0 2px 10px rgba(33, 150, 243, 0.15);
+    animation: ${DealPulse} 2s ease-in-out infinite;
+    
+    &::before {
+      content: 'LEADS';
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: 600;
+      color: #1976D2;
+      letter-spacing: 1px;
+    }
+  `;
+
+  const StockTickerContainer = styled.div`
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    height: 32px;
+    overflow: hidden;
+    background: rgba(33, 150, 243, 0.05);
+    border-top: 1px solid rgba(33, 150, 243, 0.1);
+    border-bottom: 1px solid rgba(33, 150, 243, 0.1);
+  `;
+
+  const StockTickerContent = styled.div`
+    display: flex;
+    gap: 40px;
+    padding: 0 20px;
+    white-space: nowrap;
+    animation: ${StockTicker} 20s linear infinite;
+    width: fit-content;
+  `;
+
+  const StockItem = styled.div`
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #424242;
+    
+    span {
+      margin-left: 6px;
+      font-weight: 700;
+      color: #4CAF50;
+    }
+    
+    &.negative span {
+      color: #F44336;
+    }
+  `;
+
+  const LoadingPie = styled.div`
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: conic-gradient(
+      #1976D2 0% 15%,
+      #4CAF50 15% 32%,
+      #00BCD4 32% 48%,
+      #FFC107 48% 64%,
+      #FF5722 64% 80%,
+      #9C27B0 80% 90%,
+      #E91E63 90% 100%
+    );
+    position: relative;
+    margin-top: 30px;
+    animation: ${LoadingPulse} 2s ease-in-out infinite, ${GlowPulse} 4s ease-in-out infinite;
+    box-shadow: 0 5px 25px rgba(33, 150, 243, 0.3);
+    transform-style: preserve-3d;
+    transform: perspective(800px) rotateY(15deg);
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 65px;
+      height: 65px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    &::before {
+      content: '72%';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 20px;
+      font-weight: 700;
+      color: #1976D2;
+      z-index: 2;
+    }
+  `;
+
+  const LoadingDot = styled.div`
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2196F3;
+    filter: blur(1px);
+    box-shadow: 0 0 8px rgba(33, 150, 243, 0.6);
+  `;
+
+  const LoadingRipple = keyframes`
+    0% { transform: scale(0); opacity: 1; }
+    100% { transform: scale(1); opacity: 0; }
+  `;
+
+  const LoadingRing = styled.div`
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 2px solid rgba(33, 150, 243, 0.1);
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      border-top-color: #2196F3;
+      border-right-color: #2196F3;
+      animation: spin 2s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
+  
+  const BusinessMetric = styled.div`
+    position: absolute;
+    padding: 10px 15px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #424242;
+    border-left: 3px solid #1976D2;
+    animation: ${DealPulse} 3s ease-in-out infinite;
+    z-index: 10;
+    
+    span {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1976D2;
+      margin-top: 4px;
+    }
+  `;
+
+  // Definir as animações fora do render
+  const getRandomDotStyles = (i: number) => {
+    const topPos = Math.random() * 70 + 15;
+    const leftPos = Math.random() * 70 + 15;
+    const opacity = Math.random() * 0.5 + 0.3;
+    const scale = Math.random() * 1.5 + 0.5;
+    const delay = Math.random() * 2;
+    const duration = Math.random() * 2 + 1;
+    
+    return {
+      top: `${topPos}%`,
+      left: `${leftPos}%`,
+      opacity,
+      transform: `scale(${scale})`,
+      animationDuration: `${duration}s`,
+      animationDelay: `${delay}s`
+    };
+  };
+
+  // Partículas com animações pre-definidas
+  const LoadingDotAnimated = styled(LoadingDot)`
+    animation: ${LoadingRipple} linear infinite;
+  `;
+
+  // Mostrar loading com animação moderna e luxuosa
+  if (loading) {
+    return (
+      <PageContainer>
+        <LoadingAnimation style={{ 
+          background: 'linear-gradient(180deg, #f7f9fc 0%, #ffffff 100%)',
+          boxShadow: '0 10px 50px rgba(0, 0, 0, 0.05)'
+        }}>
+          <LoadingText style={{ marginBottom: '80px' }}>Loading Dashboard</LoadingText>
+          
+          {/* Loading ring com gradiente de luxo */}
+          <div 
+            style={{ 
+              width: '300px', 
+              height: '300px', 
+              position: 'relative',
+              margin: '0 auto 80px auto'
+            }}
+          >
+            {/* Círculo central da animação */}
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '120px',
+              height: '120px',
+              borderRadius: '50%',
+              background: 'white',
+              boxShadow: '0 0 50px rgba(33, 150, 243, 0.2)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              fontSize: '22px',
+              fontWeight: 700,
+              color: '#1976D2',
+              zIndex: 5
+            }}>
+              72%
+            </div>
+            
+            {/* Círculo de animação que gira */}
+            <div style={{ 
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%', 
+              height: '100%',
+              borderRadius: '50%',
+              border: '6px solid rgba(25, 118, 210, 0.05)',
+              boxShadow: '0 0 30px rgba(25, 118, 210, 0.1)',
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: -6,
+                left: -6,
+                width: 'calc(100% + 12px)',
+                height: 'calc(100% + 12px)',
+                borderRadius: '50%',
+                borderTop: '6px solid #1976D2',
+                borderRight: '6px solid #1976D2',
+                animation: 'spin 2s linear infinite'
+              }} />
+            </div>
+            
+            {/* Arco decorativo estático */}
+            <div style={{
+              position: 'absolute',
+              top: '10%',
+              left: '10%',
+              width: '80%',
+              height: '80%',
+              borderRadius: '50%',
+              border: '2px solid rgba(76, 175, 80, 0.3)',
+              borderTop: '2px solid rgba(76, 175, 80, 0.8)',
+              borderRight: '2px solid rgba(76, 175, 80, 0.8)'
+            }} />
+          </div>
+          
+          {/* Progress bar de carregamento horizontal */}
+          <div style={{
+            width: '400px',
+            height: '6px',
+            background: 'rgba(33, 150, 243, 0.1)',
+            borderRadius: '3px',
+            margin: '0 auto 100px auto',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              height: '100%',
+              width: '75%',
+              background: 'linear-gradient(90deg, #1976D2, #2196F3)',
+              borderRadius: '3px',
+              boxShadow: '0 0 10px rgba(33, 150, 243, 0.5)',
+              animation: 'progress 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite'
+            }} />
+          </div>
+          
+          {/* Partículas sutis e elegantes */}
+          {[...Array(12)].map((_, i) => (
+            <LoadingDotAnimated 
+              key={i}
+              style={{
+                ...getRandomDotStyles(i),
+                opacity: 0.3, // Mais sutil
+                boxShadow: '0 0 12px rgba(33, 150, 243, 0.4)'
+              }}
+            />
+          ))}
+        </LoadingAnimation>
+      </PageContainer>
+    );
+  }
+  
+  // Animação de erro moderna
+  const ErrorAnimation = keyframes`
+    0% { transform: scale(1); }
+    10% { transform: scale(1.1); }
+    20% { transform: scale(1); }
+    100% { transform: scale(1); }
+  `;
+
+  const ErrorContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 70vh;
+    text-align: center;
+    padding: 50px 20px;
+    position: relative;
+    overflow: hidden;
+  `;
+
+  const ErrorIcon = styled.div`
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff5252, #d32f2f);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
+    position: relative;
+    animation: ${ErrorAnimation} 2s ease-in-out infinite;
+    box-shadow: 0 10px 30px rgba(211, 47, 47, 0.3);
+    
+    &::before, &::after {
+      content: '';
+      position: absolute;
+      background: white;
+      border-radius: 4px;
+    }
+    
+    &::before {
+      width: 10px;
+      height: 50px;
+      transform: rotate(45deg);
+    }
+    
+    &::after {
+      width: 10px;
+      height: 50px;
+      transform: rotate(-45deg);
+    }
+  `;
+
+  const ErrorTitle = styled.h3`
+    font-size: 28px;
+    font-weight: 600;
+    color: #d32f2f;
+    margin-bottom: 15px;
+  `;
+
+  const ErrorMessage = styled.div`
+    font-size: 16px;
+    color: #555;
+    max-width: 500px;
+    background: rgba(211, 47, 47, 0.05);
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid #d32f2f;
+    text-align: left;
+    position: relative;
+    
+    &::before {
+      content: '!';
+      position: absolute;
+      top: -10px;
+      left: -12px;
+      width: 24px;
+      height: 24px;
+      background: #d32f2f;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+  `;
+
+  const ErrorParticle = styled.div`
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(211, 47, 47, 0.3);
+  `;
+
+  // Helper para gerar estilos aleatórios para partículas de erro
+  const getRandomErrorParticleStyles = (i: number) => {
+    const topPos = Math.random() * 70 + 15;
+    const leftPos = Math.random() * 80 + 10;
+    const opacity = Math.random() * 0.5 + 0.3;
+    const scale = Math.random() * 1.5 + 0.5;
+    const delay = Math.random() * 2;
+    const duration = Math.random() * 3 + 2;
+    
+    return {
+      top: `${topPos}%`,
+      left: `${leftPos}%`,
+      opacity,
+      transform: `scale(${scale})`,
+      animationDuration: `${duration}s`,
+      animationDelay: `${delay}s`
+    };
+  };
+
+  // Partículas com animações pre-definidas
+  const ErrorParticleAnimated = styled(ErrorParticle)`
+    animation: ${LoadingRipple} linear infinite;
+  `;
+
+  // Mostrar erro com animação moderna
+  if (error) {
+    return (
+      <PageContainer>
+        <ErrorContainer>
+          <ErrorIcon />
+          <ErrorTitle>Error Loading Data</ErrorTitle>
+          <ErrorMessage>{error}</ErrorMessage>
+          
+          {/* Partículas de erro */}
+          {[...Array(12)].map((_, i) => (
+            <ErrorParticleAnimated
+              key={i}
+              style={getRandomErrorParticleStyles(i)}
+            />
+          ))}
+        </ErrorContainer>
+      </PageContainer>
+    );
+  }
+  
+  // Animação para "nenhum projeto" moderna
+  const EmptyAnimation = keyframes`
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0); }
+  `;
+
+  const EmptyContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 70vh;
+    text-align: center;
+    padding: 50px 20px;
+    background: rgba(103, 58, 183, 0.01);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  `;
+
+  const EmptyIcon = styled.div`
+    width: 150px;
+    height: 150px;
+    margin-bottom: 30px;
+    position: relative;
+    animation: ${EmptyAnimation} 3s ease-in-out infinite;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    svg {
+      width: 100%;
+      height: 100%;
+      color: #673AB7;
+      opacity: 0.7;
+    }
+  `;
+
+  const EmptyTitle = styled.h3`
+    font-size: 28px;
+    font-weight: 600;
+    background: linear-gradient(90deg, #673AB7, #2196F3);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 15px;
+  `;
+
+  const EmptyMessage = styled.p`
+    font-size: 18px;
+    color: #555;
+    margin-bottom: 30px;
+  `;
+
+  const EmptyButton = styled.button`
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #673AB7 0%, #2196F3 100%);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(103, 58, 183, 0.3);
+    
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(103, 58, 183, 0.4);
+    }
+  `;
+
+  const GridPattern = styled.div`
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: linear-gradient(rgba(103, 58, 183, 0.03) 1px, transparent 1px),
+                     linear-gradient(90deg, rgba(103, 58, 183, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    z-index: -1;
+  `;
+
+  const Dots = styled.div`
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(103, 58, 183, 0.2);
+  `;
+
+  // Helper para gerar estilos aleatórios para pontos decorativos
+  const getRandomDotPosition = (i: number) => {
+    const topPos = Math.random() * 90 + 5;
+    const leftPos = Math.random() * 90 + 5;
+    const opacity = Math.random() * 0.7 + 0.1;
+    const scale = Math.random() * 1.5 + 0.5;
+    
+    return {
+      top: `${topPos}%`,
+      left: `${leftPos}%`,
+      opacity,
+      transform: `scale(${scale})`
+    };
+  };
+
+  // Se não houver projeto selecionado
+  if (!currentProject) {
+    return (
+      <PageContainer>
+        <EmptyContainer>
+          <GridPattern />
+          
+          <EmptyIcon>
+            <IconComponent icon={FaIcons.FaProjectDiagram} />
+          </EmptyIcon>
+          
+          <EmptyTitle>No Project Selected</EmptyTitle>
+          <EmptyMessage>Select a project to view the dashboard data.</EmptyMessage>
+          
+          <EmptyButton>
+            <IconComponent icon={FaIcons.FaPlus} style={{ marginRight: '8px' }} />
+            Select Project
+          </EmptyButton>
+          
+          {/* Pontos decorativos */}
+          {[...Array(20)].map((_, i) => (
+            <Dots
+              key={i}
+              style={getRandomDotPosition(i)}
+            />
+          ))}
+        </EmptyContainer>
+      </PageContainer>
+    );
+  }
+  
+  // Configuração dos cards com dados reais
+  const statsCards = [
+    {
+      id: 1,
+      title: 'Reach',
+      value: statsData.reach.value,
+      icon: 'FaUsers',
+      color: 'linear-gradient(135deg, #2196F3 0%, #03A9F4 100%)',
+      description: 'People reached',
+      trend: statsData.reach.trend
+    },
+    {
+      id: 2,
+      title: 'Activities',
+      value: statsData.activities.value,
+      icon: 'FaShareAlt',
+      color: 'linear-gradient(135deg, #FF7A30 0%, #FFA07A 100%)',
+      description: 'Total activities this month',
+      trend: statsData.activities.trend
+    },
+    {
+      id: 3,
+      title: 'Total Engagements',
+      value: statsData.engagements.value,
+      icon: 'FaComments',
+      color: 'linear-gradient(135deg, #673AB7 0%, #9575CD 100%)',
+      description: 'Engagements posted',
+      trend: statsData.engagements.trend
+    },
+    {
+      id: 4,
+      title: 'LEDs',
+      value: statsData.leads.value,
+      icon: 'FaShoppingCart',
+      color: 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)',
+      description: 'LEDs Posted',
+      trend: statsData.leads.trend
+    }
+  ];
+  
   // Filter keywords based on search term
-  const filteredKeywords = keywordsData.filter(keyword => 
+  const filteredKeywords = keywordsTable.filter(keyword => 
     searchTerm === '' || 
     keyword.keyword.toLowerCase().includes(searchTerm.toLowerCase()) ||
     keyword.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -1649,13 +2332,21 @@ const Overview: React.FC = () => {
         >
           <StatCardTitle>
             <IconComponent icon={FaIcons.FaChartPie} />
-            Traffic Sources
+            Main Channels <span style={{ 
+              fontSize: '15px', 
+              fontWeight: 'normal', 
+              marginLeft: '8px',
+              color: '#666',
+              opacity: 0.9
+            }}>
+              Top Channels
+            </span>
           </StatCardTitle>
           <ChartContainer style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={pieChartData}
+                  data={trafficSources}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -1664,9 +2355,22 @@ const Overview: React.FC = () => {
                   dataKey="value"
                   label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   labelLine={false}
+                  isAnimationActive={true}
                 >
-                  {pieChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  {trafficSources.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={
+                        index === 0 ? "#D32F2F" : // Vermelho escuro
+                        index === 1 ? "#388E3C" : // Verde escuro
+                        index === 2 ? "#1976D2" : // Azul escuro
+                        index === 3 ? "#FBC02D" : // Amarelo escuro
+                        index === 4 ? "#C2185B" : // Rosa escuro
+                        index === 5 ? "#0097A7" : // Ciano escuro
+                        index === 6 ? "#E64A19" : // Laranja escuro
+                        `hsl(${index * 45}, 70%, 35%)`  // Fallback mais escuro
+                      }
+                    />
                   ))}
                 </Pie>
                 <Tooltip 
@@ -1693,7 +2397,7 @@ const Overview: React.FC = () => {
           </StatCardTitle>
           <ChartContainer style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData.slice(-4)} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+              <BarChart data={performanceData.slice(-4)} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} />
                 <YAxis axisLine={false} tickLine={false} />
@@ -1769,7 +2473,7 @@ const Overview: React.FC = () => {
           <ChartContainer>
             <ResponsiveContainer width="100%" height="100%">
               {chartType === 'area' ? (
-                <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <AreaChart data={performanceData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#673AB7" stopOpacity={0.8}/>
@@ -1828,7 +2532,7 @@ const Overview: React.FC = () => {
                   />
                 </AreaChart>
               ) : chartType === 'line' ? (
-                <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <LineChart data={performanceData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} />
                   <YAxis axisLine={false} tickLine={false} />
@@ -1870,7 +2574,7 @@ const Overview: React.FC = () => {
                   />
                 </LineChart>
               ) : (
-                <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <BarChart data={performanceData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} />
                   <YAxis axisLine={false} tickLine={false} />
