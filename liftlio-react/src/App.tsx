@@ -10,7 +10,6 @@ import Monitoring from './pages/Monitoring';
 import Mentions from './pages/Mentions';
 import Settings from './pages/Settings';
 import Integrations from './pages/Integrations';
-import YoutubeMonitoring from './pages/YoutubeMonitoring';
 import LoginPage from './pages/LoginPage';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from './utils/IconHelper';
@@ -293,7 +292,6 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
             <Route path="/" element={<Overview />} />
             <Route path="/monitoring" element={<Monitoring />} />
             <Route path="/mentions" element={<Mentions />} />
-            <Route path="/youtube-monitoring" element={<YoutubeMonitoring />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/integrations" element={<Integrations />} />
           </Routes>

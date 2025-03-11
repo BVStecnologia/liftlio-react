@@ -4,6 +4,7 @@ import Card from '../components/Card';
 import { IconContext } from 'react-icons';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
+import { useMentionsData, TimeframeType, TabType, MentionData } from '../hooks/useMentionsData';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
   Tooltip as RechartsTooltip, ResponsiveContainer, 
@@ -803,7 +804,7 @@ const ResponseInfo = styled.div<{ status?: string }>`
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border-left: 4px solid ${props => 
     props.status === 'scheduled' ? '#e69819' : 
-    props.status === 'posted' ? '#38a169' : 
+    props.status === 'posted' || props.status === 'published' ? '#38a169' : 
     '#6b46c1'};
 `;
 
@@ -820,7 +821,7 @@ const ResponseStatusBadge = styled.div<{ status?: string }>`
   color: white;
   background: ${props => 
     props.status === 'scheduled' ? '#e69819' : 
-    props.status === 'posted' ? '#38a169' : 
+    props.status === 'posted' || props.status === 'published' ? '#38a169' : 
     '#6b46c1'};
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
@@ -1392,7 +1393,7 @@ const ChartLabel = styled.div`
 interface EditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  mention: typeof mentionsData[0] | null;
+  mention: MentionData | null;
   onSave: (id: number, newText: string) => void;
 }
 
@@ -1462,13 +1463,23 @@ const EditResponseModal: React.FC<EditModalProps> = ({ isOpen, onClose, mention,
 };
 
 const Mentions: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('posted');
-  const [data, setData] = useState(mentionsData);
+  const [activeTab, setActiveTab] = useState<TabType>('posted');
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [currentMention, setCurrentMention] = useState<typeof mentionsData[0] | null>(null);
-  const [timeframe, setTimeframe] = useState('week');
+  const [currentMention, setCurrentMention] = useState<MentionData | null>(null);
+  const [timeframe, setTimeframe] = useState<TimeframeType>('week');
   
-  const renderTypeCell = (mention: typeof mentionsData[0]) => {
+  // Usar o hook para obter dados dinâmicos
+  const { 
+    loading, 
+    error, 
+    mentionsData: data, 
+    mentionStats, 
+    performanceData,
+    toggleFavorite: toggleFavoriteMention,
+    setTimeframe: setMentionTimeframe
+  } = useMentionsData(activeTab);
+  
+  const renderTypeCell = (mention: MentionData) => {
     if (mention.type === 'Led Score') {
       return (
         <TypeCell>
@@ -1500,37 +1511,23 @@ const Mentions: React.FC = () => {
     );
   };
   
-  const handleEditClick = (mention: typeof mentionsData[0]) => {
+  const handleEditClick = (mention: MentionData) => {
     setCurrentMention(mention);
     setEditModalOpen(true);
   };
   
   const handleSaveResponse = (id: number, newText: string) => {
-    setData(prevData => 
-      prevData.map(mention => 
-        mention.id === id 
-          ? { ...mention, response: { ...mention.response, text: newText }} 
-          : mention
-      )
-    );
+    // Aqui seria implementada a lógica para atualizar a resposta no banco de dados
+    console.log(`Saving response for mention ID ${id}: ${newText}`);
+    // Por enquanto, não temos uma implementação completa para isso
   };
   
   const handleToggleFavorite = (id: number) => {
-    setData(prevData => 
-      prevData.map(mention => 
-        mention.id === id 
-          ? { ...mention, favorite: !mention.favorite } 
-          : mention
-      )
-    );
+    // Usar a função do hook para alternar o favorito
+    toggleFavoriteMention(id);
   };
   
-  const filteredData = data.filter(mention => {
-    if (activeTab === 'scheduled') return mention.response.status === 'scheduled';
-    if (activeTab === 'posted') return mention.response.status === 'posted';
-    if (activeTab === 'favorites') return mention.favorite;
-    return true;
-  });
+  // Não é mais necessário filtrar os dados aqui, pois o hook já retorna os dados filtrados por tab
   
   return (
     <IconContext.Provider value={{ className: 'react-icons' }}>
@@ -1562,7 +1559,16 @@ const Mentions: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'center' }}>Actions</div>
             </TableHeader>
             
-            {filteredData.length === 0 ? (
+            {loading ? (
+              <TableRow style={{ justifyContent: 'center', padding: '40px 0' }}>
+                <div style={{ gridColumn: '1 / span 5', textAlign: 'center', color: '#6c757d' }}>
+                  <div style={{ fontSize: '48px', opacity: 0.3, marginBottom: '16px' }}>
+                    <IconComponent icon={FaIcons.FaSpinner} />
+                  </div>
+                  <p>Loading mentions...</p>
+                </div>
+              </TableRow>
+            ) : data.length === 0 ? (
               <TableRow style={{ justifyContent: 'center', padding: '40px 0' }}>
                 <div style={{ gridColumn: '1 / span 5', textAlign: 'center', color: '#6c757d' }}>
                   <div style={{ fontSize: '48px', opacity: 0.3, marginBottom: '16px' }}>
@@ -1572,13 +1578,13 @@ const Mentions: React.FC = () => {
                 </div>
               </TableRow>
             ) : (
-              filteredData.map((mention, index) => (
+              data.map((mention, index) => (
                 <TableRow key={mention.id} index={index}>
                   <VideoCell>
                     <VideoThumbnailWrapper>
                       <VideoThumbnail>
                         <img 
-                          src={`https://i.ytimg.com/vi/${mention.video.id}/maxresdefault.jpg`} 
+                          src={mention.video.thumbnail || `https://i.ytimg.com/vi/${mention.video.id}/maxresdefault.jpg`} 
                           alt={mention.video.title}
                           onError={(e) => {
                             // Fallback if high quality thumbnail is not available
@@ -1646,10 +1652,15 @@ const Mentions: React.FC = () => {
                             <IconComponent icon={FaIcons.FaClock} />
                             Scheduled
                           </>
-                        ) : (
+                        ) : mention.response.status === 'published' || mention.response.status === 'posted' ? (
                           <>
                             <IconComponent icon={FaIcons.FaCheck} />
                             Posted
+                          </>
+                        ) : (
+                          <>
+                            <IconComponent icon={FaIcons.FaEdit} />
+                            {mention.response.status || 'New'}
                           </>
                         )}
                       </ResponseStatusBadge>
@@ -1704,25 +1715,37 @@ const Mentions: React.FC = () => {
             <TimeframeSelector>
               <TimeframeButton 
                 active={timeframe === 'day'} 
-                onClick={() => setTimeframe('day')}
+                onClick={() => {
+                  setTimeframe('day');
+                  setMentionTimeframe('day');
+                }}
               >
                 Day
               </TimeframeButton>
               <TimeframeButton 
                 active={timeframe === 'week'} 
-                onClick={() => setTimeframe('week')}
+                onClick={() => {
+                  setTimeframe('week');
+                  setMentionTimeframe('week');
+                }}
               >
                 Week
               </TimeframeButton>
               <TimeframeButton 
                 active={timeframe === 'month'} 
-                onClick={() => setTimeframe('month')}
+                onClick={() => {
+                  setTimeframe('month');
+                  setMentionTimeframe('month');
+                }}
               >
                 Month
               </TimeframeButton>
               <TimeframeButton 
                 active={timeframe === 'year'} 
-                onClick={() => setTimeframe('year')}
+                onClick={() => {
+                  setTimeframe('year');
+                  setMentionTimeframe('year');
+                }}
               >
                 Year
               </TimeframeButton>
@@ -1734,11 +1757,11 @@ const Mentions: React.FC = () => {
               <StatIcon color={`linear-gradient(135deg, #8561C5 0%, #9575CD 100%)`}>
                 <IconComponent icon={FaIcons.FaComments} />
               </StatIcon>
-              <StatValue>248</StatValue>
+              <StatValue>{mentionStats.totalMentions}</StatValue>
               <StatLabel>Total Mentions</StatLabel>
-              <StatTrend increasing>
-                <IconComponent icon={FaIcons.FaArrowUp} />
-                12% from last week
+              <StatTrend increasing={mentionStats.trends.totalMentionsTrend > 0}>
+                <IconComponent icon={mentionStats.trends.totalMentionsTrend > 0 ? FaIcons.FaArrowUp : FaIcons.FaArrowDown} />
+                {Math.abs(mentionStats.trends.totalMentionsTrend)}% from last week
               </StatTrend>
             </StatCard>
             
@@ -1746,11 +1769,11 @@ const Mentions: React.FC = () => {
               <StatIcon color={`linear-gradient(135deg, #00C781 0%, #82ffc9 100%)`}>
                 <IconComponent icon={FaIcons.FaCheck} />
               </StatIcon>
-              <StatValue>189</StatValue>
+              <StatValue>{mentionStats.respondedMentions}</StatValue>
               <StatLabel>Responded Mentions</StatLabel>
-              <StatTrend increasing>
-                <IconComponent icon={FaIcons.FaArrowUp} />
-                8% from last week
+              <StatTrend increasing={mentionStats.trends.respondedMentionsTrend > 0}>
+                <IconComponent icon={mentionStats.trends.respondedMentionsTrend > 0 ? FaIcons.FaArrowUp : FaIcons.FaArrowDown} />
+                {Math.abs(mentionStats.trends.respondedMentionsTrend)}% from last week
               </StatTrend>
             </StatCard>
             
@@ -1758,11 +1781,11 @@ const Mentions: React.FC = () => {
               <StatIcon color={`linear-gradient(135deg, #FFAA15 0%, #ffd67e 100%)`}>
                 <IconComponent icon={FaIcons.FaClock} />
               </StatIcon>
-              <StatValue>59</StatValue>
+              <StatValue>{mentionStats.pendingResponses}</StatValue>
               <StatLabel>Pending Responses</StatLabel>
-              <StatTrend>
-                <IconComponent icon={FaIcons.FaArrowDown} />
-                4% from last week
+              <StatTrend increasing={mentionStats.trends.pendingResponsesTrend > 0}>
+                <IconComponent icon={mentionStats.trends.pendingResponsesTrend > 0 ? FaIcons.FaArrowUp : FaIcons.FaArrowDown} />
+                {Math.abs(mentionStats.trends.pendingResponsesTrend)}% from last week
               </StatTrend>
             </StatCard>
             
@@ -1770,18 +1793,18 @@ const Mentions: React.FC = () => {
               <StatIcon color={`linear-gradient(135deg, #9575CD 0%, #4facfe 100%)`}>
                 <IconComponent icon={FaIcons.FaPercentage} />
               </StatIcon>
-              <StatValue>76%</StatValue>
+              <StatValue>{Math.round(mentionStats.responseRate)}%</StatValue>
               <StatLabel>Response Rate</StatLabel>
-              <StatTrend increasing>
-                <IconComponent icon={FaIcons.FaArrowUp} />
-                3% from last week
+              <StatTrend increasing={mentionStats.trends.responseRateTrend > 0}>
+                <IconComponent icon={mentionStats.trends.responseRateTrend > 0 ? FaIcons.FaArrowUp : FaIcons.FaArrowDown} />
+                {Math.abs(mentionStats.trends.responseRateTrend)}% from last week
               </StatTrend>
             </StatCard>
           </StatsGrid>
           
           <ChartSection>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={analyticsData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={performanceData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f5" />
                 <XAxis dataKey="day" axisLine={false} tickLine={false} />
                 <YAxis axisLine={false} tickLine={false} />
