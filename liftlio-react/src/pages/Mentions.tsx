@@ -23,6 +23,29 @@ const fadeIn = keyframes`
   }
 `;
 
+// Toast notification animation
+const slideIn = keyframes`
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+`;
+
+const slideOut = keyframes`
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+`;
+
 const pulse = keyframes`
   0% {
     transform: scale(1);
@@ -1354,6 +1377,27 @@ const PaginationContainer = styled.div`
   opacity: 0;
 `;
 
+// Custom toast notification
+const Toast = styled.div<{ visible: boolean, success?: boolean }>`
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  background: ${props => props.success ? '#38a169' : '#e53e3e'};
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  display: ${props => props.visible ? 'flex' : 'none'};
+  align-items: center;
+  gap: 10px;
+  animation: ${props => props.visible ? slideIn : slideOut} 0.3s ease forwards;
+  
+  svg {
+    font-size: 18px;
+  }
+`;
+
 const PageInfo = styled.div`
   font-size: ${props => props.theme.fontSizes.sm};
   color: ${props => props.theme.colors.darkGrey};
@@ -1517,6 +1561,17 @@ const Mentions: React.FC = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentMention, setCurrentMention] = useState<MentionData | null>(null);
   const [timeframe, setTimeframe] = useState<TimeframeType>('week');
+  const [toast, setToast] = useState({ visible: false, message: '', success: true });
+  
+  // Auto-hide toast after 3 seconds
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(() => {
+        setToast(prev => ({ ...prev, visible: false }));
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.visible]);
   
   // Usar o hook para obter dados dinâmicos
   const { 
@@ -1580,15 +1635,36 @@ const Mentions: React.FC = () => {
     // Por enquanto, não temos uma implementação completa para isso
   };
   
-  const handleToggleFavorite = (id: number) => {
-    // Usar a função do hook para alternar o favorito
+  const handleToggleFavorite = (id: number, currentStatus: boolean) => {
+    // Use the hook function to toggle favorite status
     toggleFavoriteMention(id);
+    
+    // Show custom toast notification
+    if (currentStatus) {
+      setToast({
+        visible: true,
+        message: "Removed from favorites",
+        success: true
+      });
+    } else {
+      setToast({
+        visible: true,
+        message: "Added to favorites",
+        success: true
+      });
+    }
   };
   
   // Não é mais necessário filtrar os dados aqui, pois o hook já retorna os dados filtrados por tab
   
   return (
     <IconContext.Provider value={{ className: 'react-icons' }}>
+      {/* Custom Toast Notification */}
+      <Toast visible={toast.visible} success={toast.success}>
+        <IconComponent icon={toast.success ? FaIcons.FaCheck : FaIcons.FaExclamationCircle} />
+        {toast.message}
+      </Toast>
+      
       <PageContainer>
         <PageTitle>
           <IconComponent icon={FaIcons.FaComments} />
@@ -1597,13 +1673,13 @@ const Mentions: React.FC = () => {
         
         <TabContainer>
           <Tab active={activeTab === 'scheduled'} onClick={() => setActiveTab('scheduled')}>
-            Aguardando
+            Scheduled
           </Tab>
           <Tab active={activeTab === 'posted'} onClick={() => setActiveTab('posted')}>
-            Publicados
+            Posted
           </Tab>
           <Tab active={activeTab === 'favorites'} onClick={() => setActiveTab('favorites')}>
-            Favoritos
+            Favorites
           </Tab>
         </TabContainer>
         
@@ -1708,12 +1784,12 @@ const Mentions: React.FC = () => {
                         {mention.response.date ? (
                           <>
                             <IconComponent icon={FaIcons.FaCheck} />
-                            Publicado
+                            Posted
                           </>
                         ) : (
                           <>
                             <IconComponent icon={FaIcons.FaClock} />
-                            Aguardando
+                            Scheduled
                           </>
                         )}
                       </ResponseStatusBadge>
@@ -1733,13 +1809,15 @@ const Mentions: React.FC = () => {
                   <ActionsCell>
                     <ActionButtonsGroup>
                       <ActionLabel>Actions</ActionLabel>
-                      <ActionButton 
-                        variant="favorite" 
-                        title={mention.favorite ? "Remove from favorites" : "Add to favorites"}
-                        onClick={() => handleToggleFavorite(mention.id)}
-                      >
-                        <IconComponent icon={mention.favorite ? FaIcons.FaHeart : FaIcons.FaRegHeart} />
-                      </ActionButton>
+                      {activeTab !== 'scheduled' && (
+                        <ActionButton 
+                          variant="favorite" 
+                          title={mention.favorite ? "Remove from favorites" : "Add to favorites"}
+                          onClick={() => handleToggleFavorite(mention.id, mention.favorite)}
+                        >
+                          <IconComponent icon={mention.favorite ? FaIcons.FaHeart : FaIcons.FaRegHeart} />
+                        </ActionButton>
+                      )}
                       <ActionButton 
                         variant="primary" 
                         title="Edit response"

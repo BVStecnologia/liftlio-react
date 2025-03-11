@@ -149,7 +149,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
     setError(null);
     
     try {
-      console.log(`Buscando dados para a aba: ${activeTab}`);
+      console.log(`Fetching data for tab: ${activeTab}`);
         
         // Consulta base na view mentions_overview
         let query = supabase
@@ -161,16 +161,18 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         
         // Aplicar filtros específicos para as diferentes abas
         if (activeTab === 'scheduled') {
-          console.log('Aplicando filtro para menções agendadas (published_date vazio)');
-          query = query.is('msg_created_at_formatted', null); // Filtra por published_date vazio
+          console.log('Applying filter for scheduled mentions (msg_text not empty and msg_respondido = FALSE)');
+          query = query
+            .not('msg_text', 'is', null)    // Filter for non-empty msg_text
+            .eq('msg_respondido', false);   // And msg_respondido = FALSE
         } else if (activeTab === 'posted') {
-          console.log('Aplicando filtro para menções postadas (published_date não vazio)');
-          query = query.not('msg_created_at_formatted', 'is', null); // Filtra por published_date não vazio
+          console.log('Applying filter for posted mentions (published_date not empty)');
+          query = query.not('msg_created_at_formatted', 'is', null); // Filter for non-empty published_date
         } else if (activeTab === 'favorites' as TabType) {
-          console.log('Aplicando filtro para menções favoritadas (msg_template=TRUE)');
+          console.log('Applying filter for favorite mentions (msg_template=TRUE)');
           
-          // Atualizado para filtrar apenas por msg_template=TRUE
-          console.log('Buscando msg_template=TRUE');
+          // Updated to filter only by msg_template=TRUE
+          console.log('Finding msg_template=TRUE');
           
           const favResults = await Promise.all([
             supabase
@@ -192,7 +194,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
           // Atualizar o total de itens
           setTotalItems(totalFavorites);
           
-          console.log(`Encontrados ${favData.length} favoritos totais (${favResults[0].data?.length || 0} de msg_template) - Página ${currentPage} de ${totalPages}`);
+          console.log(`Found ${favData.length} total favorites (${favResults[0].data?.length || 0} with msg_template=TRUE) - Page ${currentPage} of ${totalPages}`);
           
           // Processar os dados diretamente
           if (favData.length === 0) {
@@ -254,7 +256,9 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
           
         // Aplicar os mesmos filtros na consulta de contagem
         if (activeTab === 'scheduled') {
-          countQuery = countQuery.is('msg_created_at_formatted', null);
+          countQuery = countQuery
+            .not('msg_text', 'is', null)    // Filtra por msg_text não vazio
+            .eq('msg_respondido', false);   // E msg_respondido = FALSE
         } else if (activeTab === 'posted') {
           countQuery = countQuery.not('msg_created_at_formatted', 'is', null);
         }
@@ -267,12 +271,12 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         // Atualizar total de itens
         setTotalItems(count);
         
-        console.log(`Resultados encontrados: ${data?.length || 0} de ${count} total (página ${currentPage} de ${Math.ceil(count / itemsPerPage)})`);
+        console.log(`Results found: ${data?.length || 0} of ${count} total (page ${currentPage} of ${Math.ceil(count / itemsPerPage)})`);
         if (data?.length === 0) {
-          console.log('Nenhum resultado encontrado com os filtros aplicados');
+          console.log('No results found with applied filters');
         } else if (activeTab === 'favorites' as TabType) {
-          // Log detalhado para depuração dos favoritos
-          console.log('Favoritos encontrados:');
+          // Detailed log for debugging favorites
+          console.log('Favorites found:');
           data.forEach((item: any, index: number) => {
             console.log(`Item ${index}: is_favorite=${item.is_favorite}, msg_template=${item.msg_template}, msg_respondido=${item.msg_respondido}`);
           });
@@ -436,10 +440,12 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
       
       const newFavoriteState = !mention.favorite;
       
-      // Log detalhado para depuração
-      console.log(`Alternando favorito para menção ID ${mentionId}`);
-      console.log(`Estado atual: favorite=${mention.favorite}`);
-      console.log(`Novo estado: favorite=${newFavoriteState}`);
+      // Detailed log for debugging
+      console.log(`======= TOGGLING FAVORITE =======`);
+      console.log(`Toggling favorite for mention ID ${mentionId}`);
+      console.log(`Current state: favorite=${mention.favorite}`);
+      console.log(`New state: favorite=${newFavoriteState}`);
+      console.log(`=================================`);
       
       // Atualizar localmente para feedback imediato
       setMentionsData(prev => 
@@ -451,7 +457,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
       );
       
       // Atualizar no banco de dados
-      console.log(`Enviando atualização para o banco de dados: ID ${mentionId}, favorite=${newFavoriteState}`);
+      console.log(`Sending update to database: ID ${mentionId}, favorite=${newFavoriteState}`);
       
       // Obter a chave primária correta baseada no comment_id
       const { data: comentario, error: fetchError } = await supabase
@@ -461,37 +467,118 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         .single();
         
       if (fetchError) {
-        console.error('Erro ao buscar comentário para atualizar:', fetchError);
+        console.error('Error fetching comment for update:', fetchError);
         throw fetchError;
       }
       
       if (!comentario) {
-        console.error(`Comentário com ID ${mentionId} não encontrado`);
-        throw new Error(`Comentário não encontrado`);
+        console.error(`Comment with ID ${mentionId} not found`);
+        throw new Error(`Comment not found`);
       }
       
-      console.log(`Comentário encontrado: ID da tabela=${comentario.id}, comment_id=${comentario.comment_id}`);
+      console.log(`Comment found: Table ID=${comentario.id}, comment_id=${comentario.comment_id}`);
       
-      // Atualizar usando a chave primária correta
-      const { error: updateError } = await supabase
-        .from('Comentarios_Principais')  // Tabela principal de comentários
+      // Log current operation for debugging
+      console.log(`Attempting to update template status in Mensagens table for comment ID=${comentario.id}`);
+      
+      try {
+        // Let's add more detailed logging to understand the current state
+        console.log(`Working with comment ID=${comentario.id} for update template=${newFavoriteState}`);
+        
+        // First check if a message record exists
+        console.log(`Checking for existing message with Comentario_Principais=${comentario.id}`);
+        const { data: existingMsg, error: checkError } = await supabase
+          .from('Mensagens')
+          .select('*')
+          .eq('Comentario_Principais', comentario.id);
+        
+        if (checkError) {
+          console.error('Error checking for existing message:', checkError);
+          throw checkError;
+        }
+        
+        console.log('Existing message check result:', existingMsg);
+        
+        if (existingMsg && existingMsg.length > 0) {
+          // Update existing record
+          console.log(`Found ${existingMsg.length} existing messages. Updating message ID=${existingMsg[0].id}`);
+          
+          const { data: updateResult, error: updateError } = await supabase
+            .from('Mensagens')
+            .update({ 
+              template: newFavoriteState 
+            })
+            .eq('id', existingMsg[0].id)
+            .select();
+          
+          if (updateError) {
+            console.error('Error updating template in Mensagens:', updateError);
+            throw updateError;
+          }
+          
+          console.log('Update result:', updateResult);
+        } else {
+          // Create a new record
+          console.log(`No existing record found. Creating new message for comment ID=${comentario.id}`);
+          
+          // Create a new message record
+          const { data: newMsg, error: insertError } = await supabase
+            .from('Mensagens')
+            .insert({
+              Comentario_Principais: comentario.id,
+              template: newFavoriteState,
+              mensagem: 'Favorite' // Add a default message
+            })
+            .select();
+          
+          if (insertError) {
+            console.error('Error creating message record:', insertError);
+            throw insertError;
+          }
+          
+          console.log('New message created:', newMsg);
+        }
+      } catch (err) {
+        console.error('Failed to update Mensagens table:', err);
+        throw err;
+      }
+      
+      // Also update the msg_template field in Comentarios_Principais for UI consistency
+      console.log(`Now updating Comentarios_Principais table ID=${comentario.id} with msg_template=${newFavoriteState}`);
+      
+      const { data: commentUpdateResult, error: updateError } = await supabase
+        .from('Comentarios_Principais')
         .update({ 
-          msg_template: newFavoriteState  // Atualizar o campo msg_template em vez de msg_respondido
+          msg_template: newFavoriteState
         })
-        .eq('id', comentario.id);  // Usar a chave primária real da tabela
+        .eq('id', comentario.id)
+        .select();
         
       if (updateError) {
-        console.error('Erro ao atualizar favorito no banco:', updateError);
+        console.error('Error updating favorite status in database:', updateError);
         throw updateError;
       }
       
-      console.log('Favorito atualizado com sucesso no banco de dados');
+      console.log('Comment update result:', commentUpdateResult);
       
-      // Buscar dados novamente para garantir consistência
-      if (activeTab === 'favorites' as TabType) {
-        console.log("Recarregando dados de favoritos após atualização");
-        fetchMentionsData();
+      // Let's verify that our update worked
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('Comentarios_Principais')
+        .select('id, msg_template')
+        .eq('id', comentario.id)
+        .single();
+        
+      if (verifyError) {
+        console.error('Error verifying update:', verifyError);
+      } else {
+        console.log(`Verification result: Comment ID=${verifyData.id} has msg_template=${verifyData.msg_template}`);
       }
+      
+      console.log('Favorite status successfully updated in database');
+      
+      // Always reload data after toggling favorite status to ensure UI is consistent
+      console.log("Reloading data after favorite status update");
+      fetchMentionsData();
     } catch (err) {
       console.error('Error toggling favorite:', err);
       // Reverter atualização local em caso de erro
