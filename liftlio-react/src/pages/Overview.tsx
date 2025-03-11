@@ -1515,7 +1515,7 @@ const Overview: React.FC = () => {
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: ${shimmer} 2s linear infinite;
+    animation: ${css`${shimmer}`} 2s linear infinite;
     position: relative;
     
     &::after {
@@ -1771,7 +1771,63 @@ const Overview: React.FC = () => {
     animation: ${LoadingRipple} linear infinite;
   `;
 
-  // Mostrar loading com animação moderna e luxuosa
+  // Cria um componente estilizado para o efeito shimmer
+  const ShimmerEffect = styled.div`
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.8) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: ${shimmer} 2s infinite linear;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0.7;
+  `;
+
+  // Gráficos de amostra para animação de carregamento
+  const samplePerformanceData = [
+    { name: 'Jan', views: 400, engagement: 240, leads: 100 },
+    { name: 'Feb', views: 300, engagement: 139, leads: 80 },
+    { name: 'Mar', views: 500, engagement: 280, leads: 150 },
+    { name: 'Apr', views: 280, engagement: 190, leads: 70 },
+    { name: 'May', views: 390, engagement: 230, leads: 120 },
+    { name: 'Jun', views: 490, engagement: 340, leads: 180 }
+  ];
+  
+  const sampleTrafficData = [
+    { name: 'YouTube', value: 400, color: '#FF0000' },
+    { name: 'Facebook', value: 300, color: '#3b5998' },
+    { name: 'Instagram', value: 300, color: '#C13584' },
+    { name: 'TikTok', value: 200, color: '#000000' },
+    { name: 'Twitter', value: 100, color: '#1DA1F2' }
+  ];
+
+  // Valores simulados para o progresso do carregamento
+  const [loadProgress, setLoadProgress] = useState(0);
+  
+  // Animação de progresso de carregamento
+  useEffect(() => {
+    if (loading) {
+      const interval = setInterval(() => {
+        setLoadProgress((prev) => {
+          const increment = 5 + Math.random() * 15; // Incremento entre 5 e 20
+          const next = prev + increment;
+          
+          // Não deixa o progresso passar de 95% durante o carregamento
+          return Math.min(next, 95);
+        });
+      }, 800);
+      
+      return () => clearInterval(interval);
+    } else {
+      // Quando o carregamento terminar, completa rapidamente até 100%
+      setLoadProgress(100);
+    }
+  }, [loading]);
+  
+  // Mostrar animação de carregamento com gráficos interativos
   if (loading) {
     return (
       <PageContainer>
@@ -1779,104 +1835,160 @@ const Overview: React.FC = () => {
           background: 'linear-gradient(180deg, #f7f9fc 0%, #ffffff 100%)',
           boxShadow: '0 10px 50px rgba(0, 0, 0, 0.05)'
         }}>
-          <LoadingText style={{ marginBottom: '80px' }}>Loading Dashboard</LoadingText>
+          {/* Texto removido para melhor responsividade */}
           
-          {/* Loading ring com gradiente de luxo */}
-          <div 
-            style={{ 
-              width: '300px', 
-              height: '300px', 
-              position: 'relative',
-              margin: '0 auto 80px auto'
-            }}
-          >
-            {/* Círculo central da animação */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-around',
+            width: '100%',
+            flexWrap: 'wrap',
+            gap: '16px',
+            padding: '12px'
+          }}>
+            {/* Gráfico animado de área à esquerda */}
             <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '120px',
-              height: '120px',
-              borderRadius: '50%',
+              width: '48%',
+              minWidth: '280px',
+              height: '280px',
               background: 'white',
-              boxShadow: '0 0 50px rgba(33, 150, 243, 0.2)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              fontSize: '22px',
-              fontWeight: 700,
-              color: '#1976D2',
-              zIndex: 5
+              borderRadius: '12px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+              padding: '12px',
+              position: 'relative',
+              overflow: 'hidden'
             }}>
-              72%
+              <ShimmerEffect />
+              
+              <h3 style={{ marginBottom: '12px', color: '#1976D2', fontSize: '14px' }}>Performance Overview</h3>
+              
+              <ResponsiveContainer width="100%" height="85%">
+                <AreaChart data={samplePerformanceData}>
+                  <defs>
+                    <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2196F3" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#2196F3" stopOpacity={0.1}/>
+                    </linearGradient>
+                    <linearGradient id="colorEngagement" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#673AB7" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#673AB7" stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
+                  <XAxis dataKey="name" tick={{ fill: '#666' }} />
+                  <YAxis tick={{ fill: '#666' }} />
+                  <Tooltip 
+                    contentStyle={{
+                      background: 'rgba(255,255,255,0.9)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="views" 
+                    stroke="#2196F3" 
+                    fill="url(#colorViews)" 
+                    activeDot={{ r: 8 }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="engagement" 
+                    stroke="#673AB7" 
+                    fill="url(#colorEngagement)" 
+                    activeDot={{ r: 8 }} 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
             
-            {/* Círculo de animação que gira */}
-            <div style={{ 
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%', 
-              height: '100%',
-              borderRadius: '50%',
-              border: '6px solid rgba(25, 118, 210, 0.05)',
-              boxShadow: '0 0 30px rgba(25, 118, 210, 0.1)',
-            }}>
-              <div style={{
-                position: 'absolute',
-                top: -6,
-                left: -6,
-                width: 'calc(100% + 12px)',
-                height: 'calc(100% + 12px)',
-                borderRadius: '50%',
-                borderTop: '6px solid #1976D2',
-                borderRight: '6px solid #1976D2',
-                animation: 'spin 2s linear infinite'
-              }} />
-            </div>
-            
-            {/* Arco decorativo estático */}
+            {/* Gráfico de pizza à direita */}
             <div style={{
-              position: 'absolute',
-              top: '10%',
-              left: '10%',
-              width: '80%',
-              height: '80%',
-              borderRadius: '50%',
-              border: '2px solid rgba(76, 175, 80, 0.3)',
-              borderTop: '2px solid rgba(76, 175, 80, 0.8)',
-              borderRight: '2px solid rgba(76, 175, 80, 0.8)'
-            }} />
+              width: '48%',
+              minWidth: '280px',
+              height: '280px',
+              background: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+              padding: '12px',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <ShimmerEffect />
+              
+              <h3 style={{ marginBottom: '12px', color: '#1976D2', fontSize: '14px' }}>Traffic Sources</h3>
+              
+              <ResponsiveContainer width="100%" height="85%">
+                <PieChart>
+                  <Pie
+                    data={sampleTrafficData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {sampleTrafficData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{
+                      background: 'rgba(255,255,255,0.9)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
           
-          {/* Progress bar de carregamento horizontal */}
+          {/* Barra de progresso de carregamento */}
           <div style={{
-            width: '400px',
-            height: '6px',
-            background: 'rgba(33, 150, 243, 0.1)',
-            borderRadius: '3px',
-            margin: '0 auto 100px auto',
-            overflow: 'hidden'
+            width: '90%',
+            maxWidth: '600px',
+            margin: '24px auto 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
           }}>
             <div style={{
-              height: '100%',
-              width: '75%',
-              background: 'linear-gradient(90deg, #1976D2, #2196F3)',
+              width: '100%',
+              height: '6px',
+              background: 'rgba(33, 150, 243, 0.1)',
               borderRadius: '3px',
-              boxShadow: '0 0 10px rgba(33, 150, 243, 0.5)',
-              animation: 'progress 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite'
-            }} />
+              overflow: 'hidden',
+              marginBottom: '10px'
+            }}>
+              <div style={{
+                height: '100%',
+                width: `${loadProgress}%`,
+                background: 'linear-gradient(90deg, #1976D2, #2196F3)',
+                borderRadius: '3px',
+                boxShadow: '0 0 10px rgba(33, 150, 243, 0.5)',
+                transition: 'width 0.5s ease-out'
+              }} />
+            </div>
+            <div style={{
+              fontSize: '12px',
+              color: '#666',
+              fontWeight: 500
+            }}>
+              {`${Math.round(loadProgress)}%`}
+            </div>
           </div>
           
           {/* Partículas sutis e elegantes */}
-          {[...Array(12)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <LoadingDotAnimated 
               key={i}
               style={{
                 ...getRandomDotStyles(i),
-                opacity: 0.3, // Mais sutil
-                boxShadow: '0 0 12px rgba(33, 150, 243, 0.4)'
+                opacity: 0.2,
+                boxShadow: '0 0 12px rgba(33, 150, 243, 0.3)'
               }}
             />
           ))}
