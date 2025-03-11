@@ -27,6 +27,7 @@ export interface MentionData {
     status: string; // 'posted' | 'scheduled' | 'draft' | 'new'
   };
   favorite: boolean;
+  msg_respondido: boolean;
 }
 
 // Estatísticas sobre menções
@@ -108,7 +109,8 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         date: item.msg_created_at_formatted || null,
         status: item.mention_status || 'new'
       },
-      favorite: item.is_favorite || item.msg_template || false
+      favorite: item.is_favorite || item.msg_template || false,
+      msg_respondido: item.msg_respondido || false
     }));
   };
   
@@ -165,19 +167,12 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
           console.log('Aplicando filtro para menções postadas (published_date não vazio)');
           query = query.not('msg_created_at_formatted', 'is', null); // Filtra por published_date não vazio
         } else if (activeTab === 'favorites' as TabType) {
-          console.log('Aplicando filtro para menções favoritadas');
+          console.log('Aplicando filtro para menções favoritadas (msg_template=TRUE)');
           
-          // Abordagem alternativa que é mais compatível
-          // Faz duas consultas separadas e depois combina os resultados
-          console.log('Buscando ambos os campos separadamente e combinando resultados');
+          // Atualizado para filtrar apenas por msg_template=TRUE
+          console.log('Buscando msg_template=TRUE');
           
           const favResults = await Promise.all([
-            supabase
-              .from('mentions_overview')
-              .select('*')
-              .eq('scanner_project_id', currentProject.id)
-              .eq('is_favorite', true)
-              .order('comment_published_at', { ascending: false }),
             supabase
               .from('mentions_overview')
               .select('*')
@@ -186,17 +181,9 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
               .order('comment_published_at', { ascending: false })
           ]);
           
-          // Combinar resultados e remover duplicatas
+          // Usar os resultados diretamente
           let favData: any[] = [];
           if (favResults[0].data) favData = [...favResults[0].data];
-          if (favResults[1].data) {
-            // Adicionar apenas itens que não estão duplicados
-            favResults[1].data.forEach((item: any) => {
-              if (!favData.some(existingItem => existingItem.comment_id === item.comment_id)) {
-                favData.push(item);
-              }
-            });
-          }
           
           // Calcular o total de páginas
           const totalFavorites = favData.length;
@@ -205,7 +192,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
           // Atualizar o total de itens
           setTotalItems(totalFavorites);
           
-          console.log(`Encontrados ${favData.length} favoritos totais (${favResults[0].data?.length || 0} de is_favorite, ${favResults[1].data?.length || 0} de msg_template) - Página ${currentPage} de ${totalPages}`);
+          console.log(`Encontrados ${favData.length} favoritos totais (${favResults[0].data?.length || 0} de msg_template) - Página ${currentPage} de ${totalPages}`);
           
           // Processar os dados diretamente
           if (favData.length === 0) {
@@ -287,7 +274,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
           // Log detalhado para depuração dos favoritos
           console.log('Favoritos encontrados:');
           data.forEach((item: any, index: number) => {
-            console.log(`Item ${index}: is_favorite=${item.is_favorite}, msg_template=${item.msg_template}`);
+            console.log(`Item ${index}: is_favorite=${item.is_favorite}, msg_template=${item.msg_template}, msg_respondido=${item.msg_respondido}`);
           });
         }
         
@@ -489,8 +476,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
       const { error: updateError } = await supabase
         .from('Comentarios_Principais')  // Tabela principal de comentários
         .update({ 
-          is_favorite: newFavoriteState,
-          msg_template: newFavoriteState  // Atualizar ambos os campos
+          msg_template: newFavoriteState  // Atualizar o campo msg_template em vez de msg_respondido
         })
         .eq('id', comentario.id);  // Usar a chave primária real da tabela
         
