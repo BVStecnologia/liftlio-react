@@ -24,6 +24,22 @@ const fadeIn = keyframes`
   }
 `;
 
+// Animação de rotação para o ícone de carregamento
+const spin = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+// Componente de spinner com animação
+const SpinnerIcon = styled.div`
+  display: inline-block;
+  animation: ${spin} 1s linear infinite;
+`;
+
 // Toast notification animation
 const slideIn = keyframes`
   from {
@@ -1681,8 +1697,14 @@ const Mentions: React.FC = () => {
     }
   };
   
+  // Estado para controlar botões de favorito que estão sendo processados
+  const [processandoFavoritos, setProcessandoFavoritos] = useState<number[]>([]);
+  
   const handleToggleFavorite = async (id: number, currentStatus: boolean) => {
     console.log(`Clicou para alternar favorito: ID=${id}, Status atual=${currentStatus}`);
+    
+    // Marcar este favorito como em processamento
+    setProcessandoFavoritos(prev => [...prev, id]);
     
     // Primeiro, tente o método normal
     toggleFavoriteMention(id);
@@ -1710,6 +1732,37 @@ const Mentions: React.FC = () => {
           
           // Recarregar dados completos
           console.log("Recarregando dados...");
+          
+          // Forçar recarregamento dos dados após um breve delay
+          setTimeout(() => {
+            // Recarregar dados diretamente do banco
+            if (activeTab === 'favorites') {
+              // Consultar favoritos diretamente
+              const buscarFavoritos = async () => {
+                console.log("Buscando favoritos diretamente do banco...");
+                try {
+                  const { data: favoritosData, error: favoritosError } = await supabase
+                    .from('Mensagens')
+                    .select('id, template')
+                    .eq('template', true);
+                    
+                  if (!favoritosError && favoritosData) {
+                    console.log(`Encontrados ${favoritosData.length} favoritos no banco.`);
+                  }
+                  
+                  // Forçar recarregamento da página atual
+                  window.location.reload();
+                } catch (err) {
+                  console.error("Erro ao buscar favoritos:", err);
+                }
+              };
+              
+              buscarFavoritos();
+            } else {
+              // Simplemente forçar recarregamento da página
+              window.location.reload();
+            }
+          }, 1000); // Esperar 1 segundo antes de recarregar
         }
       }
     } catch (erro) {
@@ -1733,6 +1786,11 @@ const Mentions: React.FC = () => {
     
     // Log para debug
     console.log(`Toast exibido, alterando de ${currentStatus} para ${!currentStatus}`);
+    
+    // Se não encontrou msg_id ou ocorreu erro, remover do estado de processamento após 3 segundos
+    setTimeout(() => {
+      setProcessandoFavoritos(prev => prev.filter(itemId => itemId !== id));
+    }, 3000);
   };
   
   // Não é mais necessário filtrar os dados aqui, pois o hook já retorna os dados filtrados por tab
@@ -1900,8 +1958,15 @@ const Mentions: React.FC = () => {
                             })}`);
                             handleToggleFavorite(mention.id, mention.favorite);
                           }}
+                          disabled={processandoFavoritos.includes(mention.id)}
                         >
-                          <IconComponent icon={mention.favorite ? FaIcons.FaHeart : FaIcons.FaRegHeart} />
+                          {processandoFavoritos.includes(mention.id) ? (
+                            <SpinnerIcon>
+                              <IconComponent icon={FaIcons.FaSpinner} />
+                            </SpinnerIcon>
+                          ) : (
+                            <IconComponent icon={mention.favorite ? FaIcons.FaHeart : FaIcons.FaRegHeart} />
+                          )}
                         </ActionButton>
                       )}
                       <ActionButton 
