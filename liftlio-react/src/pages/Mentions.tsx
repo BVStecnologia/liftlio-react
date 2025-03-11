@@ -803,7 +803,7 @@ const ResponseInfo = styled.div<{ status?: string }>`
   position: relative;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border-left: 4px solid ${props => 
-    props.status === 'scheduled' ? '#e69819' : 
+    !props.status || props.status === 'scheduled' ? '#e69819' : 
     props.status === 'posted' || props.status === 'published' ? '#38a169' : 
     '#6b46c1'};
 `;
@@ -820,7 +820,7 @@ const ResponseStatusBadge = styled.div<{ status?: string }>`
   font-weight: 600;
   color: white;
   background: ${props => 
-    props.status === 'scheduled' ? '#e69819' : 
+    !props.status || props.status === 'scheduled' ? '#e69819' : 
     props.status === 'posted' || props.status === 'published' ? '#38a169' : 
     '#6b46c1'};
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -1539,13 +1539,13 @@ const Mentions: React.FC = () => {
         
         <TabContainer>
           <Tab active={activeTab === 'scheduled'} onClick={() => setActiveTab('scheduled')}>
-            Scheduled
+            Aguardando
           </Tab>
           <Tab active={activeTab === 'posted'} onClick={() => setActiveTab('posted')}>
-            Posted
+            Publicados
           </Tab>
           <Tab active={activeTab === 'favorites'} onClick={() => setActiveTab('favorites')}>
-            Favorites
+            Favoritos
           </Tab>
         </TabContainer>
         
@@ -1646,21 +1646,16 @@ const Mentions: React.FC = () => {
                   
                   <ResponseCell>
                     <ResponseInfo status={mention.response.status}>
-                      <ResponseStatusBadge status={mention.response.status}>
-                        {mention.response.status === 'scheduled' ? (
-                          <>
-                            <IconComponent icon={FaIcons.FaClock} />
-                            Scheduled
-                          </>
-                        ) : mention.response.status === 'published' || mention.response.status === 'posted' ? (
+                      <ResponseStatusBadge status={mention.response.date ? 'posted' : 'scheduled'}>
+                        {mention.response.date ? (
                           <>
                             <IconComponent icon={FaIcons.FaCheck} />
-                            Posted
+                            Publicado
                           </>
                         ) : (
                           <>
-                            <IconComponent icon={FaIcons.FaEdit} />
-                            {mention.response.status || 'New'}
+                            <IconComponent icon={FaIcons.FaClock} />
+                            Aguardando
                           </>
                         )}
                       </ResponseStatusBadge>

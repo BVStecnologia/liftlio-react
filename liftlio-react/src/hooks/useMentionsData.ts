@@ -94,14 +94,14 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         
         // Aplicar filtros específicos para as diferentes abas
         if (activeTab === 'scheduled') {
-          console.log('Aplicando filtro para menções agendadas');
-          query = query.eq('mention_status', 'scheduled');
+          console.log('Aplicando filtro para menções agendadas (published_date vazio)');
+          query = query.is('msg_created_at_formatted', null); // Filtra por published_date vazio
         } else if (activeTab === 'posted') {
-          console.log('Aplicando filtro para menções postadas');
-          query = query.eq('mention_status', 'published'); // Alterado para 'published' que pode ser o valor real no banco
+          console.log('Aplicando filtro para menções postadas (published_date não vazio)');
+          query = query.not('msg_created_at_formatted', 'is', null); // Filtra por published_date não vazio
         } else if (activeTab === 'favorites') {
-          console.log('Aplicando filtro para menções favoritadas');
-          query = query.eq('is_favorite', true);
+          console.log('Aplicando filtro para menções favoritadas (msg_template = true)');
+          query = query.eq('msg_template', true); // Filtra por msg_template = true
         }
         
         // Executar a consulta
@@ -167,9 +167,9 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         // Calcular estatísticas
         const totalMentions = data.length;
         const respondedMentions = data.filter((item: any) => 
-          item.mention_status === 'published' || item.mention_status === 'posted').length;
+          item.msg_created_at_formatted !== null).length;
         const pendingResponses = data.filter((item: any) => 
-          item.mention_status !== 'published' && item.mention_status !== 'posted').length;
+          item.msg_created_at_formatted === null).length;
         
         console.log(`Estatísticas: Total: ${totalMentions}, Respondidas: ${respondedMentions}, Pendentes: ${pendingResponses}`);
         const responseRate = totalMentions > 0 ? 
@@ -236,8 +236,8 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
             const existing = performanceMap.get(formattedDate) || { mentions: 0, responses: 0 };
             existing.mentions += 1;
             
-            // Se foi respondido
-            if (item.mention_status === 'posted') {
+            // Se foi respondido (tem data de publicação)
+            if (item.msg_created_at_formatted !== null) {
               existing.responses += 1;
             }
             
