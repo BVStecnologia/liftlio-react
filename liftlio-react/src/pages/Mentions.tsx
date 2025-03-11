@@ -1605,14 +1605,27 @@ const Mentions: React.FC = () => {
   // Estado local adicional para forçar atualizações
   const [localMentionsData, setLocalMentionsData] = useState<MentionData[]>([]);
   
-  // Sincronizar dados locais com dados do hook
+  // Estado para armazenar quais itens foram marcados como favoritos localmente
+  const [favoritosLocais, setFavoritosLocais] = useState<{[key: number]: boolean}>({});
+  
+  // Sincronizar dados locais com dados do hook e aplicar favoritos locais
   useEffect(() => {
-    setLocalMentionsData(data);
+    // Aplicar estado de favoritos locais sobre os dados do servidor
+    const dadosComFavoritosLocais = data.map(item => {
+      // Se o item tem um estado local de favorito, sobrescrever o valor do servidor
+      if (favoritosLocais.hasOwnProperty(item.id)) {
+        return { ...item, favorite: favoritosLocais[item.id] };
+      }
+      // Caso contrário, manter o valor do servidor
+      return item;
+    });
+    
+    setLocalMentionsData(dadosComFavoritosLocais);
     
     if (activeTab === 'favorites') {
-      console.log("Dados de favoritos no componente:", data.length, data);
+      console.log("Dados de favoritos no componente:", dadosComFavoritosLocais.length, dadosComFavoritosLocais);
     }
-  }, [activeTab, data]);
+  }, [activeTab, data, favoritosLocais]);
   
   const renderTypeCell = (mention: MentionData) => {
     if (mention.type === 'Led Score') {
@@ -1706,7 +1719,14 @@ const Mentions: React.FC = () => {
     // Marcar este favorito como em processamento
     setProcessandoFavoritos(prev => [...prev, id]);
     
-    // Primeiro, tente o método normal
+    // Atualizar o estado local imediatamente para feedback visual instantâneo
+    const novoEstado = !currentStatus;
+    setFavoritosLocais(prev => ({
+      ...prev,
+      [id]: novoEstado
+    }));
+    
+    // Também tentar o método normal para persistir no banco
     toggleFavoriteMention(id);
     
     // Buscar o msg_id para testar diretamente
@@ -1723,46 +1743,15 @@ const Mentions: React.FC = () => {
         
         if (resultado) {
           console.log(`Teste direto bem-sucedido! Atualizando UI...`);
-          // Forçar recarregamento dos dados localmente
-          setLocalMentionsData(data.map(item => 
-            item.id === id 
-              ? { ...item, favorite: !currentStatus } 
-              : item
-          ));
+          // Não precisamos mais atualizar localMentionsData aqui,
+          // já que o useEffect cuida disso baseado no estado favoritosLocais
           
-          // Recarregar dados completos
-          console.log("Recarregando dados...");
-          
-          // Forçar recarregamento dos dados após um breve delay
+          // Os dados são atualizados em tempo real, então apenas remover do estado de processamento
+          console.log("Atualização concluída - aguardando atualização em tempo real");
           setTimeout(() => {
-            // Recarregar dados diretamente do banco
-            if (activeTab === 'favorites') {
-              // Consultar favoritos diretamente
-              const buscarFavoritos = async () => {
-                console.log("Buscando favoritos diretamente do banco...");
-                try {
-                  const { data: favoritosData, error: favoritosError } = await supabase
-                    .from('Mensagens')
-                    .select('id, template')
-                    .eq('template', true);
-                    
-                  if (!favoritosError && favoritosData) {
-                    console.log(`Encontrados ${favoritosData.length} favoritos no banco.`);
-                  }
-                  
-                  // Forçar recarregamento da página atual
-                  window.location.reload();
-                } catch (err) {
-                  console.error("Erro ao buscar favoritos:", err);
-                }
-              };
-              
-              buscarFavoritos();
-            } else {
-              // Simplemente forçar recarregamento da página
-              window.location.reload();
-            }
-          }, 1000); // Esperar 1 segundo antes de recarregar
+            // Remover do estado de processamento após concluir
+            setProcessandoFavoritos(prev => prev.filter(itemId => itemId !== id));
+          }, 500);
         }
       }
     } catch (erro) {
@@ -1787,10 +1776,10 @@ const Mentions: React.FC = () => {
     // Log para debug
     console.log(`Toast exibido, alterando de ${currentStatus} para ${!currentStatus}`);
     
-    // Se não encontrou msg_id ou ocorreu erro, remover do estado de processamento após 3 segundos
+    // Timeout de segurança mais curto, já que os dados são em tempo real
     setTimeout(() => {
       setProcessandoFavoritos(prev => prev.filter(itemId => itemId !== id));
-    }, 3000);
+    }, 2000);
   };
   
   // Não é mais necessário filtrar os dados aqui, pois o hook já retorna os dados filtrados por tab
