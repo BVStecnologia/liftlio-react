@@ -5,6 +5,7 @@ import { IconContext } from 'react-icons';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useMentionsData, TimeframeType, TabType, MentionData } from '../hooks/useMentionsData';
+import { supabase } from '../lib/supabaseClient';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
   Tooltip as RechartsTooltip, ResponsiveContainer, 
@@ -1585,8 +1586,13 @@ const Mentions: React.FC = () => {
     pagination // Obter informações e funções de paginação
   } = useMentionsData(activeTab);
   
-  // Log para verificar os dados recebidos pelo componente
+  // Estado local adicional para forçar atualizações
+  const [localMentionsData, setLocalMentionsData] = useState<MentionData[]>([]);
+  
+  // Sincronizar dados locais com dados do hook
   useEffect(() => {
+    setLocalMentionsData(data);
+    
     if (activeTab === 'favorites') {
       console.log("Dados de favoritos no componente:", data.length, data);
     }
@@ -1635,9 +1641,80 @@ const Mentions: React.FC = () => {
     // Por enquanto, não temos uma implementação completa para isso
   };
   
-  const handleToggleFavorite = (id: number, currentStatus: boolean) => {
-    // Use the hook function to toggle favorite status
+  // Função para testar diretamente o Supabase
+  const testeUpdateDireto = async (mensagemId: number, novoValor: boolean): Promise<boolean> => {
+    console.log(`=== TESTE DIRETO DE UPDATE ===`);
+    console.log(`Tentando atualizar mensagem ID=${mensagemId} para template=${novoValor}`);
+    
+    try {
+      // 1. Verificar se a mensagem existe
+      const { data: mensagem, error: erroConsulta } = await supabase
+        .from('Mensagens')
+        .select('*')
+        .eq('id', mensagemId)
+        .single();
+        
+      if (erroConsulta) {
+        console.error(`Erro ao verificar mensagem:`, erroConsulta);
+        return false;
+      }
+      
+      console.log(`Mensagem encontrada:`, mensagem);
+      
+      // 2. Tentar atualizar a mensagem
+      const { data: resultadoUpdate, error: erroUpdate } = await supabase
+        .from('Mensagens')
+        .update({ template: novoValor })
+        .eq('id', mensagemId)
+        .select();
+        
+      if (erroUpdate) {
+        console.error(`Erro ao atualizar mensagem:`, erroUpdate);
+        return false;
+      }
+      
+      console.log(`Update com sucesso:`, resultadoUpdate);
+      return true;
+    } catch (erro) {
+      console.error(`Erro geral no teste:`, erro);
+      return false;
+    }
+  };
+  
+  const handleToggleFavorite = async (id: number, currentStatus: boolean) => {
+    console.log(`Clicou para alternar favorito: ID=${id}, Status atual=${currentStatus}`);
+    
+    // Primeiro, tente o método normal
     toggleFavoriteMention(id);
+    
+    // Buscar o msg_id para testar diretamente
+    try {
+      const { data: comentario } = await supabase
+        .from('mentions_overview')
+        .select('msg_id')
+        .eq('comment_id', id)
+        .single();
+        
+      if (comentario && comentario.msg_id) {
+        console.log(`Fazendo teste direto para msg_id=${comentario.msg_id}`);
+        const resultado = await testeUpdateDireto(comentario.msg_id, !currentStatus);
+        
+        if (resultado) {
+          console.log(`Teste direto bem-sucedido! Atualizando UI...`);
+          // Forçar recarregamento dos dados localmente
+          setLocalMentionsData(data.map(item => 
+            item.id === id 
+              ? { ...item, favorite: !currentStatus } 
+              : item
+          ));
+          
+          // Recarregar dados completos
+          console.log("Recarregando dados...");
+        }
+      }
+    } catch (erro) {
+      console.error(`Erro ao buscar msg_id:`, erro);
+    }
     
     // Show custom toast notification
     if (currentStatus) {
@@ -1653,6 +1730,9 @@ const Mentions: React.FC = () => {
         success: true
       });
     }
+    
+    // Log para debug
+    console.log(`Toast exibido, alterando de ${currentStatus} para ${!currentStatus}`);
   };
   
   // Não é mais necessário filtrar os dados aqui, pois o hook já retorna os dados filtrados por tab
@@ -1702,7 +1782,7 @@ const Mentions: React.FC = () => {
                   <p>Loading mentions...</p>
                 </div>
               </TableRow>
-            ) : data.length === 0 ? (
+            ) : localMentionsData.length === 0 ? (
               <TableRow style={{ justifyContent: 'center', padding: '40px 0' }}>
                 <div style={{ gridColumn: '1 / span 5', textAlign: 'center', color: '#6c757d' }}>
                   <div style={{ fontSize: '48px', opacity: 0.3, marginBottom: '16px' }}>
@@ -1712,7 +1792,7 @@ const Mentions: React.FC = () => {
                 </div>
               </TableRow>
             ) : (
-              data.map((mention, index) => (
+              localMentionsData.map((mention, index) => (
                 <TableRow key={mention.id} index={index}>
                   <VideoCell>
                     <VideoThumbnailWrapper>
@@ -1813,7 +1893,13 @@ const Mentions: React.FC = () => {
                         <ActionButton 
                           variant="favorite" 
                           title={mention.favorite ? "Remove from favorites" : "Add to favorites"}
-                          onClick={() => handleToggleFavorite(mention.id, mention.favorite)}
+                          onClick={() => {
+                            console.log(`DEBUG btn: mention=${JSON.stringify({
+                              id: mention.id,
+                              favorite: mention.favorite
+                            })}`);
+                            handleToggleFavorite(mention.id, mention.favorite);
+                          }}
                         >
                           <IconComponent icon={mention.favorite ? FaIcons.FaHeart : FaIcons.FaRegHeart} />
                         </ActionButton>
