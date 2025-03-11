@@ -1340,6 +1340,56 @@ const StatTrend = styled.div<{ increasing?: boolean }>`
   }
 `;
 
+// Componentes de paginação
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 16px;
+  margin-bottom: 24px;
+  padding: 8px;
+  gap: 12px;
+  animation: ${fadeIn} 1s ease-out forwards;
+  animation-delay: 0.3s;
+  opacity: 0;
+`;
+
+const PageInfo = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.darkGrey};
+  margin: 0 12px;
+`;
+
+const PageButton = styled.button<{ active?: boolean; disabled?: boolean }>`
+  background: ${props => props.active ? props.theme.colors.primary : 'white'};
+  color: ${props => props.active ? 'white' : props.disabled ? props.theme.colors.grey : props.theme.colors.primary};
+  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.lightGrey};
+  border-radius: ${props => props.theme.radius.md};
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.2s ease;
+  opacity: ${props => props.disabled ? 0.5 : 1};
+  
+  &:hover {
+    background: ${props => props.disabled ? 'white' : props.active ? props.theme.colors.primary : '#f0f0f5'};
+    transform: ${props => props.disabled ? 'none' : 'translateY(-2px)'};
+    box-shadow: ${props => props.disabled ? 'none' : props.theme.shadows.sm};
+  }
+  
+  svg {
+    font-size: 14px;
+  }
+`;
+
+const PageNumbers = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
 const ChartSection = styled.div`
   display: flex;
   height: 400px;
@@ -1476,8 +1526,16 @@ const Mentions: React.FC = () => {
     mentionStats, 
     performanceData,
     toggleFavorite: toggleFavoriteMention,
-    setTimeframe: setMentionTimeframe
+    setTimeframe: setMentionTimeframe,
+    pagination // Obter informações e funções de paginação
   } = useMentionsData(activeTab);
+  
+  // Log para verificar os dados recebidos pelo componente
+  useEffect(() => {
+    if (activeTab === 'favorites') {
+      console.log("Dados de favoritos no componente:", data.length, data);
+    }
+  }, [activeTab, data]);
   
   const renderTypeCell = (mention: MentionData) => {
     if (mention.type === 'Led Score') {
@@ -1700,6 +1758,59 @@ const Mentions: React.FC = () => {
               ))
             )}
           </MentionsTable>
+          
+          {/* Paginação */}
+          {data.length > 0 && pagination.totalPages > 1 && (
+            <PaginationContainer>
+              <PageButton 
+                onClick={pagination.goToPrevPage} 
+                disabled={pagination.currentPage === 1}
+              >
+                <IconComponent icon={FaIcons.FaChevronLeft} />
+              </PageButton>
+              
+              <PageNumbers>
+                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                  // Lógica para mostrar as páginas adequadas quando temos muitas páginas
+                  let pageNum = i + 1;
+                  if (pagination.totalPages > 5) {
+                    if (pagination.currentPage <= 3) {
+                      // Estamos nas primeiras páginas
+                      pageNum = i + 1;
+                    } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                      // Estamos nas últimas páginas
+                      pageNum = pagination.totalPages - 4 + i;
+                    } else {
+                      // Estamos no meio
+                      pageNum = pagination.currentPage - 2 + i;
+                    }
+                  }
+                  
+                  return (
+                    <PageButton 
+                      key={i}
+                      active={pageNum === pagination.currentPage}
+                      onClick={() => pagination.goToPage(pageNum)}
+                    >
+                      {pageNum}
+                    </PageButton>
+                  );
+                })}
+              </PageNumbers>
+              
+              <PageButton 
+                onClick={pagination.goToNextPage} 
+                disabled={pagination.currentPage === pagination.totalPages}
+              >
+                <IconComponent icon={FaIcons.FaChevronRight} />
+              </PageButton>
+              
+              <PageInfo>
+                Página {pagination.currentPage} de {pagination.totalPages} 
+                ({pagination.totalItems} itens)
+              </PageInfo>
+            </PaginationContainer>
+          )}
         </MentionsContainer>
         <AnalyticsSection>
           <AnalyticsHeader>
