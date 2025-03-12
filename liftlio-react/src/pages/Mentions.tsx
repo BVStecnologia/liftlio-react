@@ -2054,9 +2054,12 @@ const Mentions: React.FC = () => {
                       </VideoStats>
                       <VideoAction>
                         <ViewDetailsButton 
-                          onClick={() => window.open(`https://www.youtube.com/watch?v=${mention.video.id}`, '_blank')}
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent TableRow click from triggering
+                            setSelectedMention(mention);
+                          }}
                         >
-                          See details <IconComponent icon={FaIcons.FaExternalLinkAlt} />
+                          See details <IconComponent icon={FaIcons.FaEye} />
                         </ViewDetailsButton>
                       </VideoAction>
                     </VideoInfo>
@@ -2092,16 +2095,16 @@ const Mentions: React.FC = () => {
                   
                   <ResponseCell>
                     <ResponseInfo status={mention.response.status}>
-                      <ResponseStatusBadge status={mention.response.date ? 'posted' : 'scheduled'}>
-                        {mention.response.date ? (
-                          <>
-                            <IconComponent icon={FaIcons.FaCheck} />
-                            Posted
-                          </>
-                        ) : (
+                      <ResponseStatusBadge status={activeTab === 'scheduled' ? 'scheduled' : 'posted'}>
+                        {activeTab === 'scheduled' ? (
                           <>
                             <IconComponent icon={FaIcons.FaClock} />
                             Scheduled
+                          </>
+                        ) : (
+                          <>
+                            <IconComponent icon={FaIcons.FaCheck} />
+                            Posted
                           </>
                         )}
                       </ResponseStatusBadge>
@@ -2155,12 +2158,6 @@ const Mentions: React.FC = () => {
                         }}
                       >
                         <IconComponent icon={FaIcons.FaPencilAlt} />
-                      </ActionButton>
-                      <ActionButton 
-                        title="View analytics"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <IconComponent icon={FaIcons.FaChartLine} />
                       </ActionButton>
                     </ActionButtonsGroup>
                   </ActionsCell>
