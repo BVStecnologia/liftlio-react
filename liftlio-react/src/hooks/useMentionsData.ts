@@ -50,6 +50,8 @@ export interface MentionPerformance {
   day: string;
   mentions: number;
   responses: number;
+  led: number;
+  brand: number;
 }
 
 export type TimeframeType = 'day' | 'week' | 'month' | 'year';
@@ -98,7 +100,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         likes: parseInt(item.video_likes) || 0,
         channel: item.video_channel || 'Unknown channel'
       },
-      type: item.msg_type === 1 ? 'Led' : 'Brand',
+      type: item.msg_type === 1 ? 'Led' : item.msg_type === 2 ? 'Brand' : 'Outro',
       score: parseFloat(item.comment_lead_score || '0'),
       comment: {
         author: item.comment_author || 'Anonymous',
@@ -315,7 +317,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         // Performance data for the chart (grouped by day)
         // This would be a good case for a separate view in the database,
         // but we can calculate it here for now
-        const performanceMap = new Map<string, { mentions: number, responses: number }>();
+        const performanceMap = new Map<string, { mentions: number, responses: number, led: number, brand: number }>();
         
         // Define an interval according to the timeframe
         const startDate = new Date();
@@ -340,13 +342,14 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
             day: 'numeric'
           });
           dates.push(formattedDate);
-          performanceMap.set(formattedDate, { mentions: 0, responses: 0 });
+          performanceMap.set(formattedDate, { mentions: 0, responses: 0, led: 0, brand: 0 });
           
           tempDate.setDate(tempDate.getDate() + 1);
         }
         
         // Fill in real data
         data.forEach((item: any) => {
+          // Só processar se o comentário tiver data de publicação (publicado)
           if (!item.comment_published_at) return;
           
           const commentDate = new Date(item.comment_published_at);
@@ -356,12 +359,25 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
               day: 'numeric'
             });
             
-            const existing = performanceMap.get(formattedDate) || { mentions: 0, responses: 0 };
+            const existing = performanceMap.get(formattedDate) || { mentions: 0, responses: 0, led: 0, brand: 0 };
             existing.mentions += 1;
             
             // If it was responded to (has a publication date)
             if (item.msg_created_at_formatted !== null) {
               existing.responses += 1;
+            }
+            
+            // Classificar como LED (msg_type = 1) ou Brand (msg_type = 2)
+            console.log(`Classificando item: msg_type=${item.msg_type}, author=${item.comment_author}`);
+            
+            if (item.msg_type === 1) {
+              existing.led += 1;
+              console.log('Classificado como LED');
+            } else if (item.msg_type === 2) {
+              existing.brand += 1;
+              console.log('Classificado como Brand');
+            } else {
+              console.log('ALERTA: Item não classificado em nenhuma categoria!');
             }
             
             performanceMap.set(formattedDate, existing);
@@ -372,7 +388,9 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         const performance: MentionPerformance[] = dates.map(day => ({
           day,
           mentions: performanceMap.get(day)?.mentions || 0,
-          responses: performanceMap.get(day)?.responses || 0
+          responses: performanceMap.get(day)?.responses || 0,
+          led: performanceMap.get(day)?.led || 0,
+          brand: performanceMap.get(day)?.brand || 0
         }));
         
         setPerformanceData(performance);
