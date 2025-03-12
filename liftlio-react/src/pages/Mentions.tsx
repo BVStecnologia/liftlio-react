@@ -24,7 +24,7 @@ const fadeIn = keyframes`
   }
 `;
 
-// Animação de rotação para o ícone de carregamento
+// Rotation animation for loading icon
 const spin = keyframes`
   from {
     transform: rotate(0deg);
@@ -34,7 +34,7 @@ const spin = keyframes`
   }
 `;
 
-// Componente de spinner com animação
+// Spinner component with animation
 const SpinnerIcon = styled.div`
   display: inline-block;
   animation: ${spin} 1s linear infinite;
@@ -299,7 +299,7 @@ const TableHeader = styled.div`
   }
 `;
 
-const TableRow = styled.div<{ index?: number }>`
+const TableRow = styled.div<{ index?: number, isFavorite?: boolean }>`
   display: grid;
   grid-template-columns: 2.5fr 1fr 2.5fr 3fr 1fr;
   padding: 20px;
@@ -311,11 +311,15 @@ const TableRow = styled.div<{ index?: number }>`
   animation-delay: ${props => (props.index || 0) * 0.1}s;
   opacity: 0;
   min-width: 1000px;
+  cursor: pointer;
+  
+  /* Destacar itens favoritos com uma borda suave */
+  border-left: ${props => props.isFavorite ? '4px solid #FF5C93' : '4px solid transparent'};
   
   &:hover {
-    background-color: rgba(135, 97, 197, 0.05);
+    background-color: rgba(135, 97, 197, 0.08);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     z-index: 1;
   }
   
@@ -331,7 +335,7 @@ const TableRow = styled.div<{ index?: number }>`
     height: 100%;
     width: 0;
     background: ${props => props.theme.colors.gradient.primary};
-    opacity: 0.1;
+    opacity: 0.2;
     transition: width 0.3s ease;
   }
   
@@ -620,93 +624,99 @@ const scorePulse = keyframes`
   }
 `;
 
-const LEDScoreBadgeContainer = styled.div`
-  position: relative;
+// Animação mais sutil para o medidor de score
+const subtleFill = keyframes`
+  from { width: 0; }
+  to { width: var(--fill-width); }
 `;
 
-const ScoreRipple = styled.div<{ score: number }>`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background: ${props => {
-    if (props.score >= 80) return 'rgba(0, 199, 129, 0.15)';
-    if (props.score >= 60) return 'rgba(153, 199, 129, 0.15)';
-    if (props.score >= 40) return 'rgba(255, 170, 21, 0.15)';
-    if (props.score >= 20) return 'rgba(255, 140, 64, 0.15)';
-    return 'rgba(255, 64, 64, 0.15)';
-  }};
-  z-index: 1;
-`;
-
-const LedScoreText = styled.div`
-  position: relative;
-  z-index: 2;
-`;
-
-const LedScoreBadge = styled.div<{ score: number }>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  color: white;
-  font-weight: 600;
-  font-size: 1.25rem;
-  background: ${props => {
-    // Dynamic gradient based on score
-    if (props.score >= 80) return 'linear-gradient(135deg, #00C781 0%, #82ffc9 100%)';
-    if (props.score >= 60) return 'linear-gradient(135deg, #99C781 20%, #d4ffaa 100%)';
-    if (props.score >= 40) return 'linear-gradient(135deg, #FFAA15 0%, #ffd67e 100%)';
-    if (props.score >= 20) return 'linear-gradient(135deg, #FF8C40 0%, #ffb27e 100%)';
-    return 'linear-gradient(135deg, #FF4040 0%, #ff9b9b 100%)';
-  }};
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-  position: relative;
-  transition: all 0.3s ease;
-  z-index: 2;
-  animation: ${scorePulse} 4s ease-in-out infinite;
+// Componente clean para o score
+const ScoreCardContainer = styled.div`
+  width: 120px;
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+  transition: all 0.2s ease;
   
   &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: 50%;
-    background: inherit;
-    z-index: -1;
-    filter: blur(10px);
-    opacity: 0.7;
-    transition: all 0.3s ease;
-  }
-  
-  &:hover::before {
-    opacity: 0.9;
-    filter: blur(15px);
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
-    filter: blur(1px);
-  }
+`;
+
+const ScoreLabel = styled.div`
+  font-size: 11px;
+  font-weight: 500;
+  color: #718096;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const TypeBadge = styled.span<{ type: string }>`
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: ${props => props.type === 'Led' ? '#EBF4FF' : '#F0FFF4'};
+  color: ${props => props.type === 'Led' ? '#3182CE' : '#38A169'};
+  font-weight: 600;
+`;
+
+const ScoreValueRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+`;
+
+const ScoreValue = styled.div<{ score: number }>`
+  font-size: 18px;
+  font-weight: 700;
+  color: ${props => {
+    if (props.score >= 70) return '#38A169';
+    if (props.score >= 40) return '#DD6B20';
+    return '#E53E3E';
+  }};
+`;
+
+const ScoreQualityBadge = styled.div<{ score: number }>`
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: ${props => {
+    if (props.score >= 70) return '#F0FFF4';
+    if (props.score >= 40) return '#FFFAF0';
+    return '#FFF5F5';
+  }};
+  color: ${props => {
+    if (props.score >= 70) return '#38A169';
+    if (props.score >= 40) return '#DD6B20';
+    return '#E53E3E';
+  }};
+`;
+
+const ScoreMeterContainer = styled.div`
+  width: 100%;
+  height: 4px;
+  background: #EDF2F7;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+`;
+
+const ScoreMeterFill = styled.div<{ score: number }>`
+  height: 100%;
+  width: var(--fill-width);
+  background: ${props => {
+    if (props.score >= 70) return '#38A169';
+    if (props.score >= 40) return '#DD6B20';
+    return '#E53E3E';
+  }};
+  border-radius: 2px;
+  animation: ${subtleFill} 0.6s ease-out;
 `;
 
 // Enhanced comment section
@@ -801,6 +811,12 @@ const CommentText = styled.div`
   color: ${props => props.theme.colors.text};
   margin-bottom: 8px;
   position: relative;
+  height: 65px; /* Altura fixa para manter consistência */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Limitar a 3 linhas */
+  -webkit-box-orient: vertical;
   
   &::before {
     content: '\\201C';
@@ -878,6 +894,7 @@ const ResponseText = styled.div`
   line-height: 1.5;
   color: ${props => props.theme.colors.text};
   margin-bottom: 12px;
+  height: 65px; /* Altura fixa para manter consistência */
   
   // Add ellipsis for long text
   display: -webkit-box;
@@ -885,6 +902,171 @@ const ResponseText = styled.div`
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+`;
+
+// Components for the detail popup
+const DetailPopupOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(5px);
+`;
+
+const DetailPopupContent = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  width: 80%;
+  max-width: 900px;
+  max-height: none;
+  overflow-y: visible;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  position: relative;
+  
+  /* Design moderno com borda gradiente */
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: ${props => props.theme.colors.gradient.primary};
+    z-index: -1;
+    border-radius: 14px;
+    opacity: 0.5;
+  }
+`;
+
+const DetailPopupHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+`;
+
+const DetailPopupTitle = styled.h2`
+  font-size: ${props => props.theme.fontSizes.xl};
+  color: ${props => props.theme.colors.primary};
+  margin: 0;
+  font-weight: 600;
+`;
+
+const DetailPopupCloseButton = styled.button`
+  background: transparent;
+  border: none;
+  color: ${props => props.theme.colors.darkGrey};
+  font-size: 28px;
+  cursor: pointer;
+  transition: color 0.2s;
+  
+  &:hover {
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const DetailPopupVideoSection = styled.div`
+  display: flex;
+  margin-bottom: 30px;
+  gap: 20px;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+const DetailPopupThumbnail = styled.div`
+  width: 300px;
+  height: 170px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    height: 200px;
+  }
+`;
+
+const DetailPopupVideoInfo = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+`;
+
+const DetailPopupVideoTitle = styled.h3`
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: ${props => props.theme.colors.text};
+  font-weight: 600;
+`;
+
+const DetailPopupGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const DetailPopupSection = styled.div`
+  margin-bottom: 20px;
+`;
+
+const DetailPopupSectionTitle = styled.h4`
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: ${props => props.theme.colors.primary};
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 8px;
+  }
+`;
+
+const DetailPopupComment = styled.div`
+  background: #f9f8fc;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+`;
+
+const DetailPopupResponse = styled.div`
+  background: #f0f7ff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+`;
+
+const FavoriteIndicator = styled.div<{ isFavorite: boolean }>`
+  position: absolute;
+  top: 30px;
+  right: 80px;
+  color: ${props => props.isFavorite ? '#FF5C93' : '#aaa'};
+  font-size: 24px;
 `;
 
 const ResponseDate = styled.div`
@@ -1628,33 +1810,28 @@ const Mentions: React.FC = () => {
   }, [activeTab, data, favoritosLocais]);
   
   const renderTypeCell = (mention: MentionData) => {
-    if (mention.type === 'Led Score') {
-      return (
-        <TypeCell>
-          <LedScoreWrapper>
-            <LedScoreLabel>{mention.type}</LedScoreLabel>
-            <LEDScoreBadgeContainer>
-              <ScoreRipple score={mention.score} />
-              <LedScoreBadge score={mention.score}>
-                <LedScoreText>{mention.score}%</LedScoreText>
-              </LedScoreBadge>
-            </LEDScoreBadgeContainer>
-          </LedScoreWrapper>
-        </TypeCell>
-      );
-    }
+    // Calcular a largura do preenchimento com base na pontuação
+    const fillWidth = `${mention.score}%`;
+    const category = mention.score >= 70 ? 'Quality' : mention.score >= 40 ? 'Medium' : 'Low';
     
     return (
       <TypeCell>
-        <LedScoreWrapper>
-          <LedScoreLabel>{mention.type}</LedScoreLabel>
-          <LEDScoreBadgeContainer>
-            <ScoreRipple score={mention.score} />
-            <LedScoreBadge score={mention.score}>
-              <LedScoreText>{mention.score}%</LedScoreText>
-            </LedScoreBadge>
-          </LEDScoreBadgeContainer>
-        </LedScoreWrapper>
+        <ScoreCardContainer>
+          <ScoreLabel>
+            Score
+            <TypeBadge type={mention.type}>{mention.type}</TypeBadge>
+          </ScoreLabel>
+          <ScoreValueRow>
+            <ScoreValue score={mention.score}>{mention.score}%</ScoreValue>
+            <ScoreQualityBadge score={mention.score}>{category}</ScoreQualityBadge>
+          </ScoreValueRow>
+          <ScoreMeterContainer>
+            <ScoreMeterFill 
+              score={mention.score} 
+              style={{ '--fill-width': fillWidth } as React.CSSProperties} 
+            />
+          </ScoreMeterContainer>
+        </ScoreCardContainer>
       </TypeCell>
     );
   };
@@ -1712,6 +1889,9 @@ const Mentions: React.FC = () => {
   
   // Estado para controlar botões de favorito que estão sendo processados
   const [processandoFavoritos, setProcessandoFavoritos] = useState<number[]>([]);
+  
+  // Estado para controlar o popup de detalhes
+  const [selectedMention, setSelectedMention] = useState<MentionData | null>(null);
   
   const handleToggleFavorite = async (id: number, currentStatus: boolean) => {
     console.log(`Clicou para alternar favorito: ID=${id}, Status atual=${currentStatus}`);
@@ -1840,7 +2020,12 @@ const Mentions: React.FC = () => {
               </TableRow>
             ) : (
               localMentionsData.map((mention, index) => (
-                <TableRow key={mention.id} index={index}>
+                <TableRow 
+                  key={mention.id} 
+                  index={index}
+                  isFavorite={mention.favorite}
+                  onClick={() => setSelectedMention(mention)}
+                >
                   <VideoCell>
                     <VideoThumbnailWrapper>
                       <VideoThumbnail>
@@ -1940,7 +2125,10 @@ const Mentions: React.FC = () => {
                         <ActionButton 
                           variant="favorite" 
                           title={mention.favorite ? "Remove from favorites" : "Add to favorites"}
-                          onClick={() => {
+                          onClick={(e) => {
+                            // Prevent button click from propagating to the TableRow
+                            e.stopPropagation();
+                            
                             console.log(`DEBUG btn: mention=${JSON.stringify({
                               id: mention.id,
                               favorite: mention.favorite
@@ -1961,12 +2149,16 @@ const Mentions: React.FC = () => {
                       <ActionButton 
                         variant="primary" 
                         title="Edit response"
-                        onClick={() => handleEditClick(mention)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditClick(mention);
+                        }}
                       >
                         <IconComponent icon={FaIcons.FaPencilAlt} />
                       </ActionButton>
                       <ActionButton 
                         title="View analytics"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <IconComponent icon={FaIcons.FaChartLine} />
                       </ActionButton>
@@ -1977,7 +2169,7 @@ const Mentions: React.FC = () => {
             )}
           </MentionsTable>
           
-          {/* Paginação */}
+          {/* Pagination */}
           {data.length > 0 && pagination.totalPages > 1 && (
             <PaginationContainer>
               <PageButton 
@@ -1989,17 +2181,17 @@ const Mentions: React.FC = () => {
               
               <PageNumbers>
                 {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                  // Lógica para mostrar as páginas adequadas quando temos muitas páginas
+                  // Logic to display the appropriate pages when we have many pages
                   let pageNum = i + 1;
                   if (pagination.totalPages > 5) {
                     if (pagination.currentPage <= 3) {
-                      // Estamos nas primeiras páginas
+                      // We are on the first pages
                       pageNum = i + 1;
                     } else if (pagination.currentPage >= pagination.totalPages - 2) {
-                      // Estamos nas últimas páginas
+                      // We are on the last pages
                       pageNum = pagination.totalPages - 4 + i;
                     } else {
-                      // Estamos no meio
+                      // We are in the middle
                       pageNum = pagination.currentPage - 2 + i;
                     }
                   }
@@ -2207,6 +2399,167 @@ const Mentions: React.FC = () => {
         mention={currentMention}
         onSave={handleSaveResponse}
       />
+      
+      {/* Popup de detalhes de menção */}
+      {selectedMention && (
+        <DetailPopupOverlay onClick={() => setSelectedMention(null)}>
+          <DetailPopupContent onClick={(e) => e.stopPropagation()}>
+            <FavoriteIndicator isFavorite={selectedMention.favorite}>
+              <IconComponent icon={selectedMention.favorite ? FaIcons.FaHeart : FaIcons.FaRegHeart} />
+            </FavoriteIndicator>
+            
+            <DetailPopupHeader>
+              <DetailPopupTitle>Mention Details</DetailPopupTitle>
+              <DetailPopupCloseButton onClick={() => setSelectedMention(null)}>×</DetailPopupCloseButton>
+            </DetailPopupHeader>
+            
+            <DetailPopupVideoSection>
+              <DetailPopupThumbnail>
+                <img
+                  src={selectedMention.video.thumbnail}
+                  alt={selectedMention.video.title}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://i.ytimg.com/vi/${selectedMention.video.id}/hqdefault.jpg`;
+                  }}
+                />
+              </DetailPopupThumbnail>
+              
+              <DetailPopupVideoInfo>
+                <DetailPopupVideoTitle>{selectedMention.video.title}</DetailPopupVideoTitle>
+                <div style={{ display: 'flex', gap: '15px', marginBottom: '10px' }}>
+                  <span><IconComponent icon={FaIcons.FaEye} /> {selectedMention.video.views.toLocaleString()} views</span>
+                  <span><IconComponent icon={FaIcons.FaThumbsUp} /> {selectedMention.video.likes.toLocaleString()} likes</span>
+                </div>
+                <div>
+                  <strong>Canal:</strong> {selectedMention.video.channel}
+                </div>
+                <div style={{ marginTop: 'auto' }}>
+                  <button 
+                    style={{ 
+                      background: '#f0f0f5',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      marginTop: '15px'
+                    }}
+                    onClick={() => window.open(`https://www.youtube.com/watch?v=${selectedMention.video.youtube_id}`, '_blank')}
+                  >
+                    <IconComponent icon={FaIcons.FaYoutube} /> View on YouTube
+                  </button>
+                </div>
+              </DetailPopupVideoInfo>
+            </DetailPopupVideoSection>
+            
+            <DetailPopupGrid>
+              <DetailPopupSection>
+                <DetailPopupSectionTitle>
+                  <IconComponent icon={FaIcons.FaComment} /> Comment
+                </DetailPopupSectionTitle>
+                
+                <DetailPopupComment>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <strong>{selectedMention.comment.author}</strong>
+                    <span>{selectedMention.comment.date}</span>
+                  </div>
+                  <p style={{ margin: '0 0 10px 0', lineHeight: '1.6' }}>{selectedMention.comment.text}</p>
+                  <div>
+                    <IconComponent icon={FaIcons.FaThumbsUp} /> {selectedMention.comment.likes} likes
+                  </div>
+                </DetailPopupComment>
+                
+                <div style={{ 
+                  margin: '15px 0',
+                  background: '#f8f8f8',
+                  padding: '15px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}>
+                  <ScoreCardContainer style={{ width: '140px' }}>
+                    <ScoreLabel>
+                      Score
+                      <TypeBadge type={selectedMention.type}>{selectedMention.type}</TypeBadge>
+                    </ScoreLabel>
+                    <ScoreValueRow>
+                      <ScoreValue score={selectedMention.score}>{selectedMention.score}%</ScoreValue>
+                      <ScoreQualityBadge score={selectedMention.score}>
+                        {selectedMention.score >= 70 ? 'Quality' : selectedMention.score >= 40 ? 'Medium' : 'Low'}
+                      </ScoreQualityBadge>
+                    </ScoreValueRow>
+                    <ScoreMeterContainer>
+                      <ScoreMeterFill 
+                        score={selectedMention.score} 
+                        style={{ '--fill-width': `${selectedMention.score}%` } as React.CSSProperties} 
+                      />
+                    </ScoreMeterContainer>
+                  </ScoreCardContainer>
+                </div>
+              </DetailPopupSection>
+              
+              <DetailPopupSection>
+                <DetailPopupSectionTitle>
+                  <IconComponent icon={FaIcons.FaReply} /> Response
+                </DetailPopupSectionTitle>
+                
+                <DetailPopupResponse>
+                  <div style={{ 
+                    display: 'inline-block',
+                    padding: '4px 10px',
+                    background: selectedMention.response.status === 'posted' ? '#e8f5e9' : '#fff8e1',
+                    color: selectedMention.response.status === 'posted' ? '#43a047' : '#ff8f00',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    marginBottom: '10px'
+                  }}>
+                    <IconComponent icon={selectedMention.response.status === 'posted' ? FaIcons.FaCheck : FaIcons.FaClock} />
+                    {' '}
+                    {selectedMention.response.status === 'posted' ? 'Posted' : 'Scheduled'}
+                  </div>
+                  
+                  <p style={{ margin: '0 0 15px 0', lineHeight: '1.6' }}>{selectedMention.response.text}</p>
+                  
+                  {selectedMention.response.date && (
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                      <IconComponent icon={FaIcons.FaCalendarAlt} /> Data: {selectedMention.response.date}
+                    </div>
+                  )}
+                </DetailPopupResponse>
+                
+                <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                  <button 
+                    style={{ 
+                      background: `linear-gradient(135deg, #6b46c1 0%, #9579e0 100%)`,
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 2px 10px rgba(107, 70, 193, 0.2)'
+                    }}
+                    onClick={() => {
+                      setSelectedMention(null);
+                      setCurrentMention(selectedMention);
+                      setEditModalOpen(true);
+                    }}
+                  >
+                    <IconComponent icon={FaIcons.FaEdit} /> Edit Response
+                  </button>
+                </div>
+              </DetailPopupSection>
+            </DetailPopupGrid>
+          </DetailPopupContent>
+        </DetailPopupOverlay>
+      )}
     </IconContext.Provider>
   );
 };

@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useProject } from '../context/ProjectContext';
 
-// Definição de tipos para dados de menções
+// Type definition for mention data
 export interface MentionData {
   id: number;
   video: {
     id: string;
+    youtube_id: string;
     thumbnail: string;
     title: string;
     views: number;
@@ -30,7 +31,7 @@ export interface MentionData {
   msg_respondido: boolean;
 }
 
-// Estatísticas sobre menções
+// Statistics about mentions
 export interface MentionStats {
   totalMentions: number;
   respondedMentions: number;
@@ -44,7 +45,7 @@ export interface MentionStats {
   };
 }
 
-// Dados de performance para gráficos
+// Performance data for charts
 export interface MentionPerformance {
   day: string;
   mentions: number;
@@ -59,7 +60,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Estados para dados
+  // States for data
   const [mentionsData, setMentionsData] = useState<MentionData[]>([]);
   const [mentionStats, setMentionStats] = useState<MentionStats>({
     totalMentions: 0,
@@ -76,30 +77,31 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
   const [performanceData, setPerformanceData] = useState<MentionPerformance[]>([]);
   const [currentTimeframe, setCurrentTimeframe] = useState<TimeframeType>('week');
   
-  // Estado para paginação
+  // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 5; // Limite de 5 itens por página
+  const itemsPerPage = 5; // Limit of 5 items per page
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   
-  // Função auxiliar para processar dados no formato da interface
+  // Helper function to process data in the interface format
   const processMentionsData = (data: any[]): MentionData[] => {
     return data.map((item: any) => ({
       id: item.comment_id,
       video: {
         id: item.video_id,
+        youtube_id: item.video_youtube_id || '',
         thumbnail: item.video_youtube_id ? 
           `https://i.ytimg.com/vi/${item.video_youtube_id}/hqdefault.jpg` : 
           '',
-        title: item.video_title || 'Sem título',
+        title: item.video_title || 'No title',
         views: parseInt(item.video_views) || 0,
         likes: parseInt(item.video_likes) || 0,
-        channel: item.video_channel || 'Canal desconhecido'
+        channel: item.video_channel || 'Unknown channel'
       },
-      type: item.comment_is_lead ? 'Led Score' : 'Standard',
+      type: item.msg_type === 1 ? 'Led' : 'Brand',
       score: parseFloat(item.comment_lead_score || '0'),
       comment: {
-        author: item.comment_author || 'Anônimo',
+        author: item.comment_author || 'Anonymous',
         date: item.comment_published_at_formatted || '',
         text: item.comment_text || '',
         likes: parseInt(item.comment_likes) || 0
@@ -114,7 +116,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
     }));
   };
   
-  // Função auxiliar para calcular estatísticas
+  // Helper function to calculate statistics
   const calculateStats = (data: any[]) => {
     const totalMentions = data.length;
     const respondedMentions = data.filter((item: any) => 
@@ -122,11 +124,11 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
     const pendingResponses = data.filter((item: any) => 
       item.msg_created_at_formatted === null).length;
     
-    console.log(`Estatísticas: Total: ${totalMentions}, Respondidas: ${respondedMentions}, Pendentes: ${pendingResponses}`);
+    console.log(`Statistics: Total: ${totalMentions}, Responded: ${respondedMentions}, Pending: ${pendingResponses}`);
     const responseRate = totalMentions > 0 ? 
       (respondedMentions / totalMentions) * 100 : 0;
     
-    // Tendências (simuladas por enquanto)
+    // Trends (simulated for now)
     setMentionStats({
       totalMentions,
       respondedMentions,
@@ -141,7 +143,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
     });
   };
   
-  // Função para buscar e processar os dados
+  // Function to fetch and process data
   const fetchMentionsData = async () => {
     if (!currentProject) return;
     
@@ -151,15 +153,15 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
     try {
       console.log(`Fetching data for tab: ${activeTab}`);
         
-        // Consulta base na view mentions_overview
+        // Base query on the mentions_overview view
         let query = supabase
           .from('mentions_overview')
-          .select('*') // Selecionar todos os campos
+          .select('*') // Select all fields
           .eq('scanner_project_id', currentProject.id)
-          .order('comment_published_at', { ascending: false }) // Ordenar pelos mais recentes
-          .range((currentPage - 1) * itemsPerPage, (currentPage * itemsPerPage) - 1); // Aplicar paginação
+          .order('comment_published_at', { ascending: false }) // Order by most recent
+          .range((currentPage - 1) * itemsPerPage, (currentPage * itemsPerPage) - 1); // Apply pagination
         
-        // Aplicar filtros específicos para as diferentes abas
+        // Apply specific filters for different tabs
         if (activeTab === 'scheduled') {
           console.log('Applying filter for scheduled mentions (msg_text not empty and msg_respondido = FALSE)');
           query = query
@@ -234,41 +236,41 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
           // Continuar processamento normal com os dados paginados
           const processedMentions: MentionData[] = processMentionsData(paginatedFavData);
           setMentionsData(processedMentions);
-          calculateStats(favData); // Mantém estatísticas sobre todos os dados
+          calculateStats(favData); // Maintain statistics about all data
           
-          // Sair da função para evitar processamento adicional
+          // Exit the function to avoid additional processing
           setLoading(false);
           return;
           
-          // As linhas abaixo nunca são executadas pois retornamos acima
+          // The lines below are never executed because we return above
           query = query.eq('is_favorite', true);
         }
         
-        // Executar a consulta principal
+        // Execute the main query
         const { data, error } = await query;
         
-        // Executar uma consulta separada para obter a contagem total
-        // Em vez de contar, vamos buscar todos os IDs e contar manualmente
+        // Execute a separate query to get the total count
+        // Instead of counting, let's fetch all IDs and count them manually
         let countQuery = supabase
           .from('mentions_overview')
           .select('comment_id')
           .eq('scanner_project_id', currentProject.id);
           
-        // Aplicar os mesmos filtros na consulta de contagem
+        // Apply the same filters in the count query
         if (activeTab === 'scheduled') {
           countQuery = countQuery
-            .not('msg_text', 'is', null)    // Filtra por msg_text não vazio
-            .eq('msg_respondido', false);   // E msg_respondido = FALSE
+            .not('msg_text', 'is', null)    // Filter for non-empty msg_text
+            .eq('msg_respondido', false);   // And msg_respondido = FALSE
         } else if (activeTab === 'posted') {
           countQuery = countQuery.not('msg_created_at_formatted', 'is', null);
         }
         
         const { data: countData } = await countQuery;
         
-        // Contar manualmente
+        // Count manually
         const count = countData?.length || 0;
         
-        // Atualizar total de itens
+        // Update total items
         setTotalItems(count);
         
         console.log(`Results found: ${data?.length || 0} of ${count} total (page ${currentPage} of ${Math.ceil(count / itemsPerPage)})`);
@@ -303,19 +305,19 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
           return;
         }
         
-        // Processar os dados usando a função auxiliar
+        // Process data using the helper function
         const processedMentions: MentionData[] = processMentionsData(data);
         setMentionsData(processedMentions);
         
-        // Calcular estatísticas
+        // Calculate statistics
         calculateStats(data);
         
-        // Dados de performance para o gráfico (agrupados por dia)
-        // Este seria um bom caso para uma view separada no banco,
-        // mas podemos calcular aqui por enquanto
+        // Performance data for the chart (grouped by day)
+        // This would be a good case for a separate view in the database,
+        // but we can calculate it here for now
         const performanceMap = new Map<string, { mentions: number, responses: number }>();
         
-        // Definir um intervalo de acordo com o timeframe
+        // Define an interval according to the timeframe
         const startDate = new Date();
         if (currentTimeframe === 'week') {
           startDate.setDate(startDate.getDate() - 7);
@@ -327,7 +329,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
           startDate.setDate(startDate.getDate() - 1);
         }
         
-        // Criar datas para o intervalo
+        // Create dates for the interval
         const dates: string[] = [];
         const currentDate = new Date();
         let tempDate = new Date(startDate);
@@ -343,7 +345,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
           tempDate.setDate(tempDate.getDate() + 1);
         }
         
-        // Preencher dados reais
+        // Fill in real data
         data.forEach((item: any) => {
           if (!item.comment_published_at) return;
           
@@ -357,7 +359,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
             const existing = performanceMap.get(formattedDate) || { mentions: 0, responses: 0 };
             existing.mentions += 1;
             
-            // Se foi respondido (tem data de publicação)
+            // If it was responded to (has a publication date)
             if (item.msg_created_at_formatted !== null) {
               existing.responses += 1;
             }
@@ -366,7 +368,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
           }
         });
         
-        // Converter para array para o gráfico
+        // Convert to array for the chart
         const performance: MentionPerformance[] = dates.map(day => ({
           day,
           mentions: performanceMap.get(day)?.mentions || 0,
@@ -382,13 +384,13 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         setLoading(false);
       }
     };
-  // Busca e processa os dados com base no timeframe e tab
+  // Fetch and process data based on timeframe and tab
   useEffect(() => {
     if (!currentProject) return;
     
     fetchMentionsData();
     
-    // Configurar listener para atualizações em tempo real
+    // Configure listener for real-time updates
     const subscription = supabase
       .channel('mentions-changes')
       .on('postgres_changes', {
