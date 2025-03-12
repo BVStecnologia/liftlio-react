@@ -661,13 +661,13 @@ const TypeBadge = styled.span<{ type: string }>`
   padding: 2px 6px;
   border-radius: 4px;
   background: ${props => {
-    if (props.type === 'Led') return '#EBF4FF'; 
-    if (props.type === 'Brand') return '#F0FFF4';
+    if (props.type === 'LED') return '#EBF4FF'; 
+    if (props.type === 'BRAND') return '#F0FFF4';
     return '#F9F9F9'; // Fallback para outros tipos
   }};
   color: ${props => {
-    if (props.type === 'Led') return '#3182CE'; 
-    if (props.type === 'Brand') return '#38A169';
+    if (props.type === 'LED') return '#3182CE'; 
+    if (props.type === 'BRAND') return '#38A169';
     return '#718096'; // Fallback para outros tipos
   }};
   font-weight: 600;

@@ -100,7 +100,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         likes: parseInt(item.video_likes) || 0,
         channel: item.video_channel || 'Unknown channel'
       },
-      type: item.msg_type === 1 ? 'Led' : item.msg_type === 2 ? 'Brand' : 'Outro',
+      type: item.msg_type === 1 ? 'LED' : item.msg_type === 2 ? 'BRAND' : 'Outro',
       score: parseFloat(item.comment_lead_score || '0'),
       comment: {
         author: item.comment_author || 'Anonymous',
@@ -349,10 +349,9 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         
         // Fill in real data
         data.forEach((item: any) => {
-          // Só processar se o comentário tiver data de publicação (publicado)
-          if (!item.comment_published_at) return;
-          
-          const commentDate = new Date(item.comment_published_at);
+          // Processar todos os itens, independentemente do status
+          // A data pode ser a data de publicação ou data atual se não estiver publicado
+          const commentDate = item.comment_published_at ? new Date(item.comment_published_at) : new Date();
           if (commentDate >= startDate) {
             const formattedDate = commentDate.toLocaleDateString('default', {
               month: 'short',
