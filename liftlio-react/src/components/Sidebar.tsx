@@ -883,7 +883,7 @@ const AddButton = styled.button`
 const navItems = [
   { path: '/', label: 'Dashboard', icon: 'FaHome' },
   { path: '/mentions', label: 'Mentions', icon: 'FaComments' },
-  { path: '/youtube-monitoring', label: 'Monitoring', icon: 'FaYoutube' },
+  { path: '/monitoring', label: 'Monitoring', icon: 'FaYoutube' },
   { path: '/settings', label: 'Settings', icon: 'FaCog' },
   { path: '/integrations', label: 'Integrations', icon: 'FaPlug' }
 ];
