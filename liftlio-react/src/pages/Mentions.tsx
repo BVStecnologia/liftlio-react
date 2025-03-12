@@ -1371,13 +1371,13 @@ const mentionsData = [
 
 // Chart data for the analytics section
 const analyticsData = [
-  { day: 'Mon', mentions: 65, responses: 55 },
-  { day: 'Tue', mentions: 78, responses: 70 },
-  { day: 'Wed', mentions: 52, responses: 48 },
-  { day: 'Thu', mentions: 91, responses: 80 },
-  { day: 'Fri', mentions: 44, responses: 36 },
-  { day: 'Sat', mentions: 59, responses: 45 },
-  { day: 'Sun', mentions: 86, responses: 75 }
+  { day: 'Mon', led: 35, brand: 20 },
+  { day: 'Tue', led: 40, brand: 28 },
+  { day: 'Wed', led: 22, brand: 16 },
+  { day: 'Thu', led: 51, brand: 23 },
+  { day: 'Fri', led: 24, brand: 12 },
+  { day: 'Sat', led: 29, brand: 18 },
+  { day: 'Sun', led: 46, brand: 22 }
 ];
 
 // Analytics section styles
@@ -1772,17 +1772,21 @@ const Mentions: React.FC = () => {
     }
   }, [toast.visible]);
   
-  // Usar o hook para obter dados dinâmicos
+  // Usar o hook para obter dados dinâmicos baseados na aba ativa
   const { 
     loading, 
     error, 
     mentionsData: data, 
-    mentionStats, 
-    performanceData,
     toggleFavorite: toggleFavoriteMention,
     setTimeframe: setMentionTimeframe,
     pagination // Obter informações e funções de paginação
   } = useMentionsData(activeTab);
+  
+  // Obter estatísticas gerais independentes da aba selecionada
+  const {
+    mentionStats,
+    performanceData
+  } = useMentionsData('all');
   
   // Estado local adicional para forçar atualizações
   const [localMentionsData, setLocalMentionsData] = useState<MentionData[]>([]);
@@ -2317,7 +2321,7 @@ const Mentions: React.FC = () => {
           
           <ChartSection>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={performanceData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={analyticsData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f5" />
                 <XAxis dataKey="day" axisLine={false} tickLine={false} />
                 <YAxis axisLine={false} tickLine={false} />
@@ -2332,8 +2336,8 @@ const Mentions: React.FC = () => {
                 />
                 <Legend verticalAlign="top" height={40} />
                 <Bar 
-                  dataKey="mentions" 
-                  name="Mentions" 
+                  dataKey="led" 
+                  name="LED" 
                   fill="#8561C5" 
                   radius={[4, 4, 0, 0]}
                   animationDuration={1500}
@@ -2341,14 +2345,14 @@ const Mentions: React.FC = () => {
                 >
                   {analyticsData.map((entry, index) => (
                     <Cell 
-                      key={`cell-${index}`} 
-                      fill={`url(#mentionsGradient-${index})`} 
+                      key={`cell-led-${index}`} 
+                      fill={`url(#ledGradient-${index})`} 
                     />
                   ))}
                 </Bar>
                 <Bar 
-                  dataKey="responses" 
-                  name="Responses" 
+                  dataKey="brand" 
+                  name="Brand" 
                   fill="#4facfe" 
                   radius={[4, 4, 0, 0]}
                   animationDuration={1500}
@@ -2357,16 +2361,16 @@ const Mentions: React.FC = () => {
                 >
                   {analyticsData.map((entry, index) => (
                     <Cell 
-                      key={`cell-${index}`} 
-                      fill={`url(#responsesGradient-${index})`} 
+                      key={`cell-brand-${index}`} 
+                      fill={`url(#brandGradient-${index})`} 
                     />
                   ))}
                 </Bar>
                 <defs>
                   {analyticsData.map((entry, index) => (
                     <linearGradient 
-                      key={`mentionsGradient-${index}`}
-                      id={`mentionsGradient-${index}`} 
+                      key={`ledGradient-${index}`}
+                      id={`ledGradient-${index}`} 
                       x1="0" y1="0" x2="0" y2="1"
                     >
                       <stop offset="0%" stopColor="#9575CD" stopOpacity={0.9} />
@@ -2375,8 +2379,8 @@ const Mentions: React.FC = () => {
                   ))}
                   {analyticsData.map((entry, index) => (
                     <linearGradient 
-                      key={`responsesGradient-${index}`}
-                      id={`responsesGradient-${index}`} 
+                      key={`brandGradient-${index}`}
+                      id={`brandGradient-${index}`} 
                       x1="0" y1="0" x2="0" y2="1"
                     >
                       <stop offset="0%" stopColor="#4facfe" stopOpacity={0.9} />
