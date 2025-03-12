@@ -660,8 +660,16 @@ const TypeBadge = styled.span<{ type: string }>`
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 4px;
-  background: ${props => props.type === 'Led' ? '#EBF4FF' : '#F0FFF4'};
-  color: ${props => props.type === 'Led' ? '#3182CE' : '#38A169'};
+  background: ${props => {
+    if (props.type === 'Led') return '#EBF4FF'; 
+    if (props.type === 'Brand') return '#F0FFF4';
+    return '#F9F9F9'; // Fallback para outros tipos
+  }};
+  color: ${props => {
+    if (props.type === 'Led') return '#3182CE'; 
+    if (props.type === 'Brand') return '#38A169';
+    return '#718096'; // Fallback para outros tipos
+  }};
   font-weight: 600;
 `;
 
