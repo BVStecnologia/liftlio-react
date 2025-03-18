@@ -94,6 +94,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
+      // Limpar o projeto atual do localStorage ao fazer logout
+      localStorage.removeItem('currentProjectId');
+      
       const { error } = await supabase.auth.signOut()
       if (error) throw error
     } catch (error) {

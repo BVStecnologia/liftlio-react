@@ -50,7 +50,10 @@ interface Keyword {
 type TimeframeType = 'week' | 'month' | 'year';
 
 export const useDashboardData = () => {
+  // Obter o projeto atual do contexto global
   const { currentProject } = useProject();
+  const projectId = currentProject?.id;  // Extraindo o ID do projeto para fácil referência
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -89,7 +92,10 @@ export const useDashboardData = () => {
   
   // Carregar dados do dashboard
   useEffect(() => {
-    if (!currentProject) return;
+    if (!projectId) {
+      console.log('Não foi possível buscar dados: ID do projeto não disponível');
+      return;
+    }
     
     const fetchDashboardData = async () => {
       setLoading(true);
@@ -101,17 +107,17 @@ export const useDashboardData = () => {
           supabase
             .from('comment_overview')
             .select('*')
-            .eq('scanner_project_id', currentProject.id),
+            .eq('scanner_project_id', projectId),
           
           supabase
             .from('keyword_overview')
             .select('*')
-            .eq('project_id', currentProject.id),
+            .eq('project_id', projectId),
           
           supabase
             .from('best_videos_overview')
             .select('*')
-            .eq('project_id', currentProject.id)
+            .eq('project_id', projectId)
         ]);
         
         if (commentsResponse.error) throw commentsResponse.error;
@@ -347,7 +353,7 @@ export const useDashboardData = () => {
         event: '*',
         schema: 'public',
         table: 'Comentarios_Principais',
-        filter: `video_id=in.(select id from "Videos" where scanner_id in (select id from "Scanner de videos do youtube" where "Projeto_id"=${currentProject.id}))`
+        filter: `video_id=in.(select id from "Videos" where scanner_id in (select id from "Scanner de videos do youtube" where "Projeto_id"=${projectId}))`
       }, () => {
         // Recarregar dados quando houver mudanças
         fetchDashboardData();
@@ -357,7 +363,7 @@ export const useDashboardData = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [currentProject, currentTimeframe]);
+  }, [projectId, currentTimeframe]);
   
   // Função para atualizar o timeframe
   const setTimeframe = (timeframe: TimeframeType) => {

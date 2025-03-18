@@ -58,7 +58,10 @@ export type TimeframeType = 'day' | 'week' | 'month' | 'year';
 export type TabType = 'all' | 'scheduled' | 'posted' | 'favorites';
 
 export const useMentionsData = (activeTab: TabType = 'all') => {
+  // Obter o projeto atual do contexto global
   const { currentProject } = useProject();
+  const projectId = currentProject?.id;  // Extraindo o ID do projeto para fácil referência
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -120,10 +123,19 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
   
   // Helper function to calculate statistics
   const calculateStats = (data: any[]) => {
-    const totalMentions = data.length;
-    const respondedMentions = data.filter((item: any) => 
+    // Se estamos na aba 'all', usamos todos os dados
+    let dataToUse = data;
+    
+    // Se estamos em outra aba mas queremos estatísticas de todos os dados do projeto atual
+    if (activeTab !== 'all') {
+      // Por enquanto, vamos usar os dados disponíveis
+      console.log('Calculando estatísticas baseadas nos dados disponíveis');
+    }
+    
+    const totalMentions = dataToUse.length;
+    const respondedMentions = dataToUse.filter((item: any) => 
       item.msg_created_at_formatted !== null).length;
-    const pendingResponses = data.filter((item: any) => 
+    const pendingResponses = dataToUse.filter((item: any) => 
       item.msg_created_at_formatted === null).length;
     
     console.log(`Statistics: Total: ${totalMentions}, Responded: ${respondedMentions}, Pending: ${pendingResponses}`);
@@ -147,19 +159,22 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
   
   // Function to fetch and process data
   const fetchMentionsData = async () => {
-    if (!currentProject) return;
+    if (!projectId) {
+      console.log('Não foi possível buscar dados: ID do projeto não disponível');
+      return;
+    }
     
     setLoading(true);
     setError(null);
     
     try {
-      console.log(`Fetching data for tab: ${activeTab}`);
+      console.log(`Buscando dados para aba: ${activeTab}, projeto ID: ${projectId}`);
         
         // Base query on the mentions_overview view
         let query = supabase
           .from('mentions_overview')
           .select('*') // Select all fields
-          .eq('scanner_project_id', currentProject.id)
+          .eq('scanner_project_id', projectId)
           .order('comment_published_at', { ascending: false }) // Order by most recent
           .range((currentPage - 1) * itemsPerPage, (currentPage * itemsPerPage) - 1); // Apply pagination
         
@@ -182,7 +197,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
             supabase
               .from('mentions_overview')
               .select('*')
-              .eq('scanner_project_id', currentProject.id)
+              .eq('scanner_project_id', projectId)
               .eq('msg_template', true)
               .order('comment_published_at', { ascending: false })
           ]);
@@ -266,6 +281,9 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         } else if (activeTab === 'posted') {
           countQuery = countQuery.not('msg_created_at_formatted', 'is', null);
         }
+        
+        // Se quisermos buscar somente as menções deste projeto específico, podemos adicionar isso aqui
+        // countQuery = countQuery.eq('scanner_project_id', currentProject.id);
         
         const { data: countData } = await countQuery;
         
@@ -403,7 +421,10 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
     };
   // Fetch and process data based on timeframe and tab
   useEffect(() => {
-    if (!currentProject) return;
+    if (!projectId) {
+      console.log('Não foi possível configurar assinatura em tempo real: ID do projeto não disponível');
+      return;
+    }
     
     fetchMentionsData();
     
@@ -414,7 +435,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         event: '*',
         schema: 'public',
         table: 'Comentarios_Principais',
-        filter: `video_id=in.(select id from "Videos" where scanner_id in (select id from "Scanner de videos do youtube" where "Projeto_id"=${currentProject.id}))`
+        filter: `video_id=in.(select id from "Videos" where scanner_id in (select id from "Scanner de videos do youtube" where "Projeto_id"=${projectId}))`
       }, () => {
         fetchMentionsData();
       })
@@ -423,7 +444,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [currentProject, currentTimeframe, activeTab, currentPage]);
+  }, [projectId, currentTimeframe, activeTab, currentPage]);
   
   // Função para atualizar o timeframe
   const setTimeframe = (timeframe: TimeframeType) => {

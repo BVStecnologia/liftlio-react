@@ -3,7 +3,8 @@ cat > comandos_git.txt << 'EOL'
 # COMANDOS GIT PARA O PROJETO LIFTLIO
 
 # PUXAR ATUALIZAÇÕES DO GITHUB
-git pull
+git fetch --all
+git reset --hard origin/main
 
 # ENVIAR ALTERAÇÕES PARA O GITHUB
 git add .

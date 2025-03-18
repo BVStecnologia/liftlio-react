@@ -1095,7 +1095,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
               <ProjectIcon>
                 <IconComponent icon={FaIcons.FaProjectDiagram} />
               </ProjectIcon>
-              {currentProject ? currentProject["Project name"] || "Select a project" : "Select a project"}
+              {currentProject && projects.some(p => p.id === currentProject.id) ? 
+                (currentProject["Project name"] || currentProject.name) : 
+                "Select a project"}
             </ProjectSelector>
             
             {showProjectsDropdown && (
@@ -1106,7 +1108,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                     {projects.map(project => (
                       <ProjectItem key={project.id} onClick={() => handleProjectSelect(project)}>
                         <IconComponent icon={FaIcons.FaFolder} />
-                        {project["Project name"]}
+                        {project["Project name"] || project.name}
                       </ProjectItem>
                     ))}
                     <ProjectItem onClick={() => setShowProjectModal(true)} style={{borderTop: '1px solid rgba(0,0,0,0.1)', marginTop: '10px', paddingTop: '15px'}}>

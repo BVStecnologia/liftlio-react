@@ -1,20 +1,33 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
+// Interface para o modelo de dados de Projeto
+interface Project {
+  id: string | number;
+  name: string;
+  description: string;
+  user: string;
+  user_id?: string;
+  link?: string;
+  audience?: string;
+  "Project name"?: string; // Campo legado usado na interface
+  // Adicione outros campos conforme necessário
+}
+
 type ProjectContextType = {
-  currentProject: any | null;
-  setCurrentProject: (project: any) => void;
-  loadUserProjects: () => Promise<any[]>;
+  currentProject: Project | null;
+  setCurrentProject: (project: Project) => void;
+  loadUserProjects: () => Promise<Project[]>;
   isLoading: boolean;
-  projects: any[];
+  projects: Project[];
 };
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
-  const [currentProject, setCurrentProject] = useState<any | null>(null);
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const subscriptionRef = useRef<any>(null);
   
   useEffect(() => {
@@ -43,18 +56,34 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
   const fetchProject = async (projectId: string) => {
     setIsLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user || !user.email) {
+        // Se não há usuário, limpar o projeto salvo
+        localStorage.removeItem('currentProjectId');
+        setCurrentProject(null);
+        return;
+      }
+      
       const { data, error } = await supabase
         .from('Projeto')
         .select('*')
         .eq('id', projectId)
+        .eq('user', user.email) // Verifica se pertence ao usuário atual
         .single();
         
       if (data && !error) {
         setCurrentProject(data);
         localStorage.setItem('currentProjectId', projectId);
+      } else {
+        // Se o projeto não existe ou não pertence ao usuário, limpar
+        localStorage.removeItem('currentProjectId');
+        setCurrentProject(null);
       }
     } catch (error) {
       console.error("Error fetching project:", error);
+      localStorage.removeItem('currentProjectId');
+      setCurrentProject(null);
     } finally {
       setIsLoading(false);
     }
