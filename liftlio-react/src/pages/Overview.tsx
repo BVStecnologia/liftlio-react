@@ -2281,27 +2281,27 @@ const Overview: React.FC = () => {
   const statsCards = [
     {
       id: 1,
-      title: 'Reach',
+      title: 'Posts',
       value: statsData.reach.value,
-      icon: 'FaUsers',
+      icon: 'FaFileAlt',
       color: 'linear-gradient(135deg, #2196F3 0%, #03A9F4 100%)',
-      description: 'People reached',
+      description: 'Total posts',
       trend: statsData.reach.trend
     },
     {
       id: 2,
-      title: 'Activities',
+      title: 'Comments',
       value: statsData.activities.value,
-      icon: 'FaShareAlt',
+      icon: 'FaComments',
       color: 'linear-gradient(135deg, #FF7A30 0%, #FFA07A 100%)',
-      description: 'Total activities this month',
+      description: 'Total comments',
       trend: statsData.activities.trend
     },
     {
       id: 3,
       title: 'Total Engagements',
       value: statsData.engagements.value,
-      icon: 'FaComments',
+      icon: 'FaStar',
       color: 'linear-gradient(135deg, #673AB7 0%, #9575CD 100%)',
       description: 'Engagements posted',
       trend: statsData.engagements.trend
@@ -2310,7 +2310,7 @@ const Overview: React.FC = () => {
       id: 4,
       title: 'LEDs',
       value: statsData.leads.value,
-      icon: 'FaShoppingCart',
+      icon: 'FaUserCheck',
       color: 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)',
       description: 'LEDs Posted',
       trend: statsData.leads.trend
@@ -2428,10 +2428,10 @@ const Overview: React.FC = () => {
                     opacity: activeLeds[index as keyof typeof activeLeds] ? 1 : 0.9
                   }}
                 >
-                  {stat.title === 'Total Engagements' && <IconComponent icon={FaIcons.FaComments} />}
-                  {stat.title === 'LEDs' && <IconComponent icon={FaIcons.FaShoppingCart} />}
-                  {stat.title === 'Activities' && <IconComponent icon={FaIcons.FaShareAlt} />}
-                  {stat.title === 'Reach' && <IconComponent icon={FaIcons.FaUsers} />}
+                  {stat.title === 'Total Engagements' && <IconComponent icon={FaIcons.FaStar} />}
+                  {stat.title === 'LEDs' && <IconComponent icon={FaIcons.FaUserCheck} />}
+                  {stat.title === 'Comments' && <IconComponent icon={FaIcons.FaComments} />}
+                  {stat.title === 'Posts' && <IconComponent icon={FaIcons.FaFileAlt} />}
                 </StatIcon>
               </StatIconContainer>
             </StatDisplay>
