@@ -1267,7 +1267,8 @@ const Settings: React.FC<{}> = () => {
     "Negative keywords": '',
     "País": '',
     user: '',
-    "User id": ''
+    "User id": '',
+    "Youtube Active": false
   });
   
   // Parse keywords from string to array
@@ -1369,7 +1370,8 @@ const Settings: React.FC<{}> = () => {
             "Negative keywords": data["Negative keywords"] || '',
             "País": data["País"] || '',
             user: data.user || '',
-            "User id": data["User id"] || ''
+            "User id": data["User id"] || '',
+            "Youtube Active": data["Youtube Active"] || false
           };
           
           // Use the mapped data
@@ -1445,9 +1447,18 @@ const Settings: React.FC<{}> = () => {
     if (isFieldChanged(projectData.Keywords, originalData.Keywords)) return true;
     if (isFieldChanged(projectData["Negative keywords"], originalData["Negative keywords"])) return true;
     if (isFieldChanged(projectData["País"], originalData["País"])) return true;
+    if (isFieldChanged(projectData["Youtube Active"], originalData["Youtube Active"])) return true;
     
     // No changes detected
     return false;
+  };
+  
+  // Function to toggle project active state
+  const toggleYoutubeActive = () => {
+    setProjectData(prev => ({
+      ...prev,
+      "Youtube Active": !prev["Youtube Active"]
+    }));
   };
   
   // Create direct change handlers for each field
@@ -1469,6 +1480,7 @@ const Settings: React.FC<{}> = () => {
     newChangedFields["Keywords"] = isFieldChanged(updatedData.Keywords, originalData.Keywords);
     newChangedFields["Negative keywords"] = isFieldChanged(updatedData["Negative keywords"], originalData["Negative keywords"]);
     newChangedFields["País"] = isFieldChanged(updatedData["País"], originalData["País"]);
+    newChangedFields["Youtube Active"] = isFieldChanged(updatedData["Youtube Active"], originalData["Youtube Active"]);
     
     console.log('Field changed:', field, 'New value:', value, 'Changed fields:', newChangedFields);
     
@@ -1518,7 +1530,8 @@ const Settings: React.FC<{}> = () => {
         "description service": projectData.description_service,
         "Keywords": projectData.Keywords,
         "Negative keywords": projectData["Negative keywords"],
-        "País": projectData["País"]
+        "País": projectData["País"],
+        "Youtube Active": projectData["Youtube Active"]
       };
         
       console.log('Data to update:', updateData);
@@ -1561,7 +1574,8 @@ const Settings: React.FC<{}> = () => {
           "Negative keywords": updatedData["Negative keywords"] || '',
           "País": updatedData["País"] || '',
           user: updatedData.user || '',
-          "User id": updatedData["User id"] || ''
+          "User id": updatedData["User id"] || '',
+          "Youtube Active": updatedData["Youtube Active"] || false
         };
           
         // Store the updated data as our new reference point
@@ -1887,6 +1901,29 @@ const Settings: React.FC<{}> = () => {
                     <option value="180">180 days</option>
                     <option value="365">1 year</option>
                   </Select>
+                </FormGroup>
+                
+                <FormGroup>
+                  <Label>Project Status</Label>
+                  <div style={{ marginBottom: '10px', fontSize: '14px', color: '#666' }}>
+                    Disabling the project will pause monitoring and integrations
+                  </div>
+                  <ToggleContainer>
+                    <ToggleSwitch>
+                      <input 
+                        type="checkbox" 
+                        checked={projectData["Youtube Active"]}
+                        onChange={toggleYoutubeActive}
+                      />
+                      <span />
+                    </ToggleSwitch>
+                    <ToggleLabel>
+                      {projectData["Youtube Active"] ? 
+                        <><IconComponent icon={FaYoutube} style={{ color: '#FF0000' }} /> Project Active</> : 
+                        <><IconComponent icon={FaYoutube} style={{ color: '#999' }} /> Project Disabled</>
+                      }
+                    </ToggleLabel>
+                  </ToggleContainer>
                 </FormGroup>
                 
                 <FormRow>
