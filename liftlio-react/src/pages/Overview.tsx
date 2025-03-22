@@ -1864,7 +1864,7 @@ const Overview: React.FC = () => {
               <ResponsiveContainer width="100%" height="85%">
                 <AreaChart data={samplePerformanceData}>
                   <defs>
-                    <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="colorVideos" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#2196F3" stopOpacity={0.8}/>
                       <stop offset="95%" stopColor="#2196F3" stopOpacity={0.1}/>
                     </linearGradient>
@@ -1886,9 +1886,9 @@ const Overview: React.FC = () => {
                   />
                   <Area 
                     type="monotone" 
-                    dataKey="views" 
+                    dataKey="videos" 
                     stroke="#2196F3" 
-                    fill="url(#colorViews)" 
+                    fill="url(#colorVideos)" 
                     activeDot={{ r: 8 }}
                   />
                   <Area 
@@ -2285,7 +2285,7 @@ const Overview: React.FC = () => {
       value: statsData.reach.value,
       icon: 'FaFileAlt',
       color: 'linear-gradient(135deg, #2196F3 0%, #03A9F4 100%)',
-      description: 'Total posts',
+      description: 'Videos',
       trend: statsData.reach.trend
     },
     {
@@ -2294,7 +2294,7 @@ const Overview: React.FC = () => {
       value: statsData.activities.value,
       icon: 'FaComments',
       color: 'linear-gradient(135deg, #FF7A30 0%, #FFA07A 100%)',
-      description: 'Total comments',
+      description: 'Comments',
       trend: statsData.activities.trend
     },
     {
@@ -2303,7 +2303,7 @@ const Overview: React.FC = () => {
       value: statsData.engagements.value,
       icon: 'FaStar',
       color: 'linear-gradient(135deg, #673AB7 0%, #9575CD 100%)',
-      description: 'Engagements posted',
+      description: 'Total engagements',
       trend: statsData.engagements.trend
     },
     {
@@ -2312,7 +2312,7 @@ const Overview: React.FC = () => {
       value: statsData.leads.value,
       icon: 'FaUserCheck',
       color: 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)',
-      description: 'LEDs Posted',
+      description: 'LED mentions',
       trend: statsData.leads.trend
     }
   ];
@@ -2522,7 +2522,7 @@ const Overview: React.FC = () => {
                   }}
                 />
                 <Legend />
-                <Bar dataKey="views" name="Views" fill="#673AB7" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="videos" name="Videos" fill="#673AB7" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="engagement" name="Engagement" fill="#FF9800" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="leads" name="Leads" fill="#4CAF50" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -2587,7 +2587,7 @@ const Overview: React.FC = () => {
               {chartType === 'area' ? (
                 <AreaChart data={performanceData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="colorVideos" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#673AB7" stopOpacity={0.8}/>
                       <stop offset="95%" stopColor="#673AB7" stopOpacity={0.2}/>
                     </linearGradient>
@@ -2614,12 +2614,12 @@ const Overview: React.FC = () => {
                   <Legend />
                   <Area 
                     type="monotone" 
-                    dataKey="views" 
-                    name="Views"
+                    dataKey="videos" 
+                    name="Videos"
                     stroke="#673AB7" 
                     strokeWidth={2}
                     fillOpacity={1} 
-                    fill="url(#colorViews)" 
+                    fill="url(#colorVideos)" 
                     activeDot={{ r: 8, strokeWidth: 0, fill: "#673AB7" }}
                   />
                   <Area 
@@ -2659,8 +2659,8 @@ const Overview: React.FC = () => {
                   <Legend />
                   <Line 
                     type="monotone" 
-                    dataKey="views" 
-                    name="Views"
+                    dataKey="videos" 
+                    name="Videos"
                     stroke="#673AB7" 
                     strokeWidth={3}
                     dot={{ r: 4, strokeWidth: 0, fill: "#673AB7" }}
@@ -2699,7 +2699,7 @@ const Overview: React.FC = () => {
                     }} 
                   />
                   <Legend />
-                  <Bar dataKey="views" name="Views" fill="#673AB7" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="videos" name="Videos" fill="#673AB7" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="engagement" name="Engagement" fill="#FF9800" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="leads" name="Leads" fill="#4CAF50" radius={[4, 4, 0, 0]} />
                 </BarChart>

@@ -22,16 +22,49 @@ interface StatsData {
 
 interface PerformanceData {
   name: string;
-  views: number;
+  videos: number;
   engagement: number;
   leads: number;
   dateKey?: string;
+}
+
+interface WeeklyPerformanceData {
+  project_id: number | string;
+  date: string;
+  formatted_date: string;
+  views: number;
+  videos?: number;
+  engagements: number;
+  leads: number;
+}
+
+interface PerformanceAnalysisData {
+  project_id: number | string;
+  date: string;
+  granularity: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  label: string;
+  videos: number;
+  views: number;
+  engagements: number;
+  leads: number;
+}
+
+interface ChannelData {
+  project_id: number | string;
+  channel_name: string;
+  engagement_count: number;
+  lead_count: number;
+  weighted_score: number;
+  lead_percentage: number;
 }
 
 interface TrafficSource {
   name: string;
   value: number;
   color: string;
+  engagements?: number;
+  leads?: number;
+  leadPercentage?: number;
 }
 
 interface Keyword {
@@ -45,6 +78,9 @@ interface Keyword {
   topVideos: string[];
   category: string;
   audience: string;
+  total_leads?: number;
+  converted_leads?: number;
+  keyword_composite_score?: number;
 }
 
 type TimeframeType = 'week' | 'month' | 'year';
@@ -69,7 +105,8 @@ export const useDashboardData = () => {
   const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
   const [trafficSources, setTrafficSources] = useState<TrafficSource[]>([]);
   const [keywordsTable, setKeywordsTable] = useState<Keyword[]>([]);
-  const [currentTimeframe, setCurrentTimeframe] = useState<TimeframeType>('week');
+  const [performanceAnalysis, setPerformanceAnalysis] = useState<PerformanceAnalysisData[]>([]);
+  const [currentTimeframe, setCurrentTimeframe] = useState<TimeframeType>('year');
   
   // Função para filtrar dados conforme timeframe
   const filterByTimeframe = <T extends Record<string, any>>(data: T[], dateField: string, timeframe: TimeframeType): T[] => {
@@ -102,8 +139,16 @@ export const useDashboardData = () => {
       setError(null);
       
       try {
-        // Buscar dados das três views em paralelo
-        const [commentsResponse, keywordsResponse, videosResponse] = await Promise.all([
+        // Buscar dados das sete views em paralelo
+        const [
+          commentsResponse, 
+          keywordsResponse, 
+          videosResponse, 
+          metricsResponse, 
+          channelsResponse, 
+          performanceResponse,
+          performanceAnalysisResponse
+        ] = await Promise.all([
           supabase
             .from('comment_overview')
             .select('*')
@@ -117,47 +162,79 @@ export const useDashboardData = () => {
           supabase
             .from('best_videos_overview')
             .select('*')
+            .eq('project_id', projectId),
+            
+          supabase
+            .from('dashboard_metrics')
+            .select('*')
+            .eq('project_id', projectId),
+            
+          supabase
+            .from('melhores_canais')
+            .select('*')
+            .eq('project_id', projectId),
+            
+          supabase
+            .from('performance_semanal')
+            .select('*')
             .eq('project_id', projectId)
+            .order('date', { ascending: true })
+            .limit(30),
+            
+          supabase
+            .from('grafico_performance')
+            .select('*')
+            .eq('project_id', projectId)
+            .order('date', { ascending: true })
+            .limit(100)
         ]);
         
         if (commentsResponse.error) throw commentsResponse.error;
         if (keywordsResponse.error) throw keywordsResponse.error;
         if (videosResponse.error) throw videosResponse.error;
+        if (metricsResponse.error) throw metricsResponse.error;
+        if (channelsResponse.error) throw channelsResponse.error;
+        if (performanceResponse.error) throw performanceResponse.error;
+        if (performanceAnalysisResponse.error) throw performanceAnalysisResponse.error;
         
         const comments = commentsResponse.data || [];
         const keywords = keywordsResponse.data || [];
         const videos = videosResponse.data || [];
+        const metrics = metricsResponse.data[0] || {
+          total_videos: 0,
+          total_comments: 0,
+          total_engagements: 0,
+          total_leads: 0
+        };
+        const topChannels: ChannelData[] = channelsResponse.data || [];
+        const weeklyPerformance: WeeklyPerformanceData[] = performanceResponse.data || [];
+        const performanceAnalysis: PerformanceAnalysisData[] = performanceAnalysisResponse.data || [];
+        console.log('Performance Analysis Data:', performanceAnalysis);
         
         // =============================================
         // 1. Processar CARDS DE ESTATÍSTICAS
         // =============================================
         
-        // CARD 1: REACH - Total de visualizações de todas as keywords
-        const totalViews = keywords.reduce((sum: number, k: any) => sum + (parseInt(k.total_views) || 0), 0);
-        
-        // CARD 2: ACTIVITIES - Total de vídeos monitorados
-        const totalVideos = videos.length;
-        
-        // CARD 3: ENGAGEMENTS - Total de comentários
-        const totalComments = comments.length;
-        
-        // CARD 4: LEADS - Comentários marcados como lead
-        const totalLeads = comments.filter((c: any) => c.comment_is_lead).length;
+        // Usar dados da nova view dashboard_metrics
+        const totalVideos = metrics.total_videos;
+        const totalComments = metrics.total_comments;
+        const totalEngagements = metrics.total_engagements;
+        const totalLeads = metrics.total_leads;
         
         // Calcular tendências (simulação para este exemplo)
         // Em produção, você compararia com dados históricos reais
         setStatsData({
           reach: { 
-            value: totalViews.toLocaleString(), 
-            trend: { value: '+5%', positive: true } as TrendData
-          },
-          activities: { 
             value: totalVideos.toString(), 
             trend: { value: '+3%', positive: true } as TrendData
           },
-          engagements: { 
+          activities: { 
             value: totalComments.toString(), 
             trend: { value: '+12%', positive: true } as TrendData
+          },
+          engagements: { 
+            value: totalEngagements.toString(), 
+            trend: { value: '+8%', positive: true } as TrendData
           },
           leads: { 
             value: totalLeads.toString(), 
@@ -168,20 +245,6 @@ export const useDashboardData = () => {
         // =============================================
         // 2. Processar GRÁFICO DE PIZZA (Traffic Sources)
         // =============================================
-        
-        // Agrupar por canais
-        const channelMap: Record<string, number> = {};
-        
-        videos.forEach((video: any) => {
-          if (!video.channel_name) return;
-          
-          if (!channelMap[video.channel_name]) {
-            channelMap[video.channel_name] = 0;
-          }
-          
-          // Usar view_count para calcular valor de cada canal
-          channelMap[video.channel_name] += parseInt(video.view_count) || 0;
-        });
         
         // Cores vivas e distintas para diferentes plataformas
         const channelColors: Record<string, string> = {
@@ -199,15 +262,15 @@ export const useDashboardData = () => {
           'Telegram': '#0088CC'      // Azul Telegram
         };
         
-        // Formatar para gráfico de pizza e limitar aos 8 principais canais
-        const trafficSourceData: TrafficSource[] = Object.entries(channelMap)
-          .sort((a, b) => b[1] - a[1]) // Ordenar por valor (decrescente)
-          .slice(0, 8) // Pegar apenas os 8 principais
-          .map(([name, value]) => ({
-            name,
-            value,
-            color: channelColors[name] || '#555555' // Usar cinza escuro para canais sem cor predefinida
-          }));
+        // Usar dados da view melhores_canais - já vem os 8 melhores canais
+        const trafficSourceData: TrafficSource[] = topChannels.map((channel: ChannelData) => ({
+          name: channel.channel_name,
+          value: channel.weighted_score,
+          color: channelColors[channel.channel_name] || '#555555', // Usar cinza escuro para canais sem cor predefinida
+          engagements: channel.engagement_count,
+          leads: channel.lead_count,
+          leadPercentage: channel.lead_percentage
+        }));
         
         setTrafficSources(trafficSourceData);
         
@@ -215,55 +278,32 @@ export const useDashboardData = () => {
         // 3. Processar GRÁFICOS DE PERFORMANCE
         // =============================================
         
-        // Filtrar comentários conforme período selecionado
-        const filteredComments = filterByTimeframe(
-          comments, 
-          'comment_published_at',
-          currentTimeframe
-        );
+        // Usar dados da nova view grafico_performance em vez dos antigos
+        let filteredPerformance: PerformanceAnalysisData[] = [];
         
-        // Agrupar comentários por data
-        const performanceByDate: Record<string, PerformanceData> = {};
-        
-        filteredComments.forEach((comment: any) => {
-          if (!comment.comment_published_at) return;
-          
-          const commentDate = new Date(comment.comment_published_at);
-          const dateKey = commentDate.toISOString().split('T')[0];
-          
-          if (!performanceByDate[dateKey]) {
-            performanceByDate[dateKey] = {
-              name: new Date(dateKey).toLocaleDateString('default', { month: 'short', day: 'numeric' }),
-              views: 0,
-              engagement: 0,
-              leads: 0,
-              // Manter a chave para ordenação posterior
-              dateKey
-            };
+        if (currentTimeframe === 'week') {
+          // Últimos 7 dias
+          filteredPerformance = performanceAnalysis.filter(data => data.granularity === 'daily').slice(-7);
+        } else if (currentTimeframe === 'month') {
+          // Últimos 30 dias
+          filteredPerformance = performanceAnalysis.filter(data => data.granularity === 'daily').slice(-30);
+        } else {
+          // year - Usar dados anuais ou mensais se disponíveis
+          filteredPerformance = performanceAnalysis.filter(data => data.granularity === 'yearly');
+          if (filteredPerformance.length === 0) {
+            filteredPerformance = performanceAnalysis.filter(data => data.granularity === 'monthly');
           }
-          
-          // Incrementar visualizações
-          performanceByDate[dateKey].views += parseInt(comment.video_views || '0') / Math.max(1, totalVideos);
-          
-          // Incrementar engajamento (um por comentário)
-          performanceByDate[dateKey].engagement++;
-          
-          // Incrementar leads
-          if (comment.comment_is_lead) {
-            performanceByDate[dateKey].leads++;
-          }
-        });
+        }
         
-        // Converter para array e ordenar por data
-        let processedPerformanceData: PerformanceData[] = Object.values(performanceByDate)
-          .sort((a, b) => {
-            return new Date(a.dateKey || '').getTime() - new Date(b.dateKey || '').getTime();
-          })
-          .map(item => {
-            // Remover a propriedade dateKey antes de retornar os dados
-            const { dateKey, ...rest } = item;
-            return rest;
-          });
+        // Converter para o formato esperado pelo gráfico
+        let processedPerformanceData: PerformanceData[] = filteredPerformance.map(data => ({
+          name: data.label || new Date(data.date).toLocaleDateString('default', { month: 'short', day: 'numeric' }),
+          videos: data.videos || 0,
+          engagement: data.engagements || 0,
+          leads: data.leads || 0
+        }));
+        
+        console.log('Processed Performance Data:', processedPerformanceData);
         
         // Se não tiver dados suficientes, criar dados de exemplo para garantir visualização nos gráficos
         if (processedPerformanceData.length < 5) {
@@ -272,7 +312,7 @@ export const useDashboardData = () => {
             date.setDate(date.getDate() - (6 - i));
             return {
               name: date.toLocaleDateString('default', { month: 'short', day: 'numeric' }),
-              views: Math.floor(Math.random() * 1000) + 500,
+              videos: Math.floor(Math.random() * 1000) + 500,
               engagement: Math.floor(Math.random() * 100) + 50,
               leads: Math.floor(Math.random() * 20) + 5
             };
@@ -283,19 +323,76 @@ export const useDashboardData = () => {
         // Se não houver dados de traffic sources, criar dados de exemplo
         if (trafficSourceData.length === 0) {
           const sampleChannels = [
-            { name: 'YouTube', value: 30, color: '#FF0000' },
-            { name: 'Facebook', value: 25, color: '#3b5998' },
-            { name: 'Instagram', value: 15, color: '#C13584' },
-            { name: 'TikTok', value: 10, color: '#000000' },
-            { name: 'Twitter', value: 8, color: '#1DA1F2' },
-            { name: 'LinkedIn', value: 5, color: '#0077B5' },
-            { name: 'Pinterest', value: 4, color: '#E60023' },
-            { name: 'Snapchat', value: 3, color: '#FFFC00' }
+            { 
+              name: 'YouTube', 
+              value: 30, 
+              color: '#FF0000',
+              engagements: 20,
+              leads: 10,
+              leadPercentage: 33.33
+            },
+            { 
+              name: 'Facebook', 
+              value: 25, 
+              color: '#3b5998',
+              engagements: 15,
+              leads: 10,
+              leadPercentage: 40.0
+            },
+            { 
+              name: 'Instagram', 
+              value: 15, 
+              color: '#C13584',
+              engagements: 10,
+              leads: 5,
+              leadPercentage: 33.33
+            },
+            { 
+              name: 'TikTok', 
+              value: 10, 
+              color: '#000000',
+              engagements: 8,
+              leads: 2,
+              leadPercentage: 20.0
+            },
+            { 
+              name: 'Twitter', 
+              value: 8, 
+              color: '#1DA1F2',
+              engagements: 6,
+              leads: 2,
+              leadPercentage: 25.0
+            },
+            { 
+              name: 'LinkedIn', 
+              value: 5, 
+              color: '#0077B5',
+              engagements: 3,
+              leads: 2,
+              leadPercentage: 40.0
+            },
+            { 
+              name: 'Pinterest', 
+              value: 4, 
+              color: '#E60023',
+              engagements: 3,
+              leads: 1,
+              leadPercentage: 25.0
+            },
+            { 
+              name: 'Snapchat', 
+              value: 3, 
+              color: '#FFFC00',
+              engagements: 2,
+              leads: 1,
+              leadPercentage: 33.33
+            }
           ];
           setTrafficSources(sampleChannels);
         }
         
         setPerformanceData(processedPerformanceData);
+        setPerformanceAnalysis(performanceAnalysis);
         
         // =============================================
         // 4. Processar TABELA DE KEYWORDS 
@@ -330,7 +427,10 @@ export const useDashboardData = () => {
             comments: parseInt(keyword.avg_comments) || 0,
             topVideos,
             category: keyword.most_common_category || 'General',
-            audience: keyword.primary_target_audience || 'General'
+            audience: keyword.primary_target_audience || 'General',
+            total_leads: parseInt(keyword.total_leads) || 0,
+            converted_leads: parseInt(keyword.converted_leads) || 0,
+            keyword_composite_score: parseFloat(keyword.keyword_composite_score) || 0
           };
         });
         
@@ -370,6 +470,27 @@ export const useDashboardData = () => {
     setCurrentTimeframe(timeframe);
   };
   
+  // Filtrar dados de análise de performance com base no timeframe
+  const getFilteredAnalysisData = () => {
+    let filteredData = [];
+    
+    if (currentTimeframe === 'week') {
+      filteredData = performanceAnalysis.filter((data: PerformanceAnalysisData) => data.granularity === 'daily').slice(-7);
+    } else if (currentTimeframe === 'month') {
+      filteredData = performanceAnalysis.filter((data: PerformanceAnalysisData) => data.granularity === 'daily').slice(-30);
+    } else {
+      // year
+      filteredData = performanceAnalysis.filter((data: PerformanceAnalysisData) => data.granularity === 'yearly');
+      if (filteredData.length === 0) {
+        // Se não houver dados anuais, tente mensais
+        filteredData = performanceAnalysis.filter((data: PerformanceAnalysisData) => data.granularity === 'monthly');
+      }
+    }
+    
+    console.log(`Filtered data for ${currentTimeframe}:`, filteredData);
+    return filteredData;
+  };
+
   return {
     loading,
     error,
@@ -378,6 +499,7 @@ export const useDashboardData = () => {
     trafficSources,
     keywordsTable,
     timeframe: currentTimeframe,
-    setTimeframe
+    setTimeframe,
+    performanceAnalysis: getFilteredAnalysisData()
   };
 };
