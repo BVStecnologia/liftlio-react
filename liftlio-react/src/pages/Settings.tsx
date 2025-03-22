@@ -1455,6 +1455,11 @@ const Settings: React.FC = () => {
           
         console.log('Updated project data:', updatedData);
         console.log('Negative keywords after update:', updatedData ? updatedData["Negative keywords"] : 'unknown');
+        
+        // Update the initial data to reflect the saved state
+        if (updatedData) {
+          setInitialProjectData({...updatedData});
+        }
       }
       
       setShowSaveSuccess(true);
