@@ -660,8 +660,19 @@ const Integrations: React.FC = () => {
     if (currentProject?.id) {
       fetchIntegrations();
     } else {
-      setUserIntegrations([]);
-      setIsLoading(false);
+      // Tentar carregar o primeiro projeto disponível se não houver projeto selecionado
+      // Isso é útil especialmente durante o fluxo de onboarding
+      fetchProjects().then(projects => {
+        if (projects && projects.length > 0) {
+          // Selecionar o primeiro projeto automaticamente
+          const firstProject = projects[0];
+          localStorage.setItem('currentProjectId', firstProject.id.toString());
+          window.location.reload(); // Recarregar a página para atualizar o contexto
+        } else {
+          setUserIntegrations([]);
+          setIsLoading(false);
+        }
+      });
     }
     
     // O processamento do código de autorização agora é feito pelo componente OAuthHandler global
@@ -1001,7 +1012,20 @@ const Integrations: React.FC = () => {
 
   const handleConnect = (integration: any) => {
     if (!currentProject?.id) {
-      alert('Please select a project first');
+      // Verificar se viemos do onboarding e tentar carregar o primeiro projeto disponível
+      if (userIntegrations.length === 0) {
+        fetchProjects().then(projects => {
+          if (projects && projects.length > 0) {
+            // Selecionar o primeiro projeto disponível
+            const firstProject = projects[0];
+            setProjectAndContinue(firstProject, integration);
+          } else {
+            alert('Please select a project first');
+          }
+        });
+      } else {
+        alert('Please select a project first');
+      }
       return;
     }
     
@@ -1012,6 +1036,37 @@ const Integrations: React.FC = () => {
     
     setSelectedIntegration(integration);
     setModalOpen(true);
+  };
+  
+  // Função auxiliar para buscar todos os projetos disponíveis
+  const fetchProjects = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user || !user.email) {
+        return [];
+      }
+      
+      const { data, error } = await supabase
+        .from('Projeto')
+        .select('*')
+        .eq('user', user.email);
+        
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error("Error loading projects:", error);
+      return [];
+    }
+  };
+  
+  // Função para selecionar um projeto e continuar com a conexão
+  const setProjectAndContinue = (project: any, integration: any) => {
+    // Atualizar o projeto atual no ProjectContext
+    if (project?.id) {
+      localStorage.setItem('currentProjectId', project.id.toString());
+      window.location.reload(); // Recarregar a página para atualizar o contexto do projeto
+    }
   };
 
   const handleAuthorize = () => {

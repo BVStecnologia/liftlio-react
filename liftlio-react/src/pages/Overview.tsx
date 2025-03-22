@@ -8,6 +8,10 @@ import SentimentIndicator from '../components/SentimentIndicator';
 import { IconComponent } from '../utils/IconHelper';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useProject } from '../context/ProjectContext';
+import EmptyState from '../components/EmptyState';
+import LoadingDataIndicator from '../components/LoadingDataIndicator';
+import ProjectModal from '../components/ProjectModal';
+import { supabase } from '../lib/supabaseClient';
 
 // Animation keyframes
 const fadeIn = keyframes`
@@ -1320,7 +1324,15 @@ const renderIcon = (iconName: string) => {
 
 // Main component
 const Overview: React.FC = () => {
-  const { currentProject } = useProject();
+  const { 
+    currentProject, 
+    hasProjects, 
+    hasIntegrations, 
+    hasData, 
+    onboardingStep 
+  } = useProject();
+  
+  const [showProjectModal, setShowProjectModal] = useState(false);
   
   // Use o hook personalizado para buscar dados do Supabase
   const { 
@@ -1328,10 +1340,12 @@ const Overview: React.FC = () => {
     error, 
     statsData, 
     performanceData, 
+    weeklyPerformanceData, // Incluindo os dados semanais separados
     trafficSources, 
     keywordsTable, 
     timeframe,
-    setTimeframe
+    setTimeframe,
+    hasValidData
   } = useDashboardData();
   
   // States originais que ainda são necessários
@@ -1346,6 +1360,58 @@ const Overview: React.FC = () => {
     2: false, // Total Engagements
     3: false  // LEDs
   });
+  
+  // Função para lidar com ações dos estados vazios
+  const handleEmptyStateAction = () => {
+    switch (onboardingStep) {
+      case 1: // Precisa criar projeto
+        setShowProjectModal(true);
+        break;
+      case 2: // Precisa configurar integração
+        // Redirecionar para página de integrações
+        // Usando window.location.href para forçar uma recarga completa da página
+        window.location.href = '/integrations';
+        break;
+      case 3: // Aguardando dados
+        // Não faz nada, só mostra o estado atual
+        break;
+    }
+  };
+
+  // Função para lidar com a criação de projeto
+  const handleProjectCreated = async (project: any) => {
+    try {
+      // Get current user email
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      if (!currentUser || !currentUser.email) {
+        console.error("User not authenticated");
+        return;
+      }
+      
+      // Format the description field properly
+      const formattedDescription = `Company or product name: ${project.company} Audience description: ${project.audience}`;
+      
+      const { data, error } = await supabase
+        .from('Projeto')
+        .insert([{ 
+          "Project name": project.name,
+          "description service": formattedDescription,
+          "url service": project.link,
+          "Keywords": project.keywords,
+          "User id": currentUser.id,
+          "user": currentUser.email
+        }])
+        .select();
+      
+      if (error) throw error;
+      
+      setShowProjectModal(false);
+      window.location.reload(); // Recarregar a página para atualizar os estados
+    } catch (error) {
+      console.error("Error creating project:", error);
+    }
+  };
   
   // Data flow animation - more subtle and professional tech-inspired sequence
   useEffect(() => {
@@ -1796,6 +1862,9 @@ const Overview: React.FC = () => {
     { name: 'Jun', views: 490, engagement: 340, leads: 180 }
   ];
   
+  // Estado para controlar o progresso de carregamento
+  const [loadProgress, setLoadProgress] = useState(0);
+  
   const sampleTrafficData = [
     { name: 'YouTube', value: 400, color: '#FF0000' },
     { name: 'Facebook', value: 300, color: '#3b5998' },
@@ -1803,9 +1872,6 @@ const Overview: React.FC = () => {
     { name: 'TikTok', value: 200, color: '#000000' },
     { name: 'Twitter', value: 100, color: '#1DA1F2' }
   ];
-
-  // Valores simulados para o progresso do carregamento
-  const [loadProgress, setLoadProgress] = useState(0);
   
   // Animação de progresso de carregamento
   useEffect(() => {
@@ -1826,6 +1892,462 @@ const Overview: React.FC = () => {
       setLoadProgress(100);
     }
   }, [loading]);
+  
+  // Renderização condicional com base no estado de onboarding
+  // Se o usuário estiver em qualquer etapa do onboarding, apenas mostrar a EmptyState relevante
+  // e esconder todo o resto do dashboard para um fluxo mais focado
+  if (onboardingStep < 4) {
+    // Animações para o fundo, copiadas do componente Login
+    const waveAnimation = keyframes`
+      0% {
+        transform: translateX(-100%) scaleY(1);
+      }
+      50% {
+        transform: translateX(-50%) scaleY(0.9);
+      }
+      100% {
+        transform: translateX(0%) scaleY(1);
+      }
+    `;
+
+    const lightBeamAnimation = keyframes`
+      0% {
+        opacity: 0;
+        transform: translateX(-100%) skewX(-15deg);
+      }
+      20% {
+        opacity: 0.7;
+      }
+      40% {
+        opacity: 0.5;
+      }
+      60% {
+        opacity: 0.7;
+      }
+      80% {
+        opacity: 0.2;
+      }
+      100% {
+        opacity: 0;
+        transform: translateX(100%) skewX(-15deg);
+      }
+    `;
+
+    const energyPulse = keyframes`
+      0% {
+        opacity: 0.4;
+        box-shadow: 0 0 10px #4E0EB3,
+                  0 0 20px #2D1D42;
+      }
+      50% {
+        opacity: 0.8;
+        box-shadow: 0 0 20px #4E0EB3,
+                  0 0 40px #2D1D42,
+                  0 0 60px #4E0EB3;
+      }
+      100% {
+        opacity: 0.4;
+        box-shadow: 0 0 10px #4E0EB3,
+                  0 0 20px #2D1D42;
+      }
+    `;
+
+    // Container principal de onboarding
+    const OnboardingContainer = styled.div`
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      width: 100%;
+      padding: 20px;
+      background: linear-gradient(135deg, #f9f9ff 0%, #f0f0f8 100%);
+      position: relative;
+      overflow: hidden;
+      z-index: 0;
+    `;
+
+    // Elementos de animação de fundo
+    const WaveElement = styled.div`
+      position: absolute;
+      width: 200%;
+      height: 200px;
+      background: linear-gradient(90deg, 
+        rgba(45, 29, 66, 0.05) 0%, 
+        rgba(103, 58, 183, 0.03) 50%,
+        rgba(45, 29, 66, 0.05) 100%
+      );
+      opacity: 0.2;
+      border-radius: 50%;
+      z-index: 1;
+      animation: ${waveAnimation} 15s ease-in-out infinite alternate;
+      
+      &:nth-child(1) {
+        top: 15%;
+        height: 150px;
+        animation-duration: 18s;
+      }
+      
+      &:nth-child(2) {
+        top: 45%;
+        height: 180px;
+        animation-duration: 22s;
+        animation-delay: 2s;
+      }
+      
+      &:nth-child(3) {
+        top: 75%;
+        height: 130px;
+        animation-duration: 20s;
+        animation-delay: 1s;
+      }
+    `;
+
+    // Raios de luz que percorrem a tela
+    const LightBeam = styled.div`
+      position: absolute;
+      height: 8px;
+      width: 100%;
+      background: linear-gradient(90deg,
+        transparent 0%, 
+        #4E0EB3 20%, 
+        #2D1D42 50%,
+        #4E0EB3 80%, 
+        transparent 100%
+      );
+      opacity: 0;
+      box-shadow: 0 0 15px #4E0EB3, 
+                0 0 30px #2D1D42;
+      z-index: 2;
+      animation: ${lightBeamAnimation} 10s ease-in-out infinite;
+      
+      &:nth-child(4) {
+        top: 25%;
+        animation-duration: 6s;
+        animation-delay: 1s;
+        height: 3px;
+      }
+      
+      &:nth-child(5) {
+        top: 55%;
+        animation-duration: 8s;
+        animation-delay: 4s;
+        height: 2px;
+      }
+      
+      &:nth-child(6) {
+        top: 78%;
+        animation-duration: 7s;
+        animation-delay: 2s;
+        height: 4px;
+      }
+    `;
+
+    // Animação para os fios de luz
+    const glowLine = keyframes`
+      0% {
+        opacity: 0.3;
+        box-shadow: 0 0 4px rgba(78, 14, 179, 0.5);
+      }
+      50% {
+        opacity: 0.7;
+        box-shadow: 0 0 8px rgba(78, 14, 179, 0.8), 0 0 12px rgba(45, 29, 66, 0.5);
+      }
+      100% {
+        opacity: 0.3;
+        box-shadow: 0 0 4px rgba(78, 14, 179, 0.5);
+      }
+    `;
+
+    // Fios de conexão que aparecem atrás dos elementos
+    const ConnectionLine = styled.div`
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: ${props => props.theme.colors.primary};
+      animation: ${energyPulse} 4s ease-in-out infinite;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.6;
+      box-shadow: 0 0 10px rgba(78, 14, 179, 0.3);
+      
+      &::before, &::after {
+        content: '';
+        position: absolute;
+        height: 1px;
+        background: linear-gradient(90deg, 
+          rgba(78, 14, 179, 0.1) 0%, 
+          rgba(78, 14, 179, 0.3) 50%, 
+          rgba(78, 14, 179, 0.1) 100%
+        );
+        opacity: 0.4;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+      }
+      
+      &::before {
+        left: -100%;
+        width: 120px;
+      }
+      
+      &::after {
+        right: -100%;
+        width: 150px;
+      }
+      
+      &:nth-child(1) {
+        top: 10%;
+        left: 8%;
+        animation-delay: 0.5s;
+        width: 4px;
+        height: 4px;
+      }
+      
+      &:nth-child(2) {
+        top: 30%;
+        right: 12%;
+        animation-delay: 1.5s;
+        width: 5px;
+        height: 5px;
+      }
+      
+      &:nth-child(3) {
+        top: 70%;
+        left: 15%;
+        animation-delay: 1s;
+        width: 4px;
+        height: 4px;
+      }
+      
+      &:nth-child(4) {
+        top: 88%;
+        right: 22%;
+        animation-delay: 2s;
+        width: 3px;
+        height: 3px;
+      }
+      
+      &:nth-child(5) {
+        top: 50%;
+        left: 30%;
+        animation-delay: 0.7s;
+        width: 3px;
+        height: 3px;
+      }
+      
+      &:nth-child(6) {
+        top: 20%;
+        left: 40%;
+        animation-delay: 1.2s;
+        width: 4px;
+        height: 4px;
+      }
+      
+      &:nth-child(7) {
+        top: 35%;
+        left: 70%;
+        animation-delay: 0.9s;
+        width: 4px;
+        height: 4px;
+      }
+      
+      &:nth-child(8) {
+        top: 80%;
+        left: 60%;
+        animation-delay: 1.8s;
+        width: 3px;
+        height: 3px;
+      }
+    `;
+
+    // Nós de energia que pulsam com luz
+    const EnergyNode = styled.div`
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #2D1D42;
+      z-index: 3;
+      animation: ${energyPulse} 4s ease-in-out infinite;
+      
+      &::before, &::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        background: #4E0EB3;
+        opacity: 0.7;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      
+      &::before {
+        left: -100%;
+        width: 30px;
+      }
+      
+      &::after {
+        right: -100%;
+        width: 50px;
+      }
+      
+      &:nth-child(7) {
+        top: 18%;
+        left: 15%;
+        animation-delay: 0.5s;
+        width: 8px;
+        height: 8px;
+      }
+      
+      &:nth-child(8) {
+        top: 35%;
+        right: 20%;
+        animation-delay: 1.5s;
+        width: 12px;
+        height: 12px;
+      }
+      
+      &:nth-child(9) {
+        top: 65%;
+        left: 25%;
+        animation-delay: 1s;
+        width: 10px;
+        height: 10px;
+      }
+      
+      &:nth-child(10) {
+        top: 80%;
+        right: 30%;
+        animation-delay: 2s;
+        width: 6px;
+        height: 6px;
+      }
+    `;
+
+    // Wrapper para o conteúdo visível, acima das animações
+    const ContentWrapper = styled.div`
+      position: relative;
+      z-index: 100;
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: transparent;
+      pointer-events: auto;
+    `;
+    
+    // Etapa 1: Criar projeto
+    if (onboardingStep === 1) {
+      return (
+        <>
+          <OnboardingContainer>
+            {/* Elementos de fundo animados */}
+            <WaveElement />
+            <WaveElement />
+            <WaveElement />
+            
+            
+            {/* Raios de luz animados */}
+            <LightBeam />
+            <LightBeam />
+            <LightBeam />
+            
+            {/* Nós de energia pulsantes */}
+            <EnergyNode />
+            <EnergyNode />
+            <EnergyNode />
+            <EnergyNode />
+            
+            {/* Conteúdo principal */}
+            <ContentWrapper>
+              <EmptyState 
+                type="project" 
+                onAction={handleEmptyStateAction}
+                currentStep={onboardingStep} 
+              />
+            </ContentWrapper>
+          </OnboardingContainer>
+          
+          {/* Modal renderizado fora do container principal para evitar problemas de z-index */}
+          <ProjectModal 
+            isOpen={showProjectModal}
+            onClose={() => setShowProjectModal(false)}
+            onSave={handleProjectCreated}
+          />
+        </>
+      );
+    }
+    
+    // Etapa 2: Configurar integrações
+    if (onboardingStep === 2) {
+      return (
+        <OnboardingContainer>
+          {/* Elementos de fundo animados */}
+          <WaveElement />
+          <WaveElement />
+          <WaveElement />
+          
+          {/* Raios de luz animados */}
+          <LightBeam />
+          <LightBeam />
+          <LightBeam />
+          
+          {/* Nós de energia pulsantes */}
+          <EnergyNode />
+          <EnergyNode />
+          <EnergyNode />
+          <EnergyNode />
+          
+          {/* Conteúdo principal */}
+          <ContentWrapper>
+            <EmptyState 
+              type="integration" 
+              onAction={handleEmptyStateAction}
+              currentStep={onboardingStep} 
+            />
+          </ContentWrapper>
+        </OnboardingContainer>
+      );
+    }
+    
+    // Etapa 3: Aguardando dados
+    if (onboardingStep === 3) {
+      return (
+        <OnboardingContainer>
+          {/* Elementos de fundo animados */}
+          <WaveElement />
+          <WaveElement />
+          <WaveElement />
+          
+          {/* Raios de luz animados */}
+          <LightBeam />
+          <LightBeam />
+          <LightBeam />
+          
+          {/* Nós de energia pulsantes */}
+          <EnergyNode />
+          <EnergyNode />
+          <EnergyNode />
+          <EnergyNode />
+          
+          {/* Conteúdo principal */}
+          <ContentWrapper>
+            <EmptyState 
+              type="data" 
+              onAction={handleEmptyStateAction}
+              currentStep={onboardingStep} 
+            />
+            <LoadingDataIndicator />
+          </ContentWrapper>
+        </OnboardingContainer>
+      );
+    }
+    
+    return null; // Nunca deve chegar aqui, mas precaução
+  }
   
   // Mostrar animação de carregamento com gráficos interativos
   if (loading) {
@@ -2509,7 +3031,7 @@ const Overview: React.FC = () => {
           </StatCardTitle>
           <ChartContainer style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={performanceData.slice(-4)} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+              <BarChart data={weeklyPerformanceData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} />
                 <YAxis axisLine={false} tickLine={false} />

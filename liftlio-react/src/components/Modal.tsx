@@ -34,7 +34,7 @@ const ModalOverlay = styled.div<{ isOpen: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: ${props => props.theme.zIndices.modal};
+  z-index: 9999; /* Valor explícito muito alto para garantir que esteja acima de tudo */
   animation: ${fadeIn} 0.3s ease;
   visibility: ${props => (props.isOpen ? 'visible' : 'hidden')};
   opacity: ${props => (props.isOpen ? 1 : 0)};
@@ -153,7 +153,8 @@ const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen]);
   
-  if (!isOpen) return null;
+  // Sempre rendereizar o modal, mas com visibilidade controlada
+  // Isso evita o efeito de "piscada" durante remontagens
   
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
@@ -162,7 +163,7 @@ const Modal: React.FC<ModalProps> = ({
   };
   
   return (
-    <ModalOverlay isOpen={isOpen} onClick={handleOverlayClick}>
+    <ModalOverlay isOpen={isOpen} onClick={handleOverlayClick} data-testid="modal-overlay">
       <ModalContainer size={size}>
         <ModalHeader>
           <ModalTitle>{title}</ModalTitle>

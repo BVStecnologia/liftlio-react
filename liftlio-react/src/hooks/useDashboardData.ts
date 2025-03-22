@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import React from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useProject } from '../context/ProjectContext';
 
@@ -103,6 +104,7 @@ export const useDashboardData = () => {
   
   // Dados para gráficos
   const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
+  const [weeklyPerformanceData, setWeeklyPerformanceData] = useState<PerformanceData[]>([]);
   const [trafficSources, setTrafficSources] = useState<TrafficSource[]>([]);
   const [keywordsTable, setKeywordsTable] = useState<Keyword[]>([]);
   const [performanceAnalysis, setPerformanceAnalysis] = useState<PerformanceAnalysisData[]>([]);
@@ -202,6 +204,16 @@ export const useDashboardData = () => {
         const weeklyPerformance: WeeklyPerformanceData[] = performanceResponse.data || [];
         const performanceAnalysis: PerformanceAnalysisData[] = performanceAnalysisResponse.data || [];
         console.log('Performance Analysis Data:', performanceAnalysis);
+
+        // Processar os dados semanais sempre independente do filtro de tempo
+        const processedWeeklyData = weeklyPerformance.map((data) => ({
+          name: data.formatted_date || new Date(data.date).toLocaleDateString('default', { month: 'short', day: 'numeric' }),
+          videos: data.videos || 0,
+          engagement: data.engagements || 0,
+          leads: data.leads || 0
+        })).slice(-4); // Mostrar apenas as últimas 4 semanas
+        
+        setWeeklyPerformanceData(processedWeeklyData);
         
         // =============================================
         // 1. Processar CARDS DE ESTATÍSTICAS
@@ -483,15 +495,33 @@ export const useDashboardData = () => {
     return filteredData;
   };
 
+  // Verificar se os dados são válidos
+  const hasValidData = React.useMemo(() => {
+    // Verificar se há dados válidos em todas as fontes principais
+    const hasStatsData = statsData.reach.value !== '0' || 
+                         statsData.activities.value !== '0' ||
+                         statsData.engagements.value !== '0';
+    
+    const hasPerformanceData = performanceData.length > 0 && 
+                              performanceData.some(d => d.videos > 0 || d.engagement > 0);
+    
+    const hasTrafficData = trafficSources.length > 0 && 
+                          trafficSources.some(s => s.value > 0);
+    
+    return hasStatsData && hasPerformanceData && hasTrafficData;
+  }, [statsData, performanceData, trafficSources]);
+
   return {
     loading,
     error,
     statsData,
     performanceData,
+    weeklyPerformanceData, // Dados semanais sempre disponíveis independente do filtro
     trafficSources,
     keywordsTable,
     timeframe: currentTimeframe,
     setTimeframe,
-    performanceAnalysis: getFilteredAnalysisData()
+    performanceAnalysis: getFilteredAnalysisData(),
+    hasValidData
   };
 };

@@ -16,7 +16,7 @@ import { IconComponent } from './utils/IconHelper';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import { ProjectProvider } from './context/ProjectContext';
+import { ProjectProvider, useProject } from './context/ProjectContext';
 
 const AppContainer = styled.div`
   display: flex;
@@ -287,10 +287,31 @@ const OAuthHandler = () => {
             // Mostrar mensagem de sucesso
             alert('Integração com YouTube concluída com sucesso!');
             
-            // Redirecionar para a página de integrações após processamento
-            if (window.location.pathname !== '/integrations') {
-              window.location.href = '/integrations';
+            // Atualizar localStorage para forçar uma atualização de estado
+            // Isso fará com que o ProjectContext detecte a alteração no onboarding
+            localStorage.setItem('integrationCompleted', 'true');
+            localStorage.setItem('integrationTimestamp', Date.now().toString());
+            localStorage.setItem('skipOnboarding', 'true'); // Forçar pular o onboarding
+            
+            // Forçar a atualização do estado de onboarding para completar o fluxo
+            try {
+              // Atualizar diretamente na tabela de integrações - tornar ativo
+              await supabase
+                .from('Integrações')
+                .update({
+                  "ativo": true
+                })
+                .eq('PROJETO id', state)
+                .eq('Tipo de integração', 'youtube');
+              
+              console.log('Integração marcada como ativa com sucesso');
+            } catch (updateError) {
+              console.error('Erro ao marcar integração como ativa:', updateError);
             }
+            
+            // Redirecionar para a página principal e recarregar completamente
+            // Quando a página carregar, o ProjectContext detectará a conclusão do onboarding
+            window.location.href = '/';
           } else {
             alert('Erro: Nenhum ID de projeto encontrado para associar a esta integração.');
           }
@@ -371,32 +392,34 @@ function App() {
 // Componente de layout protegido
 const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean, toggleSidebar: () => void }) => {
   const { user, loading } = useAuth();
+  const { isOnboarding, onboardingReady } = useProject(); // Movido para o início, antes de qualquer return
   
-  // Aguardar o carregamento antes de decidir redirecionar
-  if (loading) {
-    const spinAnimation = keyframes`
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    `;
-    
-    const LoadingContainer = styled.div`
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      flex-direction: column;
-    `;
-    
-    const Spinner = styled.div`
-      font-size: 2rem;
-      animation: ${spinAnimation} 1.5s linear infinite;
-      display: inline-block;
-    `;
-    
-    const LoadingText = styled.div`
-      margin-top: 1rem;
-    `;
-    
+  // Definir estilos para a tela de carregamento
+  const spinAnimation = keyframes`
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  `;
+  
+  const LoadingContainer = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+  `;
+  
+  const Spinner = styled.div`
+    font-size: 2rem;
+    animation: ${spinAnimation} 1.5s linear infinite;
+    display: inline-block;
+  `;
+  
+  const LoadingText = styled.div`
+    margin-top: 1rem;
+  `;
+  
+  // Aguardar o carregamento da autenticação e do estado de onboarding
+  if (loading || !onboardingReady) {
     return (
       <LoadingContainer>
         <Spinner>⟳</Spinner>
@@ -411,6 +434,27 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   }
   
   // Se chegou aqui, o usuário está autenticado e o carregamento foi concluído
+  
+  // Para o onboarding, mostrar apenas o conteúdo (sem sidebar, header ou botão flutuante)
+  if (isOnboarding) {
+    return (
+      <AppContainer>
+        <MainContent style={{ paddingTop: 0 }}>
+          <ContentWrapper>
+            <Routes>
+              <Route path="/" element={<Overview />} />
+              <Route path="/monitoring" element={<Navigate to="/" replace />} />
+              <Route path="/mentions" element={<Navigate to="/" replace />} />
+              <Route path="/settings" element={<Navigate to="/" replace />} />
+              <Route path="/integrations" element={<Integrations />} />
+            </Routes>
+          </ContentWrapper>
+        </MainContent>
+      </AppContainer>
+    );
+  }
+  
+  // Interface completa para usuários que já completaram o onboarding
   return (
     <AppContainer>
       {/* Sidebar - desktop mode it's controlled by media query, mobile by state */}
