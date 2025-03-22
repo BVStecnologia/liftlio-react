@@ -1,0 +1,13 @@
+{
+  "name": "liftlio-supabase-functions",
+  "version": "1.0.0",
+  "description": "Funções Edge do Supabase para o Liftlio",
+  "type": "module",
+  "scripts": {
+    "test-claude-proxy": "node functions/test-edge-function.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "node-fetch": "^3.3.2"
+  }
+}
