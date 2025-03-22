@@ -770,7 +770,7 @@ const RangeInput = styled.input`
 const SettingsSaveBar = styled.div<{ visible: boolean }>`
   position: fixed;
   bottom: 0;
-  left: 0;
+  left: 250px; /* Considera o espaço para o menu lateral */
   right: 0;
   background-color: white;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
@@ -781,6 +781,10 @@ const SettingsSaveBar = styled.div<{ visible: boolean }>`
   transform: translateY(${props => props.visible ? '0' : '100%'});
   transition: transform 0.3s ease;
   z-index: 100;
+  
+  @media (max-width: 768px) {
+    left: 0; /* Em dispositivos móveis, ocupa toda a largura */
+  }
 `;
 
 const SaveStatus = styled.div`
@@ -1537,7 +1541,7 @@ const Settings: React.FC = () => {
     <IconContext.Provider value={{ className: 'react-icons' }}>
       <PageContainer>
         <PageHeader>
-          <PageTitle>Settings</PageTitle>
+          <PageTitle>Configurações</PageTitle>
         </PageHeader>
         
         <TabsContainer>
@@ -1547,7 +1551,7 @@ const Settings: React.FC = () => {
             style={{ animationDelay: '0.1s' }}
           >
             {renderIcon(FaCog)}
-            Project
+            Projeto
           </TabItem>
           <TabItem 
             active={activeTab === 'account'} 
@@ -1555,7 +1559,7 @@ const Settings: React.FC = () => {
             style={{ animationDelay: '0.2s' }}
           >
             {renderIcon(FaUser)}
-            Account
+            Conta
           </TabItem>
           <TabItem 
             active={activeTab === 'notifications'} 
@@ -1563,7 +1567,7 @@ const Settings: React.FC = () => {
             style={{ animationDelay: '0.3s' }}
           >
             {renderIcon(FaBell)}
-            Notifications
+            Notificações
           </TabItem>
           <TabItem 
             active={activeTab === 'interface'} 
@@ -1572,14 +1576,6 @@ const Settings: React.FC = () => {
           >
             {renderIcon(FaPalette)}
             Interface
-          </TabItem>
-          <TabItem 
-            active={activeTab === 'security'} 
-            onClick={() => setActiveTab('security')}
-            style={{ animationDelay: '0.5s' }}
-          >
-            {renderIcon(FaShieldAlt)}
-            Security
           </TabItem>
         </TabsContainer>
         
@@ -1806,6 +1802,153 @@ const Settings: React.FC = () => {
             </Card>
           )}
           
+          {activeTab === 'account' && (
+            <Card>
+              <SectionTitle>
+                {renderIcon(FaUser)}
+                Configurações da Conta
+              </SectionTitle>
+              
+              <FormSection>
+                <FormGroup>
+                  <Label htmlFor="fullName">Nome Completo</Label>
+                  <Input 
+                    id="fullName" 
+                    type="text" 
+                    placeholder="Seu nome completo"
+                    defaultValue="Usuário atual" 
+                    disabled
+                  />
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+                    Para alterar os dados de usuário, entre em contato com o administrador
+                  </div>
+                </FormGroup>
+                
+                <FormGroup>
+                  <Label htmlFor="email">Email</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="seu.email@exemplo.com"
+                    defaultValue="usuario@atual.com" 
+                    disabled
+                  />
+                </FormGroup>
+              </FormSection>
+            </Card>
+          )}
+          
+          {activeTab === 'notifications' && (
+            <Card>
+              <SectionTitle>
+                {renderIcon(FaBell)}
+                Configurações de Notificações
+              </SectionTitle>
+              
+              <FormSection>
+                <SectionTitle style={{ fontSize: '1.1rem' }}>Notificações por Email</SectionTitle>
+                
+                <FormGroup>
+                  <ToggleContainer>
+                    <ToggleSwitch>
+                      <input type="checkbox" defaultChecked={true} />
+                      <span />
+                    </ToggleSwitch>
+                    <ToggleLabel>
+                      Resumo diário de menções
+                    </ToggleLabel>
+                  </ToggleContainer>
+                </FormGroup>
+                
+                <FormGroup>
+                  <ToggleContainer>
+                    <ToggleSwitch>
+                      <input type="checkbox" defaultChecked={true} />
+                      <span />
+                    </ToggleSwitch>
+                    <ToggleLabel>
+                      Alertas de menções importantes
+                    </ToggleLabel>
+                  </ToggleContainer>
+                </FormGroup>
+                
+                <FormGroup>
+                  <ToggleContainer>
+                    <ToggleSwitch>
+                      <input type="checkbox" defaultChecked={false} />
+                      <span />
+                    </ToggleSwitch>
+                    <ToggleLabel>
+                      Notificações de novas funcionalidades
+                    </ToggleLabel>
+                  </ToggleContainer>
+                </FormGroup>
+                
+                <FormGroup>
+                  <ToggleContainer>
+                    <ToggleSwitch>
+                      <input type="checkbox" defaultChecked={false} />
+                      <span />
+                    </ToggleSwitch>
+                    <ToggleLabel>
+                      Newsletter mensal
+                    </ToggleLabel>
+                  </ToggleContainer>
+                </FormGroup>
+              </FormSection>
+              
+              <FormSection>
+                <SectionTitle style={{ fontSize: '1.1rem' }}>Notificações no Aplicativo</SectionTitle>
+                
+                <FormGroup>
+                  <ToggleContainer>
+                    <ToggleSwitch>
+                      <input type="checkbox" defaultChecked={true} />
+                      <span />
+                    </ToggleSwitch>
+                    <ToggleLabel>
+                      Novas menções encontradas
+                    </ToggleLabel>
+                  </ToggleContainer>
+                </FormGroup>
+                
+                <FormGroup>
+                  <ToggleContainer>
+                    <ToggleSwitch>
+                      <input type="checkbox" defaultChecked={true} />
+                      <span />
+                    </ToggleSwitch>
+                    <ToggleLabel>
+                      Alterações no sentimento das menções
+                    </ToggleLabel>
+                  </ToggleContainer>
+                </FormGroup>
+                
+                <FormGroup>
+                  <ToggleContainer>
+                    <ToggleSwitch>
+                      <input type="checkbox" defaultChecked={true} />
+                      <span />
+                    </ToggleSwitch>
+                    <ToggleLabel>
+                      Atualizações de status do scanner
+                    </ToggleLabel>
+                  </ToggleContainer>
+                </FormGroup>
+                
+                <FormGroup>
+                  <Label>Frequência das notificações</Label>
+                  <Select defaultValue="immediate">
+                    <option value="immediate">Imediatamente</option>
+                    <option value="hourly">A cada hora</option>
+                    <option value="daily">Diariamente</option>
+                    <option value="weekly">Semanalmente</option>
+                  </Select>
+                </FormGroup>
+              </FormSection>
+            </Card>
+          )}
+          
           {activeTab === 'interface' && (
             <Card>
               <SectionTitle>
@@ -1954,23 +2097,23 @@ const Settings: React.FC = () => {
         <SettingsSaveBar visible={showSaveBar}>
           {showSaveSuccess ? (
             <SaveStatus>
-              {renderIcon(FaCheck)} Settings saved successfully
+              {renderIcon(FaCheck)} Configurações salvas com sucesso
             </SaveStatus>
           ) : (
-            <div>You have unsaved changes</div>
+            <div>Você tem alterações não salvas</div>
           )}
           <SaveActions>
             <ActionButton 
               variant="secondary"
               onClick={() => setShowSaveBar(false)}
             >
-              Cancel
+              Cancelar
             </ActionButton>
             <ActionButton 
               variant="primary"
               onClick={handleSaveSettings}
             >
-              {renderIcon(FaSave)} Save Changes
+              {renderIcon(FaSave)} Salvar Alterações
             </ActionButton>
           </SaveActions>
         </SettingsSaveBar>
