@@ -261,14 +261,14 @@ const InfoTooltip = styled.div`
   animation: ${fadeIn} 0.2s ease;
 `;
 
-const Input = styled.input`
+const Input = styled.input<{ changed?: boolean }>`
   width: 100%;
   padding: 12px 15px;
-  border: 1px solid ${props => props.theme.colors.grey};
+  border: 1px solid ${props => props.changed ? props.theme.colors.primary : props.theme.colors.grey};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
   transition: all 0.2s ease;
-  background-color: white;
+  background-color: ${props => props.changed ? 'rgba(94, 53, 177, 0.05)' : 'white'};
   
   &:focus {
     border-color: ${props => props.theme.colors.primary};
@@ -303,16 +303,16 @@ const InputWithIcon = styled.div`
   }
 `;
 
-const TextArea = styled.textarea`
+const TextArea = styled.textarea<{ changed?: boolean }>`
   width: 100%;
   padding: 12px 15px;
-  border: 1px solid ${props => props.theme.colors.grey};
+  border: 1px solid ${props => props.changed ? props.theme.colors.primary : props.theme.colors.grey};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
   min-height: 120px;
   resize: vertical;
   transition: all 0.2s ease;
-  background-color: white;
+  background-color: ${props => props.changed ? 'rgba(94, 53, 177, 0.05)' : 'white'};
   
   &:focus {
     border-color: ${props => props.theme.colors.primary};
@@ -325,13 +325,13 @@ const TextArea = styled.textarea`
   }
 `;
 
-const Select = styled.select`
+const Select = styled.select<{ changed?: boolean }>`
   width: 100%;
   padding: 12px 15px;
-  border: 1px solid ${props => props.theme.colors.grey};
+  border: 1px solid ${props => props.changed ? props.theme.colors.primary : props.theme.colors.grey};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
-  background-color: white;
+  background-color: ${props => props.changed ? 'rgba(94, 53, 177, 0.05)' : 'white'};
   cursor: pointer;
   transition: all 0.2s ease;
   appearance: none;
@@ -1376,10 +1376,20 @@ const Settings: React.FC = () => {
   // We'll store the initial project data to detect actual changes
   const [initialProjectData, setInitialProjectData] = useState<any>(null);
   
+  // Track which fields have been changed
+  const [changedFields, setChangedFields] = useState<{[key: string]: boolean}>({});
+  
   // Set initial data after loading
   useEffect(() => {
     if (!isLoading && projectData.id) {
-      setInitialProjectData({...projectData});
+      // Delay setting initial data to ensure all fields are loaded
+      setTimeout(() => {
+        setInitialProjectData({...projectData});
+        // Reset changed fields when initial data is set
+        setChangedFields({});
+        // Ensure save bar is hidden initially
+        setShowSaveBar(false);
+      }, 100);
     }
   }, [isLoading, projectData.id]);
   
@@ -1387,18 +1397,25 @@ const Settings: React.FC = () => {
   useEffect(() => {
     // Only check for changes if we have initial data to compare against
     if (initialProjectData) {
-      const hasChanges = 
-        projectData["Project name"] !== initialProjectData["Project name"] ||
-        projectData.url_service !== initialProjectData.url_service ||
-        projectData.description_service !== initialProjectData.description_service ||
-        projectData.Keywords !== initialProjectData.Keywords ||
-        projectData["Negative keywords"] !== initialProjectData["Negative keywords"] ||
-        projectData["País"] !== initialProjectData["País"] ||
-        selectedColor !== colors[0].value || 
-        isDarkMode !== false ||
-        borderRadius !== 8 ||
-        fontSize !== 1.0;
+      const newChangedFields: {[key: string]: boolean} = {};
       
+      // Check each field individually and track which ones changed
+      newChangedFields["Project name"] = projectData["Project name"] !== initialProjectData["Project name"];
+      newChangedFields["url_service"] = projectData.url_service !== initialProjectData.url_service;
+      newChangedFields["description_service"] = projectData.description_service !== initialProjectData.description_service;
+      newChangedFields["Keywords"] = projectData.Keywords !== initialProjectData.Keywords;
+      newChangedFields["Negative keywords"] = projectData["Negative keywords"] !== initialProjectData["Negative keywords"];
+      newChangedFields["País"] = projectData["País"] !== initialProjectData["País"];
+      newChangedFields["selectedColor"] = selectedColor !== colors[0].value;
+      newChangedFields["isDarkMode"] = isDarkMode !== false;
+      newChangedFields["borderRadius"] = borderRadius !== 8;
+      newChangedFields["fontSize"] = fontSize !== 1.0;
+      
+      // Check if any field has changes
+      const hasChanges = Object.values(newChangedFields).some(changed => changed === true);
+      
+      // Update state
+      setChangedFields(newChangedFields);
       setShowSaveBar(hasChanges);
     }
     
@@ -1463,6 +1480,8 @@ const Settings: React.FC = () => {
         // Update the initial data to reflect the saved state
         if (updatedData) {
           setInitialProjectData({...updatedData});
+          // Reset changed fields after saving
+          setChangedFields({});
         }
       }
       
@@ -1616,6 +1635,7 @@ const Settings: React.FC = () => {
                       id="projectName" 
                       type="text" 
                       value={projectData["Project name"] || ''}
+                      changed={changedFields["Project name"]}
                       onChange={(e) => setProjectData({
                         ...projectData,
                         "Project name": e.target.value
@@ -1644,6 +1664,7 @@ const Settings: React.FC = () => {
                         id="projectLink" 
                         type="url" 
                         value={projectData.url_service || ''}
+                        changed={changedFields["url_service"]}
                         onChange={(e) => setProjectData({
                           ...projectData,
                           url_service: e.target.value
@@ -1701,6 +1722,7 @@ const Settings: React.FC = () => {
                   <Select 
                     id="region" 
                     value={projectData["País"] || "US"}
+                    changed={changedFields["País"]}
                     onChange={(e) => setProjectData({
                       ...projectData,
                       "País": e.target.value
