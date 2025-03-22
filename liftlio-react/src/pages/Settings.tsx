@@ -1541,7 +1541,7 @@ const Settings: React.FC = () => {
     <IconContext.Provider value={{ className: 'react-icons' }}>
       <PageContainer>
         <PageHeader>
-          <PageTitle>Configurações</PageTitle>
+          <PageTitle>Settings</PageTitle>
         </PageHeader>
         
         <TabsContainer>
@@ -1551,7 +1551,7 @@ const Settings: React.FC = () => {
             style={{ animationDelay: '0.1s' }}
           >
             {renderIcon(FaCog)}
-            Projeto
+            Project
           </TabItem>
           <TabItem 
             active={activeTab === 'account'} 
@@ -1559,7 +1559,7 @@ const Settings: React.FC = () => {
             style={{ animationDelay: '0.2s' }}
           >
             {renderIcon(FaUser)}
-            Conta
+            Account
           </TabItem>
           <TabItem 
             active={activeTab === 'notifications'} 
@@ -1567,7 +1567,7 @@ const Settings: React.FC = () => {
             style={{ animationDelay: '0.3s' }}
           >
             {renderIcon(FaBell)}
-            Notificações
+            Notifications
           </TabItem>
           <TabItem 
             active={activeTab === 'interface'} 
@@ -1806,21 +1806,21 @@ const Settings: React.FC = () => {
             <Card>
               <SectionTitle>
                 {renderIcon(FaUser)}
-                Configurações da Conta
+                Account Settings
               </SectionTitle>
               
               <FormSection>
                 <FormGroup>
-                  <Label htmlFor="fullName">Nome Completo</Label>
+                  <Label htmlFor="fullName">Full Name</Label>
                   <Input 
                     id="fullName" 
                     type="text" 
-                    placeholder="Seu nome completo"
-                    defaultValue="Usuário atual" 
+                    placeholder="Your full name"
+                    defaultValue="Current User" 
                     disabled
                   />
                   <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                    Para alterar os dados de usuário, entre em contato com o administrador
+                    To change user data, please contact your administrator
                   </div>
                 </FormGroup>
                 
@@ -1829,8 +1829,8 @@ const Settings: React.FC = () => {
                   <Input 
                     id="email" 
                     type="email" 
-                    placeholder="seu.email@exemplo.com"
-                    defaultValue="usuario@atual.com" 
+                    placeholder="your.email@example.com"
+                    defaultValue="user@current.com" 
                     disabled
                   />
                 </FormGroup>
@@ -1842,11 +1842,11 @@ const Settings: React.FC = () => {
             <Card>
               <SectionTitle>
                 {renderIcon(FaBell)}
-                Configurações de Notificações
+                Notification Settings
               </SectionTitle>
               
               <FormSection>
-                <SectionTitle style={{ fontSize: '1.1rem' }}>Notificações por Email</SectionTitle>
+                <SectionTitle style={{ fontSize: '1.1rem' }}>Email Notifications</SectionTitle>
                 
                 <FormGroup>
                   <ToggleContainer>
@@ -1855,7 +1855,7 @@ const Settings: React.FC = () => {
                       <span />
                     </ToggleSwitch>
                     <ToggleLabel>
-                      Resumo diário de menções
+                      Daily mentions summary
                     </ToggleLabel>
                   </ToggleContainer>
                 </FormGroup>
@@ -1867,7 +1867,7 @@ const Settings: React.FC = () => {
                       <span />
                     </ToggleSwitch>
                     <ToggleLabel>
-                      Alertas de menções importantes
+                      Important mention alerts
                     </ToggleLabel>
                   </ToggleContainer>
                 </FormGroup>
@@ -1879,7 +1879,7 @@ const Settings: React.FC = () => {
                       <span />
                     </ToggleSwitch>
                     <ToggleLabel>
-                      Notificações de novas funcionalidades
+                      New feature notifications
                     </ToggleLabel>
                   </ToggleContainer>
                 </FormGroup>
@@ -1891,14 +1891,14 @@ const Settings: React.FC = () => {
                       <span />
                     </ToggleSwitch>
                     <ToggleLabel>
-                      Newsletter mensal
+                      Monthly newsletter
                     </ToggleLabel>
                   </ToggleContainer>
                 </FormGroup>
               </FormSection>
               
               <FormSection>
-                <SectionTitle style={{ fontSize: '1.1rem' }}>Notificações no Aplicativo</SectionTitle>
+                <SectionTitle style={{ fontSize: '1.1rem' }}>In-App Notifications</SectionTitle>
                 
                 <FormGroup>
                   <ToggleContainer>
@@ -1907,7 +1907,7 @@ const Settings: React.FC = () => {
                       <span />
                     </ToggleSwitch>
                     <ToggleLabel>
-                      Novas menções encontradas
+                      New mentions found
                     </ToggleLabel>
                   </ToggleContainer>
                 </FormGroup>
@@ -1919,7 +1919,7 @@ const Settings: React.FC = () => {
                       <span />
                     </ToggleSwitch>
                     <ToggleLabel>
-                      Alterações no sentimento das menções
+                      Mention sentiment changes
                     </ToggleLabel>
                   </ToggleContainer>
                 </FormGroup>
@@ -1931,18 +1931,18 @@ const Settings: React.FC = () => {
                       <span />
                     </ToggleSwitch>
                     <ToggleLabel>
-                      Atualizações de status do scanner
+                      Scanner status updates
                     </ToggleLabel>
                   </ToggleContainer>
                 </FormGroup>
                 
                 <FormGroup>
-                  <Label>Frequência das notificações</Label>
+                  <Label>Notification frequency</Label>
                   <Select defaultValue="immediate">
-                    <option value="immediate">Imediatamente</option>
-                    <option value="hourly">A cada hora</option>
-                    <option value="daily">Diariamente</option>
-                    <option value="weekly">Semanalmente</option>
+                    <option value="immediate">Immediately</option>
+                    <option value="hourly">Hourly</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
                   </Select>
                 </FormGroup>
               </FormSection>
@@ -2097,23 +2097,23 @@ const Settings: React.FC = () => {
         <SettingsSaveBar visible={showSaveBar}>
           {showSaveSuccess ? (
             <SaveStatus>
-              {renderIcon(FaCheck)} Configurações salvas com sucesso
+              {renderIcon(FaCheck)} Settings saved successfully
             </SaveStatus>
           ) : (
-            <div>Você tem alterações não salvas</div>
+            <div>You have unsaved changes</div>
           )}
           <SaveActions>
             <ActionButton 
               variant="secondary"
               onClick={() => setShowSaveBar(false)}
             >
-              Cancelar
+              Cancel
             </ActionButton>
             <ActionButton 
               variant="primary"
               onClick={handleSaveSettings}
             >
-              {renderIcon(FaSave)} Salvar Alterações
+              {renderIcon(FaSave)} Save Changes
             </ActionButton>
           </SaveActions>
         </SettingsSaveBar>
