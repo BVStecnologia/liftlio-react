@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { IconContext } from 'react-icons';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
+import { useProject } from '../context/ProjectContext';
+import { useTheme } from '../context/ThemeContext';
+import { supabase } from '../lib/supabaseClient';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -515,7 +518,7 @@ const PremiumFeature = styled.div`
 
 const UpgradeButton = styled.div`
   padding: 14px 0;
-  margin-top: 5px;
+  margin-top: 0;
   background: linear-gradient(135deg, #8a54ff 0%, #4facfe 100%);
   color: white;
   font-weight: 700;
@@ -896,6 +899,183 @@ type Project = {
   audience: string;
 };
 
+// Letter animation effect - individual letters appear one by one
+const letterAnimation = keyframes`
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const fadeIn = keyframes`
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const pulse = keyframes`
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+`;
+
+const shimmer = keyframes`
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+`;
+
+const InsightContainer = styled.div`
+  margin: 20px 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(61, 51, 82, 0.7) 0%, rgba(28, 27, 51, 0.9) 100%);
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #4facfe, #8a54ff, #4facfe);
+    background-size: 200% auto;
+    animation: ${shimmer} 8s linear infinite;
+  }
+`;
+
+const InsightTitle = styled.div`
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  svg {
+    color: #4facfe;
+  }
+`;
+
+const InsightContent = styled.div`
+  position: relative;
+  height: 80px;
+  overflow: hidden;
+  margin: 15px 0;
+  text-align: center;
+`;
+
+const InsightText = styled.div<{ active: boolean; typing: boolean }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.8);
+  opacity: 0;
+  transform: translateY(20px);
+  padding: 0 5px;
+  text-align: center;
+  
+  /* Simplified animation - just fade in and slide up when active */
+  animation: ${props => props.active ? fadeIn : 'none'} 0.8s ease forwards;
+  
+  /* Custom styling for the metric values and highlights */
+  .metric-value {
+    background: linear-gradient(90deg, #4facfe, #8a54ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 700;
+    animation: ${pulse} 2s infinite ease-in-out;
+  }
+  
+  .highlight {
+    color: #4facfe;
+    font-weight: 500;
+  }
+`;
+
+const Highlight = styled.span`
+  color: #4facfe;
+  font-weight: 500;
+`;
+
+const MetricValue = styled.span`
+  background: linear-gradient(90deg, #4facfe, #8a54ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 700;
+  animation: ${pulse} 2s infinite ease-in-out;
+`;
+
+const InsightDots = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 15px;
+`;
+
+const Dot = styled.div<{ active: boolean }>`
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: ${props => props.active ? '#4facfe' : 'rgba(255, 255, 255, 0.3)'};
+  transition: all 0.3s ease;
+`;
+
+const LoadingIndicator = styled.div`
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #4facfe;
+  margin-left: auto;
+  animation: spin 1s infinite linear;
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const RefreshHint = styled.div`
+  text-align: center;
+  font-size: 11px;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  
+  ${InsightContainer}:hover & {
+    opacity: 1;
+  }
+`;
+
 const Tooltip = styled.div<{ visible: boolean }>`
   position: absolute;
   left: 100%;
@@ -955,16 +1135,165 @@ const SidebarOverlay = styled.div<{ isOpen: boolean }>`
 
 /* Removed Close Button as requested */
 
+
 const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
-  const [selectedProject] = useState({
-    id: '1',
-    name: 'Project 1',
-    company: 'Acme Corp',
-    link: 'www.acme.com',
-    audience: 'Tech professionals'
-  });
-  
+  const { currentProject } = useProject();
+  const { isDarkMode } = useTheme();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  
+  // Claude Insights state
+  const [currentInsight, setCurrentInsight] = useState(0);
+  const [typing, setTyping] = useState(false); // No longer using typing animation
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Initial insights to show while loading
+  const defaultInsights = [
+    {
+      en: `Your content is generating <MetricValue>32%</MetricValue> more mentions than average in your industry.`,
+      pt: `Seu conteúdo está gerando <MetricValue>32%</MetricValue> mais menções que a média do seu setor.`
+    },
+    {
+      en: `Projects with <Highlight>consistent monitoring</Highlight> see up to <MetricValue>47%</MetricValue> better engagement.`,
+      pt: `Projetos com <Highlight>monitoramento consistente</Highlight> têm até <MetricValue>47%</MetricValue> mais engajamento.`
+    },
+    {
+      en: `Adding one more platform could increase your reach by <MetricValue>65%</MetricValue>.`,
+      pt: `Adicionar mais uma plataforma pode aumentar seu alcance em <MetricValue>65%</MetricValue>.`
+    },
+    {
+      en: `Brands using Liftlio convert <MetricValue>3.6x</MetricValue> more leads on average.`,
+      pt: `Marcas que usam Liftlio convertem <MetricValue>3.6x</MetricValue> mais leads em média.`
+    },
+    {
+      en: `Increase your traffic by <MetricValue>24%</MetricValue> with optimal posting frequency.`,
+      pt: `Aumente seu tráfego em <MetricValue>24%</MetricValue> com frequência ideal de postagens.`
+    }
+  ];
+  
+  const [insights, setInsights] = useState(defaultInsights);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Function to fetch personalized insights from Claude edge function
+  const fetchClaudeInsights = async () => {
+    if (!currentProject?.id) return;
+    
+    setIsLoading(true);
+    try {
+      // Data to send to Claude - minimal to keep costs down
+      const projectData = {
+        name: currentProject.name,
+        industry: currentProject.audience || "technology",
+        description: currentProject.description || "",
+        // Could add more context from project or analytics if available
+      };
+      
+      // Invoke the Claude edge function - using fetch directly for now
+      // TODO: Update this to use Supabase proper function invocation once proper types are imported
+      const response = await fetch('https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/claude-proxy', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY || ''}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          messages: [
+            { 
+              role: 'user', 
+              content: `Generate 3-5 marketing insights for a ${projectData.industry} project called ${projectData.name}. 
+              ${projectData.description ? `The project description is: "${projectData.description}". Reference specific details from this description when possible.` : ''}
+              Each insight should highlight a benefit of using Liftlio for brand monitoring and engagement.
+              Include a specific number/metric in each insight (like 47%, 2.5x, etc.).
+              Return as JSON array with format: 
+              [{"en": "English insight with <MetricValue>32%</MetricValue> and <Highlight>keyword</Highlight>",
+                "pt": "Portuguese translation with <MetricValue>32%</MetricValue> and <Highlight>palavra-chave</Highlight>"}]
+              Only return the JSON array, no other text.`
+            }
+          ]
+        })
+      });
+      
+      const data = await response.json();
+      const error = !response.ok;
+      
+      if (error) {
+        console.error("Error fetching Claude insights:", error);
+        return;
+      }
+      
+      // Parse the response from Claude
+      if (data && data.content && data.content[0]) {
+        const responseText = data.content[0]?.text || '';
+        
+        try {
+          // Extract JSON array from response
+          const jsonMatch = responseText.match(/\[\s*\{.*\}\s*\]/s);
+          if (jsonMatch) {
+            const insightsData = JSON.parse(jsonMatch[0]);
+            if (Array.isArray(insightsData) && insightsData.length > 0) {
+              setInsights(insightsData);
+            }
+          }
+        } catch (parseError) {
+          console.error("Error parsing Claude response:", parseError);
+        }
+      } else {
+        console.error("Invalid response format from Claude:", data);
+      }
+    } catch (e) {
+      console.error("Unexpected error fetching insights:", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Determine language based on browser or user setting
+  // For now we'll hardcode to English - this could be replaced with actual language detection
+  const getLanguage = (): 'en' | 'pt' => {
+    // This could be replaced with actual language detection logic
+    return 'en';
+  };
+  const language = getLanguage();
+  
+  // Fetch insights when the component mounts or when the project changes
+  useEffect(() => {
+    if (currentProject?.id) {
+      // Reset to first insight and fetch new data when project changes
+      setCurrentInsight(0);
+      
+      // Uncomment to enable production API call
+      fetchClaudeInsights();
+    }
+    
+    // Set a refresh interval (e.g., once per day)
+    // const refreshInterval = setInterval(fetchClaudeInsights, 24 * 60 * 60 * 1000);
+    // return () => clearInterval(refreshInterval);
+  }, [currentProject?.id]);
+  
+  useEffect(() => {
+    // Simple rotation of insights without typing animation
+    const rotateInsights = () => {
+      setCurrentInsight((prev) => (prev + 1) % insights.length);
+    };
+    
+    const intervalId = setInterval(() => {
+      rotateInsights();
+    }, 8000); // Change insight every 8 seconds
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [insights.length]);
+  
+  const getInsightText = (index: number) => {
+    const insight = insights[index];
+    return language === 'pt' ? insight.pt : insight.en;
+  };
+  
+  // Function to refresh insights on demand
+  const handleRefreshInsights = () => {
+    fetchClaudeInsights();
+    setCurrentInsight(0);
+  };
   
   // Handle click outside on mobile
   useEffect(() => {
@@ -1014,29 +1343,37 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
                 </Tooltip>
               </NavItem>
             ))}
-          
+            
             <PremiumSection>
-              <PremiumBadge>
+              <PremiumBadge onClick={handleRefreshInsights}>
                 <div className="rocket-path"></div>
                 <PremiumTitle>
                   <IconComponent icon={FaIcons.FaCrown} />
                   Liftlio Premium
+                  {isLoading && <LoadingIndicator />}
                 </PremiumTitle>
                 
-                <PremiumFeatures>
-                  <PremiumFeature>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    Access to advanced features
-                  </PremiumFeature>
-                  <PremiumFeature>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    Detailed engagement reports
-                  </PremiumFeature>
-                  <PremiumFeature>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    Priority 24/7 support
-                  </PremiumFeature>
-                </PremiumFeatures>
+                <InsightContent>
+                  {insights.map((insight, index) => (
+                    <InsightText 
+                      key={index} 
+                      active={index === currentInsight} 
+                      typing={false}
+                      dangerouslySetInnerHTML={{ 
+                        __html: getInsightText(index)
+                          .replace(/<MetricValue>(.*?)<\/MetricValue>/g, '<span class="metric-value">$1</span>')
+                          .replace(/<Highlight>(.*?)<\/Highlight>/g, '<span class="highlight">$1</span>')
+                          // No typewriter effect - just show the text
+                      }}
+                    />
+                  ))}
+                </InsightContent>
+                
+                <InsightDots>
+                  {insights.map((_, index) => (
+                    <Dot key={index} active={index === currentInsight} />
+                  ))}
+                </InsightDots>
                 
                 <UpgradeButton
                   onMouseEnter={() => setHoveredItem('upgrade')}
