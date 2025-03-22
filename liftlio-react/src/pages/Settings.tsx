@@ -1393,30 +1393,52 @@ const Settings: React.FC = () => {
     }
   }, [isLoading, projectData.id]);
   
-  // Detect changes to show save bar only when data is changed
+  // Function to check if a value has been changed from its original value
+  const isFieldChanged = (currentValue: any, originalValue: any) => {
+    // Special case for strings: treat empty strings and null/undefined the same
+    if (typeof currentValue === 'string' && (originalValue === null || originalValue === undefined)) {
+      return currentValue !== '';
+    }
+    if ((currentValue === null || currentValue === undefined || currentValue === '') && 
+        (originalValue === null || originalValue === undefined || originalValue === '')) {
+      return false;
+    }
+    return currentValue !== originalValue;
+  };
+
+  // Detect changes to show save bar only when data is changed compared to DB values
   useEffect(() => {
     // Only check for changes if we have initial data to compare against
     if (initialProjectData) {
       const newChangedFields: {[key: string]: boolean} = {};
       
-      // Check each field individually and track which ones changed
-      newChangedFields["Project name"] = projectData["Project name"] !== initialProjectData["Project name"];
-      newChangedFields["url_service"] = projectData.url_service !== initialProjectData.url_service;
-      newChangedFields["description_service"] = projectData.description_service !== initialProjectData.description_service;
-      newChangedFields["Keywords"] = projectData.Keywords !== initialProjectData.Keywords;
-      newChangedFields["Negative keywords"] = projectData["Negative keywords"] !== initialProjectData["Negative keywords"];
-      newChangedFields["País"] = projectData["País"] !== initialProjectData["País"];
-      newChangedFields["selectedColor"] = selectedColor !== colors[0].value;
-      newChangedFields["isDarkMode"] = isDarkMode !== false;
-      newChangedFields["borderRadius"] = borderRadius !== 8;
-      newChangedFields["fontSize"] = fontSize !== 1.0;
+      // Focus only on the database fields that we need to track for save operations
+      // Check each field individually and track which ones changed from their original values
+      newChangedFields["Project name"] = isFieldChanged(projectData["Project name"], initialProjectData["Project name"]);
+      newChangedFields["url_service"] = isFieldChanged(projectData.url_service, initialProjectData.url_service);
+      newChangedFields["description_service"] = isFieldChanged(projectData.description_service, initialProjectData.description_service);
+      newChangedFields["Keywords"] = isFieldChanged(projectData.Keywords, initialProjectData.Keywords);
+      newChangedFields["Negative keywords"] = isFieldChanged(projectData["Negative keywords"], initialProjectData["Negative keywords"]);
+      newChangedFields["País"] = isFieldChanged(projectData["País"], initialProjectData["País"]);
       
-      // Check if any field has changes
+      // We only need to track UI settings if we're actually saving them to the database
+      // Uncomment these if you're saving UI preferences
+      // newChangedFields["selectedColor"] = selectedColor !== colors[0].value;
+      // newChangedFields["isDarkMode"] = isDarkMode !== false;
+      // newChangedFields["borderRadius"] = borderRadius !== 8;
+      // newChangedFields["fontSize"] = fontSize !== 1.0;
+      
+      // Check if any DB field has changes
       const hasChanges = Object.values(newChangedFields).some(changed => changed === true);
       
       // Update state
       setChangedFields(newChangedFields);
       setShowSaveBar(hasChanges);
+      
+      // Log which fields have changed (for debugging)
+      if (hasChanges) {
+        console.log('Changed fields:', Object.keys(newChangedFields).filter(key => newChangedFields[key]));
+      }
     }
     
     // Auto-hide save success message after 3 seconds
@@ -1445,21 +1467,48 @@ const Settings: React.FC = () => {
   const handleSaveSettings = async () => {
     if (!currentProject?.id) return;
     
+    // Check if there are actual changes to save
+    const hasChanges = Object.values(changedFields).some(changed => changed === true);
+    if (!hasChanges) {
+      console.log('No changes to save');
+      return;
+    }
+    
     try {
-      console.log('Saving project data with negative keywords:', projectData["Negative keywords"]);
+      console.log('Saving changed fields:', Object.keys(changedFields).filter(key => changedFields[key]));
+      
+      // Only include fields that have actually changed in the update
+      const updateData: any = {};
+      
+      if (changedFields["Project name"]) {
+        updateData["Project name"] = projectData["Project name"];
+      }
+      
+      if (changedFields["url_service"]) {
+        updateData["url service"] = projectData.url_service;
+      }
+      
+      if (changedFields["description_service"]) {
+        updateData["description service"] = projectData.description_service;
+      }
+      
+      if (changedFields["Keywords"]) {
+        updateData["Keywords"] = projectData.Keywords;
+      }
+      
+      if (changedFields["Negative keywords"]) {
+        updateData["Negative keywords"] = projectData["Negative keywords"];
+      }
+      
+      if (changedFields["País"]) {
+        updateData["País"] = projectData["País"];
+      }
+      
+      console.log('Data to update:', updateData);
       
       const { error } = await supabase
         .from('Projeto')
-        .update({
-          "Project name": projectData["Project name"],
-          "url service": projectData.url_service,
-          "description service": projectData.description_service,
-          "Keywords": projectData.Keywords,
-          // Use exactly the same field name as in the database schema
-          // Format is important - quotes and exactly matching casing
-          "Negative keywords": projectData["Negative keywords"],
-          "País": projectData["País"]
-        })
+        .update(updateData)
         .eq('id', currentProject.id);
         
       if (error) {
@@ -1475,22 +1524,36 @@ const Settings: React.FC = () => {
           .single();
           
         console.log('Updated project data:', updatedData);
-        console.log('Negative keywords after update:', updatedData ? updatedData["Negative keywords"] : 'unknown');
         
         // Update the initial data to reflect the saved state
         if (updatedData) {
           setInitialProjectData({...updatedData});
-          // Reset changed fields after saving
-          setChangedFields({});
+          
+          // Reset only the changed fields that were successfully saved
+          const updatedChangedFields = {...changedFields};
+          Object.keys(updateData).forEach(key => {
+            // Map DB field names back to our state field names
+            const stateKey = key === "url service" ? "url_service" : 
+                          key === "description service" ? "description_service" : key;
+            
+            updatedChangedFields[stateKey] = false;
+          });
+          
+          setChangedFields(updatedChangedFields);
         }
       }
       
       setShowSaveSuccess(true);
       
-      // Hide the save bar after a delay
-      setTimeout(() => {
-        setShowSaveBar(false);
-      }, 3000);
+      // Check if there are still unsaved changes
+      const remainingChanges = Object.values(changedFields).some(changed => changed === true);
+      
+      // Only hide the save bar if all changes were saved
+      if (!remainingChanges) {
+        setTimeout(() => {
+          setShowSaveBar(false);
+        }, 3000);
+      }
     } catch (error) {
       console.error('Error:', error);
     }
