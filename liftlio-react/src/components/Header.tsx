@@ -993,6 +993,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [youtubeConnected, setYoutubeConnected] = useState<boolean>(false);
   
   const projectsRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -1005,6 +1006,125 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       setCurrentProject(projects[0]);
     }
   }, [currentProject, projects, setCurrentProject]);
+  
+  // Verificar status do YouTube quando o projeto muda
+  useEffect(() => {
+    if (currentProject?.id) {
+      checkYouTubeConnection();
+      
+      // Configurar verificação periódica a cada 30 segundos
+      const intervalId = setInterval(() => {
+        console.log('Verificação periódica do status do YouTube');
+        checkYouTubeConnection();
+      }, 30000); // 30 segundos
+      
+      // Limpar intervalo quando o componente for desmontado ou o projeto mudar
+      return () => clearInterval(intervalId);
+    }
+  }, [currentProject]);
+  
+  // Verificação inicial
+  useEffect(() => {
+    console.log('Inicializando verificação do status do YouTube');
+    
+    // Forçar execução inicial após 1 segundo para garantir que todos os dados foram carregados
+    const timerId = setTimeout(() => {
+      if (currentProject?.id) {
+        console.log('Executando verificação inicial do YouTube');
+        checkYouTubeConnection();
+      }
+    }, 1000);
+    
+    return () => clearTimeout(timerId);
+  }, []);
+  
+  // Função para verificar a conexão com YouTube
+  const checkYouTubeConnection = async () => {
+    if (!currentProject?.id) return;
+    
+    try {
+      console.log('Verificando conexão do YouTube para projeto ID:', currentProject.id);
+      
+      // Importante: não use .single() aqui, pois se não encontrar registros, retornará erro
+      const { data, error } = await supabase
+        .from('Integrações')
+        .select('*')
+        .eq('PROJETO id', currentProject.id)
+        .eq('Tipo de integração', 'youtube');
+        
+      if (error) {
+        console.error("Erro ao verificar integração:", error);
+        console.log('YouTube desconectado (erro na consulta)');
+        setYoutubeConnected(false);
+        return;
+      }
+      
+      // Verifica se encontrou algum registro e se está ativo
+      if (data && data.length > 0) {
+        const youtubeIntegration = data[0];
+        const isConnected = youtubeIntegration.ativo === true;
+        
+        console.log('Status da conexão YouTube:', isConnected ? 'Conectado' : 'Desconectado');
+        console.log('Dados da integração:', youtubeIntegration);
+        
+        setYoutubeConnected(isConnected);
+      } else {
+        // Nenhuma integração encontrada = desconectado
+        console.log('YouTube desconectado (nenhuma integração encontrada)');
+        setYoutubeConnected(false);
+      }
+      
+    } catch (error) {
+      console.error("Erro ao verificar integração do YouTube:", error);
+      console.log('YouTube desconectado (exceção)');
+      setYoutubeConnected(false);
+    }
+  };
+  
+  // Função para iniciar o fluxo de autorização do YouTube
+  const initiateYouTubeOAuth = () => {
+    if (!currentProject?.id) {
+      alert("Selecione um projeto primeiro");
+      return;
+    }
+    
+    // Determinar o URI de redirecionamento baseado no ambiente
+    const isProduction = window.location.hostname === 'liftlio.fly.dev';
+    const redirectUri = isProduction 
+      ? 'https://liftlio.fly.dev' 
+      : 'http://localhost:3000';
+      
+    const clientId = "360636127290-1k591hbvpen81oipjur2bsb1a7a6jo2o.apps.googleusercontent.com";
+    const scopes = [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/youtube.force-ssl",
+      "https://www.googleapis.com/auth/youtube",
+      "https://www.googleapis.com/auth/youtube.readonly",
+      "https://www.googleapis.com/auth/youtube.upload"
+    ].join(' ');
+    
+    const oauthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    oauthUrl.searchParams.append('client_id', clientId);
+    oauthUrl.searchParams.append('redirect_uri', redirectUri);
+    oauthUrl.searchParams.append('response_type', 'code');
+    oauthUrl.searchParams.append('scope', scopes);
+    oauthUrl.searchParams.append('access_type', 'offline');
+    oauthUrl.searchParams.append('prompt', 'consent');
+    oauthUrl.searchParams.append('state', currentProject.id.toString());
+    
+    // Abrir popup para autorização
+    const width = 600;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    
+    window.open(
+      oauthUrl.toString(),
+      'YouTube OAuth',
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
+  };
   
   const notifications = [
     { id: '1', title: 'New mention', message: 'Your product was mentioned on Twitter', time: '2 hours ago' },
@@ -1140,6 +1260,82 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         </div>
         
         <RightSection>
+          {/* Aviso do YouTube quando não estiver conectado */}
+          {!youtubeConnected && currentProject?.id && (
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'linear-gradient(135deg, rgba(255, 0, 0, 0.08) 0%, rgba(255, 0, 0, 0.12) 100%)',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                marginRight: '15px',
+                cursor: 'pointer',
+                border: '1px solid rgba(255, 0, 0, 0.2)',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)',
+                position: 'relative',
+                overflow: 'hidden',
+                animation: 'fadeIn 0.5s ease'
+              }}
+              onClick={initiateYouTubeOAuth}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 0, 0, 0.12) 0%, rgba(255, 0, 0, 0.18) 100%)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 3px 8px rgba(0, 0, 0, 0.08)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 0, 0, 0.08) 0%, rgba(255, 0, 0, 0.12) 100%)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.05)';
+              }}
+            >
+              {/* Efeito de luz */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: '-100%',
+                width: '50%',
+                height: '100%',
+                background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+                transform: 'skewX(-25deg)',
+                animation: 'shine 3s infinite',
+                zIndex: 1
+              }} />
+              <style>{`
+                @keyframes shine {
+                  0% { left: -100%; }
+                  50% { left: 150%; }
+                  100% { left: 150%; }
+                }
+                @keyframes fadeIn {
+                  from { opacity: 0; transform: translateY(-10px); }
+                  to { opacity: 1; transform: translateY(0); }
+                }
+              `}</style>
+              
+              <IconComponent icon={FaIcons.FaYoutube}
+                style={{ 
+                  color: '#FF0000', 
+                  marginRight: '8px',
+                  fontSize: '1.1rem',
+                  filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.1))',
+                  position: 'relative',
+                  zIndex: 2
+                }} 
+              />
+              <span style={{ 
+                fontSize: '0.85rem', 
+                color: '#333',
+                fontWeight: 500,
+                position: 'relative',
+                zIndex: 2
+              }}>
+                YouTube Disconnected - Connect
+              </span>
+            </div>
+          )}
+        
           <div ref={notificationsRef} style={{ position: 'relative' }}>
             <NotificationBadge onClick={() => setShowNotifications(!showNotifications)}>
               <IconComponent icon={FaIcons.FaBell} />

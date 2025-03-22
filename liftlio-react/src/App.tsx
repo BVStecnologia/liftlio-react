@@ -177,6 +177,137 @@ const FloatingMenuButton = styled.button`
 `;
 
 
+// Componente OAuthHandler para processar códigos de autorização do YouTube em qualquer rota
+const OAuthHandler = () => {
+  useEffect(() => {
+    // Verificar se há um código de autorização do YouTube na URL
+    const checkForYouTubeOAuth = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+      const hasYouTubeScopes = urlParams.get('scope')?.includes('youtube');
+      
+      // Se temos um código de autorização e escopos do YouTube
+      if (code && hasYouTubeScopes) {
+        console.log('Código de autorização do YouTube detectado na URL:', code);
+        console.log('ID do projeto no parâmetro state:', state);
+        
+        try {
+          // Importar dinamicamente a biblioteca Supabase e o cliente
+          const { supabase } = await import('./lib/supabaseClient');
+          
+          // Limpar os parâmetros da URL para evitar reprocessamento em recargas
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          // Construir os parâmetros para troca de token
+          // Determinar o URI de redirecionamento correto com base no ambiente
+          const isProduction = window.location.hostname === 'liftlio.fly.dev';
+          const redirectUri = isProduction 
+            ? 'https://liftlio.fly.dev' 
+            : 'http://localhost:3000';
+            
+          console.log('Ambiente detectado:', isProduction ? 'Produção' : 'Desenvolvimento');
+          console.log('Usando redirect URI:', redirectUri);
+          
+          const tokenEndpoint = 'https://oauth2.googleapis.com/token';
+          const clientId = "360636127290-1k591hbvpen81oipjur2bsb1a7a6jo2o.apps.googleusercontent.com";
+          const clientSecret = "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";
+          
+          // Criar dados do formulário para a solicitação de token
+          const formData = new URLSearchParams();
+          formData.append('code', code);
+          formData.append('client_id', clientId);
+          formData.append('client_secret', clientSecret);
+          formData.append('redirect_uri', redirectUri);
+          formData.append('grant_type', 'authorization_code');
+          
+          // Fazer a requisição de token
+          console.log('Fazendo solicitação de token para o YouTube...');
+          const tokenResponse = await fetch(tokenEndpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData.toString()
+          });
+          
+          // Processar a resposta
+          if (!tokenResponse.ok) {
+            const errorData = await tokenResponse.json();
+            throw new Error(`Falha na troca de token: ${errorData.error_description || errorData.error || 'Erro desconhecido'}`);
+          }
+          
+          const tokenData = await tokenResponse.json();
+          console.log('Token recebido com sucesso, salvando no Supabase...');
+          
+          // Calcular tempo de expiração
+          const expiresAt = Math.floor(Date.now() / 1000) + tokenData.expires_in;
+          
+          // Verificar se um projeto foi fornecido no parâmetro state
+          if (state) {
+            // Verificar se a integração já existe
+            const { data: existingData } = await supabase
+              .from('Integrações')
+              .select('*')
+              .eq('PROJETO id', state)
+              .eq('Tipo de integração', 'youtube');
+            
+            if (existingData && existingData.length > 0) {
+              // Atualizar integração existente
+              const { error: updateError } = await supabase
+                .from('Integrações')
+                .update({
+                  "Token": tokenData.access_token,
+                  "Refresh token": tokenData.refresh_token,
+                  "expira em": expiresAt,
+                  "Ultima atualização": new Date().toISOString(),
+                  "ativo": true
+                })
+                .eq('PROJETO id', state)
+                .eq('Tipo de integração', 'youtube');
+                
+              if (updateError) throw updateError;
+            } else {
+              // Inserir nova integração
+              const { error: insertError } = await supabase
+                .from('Integrações')
+                .insert([{
+                  "PROJETO id": state,
+                  "Tipo de integração": "youtube",
+                  "Token": tokenData.access_token,
+                  "Refresh token": tokenData.refresh_token,
+                  "expira em": expiresAt,
+                  "Ultima atualização": new Date().toISOString(),
+                  "ativo": true
+                }]);
+                
+              if (insertError) throw insertError;
+            }
+            
+            // Mostrar mensagem de sucesso
+            alert('Integração com YouTube concluída com sucesso!');
+            
+            // Redirecionar para a página de integrações após processamento
+            if (window.location.pathname !== '/integrations') {
+              window.location.href = '/integrations';
+            }
+          } else {
+            alert('Erro: Nenhum ID de projeto encontrado para associar a esta integração.');
+          }
+        } catch (error) {
+          console.error('Erro ao processar o código de autorização do YouTube:', error);
+          alert(`Erro ao conectar ao YouTube: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+        }
+      }
+    };
+    
+    // Executar verificação
+    checkForYouTubeOAuth();
+  }, []);
+  
+  return null; // Este componente não renderiza nada
+};
+
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
@@ -218,6 +349,8 @@ function App() {
       <AuthProvider>
         <ProjectProvider>
           <Router>
+            {/* Adicionar OAuthHandler para processar códigos do YouTube em qualquer rota */}
+            <OAuthHandler />
             <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />

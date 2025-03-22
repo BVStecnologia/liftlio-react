@@ -4,8 +4,10 @@ import Card from '../components/Card';
 import { IconContext } from 'react-icons';
 import { FaYoutube, FaReddit, FaLinkedin, FaFacebook, FaTwitter, FaInstagram, 
          FaPlug, FaCheck, FaExclamationTriangle, FaLock, FaShieldAlt, 
-         FaArrowRight, FaTimes, FaSync } from 'react-icons/fa';
-import { IconComponent, renderIcon } from '../utils/IconHelper';
+         FaArrowRight, FaTimes, FaClock } from 'react-icons/fa';
+import { IconComponent } from '../utils/IconHelper';
+import { useProject } from '../context/ProjectContext';
+import { supabase } from '../lib/supabaseClient';
 
 // Animations
 const fadeIn = keyframes`
@@ -523,7 +525,22 @@ const ModalButton = styled(ActionButton)`
   width: auto;
 `;
 
-// Dados com recursos adicionais
+// Constants for OAuth
+const GOOGLE_CLIENT_ID = "360636127290-1k591hbvpen81oipjur2bsb1a7a6jo2o.apps.googleusercontent.com";
+const GOOGLE_CLIENT_SECRET = "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";
+const GOOGLE_SCOPES = [
+  "https://www.googleapis.com/auth/userinfo.email",
+  "https://www.googleapis.com/auth/userinfo.profile",
+  "https://www.googleapis.com/auth/youtube.force-ssl",
+  "https://www.googleapis.com/auth/youtube",
+  "https://www.googleapis.com/auth/youtube.readonly",
+  "https://www.googleapis.com/auth/youtube.upload"
+];
+
+// YouTube API endpoints
+const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
+
+// Integration data
 const integrations = [
   {
     id: 'youtube',
@@ -531,8 +548,9 @@ const integrations = [
     description: 'Monitor YouTube videos and comments. Engage with your audience by responding to comments.',
     icon: FaYoutube,
     bgColor: '#FF0000',
-    status: 'connected' as const,
-    features: ['Comments', 'Mentions', 'Analytics']
+    status: 'disconnected' as const, // Will be set dynamically
+    features: ['Comments', 'Mentions', 'Analytics'],
+    available: true
   },
   {
     id: 'reddit',
@@ -540,8 +558,10 @@ const integrations = [
     description: 'Track Reddit posts and comments mentioning your product. Engage with communities directly.',
     icon: FaReddit,
     bgColor: '#FF4500',
-    status: 'pending' as const,
-    features: ['Posts', 'Comments', 'Subreddits']
+    status: 'disconnected' as const,
+    features: ['Posts', 'Comments', 'Subreddits'],
+    available: false,
+    comingSoon: true
   },
   {
     id: 'linkedin',
@@ -549,8 +569,10 @@ const integrations = [
     description: 'Monitor LinkedIn posts and comments. Engage with professional audience.',
     icon: FaLinkedin,
     bgColor: '#0077B5',
-    status: 'pending' as const,
-    features: ['Posts', 'Comments', 'Company Pages']
+    status: 'disconnected' as const,
+    features: ['Posts', 'Comments', 'Company Pages'],
+    available: false,
+    comingSoon: true
   },
   {
     id: 'facebook',
@@ -559,7 +581,9 @@ const integrations = [
     icon: FaFacebook,
     bgColor: '#1877F2',
     status: 'disconnected' as const,
-    features: ['Posts', 'Comments', 'Pages', 'Groups']
+    features: ['Posts', 'Comments', 'Pages', 'Groups'],
+    available: false,
+    comingSoon: true
   },
   {
     id: 'twitter',
@@ -568,7 +592,9 @@ const integrations = [
     icon: FaTwitter,
     bgColor: '#1DA1F2',
     status: 'disconnected' as const,
-    features: ['Tweets', 'Mentions', 'Direct Messages']
+    features: ['Tweets', 'Mentions', 'Direct Messages'],
+    available: false,
+    comingSoon: true
   },
   {
     id: 'instagram',
@@ -577,31 +603,396 @@ const integrations = [
     icon: FaInstagram,
     bgColor: '#E4405F',
     status: 'disconnected' as const,
-    features: ['Posts', 'Comments', 'Stories']
+    features: ['Posts', 'Comments', 'Stories'],
+    available: false,
+    comingSoon: true
   }
 ];
 
-const categories = ['All', 'Connected', 'Pending', 'Social Media', 'Analytics', 'Commerce'];
+const categories = ['All', 'Connected', 'Available Soon'];
+
+// Interface for integration data
+interface Integration {
+  id: string;
+  status: 'connected' | 'pending' | 'disconnected';
+  token?: string;
+  refreshToken?: string;
+  expiresAt?: number;
+  lastUpdated?: string;
+}
 
 const Integrations: React.FC = () => {
+  const { currentProject } = useProject();
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState<any>(null);
   const [confirmCheckbox, setConfirmCheckbox] = useState(false);
+  const [userIntegrations, setUserIntegrations] = useState<Integration[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [authWindow, setAuthWindow] = useState<Window | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const authCheckIntervalRef = useRef<number | null>(null);
+  
+  // Verificar que os URIs de redirecionamento estão corretamente configurados no startup
+  useEffect(() => {
+    // Detectar ambiente
+    const isProduction = window.location.hostname === 'liftlio.fly.dev';
+    const redirectUri = isProduction 
+      ? 'https://liftlio.fly.dev' 
+      : 'http://localhost:3000';
+      
+    console.log('----------------------');
+    console.log('CONFIGURAÇÃO OAUTH:');
+    console.log('Ambiente: ' + (isProduction ? 'Produção' : 'Desenvolvimento'));
+    console.log('URI de redirecionamento usado: ' + redirectUri);
+    console.log('Certifique-se de que o URI acima está configurado no Google Cloud Console');
+    console.log('----------------------');
+  }, []);
 
+  // Helper functions
   const renderIcon = (Icon: any) => {
     return <IconComponent icon={Icon} />;
   };
 
-  const filteredIntegrations = integrations.filter(integration => {
-    // Filtro por categoria
+  // Load project integrations
+  useEffect(() => {
+    if (currentProject?.id) {
+      fetchIntegrations();
+    } else {
+      setUserIntegrations([]);
+      setIsLoading(false);
+    }
+    
+    // O processamento do código de autorização agora é feito pelo componente OAuthHandler global
+    
+    // Monitor popup window if opened
+    if (authWindow) {
+      const checkPopupClosed = () => {
+        if (authWindow.closed) {
+          if (authCheckIntervalRef.current) {
+            window.clearInterval(authCheckIntervalRef.current);
+            authCheckIntervalRef.current = null;
+          }
+        }
+      };
+      
+      authCheckIntervalRef.current = window.setInterval(checkPopupClosed, 500);
+    }
+    
+    return () => {
+      // Cleanup interval if exists
+      if (authCheckIntervalRef.current) {
+        window.clearInterval(authCheckIntervalRef.current);
+        authCheckIntervalRef.current = null;
+      }
+    };
+  }, [currentProject?.id, authWindow]);
+
+  // Fetch integrations from Supabase
+  const fetchIntegrations = async () => {
+    if (!currentProject?.id) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('Integrações')
+        .select('*')
+        .eq('PROJETO id', currentProject.id);
+        
+      if (error) throw error;
+      
+      // Map the integration data
+      const integrationData: Integration[] = (data || []).map((item: any) => ({
+        id: item['Tipo de integração'] || '',
+        status: item.ativo ? 'connected' : 'disconnected',
+        token: item['Token'] || '',
+        refreshToken: item['Refresh token'] || '',
+        expiresAt: item['expira em'] || 0,
+        lastUpdated: item['Ultima atualização'] || null
+      }));
+      
+      // Check for tokens that need refreshing
+      for (const integration of integrationData) {
+        if (integration.status === 'connected' && integration.expiresAt && integration.refreshToken) {
+          // If token expires in less than 5 minutes, refresh it
+          const currentTime = Math.floor(Date.now() / 1000);
+          const timeToExpiration = integration.expiresAt - currentTime;
+          
+          if (timeToExpiration < 300) { // 5 minutes in seconds
+            try {
+              await refreshToken(integration);
+            } catch (refreshError) {
+              console.error(`Error refreshing token for ${integration.id}:`, refreshError);
+            }
+          }
+        }
+      }
+      
+      setUserIntegrations(integrationData);
+    } catch (error) {
+      console.error('Error fetching integrations:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Function to refresh an expired token
+  const refreshToken = async (integration: Integration) => {
+    if (!integration.refreshToken || !currentProject?.id) return;
+    
+    try {
+      // Endpoint for refreshing tokens
+      const tokenEndpoint = 'https://oauth2.googleapis.com/token';
+      
+      // Create form data for token refresh request
+      const formData = new URLSearchParams();
+      formData.append('client_id', GOOGLE_CLIENT_ID);
+      formData.append('refresh_token', integration.refreshToken);
+      formData.append('grant_type', 'refresh_token');
+      
+      // Using client secret - Note: In production, this should be done server-side for security
+      formData.append('client_secret', GOOGLE_CLIENT_SECRET);
+      
+      // Make the token refresh request
+      const tokenResponse = await fetch(tokenEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData.toString()
+      });
+      
+      // Parse the response
+      if (!tokenResponse.ok) {
+        const errorData = await tokenResponse.json();
+        throw new Error(`Token refresh failed: ${errorData.error_description || errorData.error || 'Unknown error'}`);
+      }
+      
+      const tokenData = await tokenResponse.json();
+      
+      // Calculate new expiration time
+      const expiresAt = Math.floor(Date.now() / 1000) + tokenData.expires_in;
+      
+      // Update the integration in Supabase
+      const { error } = await supabase
+        .from('Integrações')
+        .update({
+          "Token": tokenData.access_token,
+          "expira em": expiresAt,
+          "Ultima atualização": new Date().toISOString(),
+          "ativo": true
+        })
+        .eq('PROJETO id', currentProject.id)
+        .eq('Tipo de integração', integration.id);
+        
+      if (error) throw error;
+      
+      console.log(`${integration.id} token refreshed successfully`);
+      
+    } catch (error) {
+      console.error(`Error refreshing token for ${integration.id}:`, error);
+      
+      // If the refresh token is invalid, mark the integration as disconnected
+      if (error instanceof Error && 
+          (error.message.includes('invalid_grant') || error.message.includes('Token has been expired or revoked'))) {
+        
+        const { error: updateError } = await supabase
+          .from('Integrações')
+          .update({ "ativo": false })
+          .eq('PROJETO id', currentProject.id)
+          .eq('Tipo de integração', integration.id);
+          
+        if (updateError) {
+          console.error('Error marking integration as inactive:', updateError);
+        }
+      }
+      
+      throw error;
+    }
+  };
+
+  // O processamento do código de autorização agora é feito pelo componente OAuthHandler global
+
+  // Start OAuth flow for YouTube
+  const initiateOAuth = () => {
+    // Use the redirect URI that is configured in Google Cloud
+    // Importante: Este URI deve corresponder EXATAMENTE ao configurado no Google Cloud Console
+    
+    // Determinar o URI de redirecionamento correto com base no ambiente
+    const isProduction = window.location.hostname === 'liftlio.fly.dev';
+    const redirectUri = isProduction 
+      ? 'https://liftlio.fly.dev' 
+      : 'http://localhost:3000';
+      
+    console.log('Ambiente detectado no iniciateOAuth:', isProduction ? 'Produção' : 'Desenvolvimento');
+    
+    // Log para debug - verificar o URI exato que estamos usando
+    console.log('Using redirect URI:', redirectUri);
+    
+    const scope = GOOGLE_SCOPES.join(' ');
+    
+    const oauthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    oauthUrl.searchParams.append('client_id', GOOGLE_CLIENT_ID);
+    oauthUrl.searchParams.append('redirect_uri', redirectUri);
+    oauthUrl.searchParams.append('response_type', 'code');
+    oauthUrl.searchParams.append('scope', scope);
+    oauthUrl.searchParams.append('access_type', 'offline');
+    oauthUrl.searchParams.append('prompt', 'consent');
+    oauthUrl.searchParams.append('state', currentProject?.id?.toString() || ''); // Add project ID to state parameter
+    
+    // Open popup
+    const width = 600;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    
+    const authPopup = window.open(
+      oauthUrl.toString(),
+      'YouTube OAuth',
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
+    
+    setAuthWindow(authPopup);
+    
+    // Check if popup is closed
+    const checkPopupClosed = () => {
+      if (authPopup && authPopup.closed) {
+        window.clearInterval(authCheckIntervalRef.current!);
+        authCheckIntervalRef.current = null;
+      }
+    };
+    
+    authCheckIntervalRef.current = window.setInterval(checkPopupClosed, 500);
+  };
+
+  // Disconnect a specific integration
+  const disconnectIntegration = async (integrationType: string) => {
+    if (!currentProject?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('Integrações')
+        .delete()
+        .eq('PROJETO id', currentProject.id)
+        .eq('Tipo de integração', integrationType);
+        
+      if (error) throw error;
+      
+      // Refresh the list
+      fetchIntegrations();
+      
+    } catch (error) {
+      console.error(`Error disconnecting ${integrationType}:`, error);
+      alert(`Failed to disconnect ${integrationType}. Please try again.`);
+    }
+  };
+  
+  // Get a valid access token for YouTube API operations
+  const getValidYouTubeToken = async (): Promise<string | null> => {
+    if (!currentProject?.id) return null;
+    
+    try {
+      // Get the YouTube integration
+      const youtubeIntegration = userIntegrations.find(
+        integration => integration.id === 'youtube' && integration.status === 'connected'
+      );
+      
+      if (!youtubeIntegration) {
+        throw new Error('YouTube is not connected');
+      }
+      
+      // Check if token is expired or about to expire (less than 5 minutes)
+      const currentTime = Math.floor(Date.now() / 1000);
+      const timeToExpiration = youtubeIntegration.expiresAt ? youtubeIntegration.expiresAt - currentTime : -1;
+      
+      // If token is valid and not about to expire, return it
+      if (timeToExpiration > 300) { // More than 5 minutes remaining
+        return youtubeIntegration.token || null;
+      }
+      
+      // If token is expired or about to expire, refresh it
+      if (youtubeIntegration.refreshToken) {
+        await refreshToken(youtubeIntegration);
+        
+        // Get the updated integration data
+        const { data, error } = await supabase
+          .from('Integrações')
+          .select('*')
+          .eq('PROJETO id', currentProject.id)
+          .eq('Tipo de integração', 'youtube')
+          .single();
+          
+        if (error) throw error;
+        
+        return data['Token'] || null;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting valid YouTube token:', error);
+      return null;
+    }
+  };
+  
+  // Test YouTube API connection
+  const testYouTubeConnection = async () => {
+    try {
+      const token = await getValidYouTubeToken();
+      
+      if (!token) {
+        throw new Error('Could not get a valid YouTube token');
+      }
+      
+      // Make a simple call to get the authenticated user's channel
+      const response = await fetch(`${YOUTUBE_API_BASE}/channels?part=snippet&mine=true`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`YouTube API request failed: ${
+          errorData.error?.message || errorData.error || 'Unknown error'
+        }`);
+      }
+      
+      const data = await response.json();
+      const channelName = data.items[0]?.snippet?.title || 'Unknown Channel';
+      
+      alert(`Successfully connected to YouTube channel: ${channelName}`);
+      return true;
+    } catch (error) {
+      console.error('Error testing YouTube connection:', error);
+      alert(`YouTube connection test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return false;
+    }
+  };
+
+  // Combine the static integration data with user's integration status
+  const combinedIntegrations = integrations.map(integration => {
+    const userIntegration = userIntegrations.find(ui => ui.id === integration.id);
+    
+    if (userIntegration) {
+      return {
+        ...integration,
+        status: userIntegration.status
+      };
+    }
+    
+    return integration;
+  });
+
+  // Filter integrations based on search and category
+  const filteredIntegrations = combinedIntegrations.filter(integration => {
+    // Filter by category
     if (activeCategory === 'Connected' && integration.status !== 'connected') return false;
-    if (activeCategory === 'Pending' && integration.status !== 'pending') return false;
+    if (activeCategory === 'Available Soon' && integration.available !== false) return false;
     if (activeCategory === 'Social Media' && !['youtube', 'facebook', 'twitter', 'instagram'].includes(integration.id)) return false;
     
-    // Filtro por busca
+    // Filter by search term
     if (searchTerm && !integration.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
         !integration.description.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     
@@ -609,8 +1000,28 @@ const Integrations: React.FC = () => {
   });
 
   const handleConnect = (integration: any) => {
+    if (!currentProject?.id) {
+      alert('Please select a project first');
+      return;
+    }
+    
+    if (!integration.available) {
+      alert(`${integration.name} integration is coming soon!`);
+      return;
+    }
+    
     setSelectedIntegration(integration);
     setModalOpen(true);
+  };
+
+  const handleAuthorize = () => {
+    if (selectedIntegration && selectedIntegration.id === 'youtube') {
+      // Close the modal
+      setModalOpen(false);
+      
+      // Start OAuth process
+      initiateOAuth();
+    }
   };
 
   const handleCloseModal = () => {
@@ -669,72 +1080,114 @@ const Integrations: React.FC = () => {
           ))}
         </Categories>
         
-        <IntegrationsGrid>
-          {filteredIntegrations.map((integration, index) => (
-            <IntegrationCard 
-              key={integration.id} 
-              status={integration.status}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <IntegrationHeader>
-                <IntegrationIconContainer>
-                  <IntegrationIcon bgColor={integration.bgColor}>
-                    {renderIcon(integration.icon)}
-                  </IntegrationIcon>
-                  <StatusBadge status={integration.status}>
-                    {getStatusIcon(integration.status)}
-                  </StatusBadge>
-                </IntegrationIconContainer>
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            Loading integrations...
+          </div>
+        ) : (
+          <IntegrationsGrid>
+            {filteredIntegrations.map((integration, index) => (
+              <IntegrationCard 
+                key={integration.id} 
+                status={integration.status}
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <IntegrationHeader>
+                  <IntegrationIconContainer>
+                    <IntegrationIcon bgColor={integration.bgColor}>
+                      {renderIcon(integration.icon)}
+                    </IntegrationIcon>
+                    {integration.status === 'connected' && (
+                      <StatusBadge status={integration.status}>
+                        {getStatusIcon(integration.status)}
+                      </StatusBadge>
+                    )}
+                  </IntegrationIconContainer>
+                  
+                  <IntegrationNameContainer>
+                    <IntegrationName>{integration.name}</IntegrationName>
+                    {!integration.available ? (
+                      <IntegrationStatus status="pending">
+                        {renderIcon(FaClock)} Available Soon
+                      </IntegrationStatus>
+                    ) : (
+                      <IntegrationStatus status={integration.status}>
+                        {integration.status === 'connected' && renderIcon(FaCheck)}
+                        {integration.status === 'pending' && renderIcon(FaExclamationTriangle)}
+                        {integration.status.charAt(0).toUpperCase() + integration.status.slice(1)}
+                      </IntegrationStatus>
+                    )}
+                    {/* Message for disconnected YouTube integration */}
+                    {integration.id === 'youtube' && integration.status !== 'connected' && (
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#FF5722', 
+                        marginTop: '5px',
+                        fontWeight: 500
+                      }}>
+                        Connect your YouTube account to monitor video comments
+                      </div>
+                    )}
+                  </IntegrationNameContainer>
+                </IntegrationHeader>
                 
-                <IntegrationNameContainer>
-                  <IntegrationName>{integration.name}</IntegrationName>
-                  <IntegrationStatus status={integration.status}>
-                    {integration.status === 'connected' && renderIcon(FaCheck)}
-                    {integration.status === 'pending' && renderIcon(FaExclamationTriangle)}
-                    {integration.status.charAt(0).toUpperCase() + integration.status.slice(1)}
-                  </IntegrationStatus>
-                </IntegrationNameContainer>
-              </IntegrationHeader>
-              
-              <IntegrationDescription>
-                {integration.description}
-              </IntegrationDescription>
-              
-              <IntegrationFeatures>
-                {integration.features.map(feature => (
-                  <FeatureTag key={feature}>
-                    {renderIcon(FaCheck)}
-                    {feature}
-                  </FeatureTag>
-                ))}
-              </IntegrationFeatures>
-              
-              {integration.status === 'connected' && (
-                <ActionButton variant="danger">
-                  Disconnect {renderIcon(FaTimes)}
-                </ActionButton>
-              )}
-              
-              {integration.status === 'pending' && (
-                <ActionButton 
-                  variant="primary"
-                  onClick={() => handleConnect(integration)}
-                >
-                  Complete Setup {renderIcon(FaArrowRight)}
-                </ActionButton>
-              )}
-              
-              {integration.status === 'disconnected' && (
-                <ActionButton 
-                  variant="primary"
-                  onClick={() => handleConnect(integration)}
-                >
-                  Connect {renderIcon(FaArrowRight)}
-                </ActionButton>
-              )}
-            </IntegrationCard>
-          ))}
-        </IntegrationsGrid>
+                <IntegrationDescription>
+                  {integration.description}
+                </IntegrationDescription>
+                
+                <IntegrationFeatures>
+                  {integration.features.map(feature => (
+                    <FeatureTag key={feature}>
+                      {renderIcon(FaCheck)}
+                      {feature}
+                    </FeatureTag>
+                  ))}
+                </IntegrationFeatures>
+                
+                {/* Connected integration - show test and disconnect buttons */}
+                {integration.status === 'connected' && (
+                  <>
+                    {integration.id === 'youtube' && (
+                      <ActionButton 
+                        variant="secondary"
+                        onClick={testYouTubeConnection}
+                        style={{ marginBottom: '10px' }}
+                      >
+                        Test Connection {renderIcon(FaCheck)}
+                      </ActionButton>
+                    )}
+                    <ActionButton 
+                      variant="danger"
+                      onClick={() => disconnectIntegration(integration.id)}
+                    >
+                      Disconnect {renderIcon(FaTimes)}
+                    </ActionButton>
+                  </>
+                )}
+                
+                {/* Available but not connected - show connect button */}
+                {integration.status !== 'connected' && integration.available && (
+                  <ActionButton 
+                    variant="primary"
+                    onClick={() => handleConnect(integration)}
+                  >
+                    Connect {renderIcon(FaArrowRight)}
+                  </ActionButton>
+                )}
+                
+                {/* Coming soon - disabled button */}
+                {!integration.available && (
+                  <ActionButton 
+                    variant="secondary"
+                    disabled
+                  >
+                    Coming Soon {renderIcon(FaClock)}
+                  </ActionButton>
+                )}
+              </IntegrationCard>
+            ))}
+          </IntegrationsGrid>
+        )}
         
         <APICard>
           <APICardContent>
@@ -742,19 +1195,19 @@ const Integrations: React.FC = () => {
               <APICardIconWrapper>
                 {renderIcon(FaPlug)}
               </APICardIconWrapper>
-              <APICardTitle>Available API Connections</APICardTitle>
+              <APICardTitle>API Connections</APICardTitle>
             </APICardHeader>
             
             <APICardDescription>
-              Integrate with other platforms and services using our API. Create custom connections to enhance your monitoring capabilities and client interactions.
+              Integrate with other platforms and services using our API. Direct API access coming soon for custom integrations and advanced workflows.
             </APICardDescription>
             
             <APICardActions>
-              <ActionButton variant="secondary">
-                View API Documentation {renderIcon(FaArrowRight)}
+              <ActionButton variant="secondary" disabled>
+                View Documentation {renderIcon(FaArrowRight)}
               </ActionButton>
-              <ActionButton variant="primary">
-                Create New Connection {renderIcon(FaPlug)}
+              <ActionButton variant="primary" disabled>
+                Coming Soon {renderIcon(FaClock)}
               </ActionButton>
             </APICardActions>
           </APICardContent>
@@ -772,12 +1225,12 @@ const Integrations: React.FC = () => {
               <ModalIconWrapper bgColor={selectedIntegration.bgColor}>
                 {renderIcon(selectedIntegration.icon)}
               </ModalIconWrapper>
-              <ModalTitle>Connect {selectedIntegration.name}</ModalTitle>
+              <ModalTitle>Connect to {selectedIntegration.name}</ModalTitle>
             </ModalHeader>
             
             <ModalBody>
               <ModalText>
-                By connecting your {selectedIntegration.name} account, you allow Sales Advocate to monitor and interact with your content according to your settings.
+                By connecting your {selectedIntegration.name} account, you allow Liftlio to monitor and interact with your content according to your settings.
               </ModalText>
               
               <ModalInfo>
@@ -785,12 +1238,12 @@ const Integrations: React.FC = () => {
                   {renderIcon(FaShieldAlt)} Important Information
                 </ModalInfoTitle>
                 <ModalText style={{ marginBottom: 0 }}>
-                  You will be directed to {selectedIntegration.name} authorization. Check all the authorization boxes so that Sales Advocate can connect to this account.
+                  You will be directed to {selectedIntegration.name} authorization page. Please check all the authorization boxes so that Liftlio can connect to this account.
                 </ModalText>
                 
                 {selectedIntegration.id === 'youtube' && (
                   <ModalText style={{ marginBottom: 0 }}>
-                    To enable comment posting, the YouTube account must have made at least two comments through YouTube for the API to work.
+                    To enable comment posting, the YouTube account must have made at least two comments through YouTube for the API to work properly.
                   </ModalText>
                 )}
               </ModalInfo>
@@ -817,6 +1270,7 @@ const Integrations: React.FC = () => {
               <ModalButton 
                 variant="primary"
                 disabled={selectedIntegration.id === 'youtube' && !confirmCheckbox}
+                onClick={handleAuthorize}
               >
                 Authorize {renderIcon(FaLock)}
               </ModalButton>
