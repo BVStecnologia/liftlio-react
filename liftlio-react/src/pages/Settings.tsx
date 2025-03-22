@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, ReactElement } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import Card from '../components/Card';
 import { IconContext } from 'react-icons';
+import { IconType } from 'react-icons';
 import { 
   FaCog, FaUser, FaBell, FaPalette, FaShieldAlt, FaPlus, FaTimes, 
   FaCheck, FaFont, FaSlidersH, FaMoon, FaSun, FaSave, FaRedo, 
@@ -9,9 +10,16 @@ import {
   FaTrashAlt, FaExternalLinkAlt, FaInfoCircle, FaToggleOn, FaToggleOff,
   FaYoutube
 } from 'react-icons/fa';
-import { IconComponent, renderIcon } from '../utils/IconHelper';
+import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
 import { supabase } from '../lib/supabaseClient';
+
+// Helper function to render icons safely (to avoid the import conflict)
+const renderIcon = (Icon: IconType | undefined): ReactElement | null => {
+  if (!Icon) return null;
+  // @ts-ignore - workaround to handle IconType correctly
+  return <Icon />;
+};
 
 // Animations
 const fadeIn = keyframes`
@@ -1242,7 +1250,7 @@ const NegativeKeywordRemove = styled.button`
   }
 `;
 
-const Settings: React.FC = () => {
+const Settings: React.FC<{}> = () => {
   // Get current project from context
   const { currentProject } = useProject();
   
@@ -1352,16 +1360,27 @@ const Settings: React.FC = () => {
           console.log('Keys in data:', Object.keys(data));
           
           // Map the fields correctly based on the Supabase table structure
-          setProjectData({
-            ...data,
-            // Provide default values for nullable fields
+          const mappedData = {
+            id: data.id,
             "Project name": data["Project name"] || '',
             url_service: data["url service"] || '',
             description_service: data["description service"] || '',
             "Keywords": data["Keywords"] || '',
             "Negative keywords": data["Negative keywords"] || '',
-            "País": data["País"] || ''
-          });
+            "País": data["País"] || '',
+            user: data.user || '',
+            "User id": data["User id"] || ''
+          };
+          
+          // Use the mapped data
+          setProjectData(mappedData);
+          
+          // Also set the original data right away to ensure consistency
+          setOriginalData({...mappedData});
+          
+          // Clear any changed fields
+          setChangedFields({});
+          setShowSaveBar(false);
         }
       } catch (error) {
         console.error('Error:', error);
@@ -1415,17 +1434,17 @@ const Settings: React.FC = () => {
     return currentValue !== originalValue;
   };
 
-  // Simple function to directly check if the current project state differs from original
+  // Function to check if the current project state differs from original
   const checkIfDataChanged = () => {
     if (!originalData || isSaving) return false;
     
-    // Simple direct comparison of the editable fields
-    if (projectData["Project name"] !== originalData["Project name"]) return true;
-    if (projectData.url_service !== originalData.url_service) return true;
-    if (projectData.description_service !== originalData.description_service) return true;
-    if (projectData.Keywords !== originalData.Keywords) return true;
-    if (projectData["Negative keywords"] !== originalData["Negative keywords"]) return true;
-    if (projectData["País"] !== originalData["País"]) return true;
+    // Use isFieldChanged to properly compare all fields
+    if (isFieldChanged(projectData["Project name"], originalData["Project name"])) return true;
+    if (isFieldChanged(projectData.url_service, originalData.url_service)) return true;
+    if (isFieldChanged(projectData.description_service, originalData.description_service)) return true;
+    if (isFieldChanged(projectData.Keywords, originalData.Keywords)) return true;
+    if (isFieldChanged(projectData["Negative keywords"], originalData["Negative keywords"])) return true;
+    if (isFieldChanged(projectData["País"], originalData["País"])) return true;
     
     // No changes detected
     return false;
@@ -1433,6 +1452,9 @@ const Settings: React.FC = () => {
   
   // Create direct change handlers for each field
   const handleFieldChange = (field: string, value: any) => {
+    // Only proceed if we have original data to compare against
+    if (!originalData) return;
+    
     // Update the project data with the new value
     const updatedData = {...projectData, [field]: value};
     setProjectData(updatedData);
@@ -1440,12 +1462,15 @@ const Settings: React.FC = () => {
     // Directly calculate which fields have changed from original
     const newChangedFields: {[key: string]: boolean} = {};
     
-    newChangedFields["Project name"] = updatedData["Project name"] !== originalData["Project name"];
-    newChangedFields["url_service"] = updatedData.url_service !== originalData.url_service;
-    newChangedFields["description_service"] = updatedData.description_service !== originalData.description_service;
-    newChangedFields["Keywords"] = updatedData.Keywords !== originalData.Keywords;
-    newChangedFields["Negative keywords"] = updatedData["Negative keywords"] !== originalData["Negative keywords"];
-    newChangedFields["País"] = updatedData["País"] !== originalData["País"];
+    // Use the isFieldChanged function to do proper comparison
+    newChangedFields["Project name"] = isFieldChanged(updatedData["Project name"], originalData["Project name"]);
+    newChangedFields["url_service"] = isFieldChanged(updatedData.url_service, originalData.url_service);
+    newChangedFields["description_service"] = isFieldChanged(updatedData.description_service, originalData.description_service);
+    newChangedFields["Keywords"] = isFieldChanged(updatedData.Keywords, originalData.Keywords);
+    newChangedFields["Negative keywords"] = isFieldChanged(updatedData["Negative keywords"], originalData["Negative keywords"]);
+    newChangedFields["País"] = isFieldChanged(updatedData["País"], originalData["País"]);
+    
+    console.log('Field changed:', field, 'New value:', value, 'Changed fields:', newChangedFields);
     
     setChangedFields(newChangedFields);
     
@@ -1461,8 +1486,9 @@ const Settings: React.FC = () => {
       setShowSaveBar(hasChanges);
     }
   }, [projectData, originalData, isSaving, showSaveSuccess]);
-    
-    // Auto-hide save success message after 3 seconds
+  
+  // Auto-hide save success message after 3 seconds
+  useEffect(() => {
     if (showSaveSuccess) {
       const timer = setTimeout(() => {
         setShowSaveSuccess(false);
@@ -1470,20 +1496,7 @@ const Settings: React.FC = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [
-    initialProjectData,
-    selectedColor, 
-    isDarkMode, 
-    borderRadius, 
-    fontSize, 
-    projectData["Project name"], 
-    projectData.url_service,
-    projectData.description_service,
-    projectData.Keywords,
-    projectData["Negative keywords"],
-    projectData["País"],
-    showSaveSuccess
-  ]);
+  }, [showSaveSuccess]);
 
   const handleSaveSettings = async () => {
     if (!currentProject?.id) return;
@@ -1497,59 +1510,77 @@ const Settings: React.FC = () => {
     // Mark that we're in a saving operation to prevent UI flickers
     setIsSaving(true);
     
-    // Prepare the update object with mapped field names
-    const updateData: any = {
-      "Project name": projectData["Project name"],
-      "url service": projectData.url_service,
-      "description service": projectData.description_service,
-      "Keywords": projectData.Keywords,
-      "Negative keywords": projectData["Negative keywords"],
-      "País": projectData["País"]
-    };
-      
+    try {
+      // Prepare the update object with correctly mapped field names for the database
+      const updateData: any = {
+        "Project name": projectData["Project name"],
+        "url service": projectData.url_service,
+        "description service": projectData.description_service,
+        "Keywords": projectData.Keywords,
+        "Negative keywords": projectData["Negative keywords"],
+        "País": projectData["País"]
+      };
+        
       console.log('Data to update:', updateData);
-      
+        
       const { error } = await supabase
         .from('Projeto')
         .update(updateData)
         .eq('id', currentProject.id);
-        
+          
       if (error) {
         console.error('Error details:', error);
         console.error('Error updating project:', error);
+        setIsSaving(false);
         return;
-      } else {
-        // Verify the update
-        const { data: updatedData } = await supabase
-          .from('Projeto')
-          .select('*')
-          .eq('id', currentProject.id)
-          .single();
+      } 
+      
+      // Verify the update
+      const { data: updatedData, error: fetchError } = await supabase
+        .from('Projeto')
+        .select('*')
+        .eq('id', currentProject.id)
+        .single();
           
-        console.log('Updated project data:', updatedData);
+      if (fetchError) {
+        console.error('Error fetching updated data:', fetchError);
+        setIsSaving(false);
+        return;
+      }
+          
+      console.log('Updated project data:', updatedData);
         
-        // Update our reference data with what came back from the server
-        if (updatedData) {
-          // Store the updated data as our new reference point
-          setOriginalData({...updatedData});
+      if (updatedData) {
+        // Map the data to our internal structure
+        const mappedData = {
+          id: updatedData.id,
+          "Project name": updatedData["Project name"] || '',
+          url_service: updatedData["url service"] || '',
+          description_service: updatedData["description service"] || '',
+          "Keywords": updatedData["Keywords"] || '',
+          "Negative keywords": updatedData["Negative keywords"] || '',
+          "País": updatedData["País"] || '',
+          user: updatedData.user || '',
+          "User id": updatedData["User id"] || ''
+        };
           
-          // Reset our project data to match the DB
-          setProjectData({...updatedData});
+        // Store the updated data as our new reference point
+        setOriginalData({...mappedData});
           
-          // Reset all UI state to normal
-          setChangedFields({});
-          setShowSaveBar(false);
-          setIsSaving(false);
+        // Reset our project data to match the DB
+        setProjectData({...mappedData});
           
-          // Show success message
-          setShowSaveSuccess(true);
-          setTimeout(() => {
-            setShowSaveSuccess(false);
-          }, 3000);
-        }
+        // Reset all UI state to normal
+        setChangedFields({});
+        setShowSaveBar(false);
+        setIsSaving(false);
+          
+        // Show success message
+        setShowSaveSuccess(true);
       }
     } catch (error) {
       console.error('Error:', error);
+      setIsSaving(false);
     }
   };
   
