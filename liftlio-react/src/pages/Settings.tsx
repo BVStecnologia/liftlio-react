@@ -1369,10 +1369,33 @@ const Settings: React.FC = () => {
     fetchProjectData();
   }, [currentProject?.id]);
   
-  // Detect changes to show save bar
+  // We'll store the initial project data to detect actual changes
+  const [initialProjectData, setInitialProjectData] = useState<any>(null);
+  
+  // Set initial data after loading
   useEffect(() => {
-    if (!isLoading) {
-      setShowSaveBar(true);
+    if (!isLoading && projectData.id) {
+      setInitialProjectData({...projectData});
+    }
+  }, [isLoading, projectData.id]);
+  
+  // Detect changes to show save bar only when data is changed
+  useEffect(() => {
+    // Only check for changes if we have initial data to compare against
+    if (initialProjectData) {
+      const hasChanges = 
+        projectData["Project name"] !== initialProjectData["Project name"] ||
+        projectData.url_service !== initialProjectData.url_service ||
+        projectData.description_service !== initialProjectData.description_service ||
+        projectData.Keywords !== initialProjectData.Keywords ||
+        projectData["Negative keywords"] !== initialProjectData["Negative keywords"] ||
+        projectData["País"] !== initialProjectData["País"] ||
+        selectedColor !== colors[0].value || 
+        isDarkMode !== false ||
+        borderRadius !== 8 ||
+        fontSize !== 1.0;
+      
+      setShowSaveBar(hasChanges);
     }
     
     // Auto-hide save success message after 3 seconds
@@ -1384,7 +1407,7 @@ const Settings: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [
-    isLoading,
+    initialProjectData,
     selectedColor, 
     isDarkMode, 
     borderRadius, 
@@ -1394,7 +1417,8 @@ const Settings: React.FC = () => {
     projectData.description_service,
     projectData.Keywords,
     projectData["Negative keywords"],
-    projectData["País"]
+    projectData["País"],
+    showSaveSuccess
   ]);
 
   const handleSaveSettings = async () => {
