@@ -139,9 +139,8 @@ export const useDashboardData = () => {
       setError(null);
       
       try {
-        // Buscar dados das sete views em paralelo
+        // Buscar dados das seis views em paralelo (removido comment_overview)
         const [
-          commentsResponse, 
           keywordsResponse, 
           videosResponse, 
           metricsResponse, 
@@ -149,11 +148,6 @@ export const useDashboardData = () => {
           performanceResponse,
           performanceAnalysisResponse
         ] = await Promise.all([
-          supabase
-            .from('comment_overview')
-            .select('*')
-            .eq('scanner_project_id', projectId),
-          
           supabase
             .from('keyword_overview')
             .select('*')
@@ -189,7 +183,6 @@ export const useDashboardData = () => {
             .limit(100)
         ]);
         
-        if (commentsResponse.error) throw commentsResponse.error;
         if (keywordsResponse.error) throw keywordsResponse.error;
         if (videosResponse.error) throw videosResponse.error;
         if (metricsResponse.error) throw metricsResponse.error;
@@ -197,7 +190,6 @@ export const useDashboardData = () => {
         if (performanceResponse.error) throw performanceResponse.error;
         if (performanceAnalysisResponse.error) throw performanceAnalysisResponse.error;
         
-        const comments = commentsResponse.data || [];
         const keywords = keywordsResponse.data || [];
         const videos = videosResponse.data || [];
         const metrics = metricsResponse.data[0] || {
@@ -452,10 +444,10 @@ export const useDashboardData = () => {
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'Comentarios_Principais',
-        filter: `video_id=in.(select id from "Videos" where scanner_id in (select id from "Scanner de videos do youtube" where "Projeto_id"=${projectId}))`
+        table: 'Videos',
+        filter: `scanner_id=in.(select id from "Scanner de videos do youtube" where "Projeto_id"=${projectId})`
       }, () => {
-        // Recarregar dados quando houver mudanças
+        // Recarregar dados quando houver mudanças nos vídeos
         fetchDashboardData();
       })
       .subscribe();
