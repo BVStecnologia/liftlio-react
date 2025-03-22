@@ -9,6 +9,8 @@ import {
   FaTrashAlt, FaExternalLinkAlt, FaInfoCircle 
 } from 'react-icons/fa';
 import { IconComponent, renderIcon } from '../utils/IconHelper';
+import { useProject } from '../context/ProjectContext';
+import { supabase } from '../lib/supabaseClient';
 
 // Animations
 const fadeIn = keyframes`
@@ -135,6 +137,33 @@ const TabItem = styled.div<{ active: boolean }>`
 
 const ContentContainer = styled.div`
   animation: ${fadeIn} 0.4s ease;
+`;
+
+const LoadingOverlay = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  
+  .loading-text {
+    margin-top: 20px;
+    font-weight: 500;
+    color: ${props => props.theme.colors.darkGrey};
+  }
+`;
+
+const Spinner = styled.div`
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: ${props => props.theme.colors.primary};
+  animation: spin 1s ease-in-out infinite;
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -827,13 +856,7 @@ const ModalFooter = styled.div`
   margin-top: 25px;
 `;
 
-// Sample data
-const activeKeywords = [
-  'ai affiliate marketing',
-  'passive income with ai',
-  'ai product reviews'
-];
-
+// Theme data
 const colors = [
   { name: 'Purple', value: '#5e35b1' },
   { name: 'Blue', value: '#2196f3' },
@@ -844,7 +867,27 @@ const colors = [
 ];
 
 const Settings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('interface');
+  // Get current project from context
+  const { currentProject } = useProject();
+
+  // State for project data
+  const [projectData, setProjectData] = useState({
+    id: '',
+    "Project name": '',
+    url_service: '',
+    description_service: '',
+    "Keywords": '',
+    "Negative keywords": '',
+    "País": '',
+    user: '',
+    "User id": ''
+  });
+  
+  // Parse keywords from string to array
+  const activeKeywords = projectData.Keywords ? projectData.Keywords.split(',').map(k => k.trim()) : [];
+  
+  // UI state
+  const [activeTab, setActiveTab] = useState('project');
   const [selectedColor, setSelectedColor] = useState(colors[0].value);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [borderRadius, setBorderRadius] = useState(8);
@@ -854,13 +897,63 @@ const Settings: React.FC = () => {
   const [showAddKeywordModal, setShowAddKeywordModal] = useState(false);
   const [newKeyword, setNewKeyword] = useState('');
   const [keywordError, setKeywordError] = useState('');
-  const [projectName, setProjectName] = useState('Project 2');
-  const [projectLink, setProjectLink] = useState('https://humanlikewriter.com');
   const [showTooltip, setShowTooltip] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Load project data from Supabase
+  useEffect(() => {
+    async function fetchProjectData() {
+      if (!currentProject?.id) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        setIsLoading(true);
+        console.log('Fetching data for project ID:', currentProject.id);
+        
+        const { data, error } = await supabase
+          .from('Projeto')
+          .select('*')
+          .eq('id', currentProject.id)
+          .single();
+          
+        if (error) {
+          console.error('Error fetching project data:', error);
+          return;
+        }
+        
+        if (data) {
+          console.log('Project data loaded:', data);
+          console.log('Keys in data:', Object.keys(data));
+          
+          // Map the fields correctly based on the Supabase table structure
+          setProjectData({
+            ...data,
+            // Provide default values for nullable fields
+            "Project name": data["Project name"] || '',
+            url_service: data["url service"] || '',
+            description_service: data["description service"] || '',
+            "Keywords": data["Keywords"] || '',
+            "Negative keywords": data["Negative keywords"] || '',
+            "País": data["País"] || ''
+          });
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchProjectData();
+  }, [currentProject?.id]);
   
   // Detect changes to show save bar
   useEffect(() => {
-    setShowSaveBar(true);
+    if (!isLoading) {
+      setShowSaveBar(true);
+    }
     
     // Auto-hide save success message after 3 seconds
     if (showSaveSuccess) {
@@ -870,21 +963,53 @@ const Settings: React.FC = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [selectedColor, isDarkMode, borderRadius, fontSize, projectName, projectLink]);
+  }, [
+    isLoading,
+    selectedColor, 
+    isDarkMode, 
+    borderRadius, 
+    fontSize, 
+    projectData["Project name"], 
+    projectData.url_service,
+    projectData.description_service,
+    projectData.Keywords,
+    projectData["Negative keywords"],
+    projectData["País"]
+  ]);
 
-  const handleSaveSettings = () => {
-    // Simulate saving settings
-    setTimeout(() => {
+  const handleSaveSettings = async () => {
+    if (!currentProject?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('Projeto')
+        .update({
+          "Project name": projectData["Project name"],
+          "url service": projectData.url_service,
+          "description service": projectData.description_service,
+          "Keywords": projectData.Keywords,
+          "Negative keywords": projectData["Negative keywords"],
+          "País": projectData["País"]
+        })
+        .eq('id', currentProject.id);
+        
+      if (error) {
+        console.error('Error updating project:', error);
+        return;
+      }
+      
       setShowSaveSuccess(true);
       
       // Hide the save bar after a delay
       setTimeout(() => {
         setShowSaveBar(false);
       }, 3000);
-    }, 800);
+    } catch (error) {
+      console.error('Error:', error);
+    }
   };
   
-  const handleAddKeyword = () => {
+  const handleAddKeyword = async () => {
     if (!newKeyword.trim()) {
       setKeywordError('Please enter a keyword');
       return;
@@ -895,15 +1020,66 @@ const Settings: React.FC = () => {
       return;
     }
     
-    // In a real app, you would update the list with an API call
-    // For now, just close the modal and reset form
-    setKeywordError('');
-    setNewKeyword('');
-    setShowAddKeywordModal(false);
+    try {
+      // Add the new keyword to the existing list
+      const updatedKeywords = activeKeywords.length > 0 
+        ? [...activeKeywords, newKeyword.trim()].join(', ')
+        : newKeyword.trim();
+      
+      // Update local state
+      setProjectData({
+        ...projectData,
+        Keywords: updatedKeywords
+      });
+      
+      setKeywordError('');
+      setNewKeyword('');
+      setShowAddKeywordModal(false);
+    } catch (error) {
+      console.error('Error adding keyword:', error);
+      setKeywordError('Failed to add keyword');
+    }
+  };
+  
+  const handleRemoveKeyword = (keywordToRemove: string) => {
+    try {
+      // Remove the keyword from the list
+      const updatedKeywords = activeKeywords
+        .filter(keyword => keyword !== keywordToRemove)
+        .join(', ');
+      
+      // Update local state
+      setProjectData({
+        ...projectData,
+        Keywords: updatedKeywords
+      });
+    } catch (error) {
+      console.error('Error removing keyword:', error);
+    }
   };
   
   const renderIcon = (Icon: any) => {
     return <IconComponent icon={Icon} />;
+  };
+  
+  // Debug function to show raw data
+  const renderDebugInfo = () => {
+    if (process.env.NODE_ENV !== 'production') {
+      return (
+        <div style={{ 
+          marginTop: '20px', 
+          padding: '10px', 
+          background: '#f5f5f5', 
+          borderRadius: '4px',
+          fontSize: '12px',
+          fontFamily: 'monospace'
+        }}>
+          <h4>Debug Info (Dev Only)</h4>
+          <pre>{JSON.stringify(projectData, null, 2)}</pre>
+        </div>
+      );
+    }
+    return null;
   };
   
   const updateRangeBackground = (value: number, min: number, max: number) => {
@@ -962,7 +1138,14 @@ const Settings: React.FC = () => {
         </TabsContainer>
         
         <ContentContainer>
-          {activeTab === 'project' && (
+          {isLoading ? (
+            <Card>
+              <LoadingOverlay>
+                <Spinner />
+                <div className="loading-text">Loading project settings...</div>
+              </LoadingOverlay>
+            </Card>
+          ) : activeTab === 'project' && (
             <Card>
               <SectionTitle>
                 {renderIcon(FaCog)}
@@ -990,8 +1173,11 @@ const Settings: React.FC = () => {
                     <Input 
                       id="projectName" 
                       type="text" 
-                      value={projectName}
-                      onChange={(e) => setProjectName(e.target.value)} 
+                      value={projectData["Project name"] || ''}
+                      onChange={(e) => setProjectData({
+                        ...projectData,
+                        "Project name": e.target.value
+                      })} 
                     />
                   </FormGroup>
                   
@@ -1015,8 +1201,11 @@ const Settings: React.FC = () => {
                       <Input 
                         id="projectLink" 
                         type="url" 
-                        value={projectLink}
-                        onChange={(e) => setProjectLink(e.target.value)}
+                        value={projectData.url_service || ''}
+                        onChange={(e) => setProjectData({
+                          ...projectData,
+                          url_service: e.target.value
+                        })}
                       />
                       {renderIcon(FaExternalLinkAlt)}
                     </InputWithIcon>
@@ -1029,7 +1218,17 @@ const Settings: React.FC = () => {
                     id="companyName" 
                     type="text" 
                     placeholder="Enter your company or product name" 
-                    defaultValue="Humanlike Writer"
+                    value={projectData.description_service ? 
+                      (projectData.description_service.split('Company or product name:')[1]?.split('Audience description:')[0]?.trim() || '') : ''}
+                    onChange={(e) => {
+                      const audienceDesc = projectData.description_service ? 
+                        (projectData.description_service.split('Audience description:')[1]?.trim() || '') : '';
+                      
+                      setProjectData({
+                        ...projectData,
+                        description_service: `Company or product name: ${e.target.value} Audience description: ${audienceDesc}`
+                      });
+                    }}
                   />
                 </FormGroup>
                 
@@ -1038,7 +1237,18 @@ const Settings: React.FC = () => {
                   <TextArea 
                     id="audienceDescription" 
                     placeholder="Describe your target audience"
-                    defaultValue="Humanlike Writer is for Affiliate Marketers who need content for their website to increase affiliate commissions. Humanlike Writer is an AI writer the mimics human writing that sounds like a person actually tested the product. More genuine-sounding content increases trust and conversions. Right now you can get 3 free articles to test out the ai writer."
+                    value={projectData.description_service ? 
+                      (projectData.description_service.split('Audience description:')[1]?.trim() || '') : ''}
+                    onChange={(e) => {
+                      // Extract company name
+                      const companyName = projectData.description_service ? 
+                        (projectData.description_service.split('Company or product name:')[1]?.split('Audience description:')[0]?.trim() || '') : '';
+                      
+                      setProjectData({
+                        ...projectData,
+                        description_service: `Company or product name: ${companyName} Audience description: ${e.target.value}`
+                      });
+                    }}
                   />
                 </FormGroup>
               </FormSection>
@@ -1046,7 +1256,14 @@ const Settings: React.FC = () => {
               <FormSection>
                 <FormGroup>
                   <Label htmlFor="region">Region</Label>
-                  <Select id="region" defaultValue="US">
+                  <Select 
+                    id="region" 
+                    value={projectData["País"] || "US"}
+                    onChange={(e) => setProjectData({
+                      ...projectData,
+                      "País": e.target.value
+                    })}
+                  >
                     <option value="US">United States</option>
                     <option value="EU">European Union</option>
                     <option value="UK">United Kingdom</option>
@@ -1074,19 +1291,26 @@ const Settings: React.FC = () => {
                 <FormGroup>
                   <Label>Active Keywords</Label>
                   <KeywordsContainer>
-                    {activeKeywords.map((keyword, index) => (
-                      <KeywordItem key={keyword} style={{ animationDelay: `${index * 0.1}s` }}>
-                        <KeywordText>{keyword}</KeywordText>
-                        <KeywordActions>
-                          <IconButton title="Edit keyword">
-                            {renderIcon(FaSort)}
-                          </IconButton>
-                          <IconButton title="Deactivate keyword">
-                            {renderIcon(FaTrashAlt)}
-                          </IconButton>
-                        </KeywordActions>
-                      </KeywordItem>
-                    ))}
+                    {activeKeywords.length > 0 ? (
+                      activeKeywords.map((keyword, index) => (
+                        <KeywordItem key={keyword} style={{ animationDelay: `${index * 0.1}s` }}>
+                          <KeywordText>{keyword}</KeywordText>
+                          <KeywordActions>
+                            <IconButton title="Edit keyword">
+                              {renderIcon(FaSort)}
+                            </IconButton>
+                            <IconButton 
+                              title="Remove keyword"
+                              onClick={() => handleRemoveKeyword(keyword)}
+                            >
+                              {renderIcon(FaTrashAlt)}
+                            </IconButton>
+                          </KeywordActions>
+                        </KeywordItem>
+                      ))
+                    ) : (
+                      <div>No keywords added yet. Add keywords to help track your project.</div>
+                    )}
                   </KeywordsContainer>
                   <AddButton 
                     variant="secondary"
@@ -1098,11 +1322,17 @@ const Settings: React.FC = () => {
                 
                 <FormGroup>
                   <Label>Negative keywords</Label>
-                  <AddButton 
-                    variant="secondary"
-                  >
-                    {renderIcon(FaPlus)} Add negative keyword
-                  </AddButton>
+                  <TextArea 
+                    placeholder="Enter negative keywords separated by commas"
+                    value={projectData["Negative keywords"] || ''}
+                    onChange={(e) => setProjectData({
+                      ...projectData,
+                      "Negative keywords": e.target.value
+                    })}
+                  />
+                  <div style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
+                    Enter negative keywords separated by commas (e.g., spam, scam, illegal)
+                  </div>
                 </FormGroup>
               </FormSection>
                 
@@ -1129,6 +1359,8 @@ const Settings: React.FC = () => {
                   </ActionButton>
                 </FormRow>
               </FormSection>
+              
+              {renderDebugInfo()}
             </Card>
           )}
           

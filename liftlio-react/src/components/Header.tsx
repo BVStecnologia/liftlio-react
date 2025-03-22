@@ -977,6 +977,7 @@ type Project = {
   company: string;
   link: string;
   audience: string;
+  keywords?: string;
 };
 
 interface HeaderProps {
@@ -1021,11 +1022,16 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         return;
       }
       
+      // Format the description field properly
+      const formattedDescription = `Company or product name: ${project.company} Audience description: ${project.audience}`;
+      
       const { data, error } = await supabase
         .from('Projeto')
         .insert([{ 
           "Project name": project.name,
-          description: project.company, // using company field as description
+          "description service": formattedDescription,
+          "url service": project.link,
+          "Keywords": project.keywords,
           "User id": currentUser.id,
           "user": currentUser.email
         }])

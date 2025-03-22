@@ -89,6 +89,7 @@ type Project = {
   company: string;
   link: string;
   audience: string;
+  keywords?: string;
 };
 
 type ProjectModalProps = {
@@ -115,17 +116,14 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     name: '',
     company: '',
     link: '',
-    audience: ''
+    audience: '',
+    keywords: ''
   });
   
-  // Definir a aba ativa com base na existência de projetos
+  // Sempre mostrar a aba de criação
   useEffect(() => {
-    if (existingProjects && existingProjects.length > 0) {
-      setActiveTab('list');
-    } else {
-      setActiveTab('create');
-    }
-  }, [existingProjects]);
+    setActiveTab('create');
+  }, []);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -156,7 +154,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       name: '',
       company: '',
       link: '',
-      audience: ''
+      audience: '',
+      keywords: ''
     });
   };
   
@@ -168,11 +167,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   const modalFooter = (
     <>
       <Button variant="secondary" onClick={handleClose}>Cancel</Button>
-      {activeTab === 'create' ? (
-        <Button variant="primary" onClick={handleSubmit}>Create Project</Button>
-      ) : (
-        <Button variant="primary" onClick={() => setActiveTab('create')}>New Project</Button>
-      )}
+      <Button variant="primary" onClick={handleSubmit}>Create Project</Button>
     </>
   );
   
@@ -235,26 +230,10 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Manage Projects"
+      title="Create New Project"
       footer={modalFooter}
     >
-      <TabContainer>
-        <Tab 
-          active={activeTab === 'list'} 
-          onClick={() => setActiveTab('list')}
-        >
-          My Projects
-        </Tab>
-        <Tab 
-          active={activeTab === 'create'} 
-          onClick={() => setActiveTab('create')}
-        >
-          Create New
-        </Tab>
-      </TabContainer>
-
-      {activeTab === 'create' ? (
-        <Form onSubmit={handleSubmit}>
+      <Form onSubmit={handleSubmit}>
           <FormGroup>
             <Label htmlFor="name">Project Name</Label>
             <Input
@@ -268,57 +247,52 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
           </FormGroup>
           
           <FormGroup>
-            <Label htmlFor="company">Description</Label>
-            <TextArea
+            <Label htmlFor="company">Company or product name</Label>
+            <Input
               id="company"
               name="company"
               value={projectForm.company}
               onChange={handleChange}
-              placeholder="Briefly describe your project"
+              placeholder="Enter your company or product name"
               required
             />
           </FormGroup>
           
           <FormGroup>
-            <Label htmlFor="link">Project Link (optional)</Label>
+            <Label htmlFor="audience">Audience description</Label>
+            <TextArea
+              id="audience"
+              name="audience"
+              value={projectForm.audience}
+              onChange={handleChange}
+              placeholder="Describe your target audience"
+              required
+            />
+          </FormGroup>
+          
+          <FormGroup>
+            <Label htmlFor="link">Project Link</Label>
             <Input
               id="link"
               name="link"
               value={projectForm.link}
               onChange={handleChange}
               placeholder="www.example.com"
+              required
             />
           </FormGroup>
           
           <FormGroup>
-            <Label htmlFor="audience">Keywords (optional)</Label>
+            <Label htmlFor="keywords">Keywords (optional)</Label>
             <TextArea
-              id="audience"
-              name="audience"
-              value={projectForm.audience}
+              id="keywords"
+              name="keywords"
+              value={projectForm.keywords || ''}
               onChange={handleChange}
               placeholder="Keywords separated by commas"
             />
           </FormGroup>
         </Form>
-      ) : (
-        <ProjectList>
-          {existingProjects && existingProjects.length > 0 ? (
-            existingProjects.map(project => (
-              <ProjectCard 
-                key={project.id} 
-                active={selectedProject && selectedProject.id === project.id}
-                onClick={() => onSelectProject && onSelectProject(project)}
-              >
-                <ProjectTitle>{project["Project name"]}</ProjectTitle>
-                <ProjectDescription>{project.description || "No description"}</ProjectDescription>
-              </ProjectCard>
-            ))
-          ) : (
-            <div>No projects found. Create a new project.</div>
-          )}
-        </ProjectList>
-      )}
     </Modal>
   );
 };
