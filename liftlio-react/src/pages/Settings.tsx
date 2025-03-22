@@ -6,7 +6,8 @@ import {
   FaCog, FaUser, FaBell, FaPalette, FaShieldAlt, FaPlus, FaTimes, 
   FaCheck, FaFont, FaSlidersH, FaMoon, FaSun, FaSave, FaRedo, 
   FaCloudUploadAlt, FaSearch, FaChevronDown, FaSort, FaDatabase, 
-  FaTrashAlt, FaExternalLinkAlt, FaInfoCircle 
+  FaTrashAlt, FaExternalLinkAlt, FaInfoCircle, FaToggleOn, FaToggleOff,
+  FaYoutube
 } from 'react-icons/fa';
 import { IconComponent, renderIcon } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
@@ -866,9 +867,383 @@ const colors = [
   { name: 'Red', value: '#f44336' }
 ];
 
+// KeywordScanner interface
+interface KeywordScanner {
+  id: number;
+  "Keyword": string;
+  "Ativa?": boolean;
+  "Videos": number | null;
+  "COMENTS": number | null;
+  created_at: string;
+}
+
+// KeywordOverview interface
+interface KeywordOverview {
+  keyword: string;
+  project_id: number;
+  total_videos: number;
+  total_views: number;
+  avg_likes: number;
+  total_leads: number;
+  converted_leads: number;
+  keyword_composite_score: number;
+}
+
+// KeywordScannersList component
+const KeywordScannersList: React.FC<{ projectId: string | number }> = ({ projectId }) => {
+  const [scanners, setScanners] = useState<KeywordScanner[]>([]);
+  const [keywordStats, setKeywordStats] = useState<Record<string, KeywordOverview>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!projectId) return;
+      
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Fetch scanners
+        const { data: scannersData, error: scannersError } = await supabase
+          .from('Scanner de videos do youtube')
+          .select('*')
+          .eq('Projeto_id', projectId);
+          
+        if (scannersError) {
+          throw scannersError;
+        }
+        
+        setScanners(scannersData || []);
+        
+        // Fetch keyword stats from the view
+        const { data: statsData, error: statsError } = await supabase
+          .from('keyword_overview')
+          .select('keyword, project_id, total_videos, total_views, avg_likes, total_leads, converted_leads, keyword_composite_score')
+          .eq('project_id', projectId);
+          
+        if (statsError) {
+          console.error('Error fetching keyword stats:', statsError);
+          // Don't throw here - we still want to show scanners even if stats fail
+        }
+        
+        // Convert array to object with keyword as key for easier lookup
+        const statsMap: Record<string, KeywordOverview> = {};
+        if (statsData) {
+          statsData.forEach((stat: KeywordOverview) => {
+            statsMap[stat.keyword] = stat;
+          });
+        }
+        
+        setKeywordStats(statsMap);
+      } catch (err: any) {
+        console.error('Error fetching data:', err);
+        setError(err.message || 'Failed to load keyword scanners');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [projectId]);
+  
+  const toggleScannerActive = async (scannerId: number, currentActiveState: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('Scanner de videos do youtube')
+        .update({ "Ativa?": !currentActiveState })
+        .eq('id', scannerId);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setScanners(prev => 
+        prev.map(scanner => 
+          scanner.id === scannerId 
+            ? { ...scanner, "Ativa?": !currentActiveState } 
+            : scanner
+        )
+      );
+    } catch (err: any) {
+      console.error('Error toggling scanner status:', err);
+      alert('Failed to update scanner status. Please try again.');
+    }
+  };
+  
+  const addNewScanner = async (keyword: string) => {
+    if (!keyword.trim() || !projectId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('Scanner de videos do youtube')
+        .insert([
+          { 
+            "Keyword": keyword.trim(),
+            "Ativa?": true,
+            "Projeto_id": projectId
+          }
+        ])
+        .select();
+        
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setScanners(prev => [...prev, data[0]]);
+      }
+    } catch (err: any) {
+      console.error('Error adding new scanner:', err);
+      alert('Failed to add new scanner. Please try again.');
+    }
+  };
+  
+  const [newKeyword, setNewKeyword] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  
+  if (isLoading) {
+    return (
+      <LoadingOverlay>
+        <Spinner />
+        <div className="loading-text">Loading keyword scanners...</div>
+      </LoadingOverlay>
+    );
+  }
+  
+  if (error) {
+    return <div>Error loading scanners: {error}</div>;
+  }
+  
+  return (
+    <div>
+      <div style={{ marginBottom: '15px' }}>
+        <p>Keyword scanners monitor platforms for mentions of your keywords and collect data for analysis.</p>
+      </div>
+      
+      {scanners.length === 0 ? (
+        <div style={{ padding: '20px', textAlign: 'center', background: '#f9f9f9', borderRadius: '8px' }}>
+          No keyword scanners configured. Add a scanner to start monitoring.
+        </div>
+      ) : (
+        <KeywordsContainer>
+          {scanners.map((scanner) => (
+            <ScannerItem key={scanner.id}>
+              <ScannerItemLeft>
+                <IconComponent icon={FaDatabase} style={{ marginRight: '10px' }} />
+                <ScannerKeyword>{scanner.Keyword}</ScannerKeyword>
+                {keywordStats[scanner.Keyword] && 
+                  <ScannerScore score={keywordStats[scanner.Keyword].keyword_composite_score || 0}>
+                    {Math.round((keywordStats[scanner.Keyword].keyword_composite_score || 0) * 100)}
+                  </ScannerScore>
+                }
+              </ScannerItemLeft>
+              <ScannerStats>
+                <ScannerStat title="Videos found">
+                  <b>{keywordStats[scanner.Keyword]?.total_videos || 0}</b> videos
+                </ScannerStat>
+                <ScannerStat title="Engagement">
+                  <b>{keywordStats[scanner.Keyword] ? 
+                     (keywordStats[scanner.Keyword].total_views / 1000).toFixed(1) + 'K' : 0}</b> views
+                </ScannerStat>
+                <ScannerStat title="Leads">
+                  <b>{keywordStats[scanner.Keyword]?.total_leads || 0}</b> leads
+                </ScannerStat>
+              </ScannerStats>
+              <ScannerActions>
+                <ScannerToggle
+                  active={scanner["Ativa?"] || false}
+                  onClick={() => toggleScannerActive(scanner.id, scanner["Ativa?"] || false)}
+                  title={scanner["Ativa?"] ? "Deactivate scanner" : "Activate scanner"}
+                >
+                  {scanner["Ativa?"] 
+                    ? <IconComponent icon={FaToggleOn} /> 
+                    : <IconComponent icon={FaToggleOff} />
+                  }
+                </ScannerToggle>
+              </ScannerActions>
+            </ScannerItem>
+          ))}
+        </KeywordsContainer>
+      )}
+      
+      <AddButton 
+        variant="secondary"
+        onClick={() => setShowAddModal(true)}
+      >
+        {renderIcon(FaPlus)} Add keyword scanner
+      </AddButton>
+      
+      {showAddModal && (
+        <Modal onClick={() => setShowAddModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitle>Add Keyword Scanner</ModalTitle>
+              <CloseButton onClick={() => setShowAddModal(false)}>
+                {renderIcon(FaTimes)}
+              </CloseButton>
+            </ModalHeader>
+            
+            <FormGroup>
+              <Label htmlFor="newScannerKeyword">Keyword to monitor</Label>
+              <Input 
+                id="newScannerKeyword"
+                placeholder="Enter a keyword to monitor across platforms"
+                value={newKeyword}
+                onChange={(e) => setNewKeyword(e.target.value)}
+                autoFocus
+              />
+            </FormGroup>
+            
+            <ModalFooter>
+              <ActionButton 
+                variant="secondary"
+                onClick={() => setShowAddModal(false)}
+              >
+                Cancel
+              </ActionButton>
+              <ActionButton 
+                variant="primary"
+                onClick={() => {
+                  if (newKeyword.trim()) {
+                    addNewScanner(newKeyword);
+                    setNewKeyword('');
+                    setShowAddModal(false);
+                  }
+                }}
+                disabled={!newKeyword.trim()}
+              >
+                Add Scanner
+              </ActionButton>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// Additional styled components for the scanner list
+const ScannerItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px;
+  background-color: ${props => props.theme.colors.lightBg};
+  border-radius: ${props => props.theme.radius.md};
+  margin-bottom: 12px;
+  border-left: 3px solid ${props => props.theme.colors.primary};
+  animation: ${fadeIn} 0.4s ease;
+  
+  &:hover {
+    box-shadow: ${props => props.theme.shadows.sm};
+  }
+`;
+
+const ScannerItemLeft = styled.div`
+  display: flex;
+  align-items: center;
+  flex: 1;
+`;
+
+const ScannerKeyword = styled.div`
+  font-weight: ${props => props.theme.fontWeights.medium};
+  color: ${props => props.theme.colors.text};
+  margin-right: 10px;
+`;
+
+const ScannerScore = styled.div<{ score: number }>`
+  background-color: ${props => {
+    // Color gradient based on score (0-1)
+    if (props.score > 0.7) return '#4caf50'; // High - green
+    if (props.score > 0.4) return '#ff9800'; // Medium - orange
+    return '#f44336'; // Low - red
+  }};
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 3px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+`;
+
+const ScannerStats = styled.div`
+  display: flex;
+  gap: 15px;
+  padding: 0 15px;
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const ScannerStat = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.darkGrey};
+  min-width: 80px;
+  text-align: center;
+`;
+
+const ScannerActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const ScannerToggle = styled.button<{ active: boolean }>`
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${props => props.active ? props.theme.colors.success : props.theme.colors.darkGrey};
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+  }
+`;
+
+// Styled components for negative keywords
+const NegativeKeywordsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+`;
+
+const NegativeKeywordTag = styled.div`
+  display: flex;
+  align-items: center;
+  background-color: #f1f1f1;
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-size: 14px;
+  color: ${props => props.theme.colors.text};
+  border: 1px solid ${props => props.theme.colors.grey};
+`;
+
+const NegativeKeywordRemove = styled.button`
+  border: none;
+  background: none;
+  color: ${props => props.theme.colors.darkGrey};
+  margin-left: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  
+  &:hover {
+    color: ${props => props.theme.colors.error};
+  }
+`;
+
 const Settings: React.FC = () => {
   // Get current project from context
   const { currentProject } = useProject();
+  
+  // State for negative keywords
+  const [newNegativeKeyword, setNewNegativeKeyword] = useState('');
 
   // State for project data
   const [projectData, setProjectData] = useState({
@@ -885,6 +1260,51 @@ const Settings: React.FC = () => {
   
   // Parse keywords from string to array
   const activeKeywords = projectData.Keywords ? projectData.Keywords.split(',').map(k => k.trim()) : [];
+  
+  // Helper functions for negative keywords
+  const getNegativeKeywords = (): string[] => {
+    const keywords = projectData["Negative keywords"] || '';
+    return keywords.split(',')
+      .map(keyword => keyword.trim())
+      .filter(keyword => keyword !== '');
+  };
+  
+  const addNegativeKeyword = () => {
+    if (!newNegativeKeyword.trim()) return;
+    
+    const currentKeywords = getNegativeKeywords();
+    
+    // Check if keyword already exists
+    if (currentKeywords.includes(newNegativeKeyword.trim())) {
+      alert('This negative keyword already exists.');
+      return;
+    }
+    
+    // Add the new keyword to the existing list
+    const updatedKeywords = [...currentKeywords, newNegativeKeyword.trim()].join(', ');
+    
+    // Update project data
+    setProjectData({
+      ...projectData,
+      "Negative keywords": updatedKeywords
+    });
+    
+    // Clear input
+    setNewNegativeKeyword('');
+  };
+  
+  const removeNegativeKeyword = (keywordToRemove: string) => {
+    const currentKeywords = getNegativeKeywords();
+    const updatedKeywords = currentKeywords
+      .filter(keyword => keyword !== keywordToRemove)
+      .join(', ');
+    
+    // Update project data
+    setProjectData({
+      ...projectData,
+      "Negative keywords": updatedKeywords
+    });
+  };
   
   // UI state
   const [activeTab, setActiveTab] = useState('project');
@@ -981,6 +1401,8 @@ const Settings: React.FC = () => {
     if (!currentProject?.id) return;
     
     try {
+      console.log('Saving project data with negative keywords:', projectData["Negative keywords"]);
+      
       const { error } = await supabase
         .from('Projeto')
         .update({
@@ -988,14 +1410,27 @@ const Settings: React.FC = () => {
           "url service": projectData.url_service,
           "description service": projectData.description_service,
           "Keywords": projectData.Keywords,
+          // Use exactly the same field name as in the database schema
+          // Format is important - quotes and exactly matching casing
           "Negative keywords": projectData["Negative keywords"],
           "País": projectData["País"]
         })
         .eq('id', currentProject.id);
         
       if (error) {
+        console.error('Error details:', error);
         console.error('Error updating project:', error);
         return;
+      } else {
+        // Verify the update
+        const { data: updatedData } = await supabase
+          .from('Projeto')
+          .select('*')
+          .eq('id', currentProject.id)
+          .single();
+          
+        console.log('Updated project data:', updatedData);
+        console.log('Negative keywords after update:', updatedData ? updatedData["Negative keywords"] : 'unknown');
       }
       
       setShowSaveSuccess(true);
@@ -1062,25 +1497,7 @@ const Settings: React.FC = () => {
     return <IconComponent icon={Icon} />;
   };
   
-  // Debug function to show raw data
-  const renderDebugInfo = () => {
-    if (process.env.NODE_ENV !== 'production') {
-      return (
-        <div style={{ 
-          marginTop: '20px', 
-          padding: '10px', 
-          background: '#f5f5f5', 
-          borderRadius: '4px',
-          fontSize: '12px',
-          fontFamily: 'monospace'
-        }}>
-          <h4>Debug Info (Dev Only)</h4>
-          <pre>{JSON.stringify(projectData, null, 2)}</pre>
-        </div>
-      );
-    }
-    return null;
-  };
+  // Function to render debug info (disabled)
   
   const updateRangeBackground = (value: number, min: number, max: number) => {
     const percentage = ((value - min) / (max - min)) * 100;
@@ -1264,74 +1681,71 @@ const Settings: React.FC = () => {
                       "País": e.target.value
                     })}
                   >
-                    <option value="US">United States</option>
-                    <option value="EU">European Union</option>
-                    <option value="UK">United Kingdom</option>
-                    <option value="CA">Canada</option>
-                    <option value="AU">Australia</option>
-                    <option value="BR">Brazil</option>
+                    <option value="US">US</option>
+                    <option value="BR">BR</option>
                   </Select>
                 </FormGroup>
                 
-                <FormGroup>
-                  <Label htmlFor="language">Language</Label>
-                  <Select id="language" defaultValue="en">
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                    <option value="fr">French</option>
-                    <option value="de">German</option>
-                    <option value="pt">Portuguese</option>
-                  </Select>
-                </FormGroup>
               </FormSection>
               
               <FormSection>
-                <SectionTitle>Keywords</SectionTitle>
+                <SectionTitle>
+                  {renderIcon(FaDatabase)}
+                  Keyword Scanners
+                </SectionTitle>
                 
-                <FormGroup>
-                  <Label>Active Keywords</Label>
-                  <KeywordsContainer>
-                    {activeKeywords.length > 0 ? (
-                      activeKeywords.map((keyword, index) => (
-                        <KeywordItem key={keyword} style={{ animationDelay: `${index * 0.1}s` }}>
-                          <KeywordText>{keyword}</KeywordText>
-                          <KeywordActions>
-                            <IconButton title="Edit keyword">
-                              {renderIcon(FaSort)}
-                            </IconButton>
-                            <IconButton 
-                              title="Remove keyword"
-                              onClick={() => handleRemoveKeyword(keyword)}
-                            >
-                              {renderIcon(FaTrashAlt)}
-                            </IconButton>
-                          </KeywordActions>
-                        </KeywordItem>
-                      ))
-                    ) : (
-                      <div>No keywords added yet. Add keywords to help track your project.</div>
-                    )}
-                  </KeywordsContainer>
-                  <AddButton 
-                    variant="secondary"
-                    onClick={() => setShowAddKeywordModal(true)}
-                  >
-                    {renderIcon(FaPlus)} Add new keyword
-                  </AddButton>
-                </FormGroup>
+                {currentProject?.id ? (
+                  <KeywordScannersList projectId={currentProject.id} />
+                ) : (
+                  <div>Select a project to view keyword scanners</div>
+                )}
                 
-                <FormGroup>
-                  <Label>Negative keywords</Label>
-                  <TextArea 
-                    placeholder="Enter negative keywords separated by commas"
-                    value={projectData["Negative keywords"] || ''}
-                    onChange={(e) => setProjectData({
-                      ...projectData,
-                      "Negative keywords": e.target.value
-                    })}
-                  />
-                  <div style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
-                    Enter negative keywords separated by commas (e.g., spam, scam, illegal)
+                <FormGroup style={{ marginTop: '30px' }}>
+                  <Label>Negative Keywords</Label>
+                  <div style={{ marginBottom: '10px', fontSize: '14px', color: '#666' }}>
+                    Keywords that will be excluded from monitoring and analysis
+                  </div>
+                  
+                  {getNegativeKeywords().length > 0 ? (
+                    <NegativeKeywordsContainer>
+                      {getNegativeKeywords().map((keyword, index) => (
+                        <NegativeKeywordTag key={index}>
+                          {keyword}
+                          <NegativeKeywordRemove 
+                            onClick={() => removeNegativeKeyword(keyword)}
+                            title="Remove negative keyword"
+                          >
+                            {renderIcon(FaTimes)}
+                          </NegativeKeywordRemove>
+                        </NegativeKeywordTag>
+                      ))}
+                    </NegativeKeywordsContainer>
+                  ) : (
+                    <div style={{ padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '8px', marginBottom: '15px' }}>
+                      No negative keywords set. Add keywords to exclude unwanted content.
+                    </div>
+                  )}
+                  
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <Input
+                      placeholder="Add new negative keyword"
+                      value={newNegativeKeyword}
+                      onChange={(e) => setNewNegativeKeyword(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && newNegativeKeyword.trim()) {
+                          e.preventDefault();
+                          addNegativeKeyword();
+                        }
+                      }}
+                      style={{ flex: 1 }}
+                    />
+                    <ActionButton
+                      variant="secondary"
+                      onClick={addNegativeKeyword}
+                      disabled={!newNegativeKeyword.trim()}
+                    >
+                      Add
+                    </ActionButton>
                   </div>
                 </FormGroup>
               </FormSection>
@@ -1360,7 +1774,6 @@ const Settings: React.FC = () => {
                 </FormRow>
               </FormSection>
               
-              {renderDebugInfo()}
             </Card>
           )}
           

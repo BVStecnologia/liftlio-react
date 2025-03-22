@@ -94,6 +94,7 @@ const CountryFlag = styled.span`
 
 const CountrySelect = styled(Select)`
   padding-left: 40px;
+  min-width: 180px; // Deixando o select mais largo
 `;
 
 const Button = styled.button<{ variant?: 'primary' | 'secondary'; disabled?: boolean }>`
@@ -523,13 +524,13 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
           </FormGroup>
           
           <FormGroup>
-            <Label htmlFor="keywords">Keywords</Label>
+            <Label htmlFor="keywords">Keywords (separated by commas)</Label>
             <TextArea
               id="keywords"
               name="keywords"
               value={projectForm.keywords || ''}
               onChange={handleChange}
-              placeholder="Keywords separated by commas"
+              placeholder="Keywords separated by commas (e.g. marketing, sales, product)"
               required
             />
             
