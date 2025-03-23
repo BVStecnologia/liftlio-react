@@ -91,8 +91,8 @@ const ProjectSelector = styled.div`
     );
     transform: rotate(20deg);
     z-index: 2;
-    box-shadow: 0 0 20px rgba(202, 125, 255, 0.7),
-                0 0 40px rgba(202, 125, 255, 0.25);
+    box-shadow: 0 0 20px rgba(45, 62, 80, 0.7),
+                0 0 40px rgba(45, 62, 80, 0.25);
     filter: blur(0.3px);
     opacity: 0.7;
     animation: projectSelectorBeam 6s cubic-bezier(0.17, 0.67, 0.29, 0.96) infinite;
@@ -127,8 +127,8 @@ const ProjectSelector = styled.div`
     
     &::after {
       animation-duration: 3.8s;
-      box-shadow: 0 0 25px rgba(202, 125, 255, 0.8),
-                  0 0 50px rgba(202, 125, 255, 0.3);
+      box-shadow: 0 0 25px rgba(45, 62, 80, 0.8),
+                  0 0 50px rgba(45, 62, 80, 0.3);
     }
     
     &::before {
@@ -225,7 +225,7 @@ const PopupMenuItem = styled.div`
   }
 
   &:active {
-    background-color: rgba(45, 29, 66, 0.08);
+    background-color: ${props => `${props.theme.colors.primary}14`};
   }
 
   svg {
@@ -484,8 +484,8 @@ const UserAvatar = styled.div`
     inset: 0;
     background: radial-gradient(
       circle at 30% 30%,
-      rgba(131, 58, 244, 0.15) 0%,
-      rgba(76, 0, 139, 0.03) 60%,
+      rgba(45, 62, 80, 0.15) 0%,
+      rgba(36, 52, 68, 0.03) 60%,
       rgba(0, 0, 0, 0) 100%
     );
     z-index: 1;
@@ -509,8 +509,8 @@ const UserAvatar = styled.div`
       rgba(255, 255, 255, 0) 100%
     );
     z-index: 2;
-    box-shadow: 0 0 12px rgba(131, 58, 244, 0.8),
-                0 0 30px rgba(131, 58, 244, 0.3);
+    box-shadow: 0 0 12px rgba(45, 62, 80, 0.8),
+                0 0 30px rgba(45, 62, 80, 0.3);
     opacity: 0.9;
     filter: blur(0.4px);
     animation: luxScanMove 4.5s cubic-bezier(0.3, 0, 0.2, 1) infinite;
@@ -524,8 +524,8 @@ const UserAvatar = styled.div`
     width: 100%;
     height: 100%;
     background: 
-      radial-gradient(circle at 70% 20%, rgba(131, 58, 244, 0.15) 0%, transparent 25%),
-      radial-gradient(circle at 30% 80%, rgba(76, 0, 139, 0.1) 0%, transparent 20%);
+      radial-gradient(circle at 70% 20%, rgba(45, 62, 80, 0.15) 0%, transparent 25%),
+      radial-gradient(circle at 30% 80%, rgba(36, 52, 68, 0.1) 0%, transparent 20%);
     z-index: 1;
   }
   
@@ -565,8 +565,8 @@ const UserAvatar = styled.div`
     
     &::after {
       animation-duration: 2.8s;
-      box-shadow: 0 0 20px ${withOpacity(COLORS.ACCENT, 0.9)},
-                  0 0 40px ${withOpacity(COLORS.ACCENT, 0.4)};
+      box-shadow: 0 0 20px rgba(45, 62, 80, 0.9),
+                  0 0 40px rgba(45, 62, 80, 0.4);
     }
     
     span {
@@ -670,7 +670,7 @@ const AddProjectButton = styled.button`
     transform: rotate(25deg);
     z-index: 2;
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.5),
-                0 0 30px rgba(131, 58, 244, 0.3);
+                0 0 30px rgba(45, 62, 80, 0.3);
     opacity: 0.7;
     filter: blur(0.2px);
     animation: addButtonBeam 5.2s cubic-bezier(0.25, 0.1, 0.15, 1) infinite;
@@ -705,8 +705,8 @@ const AddProjectButton = styled.button`
     padding: 1px;
     background: linear-gradient(
       135deg, 
-      rgba(131, 58, 244, 0) 0%, 
-      rgba(131, 58, 244, 0.4) 100%
+      rgba(45, 62, 80, 0) 0%, 
+      rgba(45, 62, 80, 0.4) 100%
     );
     mask: linear-gradient(#fff 0 0) content-box, 
           linear-gradient(#fff 0 0);
@@ -716,16 +716,16 @@ const AddProjectButton = styled.button`
   }
   
   &:hover {
-    background: rgba(131, 58, 244, 0.2);
-    box-shadow: 0 5px 15px rgba(35, 16, 54, 0.35),
+    background: rgba(45, 62, 80, 0.2);
+    box-shadow: 0 5px 15px rgba(36, 52, 68, 0.35),
                 inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-                0 0 15px rgba(131, 58, 244, 0.2);
+                0 0 15px rgba(45, 62, 80, 0.2);
     transform: translateY(-2px) scale(1.01);
                 
     &::after {
       animation-duration: 2.8s;
       box-shadow: 0 0 20px rgba(255, 255, 255, 0.6),
-                  0 0 40px rgba(131, 58, 244, 0.4);
+                  0 0 40px rgba(45, 62, 80, 0.4);
     }
     
     &:after {
@@ -733,14 +733,14 @@ const AddProjectButton = styled.button`
     }
     
     svg {
-      filter: drop-shadow(0 0 4px rgba(131, 58, 244, 0.6));
+      filter: drop-shadow(0 0 4px rgba(45, 62, 80, 0.6));
       transform: scale(1.1);
     }
   }
   
   &:active {
     transform: translateY(0) scale(0.98);
-    box-shadow: 0 2px 8px rgba(35, 16, 54, 0.2),
+    box-shadow: 0 2px 8px rgba(36, 52, 68, 0.2),
                 inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   }
   
@@ -753,7 +753,7 @@ const AddProjectButton = styled.button`
   svg {
     margin-right: 6px;
     font-size: 0.9rem;
-    filter: drop-shadow(0 0 2px rgba(131, 58, 244, 0.4));
+    filter: drop-shadow(0 0 2px rgba(45, 62, 80, 0.4));
   }
 
   @media (max-width: 768px) {
@@ -922,8 +922,8 @@ const ProjectItem = styled.div`
   }
   
   &:hover {
-    background-color: rgba(45, 62, 80, 0.03);
-    border-left: 2px solid #2d3e50;
+    background-color: ${props => `${props.theme.colors.primary}08`};
+    border-left: 2px solid ${props => props.theme.colors.primary};
     
     &:before {
       width: 100%;
@@ -931,8 +931,8 @@ const ProjectItem = styled.div`
     }
     
     svg {
-      color: #2d3e50;
-      filter: drop-shadow(0 0 3px rgba(45, 62, 80, 0.3));
+      color: ${props => props.theme.colors.primary};
+      filter: drop-shadow(0 0 3px ${props => `${props.theme.colors.primary}4D`});
       transform: scale(1.1);
     }
   }
@@ -944,7 +944,7 @@ const ProjectItem = styled.div`
   svg {
     margin-right: 12px;
     font-size: 1rem;
-    color: ${props => props.theme.colors.primary || '#2D1D42'};
+    color: ${props => props.theme.colors.primary};
     position: relative;
     z-index: 2;
     transition: all 0.3s ease;

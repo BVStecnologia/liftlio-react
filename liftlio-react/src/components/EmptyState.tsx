@@ -35,7 +35,7 @@ const Container = styled.div`
 const IllustrationWrapper = styled.div`
   margin-bottom: 30px;
   font-size: 80px;
-  color: ${props => props.theme.colors.primary || '#2D1D42'};
+  color: ${props => props.theme.colors.primary};
   opacity: 0.8;
   animation: ${floatAnimation} 3s ease-in-out infinite;
 `;
@@ -57,19 +57,19 @@ const Description = styled.p`
 
 const ActionButton = styled.button`
   padding: 12px 24px;
-  background: linear-gradient(135deg, #2D1D42, #3b2659);
+  background: ${props => props.theme.colors.gradient.primary};
   color: white;
   border: none;
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(35, 16, 54, 0.3);
+  box-shadow: 0 4px 15px ${props => `${props.theme.colors.primary}4D`};
   transition: all 0.3s ease;
   animation: ${pulseAnimation} 2s infinite;
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 7px 20px rgba(35, 16, 54, 0.4);
+    box-shadow: 0 7px 20px ${props => `${props.theme.colors.primary}66`};
   }
 `;
 
@@ -84,7 +84,7 @@ const Step = styled.div<{ active: boolean }>`
   height: 4px;
   border-radius: 2px;
   background-color: ${props => props.active 
-    ? props.theme.colors.primary || '#2D1D42' 
+    ? props.theme.colors.primary
     : '#D0D0D0'};
   transition: all 0.3s ease;
 `;

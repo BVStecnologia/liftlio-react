@@ -69,7 +69,7 @@ const SearchInput = styled.input`
   &:focus {
     outline: none;
     border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 0 0 3px rgba(94, 53, 177, 0.2);
+    box-shadow: 0 0 0 3px ${props => `${props.theme.colors.primary}33`};
   }
 `;
 
@@ -91,7 +91,7 @@ const CategoryTag = styled.button<{ active: boolean }>`
   transition: all 0.2s ease;
   
   &:hover {
-    background-color: ${props => props.active ? props.theme.colors.secondary : props.theme.colors.lightGrey};
+    background-color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.lightGrey};
     transform: translateY(-2px);
   }
 `;
@@ -298,13 +298,13 @@ const ActionButton = styled.button<{ variant: 'primary' | 'secondary' | 'danger'
     background-color: ${props => {
       switch (props.variant) {
         case 'primary':
-          return props.theme.colors.secondary;
+          return props.theme.colors.primary;
         case 'secondary':
-          return 'rgba(94, 53, 177, 0.1)';
+          return `${props.theme.colors.primary}15`;
         case 'danger':
           return '#d32f2f';
         default:
-          return props.theme.colors.secondary;
+          return props.theme.colors.primary;
       }
     }};
     transform: translateY(-2px);
@@ -361,7 +361,7 @@ const APICardIconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(94, 53, 177, 0.2);
+  box-shadow: 0 4px 10px ${props => `${props.theme.colors.primary}33`};
   animation: ${floatAnimation} 3s ease-in-out infinite;
   
   svg {
@@ -478,7 +478,7 @@ const ModalText = styled.p`
 `;
 
 const ModalInfo = styled.div`
-  background-color: rgba(94, 53, 177, 0.1);
+  background-color: ${props => `${props.theme.colors.primary}15`};
   border-left: 4px solid ${props => props.theme.colors.primary};
   padding: 15px;
   border-radius: ${props => props.theme.radius.md};

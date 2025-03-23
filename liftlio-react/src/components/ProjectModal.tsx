@@ -37,7 +37,7 @@ const Input = styled.input`
   
   &:focus {
     border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 0 0 2px rgba(78, 14, 179, 0.2);
+    box-shadow: 0 0 0 2px ${props => `${props.theme.colors.primary}33`};
     outline: none;
   }
 `;
@@ -53,7 +53,7 @@ const TextArea = styled.textarea`
   
   &:focus {
     border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 0 0 2px rgba(78, 14, 179, 0.2);
+    box-shadow: 0 0 0 2px ${props => `${props.theme.colors.primary}33`};
     outline: none;
   }
 `;
@@ -74,7 +74,7 @@ const Select = styled.select`
   
   &:focus {
     border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 0 0 2px rgba(78, 14, 179, 0.2);
+    box-shadow: 0 0 0 2px ${props => `${props.theme.colors.primary}33`};
     outline: none;
   }
 `;
@@ -141,7 +141,7 @@ const KeywordsContainer = styled.div`
 const Keyword = styled.div`
   display: flex;
   align-items: center;
-  background-color: ${props => props.theme.colors.primary}15;
+  background-color: ${props => `${props.theme.colors.primary}15`};
   color: ${props => props.theme.colors.text};
   padding: 6px 12px;
   border-radius: ${props => props.theme.radius.sm};
@@ -427,12 +427,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     padding: 15px;
     border-radius: 8px;
     border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.grey};
-    background-color: ${props => props.active ? 'rgba(45, 29, 66, 0.05)' : 'white'};
+    background-color: ${props => props.active ? `${props.theme.colors.primary}0A` : 'white'};
     cursor: pointer;
     transition: all 0.2s ease;
     
     &:hover {
-      background-color: rgba(45, 29, 66, 0.05);
+      background-color: ${props => `${props.theme.colors.primary}0A`};
       border-color: ${props => props.theme.colors.primary};
     }
   `;

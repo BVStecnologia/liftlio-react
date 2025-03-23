@@ -51,7 +51,12 @@ const ShimmerBar = styled.div`
   height: 10px;
   border-radius: 6px;
   width: 60%;
-  background: linear-gradient(90deg, #2D1D42 0%, #4E0EB3 30%, #833AF4 60%, #4E0EB3 80%, #2D1D42 100%);
+  background: linear-gradient(90deg, 
+    ${props => props.theme.colors.primaryDark} 0%, 
+    ${props => props.theme.colors.primary} 30%, 
+    ${props => props.theme.colors.primaryLight} 60%, 
+    ${props => props.theme.colors.primary} 80%, 
+    ${props => props.theme.colors.primaryDark} 100%);
   background-size: 200% 100%;
   animation: ${shimmer} 2s linear infinite;
   transition: width 0.5s ease;
@@ -479,7 +484,7 @@ const LedSignalDot = styled.div<{ index: number; active: boolean }>`
     border: 1px solid ${props => 
       props.index === 0 ? 'rgba(33, 150, 243, 0.3)' : // Blue for Reach
       props.index === 1 ? 'rgba(255, 122, 48, 0.3)' : // Orange for Activities
-      props.index === 2 ? 'rgba(103, 58, 183, 0.3)' : // Purple for Engagements
+      props.index === 2 ? `rgba(45, 62, 80, 0.3)` : // Blue (primary) for Engagements
       'rgba(76, 175, 80, 0.3)'         // Green for LEDs
     };
     transform: translate(-50%, -50%);
@@ -514,7 +519,7 @@ const LedConnectionLine = styled.div<{ index: number; active: boolean }>`
   background: ${props => 
     props.index === 0 ? 'rgba(33, 150, 243, 0.3)' : // Blue for Reach
     props.index === 1 ? 'rgba(255, 122, 48, 0.3)' : // Orange for Activities
-    'rgba(103, 58, 183, 0.3)'         // Purple for Engagements
+    `rgba(45, 62, 80, 0.3)`           // Blue (primary) for Engagements
   };
   z-index: 5;
   opacity: ${props => props.active ? 0.6 : 0};
