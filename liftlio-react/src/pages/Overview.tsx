@@ -10,7 +10,6 @@ import { IconComponent } from '../utils/IconHelper';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useProject } from '../context/ProjectContext';
 import EmptyState from '../components/EmptyState';
-import LoadingDataIndicator from '../components/LoadingDataIndicator';
 import ProjectModal from '../components/ProjectModal';
 import { supabase } from '../lib/supabaseClient';
 
@@ -45,6 +44,29 @@ const shimmer = keyframes`
   100% {
     background-position: 200% 0;
   }
+`;
+
+// Styled components for shimmer animations
+const ShimmerBar = styled.div`
+  height: 10px;
+  border-radius: 6px;
+  width: 60%;
+  background: linear-gradient(90deg, #2D1D42 0%, #4E0EB3 30%, #833AF4 60%, #4E0EB3 80%, #2D1D42 100%);
+  background-size: 200% 100%;
+  animation: ${shimmer} 2s linear infinite;
+  transition: width 0.5s ease;
+`;
+
+const ShimmerOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: ${shimmer} 2s linear infinite;
+  z-index: 1;
 `;
 
 const float = keyframes`
@@ -1753,20 +1775,7 @@ const Overview: React.FC = () => {
     animation: ${LoadingRipple} linear infinite;
   `;
 
-  // Cria um componente estilizado para o efeito shimmer
-  const ShimmerEffect = styled.div`
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.8) 50%, transparent 100%);
-    background-size: 200% 100%;
-    animation: ${shimmer} 2s infinite linear;
-    z-index: 2;
-    pointer-events: none;
-    opacity: 0.7;
-  `;
+  // Shimmer effect foi movido para inline para simplificar o código
 
   // Gráficos de amostra para animação de carregamento
   const samplePerformanceData = [
@@ -2256,7 +2265,26 @@ const Overview: React.FC = () => {
               onAction={handleEmptyStateAction}
               currentStep={onboardingStep} 
             />
-            <LoadingDataIndicator />
+            <div style={{
+              width: '100%',
+              background: 'rgba(240, 240, 250, 0.4)',
+              borderRadius: '8px',
+              padding: '4px',
+              margin: '15px 0',
+              boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
+              overflow: 'hidden',
+              position: 'relative'
+            }}>
+              <ShimmerBar />
+              <div style={{
+                textAlign: 'center',
+                marginTop: '10px',
+                fontSize: '14px',
+                color: '#666'
+              }}>
+                Analisando menções...
+              </div>
+            </div>
           </ContentWrapper>
         </OnboardingContainer>
       );
@@ -2295,7 +2323,7 @@ const Overview: React.FC = () => {
               position: 'relative',
               overflow: 'hidden'
             }}>
-              <ShimmerEffect />
+              <ShimmerOverlay className="loading-shimmer" />
               
               <h3 style={{ marginBottom: '12px', color: '#1976D2', fontSize: '14px' }}>Performance Overview</h3>
               
@@ -2352,7 +2380,7 @@ const Overview: React.FC = () => {
               position: 'relative',
               overflow: 'hidden'
             }}>
-              <ShimmerEffect />
+              <ShimmerOverlay className="loading-shimmer" />
               
               <h3 style={{ marginBottom: '12px', color: '#1976D2', fontSize: '14px' }}>Traffic Sources</h3>
               
