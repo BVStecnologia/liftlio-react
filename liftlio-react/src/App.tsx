@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import GlobalStyle from './styles/GlobalStyle';
 import { ThemeProvider } from './context/ThemeContext';
 import Sidebar from './components/Sidebar';
@@ -11,6 +11,7 @@ import Mentions from './pages/Mentions';
 import Settings from './pages/Settings';
 import Integrations from './pages/Integrations';
 import LoginPage from './pages/LoginPage';
+import LoadingDataIndicator from './components/LoadingDataIndicator';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from './utils/IconHelper';
 import { AuthProvider } from './context/AuthContext';
@@ -394,40 +395,15 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   const { user, loading } = useAuth();
   const { isOnboarding, onboardingReady } = useProject(); // Movido para o início, antes de qualquer return
   
-  // Definir estilos para a tela de carregamento
-  const spinAnimation = keyframes`
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  `;
-  
-  const LoadingContainer = styled.div`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    flex-direction: column;
-    background-color: ${props => props.theme.colors.tertiary}; /* Dominant color (60%) */
-  `;
-  
-  const Spinner = styled.div`
-    font-size: 2rem;
-    animation: ${spinAnimation} 1.5s linear infinite;
-    display: inline-block;
-    color: ${props => props.theme.colors.primary}; /* Accent color (10%) */
-  `;
-  
-  const LoadingText = styled.div`
-    margin-top: 1rem;
-    color: ${props => props.theme.colors.secondary}; /* Secondary color (30%) */
-  `;
-  
   // Aguardar o carregamento da autenticação e do estado de onboarding
   if (loading || !onboardingReady) {
     return (
-      <LoadingContainer>
-        <Spinner>⟳</Spinner>
-        <LoadingText>Carregando...</LoadingText>
-      </LoadingContainer>
+      <div style={{
+        height: '100vh',
+        backgroundColor: '#f0f2f5'
+      }}>
+        <LoadingDataIndicator />
+      </div>
     );
   }
   
@@ -549,38 +525,13 @@ const AuthCallback = () => {
     }
   }, [user, loading, navigate, location]);
   
-  const spinAnimation = keyframes`
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  `;
-  
-  const LoadingContainer = styled.div`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    flex-direction: column;
-    background-color: ${props => props.theme.colors.tertiary}; /* Dominant color (60%) */
-  `;
-  
-  const Spinner = styled.div`
-    font-size: 2.5rem;
-    color: ${props => props.theme.colors.primary};
-    animation: ${spinAnimation} 1.5s linear infinite;
-    display: inline-block;
-  `;
-  
-  const LoadingText = styled.div`
-    margin-top: 1rem;
-    color: ${props => props.theme.colors.secondary}; /* Secondary color (30%) */
-    font-size: 1.125rem;
-  `;
-  
   return (
-    <LoadingContainer>
-      <Spinner>⟳</Spinner>
-      <LoadingText>Verificando autenticação...</LoadingText>
-    </LoadingContainer>
+    <div style={{
+      height: '100vh',
+      backgroundColor: '#f0f2f5'
+    }}>
+      <LoadingDataIndicator />
+    </div>
   );
 };
 
