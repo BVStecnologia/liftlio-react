@@ -519,7 +519,7 @@ const PremiumFeature = styled.div`
 const UpgradeButton = styled.div`
   padding: 14px 0;
   margin-top: 0;
-  background: #2d3e50; /* Cor de destaque - Azul naval escuro */
+  background: ${props => props.theme.colors.primary}; /* Cor de destaque - Azul naval escuro (10%) */
   color: white;
   font-weight: 700;
   text-align: center;

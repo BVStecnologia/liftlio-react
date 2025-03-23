@@ -230,19 +230,19 @@ export const useDashboardData = () => {
         setStatsData({
           reach: { 
             value: totalVideos.toString(), 
-            trend: { value: '+3%', positive: true } as TrendData
+            trend: null
           },
           activities: { 
             value: totalComments.toString(), 
-            trend: { value: '+12%', positive: true } as TrendData
+            trend: null
           },
           engagements: { 
             value: totalEngagements.toString(), 
-            trend: { value: '+8%', positive: true } as TrendData
+            trend: null
           },
           leads: { 
             value: totalLeads.toString(), 
-            trend: totalLeads > 0 ? { value: '+15%', positive: true } as TrendData : null
+            trend: null
           }
         });
         

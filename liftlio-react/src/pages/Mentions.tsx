@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes, css } from 'styled-components';
+import { COLORS, withOpacity } from '../styles/colors';
 import Card from '../components/Card';
 import { IconContext } from 'react-icons';
 import * as FaIcons from 'react-icons/fa';
@@ -7,11 +8,7 @@ import { IconComponent } from '../utils/IconHelper';
 import { useMentionsData, TimeframeType, TabType, MentionData } from '../hooks/useMentionsData';
 import { supabase } from '../lib/supabaseClient';
 import { useProject } from '../context/ProjectContext';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, 
-  Tooltip as RechartsTooltip, ResponsiveContainer, 
-  BarChart, Bar, Legend, Cell 
-} from 'recharts';
+// Recharts imports removidos pois os gráficos foram removidos
 
 // Animation keyframes
 const fadeIn = keyframes`
@@ -89,6 +86,7 @@ const shimmer = keyframes`
 const PageContainer = styled.div`
   padding: 16px;
   animation: ${fadeIn} 0.6s ease-out forwards;
+  background-color: ${props => props.theme.colors.tertiary}; /* Dominant color (60%) - Cinza médio */
   
   @media (max-width: 768px) {
     padding: 12px;
@@ -103,14 +101,14 @@ const PageTitle = styled.h1`
   font-size: ${props => props.theme.fontSizes['2xl']};
   font-weight: ${props => props.theme.fontWeights.bold};
   margin-bottom: 24px;
-  color: ${props => props.theme.colors.text};
+  color: ${COLORS.TEXT.ON_LIGHT};
   display: flex;
   align-items: center;
   position: relative;
   
   svg {
     margin-right: 12px;
-    color: ${props => props.theme.colors.primary};
+    color: ${COLORS.ACCENT};
     animation: ${pulse} 3s infinite;
   }
   
@@ -121,7 +119,7 @@ const PageTitle = styled.h1`
     bottom: -8px;
     width: 60px;
     height: 3px;
-    background: ${props => props.theme.colors.gradient.primary};
+    background: ${COLORS.GRADIENT.PRIMARY};
     border-radius: 3px;
   }
   
@@ -140,11 +138,11 @@ const PageTitle = styled.h1`
 const TabContainer = styled.div`
   display: flex;
   margin-bottom: 30px;
-  background: #f0f0f5;
+  background: ${COLORS.DOMINANT_LIGHTER};
   border-radius: ${props => props.theme.radius.pill};
   padding: 5px;
   width: fit-content;
-  box-shadow: ${props => props.theme.shadows.sm};
+  box-shadow: ${COLORS.SHADOW.LIGHT};
   position: relative;
   animation: ${fadeIn} 0.8s ease-out forwards;
   white-space: nowrap;
@@ -157,9 +155,9 @@ const TabContainer = styled.div`
     bottom: -5px;
     left: -5px;
     background: linear-gradient(90deg, 
-      rgba(135, 97, 197, 0.05), 
-      rgba(79, 172, 254, 0.05), 
-      rgba(135, 97, 197, 0.05));
+      ${withOpacity(COLORS.ACCENT, 0.05)}, 
+      ${withOpacity(COLORS.INFO, 0.05)}, 
+      ${withOpacity(COLORS.ACCENT, 0.05)});
     border-radius: ${props => props.theme.radius.pill};
     z-index: -1;
     animation: ${shimmer} 3s infinite linear;
@@ -187,11 +185,11 @@ const tabHoverEffect = css`
 
 const Tab = styled.button<{ active: boolean }>`
   padding: 10px 20px;
-  background: ${props => props.active ? props.theme.colors.white : 'transparent'};
+  background: ${props => props.active ? COLORS.SECONDARY : 'transparent'};
   border: none;
   border-radius: ${props => props.theme.radius.pill};
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.normal};
-  color: ${props => props.active ? '#6b46c1' : props.theme.colors.darkGrey};
+  color: ${props => props.active ? COLORS.ACCENT : COLORS.TEXT.SECONDARY};
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   box-shadow: ${props => props.active ? '0 2px 4px rgba(0, 0, 0, 0.05)' : 'none'};
@@ -208,7 +206,7 @@ const Tab = styled.button<{ active: boolean }>`
     left: 0;
     width: 100%;
     height: 2px;
-    background: ${props => props.active ? '#6b46c1' : 'transparent'};
+    background: ${props => props.active ? COLORS.ACCENT : 'transparent'};
     transition: background 0.3s ease;
     opacity: 1;
   }
@@ -216,11 +214,11 @@ const Tab = styled.button<{ active: boolean }>`
   ${props => props.active && tabHoverEffect}
   
   &:hover {
-    background: ${props => props.active ? props.theme.colors.white : 'rgba(255, 255, 255, 0.8)'};
-    color: #6b46c1;
+    background: ${props => props.active ? COLORS.SECONDARY : withOpacity(COLORS.SECONDARY, 0.8)};
+    color: ${COLORS.ACCENT};
     
     &::after {
-      background: #6b46c1;
+      background: ${COLORS.ACCENT};
       opacity: ${props => props.active ? 1 : 0.5};
     }
   }
@@ -246,10 +244,10 @@ const MentionsContainer = styled(Card)`
   overflow: hidden;
   animation: ${fadeIn} 1s ease-out forwards;
   box-shadow: ${props => props.theme.shadows.lg};
-  border: 1px solid rgba(135, 97, 197, 0.1);
+  border: 1px solid ${withOpacity(COLORS.ACCENT, 0.1)};
   
   &:hover {
-    box-shadow: ${props => props.theme.shadows.xl};
+    box-shadow: ${COLORS.SHADOW.STRONG};
     transition: box-shadow 0.3s ease;
   }
 `;
@@ -276,13 +274,13 @@ const TableHeader = styled.div`
   display: grid;
   grid-template-columns: 2.5fr 1fr 2.5fr 3fr 1fr;
   padding: 16px 20px;
-  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
-  color: #4a5568;
+  border-bottom: 1px solid ${COLORS.BORDER.DEFAULT};
+  color: ${COLORS.TEXT.SECONDARY};
   font-weight: ${props => props.theme.fontWeights.semiBold};
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: #f8f9fa;
+  background: ${COLORS.DOMINANT_LIGHTER};
   position: sticky;
   top: 0;
   z-index: 10;
@@ -304,7 +302,7 @@ const TableRow = styled.div<{ index?: number, isFavorite?: boolean }>`
   display: grid;
   grid-template-columns: 2.5fr 1fr 2.5fr 3fr 1fr;
   padding: 20px;
-  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+  border-bottom: 1px solid ${COLORS.BORDER.DEFAULT};
   align-items: stretch;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
@@ -315,12 +313,12 @@ const TableRow = styled.div<{ index?: number, isFavorite?: boolean }>`
   cursor: pointer;
   
   /* Destacar itens favoritos com uma borda suave */
-  border-left: ${props => props.isFavorite ? '4px solid #FF5C93' : '4px solid transparent'};
+  border-left: ${props => props.isFavorite ? `4px solid ${COLORS.ERROR}` : '4px solid transparent'};
   
   &:hover {
-    background-color: rgba(135, 97, 197, 0.08);
+    background-color: ${withOpacity(COLORS.ACCENT, 0.08)};
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: ${COLORS.SHADOW.MEDIUM};
     z-index: 1;
   }
   
@@ -335,7 +333,7 @@ const TableRow = styled.div<{ index?: number, isFavorite?: boolean }>`
     top: 0;
     height: 100%;
     width: 0;
-    background: ${props => props.theme.colors.gradient.primary};
+    background: ${COLORS.GRADIENT.PRIMARY};
     opacity: 0.2;
     transition: width 0.3s ease;
   }
@@ -380,13 +378,13 @@ const playButtonPulse = keyframes`
 
 const glow = keyframes`
   0% {
-    box-shadow: 0 0 5px rgba(135, 97, 197, 0.5);
+    box-shadow: 0 0 5px ${withOpacity(COLORS.ACCENT, 0.5)};
   }
   50% {
-    box-shadow: 0 0 15px rgba(135, 97, 197, 0.8), 0 0 30px rgba(135, 97, 197, 0.4);
+    box-shadow: 0 0 15px ${withOpacity(COLORS.ACCENT, 0.8)}, 0 0 30px ${withOpacity(COLORS.ACCENT, 0.4)};
   }
   100% {
-    box-shadow: 0 0 5px rgba(135, 97, 197, 0.5);
+    box-shadow: 0 0 5px ${withOpacity(COLORS.ACCENT, 0.5)};
   }
 `;
 
@@ -410,7 +408,7 @@ const VideoThumbnail = styled.div`
   border-radius: ${props => props.theme.radius.md};
   overflow: hidden;
   position: relative;
-  box-shadow: ${props => props.theme.shadows.md};
+  box-shadow: ${COLORS.SHADOW.MEDIUM};
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   
   @media (max-width: 768px) {
@@ -432,9 +430,9 @@ const VideoThumbnail = styled.div`
     bottom: 0;
     background: linear-gradient(
       120deg,
-      rgba(135, 97, 197, 0) 40%,
-      rgba(135, 97, 197, 0.2) 50%,
-      rgba(135, 97, 197, 0) 60%
+      ${withOpacity(COLORS.ACCENT, 0)} 40%,
+      ${withOpacity(COLORS.ACCENT, 0.2)} 50%,
+      ${withOpacity(COLORS.ACCENT, 0)} 60%
     );
     z-index: 2;
     transform: translateX(-100%);
@@ -450,7 +448,7 @@ const VideoThumbnail = styled.div`
   
   &:hover {
     transform: translateY(-5px);
-    box-shadow: ${props => props.theme.shadows.lg};
+    box-shadow: ${COLORS.SHADOW.STRONG};
     animation: ${glow} 2s infinite;
     
     &::before {
@@ -501,7 +499,7 @@ const VideoInfo = styled.div`
 const VideoTitle = styled.h3`
   font-size: ${props => props.theme.fontSizes.md};
   margin-bottom: 8px;
-  color: ${props => props.theme.colors.text};
+  color: ${COLORS.TEXT.ON_LIGHT};
   font-weight: ${props => props.theme.fontWeights.semiBold};
   line-height: 1.4;
   
@@ -527,7 +525,7 @@ const VideoStats = styled.div`
   display: flex;
   align-items: center;
   gap: 15px;
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${COLORS.TEXT.SECONDARY};
   font-size: ${props => props.theme.fontSizes.sm};
   margin-top: 4px;
   
@@ -543,7 +541,7 @@ const VideoAction = styled.div`
 const ViewDetailsButton = styled.button`
   background: transparent;
   border: none;
-  color: ${props => props.theme.colors.tertiary};
+  color: ${COLORS.ACCENT};
   font-size: ${props => props.theme.fontSizes.sm};
   padding: 0;
   cursor: pointer;
@@ -578,7 +576,7 @@ const LedScoreLabel = styled.div`
   font-size: ${props => props.theme.fontSizes.xs};
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${COLORS.TEXT.SECONDARY};
   margin-bottom: 8px;
   font-weight: ${props => props.theme.fontWeights.medium};
   position: relative;
@@ -591,7 +589,7 @@ const LedScoreLabel = styled.div`
     transform: translateX(-50%);
     width: 0;
     height: 2px;
-    background: ${props => props.theme.colors.gradient.primary};
+    background: ${COLORS.GRADIENT.PRIMARY};
     transition: width 0.3s ease;
   }
   
@@ -1001,7 +999,7 @@ const DetailPopupThumbnail = styled.div`
   height: 170px;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: ${COLORS.SHADOW.MEDIUM};
   
   img {
     width: 100%;
@@ -1024,7 +1022,7 @@ const DetailPopupVideoInfo = styled.div`
 const DetailPopupVideoTitle = styled.h3`
   font-size: 18px;
   margin-bottom: 10px;
-  color: ${props => props.theme.colors.text};
+  color: ${COLORS.TEXT.ON_LIGHT};
   font-weight: 600;
 `;
 
@@ -1045,7 +1043,7 @@ const DetailPopupSection = styled.div`
 const DetailPopupSectionTitle = styled.h4`
   font-size: 16px;
   margin-bottom: 10px;
-  color: ${props => props.theme.colors.primary};
+  color: ${COLORS.ACCENT};
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -1056,31 +1054,31 @@ const DetailPopupSectionTitle = styled.h4`
 `;
 
 const DetailPopupComment = styled.div`
-  background: #f9f8fc;
+  background: ${COLORS.DOMINANT_LIGHTER};
   border-radius: 10px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: ${COLORS.SHADOW.LIGHT};
   margin-bottom: 20px;
 `;
 
 const DetailPopupResponse = styled.div`
-  background: #f0f7ff;
+  background: ${withOpacity(COLORS.INFO_LIGHT, 0.5)};
   border-radius: 10px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: ${COLORS.SHADOW.LIGHT};
 `;
 
 const FavoriteIndicator = styled.div<{ isFavorite: boolean }>`
   position: absolute;
   top: 30px;
   right: 80px;
-  color: ${props => props.isFavorite ? '#FF5C93' : '#aaa'};
+  color: ${props => props.isFavorite ? COLORS.ERROR : COLORS.DOMINANT_DARK};
   font-size: 24px;
 `;
 
 const ResponseDate = styled.div`
   font-size: ${props => props.theme.fontSizes.xs};
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${COLORS.TEXT.SECONDARY};
   margin-top: auto;
   display: flex;
   align-items: center;
@@ -1092,7 +1090,7 @@ const ResponseDate = styled.div`
 `;
 
 const SeeMoreLink = styled.a`
-  color: ${props => props.theme.colors.tertiary};
+  color: ${COLORS.ACCENT};
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.theme.fontWeights.medium};
   cursor: pointer;
@@ -1121,14 +1119,14 @@ const ActionsCell = styled(TableCell)`
 
 const ActionButton = styled.button<{ variant?: 'primary' | 'secondary' | 'favorite' }>`
   background: ${props => 
-    props.variant === 'primary' ? 'white' : 
-    props.variant === 'favorite' ? 'rgba(255, 92, 147, 0.1)' : 
-    'rgba(135, 97, 197, 0.1)'};
+    props.variant === 'primary' ? COLORS.SECONDARY : 
+    props.variant === 'favorite' ? withOpacity(COLORS.ERROR, 0.1) : 
+    withOpacity(COLORS.ACCENT, 0.1)};
   border: ${props => 
-    props.variant === 'primary' ? '1px solid rgba(135, 97, 197, 0.3)' : 'none'};
+    props.variant === 'primary' ? `1px solid ${withOpacity(COLORS.ACCENT, 0.3)}` : 'none'};
   color: ${props => 
-    props.variant === 'favorite' ? '#FF5C93' : 
-    props.theme.colors.primary};
+    props.variant === 'favorite' ? COLORS.ERROR : 
+    COLORS.ACCENT};
   cursor: pointer;
   padding: 8px;
   width: 38px;
@@ -1142,11 +1140,11 @@ const ActionButton = styled.button<{ variant?: 'primary' | 'secondary' | 'favori
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: ${props => props.theme.shadows.md};
+    box-shadow: ${COLORS.SHADOW.MEDIUM};
     background: ${props => 
-      props.variant === 'favorite' ? 'rgba(255, 92, 147, 0.2)' : 
-      props.variant === 'primary' ? 'white' : 
-      'rgba(135, 97, 197, 0.2)'};
+      props.variant === 'favorite' ? withOpacity(COLORS.ERROR, 0.2) : 
+      props.variant === 'primary' ? COLORS.SECONDARY : 
+      withOpacity(COLORS.ACCENT, 0.2)};
   }
   
   svg {
@@ -1162,7 +1160,7 @@ const ActionButtonsGroup = styled.div`
 
 const ActionLabel = styled.div`
   font-size: ${props => props.theme.fontSizes.xs};
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${COLORS.TEXT.SECONDARY};
   margin-bottom: 4px;
   text-align: center;
 `;
@@ -1182,14 +1180,14 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: white;
+  background: ${COLORS.SECONDARY};
   border-radius: ${props => props.theme.radius.lg};
   padding: 24px;
   width: 600px;
   max-width: 90vw;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: ${props => props.theme.shadows.xl};
+  box-shadow: ${COLORS.SHADOW.STRONG};
   position: relative;
 `;
 
@@ -1199,12 +1197,12 @@ const ModalHeader = styled.div`
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+  border-bottom: 1px solid ${COLORS.BORDER.DEFAULT};
 `;
 
 const ModalTitle = styled.h2`
   font-size: ${props => props.theme.fontSizes.xl};
-  color: ${props => props.theme.colors.primary};
+  color: ${COLORS.ACCENT};
   margin: 0;
   font-weight: ${props => props.theme.fontWeights.semiBold};
   display: flex;
@@ -1220,7 +1218,7 @@ const CloseButton = styled.button`
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${COLORS.TEXT.SECONDARY};
   transition: all 0.2s ease;
   
   &:hover {
@@ -1248,7 +1246,7 @@ const Label = styled.label`
 
 const TextArea = styled.textarea`
   padding: 12px;
-  border: 1px solid ${props => props.theme.colors.grey};
+  border: 1px solid ${COLORS.BORDER.DEFAULT};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
   min-height: 120px;
@@ -1257,8 +1255,8 @@ const TextArea = styled.textarea`
   
   &:focus {
     outline: none;
-    border-color: ${props => props.theme.colors.tertiary};
-    box-shadow: 0 0 0 2px rgba(135, 97, 197, 0.2);
+    border-color: ${COLORS.ACCENT};
+    box-shadow: 0 0 0 2px ${withOpacity(COLORS.ACCENT, 0.2)};
   }
 `;
 
@@ -1279,23 +1277,23 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
   border: none;
   
   background: ${props => props.variant === 'primary' 
-    ? props.theme.colors.gradient.primary 
+    ? COLORS.GRADIENT.PRIMARY 
     : 'transparent'};
   color: ${props => props.variant === 'primary' 
-    ? 'white' 
-    : props.theme.colors.darkGrey};
+    ? COLORS.TEXT.ON_DARK 
+    : COLORS.TEXT.SECONDARY};
   border: ${props => props.variant === 'primary' 
     ? 'none' 
-    : `1px solid ${props.theme.colors.grey}`};
+    : `1px solid ${COLORS.BORDER.DEFAULT}`};
   
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${props => props.variant === 'primary' 
-      ? props.theme.shadows.md 
+      ? COLORS.SHADOW.MEDIUM 
       : 'none'};
     background: ${props => props.variant === 'primary' 
-      ? props.theme.colors.gradient.accent 
-      : props.theme.colors.lightGrey};
+      ? COLORS.GRADIENT.PRIMARY 
+      : COLORS.DOMINANT_LIGHTER};
   }
 `;
 
@@ -1425,71 +1423,11 @@ const AnalyticsSection = styled.div`
   }
 `;
 
-const AnalyticsHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 20px;
-  }
-  
-  @media (max-width: 480px) {
-    margin-bottom: 16px;
-  }
-`;
+// AnalyticsHeader e AnalyticsTitle removidos pois não são mais necessários
 
-const AnalyticsTitle = styled.h2`
-  font-size: ${props => props.theme.fontSizes.xl};
-  font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.text};
-  margin: 0;
-  display: flex;
-  align-items: center;
-  
-  svg {
-    margin-right: 12px;
-    color: ${props => props.theme.colors.primary};
-  }
-`;
+// TimeframeSelector e TimeframeButton removidos pois não são mais necessários
 
-const TimeframeSelector = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  
-  @media (max-width: 768px) {
-    width: 100%;
-    justify-content: space-between;
-  }
-  
-  @media (max-width: 480px) {
-    overflow-x: auto;
-    padding-bottom: 8px;
-    -webkit-overflow-scrolling: touch;
-  }
-`;
-
-const TimeframeButton = styled.button<{ active?: boolean }>`
-  padding: 6px 12px;
-  border-radius: ${props => props.theme.radius.pill};
-  border: none;
-  background: ${props => props.active ? props.theme.colors.primary : '#f0f0f5'};
-  color: ${props => props.active ? 'white' : props.theme.colors.darkGrey};
-  font-size: ${props => props.theme.fontSizes.sm};
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: ${props => props.active ? props.theme.colors.primary : '#e0e0e5'};
-  }
-`;
-
-const StatsGrid = styled.div`
+const TopStatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
@@ -1503,6 +1441,17 @@ const StatsGrid = styled.div`
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+`;
+
+const BottomStatsContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+  
+  & > div {
+    max-width: 300px;
+    width: 100%;
   }
 `;
 
@@ -1633,55 +1582,11 @@ const PageNumbers = styled.div`
   gap: 8px;
 `;
 
-const ChartSection = styled.div`
-  display: flex;
-  height: 400px;
-  background: ${props => props.theme.colors.white};
-  border-radius: ${props => props.theme.radius.md};
-  border: 1px solid ${props => props.theme.colors.lightGrey};
-  overflow: hidden;
-  position: relative;
-  box-shadow: ${props => props.theme.shadows.md};
-  animation: ${fadeIn} 1.2s ease-out forwards;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  
-  &:hover {
-    box-shadow: ${props => props.theme.shadows.lg};
-    transform: translateY(-5px);
-  }
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 5px;
-    background: ${props => props.theme.colors.gradient.primary};
-    opacity: 0.7;
-  }
-  
-  @media (max-width: 768px) {
-    height: 300px;
-  }
-  
-  @media (max-width: 480px) {
-    height: 250px;
-  }
-`;
+// ChartSection component removido
 
-const ChartLabels = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-`;
+// ChartLabels component removido
 
-const ChartLabel = styled.div`
-  font-size: ${props => props.theme.fontSizes.xs};
-  color: ${props => props.theme.colors.darkGrey};
-  text-align: center;
-  width: 40px;
-`;
+// ChartLabel component removido
 
 interface EditModalProps {
   isOpen: boolean;
@@ -1759,7 +1664,7 @@ const Mentions: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('posted');
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentMention, setCurrentMention] = useState<MentionData | null>(null);
-  const [timeframe, setTimeframe] = useState<TimeframeType>('week');
+  // Estado timeframe removido, pois o seletor de timeframe foi removido
   const [toast, setToast] = useState({ visible: false, message: '', success: true });
   
   // Auto-hide toast after 3 seconds
@@ -1778,7 +1683,6 @@ const Mentions: React.FC = () => {
     error, 
     mentionsData: data, 
     toggleFavorite: toggleFavoriteMention,
-    setTimeframe: setMentionTimeframe,
     pagination // Obter informações e funções de paginação
   } = useMentionsData(activeTab);
   
@@ -1791,8 +1695,7 @@ const Mentions: React.FC = () => {
   // Obter o projeto atual do contexto
   const { currentProject } = useProject();
 
-  // Estado para armazenar dados do gráfico
-  const [performanceData, setPerformanceData] = useState<any[]>([]);
+  // Estado para armazenar dados (removido estado do gráfico)
   
   // Estado para os dados dos cards
   const [cardStats, setCardStats] = useState({
@@ -1913,127 +1816,7 @@ const Mentions: React.FC = () => {
         });
       }
       
-      // ----- BUSCAR DADOS PARA O GRÁFICO -----
-      
-      // Usar a mesma consulta da aba "posted" mas incluindo todos os status
-      console.log(`Buscando dados de menções para o projeto ${currentProject.id} para o gráfico`);
-      const { data, error } = await supabase
-        .from('mentions_overview')
-        .select('*')
-        .eq('scanner_project_id', currentProject.id)
-        .order('comment_published_at', { ascending: false });
-      
-      // Adicionando log para debug
-      console.log(`Resultados da consulta: total=${data?.length || 0}, com erro=${!!error}`);
-      console.log(`Distribuição por msg_type: ${JSON.stringify(
-        data?.reduce((acc: {[key: string]: number}, item: any) => {
-          const key = item.msg_type || 'undefined';
-          acc[key] = (acc[key] || 0) + 1;
-          return acc;
-        }, {})
-      )}`);
-      
-      if (error) {
-        console.error('Erro ao buscar dados para o gráfico:', error);
-        return;
-      }
-      
-      console.log(`Total de dados obtidos para o gráfico: ${data.length}`);
-      
-      // Processar dados para o gráfico
-      const dateMap = new Map<string, { led: number, brand: number }>();
-      
-      // Verificar se temos dados
-      if (!data || data.length === 0) {
-        console.log('Não há dados para processar para o gráfico');
-        // Definir pelo menos dados vazios para as datas
-        const emptyData = [
-          { day: 'Jan 1', led: 0, brand: 0 },
-          { day: 'Jan 2', led: 0, brand: 0 },
-          { day: 'Jan 3', led: 0, brand: 0 }
-        ];
-        setPerformanceData(emptyData);
-        return;
-      }
-      
-      // Definir intervalo de 7 dias
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 7);
-      
-      // Preparar as datas
-      const dates: string[] = [];
-      const currentDate = new Date();
-      let tempDate = new Date(startDate);
-      
-      while (tempDate <= currentDate) {
-        const formattedDate = tempDate.toLocaleDateString('default', {
-          month: 'short',
-          day: 'numeric'
-        });
-        dates.push(formattedDate);
-        dateMap.set(formattedDate, { led: 0, brand: 0 });
-        
-        tempDate.setDate(tempDate.getDate() + 1);
-      }
-      
-      // Processar os dados
-      data.forEach((item: any) => {
-        if (!item.comment_published_at) return;
-        
-        const commentDate = new Date(item.comment_published_at);
-        if (commentDate >= startDate) {
-          const formattedDate = commentDate.toLocaleDateString('default', {
-            month: 'short',
-            day: 'numeric'
-          });
-          
-          const existing = dateMap.get(formattedDate) || { led: 0, brand: 0 };
-          
-          // Classificar como LED (msg_type = 1) ou Brand (msg_type = 2)
-          if (item.msg_type === 1) {
-            existing.led += 1;
-            console.log(`Adicionando LED para data ${formattedDate}, agora tem ${existing.led}`);
-          } else if (item.msg_type === 2) {
-            existing.brand += 1;
-            console.log(`Adicionando BRAND para data ${formattedDate}, agora tem ${existing.brand}`);
-          } else {
-            console.log(`Item não classificado: msg_type=${item.msg_type}, data=${formattedDate}`);
-          }
-          
-          dateMap.set(formattedDate, existing);
-        }
-      });
-      
-      // Converter para o formato do gráfico
-      const chartData = dates.map(day => ({
-        day,
-        led: dateMap.get(day)?.led || 0,
-        brand: dateMap.get(day)?.brand || 0
-      }));
-      
-      // Adicionar pelo menos um valor de demonstração se todos forem zero
-      let temDados = false;
-      for (const entry of chartData) {
-        if (entry.led > 0 || entry.brand > 0) {
-          temDados = true;
-          break;
-        }
-      }
-      
-      if (!temDados) {
-        console.log('Todos os valores são zero, adicionando dados de exemplo para visualização');
-        // Adicionar alguns valores de exemplo para o primeiro dia
-        if (chartData.length > 0) {
-          chartData[0] = {
-            ...chartData[0],
-            led: 3,
-            brand: 2
-          };
-        }
-      }
-      
-      console.log('Dados processados para o gráfico:', chartData);
-      setPerformanceData(chartData);
+      // Código para buscar dados do gráfico de performance removido
       
     } catch (err) {
       console.error('Erro ao processar dados do dashboard:', err);
@@ -2480,207 +2263,7 @@ const Mentions: React.FC = () => {
             </PaginationContainer>
           )}
         </MentionsContainer>
-        <AnalyticsSection>
-          <AnalyticsHeader>
-            <AnalyticsTitle>
-              <IconComponent icon={FaIcons.FaChartBar} />
-              Mentions Performance
-            </AnalyticsTitle>
-            <TimeframeSelector>
-              <TimeframeButton 
-                active={timeframe === 'day'} 
-                onClick={() => {
-                  setTimeframe('day');
-                  setMentionTimeframe('day');
-                }}
-              >
-                Day
-              </TimeframeButton>
-              <TimeframeButton 
-                active={timeframe === 'week'} 
-                onClick={() => {
-                  setTimeframe('week');
-                  setMentionTimeframe('week');
-                }}
-              >
-                Week
-              </TimeframeButton>
-              <TimeframeButton 
-                active={timeframe === 'month'} 
-                onClick={() => {
-                  setTimeframe('month');
-                  setMentionTimeframe('month');
-                }}
-              >
-                Month
-              </TimeframeButton>
-              <TimeframeButton 
-                active={timeframe === 'year'} 
-                onClick={() => {
-                  setTimeframe('year');
-                  setMentionTimeframe('year');
-                }}
-              >
-                Year
-              </TimeframeButton>
-            </TimeframeSelector>
-          </AnalyticsHeader>
-          
-          <StatsGrid>
-            <StatCard>
-              <StatIcon color={`linear-gradient(135deg, #8561C5 0%, #9575CD 100%)`}>
-                <IconComponent icon={FaIcons.FaComments} />
-              </StatIcon>
-              <StatValue>{mentionStats.totalMentions}</StatValue>
-              <StatLabel>Total Mentions</StatLabel>
-              <StatTrend increasing={mentionStats.trends.totalMentionsTrend > 0}>
-                <IconComponent icon={mentionStats.trends.totalMentionsTrend > 0 ? FaIcons.FaArrowUp : FaIcons.FaArrowDown} />
-                {Math.abs(mentionStats.trends.totalMentionsTrend)}% from last week
-              </StatTrend>
-            </StatCard>
-            
-            <StatCard>
-              <StatIcon color={`linear-gradient(135deg, #00C781 0%, #82ffc9 100%)`}>
-                <IconComponent icon={FaIcons.FaLightbulb} />
-              </StatIcon>
-              <StatValue>{cardStats.leadMentions}</StatValue>
-              <StatLabel>Lead Mentions</StatLabel>
-              <StatTrend increasing={cardStats.leadMentionsTrend > 0}>
-                <IconComponent icon={cardStats.leadMentionsTrend > 0 ? FaIcons.FaArrowUp : FaIcons.FaArrowDown} />
-                {Math.abs(cardStats.leadMentionsTrend)}% from last week
-              </StatTrend>
-            </StatCard>
-            
-            <StatCard>
-              <StatIcon color={`linear-gradient(135deg, #FFAA15 0%, #ffd67e 100%)`}>
-                <IconComponent icon={FaIcons.FaExclamationTriangle} />
-              </StatIcon>
-              <StatValue>{cardStats.highPriority}</StatValue>
-              <StatLabel>High Priority</StatLabel>
-              <StatTrend increasing={cardStats.highPriorityTrend > 0}>
-                <IconComponent icon={cardStats.highPriorityTrend > 0 ? FaIcons.FaArrowUp : FaIcons.FaArrowDown} />
-                {Math.abs(cardStats.highPriorityTrend)}% from last week
-              </StatTrend>
-            </StatCard>
-            
-            <StatCard>
-              <StatIcon color={`linear-gradient(135deg, #3D138D 0%, #7d5cca 100%)`}>
-                <IconComponent icon={FaIcons.FaClock} />
-              </StatIcon>
-              <StatValue>{cardStats.avgResponseTime}h</StatValue>
-              <StatLabel>Avg Response Time</StatLabel>
-              <StatTrend increasing={cardStats.avgResponseTimeTrend > 0}>
-                <IconComponent icon={cardStats.avgResponseTimeTrend > 0 ? FaIcons.FaArrowUp : FaIcons.FaArrowDown} />
-                {Math.abs(cardStats.avgResponseTimeTrend)}% from last week
-              </StatTrend>
-            </StatCard>
-            
-            <StatCard>
-              <StatIcon color={`linear-gradient(135deg, #9575CD 0%, #4facfe 100%)`}>
-                <IconComponent icon={FaIcons.FaPercentage} />
-              </StatIcon>
-              <StatValue>{cardStats.responseRate}%</StatValue>
-              <StatLabel>Response Rate</StatLabel>
-              <StatTrend increasing={cardStats.responseRateTrend > 0}>
-                <IconComponent icon={cardStats.responseRateTrend > 0 ? FaIcons.FaArrowUp : FaIcons.FaArrowDown} />
-                {Math.abs(cardStats.responseRateTrend)}% from last week
-              </StatTrend>
-            </StatCard>
-          </StatsGrid>
-          
-          <ChartSection>
-            {/* Exibir mensagem de debug para facilitar o diagnóstico */}
-            {performanceData.length === 0 ? (
-              <div style={{ 
-                height: '100%', 
-                display: 'flex', 
-                flexDirection: 'column',
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                color: '#666',
-                padding: '20px'
-              }}>
-                <p style={{ fontSize: '16px', marginBottom: '10px' }}>
-                  Não há dados para exibir no gráfico. 
-                </p>
-                <p style={{ fontSize: '14px' }}>
-                  Verifique se existem menções classificadas como LED (tipo 1) ou Brand (tipo 2) no banco de dados.
-                </p>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={performanceData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f5" />
-                  <XAxis dataKey="day" axisLine={false} tickLine={false} />
-                  <YAxis axisLine={false} tickLine={false} />
-                  <RechartsTooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'white', 
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                      border: 'none'
-                    }}
-                    cursor={{ fill: 'rgba(135, 97, 197, 0.05)' }}
-                  />
-                  <Legend verticalAlign="top" height={40} />
-                  <Bar 
-                    dataKey="led" 
-                    name="LED" 
-                    fill="#8561C5" 
-                    radius={[4, 4, 0, 0]}
-                    animationDuration={1500}
-                    animationEasing="ease-in-out"
-                  >
-                    {performanceData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-led-${index}`} 
-                        fill={`url(#ledGradient-${index})`} 
-                      />
-                    ))}
-                  </Bar>
-                  <Bar 
-                    dataKey="brand" 
-                    name="Brand" 
-                    fill="#4facfe" 
-                    radius={[4, 4, 0, 0]}
-                    animationDuration={1500}
-                    animationEasing="ease-in-out"
-                    animationBegin={300}
-                  >
-                    {performanceData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-brand-${index}`} 
-                        fill={`url(#brandGradient-${index})`} 
-                      />
-                    ))}
-                  </Bar>
-                  <defs>
-                    {performanceData.map((entry, index) => (
-                      <linearGradient 
-                        key={`ledGradient-${index}`}
-                        id={`ledGradient-${index}`} 
-                        x1="0" y1="0" x2="0" y2="1"
-                      >
-                        <stop offset="0%" stopColor="#9575CD" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#673AB7" stopOpacity={0.9} />
-                      </linearGradient>
-                    ))}
-                    {performanceData.map((entry, index) => (
-                      <linearGradient 
-                        key={`brandGradient-${index}`}
-                        id={`brandGradient-${index}`} 
-                        x1="0" y1="0" x2="0" y2="1"
-                      >
-                        <stop offset="0%" stopColor="#4facfe" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#00f2fe" stopOpacity={0.9} />
-                      </linearGradient>
-                    ))}
-                  </defs>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </ChartSection>
-        </AnalyticsSection>
+        {/* Seção Analytics removida */}
       </PageContainer>
       
       <EditResponseModal 

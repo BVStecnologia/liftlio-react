@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { COLORS, withOpacity } from '../styles/colors';
 import * as FaIcons from 'react-icons/fa';
 import ProjectModal from './ProjectModal';
 import { IconComponent } from '../utils/IconHelper';
@@ -20,9 +21,13 @@ const HeaderContainer = styled.header`
   justify-content: space-between;
   align-items: center;
   padding: 12px 24px;
-  background-color: ${props => props.theme.colors.secondary}; /* Branco (30%) */
-  box-shadow: ${props => props.theme.shadows.sm};
-  border-bottom: 1px solid ${props => props.theme.colors.tertiary}; /* Cinza médio (60%) */
+  background-color: ${COLORS.SECONDARY}; /* Branco (30%) */
+  box-shadow: ${COLORS.SHADOW.LIGHT};
+  border-bottom: 1px solid ${COLORS.BORDER.DEFAULT}; /* Cinza médio (60%) */
+  color: ${COLORS.TEXT.ON_LIGHT};
+  --color-dominant: ${COLORS.DOMINANT};
+  --color-secondary: ${COLORS.SECONDARY};
+  --color-accent: ${COLORS.ACCENT};
   position: sticky;
   top: 0;
   z-index: 900; /* High but lower than sidebar (1000) */
@@ -38,14 +43,14 @@ const HeaderContainer = styled.header`
 const ProjectSelector = styled.div`
   display: flex;
   align-items: center;
-  background: #2d3e50; /* Azul naval escuro (10%) */
-  color: white;
+  background: ${COLORS.ACCENT}; /* Azul naval escuro (10%) */
+  color: ${COLORS.TEXT.ON_DARK};
   padding: 10px 18px;
   border-radius: 8px; /* Menos arredondado */
   cursor: pointer;
   font-weight: ${props => props.theme.fontWeights.medium};
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 
-              inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow: ${COLORS.SHADOW.MEDIUM}, 
+              inset 0 0 0 1px ${withOpacity(COLORS.SECONDARY, 0.08)};
   transition: all 0.35s cubic-bezier(0.17, 0.67, 0.29, 0.96);
   position: relative;
   overflow: hidden;
@@ -115,10 +120,10 @@ const ProjectSelector = styled.div`
   
   &:hover {
     transform: translateY(-2px) scale(1.01);
-    background: #34495e; /* Azul escuro naval mais claro */
-    box-shadow: 0 7px 20px rgba(0, 0, 0, 0.4), 
-                inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-                0 0 15px rgba(45, 62, 80, 0.3);
+    background: ${COLORS.ACCENT_LIGHT}; /* Azul escuro naval mais claro */
+    box-shadow: ${COLORS.SHADOW.STRONG}, 
+                inset 0 0 0 1px ${withOpacity(COLORS.SECONDARY, 0.1)},
+                0 0 15px ${withOpacity(COLORS.ACCENT, 0.3)};
     
     &::after {
       animation-duration: 3.8s;
@@ -192,9 +197,9 @@ const PopupMenu = styled.div`
   top: 100%;
   right: 0;
   width: 250px;
-  background-color: white;
+  background-color: ${COLORS.SECONDARY};
   border-radius: ${props => props.theme.radius.md};
-  box-shadow: ${props => props.theme.shadows.lg};
+  box-shadow: ${COLORS.SHADOW.STRONG};
   z-index: ${props => props.theme.zIndices.dropdown};
   overflow: hidden;
   margin-top: 8px;
@@ -215,8 +220,8 @@ const PopupMenuItem = styled.div`
   border-left: 3px solid transparent;
 
   &:hover {
-    background-color: rgba(45, 29, 66, 0.04);
-    border-left: 3px solid ${props => props.theme.colors.primary || '#2D1D42'};
+    background-color: ${COLORS.DOMINANT_LIGHTER};
+    border-left: 3px solid ${COLORS.ACCENT};
   }
 
   &:active {
@@ -226,7 +231,7 @@ const PopupMenuItem = styled.div`
   svg {
     margin-right: 12px;
     font-size: 1rem;
-    color: ${props => props.theme.colors.primary || '#2D1D42'};
+    color: ${COLORS.ACCENT};
     opacity: 0.7;
   }
 `;
@@ -248,7 +253,7 @@ const NotificationBadge = styled.div`
   
   svg {
     font-size: 1.3rem;
-    color: ${props => props.theme.colors.darkGrey};
+    color: ${COLORS.TEXT.SECONDARY};
   }
   
   &::after {
@@ -258,9 +263,9 @@ const NotificationBadge = styled.div`
     right: 8px;
     width: 10px;
     height: 10px;
-    background-color: ${props => props.theme.colors.error};
+    background-color: ${COLORS.ERROR};
     border-radius: 50%;
-    box-shadow: 0 0 0 2px white;
+    box-shadow: 0 0 0 2px ${COLORS.SECONDARY};
   }
 
   @media (max-width: 480px) {
@@ -340,20 +345,20 @@ const NotificationItem = styled.div`
     font-weight: ${props => props.theme.fontWeights.medium};
     margin: 0 0 6px 0;
     font-size: 0.9rem;
-    color: #2D1D42;
+    color: ${COLORS.TEXT.ON_LIGHT};
   }
   
   p {
     margin: 0;
     font-size: 0.85rem;
-    color: ${props => props.theme.colors.darkGrey};
+    color: ${COLORS.TEXT.SECONDARY};
     line-height: 1.4;
   }
   
   time {
     display: block;
     font-size: 0.75rem;
-    color: ${props => props.theme.colors.grey};
+    color: ${COLORS.DOMINANT_DARK};
     margin-top: 8px;
   }
 
@@ -373,18 +378,18 @@ const NotificationItem = styled.div`
 
 const PopupHeader = styled.div`
   padding: 14px 18px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid ${COLORS.BORDER.DEFAULT};
   font-weight: ${props => props.theme.fontWeights.medium};
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: rgba(245, 245, 250, 0.5);
+  background-color: ${COLORS.DOMINANT_LIGHTER};
   font-size: 0.95rem;
-  color: #2D1D42;
+  color: ${COLORS.TEXT.ON_LIGHT};
   
   span {
     font-size: 0.8rem;
-    color: ${props => props.theme.colors.primary || '#2D1D42'};
+    color: ${COLORS.ACCENT};
     cursor: pointer;
     transition: all 0.2s ease;
     
@@ -456,9 +461,9 @@ const UserAvatar = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, #231036, #3d2956);
+  background: ${COLORS.GRADIENT.PRIMARY};
   position: relative;
-  box-shadow: 0 2px 15px rgba(35, 16, 54, 0.4);
+  box-shadow: ${COLORS.SHADOW.MEDIUM};
   transition: all 0.3s cubic-bezier(.25,.8,.25,1);
   isolation: isolate;
   
@@ -528,8 +533,8 @@ const UserAvatar = styled.div`
   &:after {
     box-shadow: 
       inset 0 0 2px rgba(255, 255, 255, 0.4),
-      0 0 12px rgba(131, 58, 244, 0.8),
-      0 0 30px rgba(131, 58, 244, 0.3);
+      0 0 12px ${withOpacity(COLORS.ACCENT, 0.8)},
+      0 0 30px ${withOpacity(COLORS.ACCENT, 0.3)};
   }
   
   @keyframes luxScanMove {
@@ -554,14 +559,14 @@ const UserAvatar = styled.div`
   }
   
   &:hover {
-    box-shadow: 0 5px 20px rgba(35, 16, 54, 0.6), 0 0 15px rgba(131, 58, 244, 0.4);
+    box-shadow: ${COLORS.SHADOW.STRONG}, 0 0 15px ${withOpacity(COLORS.ACCENT, 0.4)};
     transform: translateY(-1px) scale(1.03);
-    background: linear-gradient(145deg, #2a1340, #44305f);
+    background: ${COLORS.GRADIENT.PRIMARY};
     
     &::after {
       animation-duration: 2.8s;
-      box-shadow: 0 0 20px rgba(131, 58, 244, 0.9),
-                  0 0 40px rgba(131, 58, 244, 0.4);
+      box-shadow: 0 0 20px ${withOpacity(COLORS.ACCENT, 0.9)},
+                  0 0 40px ${withOpacity(COLORS.ACCENT, 0.4)};
     }
     
     span {
@@ -586,20 +591,20 @@ const UserAvatar = styled.div`
 
 const UserInfo = styled.div`
   padding: 18px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid ${COLORS.BORDER.DEFAULT};
   text-align: center;
-  background-color: rgba(245, 245, 250, 0.3);
+  background-color: ${COLORS.DOMINANT_LIGHTER};
   
   h4 {
     margin: 10px 0 5px;
     font-weight: ${props => props.theme.fontWeights.medium};
-    color: #2D1D42;
+    color: ${COLORS.TEXT.ON_LIGHT};
   }
   
   p {
     margin: 0;
     font-size: 0.8rem;
-    color: ${props => props.theme.colors.darkGrey};
+    color: ${COLORS.TEXT.SECONDARY};
   }
   
   .profile-avatar {
@@ -616,8 +621,8 @@ const AddProjectButton = styled.button`
   padding: 8px 14px;
   border-radius: ${props => props.theme.radius.md};
   border: none;
-  background: #2d3e50; /* Azul naval escuro (10%) */
-  color: white;
+  background: ${COLORS.ACCENT}; /* Azul naval escuro (10%) */
+  color: ${COLORS.TEXT.ON_DARK};
   font-weight: ${props => props.theme.fontWeights.medium};
   font-size: ${props => props.theme.fontSizes.sm};
   margin-right: 20px; /* Position it at the header right section */
@@ -792,7 +797,7 @@ const LanguageSelector = styled.div`
   
   svg {
     font-size: 1.3rem;
-    color: ${props => props.theme.colors.darkGrey};
+    color: ${COLORS.TEXT.SECONDARY};
     margin-right: 5px;
   }
 
@@ -909,16 +914,16 @@ const ProjectItem = styled.div`
     width: 0;
     height: 1px;
     background: linear-gradient(to right, 
-      rgba(131, 58, 244, 0.7) 0%, 
-      rgba(131, 58, 244, 0.3) 50%,
-      rgba(131, 58, 244, 0.1) 100%);
+      rgba(45, 62, 80, 0.7) 0%, 
+      rgba(45, 62, 80, 0.3) 50%,
+      rgba(45, 62, 80, 0.1) 100%);
     transition: width 0.4s cubic-bezier(0.17, 0.67, 0.29, 0.96);
     z-index: 2;
   }
   
   &:hover {
-    background-color: rgba(131, 58, 244, 0.03);
-    border-left: 2px solid #843af4;
+    background-color: rgba(45, 62, 80, 0.03);
+    border-left: 2px solid #2d3e50;
     
     &:before {
       width: 100%;
@@ -926,14 +931,14 @@ const ProjectItem = styled.div`
     }
     
     svg {
-      color: #843af4;
-      filter: drop-shadow(0 0 3px rgba(131, 58, 244, 0.3));
+      color: #2d3e50;
+      filter: drop-shadow(0 0 3px rgba(45, 62, 80, 0.3));
       transform: scale(1.1);
     }
   }
   
   &:active {
-    background-color: rgba(131, 58, 244, 0.06);
+    background-color: rgba(45, 62, 80, 0.06);
   }
   
   svg {
@@ -955,13 +960,13 @@ const ProjectItem = styled.div`
     top: 0;
     background: linear-gradient(
       to bottom,
-      rgba(131, 58, 244, 0.7) 0%,
-      rgba(131, 58, 244, 0.1) 100%
+      rgba(45, 62, 80, 0.7) 0%,
+      rgba(45, 62, 80, 0.1) 100%
     );
     opacity: 0;
     transition: opacity 0.3s ease, height 0.3s cubic-bezier(0.17, 0.67, 0.29, 0.96);
     z-index: 1;
-    box-shadow: 0 0 8px rgba(131, 58, 244, 0.3);
+    box-shadow: 0 0 8px rgba(45, 62, 80, 0.3);
   }
   
   &:hover::after {

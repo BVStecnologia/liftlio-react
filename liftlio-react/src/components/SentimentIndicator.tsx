@@ -2,6 +2,7 @@ import React from 'react';
 import styled, { keyframes } from 'styled-components';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
+import COLORS, { withOpacity } from '../styles/colors';
 
 interface SentimentIndicatorProps {
   percentage: number;
@@ -76,15 +77,15 @@ const SentimentCircle = styled.div<{ percentage: number; size: 'small' | 'medium
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: white;
-  color: ${({ percentage, theme }) => {
-    if (percentage >= 80) return theme.colors.sentiment.positive;
-    if (percentage >= 50) return theme.colors.success;
-    if (percentage >= 40) return theme.colors.sentiment.neutral;
-    return theme.colors.sentiment.negative;
+  background: ${COLORS.SECONDARY};
+  color: ${({ percentage }) => {
+    if (percentage >= 80) return COLORS.SUCCESS;
+    if (percentage >= 50) return COLORS.SUCCESS;
+    if (percentage >= 40) return COLORS.WARNING;
+    return COLORS.ERROR;
   }};
   font-weight: bold;
-  box-shadow: ${props => props.theme.shadows.md};
+  box-shadow: ${COLORS.SHADOW.MEDIUM};
   position: relative;
   animation: ${props => props.animated ? pulse : 'none'} 2s infinite;
   font-size: ${props => sizeDimensions[props.size].fontSize};
@@ -98,13 +99,13 @@ const SentimentCircle = styled.div<{ percentage: number; size: 'small' | 'medium
     left: -5px;
     border-radius: 50%;
     z-index: -1;
-    background: white;
+    background: ${COLORS.SECONDARY};
     opacity: 0.5;
   }
 `;
 
 const SentimentText = styled.span`
-  font-weight: ${props => props.theme.fontWeights.bold};
+  font-weight: 600;
 `;
 
 const IconWrapper = styled.div<{ size: 'small' | 'medium' | 'large' }>`
@@ -119,12 +120,12 @@ const getSentimentIcon = (percentage: number) => {
   return FaIcons.FaFrown;
 };
 
-const getSentimentColor = (percentage: number, theme: any) => {
-  if (percentage >= 80) return '#00C781'; // Green
-  if (percentage >= 70) return '#34CDBB'; // Teal
-  if (percentage >= 60) return '#68AEFF'; // Blue
-  if (percentage >= 50) return '#FFAA15'; // Yellow
-  return '#FF4040'; // Red
+const getSentimentColor = (percentage: number) => {
+  if (percentage >= 80) return COLORS.SUCCESS;
+  if (percentage >= 70) return COLORS.SUCCESS_LIGHT;
+  if (percentage >= 60) return COLORS.INFO;
+  if (percentage >= 50) return COLORS.WARNING;
+  return COLORS.ERROR;
 };
 
 const SentimentIndicator: React.FC<SentimentIndicatorProps> = ({ 
@@ -133,7 +134,7 @@ const SentimentIndicator: React.FC<SentimentIndicatorProps> = ({
   animated = true,
   showIcon = true
 }) => {
-  const sentimentColor = (theme: any) => getSentimentColor(percentage, theme);
+  const sentimentColor = getSentimentColor(percentage);
   const SentimentIcon = getSentimentIcon(percentage);
   
   return (

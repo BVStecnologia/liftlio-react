@@ -94,6 +94,42 @@ const GlobalStyle = createGlobalStyle`
       height: 4px;
     }
   }
+  
+  /* Page components styling */
+  h1, h2, h3, h4, h5, h6 {
+    color: ${props => props.theme.colors.primary}; /* Azul naval escuro (10%) */
+    font-weight: 600;
+    margin-bottom: 0.5em;
+  }
+  
+  p {
+    color: ${props => props.theme.colors.text};
+    line-height: 1.6;
+  }
+  
+  /* Main content container - applies the dominant color (60%) as background */
+  main {
+    background-color: ${props => props.theme.colors.tertiary}; /* Cinza médio - dominant color */
+  }
+  
+  /* Card components - apply the secondary color (30%) */
+  .card, .stat-card, .data-card {
+    background-color: ${props => props.theme.colors.secondary}; /* Branco - secondary color */
+    border: 1px solid rgba(165, 177, 183, 0.2); /* Borderline based on dominant color */
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Buttons, links, and interactive elements - apply the accent color (10%) */
+  .accent-element {
+    color: ${props => props.theme.colors.primary}; /* Azul naval escuro - accent color */
+  }
+  
+  /* Header components usually have white background (secondary color - 30%) */
+  header {
+    background-color: ${props => props.theme.colors.secondary};
+    border-bottom: 1px solid ${props => props.theme.colors.tertiary};
+  }
 `;
 
 export default GlobalStyle;

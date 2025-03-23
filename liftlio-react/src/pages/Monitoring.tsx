@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
+import { COLORS, withOpacity } from '../styles/colors';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import Card from '../components/Card';
+import ButtonUI from '../components/ui/Button';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 
@@ -10,19 +12,20 @@ const PageContainer = styled.div`
   padding: 20px;
   max-width: 1600px;
   margin: 0 auto;
+  background-color: ${COLORS.DOMINANT}; /* Dominant color (60%) - Cinza médio */
 `;
 
 const PageTitle = styled.h1`
   font-size: ${props => props.theme.fontSizes['2xl']};
   font-weight: ${props => props.theme.fontWeights.bold};
   margin-bottom: 24px;
-  color: ${props => props.theme.colors.text};
+  color: ${COLORS.ACCENT}; /* Accent color (10%) - Azul naval escuro */
   display: flex;
   align-items: center;
   
   svg {
     margin-right: 16px;
-    color: #FF0000; /* YouTube red */
+    color: #FF0000; /* YouTube red - keeping this as it's platform-specific */
     font-size: 32px;
   }
 `;
@@ -40,7 +43,7 @@ const TabsContainer = styled.div`
     left: 0;
     right: 0;
     height: 1px;
-    background: ${props => props.theme.colors.lightGrey};
+    background: ${COLORS.BORDER.DEFAULT};
   }
 `;
 
@@ -50,13 +53,13 @@ const Tab = styled.button<{ active: boolean }>`
   border: none;
   position: relative;
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.regular};
-  color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.darkGrey};
+  color: ${props => props.active ? COLORS.ACCENT : COLORS.TEXT.SECONDARY};
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: ${props => props.theme.fontSizes.md};
   
   &:hover {
-    color: ${props => props.theme.colors.primary};
+    color: ${COLORS.ACCENT};
   }
   
   &::after {
@@ -66,7 +69,7 @@ const Tab = styled.button<{ active: boolean }>`
     left: 0;
     right: 0;
     height: 3px;
-    background: ${props => props.active ? props.theme.colors.primary : 'transparent'};
+    background: ${props => props.active ? COLORS.ACCENT : 'transparent'};
     z-index: 1;
     transition: all 0.3s ease;
   }
@@ -95,20 +98,14 @@ const StatsGrid = styled.div`
   }
 `;
 
-const StatCard = styled.div`
-  background: ${props => props.theme.colors.secondary}; /* White (30%) */
-  border-radius: ${props => props.theme.radius.lg};
+// Using our Card component to have consistent styling
+const StatCard = styled(Card)`
   padding: 24px;
-  box-shadow: ${props => props.theme.shadows.sm};
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   
   &:hover {
     transform: translateY(-5px);
-    box-shadow: ${props => props.theme.shadows.md};
   }
 `;
 
@@ -138,7 +135,7 @@ const StatContent = styled.div`
 const StatValue = styled.div`
   font-size: ${props => props.theme.fontSizes['3xl']};
   font-weight: ${props => props.theme.fontWeights.bold};
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.primary};
   margin: 12px 0 4px;
 `;
 
@@ -191,13 +188,13 @@ const ChartHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+  border-bottom: 1px solid ${props => props.theme.colors.tertiary};
 `;
 
 const ChartTitle = styled.h3`
   font-size: ${props => props.theme.fontSizes.lg};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.primary};
   margin: 0;
   display: flex;
   align-items: center;
@@ -211,7 +208,7 @@ const ChartBody = styled.div`
 // Modern time selector
 const TimeSelector = styled.div`
   display: flex;
-  background: ${props => props.theme.colors.lightGrey};
+  background: ${props => props.theme.colors.tertiary};
   border-radius: ${props => props.theme.radius.pill};
   padding: 4px;
 `;
@@ -248,7 +245,7 @@ const ChannelsHeader = styled.div`
 const SectionTitle = styled.h2`
   font-size: ${props => props.theme.fontSizes.xl};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.primary};
   margin: 0;
 `;
 
@@ -258,23 +255,23 @@ const ChannelList = styled.div`
   gap: 20px;
 `;
 
-const ChannelCard = styled.div<{ active: boolean }>`
+// Create a wrapper div that can accept onClick and other interactive props
+const ChannelCardWrapper = styled.div<{ active: boolean }>`
   display: flex;
   align-items: center;
   padding: 16px;
-  border-radius: ${props => props.theme.radius.lg};
-  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.lightGrey};
-  background: ${props => props.theme.colors.secondary}; /* White (30%) */
-  cursor: pointer;
-  transition: all 0.3s ease;
+  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.tertiary};
   box-shadow: ${props => props.active ? props.theme.shadows.md : props.theme.shadows.sm};
+  cursor: pointer;
+  border-radius: ${props => props.theme.radius.lg};
+  background-color: ${props => props.theme.colors.white};
   position: relative;
   overflow: hidden;
+  transition: all 0.3s ease;
   
   &:hover {
     transform: translateY(-4px);
     border-color: ${props => props.theme.colors.primary};
-    box-shadow: ${props => props.theme.shadows.md};
   }
   
   ${props => props.active && `
@@ -385,7 +382,7 @@ const VideoTableHeader = styled.div`
   display: grid;
   grid-template-columns: 3fr 1fr 1fr 1fr 1fr;
   padding: 16px 24px;
-  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+  border-bottom: 1px solid ${props => props.theme.colors.tertiary};
   color: ${props => props.theme.colors.darkGrey};
   font-weight: ${props => props.theme.fontWeights.semiBold};
   font-size: ${props => props.theme.fontSizes.sm};
@@ -397,12 +394,12 @@ const VideoTableRow = styled.div`
   display: grid;
   grid-template-columns: 3fr 1fr 1fr 1fr 1fr;
   padding: 16px 24px;
-  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+  border-bottom: 1px solid ${props => props.theme.colors.tertiary};
   align-items: center;
   transition: all 0.2s ease;
   
   &:hover {
-    background: ${props => props.theme.colors.lightGrey}10;
+    background: ${props => props.theme.colors.tertiary}10;
   }
   
   &:last-child {
@@ -452,10 +449,11 @@ const VideoTitleText = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: ${props => props.theme.colors.primary};
 `;
 
 const VideoStat = styled.div`
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.primary};
   font-weight: ${props => props.theme.fontWeights.medium};
   font-size: ${props => props.theme.fontSizes.md};
   text-align: center;
@@ -484,9 +482,9 @@ const FilterGroup = styled.div`
 
 const FilterButton = styled.button<{ active?: boolean }>`
   padding: 10px 16px;
-  background: ${props => props.active ? props.theme.colors.primary : 'white'};
-  color: ${props => props.active ? 'white' : props.theme.colors.darkGrey};
-  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.lightGrey};
+  background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.secondary};
+  color: ${props => props.active ? props.theme.colors.secondary : props.theme.colors.darkGrey};
+  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.tertiary};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.regular};
@@ -560,28 +558,9 @@ const ButtonRow = styled.div`
   margin-top: 24px;
 `;
 
-const ActionButton = styled.button<{ primary?: boolean }>`
-  background: ${props => props.primary ? props.theme.colors.gradient.primary : 'white'};
-  color: ${props => props.primary ? 'white' : props.theme.colors.darkGrey};
-  border: ${props => props.primary ? 'none' : `1px solid ${props.theme.colors.grey}`};
-  border-radius: ${props => props.theme.radius.md};
-  padding: 12px 20px;
-  font-weight: ${props => props.theme.fontWeights.medium};
-  font-size: ${props => props.theme.fontSizes.sm};
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  
-  svg {
-    margin-right: 8px;
-  }
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${props => props.primary ? props.theme.shadows.md : props.theme.shadows.sm};
-    background: ${props => props.primary ? props.theme.colors.gradient.accent : props.theme.colors.lightGrey};
-  }
+// Extend the Button component with some additional styling
+const ActionButton = styled(ButtonUI)`
+  /* Using leftIcon/rightIcon props for icon positioning */
 `;
 
 // Sample data for YouTube channels
@@ -1152,7 +1131,7 @@ const YoutubeMonitoring: React.FC = () => {
                   (searchTerm === '' || channel.name.toLowerCase().includes(searchTerm.toLowerCase()))
                 )
                 .map(channel => (
-                <ChannelCard 
+                <ChannelCardWrapper 
                   key={channel.id} 
                   active={selectedChannel === channel.id}
                   onClick={() => setSelectedChannel(channel.id)}
@@ -1190,17 +1169,15 @@ const YoutubeMonitoring: React.FC = () => {
                     <IconComponent icon={FaIcons.FaChartLine} />
                     {channel.engagementRate}
                   </EngagementPill>
-                </ChannelCard>
+                </ChannelCardWrapper>
               ))}
             </ChannelList>
             
             <ButtonRow>
-              <ActionButton>
-                <IconComponent icon={FaIcons.FaSync} />
+              <ActionButton variant="ghost" leftIcon={<IconComponent icon={FaIcons.FaSync} />}>
                 Refresh Data
               </ActionButton>
-              <ActionButton primary>
-                <IconComponent icon={FaIcons.FaPlus} />
+              <ActionButton variant="primary" leftIcon={<IconComponent icon={FaIcons.FaPlus} />}>
                 Add New Channel
               </ActionButton>
             </ButtonRow>
@@ -1272,12 +1249,10 @@ const YoutubeMonitoring: React.FC = () => {
           </VideoTable>
           
           <ButtonRow>
-            <ActionButton>
-              <IconComponent icon={FaIcons.FaFileExport} />
+            <ActionButton variant="ghost" leftIcon={<IconComponent icon={FaIcons.FaFileExport} />}>
               Export Data
             </ActionButton>
-            <ActionButton primary>
-              <IconComponent icon={FaIcons.FaMagic} />
+            <ActionButton variant="primary" leftIcon={<IconComponent icon={FaIcons.FaMagic} />}>
               Setup Automation
             </ActionButton>
           </ButtonRow>
@@ -1300,8 +1275,7 @@ const YoutubeMonitoring: React.FC = () => {
             <h3>No comment templates created yet</h3>
             <p>Create a comment template to automate your responses</p>
             <div style={{ marginTop: '24px' }}>
-              <ActionButton primary>
-                <IconComponent icon={FaIcons.FaPlus} />
+              <ActionButton variant="primary" leftIcon={<IconComponent icon={FaIcons.FaPlus} />}>
                 Create Template
               </ActionButton>
             </div>
@@ -1325,8 +1299,7 @@ const YoutubeMonitoring: React.FC = () => {
             <h3>No automation rules set up</h3>
             <p>Create rules to automate your YouTube engagement</p>
             <div style={{ marginTop: '24px' }}>
-              <ActionButton primary>
-                <IconComponent icon={FaIcons.FaPlus} />
+              <ActionButton variant="primary" leftIcon={<IconComponent icon={FaIcons.FaPlus} />}>
                 Create Rule
               </ActionButton>
             </div>

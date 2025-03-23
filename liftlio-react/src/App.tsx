@@ -36,7 +36,7 @@ const AppContainer = styled.div`
 const MainContent = styled.main`
   flex: 1;
   overflow-y: auto;
-  background-color: ${props => props.theme.colors.background}; /* Cinza médio (60%) */
+  background-color: ${props => props.theme.colors.tertiary}; /* Dominant color - Cinza médio (60%) */
   width: 100%;
 `;
 
@@ -59,8 +59,8 @@ const FloatingMenuButton = styled.button`
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, ${props => props.theme.colors.primaryDark}, ${props => props.theme.colors.primary});
-  color: ${props => props.theme.colors.secondary};
+  background: linear-gradient(135deg, ${props => props.theme.colors.primaryDark}, ${props => props.theme.colors.primary}); /* Accent color (10%) for button background */
+  color: ${props => props.theme.colors.secondary}; /* Secondary color (30%) for button icon */
   border: none;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 
               inset 0 0 0 1px rgba(255, 255, 255, 0.08);
@@ -144,7 +144,7 @@ const FloatingMenuButton = styled.button`
   
   &:hover {
     transform: translateY(-2px) scale(1.01);
-    background: linear-gradient(135deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.primaryLight});
+    background: linear-gradient(135deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.primaryLight}); /* Accent colors (10%) for hover state */
     box-shadow: 0 7px 20px rgba(0, 0, 0, 0.4), 
                 inset 0 0 0 1px rgba(255, 255, 255, 0.1),
                 0 0 15px rgba(255, 255, 255, 0.2);
@@ -406,16 +406,19 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     align-items: center;
     height: 100vh;
     flex-direction: column;
+    background-color: ${props => props.theme.colors.tertiary}; /* Dominant color (60%) */
   `;
   
   const Spinner = styled.div`
     font-size: 2rem;
     animation: ${spinAnimation} 1.5s linear infinite;
     display: inline-block;
+    color: ${props => props.theme.colors.primary}; /* Accent color (10%) */
   `;
   
   const LoadingText = styled.div`
     margin-top: 1rem;
+    color: ${props => props.theme.colors.secondary}; /* Secondary color (30%) */
   `;
   
   // Aguardar o carregamento da autenticação e do estado de onboarding
@@ -557,7 +560,7 @@ const AuthCallback = () => {
     align-items: center;
     height: 100vh;
     flex-direction: column;
-    background-color: ${props => props.theme.colors.background};
+    background-color: ${props => props.theme.colors.tertiary}; /* Dominant color (60%) */
   `;
   
   const Spinner = styled.div`
@@ -569,7 +572,7 @@ const AuthCallback = () => {
   
   const LoadingText = styled.div`
     margin-top: 1rem;
-    color: ${props => props.theme.colors.darkGrey};
+    color: ${props => props.theme.colors.secondary}; /* Secondary color (30%) */
     font-size: 1.125rem;
   `;
   

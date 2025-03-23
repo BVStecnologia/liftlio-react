@@ -1,140 +1,208 @@
-import { css } from 'styled-components';
+import { keyframes } from 'styled-components';
 
-// Animações de página/componente
-export const pageTransition = css`
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
-  
-  &.active {
+// Animation keyframes
+export const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
     opacity: 1;
     transform: translateY(0);
   }
-  
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-    transform: none;
+`;
+
+export const pulse = keyframes`
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
   }
 `;
 
-// Animações para loaders e skeletons
-export const skeletonAnimation = css`
-  background: linear-gradient(
-    90deg, 
-    ${props => props.theme.colors.secondary} 25%, 
-    ${props => props.theme.colors.tertiaryLight} 50%, 
-    ${props => props.theme.colors.secondary} 75%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-loading 1.5s infinite;
-  
-  @keyframes skeleton-loading {
-    0% {
-      background-position: 200% 0;
-    }
-    100% {
-      background-position: -200% 0;
-    }
+export const shimmer = keyframes`
+  0% {
+    background-position: -200% 0;
   }
-  
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-    background: ${props => props.theme.colors.tertiaryLight};
+  100% {
+    background-position: 200% 0;
   }
 `;
 
-// Animação para spinner/loader
-export const spinnerAnimation = css`
-  border: 3px solid ${props => props.theme.colors.tertiary};
-  border-top: 3px solid ${props => props.theme.colors.primary};
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  animation: spinner 1s linear infinite;
-  
-  @keyframes spinner {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
+export const float = keyframes`
+  0% {
+    transform: translateY(0px);
   }
-  
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
   }
 `;
 
-// Efeito ripple para botões
-export const rippleEffect = css`
-  position: relative;
-  overflow: hidden;
-  
-  &:after {
-    content: "";
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 70%);
+// Signal animation keyframe
+export const signalPulse = keyframes`
+  0% {
     transform: scale(0);
-    opacity: 0;
-    transition: transform 0.3s, opacity 0.3s;
+    opacity: 0.8;
   }
-  
-  &:active:after {
+  70% {
+    opacity: 0;
+  }
+  100% {
     transform: scale(3);
     opacity: 0;
-    transition: 0s;
   }
 `;
 
-// Efeito hover para itens de sidebar
-export const sidebarHoverEffect = css`
-  &:hover {
-    background-color: ${props => props.theme.colors.gradient.hoverOverlay};
-    transition: background-color 0.3s ease;
+// LED flow animation keyframe
+export const ledFlow = keyframes`
+  0%, 15% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  20%, 30% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  35%, 100% {
+    opacity: 0;
+    transform: translateX(10px);
   }
 `;
 
-// Efeito hover para botões principais
-export const buttonHoverEffect = css`
-  &:hover {
-    background-color: ${props => props.theme.colors.primaryLight};
-    transform: translateY(-1px);
-    transition: all 0.3s ease;
+// Modern digital pulse animation
+export const digitalPulse = keyframes`
+  0% {
+    background-position: -20px 0;
+    opacity: 0.05;
   }
-  
-  &:active {
+  50% {
+    opacity: 0.15;
+  }
+  100% {
+    background-position: 20px 0;
+    opacity: 0.05;
+  }
+`;
+
+// Ultra subtle card highlight animation
+export const subtleHighlight = keyframes`
+  0% {
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05);
+  }
+  50% {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+  100% {
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05);
+  }
+`;
+
+// Minimal tech interface scan
+export const interfaceScan = keyframes`
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.08;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+`;
+
+// Gentle indicator pulse
+export const indicatorPulse = keyframes`
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+`;
+
+// Border top highlight effect
+export const borderGlow = keyframes`
+  0%, 100% {
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.05);
+  }
+  50% {
+    box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+// Funnel arrow animation
+export const funnelArrow = keyframes`
+  0% { transform: translateX(0) translateY(0); opacity: 0.4; }
+  50% { transform: translateX(6px) translateY(0); opacity: 0.9; }
+  100% { transform: translateX(0) translateY(0); opacity: 0.4; }
+`;
+
+// Button animations
+export const rippleEffect = keyframes`
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+`;
+
+export const buttonHoverEffect = keyframes`
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+  100% {
     transform: translateY(0);
   }
 `;
 
-// Efeito hover para cards
-export const cardHoverEffect = css`
-  &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: box-shadow 0.3s ease;
+// Card animations
+export const cardHoverEffect = keyframes`
+  0% {
+    transform: translateY(0);
+    box-shadow: ${props => props.theme?.shadows?.sm || '0 2px 5px rgba(0,0,0,0.1)'};
+  }
+  100% {
+    transform: translateY(-3px);
+    box-shadow: ${props => props.theme?.shadows?.md || '0 4px 12px rgba(0,0,0,0.15)'};
   }
 `;
 
-// Animação de linha de gráfico
-export const chartLineAnimation = css`
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-  animation: drawLine 1.5s ease forwards;
-  
-  @keyframes drawLine {
-    to {
-      stroke-dashoffset: 0;
-    }
+// Sidebar animation
+export const sidebarHoverEffect = keyframes`
+  0% {
+    background-position: 0% 50%;
   }
-  
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-    stroke-dasharray: none;
-    stroke-dashoffset: 0;
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+`;
+
+// Skeleton loading animation
+export const skeletonAnimation = keyframes`
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
   }
 `;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
+import { COLORS, withOpacity } from '../styles/colors';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import * as FaIcons from 'react-icons/fa';
 import { IconType } from 'react-icons';
@@ -161,6 +162,7 @@ const PageContainer = styled.div`
   padding: 24px;
   position: relative;
   overflow: hidden;
+  background-color: ${COLORS.DOMINANT}; /* Dominant color (60%) for main background */
   
   @media (max-width: 768px) {
     padding: 16px 12px;
@@ -197,14 +199,14 @@ const DashboardHeader = styled.div`
 const PageTitle = styled.h1`
   font-size: ${props => props.theme.fontSizes['3xl']};
   font-weight: ${props => props.theme.fontWeights.bold};
-  color: ${props => props.theme.colors.text};
+  color: ${COLORS.ACCENT}; /* Cor de destaque (10%) - Azul naval escuro */
   margin: 0;
   display: flex;
   align-items: center;
   gap: 14px;
   
   svg {
-    color: ${props => props.theme.colors.primary};
+    color: ${COLORS.ACCENT};
   }
   
   @media (max-width: 768px) {
@@ -287,49 +289,49 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost' | 'ou
   ${props => {
     if (props.variant === 'primary') {
       return css`
-        background: ${props.theme.colors.gradient.primary};
-        color: white;
+        background: ${COLORS.GRADIENT.PRIMARY}; /* Accent color (10%) for primary buttons */
+        color: ${COLORS.TEXT.ON_DARK}; /* Text on dark backgrounds */
         border: none;
-        box-shadow: ${props.theme.shadows.sm};
+        box-shadow: ${COLORS.SHADOW.LIGHT};
         
         &:hover {
-          box-shadow: ${props.theme.shadows.md};
+          box-shadow: ${COLORS.SHADOW.MEDIUM};
           transform: translateY(-2px);
         }
       `;
     } else if (props.variant === 'secondary') {
       return css`
-        background: ${props.theme.colors.gradient.secondary};
-        color: white;
+        background: ${COLORS.GRADIENT.SECONDARY}; /* Dominant color (60%) for secondary buttons */
+        color: ${COLORS.TEXT.ON_DARK}; /* Secondary color (30%) for text */
         border: none;
-        box-shadow: ${props.theme.shadows.sm};
+        box-shadow: ${COLORS.SHADOW.LIGHT};
         
         &:hover {
-          box-shadow: ${props.theme.shadows.md};
+          box-shadow: ${COLORS.SHADOW.MEDIUM};
           transform: translateY(-2px);
         }
       `;
     } else if (props.variant === 'outline') {
       return css`
         background: transparent;
-        color: ${props.theme.colors.primary};
-        border: 1px solid ${props.theme.colors.primary};
+        color: ${COLORS.ACCENT}; /* Accent color (10%) for text */
+        border: 1px solid ${COLORS.ACCENT}; /* Accent color (10%) for border */
         
         &:hover {
-          background: ${props.theme.colors.primary}10;
+          background: ${withOpacity(COLORS.ACCENT, 0.1)};
           transform: translateY(-2px);
         }
       `;
     } else {
       return css`
         background: transparent;
-        color: ${props.theme.colors.darkGrey};
-        border: 1px solid ${props.theme.colors.grey};
+        color: ${COLORS.TEXT.SECONDARY}; /* Dominant color dark shade (60%) */
+        border: 1px solid ${COLORS.BORDER.DEFAULT}; /* Dominant color (60%) */
         
         &:hover {
-          background: ${props.theme.colors.lightGrey};
-          border-color: ${props.theme.colors.darkGrey};
-          color: ${props.theme.colors.text};
+          background: ${COLORS.DOMINANT_LIGHTER}; /* Dominant color light shade (60%) */
+          border-color: ${COLORS.TEXT.SECONDARY}; /* Dominant color dark shade (60%) */
+          color: ${COLORS.ACCENT}; /* Accent color (10%) on hover */
           transform: translateY(-2px);
         }
       `;
@@ -344,50 +346,6 @@ const OverviewGrid = styled.div`
   gap: 24px;
   margin-bottom: 32px;
   position: relative;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    width: 65%;
-    height: 5px;
-    left: 50%;
-    top: 54%;
-    transform: translateX(-50%);
-    background: linear-gradient(90deg, 
-      rgba(33, 150, 243, 0.6) 0%, 
-      rgba(76, 175, 80, 0.5) 33%, 
-      rgba(103, 58, 183, 0.4) 66%, 
-      rgba(255, 122, 48, 0.3) 100%);
-    border-radius: 10px;
-    z-index: 0;
-    filter: blur(6px);
-    opacity: 0.5;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-    
-    @media (max-width: 1200px) {
-      display: none;
-    }
-  }
-  
-  &::before {
-    content: '';
-    position: absolute;
-    width: 65%;
-    height: 60px;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 0;
-    background: radial-gradient(
-      ellipse at center,
-      rgba(255, 255, 255, 0.1) 0%,
-      rgba(255, 255, 255, 0) 70%
-    );
-    
-    @media (max-width: 1200px) {
-      display: none;
-    }
-  }
   
   @media (max-width: 1200px) {
     grid-template-columns: repeat(6, 1fr);
@@ -407,10 +365,10 @@ const OverviewGrid = styled.div`
 
 // Enhanced stat card with modern tech-inspired design
 const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number; active?: boolean }>`
-  background: white;
-  border-radius: ${props => props.theme.radius.lg};
+  background: ${COLORS.SECONDARY}; // Branco - Secondary color (30%)
+  border-radius: 16px;
   padding: 24px;
-  box-shadow: ${props => props.theme.shadows.sm};
+  box-shadow: ${COLORS.SHADOW.LIGHT};
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -421,34 +379,12 @@ const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number; active?: bo
     : 'scale(1)'
   };
   z-index: ${props => props.cardIndex !== undefined ? 10 - props.cardIndex : 1};
-  
-  ${props => props.cardIndex !== undefined && props.cardIndex > 0 ? `
-    &::before {
-      content: '';
-      position: absolute;
-      top: -8px;
-      left: ${45 + props.cardIndex * 2}%;
-      width: 10%;
-      height: 8px;
-      background: linear-gradient(to bottom, rgba(240, 240, 240, 0.5) 0%, rgba(255, 255, 255, 0) 100%);
-      clip-path: polygon(0% 0%, 45% 100%, 55% 100%, 100% 0%);
-      z-index: 0;
-      opacity: ${0.6 - props.cardIndex * 0.1};
-    }
-  ` : ''}
+  border: 1px solid ${withOpacity(COLORS.DOMINANT, 0.2)}; // Borda sutil com cor dominante (60%)
   
   &:hover {
     transform: translateY(-2px) ${props => props.cardIndex !== undefined ? `scale(${1 - props.cardIndex * 0.01})` : 'scale(1)'};
-    box-shadow: ${props => props.theme.shadows.md};
+    box-shadow: ${COLORS.SHADOW.MEDIUM};
   }
-
-  border-left: ${props => props.cardIndex !== undefined ? `4px solid rgba(103, 58, 183, 0.7)` : 'none'}; // Consistent purple left border for all cards
-  border-top: none; // No top border
-  
-  animation: ${props => props.active && props.cardIndex !== undefined ? subtleHighlight : 'none'} 4s ease-in-out infinite;
-  animation-delay: ${props => props.cardIndex !== undefined ? `${props.cardIndex * 0.2}s` : '0s'};
-  
-  /* Removed top border effect */
   
   @media (max-width: 1200px) {
     grid-column: span ${props => Math.min(props.gridSpan || 3, 6)};
@@ -456,9 +392,6 @@ const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number; active?: bo
   
   @media (max-width: 768px) {
     grid-column: 1 / -1;
-    &::before {
-      display: none;
-    }
   }
 `;
 
@@ -471,7 +404,7 @@ const FunnelArrow = keyframes`
 const StatCardTitle = styled.h3`
   font-size: ${props => props.theme.fontSizes.md};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${COLORS.TEXT.SECONDARY}; /* Dominant color shade (60%) */
   margin: 0 0 16px 0;
   display: flex;
   align-items: center;
@@ -479,7 +412,7 @@ const StatCardTitle = styled.h3`
   position: relative;
   
   svg {
-    color: ${props => props.theme.colors.primary};
+    color: ${COLORS.TEXT.SECONDARY}; /* Dominant color shade (60%) */
   }
 `;
 
@@ -507,20 +440,10 @@ const LedSignalDot = styled.div<{ index: number; active: boolean }>`
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background-color: ${props => 
-    props.index === 0 ? '#2196F3' : // Blue for Reach
-    props.index === 1 ? '#FF7A30' : // Orange for Activities
-    props.index === 2 ? '#673AB7' : // Purple for Engagements
-    '#4CAF50'         // Green for LEDs
-  };
+  background-color: ${COLORS.ACCENT}; // Using accent color for all LEDs
   z-index: 15;
   opacity: ${props => props.active ? 0.8 : 0};
-  box-shadow: 0 0 3px ${props => 
-    props.index === 0 ? 'rgba(33, 150, 243, 0.5)' : // Blue for Reach
-    props.index === 1 ? 'rgba(255, 122, 48, 0.5)' : // Orange for Activities
-    props.index === 2 ? 'rgba(103, 58, 183, 0.5)' : // Purple for Engagements
-    'rgba(76, 175, 80, 0.5)'         // Green for LEDs
-  };
+  box-shadow: 0 0 3px ${withOpacity(COLORS.ACCENT, 0.5)}; // Unified shadow for all LEDs
   transition: all 0.3s ease;
   
   &::before {
@@ -703,10 +626,7 @@ const StatContent = styled.div`
 const StatValue = styled.div`
   font-size: ${props => props.theme.fontSizes['4xl']};
   font-weight: ${props => props.theme.fontWeights.bold};
-  background: ${props => props.theme.colors.gradient.primary};
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: ${props => props.theme.colors.primary}; /* Accent color (10%) for stat values */
   margin-bottom: 8px;
   letter-spacing: -0.5px;
   word-break: break-word;
@@ -721,11 +641,9 @@ const StatGrowth = styled.div<{ positive?: boolean }>`
   align-items: center;
   font-size: ${props => props.theme.fontSizes.xs};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.positive ? props.theme.colors.success : props.theme.colors.error};
-  background-color: ${props => props.positive ? 'rgba(0, 201, 136, 0.1)' : 'rgba(255, 64, 87, 0.1)'};
-  padding: 4px 8px;
-  border-radius: ${props => props.theme.radius.pill};
-  margin-left: 8px;
+  color: ${props => props.positive ? '#4CAF50' : '#e74c3c'};
+  background-color: transparent;
+  padding: 2px 0px;
   margin-top: 4px;
   white-space: nowrap;
   
@@ -735,13 +653,12 @@ const StatGrowth = styled.div<{ positive?: boolean }>`
   }
   
   @media (max-width: 992px) and (min-width: 768px) {
-    padding: 3px 6px;
     font-size: 10px;
   }
 `;
 
 const StatLabel = styled.div`
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.darkGrey}; /* Dominant color dark shade (60%) */
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.theme.fontWeights.medium};
   display: flex;
@@ -761,32 +678,30 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 60px;
-  height: 60px;
-  border-radius: 16px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   background: ${props => props.bgColor};
   color: white;
   font-size: 1.5rem;
-  box-shadow: ${props => props.theme.shadows.md};
+  box-shadow: none;
   position: relative;
   overflow: hidden;
-  animation: ${float} 6s ease-in-out infinite;
-  animation-delay: ${props => props.animationDelay || '0s'};
   
   svg {
     position: relative;
     z-index: 2;
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
   }
   
   @media (max-width: 992px) and (min-width: 768px) {
-    width: 54px;
-    height: 54px;
+    width: 44px;
+    height: 44px;
     
     svg {
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
     }
   }
 `;
@@ -795,7 +710,7 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
 const ChartCard = styled(StatCard)`
   padding: 0;
   overflow: hidden;
-  border-left: 4px solid rgba(103, 58, 183, 0.7); /* Purple left border for all components */
+  border-left: none;
   border-top: none;
   
   @media (max-width: 768px) {
@@ -809,7 +724,7 @@ const ChartHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+  border-bottom: 1px solid ${COLORS.BORDER.DEFAULT};
   
   @media (max-width: 768px) {
     padding: 16px 20px;
@@ -826,14 +741,14 @@ const ChartHeader = styled.div`
 const ChartTitle = styled.h3`
   font-size: ${props => props.theme.fontSizes.lg};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.text};
+  color: ${COLORS.ACCENT};
   margin: 0;
   display: flex;
   align-items: center;
   gap: 10px;
   
   svg {
-    color: ${props => props.theme.colors.primary};
+    color: ${COLORS.DOMINANT_DARK};
   }
 `;
 
@@ -867,10 +782,10 @@ const ChartOptions = styled.div`
 
 const ChartOption = styled.button<{ active: boolean }>`
   padding: 8px 16px;
-  background: ${props => props.active ? props.theme.colors.primary : 'white'};
-  color: ${props => props.active ? 'white' : props.theme.colors.darkGrey};
-  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.lightGrey};
-  border-radius: ${props => props.theme.radius.pill};
+  background: ${props => props.active ? COLORS.ACCENT : COLORS.SECONDARY};
+  color: ${props => props.active ? COLORS.TEXT.ON_DARK : COLORS.TEXT.SECONDARY};
+  border: 1px solid ${props => props.active ? COLORS.ACCENT : withOpacity(COLORS.BORDER.DEFAULT, 0.5)};
+  border-radius: 24px;
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.medium};
   cursor: pointer;
@@ -883,9 +798,9 @@ const ChartOption = styled.button<{ active: boolean }>`
   }
   
   &:hover {
-    border-color: ${props => props.theme.colors.primary};
-    background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.lightGrey}20;
-    color: ${props => props.active ? 'white' : props.theme.colors.primary};
+    border-color: ${COLORS.ACCENT};
+    background: ${props => props.active ? COLORS.ACCENT_LIGHT : withOpacity(COLORS.DOMINANT_LIGHTER, 0.2)};
+    color: ${props => props.active ? COLORS.TEXT.ON_DARK : COLORS.ACCENT};
     transform: translateY(-2px);
   }
 `;
@@ -893,7 +808,7 @@ const ChartOption = styled.button<{ active: boolean }>`
 const ChartTabs = styled.div`
   display: flex;
   gap: 0;
-  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+  border-bottom: 1px solid ${withOpacity(COLORS.BORDER.DEFAULT, 0.2)}; /* Dominant light color com transparência */
   margin-bottom: 16px;
   
   @media (max-width: 480px) {
@@ -906,10 +821,10 @@ const ChartTab = styled.button<{ active: boolean }>`
   padding: 12px 20px;
   background: transparent;
   border: none;
-  border-bottom: 3px solid ${props => props.active ? props.theme.colors.primary : 'transparent'};
+  border-bottom: 2px solid ${props => props.active ? COLORS.ACCENT : 'transparent'};
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.medium};
-  color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.darkGrey};
+  color: ${props => props.active ? COLORS.ACCENT : COLORS.TEXT.SECONDARY};
   cursor: pointer;
   transition: all 0.2s ease;
   
@@ -925,31 +840,31 @@ const ChartTab = styled.button<{ active: boolean }>`
   }
   
   &:hover {
-    color: ${props => props.theme.colors.primary};
+    color: ${COLORS.ACCENT};
   }
 `;
 
 // Keyword insights section
 const KeywordTable = styled.div`
-  background: white;
-  border-radius: ${props => props.theme.radius.lg};
-  box-shadow: ${props => props.theme.shadows.sm};
+  background: ${COLORS.SECONDARY}; /* Secondary color (30%) for content areas */
+  border-radius: 16px;
+  box-shadow: ${COLORS.SHADOW.LIGHT};
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   animation: ${fadeIn} 0.8s ease-out forwards;
   margin-top: 32px;
   width: 100%;
-  /* No top border for Keywords & Insights table */
   position: relative;
+  border: 1px solid ${withOpacity(COLORS.DOMINANT, 0.2)}; /* Subtle border with dominant color (60%) */
   
   @media (max-width: 768px) {
     margin-top: 24px;
-    border-radius: ${props => props.theme.radius.md};
+    border-radius: 12px;
   }
   
   @media (max-width: 480px) {
     margin-top: 20px;
-    border-radius: ${props => props.theme.radius.sm};
+    border-radius: 8px;
   }
 `;
 
@@ -957,11 +872,11 @@ const TableHeader = styled.div`
   display: grid;
   grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 2fr 1.2fr 1.5fr;
   padding: 16px 24px;
-  background: ${props => props.theme.colors.background};
-  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
-  font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.darkGrey};
-  font-size: ${props => props.theme.fontSizes.sm};
+  background: ${COLORS.SECONDARY}; /* Secondary color (30%) for header background */
+  border-bottom: 1px solid ${withOpacity(COLORS.DOMINANT_LIGHT, 0.2)}; /* Dominant light color (60%) with transparency */
+  font-weight: 600;
+  color: ${COLORS.TEXT.SECONDARY}; /* Text secondary color for header */
+  font-size: 14px;
   min-width: 1000px;
   
   @media (max-width: 1200px) {
@@ -970,7 +885,7 @@ const TableHeader = styled.div`
   
   @media (max-width: 768px) {
     padding: 12px 16px;
-    font-size: ${props => props.theme.fontSizes.xs};
+    font-size: 12px;
   }
 `;
 
@@ -978,15 +893,15 @@ const TableRow = styled.div`
   display: grid;
   grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 2fr 1.2fr 1.5fr;
   padding: 16px 24px;
-  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+  border-bottom: 1px solid ${withOpacity(COLORS.DOMINANT_LIGHT, 0.2)};
   align-items: center;
   transition: all 0.2s ease;
   min-width: 1000px;
   
   &:hover {
-    background-color: ${props => props.theme.colors.background};
+    background-color: ${withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)};
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: ${COLORS.SHADOW.LIGHT};
   }
   
   &:last-child {
@@ -1014,20 +929,20 @@ const TableCell = styled.div`
     flex: 1 0 50%;
     &:first-child {
       flex: 1 0 100%;
-      font-weight: ${props => props.theme.fontWeights.semiBold};
+      font-weight: 600;
       margin-bottom: 8px;
     }
   }
 `;
 
 const KeywordCell = styled(TableCell)`
-  font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.text};
+  font-weight: 600;
+  color: ${COLORS.TEXT.ON_LIGHT};
 `;
 
 const NumericCell = styled(TableCell)`
-  font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.darkGrey};
+  font-weight: 600;
+  color: ${COLORS.TEXT.SECONDARY};
 `;
 
 // Video links styling
@@ -1046,8 +961,8 @@ const VideoLinks = styled.div`
 `;
 
 const VideoLink = styled.a`
-  color: ${props => props.theme.colors.primary};
-  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${COLORS.INFO};
+  font-size: 14px;
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -1055,16 +970,17 @@ const VideoLink = styled.a`
   
   &:hover {
     transform: translateX(4px);
-    color: ${props => props.theme.colors.secondary};
+    color: ${COLORS.ACCENT};
   }
   
   svg {
     margin-right: 6px;
     font-size: 0.9rem;
+    color: ${COLORS.INFO};
   }
   
   @media (max-width: 1200px) {
-    font-size: ${props => props.theme.fontSizes.xs};
+    font-size: 12px;
   }
   
   @media (max-width: 768px) {
@@ -1076,14 +992,14 @@ const VideoLink = styled.a`
 
 // Tags styling
 const CategoryTag = styled.span`
-  background: ${props => props.theme.colors.gradient.primary};
-  color: white;
+  background: ${COLORS.GRADIENT.PRIMARY};
+  color: ${COLORS.TEXT.ON_DARK};
   padding: 6px 12px;
-  border-radius: ${props => props.theme.radius.pill};
-  font-size: ${props => props.theme.fontSizes.xs};
-  font-weight: ${props => props.theme.fontWeights.medium};
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
   display: inline-block;
-  box-shadow: ${props => props.theme.shadows.sm};
+  box-shadow: ${COLORS.SHADOW.LIGHT};
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
@@ -1091,7 +1007,7 @@ const CategoryTag = styled.span`
   
   @media (max-width: 1200px) {
     padding: 5px 10px;
-    font-size: calc(${props => props.theme.fontSizes.xs} - 1px);
+    font-size: 11px;
   }
   
   @media (max-width: 768px) {
@@ -1101,12 +1017,12 @@ const CategoryTag = styled.span`
 `;
 
 const AudienceTag = styled.span`
-  background-color: ${props => props.theme.colors.lightGrey};
-  color: ${props => props.theme.colors.darkGrey};
+  background-color: ${withOpacity(COLORS.DOMINANT_LIGHT, 0.7)};
+  color: ${COLORS.TEXT.ON_LIGHT};
   padding: 4px 10px;
-  border-radius: ${props => props.theme.radius.pill};
-  font-size: ${props => props.theme.fontSizes.xs};
-  font-weight: ${props => props.theme.fontWeights.medium};
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
@@ -1114,7 +1030,7 @@ const AudienceTag = styled.span`
   
   @media (max-width: 1200px) {
     padding: 3px 8px;
-    font-size: calc(${props => props.theme.fontSizes.xs} - 1px);
+    font-size: 11px;
   }
   
   @media (max-width: 768px) {
@@ -2806,7 +2722,7 @@ const Overview: React.FC = () => {
       title: 'Posts',
       value: statsData.reach.value,
       icon: 'FaFileAlt',
-      color: 'linear-gradient(135deg, #2196F3 0%, #03A9F4 100%)',
+      color: `linear-gradient(135deg, ${COLORS.ACCENT} 0%, ${COLORS.ACCENT_LIGHT} 100%)`,
       description: 'Videos',
       trend: statsData.reach.trend
     },
@@ -2815,7 +2731,7 @@ const Overview: React.FC = () => {
       title: 'Comments',
       value: statsData.activities.value,
       icon: 'FaComments',
-      color: 'linear-gradient(135deg, #FF7A30 0%, #FFA07A 100%)',
+      color: `linear-gradient(135deg, ${COLORS.ACCENT} 0%, ${COLORS.ACCENT_LIGHT} 100%)`,
       description: 'Comments',
       trend: statsData.activities.trend
     },
@@ -2824,7 +2740,7 @@ const Overview: React.FC = () => {
       title: 'Total Engagements',
       value: statsData.engagements.value,
       icon: 'FaStar',
-      color: 'linear-gradient(135deg, #673AB7 0%, #9575CD 100%)',
+      color: `linear-gradient(135deg, ${COLORS.ACCENT} 0%, ${COLORS.ACCENT_LIGHT} 100%)`,
       description: 'Total engagements',
       trend: statsData.engagements.trend
     },
@@ -2833,7 +2749,7 @@ const Overview: React.FC = () => {
       title: 'LEDs',
       value: statsData.leads.value,
       icon: 'FaUserCheck',
-      color: 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)',
+      color: `linear-gradient(135deg, ${COLORS.ACCENT} 0%, ${COLORS.ACCENT_LIGHT} 100%)`,
       description: 'LED mentions',
       trend: statsData.leads.trend
     }
@@ -2930,12 +2846,6 @@ const Overview: React.FC = () => {
                 </StatValue>
                 <StatLabel>
                   {stat.description}
-                  {stat.trend && (
-                    <StatGrowth positive={stat.trend.positive}>
-                      <IconComponent icon={stat.trend.positive ? FaIcons.FaArrowUp : FaIcons.FaArrowDown} />
-                      {stat.trend.value}
-                    </StatGrowth>
-                  )}
                 </StatLabel>
               </StatContent>
               <StatIconContainer>
@@ -2962,7 +2872,7 @@ const Overview: React.FC = () => {
         
         <StatCard 
           gridSpan={6}
-          style={{ borderLeft: '4px solid rgba(103, 58, 183, 0.7)', borderTop: 'none' }} /* Purple left border */
+          style={{ borderTop: 'none' }}
         >
           <StatCardTitle>
             <IconComponent icon={FaIcons.FaChartPie} />
@@ -2970,7 +2880,7 @@ const Overview: React.FC = () => {
               fontSize: '15px', 
               fontWeight: 'normal', 
               marginLeft: '8px',
-              color: '#666',
+              color: COLORS.TEXT.SECONDARY,
               opacity: 0.9
             }}>
               Top Channels
@@ -2995,14 +2905,14 @@ const Overview: React.FC = () => {
                     <Cell 
                       key={`cell-${index}`} 
                       fill={
-                        index === 0 ? "#D32F2F" : // Vermelho escuro
-                        index === 1 ? "#388E3C" : // Verde escuro
-                        index === 2 ? "#1976D2" : // Azul escuro
-                        index === 3 ? "#FBC02D" : // Amarelo escuro
-                        index === 4 ? "#C2185B" : // Rosa escuro
-                        index === 5 ? "#0097A7" : // Ciano escuro
-                        index === 6 ? "#E64A19" : // Laranja escuro
-                        `hsl(${index * 45}, 70%, 35%)`  // Fallback mais escuro
+                        index === 0 ? COLORS.ACCENT : 
+                        index === 1 ? COLORS.ACCENT_LIGHT : 
+                        index === 2 ? COLORS.ACCENT_LIGHTER : 
+                        index === 3 ? withOpacity(COLORS.ACCENT, 0.7) : 
+                        index === 4 ? withOpacity(COLORS.ACCENT, 0.6) : 
+                        index === 5 ? withOpacity(COLORS.ACCENT, 0.5) : 
+                        index === 6 ? withOpacity(COLORS.ACCENT, 0.4) : 
+                        withOpacity(COLORS.ACCENT, 0.3 - (index * 0.05))
                       }
                     />
                   ))}
@@ -3010,10 +2920,10 @@ const Overview: React.FC = () => {
                 <Tooltip 
                   formatter={(value) => [`${value}%`, 'Percentage']}
                   contentStyle={{
-                    background: 'rgba(255, 255, 255, 0.95)',
+                    background: withOpacity(COLORS.SECONDARY, 0.95),
                     border: 'none',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                    boxShadow: COLORS.SHADOW.MEDIUM
                   }}
                 />
               </PieChart>
@@ -3023,7 +2933,7 @@ const Overview: React.FC = () => {
         
         <StatCard 
           gridSpan={6}
-          style={{ borderLeft: '4px solid rgba(103, 58, 183, 0.7)', borderTop: 'none' }} /* Purple left border */
+          style={{ borderTop: 'none' }}
         >
           <StatCardTitle>
             <IconComponent icon={FaIcons.FaChartBar} />
@@ -3032,20 +2942,20 @@ const Overview: React.FC = () => {
           <ChartContainer style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyPerformanceData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} />
                 <YAxis axisLine={false} tickLine={false} />
                 <Tooltip
                   contentStyle={{
-                    background: 'rgba(255, 255, 255, 0.95)',
+                    background: withOpacity(COLORS.SECONDARY, 0.95),
                     border: 'none',
                     borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                    boxShadow: COLORS.SHADOW.MEDIUM
                   }}
                 />
                 <Legend />
-                <Bar dataKey="videos" name="Videos" fill="#673AB7" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="engagement" name="Engagement" fill="#FF9800" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="videos" name="Videos" fill="#2196F3" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="engagement" name="Engagement" fill="#FF7A30" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="leads" name="Leads" fill="#4CAF50" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -3110,27 +3020,27 @@ const Overview: React.FC = () => {
                 <AreaChart data={performanceData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorVideos" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#673AB7" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#673AB7" stopOpacity={0.2}/>
+                      <stop offset="5%" stopColor="#2196F3" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#2196F3" stopOpacity={0.2}/>
                     </linearGradient>
                     <linearGradient id="colorEngagement" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#FF9800" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#FF9800" stopOpacity={0.2}/>
+                      <stop offset="5%" stopColor="#FF7A30" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#FF7A30" stopOpacity={0.2}/>
                     </linearGradient>
                     <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.8}/>
                       <stop offset="95%" stopColor="#4CAF50" stopOpacity={0.2}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} />
                   <YAxis axisLine={false} tickLine={false} />
                   <Tooltip 
                     contentStyle={{ 
-                      background: 'rgba(255, 255, 255, 0.95)', 
+                      background: withOpacity(COLORS.SECONDARY, 0.95), 
                       border: 'none',
                       borderRadius: '8px',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                      boxShadow: COLORS.SHADOW.MEDIUM
                     }} 
                   />
                   <Legend />
@@ -3138,21 +3048,21 @@ const Overview: React.FC = () => {
                     type="monotone" 
                     dataKey="videos" 
                     name="Videos"
-                    stroke="#673AB7" 
+                    stroke="#2196F3" 
                     strokeWidth={2}
                     fillOpacity={1} 
                     fill="url(#colorVideos)" 
-                    activeDot={{ r: 8, strokeWidth: 0, fill: "#673AB7" }}
+                    activeDot={{ r: 8, strokeWidth: 0, fill: "#2196F3" }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="engagement" 
                     name="Engagement"
-                    stroke="#FF9800" 
+                    stroke="#FF7A30" 
                     strokeWidth={2}
                     fillOpacity={1} 
                     fill="url(#colorEngagement)" 
-                    activeDot={{ r: 6, strokeWidth: 0 }}
+                    activeDot={{ r: 6, strokeWidth: 0, fill: "#FF7A30" }}
                   />
                   <Area 
                     type="monotone" 
@@ -3162,20 +3072,20 @@ const Overview: React.FC = () => {
                     strokeWidth={2}
                     fillOpacity={1} 
                     fill="url(#colorLeads)" 
-                    activeDot={{ r: 6, strokeWidth: 0 }}
+                    activeDot={{ r: 6, strokeWidth: 0, fill: "#4CAF50" }}
                   />
                 </AreaChart>
               ) : chartType === 'line' ? (
                 <LineChart data={performanceData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} />
                   <YAxis axisLine={false} tickLine={false} />
                   <Tooltip 
                     contentStyle={{ 
-                      background: 'rgba(255, 255, 255, 0.95)', 
+                      background: withOpacity(COLORS.SECONDARY, 0.95), 
                       border: 'none',
                       borderRadius: '8px',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                      boxShadow: COLORS.SHADOW.MEDIUM
                     }} 
                   />
                   <Legend />
@@ -3183,19 +3093,19 @@ const Overview: React.FC = () => {
                     type="monotone" 
                     dataKey="videos" 
                     name="Videos"
-                    stroke="#673AB7" 
+                    stroke="#2196F3" 
                     strokeWidth={3}
-                    dot={{ r: 4, strokeWidth: 0, fill: "#673AB7" }}
-                    activeDot={{ r: 8, strokeWidth: 0, fill: "#673AB7" }}
+                    dot={{ r: 4, strokeWidth: 0, fill: "#2196F3" }}
+                    activeDot={{ r: 8, strokeWidth: 0, fill: "#2196F3" }}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="engagement" 
                     name="Engagement"
-                    stroke="#FF9800" 
+                    stroke="#FF7A30" 
                     strokeWidth={3}
-                    dot={{ r: 4, strokeWidth: 0, fill: "#FF9800" }}
-                    activeDot={{ r: 6, strokeWidth: 0, fill: "#FF9800" }}
+                    dot={{ r: 4, strokeWidth: 0, fill: "#FF7A30" }}
+                    activeDot={{ r: 6, strokeWidth: 0, fill: "#FF7A30" }}
                   />
                   <Line 
                     type="monotone" 
@@ -3209,20 +3119,20 @@ const Overview: React.FC = () => {
                 </LineChart>
               ) : (
                 <BarChart data={performanceData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} />
                   <YAxis axisLine={false} tickLine={false} />
                   <Tooltip 
                     contentStyle={{ 
-                      background: 'rgba(255, 255, 255, 0.95)', 
+                      background: withOpacity(COLORS.SECONDARY, 0.95), 
                       border: 'none',
                       borderRadius: '8px',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                      boxShadow: COLORS.SHADOW.MEDIUM
                     }} 
                   />
                   <Legend />
-                  <Bar dataKey="videos" name="Videos" fill="#673AB7" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="engagement" name="Engagement" fill="#FF9800" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="videos" name="Videos" fill="#2196F3" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="engagement" name="Engagement" fill="#FF7A30" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="leads" name="Leads" fill="#4CAF50" radius={[4, 4, 0, 0]} />
                 </BarChart>
               )}
@@ -3247,43 +3157,11 @@ const Overview: React.FC = () => {
           alignItems: 'center',
           gap: '12px',
           fontSize: '22px',
-          color: '#2d2d2d'
+          color: COLORS.TEXT.ON_LIGHT
         }}>
-          <IconComponent icon={FaIcons.FaHashtag} style={{ color: '#6b46c1' }} />
+          <IconComponent icon={FaIcons.FaHashtag} style={{ color: COLORS.INFO }} />
           <span style={{ fontWeight: 600 }}>Keywords & Insights</span>
         </ContentTitle>
-        <SearchBar>
-          <SearchInput style={{
-            height: '46px',
-            borderRadius: '14px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-          }}>
-            <SearchIcon>
-              <IconComponent icon={FaIcons.FaSearch} />
-            </SearchIcon>
-            <Input 
-              type="text" 
-              placeholder="Search keywords..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                fontSize: '15px'
-              }}
-            />
-          </SearchInput>
-          <Button variant="ghost" style={{
-            height: '46px',
-            background: '#f8f8f8',
-            borderRadius: '14px',
-            padding: '0 20px',
-            marginLeft: '12px',
-            fontWeight: 500,
-            color: '#555'
-          }}>
-            <IconComponent icon={FaIcons.FaFilter} style={{ marginRight: '8px' }} />
-            <span className="filter-text">Filter</span>
-          </Button>
-        </SearchBar>
       </ContentHeader>
       
       {/* Spacing is now handled by the marginBottom in ContentHeader */}
@@ -3399,8 +3277,7 @@ const Overview: React.FC = () => {
                 fullWidth 
                 style={{ 
                   marginBottom: '0',
-                  /* No top border for Keywords cards */
-                  borderLeft: `4px solid rgba(103, 58, 183, 0.7)`, /* Purple for all components */
+                  /* No borders for Keywords cards */
                   transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                   height: '100%'
                 }}
@@ -3411,7 +3288,7 @@ const Overview: React.FC = () => {
                     fontSize: '18px', 
                     margin: '0 0 12px 0', 
                     fontWeight: 600,
-                    color: '#2d2d2d',
+                    color: COLORS.TEXT.ON_LIGHT,
                   }}>
                     {keyword.keyword}
                   </h3>
@@ -3424,13 +3301,13 @@ const Overview: React.FC = () => {
                   }}>
                     <span style={{ 
                       fontSize: '13px', 
-                      color: '#666', 
+                      color: COLORS.TEXT.SECONDARY, 
                       display: 'flex', 
                       alignItems: 'center' 
                     }}>
                       Sentiment: 
                       <span style={{ 
-                        color: keyword.sentiment > 65 ? '#4caf50' : keyword.sentiment > 35 ? '#ff9800' : '#f44336',
+                        color: keyword.sentiment > 65 ? COLORS.SUCCESS : keyword.sentiment > 35 ? COLORS.WARNING : COLORS.ERROR,
                         fontWeight: 'bold',
                         marginLeft: '4px'
                       }}>
@@ -3455,31 +3332,31 @@ const Overview: React.FC = () => {
                       <div style={{ 
                         fontSize: '20px', 
                         fontWeight: 'bold',
-                        color: '#4a6cf7'
+                        color: COLORS.INFO
                       }}>
                         {keyword.views.toLocaleString()}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#555' }}>Views</div>
+                      <div style={{ fontSize: '12px', color: COLORS.TEXT.SECONDARY }}>Views</div>
                     </div>
                     <div style={{ textAlign: 'center' }}>
                       <div style={{ 
                         fontSize: '20px', 
                         fontWeight: 'bold',
-                        color: '#4a6cf7'
+                        color: COLORS.INFO
                       }}>
                         {keyword.videos}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#555' }}>Videos</div>
+                      <div style={{ fontSize: '12px', color: COLORS.TEXT.SECONDARY }}>Videos</div>
                     </div>
                     <div style={{ textAlign: 'center' }}>
                       <div style={{ 
                         fontSize: '20px', 
                         fontWeight: 'bold',
-                        color: '#4a6cf7'
+                        color: COLORS.INFO
                       }}>
                         {keyword.likes}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#555' }}>Likes</div>
+                      <div style={{ fontSize: '12px', color: COLORS.TEXT.SECONDARY }}>Likes</div>
                     </div>
                   </div>
                   
@@ -3491,7 +3368,7 @@ const Overview: React.FC = () => {
                       fontSize: '13px',
                       margin: '0 0 6px 0',
                       fontWeight: 500,
-                      color: '#555'
+                      color: COLORS.TEXT.SECONDARY
                     }}>
                       Top Videos:
                     </p>
@@ -3501,7 +3378,7 @@ const Overview: React.FC = () => {
                           padding: '4px 0',
                           fontSize: '12px'
                         }}>
-                          <IconComponent icon={FaIcons.FaPlayCircle} style={{ color: '#4a6cf7' }} />
+                          <IconComponent icon={FaIcons.FaPlayCircle} style={{ color: COLORS.INFO }} />
                           {video}
                         </VideoLink>
                       ))}
