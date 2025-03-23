@@ -918,23 +918,23 @@ const DetailPopupOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(45, 62, 80, 0.85); /* Using accent color with opacity */
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: ${props => props.theme.zIndices.modal};
   backdrop-filter: blur(5px);
 `;
 
 const DetailPopupContent = styled.div`
-  background: white;
-  border-radius: 12px;
+  background: ${props => props.theme.colors.white};
+  border-radius: ${props => props.theme.radius.lg};
   padding: 30px;
   width: 80%;
   max-width: 900px;
   max-height: none;
   overflow-y: visible;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: ${props => props.theme.shadows.xl};
   position: relative;
   
   /* Design moderno com borda gradiente */
@@ -950,7 +950,7 @@ const DetailPopupContent = styled.div`
     bottom: -2px;
     background: ${props => props.theme.colors.gradient.primary};
     z-index: -1;
-    border-radius: 14px;
+    border-radius: ${props => props.theme.radius.xl};
     opacity: 0.5;
   }
 `;
@@ -997,9 +997,9 @@ const DetailPopupVideoSection = styled.div`
 const DetailPopupThumbnail = styled.div`
   width: 300px;
   height: 170px;
-  border-radius: 10px;
+  border-radius: ${props => props.theme.radius.md};
   overflow: hidden;
-  box-shadow: ${COLORS.SHADOW.MEDIUM};
+  box-shadow: ${props => props.theme.shadows.md};
   
   img {
     width: 100%;
@@ -1020,10 +1020,10 @@ const DetailPopupVideoInfo = styled.div`
 `;
 
 const DetailPopupVideoTitle = styled.h3`
-  font-size: 18px;
+  font-size: ${props => props.theme.fontSizes.lg};
   margin-bottom: 10px;
-  color: ${COLORS.TEXT.ON_LIGHT};
-  font-weight: 600;
+  color: ${props => props.theme.colors.text};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
 `;
 
 const DetailPopupGrid = styled.div`
@@ -1041,10 +1041,10 @@ const DetailPopupSection = styled.div`
 `;
 
 const DetailPopupSectionTitle = styled.h4`
-  font-size: 16px;
+  font-size: ${props => props.theme.fontSizes.md};
   margin-bottom: 10px;
-  color: ${COLORS.ACCENT};
-  font-weight: 600;
+  color: ${props => props.theme.colors.primary};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
   display: flex;
   align-items: center;
   
@@ -1054,31 +1054,33 @@ const DetailPopupSectionTitle = styled.h4`
 `;
 
 const DetailPopupComment = styled.div`
-  background: ${COLORS.DOMINANT_LIGHTER};
-  border-radius: 10px;
+  background: rgba(45, 62, 80, 0.03);
+  border-radius: ${props => props.theme.radius.md};
   padding: 20px;
-  box-shadow: ${COLORS.SHADOW.LIGHT};
+  box-shadow: ${props => props.theme.shadows.sm};
   margin-bottom: 20px;
+  border: 1px solid rgba(45, 62, 80, 0.08);
 `;
 
 const DetailPopupResponse = styled.div`
-  background: ${withOpacity(COLORS.INFO_LIGHT, 0.5)};
-  border-radius: 10px;
+  background: rgba(45, 62, 80, 0.05);
+  border-radius: ${props => props.theme.radius.md};
   padding: 20px;
-  box-shadow: ${COLORS.SHADOW.LIGHT};
+  box-shadow: ${props => props.theme.shadows.sm};
+  border: 1px solid rgba(45, 62, 80, 0.1);
 `;
 
 const FavoriteIndicator = styled.div<{ isFavorite: boolean }>`
   position: absolute;
   top: 30px;
   right: 80px;
-  color: ${props => props.isFavorite ? COLORS.ERROR : COLORS.DOMINANT_DARK};
+  color: ${props => props.isFavorite ? props.theme.colors.error : props.theme.colors.darkGrey};
   font-size: 24px;
 `;
 
 const ResponseDate = styled.div`
   font-size: ${props => props.theme.fontSizes.xs};
-  color: ${COLORS.TEXT.SECONDARY};
+  color: ${props => props.theme.colors.darkGrey};
   margin-top: auto;
   display: flex;
   align-items: center;
@@ -1090,7 +1092,7 @@ const ResponseDate = styled.div`
 `;
 
 const SeeMoreLink = styled.a`
-  color: ${COLORS.ACCENT};
+  color: ${props => props.theme.colors.primary};
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.theme.fontWeights.medium};
   cursor: pointer;
@@ -2310,7 +2312,7 @@ const Mentions: React.FC = () => {
                 <div style={{ marginTop: 'auto' }}>
                   <button 
                     style={{ 
-                      background: '#f0f0f5',
+                      background: `${COLORS.ACCENT}`,
                       border: 'none',
                       padding: '8px 16px',
                       borderRadius: '20px',
@@ -2318,7 +2320,9 @@ const Mentions: React.FC = () => {
                       alignItems: 'center',
                       gap: '8px',
                       cursor: 'pointer',
-                      marginTop: '15px'
+                      marginTop: '15px',
+                      color: 'white',
+                      boxShadow: '0 4px 8px rgba(45, 62, 80, 0.3)'
                     }}
                     onClick={() => window.open(`https://www.youtube.com/watch?v=${selectedMention.video.youtube_id}`, '_blank')}
                   >
@@ -2347,11 +2351,12 @@ const Mentions: React.FC = () => {
                 
                 <div style={{ 
                   margin: '15px 0',
-                  background: '#f8f8f8',
+                  background: 'rgba(45, 62, 80, 0.05)',
                   padding: '15px',
                   borderRadius: '8px',
                   display: 'flex',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  border: '1px solid rgba(45, 62, 80, 0.1)'
                 }}>
                   <ScoreCardContainer style={{ width: '140px' }}>
                     <ScoreLabel>
@@ -2383,12 +2388,13 @@ const Mentions: React.FC = () => {
                   <div style={{ 
                     display: 'inline-block',
                     padding: '4px 10px',
-                    background: selectedMention.response.status === 'posted' ? '#e8f5e9' : '#fff8e1',
-                    color: selectedMention.response.status === 'posted' ? '#43a047' : '#ff8f00',
+                    background: selectedMention.response.status === 'posted' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 170, 21, 0.1)',
+                    color: selectedMention.response.status === 'posted' ? COLORS.SUCCESS : COLORS.WARNING,
                     borderRadius: '4px',
                     fontSize: '12px',
                     fontWeight: 'bold',
-                    marginBottom: '10px'
+                    marginBottom: '10px',
+                    border: `1px solid ${selectedMention.response.status === 'posted' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 170, 21, 0.2)'}`
                   }}>
                     <IconComponent icon={selectedMention.response.status === 'posted' ? FaIcons.FaCheck : FaIcons.FaClock} />
                     {' '}
@@ -2407,7 +2413,7 @@ const Mentions: React.FC = () => {
                 <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
                   <button 
                     style={{ 
-                      background: `linear-gradient(135deg, #6b46c1 0%, #9579e0 100%)`,
+                      background: `${COLORS.GRADIENT.PRIMARY}`,
                       border: 'none',
                       padding: '10px 20px',
                       borderRadius: '8px',
@@ -2417,7 +2423,7 @@ const Mentions: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      boxShadow: '0 2px 10px rgba(107, 70, 193, 0.2)'
+                      boxShadow: '0 4px 12px rgba(45, 62, 80, 0.3)'
                     }}
                     onClick={() => {
                       setSelectedMention(null);
