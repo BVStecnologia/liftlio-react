@@ -20,9 +20,9 @@ const HeaderContainer = styled.header`
   justify-content: space-between;
   align-items: center;
   padding: 12px 24px;
-  background-color: ${props => props.theme.colors.white};
+  background-color: ${props => props.theme.colors.secondary}; /* Branco (30%) */
   box-shadow: ${props => props.theme.shadows.sm};
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid ${props => props.theme.colors.tertiary}; /* Cinza médio (60%) */
   position: sticky;
   top: 0;
   z-index: 900; /* High but lower than sidebar (1000) */
@@ -38,13 +38,13 @@ const HeaderContainer = styled.header`
 const ProjectSelector = styled.div`
   display: flex;
   align-items: center;
-  background: linear-gradient(135deg, #2D1D42, #3b2659);
+  background: #2d3e50; /* Azul naval escuro (10%) */
   color: white;
   padding: 10px 18px;
   border-radius: 8px; /* Menos arredondado */
   cursor: pointer;
   font-weight: ${props => props.theme.fontWeights.medium};
-  box-shadow: 0 4px 15px rgba(35, 16, 54, 0.3), 
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 
               inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   transition: all 0.35s cubic-bezier(0.17, 0.67, 0.29, 0.96);
   position: relative;
@@ -115,10 +115,10 @@ const ProjectSelector = styled.div`
   
   &:hover {
     transform: translateY(-2px) scale(1.01);
-    background: linear-gradient(135deg, #341f4c, #432e65);
-    box-shadow: 0 7px 20px rgba(35, 16, 54, 0.4), 
+    background: #34495e; /* Azul escuro naval mais claro */
+    box-shadow: 0 7px 20px rgba(0, 0, 0, 0.4), 
                 inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-                0 0 15px rgba(131, 58, 244, 0.2);
+                0 0 15px rgba(45, 62, 80, 0.3);
     
     &::after {
       animation-duration: 3.8s;
@@ -616,7 +616,7 @@ const AddProjectButton = styled.button`
   padding: 8px 14px;
   border-radius: ${props => props.theme.radius.md};
   border: none;
-  background: rgba(131, 58, 244, 0.15);
+  background: #2d3e50; /* Azul naval escuro (10%) */
   color: white;
   font-weight: ${props => props.theme.fontWeights.medium};
   font-size: ${props => props.theme.fontSizes.sm};
@@ -628,9 +628,9 @@ const AddProjectButton = styled.button`
   isolation: isolate;
   backdrop-filter: blur(4px);
   text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-  box-shadow: 0 3px 10px rgba(35, 16, 54, 0.25),
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25),
               inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-              0 0 0 0 rgba(131, 58, 244, 0.3);
+              0 0 0 0 rgba(45, 62, 80, 0.3);
   
   /* Subtle inner gradient */
   &::before {

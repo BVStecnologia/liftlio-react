@@ -1,43 +1,57 @@
 // Base theme object with shared properties
 const baseTheme = {
   colors: {
-    primary: '#2D1D42', // Dark purple (from sidebar)
-    secondary: '#673AB7', // Medium purple
-    tertiary: '#8561C5', // Light purple
-    accent: '#9575CD', // Lavender accent
-    background: '#f7f7f9', // Light background from reference
+    // PALETA DE CORES PRINCIPAL
+    primary: '#2d3e50',     // Azul escuro naval (accent) - 10%
+    secondary: '#ffffff',   // Branco - 30%
+    tertiary: '#a5b1b7',    // Cinza médio (dominant) - 60%
+    
+    // Cores derivadas para animações e estados
+    primaryLight: '#34495e', // accentLight
+    primaryDark: '#243444',  // accentDark
+    tertiaryLight: '#c9d1d6', // dominantLight
+    tertiaryDark: '#8a969c',  // dominantDark
+    
+    // Cores de background e texto
+    background: '#a5b1b7',   // dominant como background principal
     white: '#ffffff',
-    lightGrey: '#e9ecef',
-    grey: '#ced4da',
-    darkGrey: '#6c757d',
-    text: '#1a1f36', // Darker for better contrast
-    success: '#00C781', // Green from reference
-    successLight: '#E7F7EF', // Light green for backgrounds
-    warning: '#FFAA15', // Orange from reference
-    warningLight: '#FFF5E5', // Light orange for backgrounds
-    error: '#FF4040',   // Red from reference
-    errorLight: '#FFEBEB', // Light red for backgrounds
-    info: '#00A9DB',    // Blue from reference
-    infoLight: '#E5F6FB', // Light blue for backgrounds
+    lightGrey: '#c9d1d6',    // dominantLight
+    grey: '#a5b1b7',         // dominant
+    darkGrey: '#8a969c',     // dominantDark
+    text: '#2d3e50',        // accent para texto
+    
+    // Cores semânticas
+    success: '#4CAF50',     // Verde para métricas positivas
+    successLight: '#E7F7EF', 
+    warning: '#FFAA15',     // Laranja para avisos
+    warningLight: '#FFF5E5',
+    error: '#e74c3c',       // Vermelho para métricas negativas
+    errorLight: '#FFEBEB',
+    info: '#00A9DB',
+    infoLight: '#E5F6FB',
+    
     sentiment: {
-      positive: '#00C781',
-      neutral: '#FFAA15',
-      negative: '#FF4040'
+      positive: '#4CAF50',  // Verde para sentimento positivo
+      neutral: '#a5b1b7',   // Cinza (dominant) para neutro
+      negative: '#e74c3c'   // Vermelho para negativo
     },
+    
     gradient: {
-      primary: 'linear-gradient(135deg, #2D1D42 0%, #673AB7 100%)',
-      secondary: 'linear-gradient(135deg, #673AB7 0%, #9575CD 100%)',
-      accent: 'linear-gradient(135deg, #673AB7 0%, #8561C5 100%)',
-      success: 'linear-gradient(135deg, #00C781 0%, #82ffc9 100%)',
+      primary: 'linear-gradient(135deg, #243444 0%, #2d3e50 100%)',
+      secondary: 'linear-gradient(135deg, #8a969c 0%, #a5b1b7 100%)',
+      accent: 'linear-gradient(135deg, #2d3e50 0%, #34495e 100%)',
+      success: 'linear-gradient(135deg, #4CAF50 0%, #81c784 100%)',
       warning: 'linear-gradient(135deg, #FFAA15 0%, #ffd67e 100%)',
-      error: 'linear-gradient(135deg, #FF4040 0%, #ff9b9b 100%)',
+      error: 'linear-gradient(135deg, #e74c3c 0%, #e57373 100%)',
       info: 'linear-gradient(135deg, #00A9DB 0%, #85DEFF 100%)',
       glass: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.3) 100%)',
-      dark: 'linear-gradient(135deg, rgba(26, 31, 54, 0.95) 0%, rgba(26, 31, 54, 0.6) 100%)',
+      dark: 'linear-gradient(135deg, rgba(45, 62, 80, 0.95) 0%, rgba(45, 62, 80, 0.6) 100%)',
+      hoverOverlay: 'rgba(255, 255, 255, 0.1)'
     },
+    
     chart: [
-      '#673AB7', '#9575CD', '#8561C5', '#7986CB', 
-      '#00C781', '#FFAA15', '#FF4040', '#00A9DB'
+      '#2d3e50', '#a5b1b7', '#ffffff', '#34495e', 
+      '#4CAF50', '#e74c3c', '#FFAA15', '#00A9DB'
     ]
   },
   shadows: {
@@ -105,32 +119,33 @@ const baseTheme = {
   }
 };
 
-// Light theme - using the base theme
+// Light theme - usando o tema base
 export const lightTheme = {
   ...baseTheme,
   colors: {
     ...baseTheme.colors,
-    background: '#f7f7f9',
-    white: '#ffffff',
-    text: '#1a1f36',
-    lightGrey: '#e9ecef',
-    grey: '#ced4da',
-    darkGrey: '#6c757d',
+    // Mantém as cores da nova paleta
+    background: '#a5b1b7',    // Cinza médio (dominant)
+    white: '#ffffff',         // Branco
+    text: '#2d3e50',          // Azul escuro naval (accent)
+    lightGrey: '#c9d1d6',     // dominantLight
+    grey: '#a5b1b7',          // dominant
+    darkGrey: '#8a969c',      // dominantDark
   }
 };
 
-// Dark theme - custom dark version
+// Dark theme - versão escura personalizada
 export const darkTheme = {
   ...baseTheme,
   colors: {
     ...baseTheme.colors,
-    primary: '#351F4A',       // Slightly lighter dark purple for dark mode
-    background: '#1a1f36',    // Dark background
-    white: '#121212',         // Almost black
-    text: '#f7f7f9',          // Light text
-    lightGrey: '#2d3748',     // Darker grey
-    grey: '#4a5568',          // Mid dark grey
-    darkGrey: '#a0aec0',      // Lighter grey for dark mode
+    primary: '#34495e',       // Versão mais clara do azul escuro naval (accentLight)
+    background: '#243444',    // Versão escura do azul naval (accentDark)
+    white: '#2d3e50',         // Azul escuro naval (accent)
+    text: '#ffffff',          // Texto branco
+    lightGrey: '#34495e',     // accentLight
+    grey: '#2d3e50',          // accent
+    darkGrey: '#a5b1b7',      // dominant (cinza) para contraste no dark mode
   }
 };
 

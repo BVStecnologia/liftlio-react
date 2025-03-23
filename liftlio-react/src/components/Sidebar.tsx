@@ -21,8 +21,8 @@ const slideIn = keyframes`
 const SidebarContainer = styled.aside<{ isOpen: boolean }>`
   width: 240px;
   height: 100%;
-  background: linear-gradient(160deg, #2D1D42, #231536); /* Dark purple gradient */
-  color: #fff;
+  background: ${props => props.theme.colors.primary}; /* Azul naval escuro (10%) */
+  color: ${props => props.theme.colors.secondary}; /* White (30%) */
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -384,8 +384,8 @@ const PremiumBadge = styled.div`
     height: 200%;
     background: radial-gradient(
       circle at center,
-      rgba(138, 84, 255, 0.15) 0%,
-      rgba(79, 172, 254, 0.05) 30%,
+      rgba(45, 62, 80, 0.3) 0%,
+      rgba(45, 62, 80, 0.1) 30%,
       transparent 70%
     );
     opacity: 0.8;
@@ -519,7 +519,7 @@ const PremiumFeature = styled.div`
 const UpgradeButton = styled.div`
   padding: 14px 0;
   margin-top: 0;
-  background: linear-gradient(135deg, #8a54ff 0%, #4facfe 100%);
+  background: #2d3e50; /* Cor de destaque - Azul naval escuro */
   color: white;
   font-weight: 700;
   text-align: center;
@@ -529,8 +529,8 @@ const UpgradeButton = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 15px rgba(79, 172, 254, 0.3), 
-              0 0 15px rgba(138, 84, 255, 0.2) inset;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3), 
+              0 0 15px rgba(255, 255, 255, 0.05) inset;
   position: relative;
   overflow: hidden;
   letter-spacing: 0.5px;

@@ -25,8 +25,8 @@ const GlobalStyle = createGlobalStyle`
 
   body {
     font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
-    background-color: #f5f7f9;
-    color: #2c3e50;
+    background-color: ${props => props.theme.colors.background};
+    color: ${props => props.theme.colors.text};
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
@@ -64,7 +64,7 @@ const GlobalStyle = createGlobalStyle`
   
   /* For better accessibility */
   :focus-visible {
-    outline: 2px solid #673AB7;
+    outline: 2px solid ${props => props.theme.colors.primary};
     outline-offset: 2px;
   }
   
@@ -75,17 +75,17 @@ const GlobalStyle = createGlobalStyle`
   }
   
   ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: ${props => props.theme.colors.tertiaryLight};
     border-radius: 8px;
   }
   
   ::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: ${props => props.theme.colors.tertiary};
     border-radius: 8px;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: #a1a1a1;
+    background: ${props => props.theme.colors.tertiaryDark};
   }
   
   @media (max-width: 768px) {

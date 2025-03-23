@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import styled, { ThemeProvider, keyframes } from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import GlobalStyle from './styles/GlobalStyle';
-import { theme } from './styles/theme';
+import { ThemeProvider } from './context/ThemeContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Overview from './pages/Overview';
@@ -36,7 +36,7 @@ const AppContainer = styled.div`
 const MainContent = styled.main`
   flex: 1;
   overflow-y: auto;
-  background-color: ${props => props.theme.colors.background};
+  background-color: ${props => props.theme.colors.background}; /* Cinza médio (60%) */
   width: 100%;
 `;
 
@@ -59,10 +59,10 @@ const FloatingMenuButton = styled.button`
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2D1D42, #3b2659);
-  color: white;
+  background: linear-gradient(135deg, ${props => props.theme.colors.primaryDark}, ${props => props.theme.colors.primary});
+  color: ${props => props.theme.colors.secondary};
   border: none;
-  box-shadow: 0 4px 15px rgba(35, 16, 54, 0.3), 
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 
               inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   position: fixed;
   bottom: 20px;
@@ -106,8 +106,8 @@ const FloatingMenuButton = styled.button`
     );
     transform: rotate(20deg);
     z-index: 2;
-    box-shadow: 0 0 20px rgba(202, 125, 255, 0.7),
-                0 0 40px rgba(202, 125, 255, 0.25);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.7),
+                0 0 40px rgba(255, 255, 255, 0.25);
     filter: blur(0.3px);
     opacity: 0.7;
     animation: navButtonBeam 6s cubic-bezier(0.17, 0.67, 0.29, 0.96) infinite;
@@ -144,15 +144,15 @@ const FloatingMenuButton = styled.button`
   
   &:hover {
     transform: translateY(-2px) scale(1.01);
-    background: linear-gradient(135deg, #341f4c, #432e65);
-    box-shadow: 0 7px 20px rgba(35, 16, 54, 0.4), 
+    background: linear-gradient(135deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.primaryLight});
+    box-shadow: 0 7px 20px rgba(0, 0, 0, 0.4), 
                 inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-                0 0 15px rgba(131, 58, 244, 0.2);
+                0 0 15px rgba(255, 255, 255, 0.2);
     
     &::after {
       animation-duration: 3.8s;
-      box-shadow: 0 0 25px rgba(202, 125, 255, 0.8),
-                  0 0 50px rgba(202, 125, 255, 0.3);
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.8),
+                  0 0 50px rgba(255, 255, 255, 0.3);
     }
     
     &::before {
@@ -167,7 +167,7 @@ const FloatingMenuButton = styled.button`
   
   &:active {
     transform: translateY(0) scale(0.99);
-    box-shadow: 0 2px 10px rgba(35, 16, 54, 0.3), 
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3), 
                 inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   }
   
@@ -365,7 +365,7 @@ function App() {
   }, []);
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider>
       <GlobalStyle />
       <AuthProvider>
         <ProjectProvider>

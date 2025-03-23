@@ -96,7 +96,7 @@ const StatsGrid = styled.div`
 `;
 
 const StatCard = styled.div`
-  background: white;
+  background: ${props => props.theme.colors.secondary}; /* White (30%) */
   border-radius: ${props => props.theme.radius.lg};
   padding: 24px;
   box-shadow: ${props => props.theme.shadows.sm};
@@ -218,7 +218,7 @@ const TimeSelector = styled.div`
 
 const TimeOption = styled.button<{ active: boolean }>`
   padding: 8px 16px;
-  background: ${props => props.active ? 'white' : 'transparent'};
+  background: ${props => props.active ? props.theme.colors.secondary : 'transparent'}; /* White (30%) if active */
   color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.darkGrey};
   border: none;
   border-radius: ${props => props.theme.radius.pill};
@@ -264,7 +264,7 @@ const ChannelCard = styled.div<{ active: boolean }>`
   padding: 16px;
   border-radius: ${props => props.theme.radius.lg};
   border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.lightGrey};
-  background: white;
+  background: ${props => props.theme.colors.secondary}; /* White (30%) */
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: ${props => props.active ? props.theme.shadows.md : props.theme.shadows.sm};
