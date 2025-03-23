@@ -210,8 +210,8 @@ const OAuthHandler = () => {
           console.log('Usando redirect URI:', redirectUri);
           
           const tokenEndpoint = 'https://oauth2.googleapis.com/token';
-          const clientId = "360636127290-1k591hbvpen81oipjur2bsb1a7a6jo2o.apps.googleusercontent.com";
-          const clientSecret = "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";
+          const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
+          const clientSecret = process.env.REACT_APP_GOOGLE_CLIENT_SECRET || "";
           
           // Criar dados do formulário para a solicitação de token
           const formData = new URLSearchParams();

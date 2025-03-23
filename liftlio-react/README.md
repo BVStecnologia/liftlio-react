@@ -1,46 +1,54 @@
-# Getting Started with Create React App
+# Liftlio React
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Configuração do Ambiente
 
-## Available Scripts
+### Variáveis de Ambiente
 
-In the project directory, you can run:
+Para executar este projeto, você precisa configurar as variáveis de ambiente necessárias. Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 
-### `npm start`
+```
+REACT_APP_GOOGLE_CLIENT_ID=seu-client-id-do-google
+REACT_APP_GOOGLE_CLIENT_SECRET=seu-client-secret-do-google
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+**Importante:** Nunca compartilhe suas credenciais ou faça commit do arquivo `.env` no repositório Git. O arquivo `.env` já está incluído no `.gitignore` para evitar que seja versionado acidentalmente.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### Obtendo Credenciais do Google
 
-### `npm test`
+Para obter as credenciais do Google OAuth:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. Acesse o [Google Cloud Console](https://console.cloud.google.com/)
+2. Crie um novo projeto ou selecione um existente
+3. Vá para "APIs e Serviços" > "Credenciais"
+4. Clique em "Criar Credenciais" > "ID do Cliente OAuth"
+5. Configure o tipo de aplicativo e os URIs de redirecionamento
+   - Para desenvolvimento local: `http://localhost:3000`
+   - Para produção: `https://liftlio.fly.dev`
+6. Anote o Client ID e Client Secret gerados
 
-### `npm run build`
+## Comandos Git
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Alguns comandos Git úteis:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+# Atualizar o repositório local com as mudanças do remoto
+git fetch --all
+git reset --hard origin/main
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# Adicionar, commitar e enviar mudanças
+git add .
+git commit -m "Descrição das alterações"
+git push
+```
 
-### `npm run eject`
+## Executando o Projeto
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```bash
+# Instalar dependências
+npm install
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# Iniciar o servidor de desenvolvimento
+npm start
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+# Construir para produção
+npm run build

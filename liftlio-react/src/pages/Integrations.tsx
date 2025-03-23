@@ -526,8 +526,8 @@ const ModalButton = styled(ActionButton)`
 `;
 
 // Constants for OAuth
-const GOOGLE_CLIENT_ID = "360636127290-1k591hbvpen81oipjur2bsb1a7a6jo2o.apps.googleusercontent.com";
-const GOOGLE_CLIENT_SECRET = "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";
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
+const GOOGLE_CLIENT_SECRET = process.env.REACT_APP_GOOGLE_CLIENT_SECRET || "";
 const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/userinfo.email",
   "https://www.googleapis.com/auth/userinfo.profile",
