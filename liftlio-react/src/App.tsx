@@ -435,11 +435,12 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   
   // Se chegou aqui, o usuário está autenticado e o carregamento foi concluído
   
-  // Para o onboarding, mostrar apenas o conteúdo (sem sidebar, header ou botão flutuante)
+  // Para o onboarding, mostrar o header mas esconder a sidebar e o botão flutuante
   if (isOnboarding) {
     return (
       <AppContainer>
-        <MainContent style={{ paddingTop: 0 }}>
+        <MainContent>
+          <Header toggleSidebar={toggleSidebar} />
           <ContentWrapper>
             <Routes>
               <Route path="/" element={<Overview />} />
@@ -455,6 +456,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   }
   
   // Interface completa para usuários que já completaram o onboarding
+  // Ou usuários que estão adicionando novo projeto (sempre mostrar header)
   return (
     <AppContainer>
       {/* Sidebar - desktop mode it's controlled by media query, mobile by state */}
