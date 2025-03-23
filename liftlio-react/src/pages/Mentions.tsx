@@ -302,7 +302,7 @@ const TableRow = styled.div<{ index?: number, isFavorite?: boolean }>`
   display: grid;
   grid-template-columns: 2.5fr 1fr 2.5fr 3fr 1fr;
   padding: 20px;
-  border-bottom: 1px solid ${COLORS.BORDER.DEFAULT};
+  border-bottom: 1px solid ${props => props.theme.colors.dominant_light};
   align-items: stretch;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
@@ -312,13 +312,13 @@ const TableRow = styled.div<{ index?: number, isFavorite?: boolean }>`
   min-width: 1000px;
   cursor: pointer;
   
-  /* Destacar itens favoritos com uma borda suave */
-  border-left: ${props => props.isFavorite ? `4px solid ${COLORS.ERROR}` : '4px solid transparent'};
+  /* Destacar itens favoritos sem borda vermelha */
+  border-left: 4px solid transparent;
   
   &:hover {
-    background-color: ${withOpacity(COLORS.ACCENT, 0.08)};
+    background-color: ${props => withOpacity(props.theme.colors.accent, 0.08)};
     transform: translateY(-2px);
-    box-shadow: ${COLORS.SHADOW.MEDIUM};
+    box-shadow: ${props => props.theme.shadows.md};
     z-index: 1;
   }
   
@@ -333,7 +333,7 @@ const TableRow = styled.div<{ index?: number, isFavorite?: boolean }>`
     top: 0;
     height: 100%;
     width: 0;
-    background: ${COLORS.GRADIENT.PRIMARY};
+    background: ${props => props.theme.colors.gradient.primary};
     opacity: 0.2;
     transition: width 0.3s ease;
   }
@@ -404,11 +404,11 @@ const VideoThumbnailWrapper = styled.div`
 const VideoThumbnail = styled.div`
   width: 210px;
   height: 120px;
-  background-color: #000;
+  background-color: ${props => props.theme.colors.accent};
   border-radius: ${props => props.theme.radius.md};
   overflow: hidden;
   position: relative;
-  box-shadow: ${COLORS.SHADOW.MEDIUM};
+  box-shadow: ${props => props.theme.shadows.md};
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   
   @media (max-width: 768px) {
@@ -430,9 +430,9 @@ const VideoThumbnail = styled.div`
     bottom: 0;
     background: linear-gradient(
       120deg,
-      ${withOpacity(COLORS.ACCENT, 0)} 40%,
-      ${withOpacity(COLORS.ACCENT, 0.2)} 50%,
-      ${withOpacity(COLORS.ACCENT, 0)} 60%
+      ${props => withOpacity(props.theme.colors.accent, 0)} 40%,
+      ${props => withOpacity(props.theme.colors.accent, 0.2)} 50%,
+      ${props => withOpacity(props.theme.colors.accent, 0)} 60%
     );
     z-index: 2;
     transform: translateX(-100%);
@@ -448,7 +448,7 @@ const VideoThumbnail = styled.div`
   
   &:hover {
     transform: translateY(-5px);
-    box-shadow: ${COLORS.SHADOW.STRONG};
+    box-shadow: ${props => props.theme.shadows.lg};
     animation: ${glow} 2s infinite;
     
     &::before {
@@ -469,7 +469,7 @@ const VideoThumbnail = styled.div`
     width: 0;
     height: 0;
     border-top: 15px solid transparent;
-    border-left: 30px solid white;
+    border-left: 30px solid ${props => props.theme.colors.secondary};
     border-bottom: 15px solid transparent;
     opacity: 0.9;
     filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.6));
@@ -632,22 +632,22 @@ const subtleFill = keyframes`
 // Componente clean para o score
 const ScoreCardContainer = styled.div`
   width: 120px;
-  background: white;
-  border-radius: 8px;
+  background: ${props => props.theme.colors.secondary};
+  border-radius: ${props => props.theme.radius.sm};
   padding: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  border: 1px solid #f0f0f0;
+  box-shadow: ${props => props.theme.shadows.sm};
+  border: 1px solid ${props => props.theme.colors.dominant_light};
   transition: all 0.2s ease;
   
   &:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: ${props => props.theme.shadows.md};
   }
 `;
 
 const ScoreLabel = styled.div`
   font-size: 11px;
   font-weight: 500;
-  color: #718096;
+  color: ${props => props.theme.colors.text.secondary};
   margin-bottom: 8px;
   display: flex;
   align-items: center;
@@ -657,16 +657,16 @@ const ScoreLabel = styled.div`
 const TypeBadge = styled.span<{ type: string }>`
   font-size: 10px;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: ${props => props.theme.radius.sm};
   background: ${props => {
-    if (props.type === 'LED') return '#EBF4FF'; 
-    if (props.type === 'BRAND') return '#F0FFF4';
-    return '#F9F9F9'; // Fallback para outros tipos
+    if (props.type === 'LED') return props.theme.colors.info_light; 
+    if (props.type === 'BRAND') return props.theme.colors.success_light;
+    return props.theme.colors.dominant_lighter; // Fallback para outros tipos
   }};
   color: ${props => {
-    if (props.type === 'LED') return '#3182CE'; 
-    if (props.type === 'BRAND') return '#38A169';
-    return '#718096'; // Fallback para outros tipos
+    if (props.type === 'LED') return props.theme.colors.info; 
+    if (props.type === 'BRAND') return props.theme.colors.success;
+    return props.theme.colors.text.secondary; // Fallback para outros tipos
   }};
   font-weight: 600;
 `;
@@ -682,9 +682,9 @@ const ScoreValue = styled.div<{ score: number }>`
   font-size: 18px;
   font-weight: 700;
   color: ${props => {
-    if (props.score >= 70) return '#38A169';
-    if (props.score >= 40) return '#DD6B20';
-    return '#E53E3E';
+    if (props.score >= 70) return props.theme.colors.success;
+    if (props.score >= 40) return props.theme.colors.warning;
+    return props.theme.colors.error;
   }};
 `;
 
@@ -692,24 +692,24 @@ const ScoreQualityBadge = styled.div<{ score: number }>`
   font-size: 10px;
   font-weight: 600;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: ${props => props.theme.radius.sm};
   background: ${props => {
-    if (props.score >= 70) return '#F0FFF4';
-    if (props.score >= 40) return '#FFFAF0';
-    return '#FFF5F5';
+    if (props.score >= 70) return props.theme.colors.success_light;
+    if (props.score >= 40) return props.theme.colors.warning_light;
+    return props.theme.colors.error_light;
   }};
   color: ${props => {
-    if (props.score >= 70) return '#38A169';
-    if (props.score >= 40) return '#DD6B20';
-    return '#E53E3E';
+    if (props.score >= 70) return props.theme.colors.success;
+    if (props.score >= 40) return props.theme.colors.warning;
+    return props.theme.colors.error;
   }};
 `;
 
 const ScoreMeterContainer = styled.div`
   width: 100%;
   height: 4px;
-  background: #EDF2F7;
-  border-radius: 2px;
+  background: ${props => props.theme.colors.dominant_light};
+  border-radius: ${props => props.theme.radius.sm};
   overflow: hidden;
   margin-top: 4px;
 `;
@@ -718,9 +718,9 @@ const ScoreMeterFill = styled.div<{ score: number }>`
   height: 100%;
   width: var(--fill-width);
   background: ${props => {
-    if (props.score >= 70) return '#38A169';
-    if (props.score >= 40) return '#DD6B20';
-    return '#E53E3E';
+    if (props.score >= 70) return props.theme.colors.success;
+    if (props.score >= 40) return props.theme.colors.warning;
+    return props.theme.colors.error;
   }};
   border-radius: 2px;
   animation: ${subtleFill} 0.6s ease-out;
@@ -739,7 +739,7 @@ const CommentCell = styled(TableCell)`
 const CommentInfo = styled.div`
   display: flex;
   flex-direction: column;
-  background: #f9f8fc;
+  background: ${props => props.theme.colors.dominant_lighter};
   border-radius: ${props => props.theme.radius.md};
   padding: 16px;
   width: 90%;
@@ -756,7 +756,7 @@ const CommentInfo = styled.div`
     height: 0;
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
-    border-top: 10px solid #f9f8fc;
+    border-top: 10px solid ${props => props.theme.colors.dominant_lighter};
   }
 `;
 
@@ -798,7 +798,7 @@ const CommentEngagement = styled.div`
 `;
 
 const EngagementBadge = styled.div`
-  background: rgba(135, 97, 197, 0.1);
+  background: ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
   color: ${props => props.theme.colors.primary};
   font-size: ${props => props.theme.fontSizes.xs};
   padding: 4px 8px;
@@ -859,16 +859,16 @@ const ResponseCell = styled(TableCell)`
 const ResponseInfo = styled.div<{ status?: string }>`
   display: flex;
   flex-direction: column;
-  background: white;
-  border-radius: 8px;
+  background: ${props => props.theme.colors.secondary};
+  border-radius: ${props => props.theme.radius.md};
   padding: 16px;
   width: 90%;
   position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: ${props => props.theme.shadows.sm};
   border-left: 4px solid ${props => 
-    !props.status || props.status === 'scheduled' ? '#e69819' : 
-    props.status === 'posted' || props.status === 'published' ? '#38a169' : 
-    '#6b46c1'};
+    !props.status || props.status === 'scheduled' ? props.theme.colors.warning : 
+    props.status === 'posted' || props.status === 'published' ? props.theme.colors.success : 
+    props.theme.colors.tertiary};
 `;
 
 const ResponseStatusBadge = styled.div<{ status?: string }>`
@@ -876,17 +876,17 @@ const ResponseStatusBadge = styled.div<{ status?: string }>`
   top: -10px;
   right: 15px;
   padding: 4px 12px;
-  border-radius: 4px;
+  border-radius: ${props => props.theme.radius.sm};
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
-  color: white;
+  color: ${props => props.theme.colors.secondary};
   background: ${props => 
-    !props.status || props.status === 'scheduled' ? '#e69819' : 
-    props.status === 'posted' || props.status === 'published' ? '#38a169' : 
-    '#6b46c1'};
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    !props.status || props.status === 'scheduled' ? props.theme.colors.warning : 
+    props.status === 'posted' || props.status === 'published' ? props.theme.colors.success : 
+    props.theme.colors.tertiary};
+  box-shadow: ${props => props.theme.shadows.sm};
   display: flex;
   align-items: center;
   
@@ -1121,14 +1121,14 @@ const ActionsCell = styled(TableCell)`
 
 const ActionButton = styled.button<{ variant?: 'primary' | 'secondary' | 'favorite' }>`
   background: ${props => 
-    props.variant === 'primary' ? COLORS.SECONDARY : 
-    props.variant === 'favorite' ? withOpacity(COLORS.ERROR, 0.1) : 
-    withOpacity(COLORS.ACCENT, 0.1)};
+    props.variant === 'primary' ? props.theme.colors.secondary : 
+    props.variant === 'favorite' ? withOpacity(props.theme.colors.error, 0.1) : 
+    withOpacity(props.theme.colors.accent, 0.1)};
   border: ${props => 
-    props.variant === 'primary' ? `1px solid ${withOpacity(COLORS.ACCENT, 0.3)}` : 'none'};
+    props.variant === 'primary' ? `1px solid ${withOpacity(props.theme.colors.accent, 0.3)}` : 'none'};
   color: ${props => 
-    props.variant === 'favorite' ? COLORS.ERROR : 
-    COLORS.ACCENT};
+    props.variant === 'favorite' ? props.theme.colors.error : 
+    props.theme.colors.accent};
   cursor: pointer;
   padding: 8px;
   width: 38px;
@@ -1142,11 +1142,11 @@ const ActionButton = styled.button<{ variant?: 'primary' | 'secondary' | 'favori
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: ${COLORS.SHADOW.MEDIUM};
+    box-shadow: ${props => props.theme.shadows.md};
     background: ${props => 
-      props.variant === 'favorite' ? withOpacity(COLORS.ERROR, 0.2) : 
-      props.variant === 'primary' ? COLORS.SECONDARY : 
-      withOpacity(COLORS.ACCENT, 0.2)};
+      props.variant === 'favorite' ? withOpacity(props.theme.colors.error, 0.2) : 
+      props.variant === 'primary' ? props.theme.colors.secondary : 
+      withOpacity(props.theme.colors.accent, 0.2)};
   }
   
   svg {
@@ -1174,7 +1174,7 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: ${props => withOpacity(props.theme.colors.accent, 0.5)};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1182,7 +1182,7 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: ${COLORS.SECONDARY};
+  background: ${props => props.theme.colors.secondary};
   border-radius: ${props => props.theme.radius.lg};
   padding: 24px;
   width: 600px;
@@ -1384,7 +1384,7 @@ const mentionsData = [
 const AnalyticsSection = styled.div`
   margin-top: 30px;
   padding: 24px;
-  background: white;
+  background: ${props => props.theme.colors.secondary};
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.md};
   animation: ${fadeIn} 1s ease-out forwards;
@@ -1401,9 +1401,9 @@ const AnalyticsSection = styled.div`
     width: 100%;
     height: 100%;
     background: linear-gradient(135deg, 
-      rgba(135, 97, 197, 0.03) 0%, 
-      rgba(255, 255, 255, 0) 50%, 
-      rgba(79, 172, 254, 0.03) 100%);
+      ${props => withOpacity(props.theme.colors.tertiary, 0.03)} 0%, 
+      ${props => withOpacity(props.theme.colors.secondary, 0)} 50%, 
+      ${props => withOpacity(props.theme.colors.primary, 0.03)} 100%);
     z-index: 0;
   }
   
@@ -1533,10 +1533,10 @@ const Toast = styled.div<{ visible: boolean, success?: boolean }>`
   top: 20px;
   right: 20px;
   padding: 12px 20px;
-  background: ${props => props.success ? '#38a169' : '#e53e3e'};
-  color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: ${props => props.success ? props.theme.colors.success : props.theme.colors.error};
+  color: ${props => props.theme.colors.secondary};
+  border-radius: ${props => props.theme.radius.md};
+  box-shadow: ${props => props.theme.shadows.lg};
   z-index: 9999;
   display: ${props => props.visible ? 'flex' : 'none'};
   align-items: center;

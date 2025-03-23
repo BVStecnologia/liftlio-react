@@ -126,7 +126,7 @@ const Logo = styled.div`
   span {
     position: relative;
     z-index: 2;
-    background: linear-gradient(90deg, #fff, #99aaff, #fff);
+    background: linear-gradient(90deg, #fff, ${props => props.theme.colors.tertiary}, #fff);
     background-size: 200% auto;
     background-clip: text;
     -webkit-background-clip: text;
@@ -162,7 +162,7 @@ const Logo = styled.div`
       animation: gradientShift 4s linear infinite;
       /* Enhanced but still thin glow on hover */
       text-shadow: 0 0 2px rgba(255, 255, 255, 0.4), 
-                  0 0 10px rgba(79, 172, 254, 0.2);
+                  0 0 10px rgba(${props => props.theme.colors.tertiary}, 0.2);
     }
     
     &::before {
@@ -576,7 +576,7 @@ const UpgradeButton = styled.div`
     position: absolute;
     inset: 2px;
     border-radius: 8px;
-    background: linear-gradient(135deg, rgba(138, 84, 255, 0.8) 0%, rgba(79, 172, 254, 0.8) 100%);
+    background: linear-gradient(135deg, ${props => props.theme.colors.tertiary} 0%, ${props => props.theme.colors.primary} 100%);
     z-index: -1;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -706,7 +706,7 @@ const UpgradeButton = styled.div`
     }
     
     &::after {
-      opacity: 1;
+      opacity: 0;
     }
     
     .crown-icon {
@@ -715,7 +715,7 @@ const UpgradeButton = styled.div`
     }
     
     .upgrade-text {
-      background-position: 0%;
+      color: #FFC107;
     }
     
     /* Rocket Animation on Hover */
@@ -761,13 +761,8 @@ const UpgradeButton = styled.div`
   }
   
   .upgrade-text {
-    background: linear-gradient(to right, #fff, #FFC107, #fff);
-    background-size: 200% auto;
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
+    color: #FFC107;
     transition: all 0.5s ease;
-    background-position: 100%;
   }
   
   @keyframes shineIcon {
