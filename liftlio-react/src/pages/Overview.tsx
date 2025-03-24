@@ -12,6 +12,7 @@ import { useProject } from '../context/ProjectContext';
 import EmptyState from '../components/EmptyState';
 import ProjectModal from '../components/ProjectModal';
 import { supabase } from '../lib/supabaseClient';
+import TechBackground from '../components/TechBackground';
 
 // Animation keyframes
 const fadeIn = keyframes`
@@ -1891,86 +1892,19 @@ const Overview: React.FC = () => {
       min-height: 100vh;
       width: 100%;
       padding: 20px;
-      background: linear-gradient(135deg, #f9f9ff 0%, #f0f0f8 100%);
+      background: #f8f8f8;
       position: relative;
       overflow: hidden;
-      z-index: 0;
     `;
 
-    // Elementos de animação de fundo
+    // Removidos elementos de animação de fundo
     const WaveElement = styled.div`
-      position: absolute;
-      width: 200%;
-      height: 200px;
-      background: linear-gradient(90deg, 
-        rgba(45, 29, 66, 0.05) 0%, 
-        rgba(103, 58, 183, 0.03) 50%,
-        rgba(45, 29, 66, 0.05) 100%
-      );
-      opacity: 0.2;
-      border-radius: 50%;
-      z-index: 1;
-      animation: ${waveAnimation} 15s ease-in-out infinite alternate;
-      
-      &:nth-child(1) {
-        top: 15%;
-        height: 150px;
-        animation-duration: 18s;
-      }
-      
-      &:nth-child(2) {
-        top: 45%;
-        height: 180px;
-        animation-duration: 22s;
-        animation-delay: 2s;
-      }
-      
-      &:nth-child(3) {
-        top: 75%;
-        height: 130px;
-        animation-duration: 20s;
-        animation-delay: 1s;
-      }
+      display: none;
     `;
 
-    // Raios de luz que percorrem a tela
+    // Removidos raios de luz
     const LightBeam = styled.div`
-      position: absolute;
-      height: 8px;
-      width: 100%;
-      background: linear-gradient(90deg,
-        transparent 0%, 
-        #4E0EB3 20%, 
-        #2D1D42 50%,
-        #4E0EB3 80%, 
-        transparent 100%
-      );
-      opacity: 0;
-      box-shadow: 0 0 15px #4E0EB3, 
-                0 0 30px #2D1D42;
-      z-index: 2;
-      animation: ${lightBeamAnimation} 10s ease-in-out infinite;
-      
-      &:nth-child(4) {
-        top: 25%;
-        animation-duration: 6s;
-        animation-delay: 1s;
-        height: 3px;
-      }
-      
-      &:nth-child(5) {
-        top: 55%;
-        animation-duration: 8s;
-        animation-delay: 4s;
-        height: 2px;
-      }
-      
-      &:nth-child(6) {
-        top: 78%;
-        animation-duration: 7s;
-        animation-delay: 2s;
-        height: 4px;
-      }
+      display: none;
     `;
 
     // Animação para os fios de luz
@@ -2094,79 +2028,18 @@ const Overview: React.FC = () => {
 
     // Nós de energia que pulsam com luz
     const EnergyNode = styled.div`
-      position: absolute;
-      width: 15px;
-      height: 15px;
-      border-radius: 50%;
-      background: #2D1D42;
-      z-index: 3;
-      animation: ${energyPulse} 4s ease-in-out infinite;
-      
-      &::before, &::after {
-        content: '';
-        position: absolute;
-        width: 100%;
-        height: 2px;
-        background: #4E0EB3;
-        opacity: 0.7;
-        top: 50%;
-        transform: translateY(-50%);
-      }
-      
-      &::before {
-        left: -100%;
-        width: 30px;
-      }
-      
-      &::after {
-        right: -100%;
-        width: 50px;
-      }
-      
-      &:nth-child(7) {
-        top: 18%;
-        left: 15%;
-        animation-delay: 0.5s;
-        width: 8px;
-        height: 8px;
-      }
-      
-      &:nth-child(8) {
-        top: 35%;
-        right: 20%;
-        animation-delay: 1.5s;
-        width: 12px;
-        height: 12px;
-      }
-      
-      &:nth-child(9) {
-        top: 65%;
-        left: 25%;
-        animation-delay: 1s;
-        width: 10px;
-        height: 10px;
-      }
-      
-      &:nth-child(10) {
-        top: 80%;
-        right: 30%;
-        animation-delay: 2s;
-        width: 6px;
-        height: 6px;
-      }
+      display: none;
     `;
 
     // Wrapper para o conteúdo visível, acima das animações
     const ContentWrapper = styled.div`
-      position: relative;
-      z-index: 100;
       width: 100%;
       max-width: 800px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      background: transparent;
-      pointer-events: auto;
+      position: relative;
+      z-index: 2;
     `;
     
     // Etapa 1: Criar projeto
@@ -2174,23 +2047,7 @@ const Overview: React.FC = () => {
       return (
         <>
           <OnboardingContainer>
-            {/* Elementos de fundo animados */}
-            <WaveElement />
-            <WaveElement />
-            <WaveElement />
-            
-            
-            {/* Raios de luz animados */}
-            <LightBeam />
-            <LightBeam />
-            <LightBeam />
-            
-            {/* Nós de energia pulsantes */}
-            <EnergyNode />
-            <EnergyNode />
-            <EnergyNode />
-            <EnergyNode />
-            
+            <TechBackground />
             {/* Conteúdo principal */}
             <ContentWrapper>
               <EmptyState 
@@ -2215,22 +2072,7 @@ const Overview: React.FC = () => {
     if (onboardingStep === 2) {
       return (
         <OnboardingContainer>
-          {/* Elementos de fundo animados */}
-          <WaveElement />
-          <WaveElement />
-          <WaveElement />
-          
-          {/* Raios de luz animados */}
-          <LightBeam />
-          <LightBeam />
-          <LightBeam />
-          
-          {/* Nós de energia pulsantes */}
-          <EnergyNode />
-          <EnergyNode />
-          <EnergyNode />
-          <EnergyNode />
-          
+          <TechBackground />
           {/* Conteúdo principal */}
           <ContentWrapper>
             <EmptyState 
@@ -2247,22 +2089,7 @@ const Overview: React.FC = () => {
     if (onboardingStep === 3) {
       return (
         <OnboardingContainer>
-          {/* Elementos de fundo animados */}
-          <WaveElement />
-          <WaveElement />
-          <WaveElement />
-          
-          {/* Raios de luz animados */}
-          <LightBeam />
-          <LightBeam />
-          <LightBeam />
-          
-          {/* Nós de energia pulsantes */}
-          <EnergyNode />
-          <EnergyNode />
-          <EnergyNode />
-          <EnergyNode />
-          
+          <TechBackground />
           {/* Conteúdo principal */}
           <ContentWrapper>
             <EmptyState 
@@ -2278,14 +2105,17 @@ const Overview: React.FC = () => {
               margin: '15px 0',
               boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
               overflow: 'hidden',
-              position: 'relative'
+              position: 'relative',
+              zIndex: 2
             }}>
               <ShimmerBar />
               <div style={{
                 textAlign: 'center',
                 marginTop: '10px',
                 fontSize: '14px',
-                color: '#666'
+                color: '#666',
+                position: 'relative',
+                zIndex: 2
               }}>
                 Analisando menções...
               </div>
@@ -2721,6 +2551,7 @@ const Overview: React.FC = () => {
   if (!currentProject) {
     return (
       <PageContainer>
+        <TechBackground />
         <EmptyContainer>
           <GridPattern />
           
@@ -2797,6 +2628,7 @@ const Overview: React.FC = () => {
   
   return (
     <PageContainer>
+      <TechBackground />
       <DashboardHeader>
         <PageTitle>
           <div>

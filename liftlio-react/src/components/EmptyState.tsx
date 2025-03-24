@@ -1,19 +1,8 @@
 import React from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
-
-const pulseAnimation = keyframes`
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-`;
-
-const floatAnimation = keyframes`
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-`;
+import TechBackground from './TechBackground';
 
 const Container = styled.div`
   display: flex;
@@ -23,13 +12,12 @@ const Container = styled.div`
   text-align: center;
   padding: 40px 20px;
   min-height: 400px;
-  background: linear-gradient(135deg, rgba(247, 247, 252, 0.8) 0%, rgba(240, 240, 250, 0.4) 100%);
+  background: #f7f7fc;
   border-radius: 16px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid #e0e0e0;
   margin: 20px 0;
+  position: relative;
+  overflow: hidden;
 `;
 
 const IllustrationWrapper = styled.div`
@@ -37,7 +25,8 @@ const IllustrationWrapper = styled.div`
   font-size: 80px;
   color: ${props => props.theme.colors.primary};
   opacity: 0.8;
-  animation: ${floatAnimation} 3s ease-in-out infinite;
+  position: relative;
+  z-index: 2;
 `;
 
 const Title = styled.h2`
@@ -45,6 +34,8 @@ const Title = styled.h2`
   font-weight: 600;
   margin-bottom: 15px;
   color: ${props => props.theme.colors.text};
+  position: relative;
+  z-index: 2;
 `;
 
 const Description = styled.p`
@@ -53,30 +44,28 @@ const Description = styled.p`
   margin-bottom: 30px;
   max-width: 500px;
   line-height: 1.6;
+  position: relative;
+  z-index: 2;
 `;
 
 const ActionButton = styled.button`
   padding: 12px 24px;
-  background: ${props => props.theme.colors.gradient.primary};
+  background: ${props => props.theme.colors.primary};
   color: white;
   border: none;
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 4px 15px ${props => `${props.theme.colors.primary}4D`};
-  transition: all 0.3s ease;
-  animation: ${pulseAnimation} 2s infinite;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 7px 20px ${props => `${props.theme.colors.primary}66`};
-  }
+  position: relative;
+  z-index: 2;
 `;
 
 const StepIndicator = styled.div`
   display: flex;
   margin-top: 30px;
   gap: 10px;
+  position: relative;
+  z-index: 2;
 `;
 
 const Step = styled.div<{ active: boolean }>`
@@ -86,7 +75,8 @@ const Step = styled.div<{ active: boolean }>`
   background-color: ${props => props.active 
     ? props.theme.colors.primary
     : '#D0D0D0'};
-  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
 `;
 
 interface EmptyStateProps {

@@ -1,27 +1,8 @@
 import React, { ReactNode, useEffect } from 'react';
-import styled, { keyframes, css } from 'styled-components';
+import styled from 'styled-components';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
-
-const fadeIn = keyframes`
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-`;
-
-const slideIn = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
+import TechBackground from './TechBackground';
 
 const ModalOverlay = styled.div<{ isOpen: boolean }>`
   position: fixed;
@@ -30,15 +11,13 @@ const ModalOverlay = styled.div<{ isOpen: boolean }>`
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999; /* Valor explícito muito alto para garantir que esteja acima de tudo */
-  animation: ${fadeIn} 0.3s ease;
   visibility: ${props => (props.isOpen ? 'visible' : 'hidden')};
   opacity: ${props => (props.isOpen ? 1 : 0)};
-  transition: visibility 0.3s ease, opacity 0.3s ease;
+  overflow: hidden;
 `;
 
 const ModalContainer = styled.div<{ size: 'small' | 'medium' | 'large' }>`
@@ -57,7 +36,8 @@ const ModalContainer = styled.div<{ size: 'small' | 'medium' | 'large' }>`
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  animation: ${slideIn} 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 2;
+  position: relative;
 `;
 
 const ModalHeader = styled.div`
@@ -87,12 +67,6 @@ const CloseButton = styled.button`
   width: 36px;
   height: 36px;
   border-radius: ${props => props.theme.radius.circle};
-  transition: all ${props => props.theme.transitions.default};
-  
-  &:hover {
-    background-color: ${props => props.theme.colors.lightGrey};
-    color: ${props => props.theme.colors.text};
-  }
 `;
 
 const ModalBody = styled.div`
@@ -164,6 +138,7 @@ const Modal: React.FC<ModalProps> = ({
   
   return (
     <ModalOverlay isOpen={isOpen} onClick={handleOverlayClick} data-testid="modal-overlay">
+      <TechBackground zIndex={1} />
       <ModalContainer size={size}>
         <ModalHeader>
           <ModalTitle>{title}</ModalTitle>

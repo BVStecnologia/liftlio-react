@@ -1,28 +1,9 @@
 import React from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
-
-// Animation keyframes
-const shimmer = keyframes`
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-`;
-
-const fadeIn = keyframes`
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-`;
 
 // Sample data for charts
 const samplePerformanceData = [
@@ -54,29 +35,6 @@ const LoadingAnimation = styled.div`
   position: relative;
   background: white;
   overflow: hidden;
-  animation: ${fadeIn} 0.3s ease;
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  
-  @keyframes progress {
-    0% { width: 0%; }
-    100% { width: 100%; }
-  }
-  
-  @keyframes pulse {
-    0% { transform: scale(0.95); opacity: 0.7; }
-    50% { transform: scale(1); opacity: 1; }
-    100% { transform: scale(0.95); opacity: 0.7; }
-  }
-  
-  @keyframes glow {
-    0% { box-shadow: 0 0 20px rgba(33, 150, 243, 0.3); }
-    50% { box-shadow: 0 0 40px rgba(33, 150, 243, 0.5); }
-    100% { box-shadow: 0 0 20px rgba(33, 150, 243, 0.3); }
-  }
 `;
 
 const ShimmerOverlay = styled.div`
@@ -85,9 +43,6 @@ const ShimmerOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
-  background-size: 200% 100%;
-  animation: ${shimmer} 2s linear infinite;
   z-index: 1;
 `;
 

@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabaseClient';
 import { createClient } from '@supabase/supabase-js';
 import { FaTimes, FaMagic, FaSpinner } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
+import TechBackground from './TechBackground';
 
 // Import supabase credentials
 const supabaseUrl = 'https://suqjifkhmekcdflwowiw.supabase.co';
@@ -33,11 +34,8 @@ const Input = styled.input`
   border: 1px solid ${props => props.theme.colors.grey};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
-  transition: all ${props => props.theme.transitions.default};
   
   &:focus {
-    border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 0 0 2px ${props => `${props.theme.colors.primary}33`};
     outline: none;
   }
 `;
@@ -49,11 +47,8 @@ const TextArea = styled.textarea`
   font-size: ${props => props.theme.fontSizes.md};
   min-height: 100px;
   resize: vertical;
-  transition: all ${props => props.theme.transitions.default};
   
   &:focus {
-    border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 0 0 2px ${props => `${props.theme.colors.primary}33`};
     outline: none;
   }
 `;
@@ -65,16 +60,8 @@ const Select = styled.select`
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
   background-color: white;
-  transition: all ${props => props.theme.transitions.default};
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
   
   &:focus {
-    border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 0 0 2px ${props => `${props.theme.colors.primary}33`};
     outline: none;
   }
 `;
@@ -103,31 +90,16 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary'; disabled?: boo
   font-size: ${props => props.theme.fontSizes.md};
   font-weight: ${props => props.theme.fontWeights.medium};
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
-  transition: all ${props => props.theme.transitions.default};
   opacity: ${props => props.disabled ? 0.6 : 1};
   
   ${props => props.variant === 'primary' ? `
-    background: ${props.theme.colors.gradient.primary};
+    background: ${props.theme.colors.primary};
     color: white;
     border: none;
-    box-shadow: ${props.theme.shadows.sm};
-    
-    &:hover {
-      box-shadow: ${!props.disabled ? props.theme.shadows.md : props.theme.shadows.sm};
-      transform: ${!props.disabled ? 'translateY(-1px)' : 'none'};
-    }
-    
-    &:active {
-      transform: ${!props.disabled ? 'translateY(0)' : 'none'};
-    }
   ` : `
     background: white;
     color: ${props.theme.colors.text};
     border: 1px solid ${props.theme.colors.grey};
-    
-    &:hover {
-      background: ${!props.disabled ? props.theme.colors.lightGrey : 'white'};
-    }
   `}
 `;
 
@@ -158,12 +130,6 @@ const Keyword = styled.div`
     cursor: pointer;
     padding: 2px;
     font-size: 14px;
-    border-radius: 50%;
-    
-    &:hover {
-      color: ${props => props.theme.colors.error};
-      background-color: rgba(255, 0, 0, 0.1);
-    }
   }
 `;
 
@@ -408,11 +374,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.darkGrey};
     font-weight: ${props => props.active ? '600' : '400'};
     cursor: pointer;
-    transition: all 0.2s ease;
-    
-    &:hover {
-      color: ${props => props.theme.colors.primary};
-    }
   `;
 
   const ProjectList = styled.div`
@@ -429,12 +390,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.grey};
     background-color: ${props => props.active ? `${props.theme.colors.primary}0A` : 'white'};
     cursor: pointer;
-    transition: all 0.2s ease;
-    
-    &:hover {
-      background-color: ${props => `${props.theme.colors.primary}0A`};
-      border-color: ${props => props.theme.colors.primary};
-    }
   `;
 
   const ProjectTitle = styled.h3`
@@ -557,7 +512,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
             >
               {isGeneratingKeywords ? (
                 <>
-                  <IconComponent icon={FaSpinner} style={{ animation: 'spin 1s linear infinite' }} />
+                  <IconComponent icon={FaSpinner} />
                   Generating...
                 </>
               ) : (
@@ -577,17 +532,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   );
 };
 
-// Adicione um keyframe para o spinner de carregamento
-const rotateAnimation = `
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-`;
-
-// Adicione o keyframe ao styled-components
-const injectGlobalStyle = document.createElement('style');
-injectGlobalStyle.innerHTML = rotateAnimation;
-document.head.appendChild(injectGlobalStyle);
+// Removidos efeitos de animação do spinner
 
 export default ProjectModal;
