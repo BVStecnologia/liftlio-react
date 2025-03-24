@@ -76,12 +76,12 @@ const baseTheme = {
     circle: '50%'
   },
   transitions: {
-    default: 'none',
-    fast: 'none',
-    slow: 'none',
-    springy: 'none',
-    bounce: 'none',
-    elastic: 'none'
+    default: 'all 0.3s ease',
+    fast: 'all 0.2s ease',
+    slow: 'all 0.5s ease',
+    springy: 'all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67)',
+    bounce: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    elastic: 'all 0.6s cubic-bezier(0.68, -0.6, 0.32, 1.6)'
   },
   fontSizes: {
     xs: '0.75rem',

@@ -648,7 +648,19 @@ const Integrations: React.FC = () => {
     console.log('URI de redirecionamento usado: ' + redirectUri);
     console.log('Certifique-se de que o URI acima está configurado no Google Cloud Console');
     console.log('----------------------');
-  }, []);
+    
+    // Verificar status das integrações periodicamente
+    const checkInterval = setInterval(() => {
+      if (currentProject?.id) {
+        console.log('Verificação periódica das integrações...');
+        fetchIntegrations();
+      }
+    }, 60000); // Verificar a cada 1 minuto
+    
+    return () => {
+      clearInterval(checkInterval);
+    };
+  }, [currentProject?.id]);
 
   // Helper functions
   const renderIcon = (Icon: any) => {
@@ -684,6 +696,10 @@ const Integrations: React.FC = () => {
           if (authCheckIntervalRef.current) {
             window.clearInterval(authCheckIntervalRef.current);
             authCheckIntervalRef.current = null;
+          }
+          // Após fechar a janela, verificar novamente as integrações
+          if (currentProject?.id) {
+            setTimeout(() => fetchIntegrations(), 1000);
           }
         }
       };
@@ -723,8 +739,43 @@ const Integrations: React.FC = () => {
         lastUpdated: item['Ultima atualização'] || null
       }));
       
-      // Check for tokens that need refreshing
+      // Verificar ativamente todas as integrações
       for (const integration of integrationData) {
+        if (integration.id === 'youtube' && integration.status === 'connected' && integration.token) {
+          // Verificar se o token do YouTube realmente funciona
+          console.log('Verificando token do YouTube...');
+          try {
+            // Fazer uma chamada real à API do YouTube para testar
+            const isValid = await testYouTubeTokenAPI(integration.token);
+            
+            if (!isValid) {
+              console.log('Token do YouTube inválido, marcando como desconectado');
+              // Atualizar no banco de dados
+              await supabase
+                .from('Integrações')
+                .update({ 'ativo': false })
+                .eq('PROJETO id', currentProject.id)
+                .eq('Tipo de integração', 'youtube');
+                
+              // Atualizar localmente
+              integration.status = 'disconnected' as const;
+            } else {
+              console.log('Token do YouTube válido');
+            }
+          } catch (testError) {
+            console.error('Erro ao testar token do YouTube:', testError);
+            // Em caso de erro, marcar como desconectado
+            await supabase
+              .from('Integrações')
+              .update({ 'ativo': false })
+              .eq('PROJETO id', currentProject.id)
+              .eq('Tipo de integração', 'youtube');
+              
+            integration.status = 'disconnected' as const;
+          }
+        }
+        
+        // Verificar e atualizar tokens expirados (mantendo o código original)
         if (integration.status === 'connected' && integration.expiresAt && integration.refreshToken) {
           // If token expires in less than 5 minutes, refresh it
           const currentTime = Math.floor(Date.now() / 1000);
@@ -735,6 +786,14 @@ const Integrations: React.FC = () => {
               await refreshToken(integration);
             } catch (refreshError) {
               console.error(`Error refreshing token for ${integration.id}:`, refreshError);
+              // Marcar como desconectado em caso de erro
+              await supabase
+                .from('Integrações')
+                .update({ 'ativo': false })
+                .eq('PROJETO id', currentProject.id)
+                .eq('Tipo de integração', integration.id);
+                
+              integration.status = 'disconnected' as const;
             }
           }
         }
@@ -745,6 +804,31 @@ const Integrations: React.FC = () => {
       console.error('Error fetching integrations:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  // Função para testar efetivamente o token do YouTube com a API
+  const testYouTubeTokenAPI = async (token: string): Promise<boolean> => {
+    try {
+      // Fazer uma chamada leve à API do YouTube
+      const response = await fetch(`${YOUTUBE_API_BASE}/channels?part=snippet&mine=true`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Erro na API do YouTube:', errorData);
+        return false;
+      }
+      
+      const data = await response.json();
+      return data.items && data.items.length > 0;
+    } catch (error) {
+      console.error('Erro ao verificar token do YouTube:', error);
+      return false;
     }
   };
   
@@ -917,9 +1001,26 @@ const Integrations: React.FC = () => {
       const currentTime = Math.floor(Date.now() / 1000);
       const timeToExpiration = youtubeIntegration.expiresAt ? youtubeIntegration.expiresAt - currentTime : -1;
       
-      // If token is valid and not about to expire, return it
+      // If token is valid and not about to expire, test it before returning
       if (timeToExpiration > 300) { // More than 5 minutes remaining
-        return youtubeIntegration.token || null;
+        // Verificar se o token realmente funciona
+        const isValid = await testYouTubeTokenAPI(youtubeIntegration.token || '');
+        
+        if (isValid) {
+          return youtubeIntegration.token || null;
+        } else {
+          // Token é inválido mesmo não estando expirado
+          console.log('Token teoricamente válido falhou no teste com a API');
+          
+          // Marcar como desconectado
+          await supabase
+            .from('Integrações')
+            .update({ 'ativo': false })
+            .eq('PROJETO id', currentProject.id)
+            .eq('Tipo de integração', 'youtube');
+            
+          throw new Error('YouTube token is invalid');
+        }
       }
       
       // If token is expired or about to expire, refresh it
@@ -936,12 +1037,32 @@ const Integrations: React.FC = () => {
           
         if (error) throw error;
         
-        return data['Token'] || null;
+        // Verificar se o token renovado funciona
+        const newToken = data['Token'] || null;
+        if (newToken) {
+          const isValid = await testYouTubeTokenAPI(newToken);
+          if (!isValid) {
+            // Token renovado também é inválido
+            await supabase
+              .from('Integrações')
+              .update({ 'ativo': false })
+              .eq('PROJETO id', currentProject.id)
+              .eq('Tipo de integração', 'youtube');
+              
+            throw new Error('Refreshed YouTube token is invalid');
+          }
+        }
+        
+        return newToken;
       }
       
       return null;
     } catch (error) {
       console.error('Error getting valid YouTube token:', error);
+      
+      // Forçar atualização das integrações
+      setTimeout(() => fetchIntegrations(), 500);
+      
       return null;
     }
   };
@@ -965,6 +1086,24 @@ const Integrations: React.FC = () => {
       
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Atualizar status da integração no banco se falhar
+        if (currentProject?.id) {
+          await supabase
+            .from('Integrações')
+            .update({ 'ativo': false })
+            .eq('PROJETO id', currentProject.id)
+            .eq('Tipo de integração', 'youtube');
+            
+          // Atualizar o estado
+          const updatedIntegrations = userIntegrations.map(integration => 
+            integration.id === 'youtube' 
+              ? {...integration, status: 'disconnected' as const} 
+              : integration
+          );
+          setUserIntegrations(updatedIntegrations);
+        }
+        
         throw new Error(`YouTube API request failed: ${
           errorData.error?.message || errorData.error || 'Unknown error'
         }`);
@@ -973,11 +1112,24 @@ const Integrations: React.FC = () => {
       const data = await response.json();
       const channelName = data.items[0]?.snippet?.title || 'Unknown Channel';
       
+      // Confirmar que a conexão está ativa no banco
+      if (currentProject?.id) {
+        await supabase
+          .from('Integrações')
+          .update({ 'ativo': true })
+          .eq('PROJETO id', currentProject.id)
+          .eq('Tipo de integração', 'youtube');
+      }
+      
       alert(`Successfully connected to YouTube channel: ${channelName}`);
       return true;
     } catch (error) {
       console.error('Error testing YouTube connection:', error);
       alert(`YouTube connection test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Forçar atualização da lista de integrações após falha
+      await fetchIntegrations();
+      
       return false;
     }
   };

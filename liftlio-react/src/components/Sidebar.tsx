@@ -235,10 +235,14 @@ const NavItem = styled(NavLink)`
   align-items: center;
   padding: 15px 24px;
   color: rgba(255, 255, 255, 0.7);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
   position: relative;
   text-decoration: none;
   overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  backface-visibility: hidden;
+  will-change: transform, opacity, background-color;
   
   @media (max-width: 768px) {
     padding: 16px 22px;
@@ -255,6 +259,7 @@ const NavItem = styled(NavLink)`
     font-size: 1.3rem;
   }
   
+  /* Barra lateral de destaque */
   &::before {
     content: '';
     position: absolute;
@@ -262,12 +267,18 @@ const NavItem = styled(NavLink)`
     left: 0;
     width: 4px;
     height: 100%;
-    background: ${props => props.theme.colors.tertiary};
-    transform: translateX(-4px);
-    transition: transform 0.3s ease;
+    background: linear-gradient(to bottom, 
+      ${props => props.theme.colors.primary} 0%,
+      ${props => props.theme.colors.primaryLight} 50%,
+      ${props => props.theme.colors.primary} 100%
+    );
+    box-shadow: 0 0 15px 1px rgba(79, 172, 254, 0.4);
+    transform: translateX(-4px) translateZ(2px);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     opacity: 0;
   }
   
+  /* Fundo de destaque */
   &::after {
     content: '';
     position: absolute;
@@ -275,52 +286,102 @@ const NavItem = styled(NavLink)`
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(255, 255, 255, 0.05);
+    background: linear-gradient(120deg, 
+      rgba(255, 255, 255, 0.05) 0%, 
+      rgba(255, 255, 255, 0.07) 40%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
     transform: scaleX(0);
     transform-origin: right;
-    transition: transform 0.3s ease;
+    transition: transform 0.5s cubic-bezier(0.17, 0.67, 0.83, 0.67);
     z-index: -1;
   }
   
+  /* Efeito de hover */
   &:hover {
     color: white;
+    transform: translateX(4px) translateZ(5px);
     
     &::after {
       transform: scaleX(1);
       transform-origin: left;
     }
     
+    &::before {
+      opacity: 0.7;
+      transform: translateX(-2px) translateZ(2px);
+    }
+    
+    /* Parallax no ícone */
     svg {
-      transform: translateX(2px) scale(1.15);
-      filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
+      transform: translateX(5px) translateZ(15px) scale(1.2);
+      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
     }
   }
   
+  /* Efeito de foco */
   &:focus-visible {
     outline: none;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5) inset;
   }
   
+  /* Item ativo */
   &.active {
     color: white;
-    background-color: rgba(255, 255, 255, 0.15);
-    padding-left: 28px;
+    background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.08) 70%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    padding-left: 30px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                inset 0 -1px 0 rgba(255, 255, 255, 0.05);
     
     &::before {
-      transform: translateX(0);
+      transform: translateX(0) translateZ(3px);
       opacity: 1;
+      box-shadow: 0 0 20px 1px rgba(79, 172, 254, 0.7);
     }
     
+    /* Efeito pulsante no ícone ativo */
     svg {
-      transform: scale(1.15);
-      filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
+      transform: translateZ(10px) scale(1.25);
+      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.8));
+      animation: iconPulse 2s infinite alternate ease-in-out;
+    }
+    
+    @keyframes iconPulse {
+      0% {
+        filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+        transform: translateZ(10px) scale(1.25);
+      }
+      100% {
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
+        transform: translateZ(12px) scale(1.3);
+      }
     }
   }
 
+  /* Ícone com transformação 3D */
   svg {
     margin-right: 12px;
     font-size: 1.2rem;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    transform: translateZ(5px);
+    will-change: transform, filter;
+  }
+  
+  /* Rótulo com perspectiva */
+  span {
+    position: relative;
+    transform: translateZ(3px);
+    transition: all 0.4s ease;
+  }
+  
+  /* Efeito na saída */
+  &:active {
+    transform: translateX(2px) translateZ(2px) scale(0.98);
+    transition: all 0.2s ease;
   }
 `;
 

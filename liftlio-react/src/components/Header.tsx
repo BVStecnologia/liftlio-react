@@ -46,18 +46,22 @@ const ProjectSelector = styled.div`
   background: ${COLORS.ACCENT}; /* Azul naval escuro (10%) */
   color: ${COLORS.TEXT.ON_DARK};
   padding: 10px 18px;
-  border-radius: 8px; /* Menos arredondado */
+  border-radius: 12px; /* Mais arredondado para modernidade */
   cursor: pointer;
   font-weight: ${props => props.theme.fontWeights.medium};
   box-shadow: ${COLORS.SHADOW.MEDIUM}, 
-              inset 0 0 0 1px ${withOpacity(COLORS.SECONDARY, 0.08)};
+              inset 0 0 0 1px ${withOpacity(COLORS.SECONDARY, 0.08)},
+              0 0 0 rgba(45, 62, 80, 0);
   transition: all 0.35s cubic-bezier(0.17, 0.67, 0.29, 0.96);
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
+  transform-style: preserve-3d;
+  perspective: 800px;
+  transform: perspective(800px) translateZ(0);
   
-  /* Edge highlight */
+  /* Efeito de profundidade 3D */
   &::before {
     content: '';
     position: absolute;
@@ -67,92 +71,122 @@ const ProjectSelector = styled.div`
     height: 1px;
     background: linear-gradient(90deg, 
       rgba(255, 255, 255, 0) 0%, 
-      rgba(255, 255, 255, 0.2) 50%, 
+      rgba(255, 255, 255, 0.3) 50%, 
       rgba(255, 255, 255, 0) 100%);
-    opacity: 0.6;
+    opacity: 0.8;
     z-index: 1;
+    transform: translateZ(2px);
   }
   
-  /* Light beam */
+  /* Light beam animado */
   &::after {
     content: '';
     position: absolute;
-    width: 1.2px;
-    height: 130%;
-    top: -15%;
+    width: 1.5px;
+    height: 140%;
+    top: -20%;
     left: -10%;
     background: linear-gradient(
       to bottom,
       rgba(255, 255, 255, 0) 0%,
       rgba(255, 255, 255, 0.05) 10%,
-      rgba(255, 255, 255, 0.8) 50%,
+      rgba(255, 255, 255, 0.9) 50%,
       rgba(255, 255, 255, 0.05) 90%,
       rgba(255, 255, 255, 0) 100%
     );
-    transform: rotate(20deg);
+    transform: rotate(20deg) translateZ(5px);
     z-index: 2;
-    box-shadow: 0 0 20px rgba(45, 62, 80, 0.7),
-                0 0 40px rgba(45, 62, 80, 0.25);
-    filter: blur(0.3px);
-    opacity: 0.7;
-    animation: projectSelectorBeam 6s cubic-bezier(0.17, 0.67, 0.29, 0.96) infinite;
+    box-shadow: 0 0 25px rgba(45, 62, 80, 0.8),
+                0 0 45px rgba(45, 62, 80, 0.3);
+    filter: blur(0.2px);
+    opacity: 0.8;
+    animation: projectSelectorBeam 5s cubic-bezier(0.17, 0.67, 0.29, 0.96) infinite;
     animation-delay: 1s;
   }
   
   @keyframes projectSelectorBeam {
     0% {
-      left: -5%;
+      left: -10%;
       opacity: 0;
-      transform: rotate(20deg) translateY(0);
+      transform: rotate(20deg) translateZ(5px);
     }
     10% {
-      opacity: 0.7;
+      opacity: 0.8;
     }
     60% {
-      opacity: 0.7;
+      opacity: 0.8;
     }
     100% {
-      left: 105%;
+      left: 110%;
       opacity: 0;
-      transform: rotate(20deg) translateY(0);
+      transform: rotate(20deg) translateZ(5px);
     }
   }
   
+  /* Efeito de brilho nas bordas */
+  &:before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    padding: 1.5px;
+    background: linear-gradient(
+      135deg, 
+      rgba(255, 255, 255, 0.1) 0%, 
+      rgba(255, 255, 255, 0.5) 50%,
+      rgba(255, 255, 255, 0.1) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.3;
+    transition: opacity 0.4s ease;
+  }
+  
   &:hover {
-    transform: translateY(-2px) scale(1.01);
-    background: ${COLORS.ACCENT_LIGHT}; /* Azul escuro naval mais claro */
+    transform: perspective(800px) translateY(-3px) translateZ(4px) scale(1.01);
+    background: linear-gradient(135deg, ${COLORS.ACCENT} 0%, ${COLORS.ACCENT_LIGHT} 100%);
     box-shadow: ${COLORS.SHADOW.STRONG}, 
-                inset 0 0 0 1px ${withOpacity(COLORS.SECONDARY, 0.1)},
-                0 0 15px ${withOpacity(COLORS.ACCENT, 0.3)};
+                inset 0 0 0 1px ${withOpacity(COLORS.SECONDARY, 0.15)},
+                0 0 20px ${withOpacity(COLORS.ACCENT, 0.4)};
     
     &::after {
-      animation-duration: 3.8s;
-      box-shadow: 0 0 25px rgba(45, 62, 80, 0.8),
-                  0 0 50px rgba(45, 62, 80, 0.3);
+      animation-duration: 3s;
+      box-shadow: 0 0 30px rgba(45, 62, 80, 0.9),
+                  0 0 60px rgba(45, 62, 80, 0.4);
     }
     
-    &::before {
-      opacity: 0.9;
+    &:before {
+      opacity: 0.8;
     }
   }
   
   &:active {
-    transform: translateY(0) scale(0.99);
+    transform: perspective(800px) translateY(0) translateZ(2px) scale(0.99);
     box-shadow: 0 2px 10px rgba(35, 16, 54, 0.3), 
                 inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    transition: all 0.1s ease;
   }
   
   svg {
     margin-left: 8px;
     position: relative;
     z-index: 3;
-    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.3));
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.4));
+    transform: translateZ(10px);
+    transition: all 0.3s ease;
   }
 
   span, div {
     position: relative;
     z-index: 3;
-    text-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
+    transform: translateZ(8px);
+  }
+  
+  &:hover svg {
+    transform: translateZ(15px) scale(1.1);
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
   }
 
   @media (max-width: 768px) {
@@ -461,11 +495,51 @@ const UserAvatar = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${COLORS.GRADIENT.PRIMARY};
+  background: linear-gradient(135deg, #2d3e50 0%, #34495e 50%, #2d3e50 100%);
   position: relative;
   box-shadow: ${COLORS.SHADOW.MEDIUM};
-  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
   isolation: isolate;
+  transform-style: preserve-3d;
+  perspective: 800px;
+  transform: perspective(800px) rotateX(0) rotateY(0);
+  
+  /* Efeito de borda holográfica */
+  &:before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 50%;
+    padding: 1px;
+    background: conic-gradient(
+      from 215deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 10%,
+      rgba(255, 255, 255, 0.6) 20%,
+      rgba(255, 255, 255, 0.1) 30%,
+      transparent 40%,
+      transparent 60%,
+      rgba(255, 255, 255, 0.1) 70%,
+      rgba(79, 172, 254, 0.4) 80%,
+      rgba(255, 255, 255, 0.1) 90%,
+      transparent 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.5;
+    transition: all 0.6s ease;
+    animation: rotateBorder 8s linear infinite;
+  }
+  
+  @keyframes rotateBorder {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
   
   span {
     color: white;
@@ -475,31 +549,33 @@ const UserAvatar = styled.div`
     position: relative;
     z-index: 3;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    transform: translateZ(5px);
+    transition: all 0.3s ease;
   }
   
-  /* Ambient inner glow */
+  /* Efeito de vidro/lente */
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     background: radial-gradient(
       circle at 30% 30%,
-      rgba(45, 62, 80, 0.15) 0%,
-      rgba(36, 52, 68, 0.03) 60%,
-      rgba(0, 0, 0, 0) 100%
+      rgba(45, 62, 80, 0.2) 0%,
+      rgba(36, 52, 68, 0.1) 40%,
+      transparent 70%
     );
     z-index: 1;
+    opacity: 0.7;
   }
   
-  /* Primary light beam */
+  /* Efeito de scanner */
   &::after {
     content: '';
     position: absolute;
-    width: 1.5px;
-    height: 100%;
-    top: 0;
-    bottom: 0;
-    left: -10%;
+    width: 2px;
+    height: 120%;
+    top: -10%;
+    left: -20%;
     background: linear-gradient(
       to bottom,
       rgba(255, 255, 255, 0) 0%,
@@ -509,68 +585,88 @@ const UserAvatar = styled.div`
       rgba(255, 255, 255, 0) 100%
     );
     z-index: 2;
-    box-shadow: 0 0 12px rgba(45, 62, 80, 0.8),
-                0 0 30px rgba(45, 62, 80, 0.3);
-    opacity: 0.9;
-    filter: blur(0.4px);
-    animation: luxScanMove 4.5s cubic-bezier(0.3, 0, 0.2, 1) infinite;
-    animation-delay: 0.2s;
+    box-shadow: 0 0 15px rgba(79, 172, 254, 0.8),
+                0 0 35px rgba(79, 172, 254, 0.4);
+    opacity: 0;
+    filter: blur(0.3px);
+    animation: scanMove 4s cubic-bezier(0.3, 0, 0.2, 1) infinite;
+    animation-delay: 0.8s;
   }
   
-  /* Secondary subtle lights */
-  &:before {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: 
-      radial-gradient(circle at 70% 20%, rgba(45, 62, 80, 0.15) 0%, transparent 25%),
-      radial-gradient(circle at 30% 80%, rgba(36, 52, 68, 0.1) 0%, transparent 20%);
-    z-index: 1;
-  }
-  
-  /* Holographic rim light effect */
-  &:after {
-    box-shadow: 
-      inset 0 0 2px rgba(255, 255, 255, 0.4),
-      0 0 12px ${withOpacity(COLORS.ACCENT, 0.8)},
-      0 0 30px ${withOpacity(COLORS.ACCENT, 0.3)};
-  }
-  
-  @keyframes luxScanMove {
+  @keyframes scanMove {
     0% {
-      left: -10%;
+      left: -30%;
       opacity: 0;
-      transform: skewX(-15deg);
+      transform: skewX(-20deg) translateZ(2px);
     }
-    15% {
+    10% {
       opacity: 0.9;
-      transform: skewX(-15deg);
     }
-    80% {
+    75% {
       opacity: 0.9;
-      transform: skewX(-5deg);
     }
     100% {
-      left: 110%;
+      left: 130%;
       opacity: 0;
-      transform: skewX(-5deg);
+      transform: skewX(-20deg) translateZ(2px);
     }
   }
   
+  /* Inner reflections */
+  &:after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(
+        circle at 70% 20%, 
+        rgba(255, 255, 255, 0.2) 0%, 
+        transparent 25%
+      ),
+      radial-gradient(
+        circle at 30% 75%, 
+        rgba(79, 172, 254, 0.15) 0%, 
+        transparent 30%
+      );
+    border-radius: 50%;
+    z-index: 2;
+    opacity: 0.6;
+    mix-blend-mode: screen;
+  }
+  
+  /* Efeito 3D no hover */
   &:hover {
-    box-shadow: ${COLORS.SHADOW.STRONG}, 0 0 15px ${withOpacity(COLORS.ACCENT, 0.4)};
-    transform: translateY(-1px) scale(1.03);
-    background: ${COLORS.GRADIENT.PRIMARY};
+    box-shadow: 
+      ${COLORS.SHADOW.STRONG}, 
+      0 0 20px ${withOpacity(COLORS.ACCENT, 0.5)},
+      0 0 40px ${withOpacity(COLORS.ACCENT, 0.2)};
+    transform: 
+      perspective(800px) 
+      translateY(-2px)
+      translateZ(10px)
+      rotateX(5deg)
+      rotateY(-5deg)
+      scale(1.08);
+    background: linear-gradient(135deg, #34495e 0%, #4e6785 50%, #34495e 100%);
     
     &::after {
-      animation-duration: 2.8s;
-      box-shadow: 0 0 20px rgba(45, 62, 80, 0.9),
-                  0 0 40px rgba(45, 62, 80, 0.4);
+      opacity: 1;
+      animation-duration: 2s;
+      box-shadow: 
+        0 0 25px rgba(79, 172, 254, 0.9),
+        0 0 50px rgba(79, 172, 254, 0.5);
+    }
+    
+    &:before {
+      opacity: 0.9;
+      animation-duration: 6s;
     }
     
     span {
-      text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+      transform: translateZ(15px);
+      text-shadow: 
+        0 0 15px rgba(255, 255, 255, 0.7),
+        0 0 30px rgba(79, 172, 254, 0.4);
     }
   }
   
@@ -1015,6 +1111,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   // Verificar status do YouTube quando o projeto muda
   useEffect(() => {
     if (currentProject?.id) {
+      // Inicialmente, assumir que o YouTube está desconectado até verificarmos
+      setYoutubeConnected(false);
+      
+      // Verificar status imediatamente
       checkYouTubeConnection();
       
       // Configurar verificação periódica a cada 30 segundos
@@ -1025,6 +1125,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       
       // Limpar intervalo quando o componente for desmontado ou o projeto mudar
       return () => clearInterval(intervalId);
+    } else {
+      // Se não houver projeto selecionado, não mostrar notificação
+      setYoutubeConnected(true);
     }
   }, [currentProject]);
   
@@ -1072,7 +1175,40 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         console.log('Status da conexão YouTube:', isConnected ? 'Conectado' : 'Desconectado');
         console.log('Dados da integração:', youtubeIntegration);
         
-        setYoutubeConnected(isConnected);
+        // Se estiver marcado como conectado, vamos verificar se o token funciona usando o endpoint do YouTube
+        if (isConnected && youtubeIntegration['Token']) {
+          try {
+            const response = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true', {
+              headers: {
+                'Authorization': `Bearer ${youtubeIntegration['Token']}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (!response.ok) {
+              console.log('Token do YouTube inválido, marcando como desconectado');
+              
+              // Atualizar o status no banco
+              await supabase
+                .from('Integrações')
+                .update({ 'ativo': false })
+                .eq('PROJETO id', currentProject.id)
+                .eq('Tipo de integração', 'youtube');
+                
+              setYoutubeConnected(false);
+              return;
+            }
+            
+            // Se chegou aqui, o token é válido
+            setYoutubeConnected(true);
+          } catch (apiError) {
+            console.error('Erro ao testar token do YouTube:', apiError);
+            setYoutubeConnected(false);
+          }
+        } else {
+          // Não está marcado como ativo no banco ou não tem token
+          setYoutubeConnected(false);
+        }
       } else {
         // Nenhuma integração encontrada = desconectado
         console.log('YouTube desconectado (nenhuma integração encontrada)');
@@ -1317,6 +1453,11 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                   from { opacity: 0; transform: translateY(-10px); }
                   to { opacity: 1; transform: translateY(0); }
                 }
+                @keyframes pulse {
+                  0% { transform: scale(1); }
+                  50% { transform: scale(1.05); }
+                  100% { transform: scale(1); }
+                }
               `}</style>
               
               <IconComponent icon={FaIcons.FaYoutube}
@@ -1326,7 +1467,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                   fontSize: '1.1rem',
                   filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.1))',
                   position: 'relative',
-                  zIndex: 2
+                  zIndex: 2,
+                  animation: 'pulse 2s infinite'
                 }} 
               />
               <span style={{ 
@@ -1336,7 +1478,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                 position: 'relative',
                 zIndex: 2
               }}>
-                YouTube Disconnected - Connect
+                YouTube Disconnected - Click to Connect
               </span>
             </div>
           )}
