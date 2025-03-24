@@ -2,7 +2,6 @@ import React, { ReactNode, useEffect } from 'react';
 import styled from 'styled-components';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
-import TechBackground from './TechBackground';
 
 const ModalOverlay = styled.div<{ isOpen: boolean }>`
   position: fixed;
@@ -21,7 +20,7 @@ const ModalOverlay = styled.div<{ isOpen: boolean }>`
 `;
 
 const ModalContainer = styled.div<{ size: 'small' | 'medium' | 'large' }>`
-  background-color: ${props => props.theme.colors.white};
+  background-color: transparent;
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.xl};
   overflow: hidden;
@@ -46,6 +45,7 @@ const ModalHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+  background-color: ${props => props.theme.colors.white};
 `;
 
 const ModalTitle = styled.h3`
@@ -74,6 +74,7 @@ const ModalBody = styled.div`
   flex: 1;
   overflow-y: auto;
   max-height: 70vh;
+  background-color: ${props => props.theme.colors.white};
 `;
 
 const ModalFooter = styled.div`
@@ -82,6 +83,7 @@ const ModalFooter = styled.div`
   justify-content: flex-end;
   gap: 12px;
   border-top: 1px solid ${props => props.theme.colors.lightGrey};
+  background-color: ${props => props.theme.colors.white};
 `;
 
 type ModalProps = {
@@ -138,7 +140,6 @@ const Modal: React.FC<ModalProps> = ({
   
   return (
     <ModalOverlay isOpen={isOpen} onClick={handleOverlayClick} data-testid="modal-overlay">
-      <TechBackground zIndex={1} />
       <ModalContainer size={size}>
         <ModalHeader>
           <ModalTitle>{title}</ModalTitle>

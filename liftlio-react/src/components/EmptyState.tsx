@@ -2,7 +2,6 @@ import React from 'react';
 import styled from 'styled-components';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
-import TechBackground from './TechBackground';
 
 const Container = styled.div`
   display: flex;
@@ -12,9 +11,7 @@ const Container = styled.div`
   text-align: center;
   padding: 40px 20px;
   min-height: 400px;
-  background: #f7f7fc;
-  border-radius: 16px;
-  border: 1px solid #e0e0e0;
+  background: transparent;
   margin: 20px 0;
   position: relative;
   overflow: hidden;

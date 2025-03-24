@@ -5,7 +5,6 @@ import { supabase } from '../lib/supabaseClient';
 import { createClient } from '@supabase/supabase-js';
 import { FaTimes, FaMagic, FaSpinner } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
-import TechBackground from './TechBackground';
 
 // Import supabase credentials
 const supabaseUrl = 'https://suqjifkhmekcdflwowiw.supabase.co';

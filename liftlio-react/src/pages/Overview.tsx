@@ -12,7 +12,6 @@ import { useProject } from '../context/ProjectContext';
 import EmptyState from '../components/EmptyState';
 import ProjectModal from '../components/ProjectModal';
 import { supabase } from '../lib/supabaseClient';
-import TechBackground from '../components/TechBackground';
 
 // Animation keyframes
 const fadeIn = keyframes`
@@ -1892,7 +1891,6 @@ const Overview: React.FC = () => {
       min-height: 100vh;
       width: 100%;
       padding: 20px;
-      background: #f8f8f8;
       position: relative;
       overflow: hidden;
     `;
@@ -2047,7 +2045,6 @@ const Overview: React.FC = () => {
       return (
         <>
           <OnboardingContainer>
-            <TechBackground />
             {/* Conteúdo principal */}
             <ContentWrapper>
               <EmptyState 
@@ -2072,7 +2069,6 @@ const Overview: React.FC = () => {
     if (onboardingStep === 2) {
       return (
         <OnboardingContainer>
-          <TechBackground />
           {/* Conteúdo principal */}
           <ContentWrapper>
             <EmptyState 
@@ -2089,7 +2085,6 @@ const Overview: React.FC = () => {
     if (onboardingStep === 3) {
       return (
         <OnboardingContainer>
-          <TechBackground />
           {/* Conteúdo principal */}
           <ContentWrapper>
             <EmptyState 
@@ -2551,9 +2546,7 @@ const Overview: React.FC = () => {
   if (!currentProject) {
     return (
       <PageContainer>
-        <TechBackground />
         <EmptyContainer>
-          <GridPattern />
           
           <EmptyIcon>
             <IconComponent icon={FaIcons.FaProjectDiagram} />
@@ -2628,7 +2621,6 @@ const Overview: React.FC = () => {
   
   return (
     <PageContainer>
-      <TechBackground />
       <DashboardHeader>
         <PageTitle>
           <div>
