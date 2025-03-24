@@ -2,13 +2,8 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Modal from './Modal';
 import { supabase } from '../lib/supabaseClient';
-import { createClient } from '@supabase/supabase-js';
 import { FaTimes, FaMagic, FaSpinner } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
-
-// Import supabase credentials
-const supabaseUrl = 'https://suqjifkhmekcdflwowiw.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I';
 
 const Form = styled.form`
   display: flex;
@@ -294,12 +289,16 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
          Target Audience Description: ${projectForm.audience}
          Respond ONLY with the keywords separated by commas, without any introduction or explanation.`;
       
+      // Obter a sessão atual
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token || '';
+      
       // Chamar a Edge Function diretamente via fetch
       const response = await fetch('https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/claude-proxy', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify({ prompt })
       });
@@ -308,10 +307,10 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
         throw new Error(`Error invoking edge function: ${response.statusText}`);
       }
       
-      const data = await response.json();
+      const fnData = await response.json();
       
       // Extrair as keywords da resposta
-      const responseText = data?.content?.[0]?.text || '';
+      const responseText = fnData?.content?.[0]?.text || '';
       
       // Processar as keywords (remover quebras de linha, pontos, etc)
       const cleanedResponse = responseText.replace(/\n/g, '').trim();

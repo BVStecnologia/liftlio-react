@@ -129,30 +129,37 @@ const ProjectCreationPage: React.FC = () => {
         throw new Error('User not authenticated');
       }
       
+      // A estrutura do projeto deve corresponder à da tabela Projeto no Supabase
+      const projectData = {
+        "Project name": project.name,
+        "description service": `Company or product name: ${project.company}\nAudience description: ${project.audience}`,
+        user: user.email,
+        "User id": user.id,
+        "url service": project.link,
+        "Keywords": project.keywords,
+        "País": project.country // Certificando que seja "US" ou "BR"
+      };
+      
+      console.log('Creating project with data:', projectData);
+      
       // Inserir o novo projeto no Supabase
       const { data, error } = await supabase
         .from('Projeto')
-        .insert([
-          { 
-            name: project.name,
-            description: project.audience,
-            user: user.email,
-            user_id: user.id,
-            link: project.link,
-            company: project.company,
-            keywords: project.keywords,
-            country: project.country
-          }
-        ])
-        .select();
+        .insert([projectData]);
       
       if (error) throw error;
       
       // Redirecionar para o dashboard após criar o projeto
       navigate('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating project:', error);
-      alert('Error creating the project. Please try again.');
+      
+      // Mostrar erro mais detalhado para diagnóstico
+      if (error.message) {
+        alert(`Error creating the project: ${error.message}. Please try again.`);
+      } else {
+        alert('Error creating the project. Please try again.');
+      }
     }
   };
   
