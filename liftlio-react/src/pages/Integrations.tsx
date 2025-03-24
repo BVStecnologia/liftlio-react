@@ -8,6 +8,7 @@ import { FaYoutube, FaReddit, FaLinkedin, FaFacebook, FaTwitter, FaInstagram,
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
 import { supabase } from '../lib/supabaseClient';
+import LoadingDataIndicator from '../components/LoadingDataIndicator';
 
 // Animations
 const fadeIn = keyframes`
@@ -631,6 +632,8 @@ const Integrations: React.FC = () => {
   const [userIntegrations, setUserIntegrations] = useState<Integration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [authWindow, setAuthWindow] = useState<Window | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const authCheckIntervalRef = useRef<number | null>(null);
   
@@ -687,6 +690,20 @@ const Integrations: React.FC = () => {
       });
     }
     
+    // Verificar se há uma mensagem de sucesso de integração
+    const successFlag = localStorage.getItem('integrationSuccess') === 'true';
+    if (successFlag) {
+      setShowSuccessMessage(true);
+      localStorage.removeItem('integrationSuccess');
+      
+      // Auto-ocultar mensagem após 5 segundos
+      const timer = setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+    
     // O processamento do código de autorização agora é feito pelo componente OAuthHandler global
     
     // Monitor popup window if opened
@@ -701,6 +718,8 @@ const Integrations: React.FC = () => {
           if (currentProject?.id) {
             setTimeout(() => fetchIntegrations(), 1000);
           }
+          // Remover o estado de autenticação
+          setIsAuthenticating(false);
         }
       };
       
@@ -911,6 +930,7 @@ const Integrations: React.FC = () => {
 
   // Start OAuth flow for YouTube
   const initiateOAuth = () => {
+    setIsAuthenticating(true);
     // Use the redirect URI that is configured in Google Cloud
     // Importante: Este URI deve corresponder EXATAMENTE ao configurado no Google Cloud Console
     
@@ -1265,6 +1285,39 @@ const Integrations: React.FC = () => {
   return (
     <IconContext.Provider value={{ className: 'react-icons' }}>
       <div>
+        {/* Elemento de carregamento durante autenticação */}
+        {isAuthenticating && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <LoadingDataIndicator />
+          </div>
+        )}
+        
+        {/* Mensagem de sucesso após integração */}
+        {showSuccessMessage && (
+          <div style={{
+            padding: '12px 20px',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            {renderIcon(FaCheck)} 
+            YouTube integration successfully connected!
+          </div>
+        )}
         <PageTitle>Integrations</PageTitle>
         
         <SearchContainer>

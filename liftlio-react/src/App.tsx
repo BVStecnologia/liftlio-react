@@ -286,8 +286,9 @@ const OAuthHandler = () => {
               if (insertError) throw insertError;
             }
             
-            // Mostrar mensagem de sucesso
-            alert('Integração com YouTube concluída com sucesso!');
+            // Armazenar flag de sucesso ao invés de mostrar alerta
+            localStorage.setItem('integrationSuccess', 'true');
+            localStorage.setItem('integrationTimestamp', Date.now().toString());
             
             // Atualizar localStorage para forçar uma atualização de estado
             // Isso fará com que o ProjectContext detecte a alteração no onboarding
@@ -311,9 +312,9 @@ const OAuthHandler = () => {
               console.error('Erro ao marcar integração como ativa:', updateError);
             }
             
-            // Redirecionar para a página principal e recarregar completamente
+            // Redirecionar para a página de integrações e recarregar completamente
             // Quando a página carregar, o ProjectContext detectará a conclusão do onboarding
-            window.location.href = '/';
+            window.location.href = '/integrations';
           } else {
             alert('Erro: Nenhum ID de projeto encontrado para associar a esta integração.');
           }
