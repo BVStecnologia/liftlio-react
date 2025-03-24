@@ -12,10 +12,11 @@ interface MetricCardProps {
   trend?: 'up' | 'down' | 'neutral';
   onClick?: () => void;
   className?: string;
+  color?: string;
 }
 
-const Card = styled.div<{ isClickable: boolean }>`
-  background-color: ${props => props.theme.colors.secondary}; /* White (30%) */
+const Card = styled.div<{ isClickable: boolean; color?: string }>`
+  background-color: ${props => props.color || props.theme.colors.secondary}; /* White (30%) or custom color */
   border: 1px solid rgba(165, 177, 183, 0.2); /* Subtle border based on Cinza médio (60%) */
   border-radius: 12px;
   padding: 20px;
@@ -119,15 +120,15 @@ const ChangeLabel = styled.span`
 `;
 
 // Add subtle gradient line at the top to match the reference design
-const TopGradient = styled.div`
+const TopGradient = styled.div<{ color?: string }>`
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 4px;
   background: linear-gradient(90deg, 
-    ${props => props.theme.colors.primary}88, 
-    ${props => props.theme.colors.primary}44
+    ${props => props.color || props.theme.colors.primary}88, 
+    ${props => props.color || props.theme.colors.primary}44
   );
   opacity: 0.7;
 `;
@@ -141,7 +142,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
   changeLabel,
   trend = 'neutral',
   onClick,
-  className
+  className,
+  color
 }) => {
   // Determine trend icon based on the trend property
   const getTrendIcon = () => {
@@ -161,8 +163,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
   };
   
   return (
-    <Card isClickable={!!onClick} onClick={onClick} className={className}>
-      <TopGradient />
+    <Card isClickable={!!onClick} onClick={onClick} className={className} color={color}>
+      <TopGradient color={color} />
       <CardHeader>
         <TitleContainer>
           <Title>{title}</Title>

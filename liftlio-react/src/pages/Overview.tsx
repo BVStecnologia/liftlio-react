@@ -2,6 +2,25 @@ import React, { useState, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { COLORS, withOpacity } from '../styles/colors';
+
+// Efeito de onda para os ícones
+const waveEffect = keyframes`
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+    box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.4);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+`;
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import * as FaIcons from 'react-icons/fa';
 import { IconType } from 'react-icons';
@@ -712,15 +731,32 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
   background: ${props => props.bgColor};
   color: white;
   font-size: 1.5rem;
-  box-shadow: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   position: relative;
   overflow: hidden;
+  animation: ${waveEffect} 3s infinite ease-in-out;
+  animation-delay: ${props => props.animationDelay || '0s'};
+  
+  &:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+    opacity: 0;
+    animation: ${pulse} 2s infinite ease-out;
+    border-radius: 12px;
+    z-index: 1;
+  }
   
   svg {
     position: relative;
     z-index: 2;
     width: 24px;
     height: 24px;
+    filter: drop-shadow(0 0 2px rgba(255,255,255,0.6));
   }
   
   @media (max-width: 992px) and (min-width: 768px) {
@@ -2564,7 +2600,7 @@ const Overview: React.FC = () => {
       title: 'Posts',
       value: statsData.reach.value,
       icon: 'FaFileAlt',
-      color: `linear-gradient(135deg, ${COLORS.ACCENT} 0%, ${COLORS.ACCENT_LIGHT} 100%)`,
+      color: COLORS.INFO, // Azul padrão do sistema para Posts/Videos
       description: 'Videos',
       trend: statsData.reach.trend
     },
@@ -2573,7 +2609,7 @@ const Overview: React.FC = () => {
       title: 'Comments',
       value: statsData.activities.value,
       icon: 'FaComments',
-      color: `linear-gradient(135deg, ${COLORS.ACCENT} 0%, ${COLORS.ACCENT_LIGHT} 100%)`,
+      color: '#9C27B0', // Roxo para Comentários (trocando o azul naval)
       description: 'Comments',
       trend: statsData.activities.trend
     },
@@ -2582,7 +2618,7 @@ const Overview: React.FC = () => {
       title: 'Total Engagements',
       value: statsData.engagements.value,
       icon: 'FaStar',
-      color: `linear-gradient(135deg, ${COLORS.ACCENT} 0%, ${COLORS.ACCENT_LIGHT} 100%)`,
+      color: COLORS.WARNING, // Laranja padrão para Engajamentos
       description: 'Total engagements',
       trend: statsData.engagements.trend
     },
@@ -2591,7 +2627,7 @@ const Overview: React.FC = () => {
       title: 'LEDs',
       value: statsData.leads.value,
       icon: 'FaUserCheck',
-      color: `linear-gradient(135deg, ${COLORS.ACCENT} 0%, ${COLORS.ACCENT_LIGHT} 100%)`,
+      color: COLORS.SUCCESS, // Verde padrão do sistema para LEDs
       description: 'LED mentions',
       trend: statsData.leads.trend
     }
@@ -2631,13 +2667,14 @@ const Overview: React.FC = () => {
       
       {/* Stats Overview Grid */}
       <OverviewGrid>
-        {statsCards.map((stat, index) => (
-          <StatCard 
-            key={stat.id} 
-            gridSpan={3} 
-            cardIndex={index}
-            active={!!activeLeds[index as keyof typeof activeLeds]}
-          >
+        {statsCards.map((stat, index) => {          
+          return (
+            <StatCard 
+              key={stat.id} 
+              gridSpan={3} 
+              cardIndex={index}
+              active={!!activeLeds[index as keyof typeof activeLeds]}
+            >
             {/* Card inner energy effect */}
             <CardEnergyEffect 
               index={index} 
@@ -2710,7 +2747,8 @@ const Overview: React.FC = () => {
               </StatIconContainer>
             </StatDisplay>
           </StatCard>
-        ))}
+            );
+          })}
         
         <StatCard 
           gridSpan={6}
