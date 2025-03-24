@@ -396,10 +396,10 @@ function App() {
 // Componente de layout protegido
 const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean, toggleSidebar: () => void }) => {
   const { user, loading } = useAuth();
-  const { isOnboarding, onboardingReady } = useProject(); // Movido para o início, antes de qualquer return
+  const { isOnboarding, onboardingReady, hasProjects, isLoading } = useProject(); // Adicionado hasProjects e isLoading
   
   // Aguardar o carregamento da autenticação e do estado de onboarding
-  if (loading || !onboardingReady) {
+  if (loading || !onboardingReady || isLoading) {
     return (
       <div style={{
         height: '100vh',
@@ -416,6 +416,23 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   }
   
   // Se chegou aqui, o usuário está autenticado e o carregamento foi concluído
+  
+  // Redirecionar para a página de criação de projeto se o usuário não tiver projetos
+  if (!hasProjects) {
+    return (
+      <AppContainer>
+        <MainContent>
+          <Header toggleSidebar={toggleSidebar} />
+          <ContentWrapper>
+            <Routes>
+              <Route path="*" element={<Navigate to="/create-project" replace />} />
+              <Route path="/create-project" element={<ProjectCreationPage />} />
+            </Routes>
+          </ContentWrapper>
+        </MainContent>
+      </AppContainer>
+    );
+  }
   
   // Para o onboarding, mostrar o header mas esconder a sidebar e o botão flutuante
   if (isOnboarding) {

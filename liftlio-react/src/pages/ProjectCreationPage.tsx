@@ -114,35 +114,13 @@ const ProjectCreationPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   
-  // Verificar se o usuário está autenticado e verificar projetos existentes
+  // Verificar apenas se o usuário está autenticado
   useEffect(() => {
     if (!loading && !user) {
       navigate('/');
-    } else if (user) {
-      // Verificar se o usuário já tem projetos
-      const checkExistingProjects = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('PROJETOS')
-            .select('id')
-            .eq('user_id', user.id)
-            .limit(1);
-            
-          if (error) throw error;
-          
-          // Se encontrar projetos, redirecionar para o dashboard
-          if (data && data.length > 0) {
-            navigate('/dashboard');
-          }
-        } catch (error) {
-          console.error('Error checking existing projects:', error);
-        }
-      };
-      
-      // Verifica apenas na montagem inicial do componente
-      // e quando o usuário ou estado de loading mudar
-      checkExistingProjects();
     }
+    // Não verificamos mais projetos aqui, pois a lógica de redirecionamento
+    // com base em projetos agora está no ProtectedLayout
   }, [user, loading, navigate]);
   
   const handleProjectCreated = async (project: any) => {
@@ -153,7 +131,7 @@ const ProjectCreationPage: React.FC = () => {
       
       // Inserir o novo projeto no Supabase
       const { data, error } = await supabase
-        .from('PROJETOS')
+        .from('Projeto')
         .insert([
           { 
             name: project.name,

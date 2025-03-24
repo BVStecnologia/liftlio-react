@@ -265,6 +265,7 @@ const LoginPage: React.FC = () => {
 
   useEffect(() => {
     // Se o usuário já estiver autenticado, redireciona para o dashboard
+    // O redirecionamento correto (dashboard ou create-project) será determinado no ProtectedLayout
     if (user && !loading) {
       navigate('/dashboard')
     }
