@@ -140,6 +140,8 @@ const ProjectCreationPage: React.FC = () => {
         }
       };
       
+      // Verifica apenas na montagem inicial do componente
+      // e quando o usuário ou estado de loading mudar
       checkExistingProjects();
     }
   }, [user, loading, navigate]);

@@ -879,7 +879,7 @@ const AddButton = styled.button`
 // Removing user section as per the reference image
 
 const navItems = [
-  { path: '/', label: 'Dashboard', icon: 'FaHome' },
+  { path: '/dashboard', label: 'Dashboard', icon: 'FaHome' },
   { path: '/mentions', label: 'Mentions', icon: 'FaComments' },
   { path: '/monitoring', label: 'Monitoring', icon: 'FaYoutube' },
   { path: '/settings', label: 'Settings', icon: 'FaCog' },

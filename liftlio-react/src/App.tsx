@@ -378,9 +378,8 @@ function App() {
               {/* Tornar a página de login o ponto de entrada principal */}
               <Route path="/" element={<LoginPage />} />
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/create-project" element={<ProjectCreationPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/dashboard/*" element={
+              <Route path="/*" element={
                 <ProtectedLayout 
                   sidebarOpen={sidebarOpen} 
                   toggleSidebar={toggleSidebar}
@@ -427,10 +426,13 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
           <ContentWrapper>
             <Routes>
               <Route path="/" element={<Overview />} />
+              <Route path="/dashboard" element={<Overview />} />
+              <Route path="/create-project" element={<ProjectCreationPage />} />
               <Route path="/monitoring" element={<Navigate to="/dashboard" replace />} />
               <Route path="/mentions" element={<Navigate to="/dashboard" replace />} />
               <Route path="/settings" element={<Navigate to="/dashboard" replace />} />
               <Route path="/integrations" element={<Integrations />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </ContentWrapper>
         </MainContent>
@@ -452,10 +454,13 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
         <ContentWrapper>
           <Routes>
             <Route path="/" element={<Overview />} />
+            <Route path="/dashboard" element={<Overview />} />
+            <Route path="/create-project" element={<ProjectCreationPage />} />
             <Route path="/monitoring" element={<Monitoring />} />
             <Route path="/mentions" element={<Mentions />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/integrations" element={<Integrations />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </ContentWrapper>
       </MainContent>
@@ -523,7 +528,7 @@ const AuthCallback = () => {
         if (user) {
           navigate('/dashboard', { replace: true });
         } else {
-          navigate('/', { replace: true });
+          navigate('/login', { replace: true });
         }
       }
     }

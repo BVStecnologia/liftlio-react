@@ -2043,8 +2043,9 @@ const Overview: React.FC = () => {
     `;
     
     // Etapa 1: Criar projeto - Redirecionar para a página dedicada
-    if (onboardingStep === 1) {
+    if (onboardingStep === 1 && !hasProjects) {
       // Redirecionar para a página dedicada de criação de projeto
+      // somente se não tiver projetos
       navigate('/create-project');
       return null;
     }
