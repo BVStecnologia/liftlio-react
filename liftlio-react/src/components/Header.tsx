@@ -1266,17 +1266,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     oauthUrl.searchParams.append('prompt', 'consent');
     oauthUrl.searchParams.append('state', currentProject.id.toString());
     
-    // Abrir popup para autorização
-    const width = 600;
-    const height = 700;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-    
-    window.open(
-      oauthUrl.toString(),
-      'YouTube OAuth',
-      `width=${width},height=${height},left=${left},top=${top}`
-    );
+    // Redirecionar na mesma página em vez de abrir um popup
+    window.location.href = oauthUrl.toString();
   };
   
   const notifications = [

@@ -631,11 +631,9 @@ const Integrations: React.FC = () => {
   const [confirmCheckbox, setConfirmCheckbox] = useState(false);
   const [userIntegrations, setUserIntegrations] = useState<Integration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [authWindow, setAuthWindow] = useState<Window | null>(null);
-  // Removemos o estado isAuthenticating pois não precisamos mais dele
+  // Removemos o estado authWindow pois não vamos mais usar popup
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
-  const authCheckIntervalRef = useRef<number | null>(null);
   
   // Verificar que os URIs de redirecionamento estão corretamente configurados no startup
   useEffect(() => {
@@ -706,33 +704,11 @@ const Integrations: React.FC = () => {
     
     // O processamento do código de autorização agora é feito pelo componente OAuthHandler global
     
-    // Monitor popup window if opened
-    if (authWindow) {
-      const checkPopupClosed = () => {
-        if (authWindow.closed) {
-          if (authCheckIntervalRef.current) {
-            window.clearInterval(authCheckIntervalRef.current);
-            authCheckIntervalRef.current = null;
-          }
-          // Após fechar a janela, verificar novamente as integrações
-          if (currentProject?.id) {
-            setTimeout(() => fetchIntegrations(), 1000);
-          }
-          // Não precisamos mais desativar o estado de autenticação, pois removemos essa funcionalidade
-        }
-      };
-      
-      authCheckIntervalRef.current = window.setInterval(checkPopupClosed, 500);
-    }
+    // Não precisamos mais monitorar janelas popup, pois estamos redirecionando na mesma página
     
-    return () => {
-      // Cleanup interval if exists
-      if (authCheckIntervalRef.current) {
-        window.clearInterval(authCheckIntervalRef.current);
-        authCheckIntervalRef.current = null;
-      }
-    };
-  }, [currentProject?.id, authWindow]);
+    // Não precisamos mais de limpeza de intervalos para o popup
+    return () => {};
+  }, [currentProject?.id]);
 
   // Fetch integrations from Supabase
   const fetchIntegrations = async () => {
@@ -959,29 +935,8 @@ const Integrations: React.FC = () => {
     oauthUrl.searchParams.append('prompt', 'consent');
     oauthUrl.searchParams.append('state', currentProject?.id?.toString() || ''); // Add project ID to state parameter
     
-    // Open popup
-    const width = 600;
-    const height = 700;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-    
-    const authPopup = window.open(
-      oauthUrl.toString(),
-      'YouTube OAuth',
-      `width=${width},height=${height},left=${left},top=${top}`
-    );
-    
-    setAuthWindow(authPopup);
-    
-    // Check if popup is closed
-    const checkPopupClosed = () => {
-      if (authPopup && authPopup.closed) {
-        window.clearInterval(authCheckIntervalRef.current!);
-        authCheckIntervalRef.current = null;
-      }
-    };
-    
-    authCheckIntervalRef.current = window.setInterval(checkPopupClosed, 500);
+    // Redirecionar na mesma janela em vez de abrir um popup
+    window.location.href = oauthUrl.toString();
   };
 
   // Disconnect a specific integration

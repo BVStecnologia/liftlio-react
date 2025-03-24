@@ -58,7 +58,7 @@
 <body>
   <div class="container">
     <h1>YouTube Authorization</h1>
-    <p>Completing YouTube authorization. This window will close automatically...</p>
+    <p>Completing YouTube authorization. You will be redirected back to the application...</p>
     <div class="spinner"></div>
   </div>
   
@@ -67,22 +67,19 @@
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const error = urlParams.get('error');
+    const state = urlParams.get('state');
     
     // Handle the result
     if (code) {
-      // Send the code back to the parent window
-      window.opener.postMessage({
-        type: 'OAUTH_CALLBACK',
-        code: code
-      }, window.location.origin);
-      
-      // Will close automatically after parent window processes the message
+      // Redirecionar de volta para a aplicação principal com o código
+      // Não precisamos mais usar window.opener pois estamos na mesma janela
+      window.location.href = `${window.location.origin}?code=${code}&state=${state || ''}&scope=${urlParams.get('scope') || ''}`;
     } else if (error) {
       // Handle error
       document.querySelector('.container').innerHTML = `
         <h1>Authorization Failed</h1>
         <p>There was an error during the authorization process: ${error}</p>
-        <p>Please close this window and try again.</p>
+        <p>Please <a href="${window.location.origin}/integrations">return to the application</a> and try again.</p>
       `;
     }
   </script>
