@@ -18,13 +18,13 @@
 // Primary palette (base colors)
 export const COLORS = {
   // Base 60:30:10 palette
-  DOMINANT: '#dce4e9',    // Cinza claro - 60% of UI (lightened)
+  DOMINANT: '#e6edf2',    // Cinza mais claro - 60% of UI (suavizado)
   SECONDARY: '#ffffff',   // Branco - 30% of UI
   ACCENT: '#2d3e50',      // Azul naval escuro - 10% of UI
 
   // Variations of the dominant color (Cinza claro)
-  DOMINANT_LIGHT: '#e7eef2',  // Lighter variant for subtle differentiation
-  DOMINANT_LIGHTER: '#f3f7fa', // Very light variant for hover states on light backgrounds
+  DOMINANT_LIGHT: '#edf3f7',  // Lighter variant for subtle differentiation
+  DOMINANT_LIGHTER: '#f5f9fc', // Very light variant for hover states on light backgrounds
   DOMINANT_DARK: '#b5c2cb',   // Darker variant for text on light backgrounds
   
   // Variations of the accent color (Azul naval escuro)
