@@ -20,17 +20,17 @@ const energyLineAnimation = keyframes`
   0% {
     opacity: 0.3;
     transform: scaleX(0.95);
-    box-shadow: 0 0 5px #9575CD, 0 0 10px #9575CD;
+    box-shadow: 0 0 5px #00a9db, 0 0 10px #00a9db;
   }
   50% {
     opacity: 0.8;
     transform: scaleX(1);
-    box-shadow: 0 0 15px #673AB7, 0 0 30px #673AB7;
+    box-shadow: 0 0 15px #2d3e50, 0 0 30px #2d3e50;
   }
   100% {
     opacity: 0.3;
     transform: scaleX(0.95);
-    box-shadow: 0 0 5px #9575CD, 0 0 10px #9575CD;
+    box-shadow: 0 0 5px #00a9db, 0 0 10px #00a9db;
   }
 `;
 
@@ -88,11 +88,12 @@ const LogoContainer = styled.div`
 const Logo = styled.div`
   font-size: 2.5rem;
   font-weight: ${props => props.theme.fontWeights.bold};
-  color: ${props => props.theme.colors.primary};
+  color: #2d3e50;
   margin-bottom: 0.5rem;
   letter-spacing: -0.5px;
   position: relative;
   z-index: 2;
+  text-shadow: 0 1px 3px rgba(0, 169, 219, 0.2);
 `
 
 const Tagline = styled.p`
@@ -105,7 +106,7 @@ const Tagline = styled.p`
 
 const PowerPhrase = styled.div`
   font-size: ${props => props.theme.fontSizes.md};
-  color: ${props => props.theme.colors.secondary};
+  color: #2d3e50;
   text-align: center;
   font-weight: ${props => props.theme.fontWeights.medium};
   margin-bottom: 1.5rem;
@@ -119,7 +120,7 @@ const PowerPhrase = styled.div`
     height: 3px;
     bottom: -8px;
     left: 25%;
-    background: linear-gradient(90deg, transparent, ${props => props.theme.colors.secondary}, transparent);
+    background: linear-gradient(90deg, transparent, #00a9db, transparent);
   }
 `
 
@@ -135,7 +136,7 @@ const EnergyLine = styled.div`
   position: absolute;
   height: 3px;
   width: 60px;
-  background: ${props => props.theme.colors.secondary};
+  background: #00a9db;
   top: 20px;
   right: -30px;
   opacity: 0.8;
@@ -148,7 +149,7 @@ const EnergyLine = styled.div`
     position: absolute;
     height: 6px;
     width: 6px;
-    background: ${props => props.theme.colors.secondary};
+    background: #00a9db;
     border-radius: 50%;
     top: -1.5px;
   }
@@ -190,8 +191,8 @@ const Input = styled.input`
   
   &:focus {
     outline: none;
-    border-color: ${props => props.theme.colors.secondary};
-    box-shadow: 0 0 0 3px rgba(151, 117, 205, 0.2);
+    border-color: #00a9db;
+    box-shadow: 0 0 0 3px rgba(0, 169, 219, 0.2);
   }
 `
 
@@ -200,7 +201,7 @@ const Button = styled.button`
   align-items: center;
   justify-content: center;
   padding: 14px 20px;
-  background: ${props => props.theme.colors.gradient.primary};
+  background: linear-gradient(90deg, #00a9db, #2d3e50);
   color: white;
   border: none;
   border-radius: ${props => props.theme.radius.md};
@@ -210,7 +211,7 @@ const Button = styled.button`
   transition: all ${props => props.theme.transitions.default};
   width: 100%;
   margin-top: 1.5rem;
-  box-shadow: ${props => props.theme.shadows.md};
+  box-shadow: 0 4px 10px rgba(0, 169, 219, 0.3);
   position: relative;
   overflow: hidden;
   
