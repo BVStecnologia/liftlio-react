@@ -1094,7 +1094,14 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
-  const [youtubeConnected, setYoutubeConnected] = useState<boolean>(false);
+  // Estado para controlar se a conexão do YouTube está verificada e conectada
+  const [youtubeStatus, setYoutubeStatus] = useState<{
+    checked: boolean; // Se já verificamos o status
+    connected: boolean; // Se está conectado
+  }>({
+    checked: false,
+    connected: false
+  });
   
   const projectsRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -1111,8 +1118,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   // Verificar status do YouTube quando o projeto muda
   useEffect(() => {
     if (currentProject?.id) {
-      // Inicialmente, assumir que o YouTube está desconectado até verificarmos
-      setYoutubeConnected(false);
+      // Iniciar verificação sem alterar o estado de exibição até resultado completo
+      setYoutubeStatus(prev => ({ ...prev, checked: false }));
       
       // Verificar status imediatamente
       checkYouTubeConnection();
@@ -1127,7 +1134,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       return () => clearInterval(intervalId);
     } else {
       // Se não houver projeto selecionado, não mostrar notificação
-      setYoutubeConnected(true);
+      setYoutubeStatus({ checked: true, connected: true });
     }
   }, [currentProject]);
   
@@ -1163,7 +1170,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       if (error) {
         console.error("Erro ao verificar integração:", error);
         console.log('YouTube desconectado (erro na consulta)');
-        setYoutubeConnected(false);
+        // Marcar como verificado mas desconectado
+        setYoutubeStatus({ checked: true, connected: false });
         return;
       }
       
@@ -1194,31 +1202,32 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                 .update({ 'ativo': false })
                 .eq('PROJETO id', currentProject.id)
                 .eq('Tipo de integração', 'youtube');
-                
-              setYoutubeConnected(false);
+              
+              // Agora marcamos como verificado E desconectado
+              setYoutubeStatus({ checked: true, connected: false });
               return;
             }
             
             // Se chegou aqui, o token é válido
-            setYoutubeConnected(true);
+            setYoutubeStatus({ checked: true, connected: true });
           } catch (apiError) {
             console.error('Erro ao testar token do YouTube:', apiError);
-            setYoutubeConnected(false);
+            setYoutubeStatus({ checked: true, connected: false });
           }
         } else {
           // Não está marcado como ativo no banco ou não tem token
-          setYoutubeConnected(false);
+          setYoutubeStatus({ checked: true, connected: false });
         }
       } else {
         // Nenhuma integração encontrada = desconectado
         console.log('YouTube desconectado (nenhuma integração encontrada)');
-        setYoutubeConnected(false);
+        setYoutubeStatus({ checked: true, connected: false });
       }
       
     } catch (error) {
       console.error("Erro ao verificar integração do YouTube:", error);
       console.log('YouTube desconectado (exceção)');
-      setYoutubeConnected(false);
+      setYoutubeStatus({ checked: true, connected: false });
     }
   };
   
@@ -1228,6 +1237,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       alert("Selecione um projeto primeiro");
       return;
     }
+    
+    // Marcar como não verificado durante a autenticação
+    setYoutubeStatus({ checked: false, connected: false });
     
     // Determinar o URI de redirecionamento baseado no ambiente
     const isProduction = window.location.hostname === 'liftlio.fly.dev';
@@ -1401,8 +1413,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         </div>
         
         <RightSection>
-          {/* Aviso do YouTube quando não estiver conectado */}
-          {!youtubeConnected && currentProject?.id && (
+          {/* Aviso do YouTube quando verificação estiver completa E não estiver conectado */}
+          {youtubeStatus.checked && !youtubeStatus.connected && currentProject?.id && (
             <div 
               style={{
                 display: 'flex',
