@@ -2,6 +2,17 @@ import React, { useState, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { COLORS, withOpacity } from '../styles/colors';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
+import * as FaIcons from 'react-icons/fa';
+import { IconType } from 'react-icons';
+import Card from '../components/Card';
+import SentimentIndicator from '../components/SentimentIndicator';
+import { IconComponent } from '../utils/IconHelper';
+import { useDashboardData } from '../hooks/useDashboardData';
+import { useProject } from '../context/ProjectContext';
+import EmptyState from '../components/EmptyState';
+import ProjectModal from '../components/ProjectModal';
+import { supabase } from '../lib/supabaseClient';
 
 // Efeito de onda para os ícones
 const waveEffect = keyframes`
@@ -21,17 +32,21 @@ const waveEffect = keyframes`
     box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
   }
 `;
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
-import * as FaIcons from 'react-icons/fa';
-import { IconType } from 'react-icons';
-import Card from '../components/Card';
-import SentimentIndicator from '../components/SentimentIndicator';
-import { IconComponent } from '../utils/IconHelper';
-import { useDashboardData } from '../hooks/useDashboardData';
-import { useProject } from '../context/ProjectContext';
-import EmptyState from '../components/EmptyState';
-import ProjectModal from '../components/ProjectModal';
-import { supabase } from '../lib/supabaseClient';
+
+// Efeito de transição da esquerda para direita
+const leftToRightWave = keyframes`
+  0% {
+    background-position: -100% 0;
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    background-position: 200% 0;
+    opacity: 0.1;
+  }
+`;
 
 // Animation keyframes
 const fadeIn = keyframes`
@@ -736,6 +751,24 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
   overflow: hidden;
   animation: ${waveEffect} 3s infinite ease-in-out;
   animation-delay: ${props => props.animationDelay || '0s'};
+  
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+      rgba(255,255,255,0) 0%, 
+      rgba(255,255,255,0.3) 50%, 
+      rgba(255,255,255,0) 100%
+    );
+    background-size: 200% 100%;
+    animation: ${leftToRightWave} 3s infinite ease-in-out;
+    animation-delay: ${props => props.animationDelay || '0s'};
+    z-index: 1;
+  }
   
   &:after {
     content: '';
@@ -2730,7 +2763,7 @@ const Overview: React.FC = () => {
               <StatIconContainer>
                 <StatIcon 
                   bgColor={stat.color} 
-                  animationDelay={`${index * 0.2}s`}
+                  animationDelay={`${index * 0.8}s`}
                   style={{
                     filter: activeLeds[index as keyof typeof activeLeds] ? 
                       'brightness(1.05)' : 'none',
@@ -2785,14 +2818,14 @@ const Overview: React.FC = () => {
                     <Cell 
                       key={`cell-${index}`} 
                       fill={
-                        index === 0 ? COLORS.ACCENT : 
-                        index === 1 ? COLORS.ACCENT_LIGHT : 
-                        index === 2 ? COLORS.ACCENT_LIGHTER : 
-                        index === 3 ? withOpacity(COLORS.ACCENT, 0.7) : 
-                        index === 4 ? withOpacity(COLORS.ACCENT, 0.6) : 
-                        index === 5 ? withOpacity(COLORS.ACCENT, 0.5) : 
-                        index === 6 ? withOpacity(COLORS.ACCENT, 0.4) : 
-                        withOpacity(COLORS.ACCENT, 0.3 - (index * 0.05))
+                        index === 0 ? '#1976D2' : // Azul escuro
+                        index === 1 ? '#FF5722' : // Laranja escuro
+                        index === 2 ? '#2E7D32' : // Verde escuro
+                        index === 3 ? '#7B1FA2' : // Roxo escuro
+                        index === 4 ? '#C2185B' : // Rosa escuro
+                        index === 5 ? '#0288D1' : // Azul escuro
+                        index === 6 ? '#FFA000' : // Amarelo escuro
+                        '#455A64' // Cinza escuro
                       }
                     />
                   ))}
