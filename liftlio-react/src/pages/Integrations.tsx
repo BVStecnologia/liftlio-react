@@ -793,13 +793,17 @@ const Integrations: React.FC = () => {
           }
         }
         
-        // Verificar e atualizar tokens expirados (mantendo o código original)
+        // Verificar e atualizar tokens expirados
         if (integration.status === 'connected' && integration.expiresAt && integration.refreshToken) {
-          // If token expires in less than 5 minutes, refresh it
-          const currentTime = Math.floor(Date.now() / 1000);
-          const timeToExpiration = integration.expiresAt - currentTime;
+          // Obter a hora da última atualização para verificar se o token expirou
+          const lastUpdated = integration.lastUpdated ? new Date(integration.lastUpdated) : null;
           
-          if (timeToExpiration < 300) { // 5 minutes in seconds
+          // Se não temos lastUpdated, atualizamos o token
+          // Ou se lastUpdated + expires_in está a menos de 5 minutos de expirar
+          const shouldRefresh = !lastUpdated || 
+            (Math.floor(Date.now() / 1000) - Math.floor(lastUpdated.getTime() / 1000) + 300 >= integration.expiresAt);
+          
+          if (shouldRefresh) { // Se o token expira em menos de 5 minutos
             try {
               await refreshToken(integration);
             } catch (refreshError) {
@@ -884,8 +888,8 @@ const Integrations: React.FC = () => {
       
       const tokenData = await tokenResponse.json();
       
-      // Calculate new expiration time
-      const expiresAt = Math.floor(Date.now() / 1000) + tokenData.expires_in;
+      // Armazenar o tempo de expiração diretamente em segundos
+      const expiresAt = tokenData.expires_in; // Valor em segundos (ex: 3599)
       
       // Update the integration in Supabase
       const { error } = await supabase
@@ -1016,12 +1020,16 @@ const Integrations: React.FC = () => {
         throw new Error('YouTube is not connected');
       }
       
-      // Check if token is expired or about to expire (less than 5 minutes)
-      const currentTime = Math.floor(Date.now() / 1000);
-      const timeToExpiration = youtubeIntegration.expiresAt ? youtubeIntegration.expiresAt - currentTime : -1;
+      // Verificar se o token expirou ou está prestes a expirar
+      const lastUpdated = youtubeIntegration.lastUpdated ? new Date(youtubeIntegration.lastUpdated) : null;
       
-      // If token is valid and not about to expire, test it before returning
-      if (timeToExpiration > 300) { // More than 5 minutes remaining
+      // Se não temos lastUpdated, consideramos que o token está expirado
+      // Caso contrário, verificamos se o tempo desde a última atualização + 5 min está dentro do tempo de expiração
+      const timeFromLastUpdate = lastUpdated ? Math.floor(Date.now() / 1000) - Math.floor(lastUpdated.getTime() / 1000) : Infinity;
+      const isExpiringSoon = !lastUpdated || (timeFromLastUpdate + 300 >= (youtubeIntegration.expiresAt || 0));
+      
+      // Se o token é válido e não está prestes a expirar, testar antes de retornar
+      if (!isExpiringSoon) { // Ainda tem mais de 5 minutos restantes
         // Verificar se o token realmente funciona
         const isValid = await testYouTubeTokenAPI(youtubeIntegration.token || '');
         

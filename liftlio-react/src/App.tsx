@@ -242,8 +242,8 @@ const OAuthHandler = () => {
           const tokenData = await tokenResponse.json();
           console.log('Token recebido com sucesso, salvando no Supabase...');
           
-          // Calcular tempo de expiração
-          const expiresAt = Math.floor(Date.now() / 1000) + tokenData.expires_in;
+          // Armazenar o tempo de expiração diretamente em segundos
+          const expiresAt = tokenData.expires_in; // Valor em segundos (ex: 3599)
           
           // Verificar se um projeto foi fornecido no parâmetro state
           if (state) {
