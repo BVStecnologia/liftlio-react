@@ -49,57 +49,23 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       fetchProject(savedProjectId);
     }
     
-    // Verificar se devemos pular diretamente para o dashboard
-    const skipOnboarding = localStorage.getItem('skipOnboarding') === 'true';
-    if (skipOnboarding) {
-      console.log("Flag skipOnboarding detectado, pulando direto para o dashboard");
-      // Limpar a flag
-      localStorage.removeItem('skipOnboarding');
-      // Forçar o onboarding para concluído
-      setOnboardingStep(4);
-      setHasProjects(true);
-      setHasIntegrations(true);
-      setHasData(true);
-      setOnboardingReady(true);
-      
-      // Ainda precisamos carregar os projetos para ter o contexto correto
-      loadUserProjects().then(projectsList => {
-        setProjects(projectsList);
-      });
-      
-      // Set up real-time subscription
-      setupRealtimeSubscription();
-      
-      return;
-    }
+    // Removida a verificação de skipOnboarding que estava causando
+    // redirecionamentos indesejados após a autenticação do YouTube
     
     // Load all projects
     loadUserProjects().then(projectsList => {
       setProjects(projectsList);
       setHasProjects(projectsList.length > 0);
       
-      // Verificar se acabamos de completar uma integração
-      const integrationCompleted = localStorage.getItem('integrationCompleted') === 'true';
+      // Verificamos a lista de projetos
       
       // Se tem projetos, atualizar onboardingStep
       if (projectsList.length > 0) {
-        // Se acabamos de completar uma integração, forçar uma atualização completa
-        // do estado de onboarding
-        if (integrationCompleted) {
-          // Limpar o flag de integração completada
-          localStorage.removeItem('integrationCompleted');
-          
-          // Forçar a atualização do estado de onboarding e pular para o dashboard
-          determineOnboardingState(projectsList[0].id, true).finally(() => {
-            console.log("Onboarding concluído após integração");
-            setOnboardingReady(true);
-          });
-        } else {
-          // Comportamento normal quando não estamos vindo de uma integração
-          determineOnboardingState(projectsList[0].id).finally(() => {
-            setOnboardingReady(true); // Marcar como pronto após determinar o estado
-          });
-        }
+        // Comportamento unificado - não fazemos mais distinção se estamos vindo de uma integração
+        // pois isso causava problemas de redirecionamento
+        determineOnboardingState(projectsList[0].id).finally(() => {
+          setOnboardingReady(true); // Marcar como pronto após determinar o estado
+        });
       } else {
         setOnboardingStep(1); // Precisa criar projeto
         setOnboardingReady(true); // Mesmo sem projetos, estamos prontos (etapa 1)
@@ -181,51 +147,138 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
     setCurrentProject(project);
     if (project?.id) {
       localStorage.setItem('currentProjectId', project.id.toString());
-      determineOnboardingState(project.id);
+      
+      // Ao trocar de projeto, verificamos se o usuário já completou o onboarding
+      // para não forçá-lo a passar por isso novamente
+      const userCompletedOnboarding = localStorage.getItem('userCompletedOnboarding') === 'true';
+      
+      if (userCompletedOnboarding) {
+        // Se o usuário já completou, não reiniciar o onboarding
+        console.log("Trocando de projeto mas mantendo o status de onboarding completo");
+        setOnboardingStep(4);
+        setHasData(true);
+        setOnboardingReady(true);
+      } else {
+        // Se nunca completou, verificar estado normalmente
+        determineOnboardingState(project.id);
+      }
     }
   };
   
   // Função para determinar o estado de onboarding com base no projeto
   const determineOnboardingState = async (projectId: string | number, forceComplete: boolean = false) => {
     try {
-      // Verificar se tem integrações
-      const { data: integrationData } = await supabase
+      // Verificar se o usuário já completou o onboarding antes
+      const userCompletedOnboarding = localStorage.getItem('userCompletedOnboarding') === 'true';
+      
+      // Verificar se tem integrações ativas
+      const { data: activeIntegrations } = await supabase
         .from('Integrações')
         .select('*')
         .eq('PROJETO id', projectId)
         .eq('ativo', true);
       
-      const projectHasIntegrations = integrationData && integrationData.length > 0;
-      setHasIntegrations(projectHasIntegrations);
+      // Verificar se já existiu alguma integração (ativa ou não)
+      const { data: anyIntegrations } = await supabase
+        .from('Integrações')
+        .select('*')
+        .eq('PROJETO id', projectId);
+      
+      // Projeto tem integrações ativas?
+      const projectHasActiveIntegrations = activeIntegrations && activeIntegrations.length > 0;
+      // Projeto já teve alguma integração (mesmo que não esteja ativa agora)?
+      const projectEverHadIntegrations = anyIntegrations && anyIntegrations.length > 0;
+      
+      setHasIntegrations(projectHasActiveIntegrations);
+      
+      // IMPORTANTE: Se o projeto já teve alguma integração, consideramos que o usuário 
+      // já passou pelo onboarding, mesmo que as integrações estejam desativadas agora
+      if (projectEverHadIntegrations) {
+        console.log("Projeto já teve integrações, mantendo interface completa");
+        localStorage.setItem('userCompletedOnboarding', 'true');
+      }
       
       // Se estamos vindo de um processo de integração concluído com sucesso
       // e o parâmetro forceComplete está ativo, podemos avançar para o dashboard
-      if (forceComplete && projectHasIntegrations) {
+      if (forceComplete && (projectHasActiveIntegrations || projectEverHadIntegrations)) {
         console.log("Integração detectada, avançando para o dashboard");
         setHasData(true); // Vamos fingir que já temos dados para acessar o dashboard
         setOnboardingStep(4); // Pular diretamente para o onboarding completo
         setOnboardingReady(true); // Marcar como pronto imediatamente
+        
+        // Marcar que o usuário completou o onboarding
+        localStorage.setItem('userCompletedOnboarding', 'true');
+        return;
+      }
+      
+      // ALTERAÇÃO: Se o usuário já completou o onboarding anteriormente ou o projeto já teve integrações,
+      // não deve voltar ao modo onboarding mesmo que não tenha integrações ativas
+      if (userCompletedOnboarding || projectEverHadIntegrations) {
+        console.log("Usuário já completou onboarding ou projeto já teve integrações, mantendo modo normal");
+        setHasData(true); // Mantemos dados para acessar o dashboard
+        setOnboardingStep(4); // Manter onboarding completo
         return;
       }
       
       // ATENÇÃO: Se a integração foi conectada, sempre avançar para o painel
       // sem aguardar dados
-      if (projectHasIntegrations) {
+      if (projectHasActiveIntegrations) {
         console.log("Integração já configurada, avançando para o dashboard");
         setHasData(true); // Considerar que já temos dados
         setOnboardingStep(4); // Completar o onboarding
+        
+        // Marcar que o usuário completou o onboarding
+        localStorage.setItem('userCompletedOnboarding', 'true');
         return;
       } else {
-        // Sem integrações
+        // Sem integrações ativas e usuário nunca completou onboarding e projeto nunca teve integrações
         setHasData(false);
         setOnboardingStep(2); // Precisa configurar integrações
       }
     } catch (error) {
       console.error("Erro ao verificar estado de onboarding:", error);
-      // Em caso de erro, assumir o pior caso (sem integrações, sem dados)
-      setHasIntegrations(false);
-      setHasData(false);
-      setOnboardingStep(2);
+      
+      try {
+        // Mesmo com erro, vamos tentar verificar se o projeto já teve integrações
+        const { data: everHadIntegrations } = await supabase
+          .from('Integrações')
+          .select('*')
+          .eq('PROJETO id', projectId);
+          
+        const hadIntegrations = everHadIntegrations && everHadIntegrations.length > 0;
+        
+        // Em caso de erro, se o usuário já completou onboarding anteriormente ou
+        // se o projeto já teve integrações, mantenha-o no modo completo
+        const userCompletedOnboarding = localStorage.getItem('userCompletedOnboarding') === 'true';
+        
+        if (userCompletedOnboarding || hadIntegrations) {
+          console.log("Erro, mas usuário já completou onboarding ou projeto teve integrações");
+          if (hadIntegrations) {
+            localStorage.setItem('userCompletedOnboarding', 'true');
+          }
+          setHasIntegrations(false);
+          setHasData(true);
+          setOnboardingStep(4);
+        } else {
+          // Caso contrário, assumir o pior caso (sem integrações, sem dados)
+          setHasIntegrations(false);
+          setHasData(false);
+          setOnboardingStep(2);
+        }
+      } catch (secondError) {
+        // Se mesmo a segunda consulta falhar, verificar só o localStorage
+        console.error("Erro secundário ao verificar integrações:", secondError);
+        const userCompletedOnboarding = localStorage.getItem('userCompletedOnboarding') === 'true';
+        if (userCompletedOnboarding) {
+          setHasIntegrations(false);
+          setHasData(true);
+          setOnboardingStep(4);
+        } else {
+          setHasIntegrations(false);
+          setHasData(false);
+          setOnboardingStep(2);
+        }
+      }
     }
     
     // Após determinar o estado, independentemente do resultado, marcar como pronto

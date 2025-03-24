@@ -286,15 +286,12 @@ const OAuthHandler = () => {
               if (insertError) throw insertError;
             }
             
-            // Armazenar flag de sucesso ao invés de mostrar alerta
+            // ALTERAÇÃO: Marcamos a integração como bem-sucedida e
+            // registramos que o usuário completou o onboarding para evitar
+            // que ele volte ao modo onboarding ao desconectar integrações
             localStorage.setItem('integrationSuccess', 'true');
             localStorage.setItem('integrationTimestamp', Date.now().toString());
-            
-            // Atualizar localStorage para forçar uma atualização de estado
-            // Isso fará com que o ProjectContext detecte a alteração no onboarding
-            localStorage.setItem('integrationCompleted', 'true');
-            localStorage.setItem('integrationTimestamp', Date.now().toString());
-            localStorage.setItem('skipOnboarding', 'true'); // Forçar pular o onboarding
+            localStorage.setItem('userCompletedOnboarding', 'true');
             
             // Forçar a atualização do estado de onboarding para completar o fluxo
             try {
@@ -312,8 +309,9 @@ const OAuthHandler = () => {
               console.error('Erro ao marcar integração como ativa:', updateError);
             }
             
-            // Redirecionar para a página de integrações e recarregar completamente
-            // Quando a página carregar, o ProjectContext detectará a conclusão do onboarding
+            // Redirecionar diretamente para a página de integrações sem recarregar a página inteira
+            // Isso evita que o fluxo de onboarding seja reiniciado
+            console.log('Redirecionando para a página de integrações...');
             window.location.href = '/integrations';
           } else {
             alert('Erro: Nenhum ID de projeto encontrado para associar a esta integração.');
