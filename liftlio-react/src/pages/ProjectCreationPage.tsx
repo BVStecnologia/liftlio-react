@@ -122,12 +122,25 @@ const StepContainer = styled.div`
 
 const StepIndicator = styled.div`
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   margin-bottom: 2rem;
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+  position: relative;
+  
+  /* Linha de conexão entre os pontos */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 18px; /* Centralizado verticalmente nos pontos */
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background-color: ${props => props.theme.colors.lightGrey};
+    z-index: 0;
+  }
 `;
 
 const StepDot = styled.div<{ active: boolean; completed: boolean }>`
@@ -137,7 +150,6 @@ const StepDot = styled.div<{ active: boolean; completed: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 20px;
   background-color: ${props => 
     props.completed 
       ? props.theme.colors.primary 
@@ -158,8 +170,10 @@ const StepDot = styled.div<{ active: boolean; completed: boolean }>`
   transition: all 0.3s ease;
   box-shadow: ${props => 
     props.active
-      ? '0 2px 8px rgba(0, 0, 0, 0.15)'
+      ? '0 4px 8px rgba(0, 0, 0, 0.15)'
       : 'none'};
+  position: relative;
+  z-index: 1;
   
   &::after {
     content: '${props => props.completed ? '✓' : ''}';
@@ -170,10 +184,12 @@ const StepDot = styled.div<{ active: boolean; completed: boolean }>`
 const StepLabel = styled.div<{ active: boolean }>`
   font-size: ${props => props.theme.fontSizes.sm};
   color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.darkGrey};
-  margin-top: 8px;
+  margin-top: 10px;
   text-align: center;
-  font-weight: ${props => props.active ? props.theme.fontWeights.medium : props.theme.fontWeights.normal};
+  font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.medium};
   white-space: nowrap;
+  max-width: 120px;
+  line-height: 1.4;
 `;
 
 const StepContent = styled.div`
@@ -312,25 +328,25 @@ const ProjectCreationPage: React.FC = () => {
   return (
     <div style={{ width: '100%', padding: '20px' }}>
       {/* Cabeçalho com indicadores de passo */}
-      <div style={{ marginBottom: '30px', maxWidth: '700px', margin: '0 auto' }}>
+      <div style={{ marginBottom: '40px', maxWidth: '700px', margin: '0 auto' }}>
         <StepIndicator>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <StepDot active={currentStep === 1} completed={currentStep > 1}>
-              {currentStep <= 1 ? '1' : ''}
+              {currentStep === 1 ? '1' : ''}
             </StepDot>
             <StepLabel active={currentStep === 1}>Create Project</StepLabel>
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <StepDot active={currentStep === 2} completed={currentStep > 2}>
-              {currentStep <= 2 ? '2' : ''}
+              {currentStep === 2 ? '2' : ''}
             </StepDot>
             <StepLabel active={currentStep === 2}>Connect Integrations</StepLabel>
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <StepDot active={currentStep === 3} completed={false}>
-              {currentStep <= 3 ? '3' : ''}
+            <StepDot active={currentStep === 3} completed={currentStep > 3}>
+              {currentStep === 3 ? '3' : ''}
             </StepDot>
             <StepLabel active={currentStep === 3}>View Dashboard</StepLabel>
           </div>
