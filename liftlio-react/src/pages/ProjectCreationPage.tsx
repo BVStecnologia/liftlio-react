@@ -5,6 +5,8 @@ import TechBackground from '../components/TechBackground';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useProject } from '../context/ProjectContext';
+import Integrations from './Integrations';
 
 // Reutilizar componentes de estilo da página de login
 const PageContainer = styled.div`
@@ -109,19 +111,104 @@ const IconContainer = styled.div`
   margin-bottom: 1.5rem;
 `;
 
+// Container for step navigation
+const StepContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+`;
+
+const StepIndicator = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
+const StepDot = styled.div<{ active: boolean; completed: boolean }>`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 20px;
+  background-color: ${props => 
+    props.completed 
+      ? props.theme.colors.primary 
+      : props.active 
+        ? props.theme.colors.white 
+        : props.theme.colors.lightGrey};
+  border: 2px solid ${props => 
+    props.active || props.completed 
+      ? props.theme.colors.primary 
+      : props.theme.colors.lightGrey};
+  color: ${props => 
+    props.completed 
+      ? props.theme.colors.white 
+      : props.active 
+        ? props.theme.colors.primary 
+        : props.theme.colors.darkGrey};
+  font-weight: ${props => props.theme.fontWeights.bold};
+  transition: all 0.3s ease;
+  box-shadow: ${props => 
+    props.active
+      ? '0 2px 8px rgba(0, 0, 0, 0.15)'
+      : 'none'};
+  
+  &::after {
+    content: '${props => props.completed ? '✓' : ''}';
+    font-size: 16px;
+  }
+`;
+
+const StepLabel = styled.div<{ active: boolean }>`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.darkGrey};
+  margin-top: 8px;
+  text-align: center;
+  font-weight: ${props => props.active ? props.theme.fontWeights.medium : props.theme.fontWeights.normal};
+  white-space: nowrap;
+`;
+
+const StepContent = styled.div`
+  width: 100%;
+`;
+
 const ProjectCreationPage: React.FC = () => {
   const [showProjectModal, setShowProjectModal] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [projectCreated, setProjectCreated] = useState(false);
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const { currentProject, hasIntegrations } = useProject();
+  
+  // Removido o useEffect que estava causando loop de recarregamento
   
   // Verificar apenas se o usuário está autenticado
   useEffect(() => {
     if (!loading && !user) {
       navigate('/');
     }
-    // Não verificamos mais projetos aqui, pois a lógica de redirecionamento
-    // com base em projetos agora está no ProtectedLayout
   }, [user, loading, navigate]);
+  
+  // Verificar se o usuário já tem um projeto e integrações
+  useEffect(() => {
+    if (currentProject) {
+      setProjectCreated(true);
+      setCurrentStep(2); // Avançar para a etapa de integrações
+      
+      if (hasIntegrations) {
+        // Se já tiver integrações, redirecionar para o dashboard
+        navigate('/dashboard');
+      }
+    }
+  }, [currentProject, hasIntegrations, navigate]);
   
   const handleProjectCreated = async (project: any) => {
     try {
@@ -145,12 +232,22 @@ const ProjectCreationPage: React.FC = () => {
       // Inserir o novo projeto no Supabase
       const { data, error } = await supabase
         .from('Projeto')
-        .insert([projectData]);
+        .insert([projectData])
+        .select();
       
       if (error) throw error;
       
-      // Redirecionar para o dashboard após criar o projeto
-      navigate('/dashboard');
+      // Atualizar o estado local
+      setProjectCreated(true);
+      setCurrentStep(2); // Avançar para a etapa de integrações
+      
+      // Armazenar o ID do projeto criado no localStorage
+      if (data && data[0]) {
+        localStorage.setItem('currentProjectId', data[0].id.toString());
+        
+        // Recarregar a página para atualizar o contexto
+        window.location.reload();
+      }
     } catch (error: any) {
       console.error('Error creating project:', error);
       
@@ -160,6 +257,38 @@ const ProjectCreationPage: React.FC = () => {
       } else {
         alert('Error creating the project. Please try again.');
       }
+    }
+  };
+  
+  // Renderizar a etapa atual
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1: // Criação de projeto
+        return (
+          <WelcomeContainer>
+            <IconContainer>
+              <span role="img" aria-label="folder icon">📁</span>
+            </IconContainer>
+            <Title>Welcome to Liftlio!</Title>
+            <Description>
+              The first step is to create a project to monitor. A project can be your product,
+              service, or brand that you want to track across digital platforms.
+            </Description>
+            <Button onClick={() => setShowProjectModal(true)}>
+              Create my first project
+            </Button>
+          </WelcomeContainer>
+        );
+      
+      case 2: // Integrações
+        return (
+          <StepContent>
+            <Integrations />
+          </StepContent>
+        );
+        
+      default:
+        return null;
     }
   };
   
@@ -176,33 +305,52 @@ const ProjectCreationPage: React.FC = () => {
   if (!user) {
     return <Navigate to="/" replace />;
   }
+
+  // Não vamos mais usar abordagem de manipulação direta do DOM
   
+  // Render dentro de uma div comum
   return (
-    <PageContainer>
-      <ContentWrapper>
-        <TechBackground />
-        
-        <WelcomeContainer>
-          <IconContainer>
-            <span role="img" aria-label="folder icon">📁</span>
-          </IconContainer>
-          <Title>Welcome to Liftlio!</Title>
-          <Description>
-            The first step is to create a project to monitor. A project can be your product,
-            service, or brand that you want to track across digital platforms.
-          </Description>
-          <Button onClick={() => setShowProjectModal(true)}>
-            Create my first project
-          </Button>
-        </WelcomeContainer>
-      </ContentWrapper>
+    <div style={{ width: '100%', padding: '20px' }}>
+      {/* Cabeçalho com indicadores de passo */}
+      <div style={{ marginBottom: '30px', maxWidth: '700px', margin: '0 auto' }}>
+        <StepIndicator>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <StepDot active={currentStep === 1} completed={currentStep > 1}>
+              {currentStep <= 1 ? '1' : ''}
+            </StepDot>
+            <StepLabel active={currentStep === 1}>Create Project</StepLabel>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <StepDot active={currentStep === 2} completed={currentStep > 2}>
+              {currentStep <= 2 ? '2' : ''}
+            </StepDot>
+            <StepLabel active={currentStep === 2}>Connect Integrations</StepLabel>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <StepDot active={currentStep === 3} completed={false}>
+              {currentStep <= 3 ? '3' : ''}
+            </StepDot>
+            <StepLabel active={currentStep === 3}>View Dashboard</StepLabel>
+          </div>
+        </StepIndicator>
+      </div>
       
+      {/* Conteúdo do passo */}
+      <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ maxWidth: '800px', width: '100%' }}>
+          {renderStep()}
+        </div>
+      </div>
+      
+      {/* Modal de projeto */}
       <ProjectModal 
         isOpen={showProjectModal}
         onClose={() => setShowProjectModal(false)}
         onSave={handleProjectCreated}
       />
-    </PageContainer>
+    </div>
   );
 };
 

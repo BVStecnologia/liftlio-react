@@ -433,59 +433,97 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     );
   }
   
-  // Para o onboarding, mostrar o header mas esconder a sidebar e o botão flutuante
+  // Para o onboarding, esconder completamente a sidebar e qualquer outro componente de layout
   if (isOnboarding) {
     return (
-      <AppContainer>
-        <MainContent>
-          <Header toggleSidebar={toggleSidebar} />
-          <ContentWrapper>
-            <Routes>
-              <Route path="/" element={<Overview />} />
-              <Route path="/dashboard" element={<Overview />} />
-              <Route path="/create-project" element={<ProjectCreationPage />} />
-              <Route path="/monitoring" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/mentions" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/settings" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/integrations" element={<Integrations />} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </ContentWrapper>
-        </MainContent>
-      </AppContainer>
+      <Routes>
+        <Route path="*" element={
+          <div 
+            style={{ 
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              backgroundColor: "#f0f2f5",
+              zIndex: 9999,
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden"
+            }}
+          >
+            {/* Header fixo simples */}
+            <div 
+              style={{ 
+                height: "70px", 
+                backgroundColor: "#1e2a3d",
+                color: "white",
+                display: "flex",
+                alignItems: "center",
+                padding: "0 24px",
+                fontWeight: "bold",
+                fontSize: "24px"
+              }}
+            >
+              LIFTLIO
+            </div>
+            
+            {/* Container de conteúdo */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
+              <ProjectCreationPage />
+            </div>
+          </div>
+        } />
+      </Routes>
     );
   }
   
   // Interface completa para usuários que já completaram o onboarding
   // Ou usuários que estão adicionando novo projeto (sempre mostrar header)
   return (
-    <AppContainer>
-      {/* Sidebar - desktop mode it's controlled by media query, mobile by state */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => toggleSidebar()} 
-      />
-      <MainContent>
-        <Header toggleSidebar={toggleSidebar} />
-        <ContentWrapper>
-          <Routes>
-            <Route path="/" element={<Overview />} />
-            <Route path="/dashboard" element={<Overview />} />
-            <Route path="/create-project" element={<ProjectCreationPage />} />
-            <Route path="/monitoring" element={<Monitoring />} />
-            <Route path="/mentions" element={<Mentions />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/integrations" element={<Integrations />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </ContentWrapper>
-      </MainContent>
+    <Routes>
+      {/* Rota para criação de projeto - sem Sidebar */}
+      <Route path="/create-project" element={
+        <AppContainer>
+          <MainContent style={{ width: '100%' }}>
+            <Header toggleSidebar={toggleSidebar} />
+            <ContentWrapper>
+              <ProjectCreationPage />
+            </ContentWrapper>
+          </MainContent>
+        </AppContainer>
+      } />
       
-      {/* Floating hamburger menu button for mobile */}
-      <FloatingMenuButton onClick={toggleSidebar}>
-        <IconComponent icon={FaIcons.FaBars} />
-      </FloatingMenuButton>
-    </AppContainer>
+      {/* Todas as outras rotas - com Sidebar */}
+      <Route path="*" element={
+        <AppContainer>
+          {/* Sidebar - desktop mode it's controlled by media query, mobile by state */}
+          <Sidebar 
+            isOpen={sidebarOpen} 
+            onClose={() => toggleSidebar()} 
+          />
+          <MainContent>
+            <Header toggleSidebar={toggleSidebar} />
+            <ContentWrapper>
+              <Routes>
+                <Route path="/" element={<Overview />} />
+                <Route path="/dashboard" element={<Overview />} />
+                <Route path="/monitoring" element={<Monitoring />} />
+                <Route path="/mentions" element={<Mentions />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/integrations" element={<Integrations />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </ContentWrapper>
+          </MainContent>
+          
+          {/* Floating hamburger menu button for mobile */}
+          <FloatingMenuButton onClick={toggleSidebar}>
+            <IconComponent icon={FaIcons.FaBars} />
+          </FloatingMenuButton>
+        </AppContainer>
+      } />
+    </Routes>
   );
 }
 
