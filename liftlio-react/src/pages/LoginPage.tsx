@@ -58,9 +58,9 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Se o usuário já estiver autenticado, redireciona para a página inicial
+    // Se o usuário já estiver autenticado, redireciona para a página de criação de projeto
     if (user && !loading) {
-      navigate('/')
+      navigate('/create-project')
     }
   }, [user, loading, navigate])
 

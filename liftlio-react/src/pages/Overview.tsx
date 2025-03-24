@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 import { COLORS, withOpacity } from '../styles/colors';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import * as FaIcons from 'react-icons/fa';
@@ -1267,6 +1268,7 @@ const renderIcon = (iconName: string) => {
 
 // Main component
 const Overview: React.FC = () => {
+  const navigate = useNavigate();
   const { 
     currentProject, 
     hasProjects, 
@@ -2040,29 +2042,11 @@ const Overview: React.FC = () => {
       z-index: 2;
     `;
     
-    // Etapa 1: Criar projeto
+    // Etapa 1: Criar projeto - Redirecionar para a página dedicada
     if (onboardingStep === 1) {
-      return (
-        <>
-          <OnboardingContainer>
-            {/* Conteúdo principal */}
-            <ContentWrapper>
-              <EmptyState 
-                type="project" 
-                onAction={handleEmptyStateAction}
-                currentStep={onboardingStep} 
-              />
-            </ContentWrapper>
-          </OnboardingContainer>
-          
-          {/* Modal renderizado fora do container principal para evitar problemas de z-index */}
-          <ProjectModal 
-            isOpen={showProjectModal}
-            onClose={() => setShowProjectModal(false)}
-            onSave={handleProjectCreated}
-          />
-        </>
-      );
+      // Redirecionar para a página dedicada de criação de projeto
+      navigate('/create-project');
+      return null;
     }
     
     // Etapa 2: Configurar integrações

@@ -11,6 +11,7 @@ import Mentions from './pages/Mentions';
 import Settings from './pages/Settings';
 import Integrations from './pages/Integrations';
 import LoginPage from './pages/LoginPage';
+import ProjectCreationPage from './pages/ProjectCreationPage';
 import LoadingDataIndicator from './components/LoadingDataIndicator';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from './utils/IconHelper';
@@ -374,9 +375,12 @@ function App() {
             {/* Adicionar OAuthHandler para processar códigos do YouTube em qualquer rota */}
             <OAuthHandler />
             <Routes>
+              {/* Tornar a página de login o ponto de entrada principal */}
+              <Route path="/" element={<LoginPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/create-project" element={<ProjectCreationPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/*" element={
+              <Route path="/dashboard/*" element={
                 <ProtectedLayout 
                   sidebarOpen={sidebarOpen} 
                   toggleSidebar={toggleSidebar}
@@ -407,9 +411,9 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     );
   }
   
-  // Redirecionar para login se não estiver autenticado
+  // Redirecionar para a página inicial (login) se não estiver autenticado
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
   
   // Se chegou aqui, o usuário está autenticado e o carregamento foi concluído
@@ -423,9 +427,9 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
           <ContentWrapper>
             <Routes>
               <Route path="/" element={<Overview />} />
-              <Route path="/monitoring" element={<Navigate to="/" replace />} />
-              <Route path="/mentions" element={<Navigate to="/" replace />} />
-              <Route path="/settings" element={<Navigate to="/" replace />} />
+              <Route path="/monitoring" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/mentions" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/settings" element={<Navigate to="/dashboard" replace />} />
               <Route path="/integrations" element={<Integrations />} />
             </Routes>
           </ContentWrapper>
@@ -495,14 +499,14 @@ const AuthCallback = () => {
             // Check current session
             supabase.auth.getSession().then(({ data: sessionData }) => {
               if (sessionData.session) {
-                console.log('Active session found, redirecting to home');
-                navigate('/', { replace: true });
+                console.log('Active session found, redirecting to dashboard');
+                navigate('/dashboard', { replace: true });
               } else {
                 console.log('No active session, trying to establish one...');
                 
                 // Force a refresh based on the URL tokens
                 setTimeout(() => {
-                  navigate('/', { replace: true });
+                  navigate('/dashboard', { replace: true });
                 }, 1000);
               }
             });
@@ -517,9 +521,9 @@ const AuthCallback = () => {
       if (!loading) {
         console.log('Standard callback flow, user:', user ? 'Found' : 'Not found');
         if (user) {
-          navigate('/', { replace: true });
+          navigate('/dashboard', { replace: true });
         } else {
-          navigate('/login', { replace: true });
+          navigate('/', { replace: true });
         }
       }
     }
