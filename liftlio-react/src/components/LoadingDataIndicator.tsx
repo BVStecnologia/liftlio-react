@@ -33,7 +33,7 @@ const LoadingAnimation = styled.div`
   justify-content: center;
   align-items: center;
   position: relative;
-  background: white;
+  background: transparent;
   overflow: hidden;
 `;
 
@@ -59,8 +59,8 @@ const LoadingDataIndicator: React.FC = () => {
   return (
     <PageContainer>
       <LoadingAnimation style={{ 
-        background: 'linear-gradient(180deg, #f7f9fc 0%, #ffffff 100%)',
-        boxShadow: '0 10px 50px rgba(0, 0, 0, 0.05)'
+        background: 'transparent',
+        boxShadow: 'none'
       }}>
         <div style={{
           display: 'flex',
@@ -75,32 +75,32 @@ const LoadingDataIndicator: React.FC = () => {
             width: '48%',
             minWidth: '280px',
             height: '280px',
-            background: 'white',
+            background: 'transparent',
             borderRadius: '12px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+            boxShadow: 'none',
             padding: '12px',
             position: 'relative',
             overflow: 'hidden'
           }}>
             <ShimmerOverlay className="loading-shimmer" />
             
-            <h3 style={{ marginBottom: '12px', color: '#1976D2', fontSize: '14px', position: 'relative', zIndex: 2 }}>Performance Overview</h3>
+            <h3 style={{ marginBottom: '12px', color: '#1976D2', fontSize: '16px', fontWeight: 'bold', position: 'relative', zIndex: 2, textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>Performance Overview</h3>
             
             <ResponsiveContainer width="100%" height="85%">
               <AreaChart data={samplePerformanceData}>
                 <defs>
                   <linearGradient id="colorVideos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2196F3" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#2196F3" stopOpacity={0.1}/>
+                    <stop offset="5%" stopColor="#2196F3" stopOpacity={0.9}/>
+                    <stop offset="95%" stopColor="#2196F3" stopOpacity={0.3}/>
                   </linearGradient>
                   <linearGradient id="colorEngagement" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#673AB7" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#673AB7" stopOpacity={0.1}/>
+                    <stop offset="5%" stopColor="#673AB7" stopOpacity={0.9}/>
+                    <stop offset="95%" stopColor="#673AB7" stopOpacity={0.3}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
-                <XAxis dataKey="name" tick={{ fill: '#666' }} />
-                <YAxis tick={{ fill: '#666' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.15)" />
+                <XAxis dataKey="name" tick={{ fill: '#333' }} />
+                <YAxis tick={{ fill: '#333' }} />
                 <Tooltip 
                   contentStyle={{
                     background: 'rgba(255,255,255,0.9)',
@@ -132,16 +132,16 @@ const LoadingDataIndicator: React.FC = () => {
             width: '48%',
             minWidth: '280px',
             height: '280px',
-            background: 'white',
+            background: 'transparent',
             borderRadius: '12px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+            boxShadow: 'none',
             padding: '12px',
             position: 'relative',
             overflow: 'hidden'
           }}>
             <ShimmerOverlay className="loading-shimmer" />
             
-            <h3 style={{ marginBottom: '12px', color: '#1976D2', fontSize: '14px', position: 'relative', zIndex: 2 }}>Traffic Sources</h3>
+            <h3 style={{ marginBottom: '12px', color: '#1976D2', fontSize: '16px', fontWeight: 'bold', position: 'relative', zIndex: 2, textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>Traffic Sources</h3>
             
             <ResponsiveContainer width="100%" height="85%">
               <PieChart>
