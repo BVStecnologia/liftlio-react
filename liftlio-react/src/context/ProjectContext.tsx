@@ -26,6 +26,7 @@ type ProjectContextType = {
   onboardingStep: number;
   isOnboarding: boolean; // Indica se o usuário está em modo onboarding
   onboardingReady: boolean; // Indica se o estado de onboarding foi determinado
+  projectIntegrations: any[]; // Lista de integrações do projeto atual
 };
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -39,6 +40,7 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
   const [hasData, setHasData] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(1);
   const [onboardingReady, setOnboardingReady] = useState(false);
+  const [projectIntegrations, setProjectIntegrations] = useState<any[]>([]);
   const isOnboarding = onboardingStep < 4; // Quando onboardingStep < 4, estamos em modo onboarding
   const subscriptionRef = useRef<any>(null);
   
@@ -188,6 +190,9 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       const projectHasActiveIntegrations = activeIntegrations && activeIntegrations.length > 0;
       // Projeto já teve alguma integração (mesmo que não esteja ativa agora)?
       const projectEverHadIntegrations = anyIntegrations && anyIntegrations.length > 0;
+      
+      // Armazenar as integrações para uso posterior
+      setProjectIntegrations(anyIntegrations || []);
       
       setHasIntegrations(projectHasActiveIntegrations);
       
@@ -360,7 +365,8 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
         hasData,
         onboardingStep,
         isOnboarding,
-        onboardingReady
+        onboardingReady,
+        projectIntegrations
       }}
     >
       {children}

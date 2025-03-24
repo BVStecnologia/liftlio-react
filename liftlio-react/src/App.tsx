@@ -395,7 +395,7 @@ function App() {
 // Componente de layout protegido
 const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean, toggleSidebar: () => void }) => {
   const { user, loading } = useAuth();
-  const { isOnboarding, onboardingReady, hasProjects, isLoading } = useProject(); // Adicionado hasProjects e isLoading
+  const { isOnboarding, onboardingReady, hasProjects, isLoading, projects, projectIntegrations } = useProject();
   
   // Aguardar o carregamento da autenticação e do estado de onboarding
   if (loading || !onboardingReady || isLoading) {
@@ -418,6 +418,25 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   
   // Redirecionar para a página de criação de projeto se o usuário não tiver projetos
   if (!hasProjects) {
+    return (
+      <AppContainer>
+        <MainContent>
+          <Header toggleSidebar={toggleSidebar} />
+          <ContentWrapper>
+            <Routes>
+              <Route path="*" element={<Navigate to="/create-project" replace />} />
+              <Route path="/create-project" element={<ProjectCreationPage />} />
+            </Routes>
+          </ContentWrapper>
+        </MainContent>
+      </AppContainer>
+    );
+  }
+  
+  // Nova condição: se o usuário tem apenas 1 projeto e não há integrações configuradas
+  // também redirecionar para a página de criação de projeto
+  if (projects.length === 1 && projectIntegrations.length === 0) {
+    console.log('Usuário tem apenas 1 projeto sem integrações, redirecionando para criação de projeto');
     return (
       <AppContainer>
         <MainContent>
