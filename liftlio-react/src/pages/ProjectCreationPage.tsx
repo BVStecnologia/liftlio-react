@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import Header from '../components/Header';
 import ProjectModal from '../components/ProjectModal';
 import TechBackground from '../components/TechBackground';
 import { useNavigate, Navigate } from 'react-router-dom';
@@ -195,7 +194,6 @@ const ProjectCreationPage: React.FC = () => {
   
   return (
     <PageContainer>
-      <Header toggleSidebar={() => {}} />
       <ContentWrapper>
         <TechBackground />
         
