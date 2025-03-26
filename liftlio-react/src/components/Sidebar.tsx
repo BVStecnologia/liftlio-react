@@ -1316,8 +1316,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
       // Reset to first insight and fetch new data when project changes
       setCurrentInsight(0);
       
-      // Uncomment to enable production API call
-      fetchClaudeInsights();
+      // Temporarily disabled to reduce edge function calls
+      // fetchClaudeInsights();
     }
     
     // Set a refresh interval (e.g., once per day)
@@ -1347,7 +1347,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
   
   // Function to refresh insights on demand
   const handleRefreshInsights = () => {
-    fetchClaudeInsights();
+    // Temporarily disabled to reduce edge function calls
+    // fetchClaudeInsights();
     setCurrentInsight(0);
   };
   

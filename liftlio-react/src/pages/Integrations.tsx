@@ -758,14 +758,9 @@ const Integrations: React.FC = () => {
             }
           } catch (testError) {
             console.error('Erro ao testar token do YouTube:', testError);
-            // Em caso de erro, marcar como desconectado
-            await supabase
-              .from('Integrações')
-              .update({ 'ativo': false })
-              .eq('PROJETO id', currentProject.id)
-              .eq('Tipo de integração', 'youtube');
-              
-            integration.status = 'disconnected' as const;
+            // Não desativar automaticamente por erros de teste
+            // Erros podem ser temporários de rede ou API, não da validade do token
+            console.warn('Erro ao testar token, mas mantendo integração ativa por segurança');
           }
         }
         
@@ -776,8 +771,10 @@ const Integrations: React.FC = () => {
           
           // Se não temos lastUpdated, atualizamos o token
           // Ou se lastUpdated + expires_in está a menos de 5 minutos de expirar
-          const shouldRefresh = !lastUpdated || 
-            (Math.floor(Date.now() / 1000) - Math.floor(lastUpdated.getTime() / 1000) + 300 >= integration.expiresAt);
+          // expiresAt é em segundos e representa a duração, não o timestamp de expiração
+          // Por isso calculamos: tempo desde a última atualização + 5 minutos (300s) >= expiresAt
+          const timeSinceLastUpdate = lastUpdated ? Math.floor((Date.now() - lastUpdated.getTime()) / 1000) : 0;
+          const shouldRefresh = !lastUpdated || (timeSinceLastUpdate + 300 >= integration.expiresAt);
           
           if (shouldRefresh) { // Se o token expira em menos de 5 minutos
             try {
@@ -817,16 +814,32 @@ const Integrations: React.FC = () => {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Erro na API do YouTube:', errorData);
-        return false;
+        try {
+          const errorData = await response.json();
+          console.error('Erro na API do YouTube:', errorData);
+          
+          // Verificar se é um erro de autenticação (401) ou autorização (403)
+          if (response.status === 401 || response.status === 403) {
+            return false;
+          } else {
+            // Para outros erros (429, 500, etc.), considerar o token como válido ainda
+            console.warn('Erro temporário de API, mantendo token como válido:', response.status);
+            return true;
+          }
+        } catch (parseError) {
+          console.error('Erro ao processar resposta da API:', parseError);
+          // Se não conseguir analisar a resposta, considerar um erro de rede, não de autenticação
+          return true;
+        }
       }
       
       const data = await response.json();
       return data.items && data.items.length > 0;
     } catch (error) {
-      console.error('Erro ao verificar token do YouTube:', error);
-      return false;
+      // Erros de rede ou outros erros - considerar o token ainda válido
+      console.error('Erro temporário ao verificar token do YouTube:', error);
+      // Não invalidar tokens por falhas temporárias de rede
+      return true;
     }
   };
   
