@@ -258,6 +258,41 @@ const DashboardHeader = styled.div`
   }
 `;
 
+// Add New Project button styling
+const AddNewProjectButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background: ${COLORS.ACCENT};
+  color: ${COLORS.TEXT.ON_DARK};
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: ${COLORS.SHADOW.LIGHT};
+  
+  &:hover {
+    background: ${COLORS.ACCENT_LIGHT};
+    transform: translateY(-2px);
+    box-shadow: ${COLORS.SHADOW.MEDIUM};
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  svg {
+    margin-right: 8px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+`;
+
 const PageTitle = styled.h1`
   font-size: ${props => props.theme.fontSizes['3xl']};
   font-weight: ${props => props.theme.fontWeights.bold};
@@ -1338,14 +1373,10 @@ const renderIcon = (iconName: string) => {
 // Main component
 const Overview: React.FC = () => {
   const navigate = useNavigate();
-  const { 
-    currentProject, 
-    hasProjects, 
-    hasIntegrations, 
-    hasData, 
-    onboardingStep 
-  } = useProject();
-  
+  const { currentProject, hasProjects, projectIntegrations, onboardingStep, setCurrentProject } = useProject();
+  const [activeChart, setActiveChart] = useState<'line' | 'bar'>('line');
+  const [activeMetrics, setActiveMetrics] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [showProjectModal, setShowProjectModal] = useState(false);
   
   // Use o hook personalizado para buscar dados do Supabase
@@ -1361,6 +1392,53 @@ const Overview: React.FC = () => {
     setTimeframe,
     hasValidData
   } = useDashboardData();
+  
+  // Function to handle new project creation
+  const handleAddProject = async (project: any) => {
+    console.log("Função handleAddProject chamada", project);
+    
+    try {
+      // Get current user email
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      if (!currentUser || !currentUser.email) {
+        console.error("User not authenticated");
+        return;
+      }
+      
+      // Format the description field properly
+      const formattedDescription = `Company or product name: ${project.company} Audience description: ${project.audience}`;
+      
+      const { data, error } = await supabase
+        .from('Projeto')
+        .insert([{ 
+          "Project name": project.name,
+          "description service": formattedDescription,
+          "url service": project.link,
+          "Keywords": project.keywords,
+          "User id": currentUser.id,
+          "user": currentUser.email
+        }])
+        .select();
+      
+      if (error) {
+        console.error("Erro ao inserir projeto no Supabase:", error);
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        // Update current project to the newly created one
+        console.log("Projeto criado com sucesso:", data[0]);
+        setCurrentProject(data[0]);
+      }
+      
+      // Fechar o modal
+      setShowProjectModal(false);
+    } catch (error) {
+      console.error("Erro ao criar projeto:", error);
+      alert("Erro ao criar projeto. Por favor, tente novamente.");
+    }
+  };
   
   // States originais que ainda são necessários
   const [chartType, setChartType] = useState<ChartType>('area');
@@ -2609,9 +2687,14 @@ const Overview: React.FC = () => {
           <EmptyTitle>No Project Selected</EmptyTitle>
           <EmptyMessage>Select a project to view the dashboard data.</EmptyMessage>
           
-          <EmptyButton>
+          <EmptyButton 
+            onClick={() => {
+              console.log("Botão Create New Project clicado");
+              setShowProjectModal(true);
+            }}
+          >
             <IconComponent icon={FaIcons.FaPlus} style={{ marginRight: '8px' }} />
-            Select Project
+            Create New Project
           </EmptyButton>
           
           {/* Pontos decorativos */}
@@ -2622,6 +2705,13 @@ const Overview: React.FC = () => {
             />
           ))}
         </EmptyContainer>
+        
+        {/* Project Modal */}
+        <ProjectModal
+          isOpen={showProjectModal}
+          onClose={() => setShowProjectModal(false)}
+          onSave={handleAddProject}
+        />
       </PageContainer>
     );
   }
@@ -2691,7 +2781,13 @@ const Overview: React.FC = () => {
             <IconComponent icon={FaIcons.FaFileExport} />
             Export
           </Button>
-          <Button variant="primary">
+          <Button 
+            variant="primary"
+            onClick={() => {
+              console.log("Botão New Project no header clicado");
+              setShowProjectModal(true);
+            }}
+          >
             <IconComponent icon={FaIcons.FaPlus} />
             New Project
           </Button>
@@ -3075,6 +3171,15 @@ const Overview: React.FC = () => {
           <IconComponent icon={FaIcons.FaHashtag} style={{ color: COLORS.INFO }} />
           <span style={{ fontWeight: 600 }}>Keywords & Insights</span>
         </ContentTitle>
+        <AddNewProjectButton 
+          onClick={() => {
+            console.log("Botão Add New Project clicado");
+            setShowProjectModal(true);
+          }}
+        >
+          <IconComponent icon={FaIcons.FaPlus} /> 
+          Add New Project
+        </AddNewProjectButton>
       </ContentHeader>
       
       {/* Spacing is now handled by the marginBottom in ContentHeader */}
@@ -3314,6 +3419,13 @@ const Overview: React.FC = () => {
           </div>
         )}
       </div>
+      
+      {/* Project Modal */}
+      <ProjectModal
+        isOpen={showProjectModal}
+        onClose={() => setShowProjectModal(false)}
+        onSave={handleAddProject}
+      />
     </PageContainer>
   );
 };

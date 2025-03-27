@@ -215,6 +215,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Formulário enviado");
     
     // Verificar se todos os campos obrigatórios estão preenchidos, incluindo keywords
     if (!projectForm.name || !projectForm.company || !projectForm.link || 
@@ -223,10 +224,17 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       return;
     }
     
+    // Mapear país para o código correto (BR ou US)
+    const countryCode = projectForm.country;
+    
     const newProject: Project = {
       id: Date.now().toString(),
-      ...projectForm
+      ...projectForm,
+      country: countryCode
     };
+    
+    console.log("Novo projeto:", newProject);
+    console.log("onSave:", !!onSave, "onCreateProject:", !!onCreateProject);
     
     if (onSave) {
       onSave(newProject);

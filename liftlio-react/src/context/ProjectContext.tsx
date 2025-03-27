@@ -63,9 +63,12 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       
       // Se tem projetos, atualizar onboardingStep
       if (projectsList.length > 0) {
-        // Comportamento unificado - não fazemos mais distinção se estamos vindo de uma integração
-        // pois isso causava problemas de redirecionamento
-        determineOnboardingState(projectsList[0].id).finally(() => {
+        // Se já temos um projeto salvo no localStorage, usamos ele para determinar o estado
+        // isso evita que o projeto selecionado mude após redirecionamento das integrações
+        const projectIdToUse = savedProjectId || projectsList[0].id;
+        
+        // Sempre usar o projeto que já estava selecionado, se existir
+        determineOnboardingState(projectIdToUse).finally(() => {
           setOnboardingReady(true); // Marcar como pronto após determinar o estado
         });
       } else {

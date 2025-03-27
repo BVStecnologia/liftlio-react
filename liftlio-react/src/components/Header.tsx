@@ -1079,6 +1079,7 @@ type Project = {
   link: string;
   audience: string;
   keywords?: string;
+  country?: string;
 };
 
 interface HeaderProps {
@@ -1133,8 +1134,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       // Limpar intervalo quando o componente for desmontado ou o projeto mudar
       return () => clearInterval(intervalId);
     } else {
-      // Se não houver projeto selecionado, não mostrar notificação
-      setYoutubeStatus({ checked: true, connected: true });
+      // Se não houver projeto selecionado, marcar como desconectado (não conectado)
+      // Isso evita que a notificação de integração desconectada suma quando não há projeto selecionado
+      setYoutubeStatus({ checked: true, connected: false });
     }
   }, [currentProject]);
   
@@ -1151,82 +1153,83 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     }, 1000);
     
     return () => clearTimeout(timerId);
-  }, []);
+  }, [currentProject?.id]); // Adicionado currentProject?.id como dependência para refazer a verificação quando o projeto mudar
   
   // Função para verificar a conexão com YouTube
   const checkYouTubeConnection = async () => {
-    if (!currentProject?.id) return;
+    if (!currentProject?.id) {
+      // Forçar desconectado quando não há projeto
+      setYoutubeStatus({ checked: true, connected: false });
+      return;
+    }
+    
+    console.log('Verificando conexão do YouTube para projeto ID:', currentProject.id);
+    
+    // Forçar o estado para "verificando" durante a consulta
+    setYoutubeStatus({ checked: false, connected: false });
     
     try {
-      console.log('Verificando conexão do YouTube para projeto ID:', currentProject.id);
-      
-      // Importante: não use .single() aqui, pois se não encontrar registros, retornará erro
+      // Consulta direta para verificar se existe integração ativa
       const { data, error } = await supabase
         .from('Integrações')
         .select('*')
         .eq('PROJETO id', currentProject.id)
         .eq('Tipo de integração', 'youtube');
-        
-      if (error) {
-        console.error("Erro ao verificar integração:", error);
-        console.log('YouTube desconectado (erro na consulta)');
-        // Marcar como verificado mas desconectado
+      
+      // Se não encontrou nenhuma integração, marcar como desconectado e parar aqui
+      if (!data || data.length === 0) {
+        console.log('YouTube desconectado - Projeto não tem nenhuma integração');
         setYoutubeStatus({ checked: true, connected: false });
         return;
       }
       
-      // Verifica se encontrou algum registro e se está ativo
-      if (data && data.length > 0) {
-        const youtubeIntegration = data[0];
-        const isConnected = youtubeIntegration.ativo === true;
-        
-        console.log('Status da conexão YouTube:', isConnected ? 'Conectado' : 'Desconectado');
-        console.log('Dados da integração:', youtubeIntegration);
-        
-        // Se estiver marcado como conectado, vamos verificar se o token funciona usando o endpoint do YouTube
-        if (isConnected && youtubeIntegration['Token']) {
-          try {
-            const response = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true', {
-              headers: {
-                'Authorization': `Bearer ${youtubeIntegration['Token']}`,
-                'Content-Type': 'application/json'
-              }
-            });
-            
-            if (!response.ok) {
-              console.log('Token do YouTube inválido, marcando como desconectado');
-              
-              // Atualizar o status no banco
-              await supabase
-                .from('Integrações')
-                .update({ 'ativo': false })
-                .eq('PROJETO id', currentProject.id)
-                .eq('Tipo de integração', 'youtube');
-              
-              // Agora marcamos como verificado E desconectado
-              setYoutubeStatus({ checked: true, connected: false });
-              return;
-            }
-            
-            // Se chegou aqui, o token é válido
-            setYoutubeStatus({ checked: true, connected: true });
-          } catch (apiError) {
-            console.error('Erro ao testar token do YouTube:', apiError);
-            setYoutubeStatus({ checked: true, connected: false });
-          }
-        } else {
-          // Não está marcado como ativo no banco ou não tem token
-          setYoutubeStatus({ checked: true, connected: false });
-        }
-      } else {
-        // Nenhuma integração encontrada = desconectado
-        console.log('YouTube desconectado (nenhuma integração encontrada)');
+      // Verificar se a integração está ativa
+      const youtubeIntegration = data[0];
+      const isConnected = youtubeIntegration.ativo === true;
+      
+      console.log('Status da conexão YouTube:', isConnected ? 'Conectado' : 'Desconectado');
+      console.log('Dados da integração:', youtubeIntegration);
+      
+      // Se a integração não está ativa, marcar como desconectado e parar aqui
+      if (!isConnected || !youtubeIntegration['Token']) {
+        console.log('YouTube desconectado - Integração existe mas não está ativa ou sem token');
         setYoutubeStatus({ checked: true, connected: false });
+        return;
       }
       
+      // Testar o token com a API do YouTube
+      try {
+        const response = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true', {
+          headers: {
+            'Authorization': `Bearer ${youtubeIntegration['Token']}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          console.log('Token do YouTube inválido, marcando como desconectado');
+          
+          // Atualizar o status no banco
+          await supabase
+            .from('Integrações')
+            .update({ 'ativo': false })
+            .eq('PROJETO id', currentProject.id)
+            .eq('Tipo de integração', 'youtube');
+          
+          setYoutubeStatus({ checked: true, connected: false });
+          return;
+        }
+        
+        // Token é válido, marcar como conectado
+        console.log('Token do YouTube é válido, marcando como conectado');
+        setYoutubeStatus({ checked: true, connected: true });
+      } catch (apiError) {
+        console.error('Erro ao testar token do YouTube com a API:', apiError);
+        setYoutubeStatus({ checked: true, connected: false });
+      }
     } catch (error) {
       console.error("Erro ao verificar integração do YouTube:", error);
-      console.log('YouTube desconectado (exceção)');
+      console.log('YouTube desconectado (exceção na consulta)');
       setYoutubeStatus({ checked: true, connected: false });
     }
   };
@@ -1289,21 +1292,31 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       // Format the description field properly
       const formattedDescription = `Company or product name: ${project.company} Audience description: ${project.audience}`;
       
+      console.log("Project to save:", project);
+      console.log("Country value:", project.country);
+      
+      // Objeto de inserção no formato exatamente igual ao usado em Settings.tsx
+      const projectData = { 
+        "Project name": project.name,
+        "description service": formattedDescription,
+        "url service": project.link,
+        "Keywords": project.keywords,
+        "User id": currentUser.id,
+        "user": currentUser.email,
+        "País": project.country  // Exatamente como usado em Settings.tsx linha 1532
+      } as any;
+      
+      console.log("Final project data to insert:", projectData);
+      
       const { data, error } = await supabase
         .from('Projeto')
-        .insert([{ 
-          "Project name": project.name,
-          "description service": formattedDescription,
-          "url service": project.link,
-          "Keywords": project.keywords,
-          "User id": currentUser.id,
-          "user": currentUser.email
-        }])
+        .insert([projectData])
         .select();
       
       if (error) throw error;
       
       if (data && data.length > 0) {
+        console.log("Project created successfully:", data[0]);
         // We don't need to update projects array manually anymore
         // due to real-time subscription, but we should set this as current
         setCurrentProject(data[0]);
@@ -1405,7 +1418,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         
         <RightSection>
           {/* Aviso do YouTube quando verificação estiver completa E não estiver conectado */}
-          {youtubeStatus.checked && !youtubeStatus.connected && currentProject?.id && (
+          {/* Mostra o alerta para qualquer projeto, mesmo sem id, para projetos novos */}
+          {youtubeStatus.checked && !youtubeStatus.connected && (
             <div 
               style={{
                 display: 'flex',
