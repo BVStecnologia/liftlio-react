@@ -248,15 +248,20 @@ const OAuthHandler = () => {
           // Verificar se um projeto foi fornecido no parâmetro state
           if (state) {
             // Verificar se a integração já existe
-            const { data: existingData } = await supabase
+            console.log('Verificando integração existente para projeto ID:', state);
+            const projectId = parseInt(state, 10); // Converter para número
+            const { data: existingData, error: queryError } = await supabase
               .from('Integrações')
               .select('*')
-              .eq('PROJETO id', state)
+              .eq('PROJETO id', projectId)
               .eq('Tipo de integração', 'youtube');
+              
+            console.log('Consulta de integração:', existingData ? `${existingData.length} encontradas` : 'Nenhuma', queryError || '');
             
             if (existingData && existingData.length > 0) {
               // Atualizar integração existente
-              const { error: updateError } = await supabase
+              console.log('Atualizando integração existente para projeto ID:', projectId);
+              const { data: updateData, error: updateError } = await supabase
                 .from('Integrações')
                 .update({
                   "Token": tokenData.access_token,
@@ -265,23 +270,30 @@ const OAuthHandler = () => {
                   "Ultima atualização": new Date().toISOString(),
                   "ativo": true
                 })
-                .eq('PROJETO id', state)
-                .eq('Tipo de integração', 'youtube');
+                .eq('PROJETO id', projectId)
+                .eq('Tipo de integração', 'youtube')
+                .select();
+                
+              console.log('Resultado da atualização:', updateData ? 'Sucesso' : 'Falha', updateError || '');
                 
               if (updateError) throw updateError;
             } else {
               // Inserir nova integração
-              const { error: insertError } = await supabase
+              console.log('Criando nova integração com PROJETO id:', state);
+              const { data: insertData, error: insertError } = await supabase
                 .from('Integrações')
                 .insert([{
-                  "PROJETO id": state,
+                  "PROJETO id": parseInt(state, 10),  // Convertendo string para número
                   "Tipo de integração": "youtube",
                   "Token": tokenData.access_token,
                   "Refresh token": tokenData.refresh_token,
                   "expira em": expiresAt,
                   "Ultima atualização": new Date().toISOString(),
                   "ativo": true
-                }]);
+                }])
+                .select();
+              
+              console.log('Resultado da inserção:', insertData ? 'Sucesso' : 'Falha', insertError || '');
                 
               if (insertError) throw insertError;
             }
@@ -293,16 +305,83 @@ const OAuthHandler = () => {
             localStorage.setItem('integrationTimestamp', Date.now().toString());
             localStorage.setItem('userCompletedOnboarding', 'true');
             
+            // Adicionar marcador de "integração recente" para prevenir inicialização duplicada
+            // Este marcador será verificado antes de iniciar um novo fluxo OAuth
+            localStorage.setItem('recentIntegration', 'true');
+            
+            // Configurar expiração do marcador (60 segundos)
+            setTimeout(() => {
+              localStorage.removeItem('recentIntegration');
+            }, 60000); // Remover após 60 segundos
+            
             // Forçar a atualização do estado de onboarding para completar o fluxo
             try {
               // Atualizar diretamente na tabela de integrações - tornar ativo
-              await supabase
+              const { data: finalUpdateData, error: finalUpdateError } = await supabase
                 .from('Integrações')
                 .update({
                   "ativo": true
                 })
-                .eq('PROJETO id', state)
-                .eq('Tipo de integração', 'youtube');
+                .eq('PROJETO id', projectId)
+                .eq('Tipo de integração', 'youtube')
+                .select();
+                
+              console.log('Ativação final da integração:', 
+                finalUpdateData ? 'Sucesso' : 'Falha', 
+                finalUpdateError || '');
+              
+              // Primeiro, atualizar o campo Youtube Active na tabela Projeto
+              const { data: projectUpdateData, error: projectUpdateError } = await supabase
+                .from('Projeto')
+                .update({
+                  "Youtube Active": true
+                })
+                .eq('id', projectId)
+                .select();
+                
+              console.log('Atualização do campo Youtube Active no projeto:', 
+                projectUpdateData ? 'Sucesso' : 'Falha', 
+                projectUpdateError || '');
+                
+              // Segundo, atualizar o campo Integrações na tabela Projeto
+              // Precisamos do ID da integração que acabamos de criar ou atualizar
+              // Se já existia uma integração anterior, usamos esse ID
+              let integracaoId = null;
+              if (existingData?.length > 0) {
+                integracaoId = existingData[0].id;
+              }
+              // Se não existia e acabamos de criar uma, precisamos buscar o ID dela
+              else {
+                // Buscar a integração recém-criada para obter o ID
+                const { data: newIntegrationData } = await supabase
+                  .from('Integrações')
+                  .select('id')
+                  .eq('PROJETO id', projectId)
+                  .eq('Tipo de integração', 'youtube')
+                  .limit(1);
+                  
+                if (newIntegrationData?.length > 0) {
+                  integracaoId = newIntegrationData[0].id;
+                }
+              }
+              
+              if (integracaoId) {
+                console.log('Atualizando campo Integrações do projeto com o ID da integração:', integracaoId);
+                
+                const { data: integracaoUpdateData, error: integracaoUpdateError } = await supabase
+                  .from('Projeto')
+                  .update({
+                    "Integrações": integracaoId
+                  })
+                  .eq('id', projectId)
+                  .select();
+                  
+                console.log('Atualização do campo Integrações no projeto:', 
+                  integracaoUpdateData ? 'Sucesso' : 'Falha', 
+                  integracaoUpdateError || '');
+              } else {
+                console.error('Não foi possível atualizar o campo Integrações porque não temos o ID da integração');
+              }
               
               console.log('Integração marcada como ativa com sucesso');
             } catch (updateError) {

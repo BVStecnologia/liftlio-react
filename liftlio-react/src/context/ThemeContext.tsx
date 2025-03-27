@@ -33,7 +33,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   
   // Initialize theme after component mounts to avoid SSR issues
   useEffect(() => {
-    setIsDarkMode(getInitialThemeMode());
+    // Always initialize to light mode for consistency
+    setIsDarkMode(false);
+    localStorage.setItem('darkMode', 'false');
   }, []);
 
   // Update localStorage when theme changes

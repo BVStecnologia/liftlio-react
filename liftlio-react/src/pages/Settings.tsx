@@ -533,11 +533,11 @@ const ActionButton = styled.button<{ variant?: 'primary' | 'secondary' | 'danger
   &:hover {
     background-color: ${props => {
       switch (props.variant) {
-        case 'primary': return props.theme.colors.secondary;
+        case 'primary': return props.theme.colors.ACCENT_LIGHT;
         case 'secondary': return 'rgba(94, 53, 177, 0.1)';
         case 'danger': return '#d32f2f';
         case 'success': return '#2e7d32';
-        default: return props.theme.colors.secondary;
+        default: return props.theme.colors.ACCENT_LIGHT;
       }
     }};
     transform: translateY(-2px);
@@ -2099,6 +2099,7 @@ const Settings: React.FC<{}> = () => {
             <ActionButton 
               variant="primary"
               onClick={handleSaveSettings}
+              style={{ color: 'white' }}
             >
               {renderIcon(FaSave)} Save Changes
             </ActionButton>

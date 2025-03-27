@@ -11,6 +11,7 @@ interface Project {
   link?: string;
   audience?: string;
   "Project name"?: string; // Campo legado usado na interface
+  projetc_index?: boolean; // Indica se este é o projeto selecionado pelo usuário
   // Adicione outros campos conforme necessário
 }
 
@@ -45,37 +46,86 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
   const subscriptionRef = useRef<any>(null);
   
   useEffect(() => {
-    // Load from localStorage on start
-    const savedProjectId = localStorage.getItem('currentProjectId');
-    if (savedProjectId) {
-      fetchProject(savedProjectId);
-    }
+    // Primeiro, vamos verificar se existe um projeto com projetc_index = true
+    const fetchIndexedProject = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user || !user.email) {
+          return null;
+        }
+        
+        const { data, error } = await supabase
+          .from('Projeto')
+          .select('*')
+          .eq('user', user.email)
+          .eq('projetc_index', true)
+          .maybeSingle();
+          
+        if (data && !error) {
+          // Se encontramos um projeto indexado, usamos ele
+          console.log("Projeto indexado encontrado:", data.id);
+          setCurrentProject(data);
+          // Também salvamos no localStorage para compatibilidade
+          localStorage.setItem('currentProjectId', data.id.toString());
+          return data.id;
+        } else {
+          console.log("Nenhum projeto indexado encontrado, verificando localStorage");
+          return null;
+        }
+      } catch (error) {
+        console.error("Erro ao buscar projeto indexado:", error);
+        return null;
+      }
+    };
     
-    // Removida a verificação de skipOnboarding que estava causando
-    // redirecionamentos indesejados após a autenticação do YouTube
-    
-    // Load all projects
-    loadUserProjects().then(projectsList => {
+    const initializeProject = async () => {
+      // Tenta buscar o projeto indexado primeiro
+      const indexedProjectId = await fetchIndexedProject();
+      
+      // Se não encontrou projeto indexado, tenta o localStorage como fallback
+      if (!indexedProjectId) {
+        const savedProjectId = localStorage.getItem('currentProjectId');
+        if (savedProjectId) {
+          console.log("Usando projeto do localStorage:", savedProjectId);
+          await fetchProject(savedProjectId);
+          // Atualizar o projeto para ser o indexado
+          if (currentProject) {
+            await updateProjectIndex(currentProject);
+          }
+        }
+      }
+      
+      // Carrega todos os projetos do usuário
+      const projectsList = await loadUserProjects();
       setProjects(projectsList);
       setHasProjects(projectsList.length > 0);
       
-      // Verificamos a lista de projetos
-      
       // Se tem projetos, atualizar onboardingStep
       if (projectsList.length > 0) {
-        // Se já temos um projeto salvo no localStorage, usamos ele para determinar o estado
-        // isso evita que o projeto selecionado mude após redirecionamento das integrações
-        const projectIdToUse = savedProjectId || projectsList[0].id;
+        // Usar o projeto indexado, ou o do localStorage, ou o primeiro da lista
+        const projectIdToUse = indexedProjectId || 
+                              localStorage.getItem('currentProjectId') || 
+                              projectsList[0].id;
         
-        // Sempre usar o projeto que já estava selecionado, se existir
+        // Se ainda não temos um projeto selecionado mas temos projetos disponíveis,
+        // selecionar o primeiro e marcá-lo como indexado
+        if (!currentProject && projectsList.length > 0) {
+          await setProject(projectsList[0]);
+        }
+        
+        // Determinar estado de onboarding com base no projeto escolhido
         determineOnboardingState(projectIdToUse).finally(() => {
-          setOnboardingReady(true); // Marcar como pronto após determinar o estado
+          setOnboardingReady(true);
         });
       } else {
         setOnboardingStep(1); // Precisa criar projeto
-        setOnboardingReady(true); // Mesmo sem projetos, estamos prontos (etapa 1)
+        setOnboardingReady(true);
       }
-    });
+    };
+    
+    // Inicializar o sistema de projetos
+    initializeProject();
     
     // Set up real-time subscription
     setupRealtimeSubscription();
@@ -110,6 +160,11 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       if (data && !error) {
         setCurrentProject(data);
         localStorage.setItem('currentProjectId', projectId);
+        
+        // Se o projeto não é o indexado, atualizá-lo como tal
+        if (!data.projetc_index) {
+          updateProjectIndex(data);
+        }
       } else {
         // Se o projeto não existe ou não pertence ao usuário, limpar
         localStorage.removeItem('currentProjectId');
@@ -148,9 +203,51 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
     }
   };
   
-  const setProject = (project: any) => {
+  // Função para atualizar o índice de um projeto no banco de dados
+  const updateProjectIndex = async (project: Project) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user || !user.email) {
+        console.error("Usuário não autenticado ao tentar atualizar índice do projeto");
+        return;
+      }
+      
+      // Primeiro, desmarcar todos os projetos do usuário
+      const { error: resetError } = await supabase
+        .from('Projeto')
+        .update({ projetc_index: false })
+        .eq('user', user.email);
+      
+      if (resetError) {
+        console.error("Erro ao resetar índices de projetos:", resetError);
+        return;
+      }
+      
+      // Depois, marcar o projeto selecionado como indexado
+      const { error: updateError } = await supabase
+        .from('Projeto')
+        .update({ projetc_index: true })
+        .eq('id', project.id)
+        .eq('user', user.email);
+      
+      if (updateError) {
+        console.error("Erro ao atualizar índice do projeto:", updateError);
+      } else {
+        console.log(`Projeto ${project.id} definido como projeto indexado`);
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar índice do projeto:", error);
+    }
+  };
+  
+  const setProject = async (project: any) => {
     setCurrentProject(project);
     if (project?.id) {
+      // Atualizar no banco de dados que este é o projeto ativo
+      await updateProjectIndex(project);
+      
+      // Manter compatibilidade com localStorage
       localStorage.setItem('currentProjectId', project.id.toString());
       
       // Ao trocar de projeto, verificamos se o usuário já completou o onboarding

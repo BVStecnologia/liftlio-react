@@ -1241,6 +1241,25 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       return;
     }
     
+    // Verificar se uma integração foi criada recentemente
+    // Isso evita que o fluxo seja iniciado mais de uma vez em sequência rápida
+    if (localStorage.getItem('recentIntegration') === 'true') {
+      console.log('Uma integração foi criada recentemente. Aguardando...');
+      
+      // Mostrar mensagem ao usuário
+      alert("An integration was recently started. Please wait a moment and try again.");
+      
+      // Atualizar a UI para mostrar que estamos processando
+      setYoutubeStatus({ checked: false, connected: true });
+      
+      // Verificar novamente após um breve período
+      setTimeout(() => {
+        checkYouTubeConnection();
+      }, 3000);
+      
+      return;
+    }
+    
     // Marcar como não verificado durante a autenticação
     setYoutubeStatus({ checked: false, connected: false });
     
@@ -1328,8 +1347,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     }
   };
   
-  const handleProjectSelect = (project: any) => {
-    setCurrentProject(project);
+  const handleProjectSelect = async (project: any) => {
+    await setCurrentProject(project);
     setShowProjectsDropdown(false);
   };
   
