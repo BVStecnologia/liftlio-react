@@ -620,6 +620,7 @@ interface Integration {
   refreshToken?: string;
   expiresAt?: number;
   lastUpdated?: string;
+  failureCount?: number; // Contador de falhas consecutivas
 }
 
 const Integrations: React.FC = () => {
@@ -656,7 +657,7 @@ const Integrations: React.FC = () => {
         console.log('Verificação periódica das integrações...');
         fetchIntegrations();
       }
-    }, 60000); // Verificar a cada 1 minuto
+    }, 300000); // Verificar a cada 5 minutos (aumentado de 1 minuto)
     
     return () => {
       clearInterval(checkInterval);
@@ -730,7 +731,8 @@ const Integrations: React.FC = () => {
         token: item['Token'] || '',
         refreshToken: item['Refresh token'] || '',
         expiresAt: item['expira em'] || 0,
-        lastUpdated: item['Ultima atualização'] || null
+        lastUpdated: item['Ultima atualização'] || null,
+        failureCount: item['falhas_consecutivas'] || 0 // Novo campo para contar falhas
       }));
       
       // Verificar ativamente todas as integrações
@@ -743,24 +745,55 @@ const Integrations: React.FC = () => {
             const isValid = await testYouTubeTokenAPI(integration.token);
             
             if (!isValid) {
-              console.log('Token do YouTube inválido, marcando como desconectado');
-              // Atualizar no banco de dados
-              await supabase
-                .from('Integrações')
-                .update({ 'ativo': false })
-                .eq('PROJETO id', currentProject.id)
-                .eq('Tipo de integração', 'youtube');
+              console.log('Token do YouTube falhou no teste, incrementando contador de falhas');
+              
+              // Incrementar contador de falhas
+              const failureCount = (integration.failureCount || 0) + 1;
+              
+              // Só desativar após 3 falhas consecutivas
+              if (failureCount >= 3) {
+                console.log('Token do YouTube falhou 3 vezes consecutivas, desativando integração');
+                // Atualizar no banco de dados
+                await supabase
+                  .from('Integrações')
+                  .update({ 
+                    'ativo': false,
+                    'falhas_consecutivas': 0 // Resetar contador ao desativar
+                  })
+                  .eq('PROJETO id', currentProject.id)
+                  .eq('Tipo de integração', 'youtube');
+                  
+                // Atualizar localmente
+                integration.status = 'disconnected' as const;
+              } else {
+                // Apenas incrementar contador de falhas
+                await supabase
+                  .from('Integrações')
+                  .update({ 'falhas_consecutivas': failureCount })
+                  .eq('PROJETO id', currentProject.id)
+                  .eq('Tipo de integração', 'youtube');
                 
-              // Atualizar localmente
-              integration.status = 'disconnected' as const;
+                integration.failureCount = failureCount;
+                console.log(`Falha ${failureCount}/3 - Mantendo integração ativa por enquanto`);
+              }
             } else {
-              console.log('Token do YouTube válido');
+              console.log('Token do YouTube válido, resetando contador de falhas');
+              // Resetar contador de falhas se o teste foi bem-sucedido
+              if ((integration.failureCount || 0) > 0) {
+                await supabase
+                  .from('Integrações')
+                  .update({ 'falhas_consecutivas': 0 })
+                  .eq('PROJETO id', currentProject.id)
+                  .eq('Tipo de integração', 'youtube');
+                  
+                integration.failureCount = 0;
+              }
             }
           } catch (testError) {
             console.error('Erro ao testar token do YouTube:', testError);
             // Não desativar automaticamente por erros de teste
             // Erros podem ser temporários de rede ou API, não da validade do token
-            console.warn('Erro ao testar token, mas mantendo integração ativa por segurança');
+            console.warn('Erro ao testar token, mantendo integração ativa por segurança');
           }
         }
         
@@ -781,14 +814,33 @@ const Integrations: React.FC = () => {
               await refreshToken(integration);
             } catch (refreshError) {
               console.error(`Error refreshing token for ${integration.id}:`, refreshError);
-              // Marcar como desconectado em caso de erro
-              await supabase
-                .from('Integrações')
-                .update({ 'ativo': false })
-                .eq('PROJETO id', currentProject.id)
-                .eq('Tipo de integração', integration.id);
-                
-              integration.status = 'disconnected' as const;
+              
+              // Incrementar contador de falhas em vez de desativar imediatamente
+              const failureCount = (integration.failureCount || 0) + 1;
+              
+              // Só desativar após 3 falhas consecutivas de refresh
+              if (failureCount >= 3) {
+                console.log(`Falhas de refresh de token para ${integration.id} atingiram limite (${failureCount}), desativando`);
+                await supabase
+                  .from('Integrações')
+                  .update({ 
+                    'ativo': false,
+                    'falhas_consecutivas': 0 // Resetar contador
+                  })
+                  .eq('PROJETO id', currentProject.id)
+                  .eq('Tipo de integração', integration.id);
+                  
+                integration.status = 'disconnected' as const;
+              } else {
+                // Apenas incrementar contador
+                await supabase
+                  .from('Integrações')
+                  .update({ 'falhas_consecutivas': failureCount })
+                  .eq('PROJETO id', currentProject.id)
+                  .eq('Tipo de integração', integration.id);
+                  
+                console.log(`Falha de refresh ${failureCount}/3 para ${integration.id} - Mantendo integração ativa por enquanto`);
+              }
             }
           }
         }
@@ -804,43 +856,80 @@ const Integrations: React.FC = () => {
   
   // Função para testar efetivamente o token do YouTube com a API
   const testYouTubeTokenAPI = async (token: string): Promise<boolean> => {
-    try {
-      // Fazer uma chamada leve à API do YouTube
-      const response = await fetch(`${YOUTUBE_API_BASE}/channels?part=snippet&mine=true`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        try {
-          const errorData = await response.json();
-          console.error('Erro na API do YouTube:', errorData);
-          
-          // Verificar se é um erro de autenticação (401) ou autorização (403)
-          if (response.status === 401 || response.status === 403) {
-            return false;
-          } else {
-            // Para outros erros (429, 500, etc.), considerar o token como válido ainda
-            console.warn('Erro temporário de API, mantendo token como válido:', response.status);
-            return true;
+    // Implementar sistema de retentativas
+    const maxRetries = 2;
+    let retryCount = 0;
+    
+    while (retryCount <= maxRetries) {
+      try {
+        // Fazer uma chamada leve à API do YouTube
+        console.log(`Tentativa ${retryCount + 1}/${maxRetries + 1} de validação do token do YouTube`);
+        const response = await fetch(`${YOUTUBE_API_BASE}/channels?part=snippet&mine=true`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
-        } catch (parseError) {
-          console.error('Erro ao processar resposta da API:', parseError);
-          // Se não conseguir analisar a resposta, considerar um erro de rede, não de autenticação
-          return true;
+        });
+        
+        if (!response.ok) {
+          try {
+            const errorData = await response.json();
+            console.log(`Tentativa ${retryCount + 1}/${maxRetries + 1} - Erro na API do YouTube:`, errorData);
+            
+            // Só considerar inválido se for erro específico de autenticação
+            if (response.status === 401) {
+              console.log('Erro 401 - Token inválido ou expirado');
+              return false;
+            }
+            else if (response.status === 403 && 
+                    (errorData.error?.errors?.[0]?.reason === 'authError' || 
+                     errorData.error?.errors?.[0]?.reason === 'forbidden')) {
+              console.log('Erro 403 - Problema de autorização');
+              return false;
+            }
+            else if (response.status === 429) {
+              // Rate limiting - aguardar e tentar novamente
+              console.log('Erro 429 - Rate limiting, aguardando...');
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              retryCount++;
+              continue;
+            } else {
+              // Outros códigos (500, etc) - considerar como erro temporário
+              console.log(`Erro ${response.status} - Considerando temporário`);
+              if (retryCount < maxRetries) {
+                retryCount++;
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                continue;
+              }
+              return true; // Manter integração ativa em caso de dúvida
+            }
+          } catch (parseError) {
+            console.error('Erro ao processar resposta da API:', parseError);
+            // Se não conseguir analisar a resposta, tentar novamente
+            if (retryCount < maxRetries) {
+              retryCount++;
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              continue;
+            }
+            return true; // Em caso de erro de parse, manter token válido
+          }
         }
+        
+        const data = await response.json();
+        return data.items && data.items.length > 0;
+      } catch (error) {
+        console.error(`Tentativa ${retryCount + 1}/${maxRetries + 1} - Erro temporário:`, error);
+        // Erro de rede - tentar novamente
+        if (retryCount < maxRetries) {
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
+        return true; // Após todas as tentativas, manter token como válido
       }
-      
-      const data = await response.json();
-      return data.items && data.items.length > 0;
-    } catch (error) {
-      // Erros de rede ou outros erros - considerar o token ainda válido
-      console.error('Erro temporário ao verificar token do YouTube:', error);
-      // Não invalidar tokens por falhas temporárias de rede
-      return true;
     }
+    
+    return true; // Em caso de múltiplas falhas não conclusivas, manter integração ativa
   };
   
   // Function to refresh an expired token
@@ -1027,14 +1116,35 @@ const Integrations: React.FC = () => {
           // Token é inválido mesmo não estando expirado
           console.log('Token teoricamente válido falhou no teste com a API');
           
-          // Marcar como desconectado
-          await supabase
-            .from('Integrações')
-            .update({ 'ativo': false })
-            .eq('PROJETO id', currentProject.id)
-            .eq('Tipo de integração', 'youtube');
-            
-          throw new Error('YouTube token is invalid');
+          // Incrementar contador de falhas em vez de desativar imediatamente
+          const failureCount = (youtubeIntegration.failureCount || 0) + 1;
+          
+          // Só desativar após 3 falhas consecutivas
+          if (failureCount >= 3) {
+            console.log('Token falhou 3 vezes consecutivas, desativando integração');
+            // Atualizar no banco de dados
+            await supabase
+              .from('Integrações')
+              .update({ 
+                'ativo': false,
+                'falhas_consecutivas': 0 // Resetar contador
+              })
+              .eq('PROJETO id', currentProject.id)
+              .eq('Tipo de integração', 'youtube');
+              
+            throw new Error('YouTube token is invalid after 3 consecutive failures');
+          } else {
+            // Apenas incrementar contador
+            await supabase
+              .from('Integrações')
+              .update({ 'falhas_consecutivas': failureCount })
+              .eq('PROJETO id', currentProject.id)
+              .eq('Tipo de integração', 'youtube');
+              
+            console.log(`Falha ${failureCount}/3 - Tentando usar o token mesmo assim`);
+            // Permitir o uso do token pelo menos uma vez
+            return youtubeIntegration.token || null;
+          }
         }
       }
       
@@ -1057,14 +1167,41 @@ const Integrations: React.FC = () => {
         if (newToken) {
           const isValid = await testYouTubeTokenAPI(newToken);
           if (!isValid) {
-            // Token renovado também é inválido
+            // Incrementar contador de falhas em vez de desativar imediatamente
+            const failureCount = (data['falhas_consecutivas'] || 0) + 1;
+            
+            // Só desativar após 3 falhas consecutivas
+            if (failureCount >= 3) {
+              console.log('Token renovado falhou 3 vezes, desativando integração');
+              await supabase
+                .from('Integrações')
+                .update({ 
+                  'ativo': false,
+                  'falhas_consecutivas': 0 // Resetar contador
+                })
+                .eq('PROJETO id', currentProject.id)
+                .eq('Tipo de integração', 'youtube');
+                
+              throw new Error('Refreshed YouTube token is invalid after 3 failures');
+            } else {
+              // Apenas incrementar contador
+              await supabase
+                .from('Integrações')
+                .update({ 'falhas_consecutivas': failureCount })
+                .eq('PROJETO id', currentProject.id)
+                .eq('Tipo de integração', 'youtube');
+                
+              console.log(`Falha ${failureCount}/3 - Tentando usar o token renovado mesmo assim`);
+              // Tentar usar o token renovado mesmo após falha
+              return newToken;
+            }
+          } else {
+            // Resetar contador em caso de sucesso
             await supabase
               .from('Integrações')
-              .update({ 'ativo': false })
+              .update({ 'falhas_consecutivas': 0 })
               .eq('PROJETO id', currentProject.id)
               .eq('Tipo de integração', 'youtube');
-              
-            throw new Error('Refreshed YouTube token is invalid');
           }
         }
         
@@ -1091,52 +1228,125 @@ const Integrations: React.FC = () => {
         throw new Error('Could not get a valid YouTube token');
       }
       
-      // Make a simple call to get the authenticated user's channel
-      const response = await fetch(`${YOUTUBE_API_BASE}/channels?part=snippet&mine=true`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Sistema de retentativas para testes manuais
+      const maxRetries = 2;
+      let retryCount = 0;
+      let success = false;
+      let errorMessage = '';
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        
-        // Atualizar status da integração no banco se falhar
-        if (currentProject?.id) {
-          await supabase
-            .from('Integrações')
-            .update({ 'ativo': false })
-            .eq('PROJETO id', currentProject.id)
-            .eq('Tipo de integração', 'youtube');
+      while (retryCount <= maxRetries && !success) {
+        try {
+          console.log(`Teste de conexão: Tentativa ${retryCount + 1}/${maxRetries + 1}`);
+          
+          // Make a simple call to get the authenticated user's channel
+          const response = await fetch(`${YOUTUBE_API_BASE}/channels?part=snippet&mine=true`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            errorMessage = errorData.error?.message || errorData.error || 'Unknown error';
             
-          // Atualizar o estado
-          const updatedIntegrations = userIntegrations.map(integration => 
-            integration.id === 'youtube' 
-              ? {...integration, status: 'disconnected' as const} 
-              : integration
-          );
-          setUserIntegrations(updatedIntegrations);
+            // Verificar se é erro de autenticação (401) ou autorização (403)
+            if (response.status === 401 || 
+                (response.status === 403 && 
+                 (errorData.error?.errors?.[0]?.reason === 'authError' || 
+                  errorData.error?.errors?.[0]?.reason === 'forbidden'))) {
+              
+              console.log(`Erro de autenticação definitivo: ${response.status}`);
+              break; // Sair do loop em caso de erro definitivo
+            } 
+            else if (response.status === 429) {
+              // Rate limiting, aguardar mais tempo
+              await new Promise(resolve => setTimeout(resolve, 3000));
+              retryCount++;
+              continue;
+            }
+            else {
+              // Erros 500 ou outros temporários, tentar novamente
+              console.log(`Erro temporário (${response.status}), tentando novamente após pausa`);
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              retryCount++;
+              continue;
+            }
+          }
+          
+          // Se chegou aqui, a requisição foi bem-sucedida
+          const data = await response.json();
+          const channelName = data.items[0]?.snippet?.title || 'Unknown Channel';
+          
+          // Confirmar que a conexão está ativa no banco e resetar contador
+          if (currentProject?.id) {
+            await supabase
+              .from('Integrações')
+              .update({ 
+                'ativo': true,
+                'falhas_consecutivas': 0 
+              })
+              .eq('PROJETO id', currentProject.id)
+              .eq('Tipo de integração', 'youtube');
+          }
+          
+          alert(`Successfully connected to YouTube channel: ${channelName}`);
+          success = true;
+          return true;
+        } catch (retryError) {
+          console.error(`Erro na tentativa ${retryCount + 1}:`, retryError);
+          errorMessage = retryError instanceof Error ? retryError.message : 'Unknown error';
+          
+          if (retryCount < maxRetries) {
+            retryCount++;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } else {
+            break;
+          }
+        }
+      }
+      
+      if (!success) {
+        // Só atualizar o status após esgotar todas as tentativas
+        // Incrementar contador em vez de desativar imediatamente
+        const youtubeIntegration = userIntegrations.find(i => i.id === 'youtube');
+        if (youtubeIntegration && currentProject?.id) {
+          const failureCount = (youtubeIntegration.failureCount || 0) + 1;
+          
+          // Só desativar após 3 falhas consecutivas
+          if (failureCount >= 3) {
+            console.log('Teste manual falhou 3 vezes, desativando integração');
+            await supabase
+              .from('Integrações')
+              .update({ 
+                'ativo': false,
+                'falhas_consecutivas': 0 
+              })
+              .eq('PROJETO id', currentProject.id)
+              .eq('Tipo de integração', 'youtube');
+              
+            // Atualizar o estado
+            const updatedIntegrations = userIntegrations.map(integration => 
+              integration.id === 'youtube' 
+                ? {...integration, status: 'disconnected' as const} 
+                : integration
+            );
+            setUserIntegrations(updatedIntegrations);
+          } else {
+            // Apenas incrementar contador
+            await supabase
+              .from('Integrações')
+              .update({ 'falhas_consecutivas': failureCount })
+              .eq('PROJETO id', currentProject.id)
+              .eq('Tipo de integração', 'youtube');
+              
+            console.log(`Falha ${failureCount}/3 - Mantendo integração ativa por enquanto`);
+          }
         }
         
-        throw new Error(`YouTube API request failed: ${
-          errorData.error?.message || errorData.error || 'Unknown error'
-        }`);
+        throw new Error(`YouTube API request failed: ${errorMessage}`);
       }
       
-      const data = await response.json();
-      const channelName = data.items[0]?.snippet?.title || 'Unknown Channel';
-      
-      // Confirmar que a conexão está ativa no banco
-      if (currentProject?.id) {
-        await supabase
-          .from('Integrações')
-          .update({ 'ativo': true })
-          .eq('PROJETO id', currentProject.id)
-          .eq('Tipo de integração', 'youtube');
-      }
-      
-      alert(`Successfully connected to YouTube channel: ${channelName}`);
       return true;
     } catch (error) {
       console.error('Error testing YouTube connection:', error);

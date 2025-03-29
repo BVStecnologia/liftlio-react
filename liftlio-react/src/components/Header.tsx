@@ -1348,8 +1348,63 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   };
   
   const handleProjectSelect = async (project: any) => {
-    await setCurrentProject(project);
+    // Verificar se já existe uma atualização em progresso
+    const atualizacaoEmProgresso = 'projeto_atualizando_' + project.id;
+    if (sessionStorage.getItem(atualizacaoEmProgresso) === 'true') {
+      console.log("Atualização de projeto já em andamento, aguardando...");
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    // Fechar dropdown antes de iniciar operação assíncrona
     setShowProjectsDropdown(false);
+    
+    // Como já existe um componente de carregamento na aplicação,
+    // não vamos criar um toast visual, apenas garantir que a operação complete
+    
+    try {
+      // Chamar a função para atualizar o projeto
+      await setCurrentProject(project);
+      
+      // Adicionar pequeno atraso para garantir que a operação completou
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Verificar se a atualização foi bem-sucedida
+      const result = await verificarProjetoIndexado(project.id);
+      if (!result) {
+        console.warn("Indexação não confirmada após espera");
+      }
+    } finally {
+      // Operação concluída
+      console.log("Seleção de projeto concluída");
+    }
+  };
+  
+  // Função para verificar se o projeto foi corretamente indexado
+  const verificarProjetoIndexado = async (projectId: string | number): Promise<boolean> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user || !user.email) {
+        return false;
+      }
+      
+      const { data, error } = await supabase
+        .from('Projeto')
+        .select('projetc_index')
+        .eq('id', projectId)
+        .eq('user', user.email)
+        .single();
+        
+      if (error) {
+        console.error("Erro ao verificar indexação:", error);
+        return false;
+      }
+      
+      return data.projetc_index === true;
+    } catch (error) {
+      console.error("Erro ao verificar projeto indexado:", error);
+      return false;
+    }
   };
   
   const handleLanguageChange = (lang: string) => {

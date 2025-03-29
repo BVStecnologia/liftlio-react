@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabaseClient';
 
 // Interface para o modelo de dados de Projeto
 interface Project {
@@ -66,11 +66,9 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
           // Se encontramos um projeto indexado, usamos ele
           console.log("Projeto indexado encontrado:", data.id);
           setCurrentProject(data);
-          // Também salvamos no localStorage para compatibilidade
-          localStorage.setItem('currentProjectId', data.id.toString());
           return data.id;
         } else {
-          console.log("Nenhum projeto indexado encontrado, verificando localStorage");
+          console.log("Nenhum projeto indexado encontrado");
           return null;
         }
       } catch (error) {
@@ -83,19 +81,6 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       // Tenta buscar o projeto indexado primeiro
       const indexedProjectId = await fetchIndexedProject();
       
-      // Se não encontrou projeto indexado, tenta o localStorage como fallback
-      if (!indexedProjectId) {
-        const savedProjectId = localStorage.getItem('currentProjectId');
-        if (savedProjectId) {
-          console.log("Usando projeto do localStorage:", savedProjectId);
-          await fetchProject(savedProjectId);
-          // Atualizar o projeto para ser o indexado
-          if (currentProject) {
-            await updateProjectIndex(currentProject);
-          }
-        }
-      }
-      
       // Carrega todos os projetos do usuário
       const projectsList = await loadUserProjects();
       setProjects(projectsList);
@@ -103,10 +88,8 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       
       // Se tem projetos, atualizar onboardingStep
       if (projectsList.length > 0) {
-        // Usar o projeto indexado, ou o do localStorage, ou o primeiro da lista
-        const projectIdToUse = indexedProjectId || 
-                              localStorage.getItem('currentProjectId') || 
-                              projectsList[0].id;
+        // Se temos um projeto indexado, usá-lo, senão usar o primeiro da lista
+        const projectIdToUse = indexedProjectId || projectsList[0].id;
         
         // Se ainda não temos um projeto selecionado mas temos projetos disponíveis,
         // selecionar o primeiro e marcá-lo como indexado
@@ -145,7 +128,6 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       
       if (!user || !user.email) {
         // Se não há usuário, limpar o projeto salvo
-        localStorage.removeItem('currentProjectId');
         setCurrentProject(null);
         return;
       }
@@ -159,7 +141,6 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
         
       if (data && !error) {
         setCurrentProject(data);
-        localStorage.setItem('currentProjectId', projectId);
         
         // Se o projeto não é o indexado, atualizá-lo como tal
         if (!data.projetc_index) {
@@ -167,12 +148,10 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
         }
       } else {
         // Se o projeto não existe ou não pertence ao usuário, limpar
-        localStorage.removeItem('currentProjectId');
         setCurrentProject(null);
       }
     } catch (error) {
       console.error("Error fetching project:", error);
-      localStorage.removeItem('currentProjectId');
       setCurrentProject(null);
     } finally {
       setIsLoading(false);
@@ -213,56 +192,153 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
         return;
       }
       
-      // Primeiro, desmarcar todos os projetos do usuário
-      const { error: resetError } = await supabase
-        .from('Projeto')
-        .update({ projetc_index: false })
-        .eq('user', user.email);
+      // Chamar a função RPC usando fetch diretamente para garantir a compatibilidade
+      // Esta abordagem funciona com qualquer versão do Supabase
+      const response = await fetch(`${supabaseUrl}/rest/v1/rpc/set_project_index`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          p_user_email: user.email,
+          p_project_id: project.id
+        })
+      });
       
-      if (resetError) {
-        console.error("Erro ao resetar índices de projetos:", resetError);
-        return;
-      }
-      
-      // Depois, marcar o projeto selecionado como indexado
-      const { error: updateError } = await supabase
-        .from('Projeto')
-        .update({ projetc_index: true })
-        .eq('id', project.id)
-        .eq('user', user.email);
-      
-      if (updateError) {
-        console.error("Erro ao atualizar índice do projeto:", updateError);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Erro ao atualizar índice do projeto via função RPC:", errorText);
+        
+        // Fallback: tentativa manual em duas etapas caso RPC falhe
+        console.log("Tentando método alternativo em duas etapas...");
+        
+        // Primeiro, desmarcar todos os projetos do usuário
+        const { error: resetError } = await supabase
+          .from('Projeto')
+          .update({ projetc_index: false })
+          .eq('user', user.email);
+        
+        if (resetError) {
+          console.error("Erro ao resetar índices de projetos:", resetError);
+          return;
+        }
+        
+        // Depois, marcar o projeto selecionado como indexado
+        // Usando o campo 'projetc_index' que corresponde à coluna no banco de dados
+        const { error: updateError } = await supabase
+          .from('Projeto')
+          .update({ projetc_index: true })
+          .eq('id', project.id)
+          .eq('user', user.email);
+        
+        if (updateError) {
+          console.error("Erro ao atualizar índice do projeto:", updateError);
+        } else {
+          console.log(`Projeto ${project.id} definido como projeto indexado (método alternativo)`);
+          
+          // Verificar se a atualização foi bem-sucedida
+          await verificarIndexacao(project.id, user.email);
+        }
       } else {
-        console.log(`Projeto ${project.id} definido como projeto indexado`);
+        console.log(`Projeto ${project.id} definido como projeto indexado via RPC`);
       }
     } catch (error) {
       console.error("Erro ao atualizar índice do projeto:", error);
     }
   };
   
-  const setProject = async (project: any) => {
-    setCurrentProject(project);
-    if (project?.id) {
-      // Atualizar no banco de dados que este é o projeto ativo
-      await updateProjectIndex(project);
+  // Função para verificar se o projeto foi corretamente indexado
+  const verificarIndexacao = async (projectId: string | number, userEmail: string) => {
+    try {
+      // Aguardar 500ms para dar tempo ao banco de processar a atualização
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Manter compatibilidade com localStorage
-      localStorage.setItem('currentProjectId', project.id.toString());
+      // Verificar se o projeto está marcado como indexado
+      const { data, error } = await supabase
+        .from('Projeto')
+        .select('projetc_index')
+        .eq('id', projectId)
+        .eq('user', userEmail)
+        .single();
+        
+      if (error) {
+        console.error("Erro ao verificar indexação do projeto:", error);
+        return;
+      }
       
-      // Ao trocar de projeto, verificamos se o usuário já completou o onboarding
-      // para não forçá-lo a passar por isso novamente
-      const userCompletedOnboarding = localStorage.getItem('userCompletedOnboarding') === 'true';
-      
-      if (userCompletedOnboarding) {
-        // Se o usuário já completou, não reiniciar o onboarding
-        console.log("Trocando de projeto mas mantendo o status de onboarding completo");
-        setOnboardingStep(4);
-        setHasData(true);
-        setOnboardingReady(true);
+      if (!data.projetc_index) {
+        console.warn("Projeto não foi indexado corretamente. Tentando novamente...");
+        
+        // Tentar novamente a atualização
+        const { error: updateError } = await supabase
+          .from('Projeto')
+          .update({ projetc_index: true })
+          .eq('id', projectId)
+          .eq('user', userEmail);
+          
+        if (updateError) {
+          console.error("Falha na segunda tentativa de indexação:", updateError);
+        } else {
+          console.log("Segunda tentativa de indexação bem-sucedida");
+        }
       } else {
-        // Se nunca completou, verificar estado normalmente
-        determineOnboardingState(project.id);
+        console.log("Verificação de indexação: OK");
+      }
+    } catch (error) {
+      console.error("Erro ao verificar indexação:", error);
+    }
+  };
+  
+  const setProject = async (project: any) => {
+    // Definir estado local imediatamente (experiência do usuário)
+    setCurrentProject(project);
+    
+    if (project?.id) {
+      // Adicionar flag para impedir navegação durante a atualização
+      const atualizacaoEmProgresso = 'projeto_atualizando_' + project.id;
+      sessionStorage.setItem(atualizacaoEmProgresso, 'true');
+      
+      try {
+        // Atualizar no banco de dados que este é o projeto ativo
+        // Esta é a única fonte de verdade para o projeto atual
+        await updateProjectIndex(project);
+        
+        // Verificar se a atualização foi bem-sucedida 
+        const { data, error } = await supabase
+          .from('Projeto')
+          .select('projetc_index')
+          .eq('id', project.id)
+          .single();
+          
+        if (error || !data.projetc_index) {
+          console.warn("Possível falha na indexação do projeto. Tentando novamente...");
+          // Segunda tentativa, com pequeno atraso
+          await new Promise(resolve => setTimeout(resolve, 300));
+          await updateProjectIndex(project);
+        }
+        
+        // Ao trocar de projeto, verificamos se o usuário já completou o onboarding
+        // para não forçá-lo a passar por isso novamente
+        const userCompletedOnboarding = localStorage.getItem('userCompletedOnboarding') === 'true';
+        
+        if (userCompletedOnboarding) {
+          // Se o usuário já completou, não reiniciar o onboarding
+          console.log("Trocando de projeto mas mantendo o status de onboarding completo");
+          setOnboardingStep(4);
+          setHasData(true);
+          setOnboardingReady(true);
+        } else {
+          // Se nunca completou, verificar estado normalmente
+          await determineOnboardingState(project.id);
+        }
+      } catch (error) {
+        console.error("Erro durante a atualização do projeto:", error);
+      } finally {
+        // Remover flag de atualização em progresso
+        sessionStorage.removeItem(atualizacaoEmProgresso);
       }
     }
   };
