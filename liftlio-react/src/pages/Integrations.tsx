@@ -653,35 +653,36 @@ const Integrations: React.FC = () => {
     
     // Verificar integração do YouTube ao carregar a página
     if (currentProject?.id) {
-      console.log('Chamando verificar_integracao_youtube no carregamento inicial para projeto:', currentProject.id);
-      const projeto_id = currentProject.id;
-      
-      // Usar fetch diretamente como é feito no ProjectContext
+      // Obter o email do usuário atual
       (async () => {
         try {
-          // Reproduzir o mesmo padrão usado em ProjectContext.tsx (linha 202-214)
-          const response = await fetch(`${supabaseUrl}/rest/v1/rpc/verificar_integracao_youtube`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': supabaseAnonKey,
-              'Authorization': `Bearer ${supabaseAnonKey}`,
-            },
-            body: JSON.stringify({ projeto_id })
-          });
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Erro ao verificar integração do YouTube:", errorText);
-          } else {
-            const result = await response.json();
-            console.log("Verificação de integração retornou:", result);
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user && user.email) {
+            const email_usuario = user.email;
+            console.log('Verificando integração do YouTube na página de Integrações para o usuário:', email_usuario);
+            
+            // Chamar a nova função RPC que valida por email usando fetch direto
+            const response = await fetch(`${supabaseUrl}/rest/v1/rpc/verificar_integracao_youtube_por_email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': supabaseAnonKey,
+                'Authorization': `Bearer ${supabaseAnonKey}`,
+              },
+              body: JSON.stringify({ email_usuario })
+            });
+            
+            const data = await response.json();
+            const error = !response.ok ? { message: 'Erro ao verificar integração' } : null;
+              
+            if (error) console.error("Erro ao verificar integração do YouTube:", error);
+            else console.log("Verificação de integração na página de Integrações retornou:", data);
           }
           
           // Carregar as integrações após a verificação
           fetchIntegrations();
         } catch (err) {
-          console.error('Erro ao verificar integração:', err);
+          console.error('Erro ao verificar integração do YouTube na página de Integrações:', err);
           // Mesmo com erro, carregar as integrações
           fetchIntegrations();
         }
@@ -832,35 +833,50 @@ const Integrations: React.FC = () => {
   
   // Get a valid access token for YouTube API operations
   const getValidYouTubeToken = async (): Promise<string | null> => {
-    if (!currentProject?.id) return null;
-    
     try {
-      // Verificar integração usando fetch direto
-      const projeto_id = currentProject.id;
+      // Obter o email do usuário atual
+      const { data: { user } } = await supabase.auth.getUser();
       
-      // Usar fetch diretamente como é feito no ProjectContext
-      const response = await fetch(`${supabaseUrl}/rest/v1/rpc/verificar_integracao_youtube`, {
+      if (!user || !user.email) {
+        console.error('Usuário não autenticado');
+        return null;
+      }
+      
+      const email_usuario = user.email;
+      
+      // Usar a nova função RPC que valida por email usando fetch direto
+      const response = await fetch(`${supabaseUrl}/rest/v1/rpc/verificar_integracao_youtube_por_email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'apikey': supabaseAnonKey,
           'Authorization': `Bearer ${supabaseAnonKey}`,
         },
-        body: JSON.stringify({ projeto_id })
+        body: JSON.stringify({ email_usuario })
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Erro ao verificar integração do YouTube:", errorText);
+      const responseData = await response.json();
+      const integracaoValida = response.ok ? responseData : false;
+      const rpcError = !response.ok ? { message: 'Erro ao verificar integração' } : null;
+        
+      if (rpcError) {
+        console.error("Erro ao verificar integração do YouTube:", rpcError);
         return null;
       }
       
-      // Buscar o token mais recente após a verificação
+      // Se a integração não é válida, não há token válido
+      if (!integracaoValida) {
+        console.log("Integração do YouTube não está válida");
+        return null;
+      }
+      
+      // Buscar o token mais recente - a função RPC já validou a integração
+      // Assumimos que o token está correto
       const { data, error } = await supabase
         .from('Integrações')
         .select('Token, ativo')
-        .eq('PROJETO id', currentProject.id)
         .eq('Tipo de integração', 'youtube')
+        .eq('ativo', true)
         .single();
         
       if (error) {
@@ -880,31 +896,36 @@ const Integrations: React.FC = () => {
     }
   };
   
-  // Test YouTube API connection
+  // Test YouTube API connection - Agora realizado no backend
   const testYouTubeConnection = async () => {
     try {
-      // Verificar integração usando fetch direto
-      const projeto_id = currentProject?.id;
-      if (!projeto_id) {
-        throw new Error('Nenhum projeto selecionado');
+      // Obter o email do usuário atual
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user || !user.email) {
+        throw new Error('Usuário não autenticado');
       }
       
-      console.log('Testando conexão com YouTube para projeto:', projeto_id);
+      const email_usuario = user.email;
       
-      // Usar fetch diretamente como é feito no ProjectContext
-      const response = await fetch(`${supabaseUrl}/rest/v1/rpc/verificar_integracao_youtube`, {
+      console.log('Testando conexão com YouTube para usuário:', email_usuario);
+      
+      // Usar a nova função RPC que valida por email usando fetch direto
+      const response = await fetch(`${supabaseUrl}/rest/v1/rpc/verificar_integracao_youtube_por_email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'apikey': supabaseAnonKey,
           'Authorization': `Bearer ${supabaseAnonKey}`,
         },
-        body: JSON.stringify({ projeto_id })
+        body: JSON.stringify({ email_usuario })
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erro ao verificar integração do YouTube: ${errorText}`);
+      const data = await response.json();
+      const error = !response.ok ? { message: 'Erro ao verificar integração' } : null;
+        
+      if (error) {
+        throw new Error(`Erro ao verificar integração do YouTube: ${error.message}`);
       }
       
       // Buscar o status atualizado

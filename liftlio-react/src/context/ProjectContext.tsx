@@ -81,6 +81,34 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       // Tenta buscar o projeto indexado primeiro
       const indexedProjectId = await fetchIndexedProject();
       
+      // Verificar integração do YouTube para o usuário
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && user.email) {
+          const email_usuario = user.email;
+          console.log('Verificando integração do YouTube na inicialização para o usuário:', email_usuario);
+          
+          // Chamar a função RPC que valida por email usando fetch direto
+          const response = await fetch(`${supabaseUrl}/rest/v1/rpc/verificar_integracao_youtube_por_email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': supabaseAnonKey,
+              'Authorization': `Bearer ${supabaseAnonKey}`,
+            },
+            body: JSON.stringify({ email_usuario })
+          });
+          
+          const data = await response.json();
+          const error = !response.ok ? { message: 'Erro ao verificar integração' } : null;
+          
+          if (error) console.error("Erro ao verificar integração do YouTube:", error);
+          else console.log("Verificação de integração na inicialização retornou:", data);
+        }
+      } catch (err) {
+        console.error('Erro ao verificar integração do YouTube na inicialização:', err);
+      }
+      
       // Carrega todos os projetos do usuário
       const projectsList = await loadUserProjects();
       setProjects(projectsList);
@@ -340,6 +368,34 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
         // SOMENTE APÓS confirmação do banco de dados, atualizar estado local
         console.log("Atualização confirmada no Supabase, atualizando estado local");
         setCurrentProject(project);
+        
+        // Verificar integrações do YouTube para o usuário atual sempre que trocar de projeto
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user && user.email) {
+            const email_usuario = user.email;
+            console.log('Verificando integração do YouTube na troca de projeto para o usuário:', email_usuario);
+            
+            // Chamar a função RPC que valida por email usando fetch direto
+            const response = await fetch(`${supabaseUrl}/rest/v1/rpc/verificar_integracao_youtube_por_email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': supabaseAnonKey,
+                'Authorization': `Bearer ${supabaseAnonKey}`,
+              },
+              body: JSON.stringify({ email_usuario })
+            });
+            
+            const data = await response.json();
+            const error = !response.ok ? { message: 'Erro ao verificar integração' } : null;
+            
+            if (error) console.error("Erro ao verificar integração do YouTube:", error);
+            else console.log("Verificação de integração na troca de projeto retornou:", data);
+          }
+        } catch (err) {
+          console.error("Erro ao verificar integração do YouTube na troca de projeto:", err);
+        }
         
         // Ao trocar de projeto, verificamos se o usuário já completou o onboarding
         const userCompletedOnboarding = localStorage.getItem('userCompletedOnboarding') === 'true';
