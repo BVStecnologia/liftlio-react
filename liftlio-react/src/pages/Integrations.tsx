@@ -762,13 +762,6 @@ const Integrations: React.FC = () => {
     }
   };
   
-  // A função testYouTubeTokenAPI foi removida pois a verificação agora é feita 
-  // inteiramente pela função RPC verificar_integracao_youtube no backend do Supabase
-  
-  // A função refreshToken foi removida pois a renovação de tokens agora é feita
-  // inteiramente pela função RPC verificar_integracao_youtube no backend do Supabase
-
-  // O processamento do código de autorização agora é feito pelo componente OAuthHandler global
 
   // Start OAuth flow for YouTube
   const initiateOAuth = () => {
@@ -777,9 +770,6 @@ const Integrations: React.FC = () => {
       return;
     }
     
-    // Removido verificação de 'recentIntegration'
-    
-    // Removido setIsAuthenticating(true) para evitar problemas de renderização durante o redirecionamento OAuth
     // Use the redirect URI that is configured in Google Cloud
     // Importante: Este URI deve corresponder EXATAMENTE ao configurado no Google Cloud Console
     

@@ -6,7 +6,7 @@ import ProjectModal from './ProjectModal';
 import { IconComponent } from '../utils/IconHelper';
 import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabaseClient';
 
 // Import the MobileNavToggle from App.tsx
 const fadeIn = keyframes`
@@ -1155,78 +1155,49 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     return () => clearTimeout(timerId);
   }, [currentProject?.id]); // Adicionado currentProject?.id como dependência para refazer a verificação quando o projeto mudar
   
-  // Função para verificar a conexão com YouTube
+  // Função para verificar a conexão com YouTube usando a nova função RPC
   const checkYouTubeConnection = async () => {
-    if (!currentProject?.id) {
-      // Forçar desconectado quando não há projeto
-      setYoutubeStatus({ checked: true, connected: false });
-      return;
-    }
-    
-    console.log('Verificando conexão do YouTube para projeto ID:', currentProject.id);
-    
     // Forçar o estado para "verificando" durante a consulta
     setYoutubeStatus({ checked: false, connected: false });
     
     try {
-      // Consulta direta para verificar se existe integração ativa
-      const { data, error } = await supabase
-        .from('Integrações')
-        .select('*')
-        .eq('PROJETO id', currentProject.id)
-        .eq('Tipo de integração', 'youtube');
+      // Obter o email do usuário atual
+      const { data: { user } } = await supabase.auth.getUser();
       
-      // Se não encontrou nenhuma integração, marcar como desconectado e parar aqui
-      if (!data || data.length === 0) {
-        console.log('YouTube desconectado - Projeto não tem nenhuma integração');
+      if (!user || !user.email) {
+        console.log('Usuário não autenticado, YouTube desconectado');
         setYoutubeStatus({ checked: true, connected: false });
         return;
       }
       
-      // Verificar se a integração está ativa
-      const youtubeIntegration = data[0];
-      const isConnected = youtubeIntegration.ativo === true;
+      const email_usuario = user.email;
+      console.log('Verificando conexão do YouTube para usuário:', email_usuario);
+      
+      // Chamar a função RPC que valida por email usando fetch direto
+      const response = await fetch(`${supabaseUrl}/rest/v1/rpc/verificar_integracao_youtube_por_email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({ email_usuario })
+      });
+      
+      const data = await response.json();
+      const error = !response.ok ? { message: 'Erro ao verificar integração' } : null;
+      
+      if (error) {
+        console.error('Erro ao verificar integração do YouTube:', error);
+        setYoutubeStatus({ checked: true, connected: false });
+        return;
+      }
+      
+      // O resultado da função RPC já indica se a integração está ativa
+      const isConnected = !!data;
       
       console.log('Status da conexão YouTube:', isConnected ? 'Conectado' : 'Desconectado');
-      console.log('Dados da integração:', youtubeIntegration);
-      
-      // Se a integração não está ativa, marcar como desconectado e parar aqui
-      if (!isConnected || !youtubeIntegration['Token']) {
-        console.log('YouTube desconectado - Integração existe mas não está ativa ou sem token');
-        setYoutubeStatus({ checked: true, connected: false });
-        return;
-      }
-      
-      // Testar o token com a API do YouTube
-      try {
-        const response = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true', {
-          headers: {
-            'Authorization': `Bearer ${youtubeIntegration['Token']}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (!response.ok) {
-          console.log('Token do YouTube inválido, marcando como desconectado');
-          
-          // Atualizar o status no banco
-          await supabase
-            .from('Integrações')
-            .update({ 'ativo': false })
-            .eq('PROJETO id', currentProject.id)
-            .eq('Tipo de integração', 'youtube');
-          
-          setYoutubeStatus({ checked: true, connected: false });
-          return;
-        }
-        
-        // Token é válido, marcar como conectado
-        console.log('Token do YouTube é válido, marcando como conectado');
-        setYoutubeStatus({ checked: true, connected: true });
-      } catch (apiError) {
-        console.error('Erro ao testar token do YouTube com a API:', apiError);
-        setYoutubeStatus({ checked: true, connected: false });
-      }
+      setYoutubeStatus({ checked: true, connected: isConnected });
     } catch (error) {
       console.error("Erro ao verificar integração do YouTube:", error);
       console.log('YouTube desconectado (exceção na consulta)');
