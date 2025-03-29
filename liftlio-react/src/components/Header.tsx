@@ -1241,25 +1241,6 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       return;
     }
     
-    // Verificar se uma integração foi criada recentemente
-    // Isso evita que o fluxo seja iniciado mais de uma vez em sequência rápida
-    if (localStorage.getItem('recentIntegration') === 'true') {
-      console.log('Uma integração foi criada recentemente. Aguardando...');
-      
-      // Mostrar mensagem ao usuário
-      alert("An integration was recently started. Please wait a moment and try again.");
-      
-      // Atualizar a UI para mostrar que estamos processando
-      setYoutubeStatus({ checked: false, connected: true });
-      
-      // Verificar novamente após um breve período
-      setTimeout(() => {
-        checkYouTubeConnection();
-      }, 3000);
-      
-      return;
-    }
-    
     // Marcar como não verificado durante a autenticação
     setYoutubeStatus({ checked: false, connected: false });
     
@@ -1269,7 +1250,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       ? 'https://liftlio.fly.dev' 
       : 'http://localhost:3000';
       
-    const clientId = "360636127290-1k591hbvpen81oipjur2bsb1a7a6jo2o.apps.googleusercontent.com";
+    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
     const scopes = [
       "https://www.googleapis.com/auth/userinfo.email",
       "https://www.googleapis.com/auth/userinfo.profile",

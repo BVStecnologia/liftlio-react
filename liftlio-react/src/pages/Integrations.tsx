@@ -1016,20 +1016,7 @@ const Integrations: React.FC = () => {
       return;
     }
     
-    // Verificar se uma integração foi criada recentemente
-    if (localStorage.getItem('recentIntegration') === 'true') {
-      console.log('Uma integração foi criada recentemente. Aguardando...');
-      
-      // Mostrar alerta para o usuário
-      alert("An integration was recently started. Please wait a moment and try again.");
-      
-      // Atualizar após breve período
-      setTimeout(() => {
-        fetchIntegrations();
-      }, 3000);
-      
-      return;
-    }
+    // Removido verificação de 'recentIntegration'
     
     // Removido setIsAuthenticating(true) para evitar problemas de renderização durante o redirecionamento OAuth
     // Use the redirect URI that is configured in Google Cloud
