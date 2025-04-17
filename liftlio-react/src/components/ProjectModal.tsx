@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Modal from './Modal';
 import { supabase, callEdgeFunction } from '../lib/supabaseClient';
-import { FaTimes, FaMagic, FaSpinner } from 'react-icons/fa';
+import { FaTimes, FaMagic, FaSpinner, FaGlobe, FaUser, FaBuilding, FaTag } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 
 const Form = styled.form`
@@ -40,6 +40,8 @@ const TextArea = styled.textarea`
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
   min-height: 100px;
+  width: 100%;
+  box-sizing: border-box;
   resize: vertical;
   
   &:focus {
@@ -238,7 +240,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     // Verificar se todos os campos obrigatórios estão preenchidos, incluindo keywords
     if (!projectForm.name || !projectForm.company || !projectForm.link || 
         !projectForm.audience || keywordsArray.length === 0) {
-      alert('Por favor, preencha todos os campos e adicione ao menos uma palavra-chave.');
+      alert('Por favor, preencha todos os campos obrigatórios e adicione pelo menos uma palavra-chave.');
       return;
     }
     
@@ -292,12 +294,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   const generateAIContent = async (contentType: 'keywords' | 'description') => {
     // Verificar se temos dados suficientes
     if (contentType === 'keywords' && (!projectForm.name || !projectForm.company || !projectForm.audience)) {
-      alert('Por favor, preencha os campos de Nome do Projeto, Nome da Empresa e Descrição do Público para gerar palavras-chave.');
+      alert('Por favor, preencha os campos Nome do Projeto, Nome da Empresa e Descrição do Público para gerar palavras-chave.');
       return;
     }
     
     if (contentType === 'description' && (!projectForm.name || !projectForm.company || !isValidUrl)) {
-      alert('Por favor, preencha os campos de Nome do Projeto, Nome da Empresa e adicione uma URL válida.');
+      alert('Por favor, preencha os campos Nome do Projeto, Nome da Empresa e adicione uma URL válida.');
       return;
     }
     
@@ -315,17 +317,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       let prompt = '';
       
       if (contentType === 'keywords') {
-        prompt = language === 'pt' ? 
-          `Gere 5-8 palavras-chave relevantes para o seguinte projeto:
-           Nome do Projeto: ${projectForm.name}
-           Nome da Empresa/Produto: ${projectForm.company}
-           Descrição do Público-alvo: ${projectForm.audience}
-           Responda APENAS com as palavras-chave separadas por vírgula, sem introdução ou explicação.` :
-          `Generate 5-8 relevant keywords for the following project:
-           Project Name: ${projectForm.name}
-           Company/Product Name: ${projectForm.company}
-           Target Audience Description: ${projectForm.audience}
-           Respond ONLY with the keywords separated by commas, without any introduction or explanation.`;
+        prompt = `Generate exactly 5 relevant keywords for the following project:
+         Project Name: ${projectForm.name}
+         Company/Product Name: ${projectForm.company}
+         Target Audience Description: ${projectForm.audience}
+         Respond ONLY with the keywords separated by commas, without any introduction or explanation.`;
       } else {
         // Construir a URL correta
         let url = projectForm.link;
@@ -333,17 +329,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
           url = 'https://' + url;
         }
         
-        prompt = language === 'pt' ? 
-          `Visite a URL ${url} e escreva uma descrição concisa (máximo 3 frases) do público-alvo ideal para este projeto/empresa.
-           Nome do Projeto: ${projectForm.name}
-           Nome da Empresa/Produto: ${projectForm.company}
-           URL: ${url}
-           Responda APENAS com a descrição do público-alvo, sem introdução ou explicação.` :
-          `Visit the URL ${url} and write a concise description (maximum 3 sentences) of the ideal target audience for this project/company.
-           Project Name: ${projectForm.name}
-           Company/Product Name: ${projectForm.company}
-           URL: ${url}
-           Respond ONLY with the target audience description, without any introduction or explanation.`;
+        prompt = `Visit the URL ${url} and write a concise description (maximum 3 sentences) of the ideal target audience for this project/company.
+         Project Name: ${projectForm.name}
+         Company/Product Name: ${projectForm.company}
+         URL: ${url}
+         Respond ONLY with the target audience description, without any introduction or explanation.`;
       }
       
       // Usar a função helper para chamar a edge function
@@ -355,10 +345,10 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       // Extrair a resposta - a estrutura pode variar dependendo da implementação da edge function
       const responseText = fnData?.content?.[0]?.text || fnData?.text || fnData || '';
       
-      // Processar a resposta com validação de tipo
+      // Processar a resposta com validação de tipo e limpar caracteres especiais, preservando quebras de linha
       const cleanedResponse = typeof responseText === 'string' 
-        ? responseText.replace(/\n/g, ' ').trim()
-        : String(responseText).trim();
+        ? responseText.replace(/[\*\#\/\\\[\]\(\)]/g, '').replace(/ +/g, ' ').trim()
+        : String(responseText).replace(/[\*\#\/\\\[\]\(\)]/g, '').replace(/ +/g, ' ').trim();
       
       if (contentType === 'keywords') {
         // Processar as keywords
@@ -369,7 +359,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
         
         // Verificar se temos keywords válidas
         if (generatedKeywords.length === 0) {
-          throw new Error('Não foi possível gerar palavras-chave válidas');
+          throw new Error('Could not generate valid keywords');
         }
         
         // Atualizar o formulário com as novas keywords
@@ -381,7 +371,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       } else {
         // Verificar se temos uma resposta válida para a descrição
         if (!cleanedResponse || cleanedResponse.length < 5) {
-          throw new Error('Não foi possível gerar uma descrição válida');
+          throw new Error('Could not generate a valid description');
         }
         
         // Atualizar o campo de descrição do público
@@ -429,12 +419,17 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       
       console.log('Dados extraídos da URL:', JSON.stringify(urlData, null, 2));
       
-      // Se a resposta contém uma mensagem, usamos como descrição
+      // Se a resposta contém uma mensagem, usamos como descrição (com limpeza de caracteres especiais)
       if (urlData && urlData.message) {
+        const cleanedMessage = String(urlData.message)
+          .replace(/[\*\#\/\\\[\]\(\)]/g, '')
+          .replace(/ +/g, ' ')
+          .trim();
+          
         // Atualizar o campo de descrição do público
         setProjectForm(prev => ({
           ...prev,
-          audience: urlData.message
+          audience: cleanedMessage
         }));
       } else {
         // Se não há mensagem, informamos o usuário
@@ -600,17 +595,31 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                 )}
               </GenerateButton>
             </div>
-            <TextArea
-              id="audience"
-              name="audience"
-              value={projectForm.audience}
-              onChange={handleChange}
-              placeholder="Describe your target audience"
-              required
-            />
+            <div style={{ position: 'relative' }}>
+              <TextArea
+                id="audience"
+                name="audience"
+                value={projectForm.audience}
+                onChange={handleChange}
+                placeholder="Describe your target audience"
+                required
+              />
+              {isGeneratingDescription && (
+                <LoadingOverlay>
+                  <LoadingAnimation>
+                    <LoadingDots>
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </LoadingDots>
+                    <LoadingText>Analyzing website...</LoadingText>
+                  </LoadingAnimation>
+                </LoadingOverlay>
+              )}
+            </div>
             {!isValidUrl && (
               <InfoText style={{ color: '#888' }}>
-                Add a valid URL above to enable the audience generation feature
+                Adicione uma URL válida acima para ativar o recurso de geração de público
               </InfoText>
             )}
           </FormGroup>
@@ -656,14 +665,28 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                 )}
               </GenerateButton>
             </div>
-            <TextArea
-              id="keywords"
-              name="keywords"
-              value={projectForm.keywords || ''}
-              onChange={handleChange}
-              placeholder="Keywords separated by commas (e.g. marketing, sales, product)"
-              required
-            />
+            <div style={{ position: 'relative' }}>
+              <TextArea
+                id="keywords"
+                name="keywords"
+                value={projectForm.keywords || ''}
+                onChange={handleChange}
+                placeholder="Keywords separated by commas (e.g. marketing, sales, product)"
+                required
+              />
+              {isGeneratingKeywords && (
+                <LoadingOverlay>
+                  <LoadingAnimation>
+                    <LoadingDots>
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </LoadingDots>
+                    <LoadingText>Generating keywords...</LoadingText>
+                  </LoadingAnimation>
+                </LoadingOverlay>
+              )}
+            </div>
             
             {/* Exibir keywords como tags */}
             {keywordsArray.length > 0 && (
@@ -680,14 +703,153 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
             )}
             
             <InfoText>
-              Keywords will be generated based on your project information in {projectForm.country === 'BR' ? 'Portuguese' : 'English'}.
+              Keywords will be generated based on your project information in English.
             </InfoText>
           </FormGroup>
+        
+          {/* Live Preview */}
+          <PreviewContainer>
+            <PreviewTitle>Project Preview</PreviewTitle>
+            <PreviewContent>
+              <PreviewItem>
+                <strong><IconComponent icon={FaBuilding} /> Company/Product: </strong>
+                {projectForm.company || <PreviewPlaceholder>Enter company or product name</PreviewPlaceholder>}
+              </PreviewItem>
+              <PreviewItem>
+                <strong><IconComponent icon={FaGlobe} /> Website: </strong>
+                {projectForm.link || <PreviewPlaceholder>Enter website URL</PreviewPlaceholder>}
+              </PreviewItem>
+              <PreviewItem>
+                <strong><IconComponent icon={FaUser} /> Target Audience: </strong>
+                {projectForm.audience ? (
+                  projectForm.audience.length > 100 
+                    ? `${projectForm.audience.substring(0, 100)}...` 
+                    : projectForm.audience
+                ) : (
+                  <PreviewPlaceholder>Enter or generate target audience</PreviewPlaceholder>
+                )}
+              </PreviewItem>
+              <PreviewItem>
+                <strong><IconComponent icon={FaTag} /> Keywords: </strong>
+                {keywordsArray.length > 0 ? (
+                  keywordsArray.map((keyword, i) => (
+                    <span key={i} style={{ 
+                      display: 'inline-block', 
+                      background: '#f0f0f0', 
+                      padding: '2px 6px', 
+                      borderRadius: '4px', 
+                      margin: '0 4px 4px 0',
+                      fontSize: '0.85em' 
+                    }}>
+                      {keyword}
+                    </span>
+                  ))
+                ) : (
+                  <PreviewPlaceholder>Enter or generate keywords</PreviewPlaceholder>
+                )}
+              </PreviewItem>
+            </PreviewContent>
+          </PreviewContainer>
         </Form>
     </Modal>
   );
 };
 
-// Removidos efeitos de animação do spinner
+// Add loading animation styles
+const LoadingOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: ${props => props.theme.radius.md};
+  backdrop-filter: blur(4px);
+  z-index: 5;
+`;
+
+const LoadingAnimation = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+`;
+
+const LoadingDots = styled.div`
+  display: flex;
+  gap: 8px;
+  
+  span {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: ${props => props.theme.colors.primary};
+    animation: loadingPulse 1.4s ease-in-out infinite;
+    
+    &:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    
+    &:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+  }
+  
+  @keyframes loadingPulse {
+    0%, 100% {
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 1;
+    }
+  }
+`;
+
+const LoadingText = styled.p`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.primary};
+  margin: 0;
+  font-weight: 500;
+`;
+
+// Live preview card
+const PreviewContainer = styled.div`
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px dashed ${props => props.theme.colors.grey};
+  border-radius: ${props => props.theme.radius.md};
+  background-color: ${props => `${props.theme.colors.background}80`};
+  transition: all 0.3s ease;
+`;
+
+const PreviewTitle = styled.h3`
+  font-size: ${props => props.theme.fontSizes.md};
+  margin: 0 0 12px 0;
+  color: ${props => props.theme.colors.text};
+`;
+
+const PreviewContent = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.darkGrey};
+`;
+
+const PreviewItem = styled.div`
+  margin-bottom: 8px;
+  
+  strong {
+    font-weight: 500;
+    color: ${props => props.theme.colors.text};
+  }
+`;
+
+const PreviewPlaceholder = styled.span`
+  color: ${props => props.theme.colors.grey};
+  font-style: italic;
+`;
 
 export default ProjectModal;
