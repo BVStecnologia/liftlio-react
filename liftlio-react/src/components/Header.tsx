@@ -1155,37 +1155,27 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     return () => clearTimeout(timerId);
   }, [currentProject?.id]); // Adicionado currentProject?.id como dependência para refazer a verificação quando o projeto mudar
   
-  // Função para verificar a conexão com YouTube usando a nova função RPC
+  // Função para verificar a conexão com YouTube usando verificação direta
   const checkYouTubeConnection = async () => {
     // Forçar o estado para "verificando" durante a consulta
     setYoutubeStatus({ checked: false, connected: false });
     
     try {
-      // Obter o email do usuário atual
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user || !user.email) {
-        console.log('Usuário não autenticado, YouTube desconectado');
+      if (!currentProject?.id) {
+        console.log('Sem projeto selecionado, YouTube desconectado');
         setYoutubeStatus({ checked: true, connected: false });
         return;
       }
       
-      const email_usuario = user.email;
-      console.log('Verificando conexão do YouTube para usuário:', email_usuario);
+      console.log('Verificando conexão do YouTube para o projeto atual');
       
-      // Chamar a função RPC que valida por email usando fetch direto
-      const response = await fetch(`${supabaseUrl}/rest/v1/rpc/verificar_integracao_youtube_por_email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({ email_usuario })
-      });
-      
-      const data = await response.json();
-      const error = !response.ok ? { message: 'Erro ao verificar integração' } : null;
+      // Verificação direta da integração no banco de dados
+      const { data, error } = await supabase
+        .from('Integrações')
+        .select('ativo')
+        .eq('PROJETO id', currentProject.id)
+        .eq('Tipo de integração', 'youtube')
+        .single();
       
       if (error) {
         console.error('Erro ao verificar integração do YouTube:', error);
@@ -1193,8 +1183,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         return;
       }
       
-      // O resultado da função RPC já indica se a integração está ativa
-      const isConnected = !!data;
+      // A integração está ativa se o campo ativo for true
+      const isConnected = data?.ativo === true;
       
       console.log('Status da conexão YouTube:', isConnected ? 'Conectado' : 'Desconectado');
       setYoutubeStatus({ checked: true, connected: isConnected });

@@ -651,42 +651,9 @@ const Integrations: React.FC = () => {
     console.log('Certifique-se de que o URI acima está configurado no Google Cloud Console');
     console.log('----------------------');
     
-    // Verificar integração do YouTube ao carregar a página
+    // Carregamento de integrações é feito diretamente sem chamar a função RPC
     if (currentProject?.id) {
-      // Obter o email do usuário atual
-      (async () => {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user && user.email) {
-            const email_usuario = user.email;
-            console.log('Verificando integração do YouTube na página de Integrações para o usuário:', email_usuario);
-            
-            // Chamar a nova função RPC que valida por email usando fetch direto
-            const response = await fetch(`${supabaseUrl}/rest/v1/rpc/verificar_integracao_youtube_por_email`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'apikey': supabaseAnonKey,
-                'Authorization': `Bearer ${supabaseAnonKey}`,
-              },
-              body: JSON.stringify({ email_usuario })
-            });
-            
-            const data = await response.json();
-            const error = !response.ok ? { message: 'Erro ao verificar integração' } : null;
-              
-            if (error) console.error("Erro ao verificar integração do YouTube:", error);
-            else console.log("Verificação de integração na página de Integrações retornou:", data);
-          }
-          
-          // Carregar as integrações após a verificação
-          fetchIntegrations();
-        } catch (err) {
-          console.error('Erro ao verificar integração do YouTube na página de Integrações:', err);
-          // Mesmo com erro, carregar as integrações
-          fetchIntegrations();
-        }
-      })();
+      fetchIntegrations();
     }
   }, [currentProject?.id]);
 
@@ -824,44 +791,8 @@ const Integrations: React.FC = () => {
   // Get a valid access token for YouTube API operations
   const getValidYouTubeToken = async (): Promise<string | null> => {
     try {
-      // Obter o email do usuário atual
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user || !user.email) {
-        console.error('Usuário não autenticado');
-        return null;
-      }
-      
-      const email_usuario = user.email;
-      
-      // Usar a nova função RPC que valida por email usando fetch direto
-      const response = await fetch(`${supabaseUrl}/rest/v1/rpc/verificar_integracao_youtube_por_email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({ email_usuario })
-      });
-      
-      const responseData = await response.json();
-      const integracaoValida = response.ok ? responseData : false;
-      const rpcError = !response.ok ? { message: 'Erro ao verificar integração' } : null;
-        
-      if (rpcError) {
-        console.error("Erro ao verificar integração do YouTube:", rpcError);
-        return null;
-      }
-      
-      // Se a integração não é válida, não há token válido
-      if (!integracaoValida) {
-        console.log("Integração do YouTube não está válida");
-        return null;
-      }
-      
-      // Buscar o token mais recente - a função RPC já validou a integração
-      // Assumimos que o token está correto
+      // Agora usamos uma abordagem direta para buscar token válido
+      // Verificamos apenas se existe uma integração ativa diretamente
       const { data, error } = await supabase
         .from('Integrações')
         .select('Token, ativo')
@@ -886,37 +817,10 @@ const Integrations: React.FC = () => {
     }
   };
   
-  // Test YouTube API connection - Agora realizado no backend
+  // Test YouTube API connection - Verificação direta das integrações
   const testYouTubeConnection = async () => {
     try {
-      // Obter o email do usuário atual
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user || !user.email) {
-        throw new Error('Usuário não autenticado');
-      }
-      
-      const email_usuario = user.email;
-      
-      console.log('Testando conexão com YouTube para usuário:', email_usuario);
-      
-      // Usar a nova função RPC que valida por email usando fetch direto
-      const response = await fetch(`${supabaseUrl}/rest/v1/rpc/verificar_integracao_youtube_por_email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({ email_usuario })
-      });
-      
-      const data = await response.json();
-      const error = !response.ok ? { message: 'Erro ao verificar integração' } : null;
-        
-      if (error) {
-        throw new Error(`Erro ao verificar integração do YouTube: ${error.message}`);
-      }
+      console.log('Testando conexão com YouTube');
       
       // Buscar o status atualizado
       await fetchIntegrations();
