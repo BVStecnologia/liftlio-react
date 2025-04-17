@@ -186,6 +186,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   });
   const [keywordsArray, setKeywordsArray] = useState<string[]>([]);
   const [isGeneratingKeywords, setIsGeneratingKeywords] = useState(false);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  const [isValidUrl, setIsValidUrl] = useState(false);
   
   // Sempre mostrar a aba de criação
   useEffect(() => {
@@ -211,6 +213,22 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       ...prev,
       [name]: value
     }));
+    
+    // Verificar se a URL é válida quando o campo link é alterado
+    if (name === 'link') {
+      try {
+        // Adicionar protocolo se não existir
+        let urlToTest = value;
+        if (value && !value.match(/^https?:\/\//)) {
+          urlToTest = 'https://' + value;
+        }
+        
+        const url = new URL(urlToTest);
+        setIsValidUrl(url.hostname.includes('.'));
+      } catch (e) {
+        setIsValidUrl(false);
+      }
+    }
   };
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -271,31 +289,62 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     }));
   };
   
-  const generateKeywords = async () => {
-    // Verificar se temos dados suficientes para gerar palavras-chave
-    if (!projectForm.name || !projectForm.company || !projectForm.audience) {
+  const generateAIContent = async (contentType: 'keywords' | 'description') => {
+    // Verificar se temos dados suficientes
+    if (contentType === 'keywords' && (!projectForm.name || !projectForm.company || !projectForm.audience)) {
       alert('Por favor, preencha os campos de Nome do Projeto, Nome da Empresa e Descrição do Público para gerar palavras-chave.');
       return;
     }
     
-    setIsGeneratingKeywords(true);
+    if (contentType === 'description' && (!projectForm.name || !projectForm.company || !isValidUrl)) {
+      alert('Por favor, preencha os campos de Nome do Projeto, Nome da Empresa e adicione uma URL válida.');
+      return;
+    }
+    
+    if (contentType === 'keywords') {
+      setIsGeneratingKeywords(true);
+    } else {
+      setIsGeneratingDescription(true);
+    }
     
     try {
       // Determinar o idioma baseado no país selecionado
       const language = projectForm.country === 'BR' ? 'pt' : 'en';
       
-      // Chamar a Edge Function diretamente via fetch
-      const prompt = language === 'pt' ? 
-        `Gere 5-8 palavras-chave relevantes para o seguinte projeto:
-         Nome do Projeto: ${projectForm.name}
-         Nome da Empresa/Produto: ${projectForm.company}
-         Descrição do Público-alvo: ${projectForm.audience}
-         Responda APENAS com as palavras-chave separadas por vírgula, sem introdução ou explicação.` :
-        `Generate 5-8 relevant keywords for the following project:
-         Project Name: ${projectForm.name}
-         Company/Product Name: ${projectForm.company}
-         Target Audience Description: ${projectForm.audience}
-         Respond ONLY with the keywords separated by commas, without any introduction or explanation.`;
+      // Preparar o prompt adequado baseado no tipo de conteúdo
+      let prompt = '';
+      
+      if (contentType === 'keywords') {
+        prompt = language === 'pt' ? 
+          `Gere 5-8 palavras-chave relevantes para o seguinte projeto:
+           Nome do Projeto: ${projectForm.name}
+           Nome da Empresa/Produto: ${projectForm.company}
+           Descrição do Público-alvo: ${projectForm.audience}
+           Responda APENAS com as palavras-chave separadas por vírgula, sem introdução ou explicação.` :
+          `Generate 5-8 relevant keywords for the following project:
+           Project Name: ${projectForm.name}
+           Company/Product Name: ${projectForm.company}
+           Target Audience Description: ${projectForm.audience}
+           Respond ONLY with the keywords separated by commas, without any introduction or explanation.`;
+      } else {
+        // Construir a URL correta
+        let url = projectForm.link;
+        if (!url.match(/^https?:\/\//)) {
+          url = 'https://' + url;
+        }
+        
+        prompt = language === 'pt' ? 
+          `Visite a URL ${url} e escreva uma descrição concisa (máximo 3 frases) do público-alvo ideal para este projeto/empresa.
+           Nome do Projeto: ${projectForm.name}
+           Nome da Empresa/Produto: ${projectForm.company}
+           URL: ${url}
+           Responda APENAS com a descrição do público-alvo, sem introdução ou explicação.` :
+          `Visit the URL ${url} and write a concise description (maximum 3 sentences) of the ideal target audience for this project/company.
+           Project Name: ${projectForm.name}
+           Company/Product Name: ${projectForm.company}
+           URL: ${url}
+           Respond ONLY with the target audience description, without any introduction or explanation.`;
+      }
       
       // Obter a sessão atual
       const { data: sessionData } = await supabase.auth.getSession();
@@ -316,30 +365,43 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       }
       
       const fnData = await response.json();
-      
-      // Extrair as keywords da resposta
       const responseText = fnData?.content?.[0]?.text || '';
+      const cleanedResponse = responseText.replace(/\n/g, ' ').trim();
       
-      // Processar as keywords (remover quebras de linha, pontos, etc)
-      const cleanedResponse = responseText.replace(/\n/g, '').trim();
-      const generatedKeywords = cleanedResponse
-        .split(',')
-        .map((keyword: string) => keyword.trim())
-        .filter((keyword: string) => keyword !== '');
-      
-      // Atualizar o formulário com as novas keywords
-      setKeywordsArray(generatedKeywords);
-      setProjectForm(prev => ({
-        ...prev,
-        keywords: generatedKeywords.join(', ')
-      }));
+      if (contentType === 'keywords') {
+        // Processar as keywords
+        const generatedKeywords = cleanedResponse
+          .split(',')
+          .map((keyword: string) => keyword.trim())
+          .filter((keyword: string) => keyword !== '');
+        
+        // Atualizar o formulário com as novas keywords
+        setKeywordsArray(generatedKeywords);
+        setProjectForm(prev => ({
+          ...prev,
+          keywords: generatedKeywords.join(', ')
+        }));
+      } else {
+        // Atualizar o campo de descrição do público
+        setProjectForm(prev => ({
+          ...prev,
+          audience: cleanedResponse
+        }));
+      }
     } catch (error) {
-      console.error('Error generating keywords:', error);
-      alert('Erro ao gerar palavras-chave. Por favor, tente novamente.');
+      console.error(`Error generating ${contentType}:`, error);
+      alert(`Erro ao gerar ${contentType === 'keywords' ? 'palavras-chave' : 'descrição'}. Por favor, tente novamente.`);
     } finally {
-      setIsGeneratingKeywords(false);
+      if (contentType === 'keywords') {
+        setIsGeneratingKeywords(false);
+      } else {
+        setIsGeneratingDescription(false);
+      }
     }
   };
+  
+  const generateKeywords = () => generateAIContent('keywords');
+  const generateDescription = () => generateAIContent('description');
   
   // Verificar se todos os campos obrigatórios estão preenchidos
   const isFormValid = () => {
@@ -442,19 +504,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
           </FormGroup>
           
           <FormGroup>
-            <Label htmlFor="audience">Audience description</Label>
-            <TextArea
-              id="audience"
-              name="audience"
-              value={projectForm.audience}
-              onChange={handleChange}
-              placeholder="Describe your target audience"
-              required
-            />
-          </FormGroup>
-          
-          <FormGroup>
-            <Label htmlFor="link">Project Link</Label>
+            <Label htmlFor="link">Home URL to project</Label>
             <Input
               id="link"
               name="link"
@@ -463,6 +513,44 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
               placeholder="www.example.com"
               required
             />
+          </FormGroup>
+          
+          <FormGroup>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Label htmlFor="audience">Audience description</Label>
+              <GenerateButton
+                type="button"
+                variant="secondary"
+                onClick={generateDescription}
+                disabled={isGeneratingDescription || !projectForm.name || !projectForm.company || !isValidUrl}
+                title={!isValidUrl ? "Add a valid URL first to enable this feature" : "Generate audience description from your website"}
+              >
+                {isGeneratingDescription ? (
+                  <>
+                    <IconComponent icon={FaSpinner} />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <IconComponent icon={FaMagic} />
+                    Generate Description
+                  </>
+                )}
+              </GenerateButton>
+            </div>
+            <TextArea
+              id="audience"
+              name="audience"
+              value={projectForm.audience}
+              onChange={handleChange}
+              placeholder="Describe your target audience"
+              required
+            />
+            {!isValidUrl && (
+              <InfoText style={{ color: '#888' }}>
+                Add a valid URL above to enable the audience generation feature
+              </InfoText>
+            )}
           </FormGroup>
           
           <FormGroup>
@@ -485,7 +573,27 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
           </FormGroup>
           
           <FormGroup>
-            <Label htmlFor="keywords">Keywords (separated by commas)</Label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Label htmlFor="keywords">Keywords (separated by commas)</Label>
+              <GenerateButton
+                type="button"
+                variant="secondary"
+                onClick={generateKeywords}
+                disabled={isGeneratingKeywords || !projectForm.name || !projectForm.company || !projectForm.audience}
+              >
+                {isGeneratingKeywords ? (
+                  <>
+                    <IconComponent icon={FaSpinner} />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <IconComponent icon={FaMagic} />
+                    Generate Keywords
+                  </>
+                )}
+              </GenerateButton>
+            </div>
             <TextArea
               id="keywords"
               name="keywords"
@@ -508,26 +616,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                 ))}
               </KeywordsContainer>
             )}
-            
-            {/* Botão para gerar keywords */}
-            <GenerateButton
-              type="button"
-              variant="secondary"
-              onClick={generateKeywords}
-              disabled={isGeneratingKeywords || !projectForm.name || !projectForm.company || !projectForm.audience}
-            >
-              {isGeneratingKeywords ? (
-                <>
-                  <IconComponent icon={FaSpinner} />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <IconComponent icon={FaMagic} />
-                  Generate Keywords
-                </>
-              )}
-            </GenerateButton>
             
             <InfoText>
               Keywords will be generated based on your project information in {projectForm.country === 'BR' ? 'Portuguese' : 'English'}.
