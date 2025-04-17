@@ -13,6 +13,7 @@ import Integrations from './pages/Integrations';
 import LoginPage from './pages/LoginPage';
 import ProjectCreationPage from './pages/ProjectCreationPage';
 import LoadingDataIndicator from './components/LoadingDataIndicator';
+import UrlDataTest from './components/UrlDataTest';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from './utils/IconHelper';
 import { AuthProvider } from './context/AuthContext';
@@ -610,6 +611,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
                 <Route path="/mentions" element={<Mentions />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/integrations" element={<Integrations />} />
+                <Route path="/url-test" element={<UrlDataTest />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </ContentWrapper>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Modal from './Modal';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, callEdgeFunction } from '../lib/supabaseClient';
 import { FaTimes, FaMagic, FaSpinner } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 
@@ -346,27 +346,19 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
            Respond ONLY with the target audience description, without any introduction or explanation.`;
       }
       
-      // Obter a sessão atual
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token || '';
-      
-      // Chamar a Edge Function diretamente via fetch
-      const response = await fetch('https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/claude-proxy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({ prompt })
+      // Usar a função helper para chamar a edge function
+      const fnData = await callEdgeFunction('claude-proxy', {
+        prompt: prompt,
+        textOnly: true
       });
       
-      if (!response.ok) {
-        throw new Error(`Error invoking edge function: ${response.statusText}`);
-      }
+      // Extrair a resposta - a estrutura pode variar dependendo da implementação da edge function
+      const responseText = fnData?.content?.[0]?.text || fnData?.text || fnData || '';
       
-      const fnData = await response.json();
-      const responseText = fnData?.content?.[0]?.text || '';
-      const cleanedResponse = responseText.replace(/\n/g, ' ').trim();
+      // Processar a resposta com validação de tipo
+      const cleanedResponse = typeof responseText === 'string' 
+        ? responseText.replace(/\n/g, ' ').trim()
+        : String(responseText).trim();
       
       if (contentType === 'keywords') {
         // Processar as keywords
@@ -375,6 +367,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
           .map((keyword: string) => keyword.trim())
           .filter((keyword: string) => keyword !== '');
         
+        // Verificar se temos keywords válidas
+        if (generatedKeywords.length === 0) {
+          throw new Error('Não foi possível gerar palavras-chave válidas');
+        }
+        
         // Atualizar o formulário com as novas keywords
         setKeywordsArray(generatedKeywords);
         setProjectForm(prev => ({
@@ -382,15 +379,20 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
           keywords: generatedKeywords.join(', ')
         }));
       } else {
+        // Verificar se temos uma resposta válida para a descrição
+        if (!cleanedResponse || cleanedResponse.length < 5) {
+          throw new Error('Não foi possível gerar uma descrição válida');
+        }
+        
         // Atualizar o campo de descrição do público
         setProjectForm(prev => ({
           ...prev,
           audience: cleanedResponse
         }));
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Error generating ${contentType}:`, error);
-      alert(`Erro ao gerar ${contentType === 'keywords' ? 'palavras-chave' : 'descrição'}. Por favor, tente novamente.`);
+      alert(`Error generating ${contentType === 'keywords' ? 'keywords' : 'description'}. Please try again.`);
     } finally {
       if (contentType === 'keywords') {
         setIsGeneratingKeywords(false);
@@ -401,7 +403,67 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   };
   
   const generateKeywords = () => generateAIContent('keywords');
-  const generateDescription = () => generateAIContent('description');
+  const generateDescription = async () => {
+    // Verificar se temos dados suficientes
+    if (!projectForm.name || !projectForm.company || !isValidUrl) {
+      alert('Please fill in the Project Name, Company Name fields and add a valid URL.');
+      return;
+    }
+    
+    setIsGeneratingDescription(true);
+    
+    try {
+      // Construir a URL correta
+      let url = projectForm.link;
+      if (!url.match(/^https?:\/\//)) {
+        url = 'https://' + url;
+      }
+      
+      console.log(`Extraindo informações da URL: ${url}`);
+      
+      // Usar nossa função helper para chamar a edge function Dados-da-url
+      // IMPORTANTE: O formato correto é usando 'name' para a URL
+      const urlData = await callEdgeFunction('Dados-da-url', {
+        name: url
+      });
+      
+      console.log('Dados extraídos da URL:', JSON.stringify(urlData, null, 2));
+      
+      // Se a resposta contém uma mensagem, usamos como descrição
+      if (urlData && urlData.message) {
+        // Atualizar o campo de descrição do público
+        setProjectForm(prev => ({
+          ...prev,
+          audience: urlData.message
+        }));
+      } else {
+        // Se não há mensagem, informamos o usuário
+        alert('Could not extract a description from this URL. Please try another URL or enter the description manually.');
+      }
+    } catch (error: unknown) {
+      console.error('Error extracting data from URL:', error);
+      
+      let errorMessage = 'An error occurred while accessing the URL. Please try again.';
+      
+      // Verificar se o erro é um objeto Error
+      if (error instanceof Error) {
+        // Verificar se é um erro de timeout
+        if (error.message && error.message.includes('Timeout error')) {
+          errorMessage = 'The operation took too long to complete. This URL might be too complex to process or temporarily unavailable.';
+        }
+        
+        // Verificar se é um erro de CORS ou acesso
+        if (error.message && (error.message.includes('CORS') || error.message.includes('access'))) {
+          errorMessage = 'Access to this URL is restricted. Please try a different URL.';
+        }
+      }
+      
+      alert(errorMessage);
+    } finally {
+      // Finalizamos o estado de carregamento
+      setIsGeneratingDescription(false);
+    }
+  };
   
   // Verificar se todos os campos obrigatórios estão preenchidos
   const isFormValid = () => {
