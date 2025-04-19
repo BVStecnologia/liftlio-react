@@ -185,8 +185,8 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
             .not('msg_text', 'is', null)    // Filter for non-empty msg_text
             .eq('msg_respondido', false);   // And msg_respondido = FALSE
         } else if (activeTab === 'posted') {
-          console.log('Applying filter for posted mentions (published_date not empty)');
-          query = query.not('msg_created_at_formatted', 'is', null); // Filter for non-empty published_date
+          console.log('Applying filter for posted mentions (msg_respondido = TRUE)');
+          query = query.eq('msg_respondido', true); // Filter for messages marked as responded
         } else if (activeTab === 'favorites' as TabType) {
           console.log('Applying filter for favorite mentions (msg_template=TRUE)');
           
@@ -279,7 +279,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
             .not('msg_text', 'is', null)    // Filter for non-empty msg_text
             .eq('msg_respondido', false);   // And msg_respondido = FALSE
         } else if (activeTab === 'posted') {
-          countQuery = countQuery.not('msg_created_at_formatted', 'is', null);
+          countQuery = countQuery.eq('msg_respondido', true);
         }
         
         // Se quisermos buscar somente as menções deste projeto específico, podemos adicionar isso aqui
