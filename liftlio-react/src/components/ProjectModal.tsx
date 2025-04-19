@@ -184,7 +184,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     link: '',
     audience: '',
     keywords: '',
-    country: 'BR' // Default para Brasil
+    country: 'US' // Default para Estados Unidos
   });
   const [keywordsArray, setKeywordsArray] = useState<string[]>([]);
   const [isGeneratingKeywords, setIsGeneratingKeywords] = useState(false);
@@ -272,7 +272,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       link: '',
       audience: '',
       keywords: '',
-      country: 'BR'
+      country: 'US'
     });
     setKeywordsArray([]);
   };

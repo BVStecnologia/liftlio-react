@@ -240,16 +240,23 @@ const ProjectCreationPage: React.FC = () => {
         "User id": user.id,
         "url service": project.link,
         "Keywords": project.keywords,
-        "País": project.country // Certificando que seja "US" ou "BR"
+        "País": project.country === 'US' ? 'US' : 'BR' // Garantindo formato explícito
       };
       
       console.log('Creating project with data:', projectData);
+      
+      // Adicionando log detalhado para debug do campo país
+      console.log('Valor do país recebido:', project.country);
+      console.log('Valor do país após processamento:', projectData["País"]);
       
       // Inserir o novo projeto no Supabase
       const { data, error } = await supabase
         .from('Projeto')
         .insert([projectData])
         .select();
+        
+      // Logar a resposta do Supabase para verificar o que foi realmente salvo
+      console.log('Resposta do Supabase após inserção:', { data, error });
       
       if (error) throw error;
       
