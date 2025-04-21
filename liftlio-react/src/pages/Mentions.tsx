@@ -1663,7 +1663,7 @@ const EditResponseModal: React.FC<EditModalProps> = ({ isOpen, onClose, mention,
 };
 
 const Mentions: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('posted');
+  const [activeTab, setActiveTab] = useState<TabType>('scheduled');
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentMention, setCurrentMention] = useState<MentionData | null>(null);
   // Estado timeframe removido, pois o seletor de timeframe foi removido
@@ -1942,7 +1942,7 @@ const Mentions: React.FC = () => {
   const handleToggleFavorite = async (id: number, currentStatus: boolean) => {
     console.log(`Clicou para alternar favorito: ID=${id}, Status atual=${currentStatus}`);
     
-    // Marcar este favorito como em processamento
+    // Marcar este favorito específico como em processamento
     setProcessandoFavoritos(prev => [...prev, id]);
     
     // Atualizar o estado local imediatamente para feedback visual instantâneo
@@ -1952,37 +1952,9 @@ const Mentions: React.FC = () => {
       [id]: novoEstado
     }));
     
-    // Também tentar o método normal para persistir no banco
+    // Chamar a função do hook para atualizar este favorito específico no banco
+    // Esta é a única operação de update que faremos
     toggleFavoriteMention(id);
-    
-    // Buscar o msg_id para testar diretamente
-    try {
-      const { data: comentario } = await supabase
-        .from('mentions_overview')
-        .select('msg_id')
-        .eq('comment_id', id)
-        .single();
-        
-      if (comentario && comentario.msg_id) {
-        console.log(`Fazendo teste direto para msg_id=${comentario.msg_id}`);
-        const resultado = await testeUpdateDireto(comentario.msg_id, !currentStatus);
-        
-        if (resultado) {
-          console.log(`Teste direto bem-sucedido! Atualizando UI...`);
-          // Não precisamos mais atualizar localMentionsData aqui,
-          // já que o useEffect cuida disso baseado no estado favoritosLocais
-          
-          // Os dados são atualizados em tempo real, então apenas remover do estado de processamento
-          console.log("Atualização concluída - aguardando atualização em tempo real");
-          setTimeout(() => {
-            // Remover do estado de processamento após concluir
-            setProcessandoFavoritos(prev => prev.filter(itemId => itemId !== id));
-          }, 500);
-        }
-      }
-    } catch (erro) {
-      console.error(`Erro ao buscar msg_id:`, erro);
-    }
     
     // Show custom toast notification
     if (currentStatus) {
