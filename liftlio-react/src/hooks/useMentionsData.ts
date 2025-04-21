@@ -21,11 +21,13 @@ export interface MentionData {
     date: string;
     text: string;
     likes: number;
+    comment_justificativa?: string;
   };
   response: {
     text: string;
     date: string | null;
     status: string; // 'posted' | 'scheduled' | 'draft' | 'new'
+    msg_justificativa?: string;
   };
   favorite: boolean;
   msg_respondido: boolean;
@@ -109,12 +111,14 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         author: item.comment_author || 'Anonymous',
         date: item.comment_published_at_formatted || '',
         text: item.comment_text || '',
-        likes: parseInt(item.comment_likes) || 0
+        likes: parseInt(item.comment_likes) || 0,
+        comment_justificativa: item.comment_justificativa || ''
       },
       response: {
         text: item.msg_text || '',
         date: item.msg_created_at_formatted || null,
-        status: item.mention_status || 'new'
+        status: item.mention_status || 'new',
+        msg_justificativa: item.msg_justificativa || ''
       },
       favorite: item.is_favorite || item.msg_template || item.template || false,
       msg_respondido: item.msg_respondido || false

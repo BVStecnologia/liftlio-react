@@ -2108,6 +2108,17 @@ const Mentions: React.FC = () => {
                       <CommentText>
                         {mention.comment.text}
                       </CommentText>
+                      {mention.comment.comment_justificativa && (
+                        <div 
+                          style={{ 
+                            marginTop: '8px', 
+                            fontSize: '12px', 
+                            color: COLORS.TEXT.SECONDARY
+                          }}
+                        >
+                          <strong>Justification</strong> (view in details)
+                        </div>
+                      )}
                     </CommentInfo>
                   </CommentCell>
                   
@@ -2136,6 +2147,17 @@ const Mentions: React.FC = () => {
                       <SeeMoreLink>
                         See more <IconComponent icon={FaIcons.FaChevronRight} />
                       </SeeMoreLink>
+                      {mention.response.msg_justificativa && (
+                        <div 
+                          style={{ 
+                            marginTop: '8px', 
+                            fontSize: '12px', 
+                            color: COLORS.TEXT.SECONDARY
+                          }}
+                        >
+                          <strong>Justification</strong> (view in details)
+                        </div>
+                      )}
                     </ResponseInfo>
                   </ResponseCell>
                   
@@ -2319,6 +2341,18 @@ const Mentions: React.FC = () => {
                   <div>
                     <IconComponent icon={FaIcons.FaThumbsUp} /> {selectedMention.comment.likes} likes
                   </div>
+                  {selectedMention.comment.comment_justificativa && (
+                    <div style={{ 
+                      marginTop: '10px', 
+                      padding: '10px', 
+                      background: 'rgba(45, 62, 80, 0.06)',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(45, 62, 80, 0.1)'
+                    }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Justification for choosing this comment:</div>
+                      <p style={{ margin: 0, fontSize: '14px' }}>{selectedMention.comment.comment_justificativa}</p>
+                    </div>
+                  )}
                 </DetailPopupComment>
                 
                 <div style={{ 
@@ -2378,6 +2412,19 @@ const Mentions: React.FC = () => {
                   {selectedMention.response.date && (
                     <div style={{ fontSize: '12px', color: '#666' }}>
                       <IconComponent icon={FaIcons.FaCalendarAlt} /> Data: {selectedMention.response.date}
+                    </div>
+                  )}
+                  
+                  {selectedMention.response.msg_justificativa && (
+                    <div style={{ 
+                      marginTop: '10px', 
+                      padding: '10px', 
+                      background: 'rgba(45, 62, 80, 0.06)',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(45, 62, 80, 0.1)'
+                    }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Justification for this response:</div>
+                      <p style={{ margin: 0, fontSize: '14px' }}>{selectedMention.response.msg_justificativa}</p>
                     </div>
                   )}
                 </DetailPopupResponse>
