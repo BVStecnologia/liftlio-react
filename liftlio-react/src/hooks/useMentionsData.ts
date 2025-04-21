@@ -180,10 +180,11 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         
         // Apply specific filters for different tabs
         if (activeTab === 'scheduled') {
-          console.log('Applying filter for scheduled mentions (msg_text not empty and msg_respondido = FALSE)');
+          console.log('Applying filter for scheduled mentions (msg_text not empty, msg_respondido = FALSE, and status_das_postagens_ = PENDING)');
           query = query
             .not('msg_text', 'is', null)    // Filter for non-empty msg_text
-            .eq('msg_respondido', false);   // And msg_respondido = FALSE
+            .eq('msg_respondido', false)    // And msg_respondido = FALSE
+            .eq('status_das_postagens_', 'PENDING');  // And status_das_postagens_ = PENDING
         } else if (activeTab === 'posted') {
           console.log('Applying filter for posted mentions (msg_respondido = TRUE)');
           query = query.eq('msg_respondido', true); // Filter for messages marked as responded
@@ -277,7 +278,8 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         if (activeTab === 'scheduled') {
           countQuery = countQuery
             .not('msg_text', 'is', null)    // Filter for non-empty msg_text
-            .eq('msg_respondido', false);   // And msg_respondido = FALSE
+            .eq('msg_respondido', false)    // And msg_respondido = FALSE
+            .eq('status_das_postagens_', 'PENDING');  // And status_das_postagens_ = PENDING
         } else if (activeTab === 'posted') {
           countQuery = countQuery.eq('msg_respondido', true);
         }
