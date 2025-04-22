@@ -932,14 +932,36 @@ const DetailPopupContent = styled.div`
   padding: 30px;
   width: 80%;
   max-width: 900px;
-  max-height: none;
-  overflow-y: visible;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: ${props => props.theme.shadows.xl};
   position: relative;
   
   /* Design moderno com borda gradiente */
   border: 1px solid transparent;
   background-clip: padding-box;
+  
+  /* Estilização da barra de rolagem para mantê-la discreta */
+  scrollbar-width: thin;
+  scrollbar-color: ${props => withOpacity(props.theme.colors.accent, 0.3)} transparent;
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: ${props => withOpacity(props.theme.colors.accent, 0.3)};
+    border-radius: 20px;
+    border: 2px solid transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: ${props => withOpacity(props.theme.colors.accent, 0.5)};
+  }
   
   &::before {
     content: '';
@@ -952,6 +974,7 @@ const DetailPopupContent = styled.div`
     z-index: -1;
     border-radius: ${props => props.theme.radius.xl};
     opacity: 0.5;
+    pointer-events: none;
   }
 `;
 
