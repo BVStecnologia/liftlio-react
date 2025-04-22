@@ -8,6 +8,7 @@ import { IconComponent } from '../utils/IconHelper';
 import { useMentionsData, TimeframeType, TabType, MentionData } from '../hooks/useMentionsData';
 import { supabase } from '../lib/supabaseClient';
 import { useProject } from '../context/ProjectContext';
+import { HiPencil } from 'react-icons/hi';
 // Recharts imports removidos pois os gráficos foram removidos
 
 // Animation keyframes
@@ -1322,6 +1323,32 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
   }
 `;
 
+const SpecialInstructionsButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: ${COLORS.ACCENT};
+  color: white;
+  border: none;
+  border-radius: ${props => props.theme.radius.md};
+  padding: 10px 16px;
+  font-size: ${props => props.theme.fontSizes.sm};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: ${COLORS.SHADOW.LIGHT};
+  
+  &:hover {
+    background: ${props => props.theme.colors.primary};
+    transform: translateY(-2px);
+    box-shadow: ${COLORS.SHADOW.MEDIUM};
+  }
+  
+  svg {
+    font-size: 16px;
+  }
+`;
+
 // YouTube API key
 const YOUTUBE_API_KEY = 'AIzaSyD9PWLCoomqo4CyvzlqLBiYWyWflQXd8U0';
 
@@ -1691,6 +1718,8 @@ const Mentions: React.FC = () => {
   const [currentMention, setCurrentMention] = useState<MentionData | null>(null);
   // Estado timeframe removido, pois o seletor de timeframe foi removido
   const [toast, setToast] = useState({ visible: false, message: '', success: true });
+  const [instructionsModalOpen, setInstructionsModalOpen] = useState(false);
+  const [instructionsText, setInstructionsText] = useState('');
   
   // Auto-hide toast after 3 seconds
   useEffect(() => {
@@ -1719,6 +1748,71 @@ const Mentions: React.FC = () => {
   
   // Obter o projeto atual do contexto
   const { currentProject } = useProject();
+  
+  // Função para abrir o modal de instruções especiais
+  const handleSpecialInstructionsClick = () => {
+    // Buscar as instruções atuais do projeto se existirem
+    if (currentProject?.id) {
+      fetchProjectInstructions(currentProject.id);
+    }
+    setInstructionsModalOpen(true);
+  };
+  
+  // Função para buscar as instruções do projeto
+  const fetchProjectInstructions = async (projectId: string | number) => {
+    try {
+      const { data, error } = await supabase
+        .from('Projeto')
+        .select('prompt_user')
+        .eq('id', projectId)
+        .single();
+        
+      if (error) {
+        console.error('Erro ao buscar instruções do projeto:', error);
+        return;
+      }
+      
+      setInstructionsText(data?.prompt_user || '');
+    } catch (err) {
+      console.error('Erro ao processar instruções do projeto:', err);
+    }
+  };
+  
+  // Função para salvar as instruções do projeto
+  const saveProjectInstructions = async () => {
+    if (!currentProject?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('Projeto')
+        .update({ prompt_user: instructionsText })
+        .eq('id', currentProject.id);
+        
+      if (error) {
+        console.error('Erro ao salvar instruções do projeto:', error);
+        setToast({
+          visible: true,
+          message: 'Erro ao salvar instruções',
+          success: false
+        });
+        return;
+      }
+      
+      setInstructionsModalOpen(false);
+      setToast({
+        visible: true,
+        message: 'Instruções salvas com sucesso',
+        success: true
+      });
+    } catch (err) {
+      console.error('Erro ao processar salvamento de instruções:', err);
+      setToast({
+        visible: true,
+        message: 'Erro ao salvar instruções',
+        success: false
+      });
+    }
+  };
 
   // Estado para armazenar dados (removido estado do gráfico)
   
@@ -2019,17 +2113,23 @@ const Mentions: React.FC = () => {
           Mentions
         </PageTitle>
         
-        <TabContainer>
-          <Tab active={activeTab === 'scheduled'} onClick={() => setActiveTab('scheduled')}>
-            Scheduled
-          </Tab>
-          <Tab active={activeTab === 'posted'} onClick={() => setActiveTab('posted')}>
-            Posted
-          </Tab>
-          <Tab active={activeTab === 'favorites'} onClick={() => setActiveTab('favorites')}>
-            Favorites
-          </Tab>
-        </TabContainer>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <TabContainer>
+            <Tab active={activeTab === 'scheduled'} onClick={() => setActiveTab('scheduled')}>
+              Scheduled
+            </Tab>
+            <Tab active={activeTab === 'posted'} onClick={() => setActiveTab('posted')}>
+              Posted
+            </Tab>
+            <Tab active={activeTab === 'favorites'} onClick={() => setActiveTab('favorites')}>
+              Favorites
+            </Tab>
+          </TabContainer>
+          <SpecialInstructionsButton onClick={handleSpecialInstructionsClick}>
+            <IconComponent icon={HiPencil} />
+            Special Instructions
+          </SpecialInstructionsButton>
+        </div>
         
         <MentionsContainer padding="0" elevation="medium">
           <MentionsTable>
@@ -2293,6 +2393,50 @@ const Mentions: React.FC = () => {
       />
       
       {/* Popup de detalhes de menção */}
+      {/* Modal de Instruções Especiais */}
+      {instructionsModalOpen && (
+        <DetailPopupOverlay onClick={() => setInstructionsModalOpen(false)}>
+          <DetailPopupContent onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <DetailPopupHeader>
+              <DetailPopupTitle>
+                <IconComponent icon={HiPencil} />
+                Guidelines for Liftlio
+              </DetailPopupTitle>
+              <DetailPopupCloseButton onClick={() => setInstructionsModalOpen(false)}>×</DetailPopupCloseButton>
+            </DetailPopupHeader>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <h3>Recommend what Liftlio should NOT do in responses</h3>
+              <p style={{ color: COLORS.TEXT.SECONDARY }}>
+                Tell Liftlio what to avoid when generating responses to comments. This helps maintain 
+                compliance and optimize your audience engagement.
+              </p>
+            </div>
+            
+            <textarea
+              value={instructionsText}
+              onChange={(e) => setInstructionsText(e.target.value)}
+              placeholder="Example: Don't use emojis in responses. Avoid making specific claims about results or earnings. Don't mention competitor names. Don't include promotional language in initial responses."
+              style={{
+                width: '100%',
+                height: '200px',
+                padding: '12px',
+                borderRadius: '8px',
+                border: `1px solid ${COLORS.BORDER.DEFAULT}`,
+                resize: 'vertical',
+                fontSize: '16px',
+                marginBottom: '20px'
+              }}
+            />
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <Button type="button" onClick={() => setInstructionsModalOpen(false)}>Cancel</Button>
+              <Button type="button" variant="primary" onClick={saveProjectInstructions}>Save Instructions</Button>
+            </div>
+          </DetailPopupContent>
+        </DetailPopupOverlay>
+      )}
+      
       {selectedMention && (
         <DetailPopupOverlay onClick={() => setSelectedMention(null)}>
           <DetailPopupContent onClick={(e) => e.stopPropagation()}>
