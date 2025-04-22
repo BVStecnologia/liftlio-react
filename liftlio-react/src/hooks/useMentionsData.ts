@@ -184,14 +184,12 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         
         // Apply specific filters for different tabs
         if (activeTab === 'scheduled') {
-          console.log('Applying filter for scheduled mentions (msg_text not empty, msg_respondido = FALSE, and status_das_postagens_ = PENDING)');
+          console.log('Applying filter for scheduled mentions (status_das_postagens = pending)');
           query = query
-            .not('msg_text', 'is', null)    // Filter for non-empty msg_text
-            .eq('msg_respondido', false)    // And msg_respondido = FALSE
-            .eq('status_das_postagens_', 'PENDING');  // And status_das_postagens_ = PENDING
+            .eq('status_das_postagens', 'pending');  // Only filter by status_das_postagens = pending
         } else if (activeTab === 'posted') {
-          console.log('Applying filter for posted mentions (msg_respondido = TRUE)');
-          query = query.eq('msg_respondido', true); // Filter for messages marked as responded
+          console.log('Applying filter for posted mentions (status_das_postagens = posted)');
+          query = query.eq('status_das_postagens', 'posted'); // Filter by status_das_postagens = posted
         } else if (activeTab === 'favorites' as TabType) {
           console.log('Applying filter for favorite mentions (msg_template=TRUE)');
           
@@ -281,11 +279,9 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         // Apply the same filters in the count query
         if (activeTab === 'scheduled') {
           countQuery = countQuery
-            .not('msg_text', 'is', null)    // Filter for non-empty msg_text
-            .eq('msg_respondido', false)    // And msg_respondido = FALSE
-            .eq('status_das_postagens_', 'PENDING');  // And status_das_postagens_ = PENDING
+            .eq('status_das_postagens', 'pending');  // Only filter by status_das_postagens = pending
         } else if (activeTab === 'posted') {
-          countQuery = countQuery.eq('msg_respondido', true);
+          countQuery = countQuery.eq('status_das_postagens', 'posted');
         }
         
         // Se quisermos buscar somente as menções deste projeto específico, podemos adicionar isso aqui
