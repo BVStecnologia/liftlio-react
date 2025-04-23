@@ -174,12 +174,11 @@ export const useDashboardData = () => {
             .order('total_leads', { ascending: false })
             .limit(7),
             
-          supabase
-            .from('performance_semanal')
-            .select('*')
-            .eq('project_id', projectId)
-            .order('date', { ascending: true })
-            .limit(30),
+          // Chamada RPC para dados de performance semanal
+          callRPC('get_weekly_performance', {
+            days_back: 30, // Aumentado para 30 dias para mostrar mais dados históricos
+            project_id_param: projectId
+          }),
             
           supabase
             .from('grafico_performance')
@@ -220,19 +219,63 @@ export const useDashboardData = () => {
           today_mentions: 0
         };
         const topChannels = channelsResponse.data || [];
-        const weeklyPerformance: WeeklyPerformanceData[] = performanceResponse.data || [];
         const performanceAnalysis: PerformanceAnalysisData[] = performanceAnalysisResponse.data || [];
         console.log('Performance Analysis Data:', performanceAnalysis);
 
-        // Processar os dados semanais sempre independente do filtro de tempo
-        const processedWeeklyData = weeklyPerformance.map((data) => ({
-          name: data.formatted_date || new Date(data.date).toLocaleDateString('default', { month: 'short', day: 'numeric' }),
-          videos: data.videos || 0,
-          engagement: data.engagements || 0,
-          leads: data.leads || 0
-        })).slice(-4); // Mostrar apenas as últimas 4 semanas
+        // Definir interface para a resposta da RPC
+        interface WeeklyPerformanceRPC {
+          date: string;
+          Videos: number;
+          Engagement: number;
+          Mentions: number;
+        }
         
-        setWeeklyPerformanceData(processedWeeklyData);
+        // Processar os dados do RPC get_weekly_performance
+        let processedWeeklyData = [];
+        console.log('Resposta da RPC get_weekly_performance:', performanceResponse);
+        
+        // Verificar diferentes formatos possíveis da resposta
+        if (performanceResponse && Array.isArray(performanceResponse) && performanceResponse.length > 0) {
+          // Se a resposta for um array [{ get_weekly_performance: [...] }]
+          if (performanceResponse[0] && performanceResponse[0].get_weekly_performance) {
+            processedWeeklyData = performanceResponse[0].get_weekly_performance.map((data: WeeklyPerformanceRPC) => ({
+              name: data.date,
+              videos: data.Videos || 0,
+              engagement: data.Engagement || 0,
+              leads: data.Mentions || 0
+            }));
+          } 
+          // Se a resposta for diretamente um array de dados
+          else if (Array.isArray(performanceResponse)) {
+            processedWeeklyData = performanceResponse.map((data: WeeklyPerformanceRPC) => ({
+              name: data.date,
+              videos: data.Videos || 0,
+              engagement: data.Engagement || 0,
+              leads: data.Mentions || 0
+            }));
+          }
+        } else if (performanceResponse && typeof performanceResponse === 'object') {
+          // Se a resposta for { get_weekly_performance: [...] }
+          if (performanceResponse.get_weekly_performance && Array.isArray(performanceResponse.get_weekly_performance)) {
+            processedWeeklyData = performanceResponse.get_weekly_performance.map((data: WeeklyPerformanceRPC) => ({
+              name: data.date,
+              videos: data.Videos || 0,
+              engagement: data.Engagement || 0,
+              leads: data.Mentions || 0
+            }));
+          }
+        } else {
+          // Fallback para dados vazios caso a RPC não retorne o formato esperado
+          console.log('Dados de performance semanal não disponíveis no formato esperado:', performanceResponse);
+          processedWeeklyData = [];
+        }
+        
+        console.log('Dados processados para o gráfico semanal:', processedWeeklyData);
+        
+        // Pegar apenas as últimas 7 entradas para manter o gráfico limpo
+        const recentData = processedWeeklyData.slice(-7);
+        console.log('Dados recentes para o gráfico (últimos 7 dias):', recentData);
+        setWeeklyPerformanceData(recentData);
         
         // =============================================
         // 1. Processar CARDS DE ESTATÍSTICAS
