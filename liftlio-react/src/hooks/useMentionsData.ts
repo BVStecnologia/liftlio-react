@@ -179,7 +179,6 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
           .from('mentions_overview')
           .select('*') // Select all fields
           .eq('scanner_project_id', projectId)
-          .order('comment_published_at', { ascending: false }) // Order by most recent
           .range((currentPage - 1) * itemsPerPage, (currentPage * itemsPerPage) - 1); // Apply pagination
         
         // Apply specific filters for different tabs
@@ -189,7 +188,9 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
             .eq('status_das_postagens', 'pending');  // Only filter by status_das_postagens = pending
         } else if (activeTab === 'posted') {
           console.log('Applying filter for posted mentions (status_das_postagens = posted)');
-          query = query.eq('status_das_postagens', 'posted'); // Filter by status_das_postagens = posted
+          query = query.eq('status_das_postagens', 'posted');
+          // Aplicar ordenação por data da última postagem após a consulta básica
+          query = query.order('data_da_ultima_postagem', { ascending: false }); // Ordenar por data da última postagem
         } else if (activeTab === 'favorites' as TabType) {
           console.log('Applying filter for favorite mentions (msg_template=TRUE)');
           
