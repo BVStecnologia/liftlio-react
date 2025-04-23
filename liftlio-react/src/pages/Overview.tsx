@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { COLORS, withOpacity } from '../styles/colors';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, PieChart, Pie, Cell, BarChart, Bar, Label } from 'recharts';
 import * as FaIcons from 'react-icons/fa';
 import { IconType } from 'react-icons';
 import Card from '../components/Card';
@@ -13,6 +13,7 @@ import { useProject } from '../context/ProjectContext';
 import EmptyState from '../components/EmptyState';
 import ProjectModal from '../components/ProjectModal';
 import { supabase } from '../lib/supabaseClient';
+import { PieLabelRenderProps } from 'recharts';
 
 // Efeito de onda para os ícones
 const waveEffect = keyframes`
@@ -2903,26 +2904,66 @@ const Overview: React.FC = () => {
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
-                  outerRadius={90}
+                  outerRadius={85}
                   paddingAngle={5}
                   dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}`}
-                  labelLine={false}
+                  nameKey="name"
+                  label={(props: PieLabelRenderProps) => {
+                    const RADIAN = Math.PI / 180;
+                    const { cx, cy, midAngle, outerRadius, name, value } = props;
+                    // Calculando a posição do rótulo fora do gráfico
+                    const sin = Math.sin(-RADIAN * midAngle);
+                    const cos = Math.cos(-RADIAN * midAngle);
+                    
+                    // Aumentando a distância em 30px além do raio externo
+                    const labelRadius = Number(outerRadius) + 30;
+                    const x = Number(cx) + labelRadius * cos;
+                    const y = Number(cy) + labelRadius * sin;
+                    
+                    // Truncar nomes longos
+                    const displayName = String(name).length > 15 ? `${String(name).substring(0, 15)}...` : name;
+                    
+                    // Ajustar o ancoramento do texto com base na posição
+                    const textAnchor = cos >= 0 ? 'start' : 'end';
+                    
+                    return (
+                      <text 
+                        x={x} 
+                        y={y} 
+                        fill="#333333" 
+                        textAnchor={textAnchor}
+                        dominantBaseline="central"
+                        fontSize={12}
+                        fontWeight={500}
+                      >
+                        {`${displayName}: ${value}`}
+                      </text>
+                    );
+                  }}
+                  labelLine={(props: any) => {
+                    const RADIAN = Math.PI / 180;
+                    const { cx, cy, midAngle, outerRadius } = props;
+                    
+                    const sin = Math.sin(-RADIAN * midAngle);
+                    const cos = Math.cos(-RADIAN * midAngle);
+                    
+                    // Ponto inicial na borda do gráfico
+                    const x1 = Number(cx) + Number(outerRadius) * cos;
+                    const y1 = Number(cy) + Number(outerRadius) * sin;
+                    
+                    // Ponto final próximo à label (20px antes)
+                    const labelRadius = Number(outerRadius) + 25;
+                    const x2 = Number(cx) + labelRadius * cos;
+                    const y2 = Number(cy) + labelRadius * sin;
+                    
+                    return <path d={`M${x1},${y1}L${x2},${y2}`} stroke="#666" strokeDasharray="3,3" />;
+                  }}
                   isAnimationActive={true}
                 >
                   {trafficSources.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
-                      fill={entry.color || (
-                        index === 0 ? '#1976D2' : // Azul escuro
-                        index === 1 ? '#FF5722' : // Laranja escuro
-                        index === 2 ? '#2E7D32' : // Verde escuro
-                        index === 3 ? '#7B1FA2' : // Roxo escuro
-                        index === 4 ? '#C2185B' : // Rosa escuro
-                        index === 5 ? '#0288D1' : // Azul escuro
-                        index === 6 ? '#FFA000' : // Amarelo escuro
-                        '#455A64' // Cinza escuro
-                      )}
+                      fill={entry.color}
                     />
                   ))}
                 </Pie>

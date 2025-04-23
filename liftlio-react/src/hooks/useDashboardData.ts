@@ -253,33 +253,129 @@ export const useDashboardData = () => {
         // =============================================
         
         // Cores vivas e distintas para diferentes plataformas
+        // Mapear todas as variações possíveis de nomes de canais para cores consistentes
         const channelColors: Record<string, string> = {
-          'YouTube': '#FF0000',      // Vermelho
-          'Google': '#4285F4',       // Azul Google
-          'Facebook': '#3b5998',     // Azul Facebook
-          'Instagram': '#C13584',    // Roxo Instagram 
-          'TikTok': '#000000',       // Preto
-          'Twitter': '#1DA1F2',      // Azul Twitter
-          'LinkedIn': '#0077B5',     // Azul LinkedIn
-          'Pinterest': '#E60023',    // Vermelho Pinterest
-          'Snapchat': '#FFFC00',     // Amarelo Snapchat
-          'Reddit': '#FF4500',       // Laranja Reddit
-          'WhatsApp': '#25D366',     // Verde WhatsApp
-          'Telegram': '#0088CC'      // Azul Telegram
+          // Variações de YouTube
+          'YouTube': '#CC0000',
+          'youtube': '#CC0000',
+          'Youtube': '#CC0000',
+          'YOUTUBE': '#CC0000',
+          
+          // Variações de Google
+          'Google': '#1A73E8',
+          'google': '#1A73E8',
+          'GOOGLE': '#1A73E8',
+          
+          // Variações de Facebook
+          'Facebook': '#1F4287',
+          'facebook': '#1F4287',
+          'FACEBOOK': '#1F4287',
+          
+          // Variações de Instagram
+          'Instagram': '#8E2A92',
+          'instagram': '#8E2A92',
+          'INSTAGRAM': '#8E2A92',
+          
+          // Variações de TikTok
+          'TikTok': '#222222',
+          'tiktok': '#222222',
+          'Tiktok': '#222222',
+          'TIKTOK': '#222222',
+          
+          // Variações de Twitter
+          'Twitter': '#0C7ABF',
+          'twitter': '#0C7ABF',
+          'TWITTER': '#0C7ABF',
+          
+          // Variações de LinkedIn
+          'LinkedIn': '#0A66C2',
+          'linkedin': '#0A66C2',
+          'Linkedin': '#0A66C2',
+          'LINKEDIN': '#0A66C2',
+          
+          // Outras plataformas
+          'Pinterest': '#B31B1B',
+          'pinterest': '#B31B1B',
+          'Snapchat': '#CCCC00',
+          'snapchat': '#CCCC00',
+          'Reddit': '#D63900',
+          'reddit': '#D63900',
+          'WhatsApp': '#1BA050',
+          'whatsapp': '#1BA050',
+          'Telegram': '#0065A4',
+          'telegram': '#0065A4',
+          'Discord': '#5865F2',
+          'discord': '#5865F2',
+          'Medium': '#00897B',
+          'medium': '#00897B',
+          'Vimeo': '#165272',
+          'vimeo': '#165272',
+          'Twitch': '#6441A5',
+          'twitch': '#6441A5',
+          'Spotify': '#006450',
+          'spotify': '#006450',
+          'Slack': '#4A154B',
+          'slack': '#4A154B',
+          'Tumblr': '#36465D',
+          'tumblr': '#36465D'
         };
         
         // Usar dados da nova view channel_metrics_dashboard - limitando a 7 canais
         // e organizando por total_leads (Mentions) em vez de weighted_score
-        const trafficSourceData: TrafficSource[] = topChannels.map((channel: any) => ({
-          name: channel.nome_canal,
-          value: channel.total_leads || 0,
-          color: channelColors[channel.nome_canal] || '#555555', // Usar cinza escuro para canais sem cor predefinida
-          engagements: channel.comentarios_reais || 0,
-          leads: channel.total_leads || 0,
-          leadPercentage: channel.total_leads > 0 && channel.comentarios_reais > 0 
-            ? (channel.total_leads / channel.comentarios_reais) * 100 
-            : 0
-        }));
+        // Cores vibrantes de fallback para canais não mapeados
+        const fallbackColors = [
+          '#1976D2', // Azul escuro
+          '#D32F2F', // Vermelho escuro
+          '#2E7D32', // Verde escuro
+          '#7B1FA2', // Roxo escuro
+          '#C2185B', // Rosa escuro
+          '#0288D1', // Azul claro
+          '#F57F17'  // Amarelo escuro
+        ];
+        
+        const trafficSourceData: TrafficSource[] = topChannels.map((channel: any, index: number) => {
+          const channelName = channel.nome_canal || '';
+          
+          // Determinar a cor para o canal - tenta várias combinações
+          let channelColor = null;
+          
+          // 1. Tenta encontrar a cor exata para o nome do canal
+          if (channelColors[channelName]) {
+            channelColor = channelColors[channelName];
+          } 
+          // 2. Tenta encontrar a plataforma pelo texto parcial
+          else {
+            // Lista de plataformas para verificar
+            const platforms = ['YouTube', 'Facebook', 'Instagram', 'TikTok', 'Twitter', 
+                             'LinkedIn', 'Pinterest', 'Snapchat', 'Reddit', 'WhatsApp', 
+                             'Telegram', 'Discord', 'Medium', 'Vimeo', 'Twitch', 'Spotify'];
+            
+            for (const platform of platforms) {
+              if (channelName.toLowerCase().includes(platform.toLowerCase())) {
+                channelColor = channelColors[platform];
+                break;
+              }
+            }
+          }
+          
+          // 3. Se ainda não encontrou, usa uma cor de fallback com base no índice
+          if (!channelColor) {
+            channelColor = fallbackColors[index % fallbackColors.length];
+          }
+          
+          console.log(`Canal: ${channelName}, Cor atribuída: ${channelColor}`);
+          
+          return {
+            name: channelName,
+            value: channel.total_leads || 0,
+            color: channelColor,
+            engagements: channel.comentarios_reais || 0,
+            leads: channel.total_leads || 0,
+            leadPercentage: channel.total_leads > 0 && channel.comentarios_reais > 0 
+              ? (channel.total_leads / channel.comentarios_reais) * 100 
+              : 0
+          };
+        });
         
         setTrafficSources(trafficSourceData);
         
