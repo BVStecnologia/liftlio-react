@@ -811,18 +811,6 @@ const YoutubeMonitoring: React.FC = () => {
                 </StatIconContainer>
               </StatCardHeader>
               <StatValue>{metricsData ? (metricsData.total_views >= 1000000 ? `${(metricsData.total_views / 1000000).toFixed(1)}M` : `${(metricsData.total_views / 1000).toFixed(0)}K`) : '0'}</StatValue>
-              <StatChange positive={true}>
-                <IconComponent icon={FaIcons.FaArrowUp} />
-                18.5% from last month
-              </StatChange>
-              <StatLineSpacer />
-              <MinimalTrendLine>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateTrendData(metricsData?.total_views || 3.2, 0.05).map((value, index) => ({ name: index, value }))}>
-                    <Line type="monotone" dataKey="value" stroke="#5856D6" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </MinimalTrendLine>
             </StatCard>
             
             <StatCard>
@@ -833,18 +821,6 @@ const YoutubeMonitoring: React.FC = () => {
                 </StatIconContainer>
               </StatCardHeader>
               <StatValue>{metricsData ? (metricsData.total_likes >= 1000000 ? `${(metricsData.total_likes / 1000000).toFixed(1)}M` : `${(metricsData.total_likes / 1000).toFixed(0)}K`) : '0'}</StatValue>
-              <StatChange positive={true}>
-                <IconComponent icon={FaIcons.FaArrowUp} />
-                22.1% from last month
-              </StatChange>
-              <StatLineSpacer />
-              <MinimalTrendLine>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateTrendData(metricsData?.total_likes || 284, 0.07).map((value, index) => ({ name: index, value }))}>
-                    <Line type="monotone" dataKey="value" stroke="#FF9500" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </MinimalTrendLine>
             </StatCard>
             
             <StatCard>
@@ -855,18 +831,6 @@ const YoutubeMonitoring: React.FC = () => {
                 </StatIconContainer>
               </StatCardHeader>
               <StatValue>{metricsData?.posts.toLocaleString() || '0'}</StatValue>
-              <StatChange positive={true}>
-                <IconComponent icon={FaIcons.FaArrowUp} />
-                15.4% from last month
-              </StatChange>
-              <StatLineSpacer />
-              <MinimalTrendLine>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateTrendData(metricsData?.posts || 1845, 0.1).map((value, index) => ({ name: index, value }))}>
-                    <Line type="monotone" dataKey="value" stroke="#34C759" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </MinimalTrendLine>
             </StatCard>
             
             <StatCard>
@@ -877,18 +841,6 @@ const YoutubeMonitoring: React.FC = () => {
                 </StatIconContainer>
               </StatCardHeader>
               <StatValue>{metricsData?.media ? `${parseFloat(metricsData.media).toFixed(1)}%` : '0%'}</StatValue>
-              <StatChange positive={false}>
-                <IconComponent icon={FaIcons.FaArrowDown} />
-                0.8% from last month
-              </StatChange>
-              <StatLineSpacer />
-              <MinimalTrendLine>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateTrendData(metricsData?.media ? parseFloat(metricsData.media) : 7.6, 0.06).map((value, index) => ({ name: index, value }))}>
-                    <Line type="monotone" dataKey="value" stroke="#FF2D55" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </MinimalTrendLine>
             </StatCard>
           </StatsGrid>
           
