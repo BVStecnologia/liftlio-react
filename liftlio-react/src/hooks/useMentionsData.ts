@@ -185,7 +185,8 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         if (activeTab === 'scheduled') {
           console.log('Applying filter for scheduled mentions (status_das_postagens = pending)');
           query = query
-            .eq('status_das_postagens', 'pending');  // Only filter by status_das_postagens = pending
+            .eq('status_das_postagens', 'pending')
+            .order('scheduled_post_date_timestamp', { ascending: true });  // Ordenar pela data agendada, mais próximas primeiro
         } else if (activeTab === 'posted') {
           console.log('Applying filter for posted mentions (status_das_postagens = posted)');
           query = query.eq('status_das_postagens', 'posted');
