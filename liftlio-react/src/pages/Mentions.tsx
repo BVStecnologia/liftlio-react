@@ -1713,7 +1713,44 @@ const EditResponseModal: React.FC<EditModalProps> = ({ isOpen, onClose, mention,
 };
 
 const Mentions: React.FC = () => {
+  // Obter o projeto atual do contexto (será usado em vários lugares no componente)
+  const { currentProject } = useProject();
+  
   const [activeTab, setActiveTab] = useState<TabType>('scheduled');
+  
+  // Hook para verificar se a aba 'scheduled' está vazia e mudar para 'posted'
+  useEffect(() => {
+    if (activeTab === 'scheduled') {
+      // Buscar dados da aba 'scheduled' para verificar se está vazia
+      const checkScheduledTab = async () => {
+        if (!currentProject?.id) return;
+        
+        try {
+          const { data, error } = await supabase
+            .from('mentions_overview')
+            .select('comment_id')
+            .eq('scanner_project_id', currentProject.id)
+            .eq('status_das_postagens', 'pending')
+            .limit(1);
+            
+          if (error) {
+            console.error('Erro ao verificar aba scheduled:', error);
+            return;
+          }
+          
+          // Se a aba 'scheduled' estiver vazia, mudar para 'posted'
+          if (!data || data.length === 0) {
+            console.log('Aba scheduled vazia, mudando para posted');
+            setActiveTab('posted');
+          }
+        } catch (err) {
+          console.error('Erro ao verificar aba scheduled:', err);
+        }
+      };
+      
+      checkScheduledTab();
+    }
+  }, [currentProject]);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentMention, setCurrentMention] = useState<MentionData | null>(null);
   // Estado timeframe removido, pois o seletor de timeframe foi removido
@@ -1746,8 +1783,7 @@ const Mentions: React.FC = () => {
     mentionStats
   } = useMentionsData('all');
   
-  // Obter o projeto atual do contexto
-  const { currentProject } = useProject();
+  // Usamos o currentProject que foi declarado no início do componente
   
   // Função para abrir o modal de instruções especiais
   const handleSpecialInstructionsClick = () => {
