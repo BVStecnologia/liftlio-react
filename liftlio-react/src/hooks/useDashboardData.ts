@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import React from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, callRPC } from '../lib/supabaseClient';
 import { useProject } from '../context/ProjectContext';
 
 // Define types for the data structures
@@ -142,13 +142,15 @@ export const useDashboardData = () => {
       
       try {
         // Buscar dados das seis views em paralelo (removido comment_overview)
+        // Adicionando a nova chamada RPC get_project_dashboard_stats
         const [
           keywordsResponse, 
           videosResponse, 
           metricsResponse, 
           channelsResponse, 
           performanceResponse,
-          performanceAnalysisResponse
+          performanceAnalysisResponse,
+          dashboardStatsResponse
         ] = await Promise.all([
           supabase
             .from('keyword_overview')
@@ -184,7 +186,12 @@ export const useDashboardData = () => {
             .select('*')
             .eq('project_id', projectId)
             .order('date', { ascending: true })
-            .limit(100)
+            .limit(100),
+            
+          // Nova chamada RPC para obter estatísticas de dashboard usando a função helper
+          callRPC('get_project_dashboard_stats', {
+            project_id_param: projectId
+          })
         ]);
         
         if (keywordsResponse.error) throw keywordsResponse.error;
@@ -193,6 +200,7 @@ export const useDashboardData = () => {
         if (channelsResponse.error) throw channelsResponse.error;
         if (performanceResponse.error) throw performanceResponse.error;
         if (performanceAnalysisResponse.error) throw performanceAnalysisResponse.error;
+        // Não verificamos erro para a resposta do callRPC pois o formato é diferente
         
         const keywords = keywordsResponse.data || [];
         const videos = videosResponse.data || [];
@@ -201,6 +209,15 @@ export const useDashboardData = () => {
           total_comments: 0,
           total_engagements: 0,
           total_leads: 0
+        };
+        
+        // Obter os novos dados do dashboard da função RPC
+        // A resposta da callRPC é diretamente o objeto JSON, sem a propriedade 'data'
+        const dashboardStats = dashboardStatsResponse || {
+          channels_count: 0,
+          videos_count: 0,
+          total_mentions: 0,
+          today_mentions: 0
         };
         const topChannels = channelsResponse.data || [];
         const weeklyPerformance: WeeklyPerformanceData[] = performanceResponse.data || [];
@@ -221,29 +238,32 @@ export const useDashboardData = () => {
         // 1. Processar CARDS DE ESTATÍSTICAS
         // =============================================
         
-        // Usar dados da nova view dashboard_metrics
-        const totalVideos = metrics.total_videos;
-        const totalComments = metrics.total_comments;
-        const totalEngagements = metrics.total_engagements;
-        const totalLeads = metrics.total_leads;
+        // Usar dados da chamada RPC get_project_dashboard_stats
+        // Garantindo que os valores são números, mesmo que a resposta contenha strings
+        const totalChannels = Number(dashboardStats.channels_count) || 0;
+        const totalVideos = Number(dashboardStats.videos_count) || 0;
+        const totalMentions = Number(dashboardStats.total_mentions) || 0;
+        const todayMentions = Number(dashboardStats.today_mentions) || 0;
+        
+        console.log('Dashboard Stats from RPC:', dashboardStats);
         
         // Calcular tendências (simulação para este exemplo)
         // Em produção, você compararia com dados históricos reais
         setStatsData({
           reach: { 
-            value: totalVideos.toString(), 
+            value: totalChannels.toString(), 
             trend: null
           },
           activities: { 
-            value: totalComments.toString(), 
+            value: totalVideos.toString(), 
             trend: null
           },
           engagements: { 
-            value: totalEngagements.toString(), 
+            value: totalMentions.toString(), 
             trend: null
           },
           leads: { 
-            value: totalLeads.toString(), 
+            value: todayMentions.toString(), 
             trend: null
           }
         });
