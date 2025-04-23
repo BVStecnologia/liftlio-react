@@ -2721,38 +2721,38 @@ const Overview: React.FC = () => {
   const statsCards = [
     {
       id: 1,
-      title: 'Posts',
+      title: 'Channels',
       value: statsData.reach.value,
       icon: 'FaFileAlt',
-      color: COLORS.INFO, // Azul padrão do sistema para Posts/Videos
-      description: 'Videos',
+      color: COLORS.INFO, // Azul padrão do sistema para canais
+      description: 'Active channels',
       trend: statsData.reach.trend
     },
     {
       id: 2,
-      title: 'Comments',
+      title: 'Videos',
       value: statsData.activities.value,
       icon: 'FaComments',
-      color: '#9C27B0', // Roxo para Comentários (trocando o azul naval)
-      description: 'Comments',
+      color: '#9C27B0', // Roxo para vídeos
+      description: 'Total videos',
       trend: statsData.activities.trend
     },
     {
       id: 3,
-      title: 'Total Engagements',
+      title: 'Total Mentions',
       value: statsData.engagements.value,
       icon: 'FaStar',
-      color: COLORS.WARNING, // Laranja padrão para Engajamentos
-      description: 'Total engagements',
+      color: COLORS.WARNING, // Laranja padrão para menções totais
+      description: 'All time mentions',
       trend: statsData.engagements.trend
     },
     {
       id: 4,
-      title: 'Mentions',
+      title: 'Today\'s Mentions',
       value: statsData.leads.value,
       icon: 'FaUserCheck',
-      color: COLORS.SUCCESS, // Verde padrão do sistema para Mentions
-      description: 'Lead mentions',
+      color: COLORS.SUCCESS, // Verde padrão do sistema para menções de hoje
+      description: 'Mentions today',
       trend: statsData.leads.trend
     }
   ];
@@ -2869,10 +2869,10 @@ const Overview: React.FC = () => {
                     opacity: activeLeds[index as keyof typeof activeLeds] ? 1 : 0.9
                   }}
                 >
-                  {stat.title === 'Total Engagements' && <IconComponent icon={FaIcons.FaStar} />}
-                  {stat.title === 'Mentions' && <IconComponent icon={FaIcons.FaUserCheck} />}
-                  {stat.title === 'Comments' && <IconComponent icon={FaIcons.FaComments} />}
-                  {stat.title === 'Posts' && <IconComponent icon={FaIcons.FaFileAlt} />}
+                  {stat.title === 'Total Mentions' && <IconComponent icon={FaIcons.FaStar} />}
+                  {stat.title === 'Today\'s Mentions' && <IconComponent icon={FaIcons.FaCalendarDay} />}
+                  {stat.title === 'Videos' && <IconComponent icon={FaIcons.FaVideo} />}
+                  {stat.title === 'Channels' && <IconComponent icon={FaIcons.FaBroadcastTower} />}
                 </StatIcon>
               </StatIconContainer>
             </StatDisplay>
