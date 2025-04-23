@@ -19,6 +19,18 @@
 .env.test.local
 .env.production.local
 
+# arquivos grandes
+*.dmg
+*.iso
+*.tar
+*.tar.gz
+*.zip
+*.rar
+*.7z
+*.mp4
+*.mov
+*.avi
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
