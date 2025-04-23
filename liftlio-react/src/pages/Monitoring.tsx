@@ -6,6 +6,8 @@ import Card from '../components/Card';
 import ButtonUI from '../components/ui/Button';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
+import { useProject } from '../context/ProjectContext';
+import { supabase, callRPC } from '../lib/supabaseClient';
 
 // Shared styled components
 const PageContainer = styled.div`
@@ -727,6 +729,32 @@ const YoutubeMonitoring: React.FC = () => {
   const [timeframe, setTimeframe] = useState('month');
   const [channelFilter, setChannelFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [metricsData, setMetricsData] = useState<{ 
+    total_views: number, 
+    total_likes: number, 
+    media: string, 
+    posts: number 
+  } | null>(null);
+  const { currentProject } = useProject();
+  
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      if (!currentProject?.id) return;
+      
+      const id_projeto = currentProject.id;
+      try {
+        const data = await callRPC('get_project_metrics', { id_projeto });
+        
+        if (data && data.length > 0) {
+          setMetricsData(data[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching metrics:', error);
+      }
+    };
+    
+    fetchMetrics();
+  }, [currentProject]);
   
   // Generate random trend data for stats
   const generateTrendData = (baseline: number, variance: number = 0.1, points: number = 10) => {
@@ -782,7 +810,7 @@ const YoutubeMonitoring: React.FC = () => {
                   <IconComponent icon={FaIcons.FaEye} />
                 </StatIconContainer>
               </StatCardHeader>
-              <StatValue>3.2M</StatValue>
+              <StatValue>{metricsData ? (metricsData.total_views >= 1000000 ? `${(metricsData.total_views / 1000000).toFixed(1)}M` : `${(metricsData.total_views / 1000).toFixed(0)}K`) : '0'}</StatValue>
               <StatChange positive={true}>
                 <IconComponent icon={FaIcons.FaArrowUp} />
                 18.5% from last month
@@ -790,7 +818,7 @@ const YoutubeMonitoring: React.FC = () => {
               <StatLineSpacer />
               <MinimalTrendLine>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateTrendData(3.2, 0.05).map((value, index) => ({ name: index, value }))}>
+                  <LineChart data={generateTrendData(metricsData?.total_views || 3.2, 0.05).map((value, index) => ({ name: index, value }))}>
                     <Line type="monotone" dataKey="value" stroke="#5856D6" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -804,7 +832,7 @@ const YoutubeMonitoring: React.FC = () => {
                   <IconComponent icon={FaIcons.FaThumbsUp} />
                 </StatIconContainer>
               </StatCardHeader>
-              <StatValue>284K</StatValue>
+              <StatValue>{metricsData ? (metricsData.total_likes >= 1000000 ? `${(metricsData.total_likes / 1000000).toFixed(1)}M` : `${(metricsData.total_likes / 1000).toFixed(0)}K`) : '0'}</StatValue>
               <StatChange positive={true}>
                 <IconComponent icon={FaIcons.FaArrowUp} />
                 22.1% from last month
@@ -812,7 +840,7 @@ const YoutubeMonitoring: React.FC = () => {
               <StatLineSpacer />
               <MinimalTrendLine>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateTrendData(284, 0.07).map((value, index) => ({ name: index, value }))}>
+                  <LineChart data={generateTrendData(metricsData?.total_likes || 284, 0.07).map((value, index) => ({ name: index, value }))}>
                     <Line type="monotone" dataKey="value" stroke="#FF9500" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -826,7 +854,7 @@ const YoutubeMonitoring: React.FC = () => {
                   <IconComponent icon={FaIcons.FaComment} />
                 </StatIconContainer>
               </StatCardHeader>
-              <StatValue>1,845</StatValue>
+              <StatValue>{metricsData?.posts.toLocaleString() || '0'}</StatValue>
               <StatChange positive={true}>
                 <IconComponent icon={FaIcons.FaArrowUp} />
                 15.4% from last month
@@ -834,7 +862,7 @@ const YoutubeMonitoring: React.FC = () => {
               <StatLineSpacer />
               <MinimalTrendLine>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateTrendData(1845, 0.1).map((value, index) => ({ name: index, value }))}>
+                  <LineChart data={generateTrendData(metricsData?.posts || 1845, 0.1).map((value, index) => ({ name: index, value }))}>
                     <Line type="monotone" dataKey="value" stroke="#34C759" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -848,7 +876,7 @@ const YoutubeMonitoring: React.FC = () => {
                   <IconComponent icon={FaIcons.FaChartLine} />
                 </StatIconContainer>
               </StatCardHeader>
-              <StatValue>7.6%</StatValue>
+              <StatValue>{metricsData?.media ? `${parseFloat(metricsData.media).toFixed(1)}%` : '0%'}</StatValue>
               <StatChange positive={false}>
                 <IconComponent icon={FaIcons.FaArrowDown} />
                 0.8% from last month
@@ -856,7 +884,7 @@ const YoutubeMonitoring: React.FC = () => {
               <StatLineSpacer />
               <MinimalTrendLine>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateTrendData(7.6, 0.06).map((value, index) => ({ name: index, value }))}>
+                  <LineChart data={generateTrendData(metricsData?.media ? parseFloat(metricsData.media) : 7.6, 0.06).map((value, index) => ({ name: index, value }))}>
                     <Line type="monotone" dataKey="value" stroke="#FF2D55" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
