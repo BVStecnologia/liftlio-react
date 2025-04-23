@@ -1,10 +1,14 @@
-# Cria um arquivo de instruções Git na pasta atual
-cat > comandos_git.txt << 'EOL'
 # COMANDOS GIT PARA O PROJETO LIFTLIO
 
-# PUXAR ATUALIZAÇÕES DO GITHUB
+# PUXAR ATUALIZAÇÕES DO GITHUB (MÉTODO SEGURO)
 git fetch --all
-git reset --hard origin/main
+git pull origin main
+
+# PUXAR ATUALIZAÇÕES DO GITHUB (MÉTODO ALTERNATIVO - CUIDADO!)
+# ATENÇÃO: Este método descarta TODAS as alterações locais não enviadas!
+# Use apenas se tiver certeza que não perderá trabalho importante
+# git fetch --all
+# git reset --hard origin/main
 
 # ENVIAR ALTERAÇÕES PARA O GITHUB
 git add .
@@ -16,6 +20,19 @@ git status
 
 # VER HISTÓRICO DE ALTERAÇÕES
 git log --oneline
-EOL
 
-echo "Arquivo de comandos Git criado com sucesso: comandos_git.txt"
+# VER HISTÓRICO DE REFERÊNCIAS (ÚTIL PARA RECUPERAR COMMITS PERDIDOS)
+git reflog
+
+# CRIAR UMA NOVA BRANCH
+git checkout -b nome-da-nova-branch
+
+# MUDAR PARA OUTRA BRANCH
+git checkout nome-da-branch
+
+# LISTAR TODAS AS BRANCHES
+git branch -a
+
+# SALVAR ALTERAÇÕES TEMPORARIAMENTE SEM COMMIT
+git stash
+git stash pop  # para recuperar as alterações salvas
