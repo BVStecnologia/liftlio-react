@@ -166,9 +166,11 @@ export const useDashboardData = () => {
             .eq('project_id', projectId),
             
           supabase
-            .from('melhores_canais')
+            .from('channel_metrics_dashboard')
             .select('*')
-            .eq('project_id', projectId),
+            .eq('projeto_id', projectId)
+            .order('total_leads', { ascending: false })
+            .limit(7),
             
           supabase
             .from('performance_semanal')
@@ -200,7 +202,7 @@ export const useDashboardData = () => {
           total_engagements: 0,
           total_leads: 0
         };
-        const topChannels: ChannelData[] = channelsResponse.data || [];
+        const topChannels = channelsResponse.data || [];
         const weeklyPerformance: WeeklyPerformanceData[] = performanceResponse.data || [];
         const performanceAnalysis: PerformanceAnalysisData[] = performanceAnalysisResponse.data || [];
         console.log('Performance Analysis Data:', performanceAnalysis);
@@ -266,14 +268,17 @@ export const useDashboardData = () => {
           'Telegram': '#0088CC'      // Azul Telegram
         };
         
-        // Usar dados da view melhores_canais - já vem os 8 melhores canais
-        const trafficSourceData: TrafficSource[] = topChannels.map((channel: ChannelData) => ({
-          name: channel.channel_name,
-          value: channel.weighted_score,
-          color: channelColors[channel.channel_name] || '#555555', // Usar cinza escuro para canais sem cor predefinida
-          engagements: channel.engagement_count,
-          leads: channel.lead_count,
-          leadPercentage: channel.lead_percentage
+        // Usar dados da nova view channel_metrics_dashboard - limitando a 7 canais
+        // e organizando por total_leads (Mentions) em vez de weighted_score
+        const trafficSourceData: TrafficSource[] = topChannels.map((channel: any) => ({
+          name: channel.nome_canal,
+          value: channel.total_leads || 0,
+          color: channelColors[channel.nome_canal] || '#555555', // Usar cinza escuro para canais sem cor predefinida
+          engagements: channel.comentarios_reais || 0,
+          leads: channel.total_leads || 0,
+          leadPercentage: channel.total_leads > 0 && channel.comentarios_reais > 0 
+            ? (channel.total_leads / channel.comentarios_reais) * 100 
+            : 0
         }));
         
         setTrafficSources(trafficSourceData);

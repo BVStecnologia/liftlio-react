@@ -2747,11 +2747,11 @@ const Overview: React.FC = () => {
     },
     {
       id: 4,
-      title: 'LEDs',
+      title: 'Mentions',
       value: statsData.leads.value,
       icon: 'FaUserCheck',
-      color: COLORS.SUCCESS, // Verde padrão do sistema para LEDs
-      description: 'LED mentions',
+      color: COLORS.SUCCESS, // Verde padrão do sistema para Mentions
+      description: 'Lead mentions',
       trend: statsData.leads.trend
     }
   ];
@@ -2869,7 +2869,7 @@ const Overview: React.FC = () => {
                   }}
                 >
                   {stat.title === 'Total Engagements' && <IconComponent icon={FaIcons.FaStar} />}
-                  {stat.title === 'LEDs' && <IconComponent icon={FaIcons.FaUserCheck} />}
+                  {stat.title === 'Mentions' && <IconComponent icon={FaIcons.FaUserCheck} />}
                   {stat.title === 'Comments' && <IconComponent icon={FaIcons.FaComments} />}
                   {stat.title === 'Posts' && <IconComponent icon={FaIcons.FaFileAlt} />}
                 </StatIcon>
@@ -2892,7 +2892,7 @@ const Overview: React.FC = () => {
               color: COLORS.TEXT.SECONDARY,
               opacity: 0.9
             }}>
-              Top Channels
+              Top Mentions by Channel
             </span>
           </StatCardTitle>
           <ChartContainer style={{ height: '250px' }}>
@@ -2906,14 +2906,14 @@ const Overview: React.FC = () => {
                   outerRadius={90}
                   paddingAngle={5}
                   dataKey="value"
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, value }) => `${name}: ${value}`}
                   labelLine={false}
                   isAnimationActive={true}
                 >
                   {trafficSources.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
-                      fill={
+                      fill={entry.color || (
                         index === 0 ? '#1976D2' : // Azul escuro
                         index === 1 ? '#FF5722' : // Laranja escuro
                         index === 2 ? '#2E7D32' : // Verde escuro
@@ -2922,12 +2922,12 @@ const Overview: React.FC = () => {
                         index === 5 ? '#0288D1' : // Azul escuro
                         index === 6 ? '#FFA000' : // Amarelo escuro
                         '#455A64' // Cinza escuro
-                      }
+                      )}
                     />
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value) => [`${value}%`, 'Percentage']}
+                  formatter={(value) => [`${value}`, 'Mentions']}
                   contentStyle={{
                     background: withOpacity(COLORS.SECONDARY, 0.95),
                     border: 'none',
@@ -2963,9 +2963,9 @@ const Overview: React.FC = () => {
                   }}
                 />
                 <Legend />
-                <Bar dataKey="videos" name="Videos" fill="#2196F3" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="engagement" name="Engagement" fill="#FF7A30" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="leads" name="Leads" fill="#4CAF50" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="videos" name="Videos" fill="#1976D2" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="engagement" name="Engagement" fill="#FF5722" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="leads" name="Mentions" fill="#2E7D32" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>

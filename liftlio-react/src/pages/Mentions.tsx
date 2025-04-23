@@ -2156,7 +2156,9 @@ const Mentions: React.FC = () => {
                   <div style={{ fontSize: '48px', opacity: 0.3, marginBottom: '16px' }}>
                     <IconComponent icon={FaIcons.FaInbox} />
                   </div>
-                  <p>No {activeTab} mentions found</p>
+                  <p>{activeTab === 'scheduled' 
+                    ? "Today's scheduled posts will appear here before being published" 
+                    : `No ${activeTab} mentions found`}</p>
                 </div>
               </TableRow>
             ) : (
