@@ -476,7 +476,7 @@ const ChannelStats = styled.div`
   align-items: center;
 `;
 
-// Melhorar a visualização dos itens de estatística
+// Melhorar a visualização dos itens de estatística - Manter os tooltips, mas restaurar a estrutura original
 const ChannelStatItem = styled.div`
   display: flex;
   align-items: center;
@@ -2526,40 +2526,88 @@ const YoutubeMonitoring: React.FC = () => {
                   .map(channel => (
                     <ChannelCardWrapper 
                       key={channel.id} 
-                      onClick={() => handleChannelSelect(channel.id)}
                       active={selectedChannel === channel.id}
+                      onClick={() => handleChannelSelect(channel.id)}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setSelectedChannelForToggle(channel);
+                        setIsStatusPopupOpen(true);
+                      }}
                     >
-                      <ChannelIcon style={{ backgroundImage: channel.imagem ? `url(${channel.imagem})` : 'none' }}>
-                        {!channel.imagem && <IconComponent icon={FaIcons.FaYoutube} />}
-                      </ChannelIcon>
-                      <ChannelInfo>
-                        <div>
-                          <ChannelName>{channel.channel_name || channel.name || channel.Nome || "YouTube Channel"}</ChannelName>
-                          <ChannelStats>
-                            <ChannelStatItem data-tooltip="Total de inscritos do canal">
-                              <IconComponent icon={FaIcons.FaUserFriends} />
-                              {formatNumber(channel.subscriber_count) || formatNumber(channel.subscribers) || "0"}
-                            </ChannelStatItem>
-                            <ChannelStatItem data-tooltip="Total de visualizações do canal">
-                              <IconComponent icon={FaIcons.FaEye} />
-                              {formatNumber(channel.view_count) || formatNumber(channel.views) || "0"}
-                            </ChannelStatItem>
-                            <ChannelStatItem data-tooltip="Último vídeo publicado">
-                              <IconComponent icon={FaIcons.FaCalendarAlt} />
-                              {channel.last_video || channel.lastVideo || "N/A"}
-                            </ChannelStatItem>
-                            <ChannelStatItem data-tooltip="Taxa de engajamento do canal">
-                              <IconComponent icon={FaIcons.FaChartLine} />
-                              {channel.engagement_rate ? `${typeof channel.engagement_rate === 'number' ? channel.engagement_rate.toFixed(1) : channel.engagement_rate}%` : 
-                               channel.engagementRate ? `${channel.engagementRate}%` : "0%"}
-                            </ChannelStatItem>
-                          </ChannelStats>
-                        </div>
-                        <ActionArea>
-                          <IconComponent icon={FaIcons.FaHandPointer} />
-                          Click to view channel videos
-                        </ActionArea>
-                      </ChannelInfo>
+                      <CardHeader>
+                        <ScoreBadge>
+                          <IconComponent icon={FaIcons.FaChartLine} />
+                          Score: {channel.avg_relevance_score || '0.0'}
+                        </ScoreBadge>
+                        
+                        <ChannelBadge 
+                          status={channel.is_active === true ? 'active' : 'inactive'}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedChannelForToggle(channel);
+                            setIsStatusPopupOpen(true);
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {channel.is_active === true && <IconComponent icon={FaIcons.FaCheck} />}
+                          {channel.is_active === false && <IconComponent icon={FaIcons.FaPause} />}
+                          {channel.is_active === true ? 'Active' : 'Inactive'}
+                        </ChannelBadge>
+                      </CardHeader>
+                      
+                      <CardContent>
+                        <ChannelImageWrapper>
+                          <ChannelImage imageUrl={channel.imagem}>
+                            {!channel.imagem && <IconComponent icon={FaIcons.FaYoutube} />}
+                          </ChannelImage>
+                        </ChannelImageWrapper>
+                        
+                        <ChannelInfoContainer>
+                          <ChannelName>{channel.channel_name || channel.Nome || channel.name || 'Unnamed Channel'}</ChannelName>
+                          
+                          <ChannelStatsGrid>
+                            <StatRow>
+                              <StatIcon>
+                                <IconComponent icon={FaIcons.FaUser} />
+                              </StatIcon>
+                              <StatText data-tooltip="Total de inscritos do canal">{channel.subscriber_count}</StatText>
+                            </StatRow>
+                            
+                            <StatRow>
+                              <StatIcon>
+                                <IconComponent icon={FaIcons.FaEye} />
+                              </StatIcon>
+                              <StatText data-tooltip="Total de visualizações do canal">{channel.view_count}</StatText>
+                            </StatRow>
+                            
+                            <StatRow>
+                              <StatIcon>
+                                <IconComponent icon={FaIcons.FaClock} />
+                              </StatIcon>
+                              <StatText data-tooltip="Último vídeo publicado">{channel.last_video}</StatText>
+                            </StatRow>
+                            
+                            <StatRow>
+                              <StatIcon>
+                                <IconComponent icon={FaIcons.FaVideo} />
+                              </StatIcon>
+                              <StatText data-tooltip="Número de vídeos monitorados">{channelVideoCount[channel.id] || 0} monitored videos</StatText>
+                            </StatRow>
+                            
+                            <StatRow>
+                              <StatIcon>
+                                <IconComponent icon={FaIcons.FaCommentAlt} />
+                              </StatIcon>
+                              <StatText data-tooltip="Total de mensagens postadas">{channel.total_mensagens_postadas || 0} posts</StatText>
+                            </StatRow>
+                          </ChannelStatsGrid>
+                          
+                          <ActionArea>
+                            <IconComponent icon={FaIcons.FaHandPointer} />
+                            Click to view channel videos
+                          </ActionArea>
+                        </ChannelInfoContainer>
+                      </CardContent>
                     </ChannelCardWrapper>
                   ))
               )}
