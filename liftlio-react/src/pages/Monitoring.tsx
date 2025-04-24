@@ -1097,7 +1097,19 @@ const YoutubeMonitoring: React.FC = () => {
       
       if (data && Array.isArray(data)) {
         console.log('Channel videos data:', data);
-        setChannelVideos(data);
+        
+        // Adicionar URLs de thumbnail aos vídeos se não estiverem presentes
+        const enhancedVideos = data.map(video => {
+          if (!video.thumbnail_url && video.video_id) {
+            return {
+              ...video,
+              thumbnail_url: getYouTubeThumbnailUrl(video.video_id)
+            };
+          }
+          return video;
+        });
+        
+        setChannelVideos(enhancedVideos);
       } else {
         console.error('Invalid data format received for channel videos');
         setChannelVideos([]);
@@ -1266,6 +1278,12 @@ const YoutubeMonitoring: React.FC = () => {
     }
     
     return numValue.toString();
+  };
+  
+  // Função para gerar URL de thumbnail do YouTube
+  const getYouTubeThumbnailUrl = (videoId: string) => {
+    // Tentar a versão de alta qualidade primeiro
+    return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
   };
   
   return (
