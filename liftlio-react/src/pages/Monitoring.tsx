@@ -1100,10 +1100,10 @@ const YoutubeMonitoring: React.FC = () => {
         
         // Adicionar URLs de thumbnail aos vídeos se não estiverem presentes
         const enhancedVideos = data.map(video => {
-          if (!video.thumbnail_url && video.video_id) {
+          if (video.video_id) {
             return {
               ...video,
-              thumbnail_url: getYouTubeThumbnailUrl(video.video_id)
+              thumbnail_url: video.thumbnail_url || `https://i.ytimg.com/vi/${video.video_id}/maxresdefault.jpg`
             };
           }
           return video;
@@ -1282,8 +1282,8 @@ const YoutubeMonitoring: React.FC = () => {
   
   // Função para gerar URL de thumbnail do YouTube
   const getYouTubeThumbnailUrl = (videoId: string) => {
-    // Tentar a versão de alta qualidade primeiro
-    return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+    // Tentar a versão de alta qualidade primeiro (maxresdefault)
+    return `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
   };
   
   return (
@@ -2019,9 +2019,17 @@ const YoutubeMonitoring: React.FC = () => {
                     }}
                   >
                     <VideoTitle>
-                      {video.thumbnail_url && (
+                      {video.video_id && (
                         <VideoThumbnail>
-                          <img src={video.thumbnail_url} alt={video.nome_do_video || "Video thumbnail"} />
+                          <img 
+                            src={video.thumbnail_url || `https://i.ytimg.com/vi/${video.video_id}/maxresdefault.jpg`} 
+                            alt={video.nome_do_video || "Video thumbnail"}
+                            onError={(e) => {
+                              // Fallback para thumbnail de qualidade menor se a alta qualidade não estiver disponível
+                              const target = e.target as HTMLImageElement;
+                              target.src = `https://i.ytimg.com/vi/${video.video_id}/hqdefault.jpg`;
+                            }}
+                          />
                         </VideoThumbnail>
                       )}
                       <VideoTitleText>
