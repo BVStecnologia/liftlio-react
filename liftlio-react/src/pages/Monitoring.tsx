@@ -620,6 +620,7 @@ const VideoTableHeader = styled.div`
   > div {
     display: flex;
     align-items: center;
+    height: 100%;
     
     &:first-child {
       justify-content: flex-start;
@@ -635,8 +636,9 @@ const VideoTableHeader = styled.div`
         content: '';
         position: absolute;
         left: -12px;
-        top: -16px;
-        bottom: -16px;
+        top: 0;
+        bottom: 0;
+        height: 100%;
         width: 1px;
         background-color: ${props => props.theme.colors.tertiary};
       }
@@ -646,9 +648,11 @@ const VideoTableHeader = styled.div`
 
 const VideoTitle = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   font-weight: ${props => props.theme.fontWeights.medium};
   color: ${props => props.theme.colors.text};
+  padding-right: 16px;
+  height: 100%;
 `;
 
 const VideoThumbnail = styled.div`
@@ -677,19 +681,30 @@ const VideoTableRow = styled.div`
   align-items: center;
   transition: all 0.2s ease;
   
-  > div:not(:first-child) {
-    position: relative;
-    justify-content: center;
-    text-align: center;
+  > div {
+    height: 100%;
+    display: flex;
+    align-items: center;
     
-    &::before {
-      content: '';
-      position: absolute;
-      left: -12px;
-      top: 0;
-      bottom: 0;
-      width: 1px;
-      background-color: ${props => props.theme.colors.tertiary}80;
+    &:first-child {
+      align-items: flex-start;
+    }
+    
+    &:not(:first-child) {
+      position: relative;
+      justify-content: center;
+      text-align: center;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: -12px;
+        top: 0;
+        bottom: 0;
+        height: 100%;
+        width: 1px;
+        background-color: ${props => props.theme.colors.tertiary}80;
+      }
     }
   }
   
@@ -736,6 +751,8 @@ const VideoStat = styled.div`
   justify-content: center;
   align-items: center;
   height: 100%;
+  width: 100%;
+  padding: 0 8px;
 `;
 
 const VideoStatLabel = styled.div`
