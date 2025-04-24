@@ -262,8 +262,8 @@ const ChannelList = styled.div`
 // Create a wrapper div that can accept onClick and other interactive props
 const ChannelCardWrapper = styled.div<{ active: boolean }>`
   display: flex;
-  align-items: center;
-  padding: 24px 20px; /* Aumentar padding vertical de 20px para 24px */
+  align-items: flex-start; /* Alterado de center para flex-start para melhor organização vertical */
+  padding: 32px 24px; /* Aumentar padding vertical e horizontal */
   border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.tertiary};
   box-shadow: ${props => props.active ? '0 8px 16px rgba(0,0,0,0.15)' : '0 4px 8px rgba(0,0,0,0.08)'};
   cursor: pointer;
@@ -272,6 +272,7 @@ const ChannelCardWrapper = styled.div<{ active: boolean }>`
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
+  min-height: 180px; /* Definir uma altura mínima */
   
   &:hover {
     transform: translateY(-4px);
@@ -295,7 +296,7 @@ const ChannelCardWrapper = styled.div<{ active: boolean }>`
 // Adicionar background cinza apenas para a lateral da foto
 const ChannelIconWrapper = styled.div`
   position: relative;
-  margin-right: 20px;
+  margin-right: 24px; /* Aumentar margem para dar mais espaço */
   padding: 0;
   
   &::before {
@@ -311,10 +312,10 @@ const ChannelIconWrapper = styled.div`
   }
 `;
 
-// Ajustar ChannelIcon para ficar sobre o wrapper
+// Ajustar ChannelIcon para ser maior
 const ChannelIcon = styled.div`
-  width: 64px;
-  height: 64px;
+  width: 80px; /* Aumentar de 64px para 80px */
+  height: 80px; /* Aumentar de 64px para 80px */
   background: linear-gradient(to right, #f0f0f0, #e0e0e0);
   background-size: cover;
   background-position: center;
@@ -323,7 +324,7 @@ const ChannelIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 30px; /* Aumentar de 24px para 30px */
   flex-shrink: 0;
   border: 3px solid #fff;
   box-shadow: 0 2px 8px rgba(0,0,0,0.12);
@@ -360,40 +361,45 @@ const ChannelBadge = styled.div<{ status: string }>`
 const ChannelInfo = styled.div`
   flex: 1;
   min-width: 0; /* Evitar que ultrapasse o container */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding-top: 6px; /* Adicionar um pequeno padding no topo para alinhar com o ícone maior */
 `;
 
 const ChannelName = styled.div`
   font-weight: ${props => props.theme.fontWeights.bold};
-  font-size: ${props => props.theme.fontSizes.lg};
+  font-size: ${props => props.theme.fontSizes.xl}; /* Aumentar de lg para xl */
   color: ${props => props.theme.colors.text};
-  margin-bottom: 12px; /* Aumentar espaço entre o nome e as estatísticas */
+  margin-bottom: 16px; /* Aumentar espaço entre o nome e as estatísticas */
   display: flex;
   align-items: center;
   
   svg {
     color: #FF0000; /* YouTube red */
     margin-left: 8px;
-    font-size: 16px;
+    font-size: 18px; /* Aumentar de 16px para 18px */
   }
 `;
 
 const ChannelStats = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, auto);
-  gap: 12px 16px; /* Aumentar espaçamento entre as estatísticas */
+  grid-template-columns: repeat(2, auto); /* Reduzir de 3 para 2 colunas */
+  gap: 16px 24px; /* Aumentar o espaçamento entre as estatísticas */
   align-items: center;
 `;
 
-// Define ChannelStatItem abaixo do estilo ChannelStats
+// Melhorar a visualização dos itens de estatística
 const ChannelStatItem = styled.div`
   display: flex;
   align-items: center;
   color: ${props => props.theme.colors.darkGrey};
-  font-size: ${props => props.theme.fontSizes.sm};
+  font-size: ${props => props.theme.fontSizes.md}; /* Aumentar de sm para md */
   
   svg {
-    margin-right: 6px;
-    font-size: 14px;
+    margin-right: 8px; /* Aumentar de 6px para 8px */
+    font-size: 16px; /* Aumentar de 14px para 16px */
     color: ${props => props.theme.colors.primary};
   }
 `;
@@ -2125,7 +2131,7 @@ const YoutubeMonitoring: React.FC = () => {
                       
                       {/* Mensagem de instrução */}
                       <ChannelStatItem style={{ 
-                        marginTop: '12px', 
+                        marginTop: '20px', /* Aumentar de 12px para 20px */
                         color: '#007bff', 
                         fontWeight: 'bold',
                         display: 'flex',
