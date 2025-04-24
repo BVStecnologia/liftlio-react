@@ -741,7 +741,8 @@ const performanceMetricsData = [
 // Component implementation
 const YoutubeMonitoring: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedChannel, setSelectedChannel] = useState(1);
+  const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<number | null>(null);
   const [timeframe, setTimeframe] = useState('month');
   const [channelFilter, setChannelFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -756,6 +757,10 @@ const YoutubeMonitoring: React.FC = () => {
     media: string, 
     posts: number 
   } | null>(null);
+  const [channelVideos, setChannelVideos] = useState<any[]>([]);
+  const [videoComments, setVideoComments] = useState<any[]>([]);
+  const [isLoadingVideos, setIsLoadingVideos] = useState(false);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
   const { currentProject } = useProject();
   
   useEffect(() => {
@@ -815,9 +820,10 @@ const YoutubeMonitoring: React.FC = () => {
           
           setChannels(processedChannels);
           // Set the first channel as selected if available
-          if (processedChannels.length > 0 && processedChannels[0].id) {
-            setSelectedChannel(processedChannels[0].id);
-          }
+          // Removido para compatibilidade com o novo fluxo de navegação
+          // if (processedChannels.length > 0 && processedChannels[0].id) {
+          //   setSelectedChannel(processedChannels[0].id);
+          // }
         } else {
           setChannels(defaultChannels);
         }
@@ -914,6 +920,87 @@ const YoutubeMonitoring: React.FC = () => {
     return data;
   };
   
+  // Nova função para buscar vídeos de um canal específico
+  const fetchChannelVideos = async (channelId: number) => {
+    if (!channelId || !currentProject?.id) return;
+    
+    setIsLoadingVideos(true);
+    try {
+      // Simular a busca de vídeos - no futuro, chamar a RPC real
+      // const data = await callRPC('get_channel_videos', { 
+      //   id_canal: channelId,
+      //   id_projeto: currentProject.id 
+      // });
+      
+      // Simulação de dados por enquanto
+      const simulatedData = videoPerformanceData.map(video => ({
+        ...video,
+        channelId: channelId
+      }));
+      
+      setTimeout(() => {
+        setChannelVideos(simulatedData);
+        setIsLoadingVideos(false);
+      }, 800);
+      
+    } catch (error) {
+      console.error('Error fetching channel videos:', error);
+      setChannelVideos([]);
+      setIsLoadingVideos(false);
+    }
+  };
+  
+  // Nova função para buscar comentários de um vídeo específico
+  const fetchVideoComments = async (videoId: number) => {
+    if (!videoId) return;
+    
+    setIsLoadingComments(true);
+    try {
+      // Simular a busca de comentários - no futuro, chamar a RPC real
+      // const data = await callRPC('get_video_comments', { id_video: videoId });
+      
+      // Simulação de dados por enquanto
+      const simulatedComments = [
+        { id: 1, author: "João Silva", text: "Excelente vídeo, muito útil!", date: "2023-09-15", likes: 12 },
+        { id: 2, author: "Maria Oliveira", text: "Gostei muito das dicas. Obrigada por compartilhar!", date: "2023-09-15", likes: 8 },
+        { id: 3, author: "Pedro Santos", text: "Estou seguindo seu canal há meses, conteúdo fantástico!", date: "2023-09-16", likes: 15 },
+        { id: 4, author: "Ana Pereira", text: "Poderia fazer um vídeo sobre configuração de LEDs RGB?", date: "2023-09-16", likes: 4 },
+        { id: 5, author: "Carlos Mendes", text: "Salvou meu projeto! Muito obrigado.", date: "2023-09-17", likes: 10 }
+      ];
+      
+      setTimeout(() => {
+        setVideoComments(simulatedComments);
+        setIsLoadingComments(false);
+      }, 600);
+      
+    } catch (error) {
+      console.error('Error fetching video comments:', error);
+      setVideoComments([]);
+      setIsLoadingComments(false);
+    }
+  };
+  
+  // Função para selecionar um canal
+  const handleChannelSelect = (channelId: number) => {
+    setSelectedChannel(channelId);
+    setSelectedVideo(null); // Limpar seleção de vídeo
+    fetchChannelVideos(channelId);
+    
+    // Se estiver em Overview ou Channels, mudar para a tab Videos
+    if (activeTab === 'overview' || activeTab === 'channels') {
+      setActiveTab('videos');
+    }
+  };
+  
+  // Função para selecionar um vídeo
+  const handleVideoSelect = (videoId: number) => {
+    setSelectedVideo(videoId);
+    fetchVideoComments(videoId);
+    
+    // Mudar para a tab Comments
+    setActiveTab('comments');
+  };
+  
   return (
     <PageContainer>
       <PageTitle>
@@ -930,14 +1017,24 @@ const YoutubeMonitoring: React.FC = () => {
           <TabIcon><IconComponent icon={FaIcons.FaYoutube} /></TabIcon>
           Channels
         </Tab>
-        <Tab active={activeTab === 'videos'} onClick={() => setActiveTab('videos')}>
-          <TabIcon><IconComponent icon={FaIcons.FaVideo} /></TabIcon>
-          Videos
-        </Tab>
-        <Tab active={activeTab === 'comments'} onClick={() => setActiveTab('comments')}>
-          <TabIcon><IconComponent icon={FaIcons.FaComment} /></TabIcon>
-          Comments
-        </Tab>
+        {selectedChannel !== null && (
+          <Tab active={activeTab === 'videos'} onClick={() => setActiveTab('videos')}>
+            <TabIcon><IconComponent icon={FaIcons.FaVideo} /></TabIcon>
+            Videos
+            <ChannelBadge style={{ marginLeft: '8px' }} status="active">
+              {channelVideos.length}
+            </ChannelBadge>
+          </Tab>
+        )}
+        {selectedVideo !== null && (
+          <Tab active={activeTab === 'comments'} onClick={() => setActiveTab('comments')}>
+            <TabIcon><IconComponent icon={FaIcons.FaComment} /></TabIcon>
+            Comments
+            <ChannelBadge style={{ marginLeft: '8px' }} status="active">
+              {videoComments.length}
+            </ChannelBadge>
+          </Tab>
+        )}
       </TabsContainer>
       
       {activeTab === 'overview' && (
@@ -1313,7 +1410,7 @@ const YoutubeMonitoring: React.FC = () => {
                   <ChannelCardWrapper 
                     key={channel.id} 
                     active={selectedChannel === channel.id}
-                    onClick={() => setSelectedChannel(channel.id)}
+                    onClick={() => handleChannelSelect(channel.id)}
                     onContextMenu={(e) => {
                       e.preventDefault();
                       setSelectedChannelForToggle(channel);
@@ -1354,6 +1451,18 @@ const YoutubeMonitoring: React.FC = () => {
                           Last video: {channel.last_video || channel.lastVideo || 'N/A'}
                         </ChannelStatItem>
                       </ChannelStats>
+                      
+                      {/* Mensagem de instrução */}
+                      <ChannelStatItem style={{ 
+                        marginTop: '12px', 
+                        color: '#007bff', 
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center' 
+                      }}>
+                        <IconComponent icon={FaIcons.FaHandPointer} />
+                        <span style={{ marginLeft: '4px' }}>Click to view channel videos</span>
+                      </ChannelStatItem>
                     </ChannelInfo>
                     
                     <EngagementPill>
@@ -1485,7 +1594,9 @@ const YoutubeMonitoring: React.FC = () => {
           <ChartHeader>
             <ChartTitle>
               <IconComponent icon={FaIcons.FaVideo} />
-              Videos Ready for Comment Automation
+              {channels.find(c => c.id === selectedChannel)?.channel_name || 
+               channels.find(c => c.id === selectedChannel)?.name || 
+               "Channel"} Videos
             </ChartTitle>
             <FilterGroup>
               <FilterButton>
@@ -1499,56 +1610,80 @@ const YoutubeMonitoring: React.FC = () => {
             </FilterGroup>
           </ChartHeader>
           
-          <VideoTable>
-            <VideoTableHeader>
-              <div>Video</div>
-              <div>Views</div>
-              <div>Comments</div>
-              <div>Likes</div>
-              <div>Retention</div>
-            </VideoTableHeader>
-            
-            {videoPerformanceData.map((video) => (
-              <VideoTableRow key={video.id}>
-                <VideoTitle>
-                  <VideoThumbnail>
-                    <img src={video.thumbnail} alt={video.name} />
-                  </VideoThumbnail>
-                  <VideoTitleText>
-                    {video.name}
-                    {video.badge && (
-                      <VideoBadge type={video.badge}>
-                        {video.badge === 'new' ? 'New' : 'Trending'}
-                      </VideoBadge>
-                    )}
-                  </VideoTitleText>
-                </VideoTitle>
-                <VideoStat>
-                  {(video.views / 1000).toFixed(0)}K
-                  <VideoStatLabel>Views</VideoStatLabel>
-                </VideoStat>
-                <VideoStat>
-                  {(video.comments / 1000).toFixed(1)}K
-                  <VideoStatLabel>Comments</VideoStatLabel>
-                </VideoStat>
-                <VideoStat>
-                  {(video.likes / 1000).toFixed(1)}K
-                  <VideoStatLabel>Likes</VideoStatLabel>
-                </VideoStat>
-                <VideoStat>
-                  {video.retention}%
-                  <VideoStatLabel>Retention</VideoStatLabel>
-                </VideoStat>
-              </VideoTableRow>
-            ))}
-          </VideoTable>
+          {isLoadingVideos ? (
+            <div style={{ padding: '40px 0', textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', color: '#666', marginBottom: '16px' }}>
+                <IconComponent icon={FaIcons.FaSpinner} style={{ animation: 'spin 1s linear infinite' }} />
+              </div>
+              <p>Loading videos...</p>
+            </div>
+          ) : channelVideos.length === 0 ? (
+            <div style={{ padding: '40px 0', textAlign: 'center' }}>
+              <div style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}>
+                <IconComponent icon={FaIcons.FaVideo} />
+              </div>
+              <h3>No videos found for this channel</h3>
+              <p>This channel hasn't uploaded any videos yet or they're not indexed</p>
+            </div>
+          ) : (
+            <VideoTable>
+              <VideoTableHeader>
+                <div>Video</div>
+                <div>Views</div>
+                <div>Comments</div>
+                <div>Likes</div>
+                <div>Retention</div>
+              </VideoTableHeader>
+              
+              {channelVideos.map((video) => (
+                <VideoTableRow 
+                  key={video.id}
+                  onClick={() => handleVideoSelect(video.id)}
+                  style={{ 
+                    cursor: 'pointer', 
+                    background: selectedVideo === video.id ? 'rgba(88, 86, 214, 0.1)' : 'inherit' 
+                  }}
+                >
+                  <VideoTitle>
+                    <VideoThumbnail>
+                      <img src={video.thumbnail} alt={video.name} />
+                    </VideoThumbnail>
+                    <VideoTitleText>
+                      {video.name}
+                      {video.badge && (
+                        <VideoBadge type={video.badge}>
+                          {video.badge === 'new' ? 'New' : 'Trending'}
+                        </VideoBadge>
+                      )}
+                    </VideoTitleText>
+                  </VideoTitle>
+                  <VideoStat>
+                    {(video.views / 1000).toFixed(0)}K
+                    <VideoStatLabel>Views</VideoStatLabel>
+                  </VideoStat>
+                  <VideoStat>
+                    {(video.comments / 1000).toFixed(1)}K
+                    <VideoStatLabel>Comments</VideoStatLabel>
+                  </VideoStat>
+                  <VideoStat>
+                    {(video.likes / 1000).toFixed(1)}K
+                    <VideoStatLabel>Likes</VideoStatLabel>
+                  </VideoStat>
+                  <VideoStat>
+                    {video.retention}%
+                    <VideoStatLabel>Retention</VideoStatLabel>
+                  </VideoStat>
+                </VideoTableRow>
+              ))}
+            </VideoTable>
+          )}
           
           <ButtonRow>
+            <ActionButton variant="ghost" leftIcon={<IconComponent icon={FaIcons.FaArrowLeft} />} onClick={() => setActiveTab('channels')}>
+              Back to Channels
+            </ActionButton>
             <ActionButton variant="ghost" leftIcon={<IconComponent icon={FaIcons.FaFileExport} />}>
               Export Data
-            </ActionButton>
-            <ActionButton variant="primary" leftIcon={<IconComponent icon={FaIcons.FaMagic} />}>
-              Setup Automation
             </ActionButton>
           </ButtonRow>
         </ChartContainer>
@@ -1559,22 +1694,60 @@ const YoutubeMonitoring: React.FC = () => {
           <ChartHeader>
             <ChartTitle>
               <IconComponent icon={FaIcons.FaComment} />
-              Comment Templates & Automation
+              Comments for Video: {channelVideos.find(v => v.id === selectedVideo)?.name || "Selected Video"}
             </ChartTitle>
           </ChartHeader>
           
-          <div style={{ padding: '40px 0', textAlign: 'center' }}>
-            <div style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}>
-              <IconComponent icon={FaIcons.FaComments} />
+          {isLoadingComments ? (
+            <div style={{ padding: '40px 0', textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', color: '#666', marginBottom: '16px' }}>
+                <IconComponent icon={FaIcons.FaSpinner} style={{ animation: 'spin 1s linear infinite' }} />
+              </div>
+              <p>Loading comments...</p>
             </div>
-            <h3>No comment templates created yet</h3>
-            <p>Create a comment template to automate your responses</p>
-            <div style={{ marginTop: '24px' }}>
-              <ActionButton variant="primary" leftIcon={<IconComponent icon={FaIcons.FaPlus} />}>
-                Create Template
-              </ActionButton>
+          ) : videoComments.length === 0 ? (
+            <div style={{ padding: '40px 0', textAlign: 'center' }}>
+              <div style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}>
+                <IconComponent icon={FaIcons.FaComments} />
+              </div>
+              <h3>No comments found for this video</h3>
+              <p>This video doesn't have any comments yet</p>
             </div>
-          </div>
+          ) : (
+            <div style={{ padding: '20px' }}>
+              {videoComments.map(comment => (
+                <div 
+                  key={comment.id} 
+                  style={{ 
+                    padding: '15px', 
+                    borderBottom: '1px solid #eee', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '8px' 
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ fontWeight: 'bold' }}>{comment.author}</div>
+                    <div style={{ fontSize: '0.8rem', color: '#666' }}>{comment.date}</div>
+                  </div>
+                  <div>{comment.text}</div>
+                  <div style={{ fontSize: '0.9rem', color: '#666', display: 'flex', gap: '10px' }}>
+                    <span><IconComponent icon={FaIcons.FaThumbsUp} /> {comment.likes}</span>
+                    <span><IconComponent icon={FaIcons.FaReply} /> Reply</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <ButtonRow>
+            <ActionButton variant="ghost" leftIcon={<IconComponent icon={FaIcons.FaArrowLeft} />} onClick={() => setActiveTab('videos')}>
+              Back to Videos
+            </ActionButton>
+            <ActionButton variant="primary" leftIcon={<IconComponent icon={FaIcons.FaReply} />}>
+              Reply to Comments
+            </ActionButton>
+          </ButtonRow>
         </ChartContainer>
       )}
     </PageContainer>
