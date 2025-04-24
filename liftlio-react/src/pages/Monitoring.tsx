@@ -480,6 +480,8 @@ const VideoThumbnail = styled.div`
     width: 100%;
     height: 100%;
     object-fit: cover;
+    position: relative;
+    z-index: 1;
   }
   
   &::after {
@@ -494,6 +496,8 @@ const VideoThumbnail = styled.div`
     border-left: 14px solid white;
     border-bottom: 8px solid transparent;
     opacity: 0.8;
+    z-index: 2;
+    pointer-events: none;
   }
 `;
 
@@ -1098,18 +1102,16 @@ const YoutubeMonitoring: React.FC = () => {
       if (data && Array.isArray(data)) {
         console.log('Channel videos data:', data);
         
-        // Adicionar URLs de thumbnail aos vídeos se não estiverem presentes
-        const enhancedVideos = data.map(video => {
-          if (video.video_id) {
-            return {
-              ...video,
-              thumbnail_url: video.thumbnail_url || `https://i.ytimg.com/vi/${video.video_id}/maxresdefault.jpg`
-            };
+        // Verificar e registrar os IDs de vídeo
+        data.forEach(video => {
+          if (!video.video_id) {
+            console.warn('Video sem video_id:', video);
+          } else {
+            console.log('Video ID encontrado:', video.video_id);
           }
-          return video;
         });
         
-        setChannelVideos(enhancedVideos);
+        setChannelVideos(data);
       } else {
         console.error('Invalid data format received for channel videos');
         setChannelVideos([]);
@@ -2022,13 +2024,15 @@ const YoutubeMonitoring: React.FC = () => {
                       {video.video_id && (
                         <VideoThumbnail>
                           <img 
-                            src={video.thumbnail_url || `https://i.ytimg.com/vi/${video.video_id}/maxresdefault.jpg`} 
+                            src={`https://i.ytimg.com/vi/${video.video_id}/hqdefault.jpg`}
                             alt={video.nome_do_video || "Video thumbnail"}
                             onError={(e) => {
-                              // Fallback para thumbnail de qualidade menor se a alta qualidade não estiver disponível
+                              // Fallback para thumbnail de qualidade padrão se a alta qualidade não estiver disponível
                               const target = e.target as HTMLImageElement;
-                              target.src = `https://i.ytimg.com/vi/${video.video_id}/hqdefault.jpg`;
+                              console.log(`Erro ao carregar thumbnail: ${target.src}`);
+                              target.src = `https://i.ytimg.com/vi/${video.video_id}/default.jpg`;
                             }}
+                            style={{ display: 'block' }}
                           />
                         </VideoThumbnail>
                       )}
