@@ -761,6 +761,7 @@ const YoutubeMonitoring: React.FC = () => {
   const [videoComments, setVideoComments] = useState<any[]>([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [channelVideoCount, setChannelVideoCount] = useState<{[key: number]: number}>({});
   const { currentProject } = useProject();
   
   useEffect(() => {
@@ -819,11 +820,12 @@ const YoutubeMonitoring: React.FC = () => {
           });
           
           setChannels(processedChannels);
-          // Set the first channel as selected if available
-          // Removido para compatibilidade com o novo fluxo de navegação
-          // if (processedChannels.length > 0 && processedChannels[0].id) {
-          //   setSelectedChannel(processedChannels[0].id);
-          // }
+          
+          // Fetch video counts for each channel
+          processedChannels.forEach(channel => {
+            fetchChannelVideoCount(channel.id);
+          });
+          
         } else {
           setChannels(defaultChannels);
         }
@@ -838,6 +840,24 @@ const YoutubeMonitoring: React.FC = () => {
     fetchMetrics();
     fetchChannelDetails();
   }, [currentProject]);
+  
+  // Function to fetch and store video count for a channel
+  const fetchChannelVideoCount = async (channelId: number) => {
+    try {
+      const data = await callRPC('get_videos_by_channel_id', {
+        canal_id: channelId
+      });
+      
+      if (data && Array.isArray(data)) {
+        setChannelVideoCount(prev => ({
+          ...prev,
+          [channelId]: data.length
+        }));
+      }
+    } catch (error) {
+      console.error(`Error fetching video count for channel ${channelId}:`, error);
+    }
+  };
   
   // Função para alternar o status ativo/inativo de um canal usando o ID
   const toggleChannelStatus = async (channel: ChannelDetails, currentStatus: boolean) => {
@@ -1017,7 +1037,15 @@ const YoutubeMonitoring: React.FC = () => {
           <Tab active={activeTab === 'videos'} onClick={() => setActiveTab('videos')}>
             <TabIcon><IconComponent icon={FaIcons.FaVideo} /></TabIcon>
             Videos
-            <ChannelBadge style={{ marginLeft: '12px', position: 'relative' }} status="active">
+            <ChannelBadge 
+              style={{ 
+                marginLeft: '16px',
+                display: 'inline-flex',
+                justifyContent: 'center',
+                minWidth: '24px'
+              }} 
+              status="active"
+            >
               {channelVideos.length}
             </ChannelBadge>
           </Tab>
@@ -1026,7 +1054,15 @@ const YoutubeMonitoring: React.FC = () => {
           <Tab active={activeTab === 'comments'} onClick={() => setActiveTab('comments')}>
             <TabIcon><IconComponent icon={FaIcons.FaComment} /></TabIcon>
             Comments
-            <ChannelBadge style={{ marginLeft: '8px' }} status="active">
+            <ChannelBadge 
+              style={{ 
+                marginLeft: '16px',
+                display: 'inline-flex',
+                justifyContent: 'center',
+                minWidth: '24px'
+              }} 
+              status="active"
+            >
               {videoComments.length}
             </ChannelBadge>
           </Tab>
@@ -1445,6 +1481,10 @@ const YoutubeMonitoring: React.FC = () => {
                         <ChannelStatItem>
                           <IconComponent icon={FaIcons.FaClock} />
                           Last video: {channel.last_video || channel.lastVideo || 'N/A'}
+                        </ChannelStatItem>
+                        <ChannelStatItem>
+                          <IconComponent icon={FaIcons.FaVideo} />
+                          {channelVideoCount[channel.id] || 0} monitored videos
                         </ChannelStatItem>
                       </ChannelStats>
                       
