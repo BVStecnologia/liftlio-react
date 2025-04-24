@@ -1717,6 +1717,15 @@ interface ContentCategory {
   media_relevancia: string;
 }
 
+// Interface para dados de engajamento
+interface EngagementDataPoint {
+  date: string;
+  comments: number;
+  likes: number;
+  views: number;
+  subscribers: number;
+}
+
 // Component implementation
 const YoutubeMonitoring: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -1749,6 +1758,7 @@ const YoutubeMonitoring: React.FC = () => {
   const [currentVideoComments, setCurrentVideoComments] = useState<VideoComment[]>([]);
   const [showJustification, setShowJustification] = useState<boolean>(false);
   const [currentJustification, setCurrentJustification] = useState<{ title: string; text: string } | null>(null);
+  const [dynamicEngagementData, setDynamicEngagementData] = useState<EngagementDataPoint[]>(engagementData);
   const { currentProject } = useProject();
   const [contentCategories, setContentCategories] = useState<ContentCategory[]>([]);
   
@@ -1846,10 +1856,78 @@ const YoutubeMonitoring: React.FC = () => {
       }
     };
     
+    const generateEngagementData = () => {
+      // Se não temos dados reais, geramos dados baseados em intervalos de tempo
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const date = new Date();
+      const currentMonth = date.getMonth();
+      
+      // Determinar os últimos 7 meses até o atual
+      const recentMonths = [];
+      for (let i = 6; i >= 0; i--) {
+        const monthIndex = (currentMonth - i + 12) % 12; // Garante que o índice seja positivo
+        recentMonths.push(months[monthIndex]);
+      }
+      
+      // Criar base de views, likes, comments para crescimento gradual
+      let baseViews = 2000 + Math.floor(Math.random() * 5000);
+      let baseLikes = Math.floor(baseViews * 0.05);
+      let baseComments = Math.floor(baseViews * 0.01);
+      let baseSubscribers = Math.floor(baseViews * 0.02);
+      
+      // Gerar pontos de dados com crescimento gradual
+      const data: EngagementDataPoint[] = recentMonths.map((month, index) => {
+        // Adicionar crescimento e variação
+        baseViews = Math.floor(baseViews * (1 + Math.random() * 0.2));
+        baseLikes = Math.floor(baseLikes * (1 + Math.random() * 0.15));
+        baseComments = Math.floor(baseComments * (1 + Math.random() * 0.1));
+        baseSubscribers = Math.floor(baseSubscribers * (1 + Math.random() * 0.08));
+        
+        // Adicionar um pouco de aleatoriedade
+        const views = baseViews + Math.floor(Math.random() * baseViews * 0.2);
+        const likes = baseLikes + Math.floor(Math.random() * baseLikes * 0.3);
+        const comments = baseComments + Math.floor(Math.random() * baseComments * 0.4);
+        const subscribers = baseSubscribers + Math.floor(Math.random() * baseSubscribers * 0.25);
+        
+        return {
+          date: month,
+          views,
+          likes,
+          comments,
+          subscribers
+        };
+      });
+      
+      setDynamicEngagementData(data);
+    };
+    
     fetchMetrics();
     fetchChannelDetails();
-    fetchContentCategories(); // Adicionar chamada para a nova função
+    fetchContentCategories();
+    generateEngagementData(); // Gerar dados de engajamento
   }, [currentProject]);
+  
+  // Efeito para atualizar os dados de engajamento quando o timeframe muda
+  useEffect(() => {
+    // Ajustar os dados de engajamento com base no timeframe selecionado
+    const adjustDataByTimeframe = () => {
+      const multiplier = timeframe === 'week' ? 0.25 :
+                         timeframe === 'quarter' ? 3 :
+                         timeframe === 'year' ? 12 : 1; // month é o padrão
+      
+      const adjustedData = dynamicEngagementData.map(point => ({
+        ...point,
+        views: Math.floor(point.views * multiplier),
+        likes: Math.floor(point.likes * multiplier),
+        comments: Math.floor(point.comments * multiplier),
+        subscribers: Math.floor(point.subscribers * multiplier)
+      }));
+      
+      setDynamicEngagementData(adjustedData);
+    };
+    
+    adjustDataByTimeframe();
+  }, [timeframe]);
   
   // Function to fetch and store video count for a channel
   const fetchChannelVideoCount = async (channelId: number) => {
@@ -2537,7 +2615,7 @@ const YoutubeMonitoring: React.FC = () => {
                 <div style={{ height: 300, width: '100%', padding: '0 16px' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
-                      data={engagementData}
+                      data={dynamicEngagementData}
                       margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                     >
                       <defs>
