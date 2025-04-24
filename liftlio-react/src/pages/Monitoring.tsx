@@ -1594,7 +1594,7 @@ const VideoDetailsSection = styled.div`
 `;
 
 // Adicionar um componente de tooltip reutilizável sem modificar o código existente
-const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }) => {
+const InfoTooltip = ({ text, children }: { text: string; children: React.ReactNode }) => {
   return (
     <div
       style={{
@@ -1636,7 +1636,7 @@ const Tooltip = ({ text, children }: { text: string; children: React.ReactNode }
           }}
         ></div>
       </div>
-      <style jsx>{`
+      <style>{`
         div:hover > .tooltip-text {
           opacity: 1;
           visibility: visible;
@@ -2623,45 +2623,45 @@ const YoutubeMonitoring: React.FC = () => {
                               <StatIcon>
                                 <IconComponent icon={FaIcons.FaUser} />
                               </StatIcon>
-                              <Tooltip text="Total de inscritos do canal">
+                              <InfoTooltip text="Total de inscritos do canal">
                                 <StatText>{channel.subscriber_count}</StatText>
-                              </Tooltip>
+                              </InfoTooltip>
                             </StatRow>
                             
                             <StatRow>
                               <StatIcon>
                                 <IconComponent icon={FaIcons.FaEye} />
                               </StatIcon>
-                              <Tooltip text="Total de visualizações do canal">
+                              <InfoTooltip text="Total de visualizações do canal">
                                 <StatText>{channel.view_count}</StatText>
-                              </Tooltip>
+                              </InfoTooltip>
                             </StatRow>
                             
                             <StatRow>
                               <StatIcon>
                                 <IconComponent icon={FaIcons.FaClock} />
                               </StatIcon>
-                              <Tooltip text="Último vídeo publicado">
+                              <InfoTooltip text="Último vídeo publicado">
                                 <StatText>{channel.last_video}</StatText>
-                              </Tooltip>
+                              </InfoTooltip>
                             </StatRow>
                             
                             <StatRow>
                               <StatIcon>
                                 <IconComponent icon={FaIcons.FaVideo} />
                               </StatIcon>
-                              <Tooltip text="Número de vídeos monitorados">
+                              <InfoTooltip text="Número de vídeos monitorados">
                                 <StatText>{channelVideoCount[channel.id] || 0} monitored videos</StatText>
-                              </Tooltip>
+                              </InfoTooltip>
                             </StatRow>
                             
                             <StatRow>
                               <StatIcon>
                                 <IconComponent icon={FaIcons.FaCommentAlt} />
                               </StatIcon>
-                              <Tooltip text="Total de mensagens postadas">
+                              <InfoTooltip text="Total de mensagens postadas">
                                 <StatText>{channel.total_mensagens_postadas || 0} posts</StatText>
-                              </Tooltip>
+                              </InfoTooltip>
                             </StatRow>
                           </ChannelStatsGrid>
                           
