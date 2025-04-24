@@ -607,7 +607,7 @@ const VideoTable = styled.div`
 // Atualizar o grid para as colunas terem tamanhos mais adequados
 const VideoTableHeader = styled.div`
   display: grid;
-  grid-template-columns: minmax(400px, 3fr) 100px 100px 150px 100px;
+  grid-template-columns: minmax(400px, 3fr) 100px 100px 100px 150px 100px;
   padding: 16px 24px;
   background: ${props => props.theme.colors.lightGrey};
   font-weight: ${props => props.theme.fontWeights.semiBold};
@@ -671,7 +671,7 @@ const VideoThumbnail = styled.div`
 // Atualizar o grid para as linhas
 const VideoTableRow = styled.div`
   display: grid;
-  grid-template-columns: minmax(400px, 3fr) 100px 100px 150px 100px;
+  grid-template-columns: minmax(400px, 3fr) 100px 100px 100px 150px 100px;
   padding: 16px 24px;
   border-bottom: 1px solid ${props => props.theme.colors.tertiary};
   align-items: center;
@@ -2451,6 +2451,7 @@ const YoutubeMonitoring: React.FC = () => {
                   <div>Video</div>
                   <div>Views</div>
                   <div>Comments</div>
+                  <div>Posts</div>
                   <div>Category</div>
                   <div>Relevance</div>
                 </VideoTableHeader>
@@ -2515,6 +2516,10 @@ const YoutubeMonitoring: React.FC = () => {
                       </VideoStat>
                       <VideoStat>
                         {video.commets || video.comments || '0'}
+                      </VideoStat>
+                      <VideoStat>
+                        {video.total_posts || 0}
+                        <VideoStatLabel>Posts</VideoStatLabel>
                       </VideoStat>
                       <VideoStat>
                         {video.content_category || video.category || "Uncategorized"}
