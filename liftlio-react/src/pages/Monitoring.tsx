@@ -2272,10 +2272,8 @@ const YoutubeMonitoring: React.FC = () => {
     
     // Mapear os dados das categorias para o formato do gráfico
     return contentCategories.map(category => {
-      // Truncar nomes de categorias ainda mais curtos para display
-      const displayName = category.content_category.length > 15 
-        ? category.content_category.substring(0, 13) + '...' 
-        : category.content_category;
+      // Não precisamos mais truncar os nomes agora que removemos as legendas
+      const displayName = category.content_category;
       
       // Calcular a porcentagem baseada no número de vídeos
       const percentage = Math.round((category.total_videos / totalVideos) * 100);
@@ -2632,11 +2630,11 @@ const YoutubeMonitoring: React.FC = () => {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        outerRadius={85}
+                        outerRadius={100}
                         innerRadius={60}
                         paddingAngle={5}
                         dataKey="value"
-                        label={({ name, value }) => `${name} ${value}%`}
+                        label={({ name, percent }) => `${percent * 100}%`}
                       >
                         {getContentDistributionData().map((entry, index) => {
                           const COLORS = ['#5856D6', '#FF9500', '#34C759', '#FF2D55', '#007AFF', '#5AC8FA', '#BF5AF2', '#FF3B30'];
@@ -2653,7 +2651,8 @@ const YoutubeMonitoring: React.FC = () => {
                                 padding: '12px 16px',
                                 borderRadius: '8px',
                                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                                border: '1px solid #f0f0f0'
+                                border: '1px solid #f0f0f0',
+                                maxWidth: '280px'
                               }}>
                                 <div>
                                   <p style={{ 
@@ -2661,7 +2660,6 @@ const YoutubeMonitoring: React.FC = () => {
                                     fontWeight: 'bold', 
                                     fontSize: '14px', 
                                     color: '#333',
-                                    maxWidth: '280px',
                                     wordWrap: 'break-word'
                                   }}>
                                     {data.fullName}
@@ -2683,23 +2681,6 @@ const YoutubeMonitoring: React.FC = () => {
                             );
                           }
                           return null;
-                        }}
-                      />
-                      <Legend
-                        layout="vertical"
-                        verticalAlign="middle"
-                        align="right"
-                        wrapperStyle={{
-                          fontSize: '12px',
-                          paddingLeft: '10px',
-                          maxWidth: '180px',
-                          lineHeight: '1.5'
-                        }}
-                        formatter={(value: any, entry) => {
-                          // Limitar o tamanho do texto na legenda
-                          return typeof value === 'string' && value.length > 12
-                            ? `${value.substring(0, 10)}...` 
-                            : value;
                         }}
                       />
                     </PieChart>
