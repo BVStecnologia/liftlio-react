@@ -757,7 +757,7 @@ const ChannelHeaderSection = styled.div`
 
 const ChannelHeaderBanner = styled.div`
   height: 140px;
-  background: linear-gradient(120deg, #1976D2, #64B5F6);
+  background: linear-gradient(120deg, ${COLORS.ACCENT}, ${withOpacity(COLORS.ACCENT, 0.6)});
   position: relative;
 `;
 
@@ -1202,8 +1202,8 @@ const YoutubeMonitoring: React.FC = () => {
       
       // Usar diretamente os dados que já temos ao invés de fazer uma chamada adicional
       const channelDetails = {
-        title: selectedChannelData.channel_name || 'Canal do YouTube',
-        description: selectedChannelData.description || 'Informações detalhadas sobre este canal não estão disponíveis no momento.',
+        title: selectedChannelData.channel_name || 'YouTube Channel',
+        description: selectedChannelData.description || 'No detailed information available for this channel at the moment.',
         statistics: {
           subscriberCount: selectedChannelData.raw_subscriber_count?.toString() || 
                           (typeof selectedChannelData.subscriber_count === 'string' ? 
@@ -1884,7 +1884,7 @@ const YoutubeMonitoring: React.FC = () => {
                 />
                 <ChannelHeaderInfo>
                   <ChannelHeaderTitle>
-                    {selectedChannelDetails.title || selectedChannelDetails.channel_name || 'Canal do YouTube'}
+                    {selectedChannelDetails.title || selectedChannelDetails.channel_name || 'YouTube Channel'}
                     <IconComponent icon={FaIcons.FaYoutube} />
                   </ChannelHeaderTitle>
                   
@@ -1929,9 +1929,7 @@ const YoutubeMonitoring: React.FC = () => {
           <ChartHeader>
             <ChartTitle>
               <IconComponent icon={FaIcons.FaVideo} />
-              {channels.find(c => c.id === selectedChannel)?.channel_name || 
-               channels.find(c => c.id === selectedChannel)?.name || 
-               "Channel"} Videos
+              Monitored Videos of {channels.find(c => c.id === selectedChannel)?.channel_name || "Channel"}
             </ChartTitle>
             <FilterGroup>
               <FilterButton>
@@ -1961,48 +1959,58 @@ const YoutubeMonitoring: React.FC = () => {
               <p>This channel hasn't uploaded any videos yet or they're not indexed</p>
             </div>
           ) : (
-            <VideoTable>
-              <VideoTableHeader>
-                <div>Video</div>
-                <div>Views</div>
-                <div>Comments</div>
-                <div>Category</div>
-                <div>Relevance</div>
-              </VideoTableHeader>
-              
-              {channelVideos.map((video: any) => (
-                <VideoTableRow 
-                  key={video.id}
-                  onClick={() => handleVideoSelect(video.id)}
-                  style={{ 
-                    cursor: 'pointer', 
-                    background: selectedVideo === video.id ? 'rgba(88, 86, 214, 0.1)' : 'inherit' 
-                  }}
-                >
-                  <VideoTitle>
-                    <VideoTitleText>
-                      {video.nome_do_video || "Untitled Video"}
-                    </VideoTitleText>
-                  </VideoTitle>
-                  <VideoStat>
-                    {video.views ? (video.views >= 1000 ? `${(video.views / 1000).toFixed(1)}K` : video.views) : '0'}
-                    <VideoStatLabel>Views</VideoStatLabel>
-                  </VideoStat>
-                  <VideoStat>
-                    {video.commets || '0'}
-                    <VideoStatLabel>Comments</VideoStatLabel>
-                  </VideoStat>
-                  <VideoStat>
-                    {video.content_category || "Uncategorized"}
-                    <VideoStatLabel>Category</VideoStatLabel>
-                  </VideoStat>
-                  <VideoStat>
-                    {video.relevance_score ? `${(video.relevance_score * 100).toFixed(0)}%` : '0%'}
-                    <VideoStatLabel>Relevance</VideoStatLabel>
-                  </VideoStat>
-                </VideoTableRow>
-              ))}
-            </VideoTable>
+            <div style={{ padding: '0 20px' }}>
+              <VideoTable style={{ 
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                borderRadius: '10px',
+                overflow: 'hidden'
+              }}>
+                <VideoTableHeader style={{ 
+                  background: `${withOpacity(COLORS.ACCENT, 0.05)}`,
+                  fontWeight: 'bold' 
+                }}>
+                  <div>Video</div>
+                  <div>Views</div>
+                  <div>Comments</div>
+                  <div>Category</div>
+                  <div>Relevance</div>
+                </VideoTableHeader>
+                
+                {channelVideos.map((video: any) => (
+                  <VideoTableRow 
+                    key={video.id}
+                    onClick={() => handleVideoSelect(video.id)}
+                    style={{ 
+                      cursor: 'pointer', 
+                      background: selectedVideo === video.id ? withOpacity(COLORS.ACCENT, 0.1) : 'inherit',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <VideoTitle>
+                      <VideoTitleText>
+                        {video.nome_do_video || "Untitled Video"}
+                      </VideoTitleText>
+                    </VideoTitle>
+                    <VideoStat>
+                      {video.views ? (video.views >= 1000 ? `${(video.views / 1000).toFixed(1)}K` : video.views) : '0'}
+                      <VideoStatLabel>Views</VideoStatLabel>
+                    </VideoStat>
+                    <VideoStat>
+                      {video.commets || '0'}
+                      <VideoStatLabel>Comments</VideoStatLabel>
+                    </VideoStat>
+                    <VideoStat>
+                      {video.content_category || "Uncategorized"}
+                      <VideoStatLabel>Category</VideoStatLabel>
+                    </VideoStat>
+                    <VideoStat>
+                      {video.relevance_score ? `${(video.relevance_score * 100).toFixed(0)}%` : '0%'}
+                      <VideoStatLabel>Relevance</VideoStatLabel>
+                    </VideoStat>
+                  </VideoTableRow>
+                ))}
+              </VideoTable>
+            </div>
           )}
           
           <ButtonRow>
