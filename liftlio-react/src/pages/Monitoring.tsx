@@ -1311,6 +1311,8 @@ interface VideoComment {
   justificativa_mensagem?: string;
   proxima_postagem?: string;
   status?: string;
+  published_at?: string;
+  updated_at?: string;
 }
 
 // Componentes para exibição de comentários
@@ -2901,6 +2903,162 @@ const YoutubeMonitoring: React.FC = () => {
             <ChartTitle>
               <IconComponent icon={FaIcons.FaComment} />
               Comments for Video: {selectedVideo?.nome_do_video || "Selected Video"}
+            </ChartTitle>
+          </ChartHeader>
+          
+          {/* Adicionar a visualização do vídeo */}
+          {selectedVideo && (
+            <VideoDetailsSection style={{ 
+              marginBottom: '24px', 
+              padding: '16px',
+              background: 'white',
+              borderRadius: '10px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'row',
+                gap: '20px',
+                flexWrap: 'wrap'
+              }}>
+                <div style={{ 
+                  flex: '0 0 320px',
+                  marginBottom: '16px'
+                }}>
+                  <VideoThumbnail style={{ 
+                    width: '100%', 
+                    height: '180px',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
+                  }}>
+                    <img 
+                      src={getThumbnailUrl(selectedVideo)}
+                      alt={selectedVideo.nome_do_video || "Video thumbnail"}
+                      onError={(e) => {
+                        if ((e.target as HTMLImageElement).src.includes('ytimg.com')) {
+                          const videoTitle = selectedVideo.nome_do_video || selectedVideo.title || "Untitled";
+                          const firstLetter = videoTitle.charAt(0).toUpperCase();
+                          (e.target as HTMLImageElement).src = `https://placehold.co/640x360/5F27CD/FFFFFF?text=${encodeURIComponent(firstLetter)}`;
+                        }
+                      }}
+                      style={{ 
+                        display: 'block',
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  </VideoThumbnail>
+                  {selectedVideo.video_id_youtube && (
+                    <div style={{ marginTop: '8px', textAlign: 'center' }}>
+                      <a 
+                        href={`https://www.youtube.com/watch?v=${selectedVideo.video_id_youtube}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          color: '#5F27CD',
+                          textDecoration: 'none',
+                          fontSize: '14px',
+                          fontWeight: 500
+                        }}
+                      >
+                        <IconComponent icon={FaIcons.FaYoutube} style={{ marginRight: '6px' }} />
+                        Watch on YouTube
+                      </a>
+                    </div>
+                  )}
+                </div>
+                
+                <div style={{ flex: '1 1 320px' }}>
+                  <h3 style={{ 
+                    margin: '0 0 12px 0',
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#333'
+                  }}>
+                    {selectedVideo.nome_do_video || selectedVideo.title || "Untitled Video"}
+                  </h3>
+                  
+                  <div style={{ 
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '16px',
+                    marginBottom: '16px'
+                  }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      fontSize: '14px',
+                      color: '#666'
+                    }}>
+                      <IconComponent icon={FaIcons.FaEye} style={{ marginRight: '6px' }} />
+                      {selectedVideo.views ? (selectedVideo.views >= 1000 ? `${(selectedVideo.views / 1000).toFixed(1)}K` : selectedVideo.views) : '0'} views
+                    </div>
+                    
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      fontSize: '14px',
+                      color: '#666'
+                    }}>
+                      <IconComponent icon={FaIcons.FaComment} style={{ marginRight: '6px' }} />
+                      {selectedVideo.commets || selectedVideo.comments || '0'} comments
+                    </div>
+                    
+                    {selectedVideo.content_category && (
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        fontSize: '14px',
+                        color: '#666'
+                      }}>
+                        <IconComponent icon={FaIcons.FaTag} style={{ marginRight: '6px' }} />
+                        {selectedVideo.content_category}
+                      </div>
+                    )}
+                    
+                    {selectedVideo.relevance_score && (
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        fontSize: '14px',
+                        color: '#666',
+                        background: '#f5f5f5',
+                        padding: '4px 10px',
+                        borderRadius: '12px'
+                      }}>
+                        <IconComponent icon={FaIcons.FaChartLine} style={{ marginRight: '6px' }} />
+                        Relevance: {(selectedVideo.relevance_score * 100).toFixed(0)}%
+                      </div>
+                    )}
+                  </div>
+                  
+                  {selectedVideo.descricao && (
+                    <div style={{ 
+                      fontSize: '14px',
+                      color: '#555',
+                      maxHeight: '100px',
+                      overflowY: 'auto',
+                      padding: '10px',
+                      background: '#f9f9f9',
+                      borderRadius: '6px'
+                    }}>
+                      {selectedVideo.descricao.length > 300 
+                        ? `${selectedVideo.descricao.substring(0, 300)}...` 
+                        : selectedVideo.descricao}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </VideoDetailsSection>
+          )}
+          
+          <ChartHeader>
+            <ChartTitle>
+              <IconComponent icon={FaIcons.FaComments} />
+              {currentVideoComments.length} Comments
             </ChartTitle>
           </ChartHeader>
           
