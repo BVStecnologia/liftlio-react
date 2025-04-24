@@ -2069,6 +2069,9 @@ const YoutubeMonitoring: React.FC = () => {
     setShowJustification(true);
   };
   
+  // Filtrar comentários para exibir apenas aqueles com status "posted"
+  const filteredComments = currentVideoComments.filter(comment => comment.status === 'posted');
+  
   return (
     <PageContainer>
       <PageTitle>
@@ -2115,7 +2118,7 @@ const YoutubeMonitoring: React.FC = () => {
               }} 
               status="active"
             >
-              {videoComments.length}
+              {filteredComments.length}
             </ChannelBadge>
           </Tab>
         )}
@@ -3058,7 +3061,7 @@ const YoutubeMonitoring: React.FC = () => {
           <ChartHeader>
             <ChartTitle>
               <IconComponent icon={FaIcons.FaComments} />
-              {currentVideoComments.length} Comments
+              {filteredComments.length} Comments
             </ChartTitle>
           </ChartHeader>
           
@@ -3069,17 +3072,17 @@ const YoutubeMonitoring: React.FC = () => {
               </div>
               <p>Loading comments...</p>
             </div>
-          ) : currentVideoComments.length === 0 ? (
+          ) : filteredComments.length === 0 ? (
             <div style={{ padding: '40px 0', textAlign: 'center' }}>
               <div style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}>
                 <IconComponent icon={FaIcons.FaComments} />
               </div>
               <h3>No comments found for this video</h3>
-              <p>This video doesn't have any comments yet</p>
+              <p>This video doesn't have any posted comments yet</p>
             </div>
           ) : (
             <div style={{ padding: '20px' }}>
-              {currentVideoComments.map(comment => (
+              {filteredComments.map(comment => (
                 <div 
                   key={comment.id_comentario} 
                   style={{ 
@@ -3107,6 +3110,24 @@ const YoutubeMonitoring: React.FC = () => {
                     {comment.lead_score && 
                       <span><IconComponent icon={FaIcons.FaStar} /> Score: {comment.lead_score}</span>
                     }
+                    {comment.justificativa_comentario && (
+                      <button 
+                        onClick={() => showJustificationPopup('Comment Justification', comment.justificativa_comentario)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#5F27CD',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '0',
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        <IconComponent icon={FaIcons.FaInfoCircle} style={{ marginRight: '4px' }} />
+                        Justification
+                      </button>
+                    )}
                   </div>
                   
                   {comment.mensagem && (
@@ -3117,12 +3138,30 @@ const YoutubeMonitoring: React.FC = () => {
                       borderRadius: '6px',
                       borderLeft: '3px solid #5F27CD' 
                     }}>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#5F27CD', marginBottom: '4px' }}>
-                        <IconComponent icon={FaIcons.FaReply} /> Resposta:
+                      <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#5F27CD', marginBottom: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span><IconComponent icon={FaIcons.FaReply} /> Reply:</span>
+                        {comment.justificativa_mensagem && (
+                          <button 
+                            onClick={() => showJustificationPopup('Reply Justification', comment.justificativa_mensagem)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#5F27CD',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              padding: '0',
+                              fontSize: '0.85rem'
+                            }}
+                          >
+                            <IconComponent icon={FaIcons.FaInfoCircle} style={{ marginRight: '4px' }} />
+                            Justification
+                          </button>
+                        )}
                       </div>
                       <div>{comment.mensagem}</div>
                       <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>
-                        Status: {comment.respondido ? 'Enviada' : 'Pendente'}
+                        Status: {comment.respondido ? 'Sent' : 'Pending'}
                       </div>
                     </div>
                   )}
