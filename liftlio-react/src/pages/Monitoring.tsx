@@ -8,11 +8,7 @@ import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
 import { supabase, callRPC } from '../lib/supabaseClient';
-import { format, parseISO } from 'date-fns';
-import { RelevanceIndicator } from '../components/RelevanceIndicator';
-import { LoadingContainer, LoadingText, NoDataContainer, NoDataText } from '../styles/LoadingStyles';
-import Spinner from '../components/Spinner';
-import { VideoMetaText } from '../styles/VideoMetaText';
+import Spinner from '../components/ui/Spinner';
 
 // Shared styled components
 const PageContainer = styled.div`
