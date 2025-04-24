@@ -263,7 +263,7 @@ const ChannelList = styled.div`
 const ChannelCardWrapper = styled.div<{ active: boolean }>`
   display: flex;
   align-items: center;
-  padding: 20px;
+  padding: 24px 20px; /* Aumentar padding vertical de 20px para 24px */
   border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.tertiary};
   box-shadow: ${props => props.active ? '0 8px 16px rgba(0,0,0,0.15)' : '0 4px 8px rgba(0,0,0,0.08)'};
   cursor: pointer;
@@ -359,13 +359,14 @@ const ChannelBadge = styled.div<{ status: string }>`
 
 const ChannelInfo = styled.div`
   flex: 1;
+  min-width: 0; /* Evitar que ultrapasse o container */
 `;
 
 const ChannelName = styled.div`
   font-weight: ${props => props.theme.fontWeights.bold};
   font-size: ${props => props.theme.fontSizes.lg};
   color: ${props => props.theme.colors.text};
-  margin-bottom: 8px;
+  margin-bottom: 12px; /* Aumentar espaço entre o nome e as estatísticas */
   display: flex;
   align-items: center;
   
@@ -377,10 +378,10 @@ const ChannelName = styled.div`
 `;
 
 const ChannelStats = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 12px 16px; /* Aumentar espaçamento entre as estatísticas */
+  align-items: center;
 `;
 
 // Define ChannelStatItem abaixo do estilo ChannelStats
