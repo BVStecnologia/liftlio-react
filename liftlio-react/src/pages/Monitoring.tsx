@@ -1770,19 +1770,15 @@ const YoutubeMonitoring: React.FC = () => {
                     </VideoTitle>
                     <VideoStat>
                       {(video.views / 1000).toFixed(0)}K
-                      <VideoStatLabel>Views</VideoStatLabel>
                     </VideoStat>
                     <VideoStat>
                       {(video.comments / 1000).toFixed(1)}K
-                      <VideoStatLabel>Comments</VideoStatLabel>
                     </VideoStat>
                     <VideoStat>
                       {(video.likes / 1000).toFixed(1)}K
-                      <VideoStatLabel>Likes</VideoStatLabel>
                     </VideoStat>
                     <VideoStat>
                       {video.retention}%
-                      <VideoStatLabel>Retention</VideoStatLabel>
                     </VideoStat>
                   </VideoTableRow>
                 ))}
@@ -2269,25 +2265,21 @@ const YoutubeMonitoring: React.FC = () => {
                             }}
                           >
                             <IconComponent icon={FaIcons.FaExpandAlt} />
-                            Ver detalhes completos
+                            View full details
                           </ExpandButton>
                         </VideoTitleText>
                       </VideoTitle>
                       <VideoStat>
                         {video.views ? (video.views >= 1000 ? `${(video.views / 1000).toFixed(1)}K` : video.views) : '0'}
-                        <VideoStatLabel>Views</VideoStatLabel>
                       </VideoStat>
                       <VideoStat>
                         {video.commets || video.comments || '0'}
-                        <VideoStatLabel>Comments</VideoStatLabel>
                       </VideoStat>
                       <VideoStat>
                         {video.content_category || video.category || "Uncategorized"}
-                        <VideoStatLabel>Category</VideoStatLabel>
                       </VideoStat>
                       <VideoStat>
                         {video.relevance_score ? `${(video.relevance_score * 100).toFixed(0)}%` : '0%'}
-                        <VideoStatLabel>Relevance</VideoStatLabel>
                       </VideoStat>
                     </VideoTableRow>
                   );
@@ -2438,7 +2430,7 @@ const YoutubeMonitoring: React.FC = () => {
                   leftIcon={<IconComponent icon={FaIcons.FaTimes} />}
                   onClick={() => setSelectedVideoForDetail(null)}
                 >
-                  Fechar
+                  Close
                 </ModalActionButton>
                 
                 {selectedVideoForDetail.video_id_youtube && (
@@ -2449,7 +2441,7 @@ const YoutubeMonitoring: React.FC = () => {
                       window.open(`https://www.youtube.com/watch?v=${selectedVideoForDetail.video_id_youtube}`, '_blank');
                     }}
                   >
-                    Ver no YouTube
+                    Watch on YouTube
                   </ModalActionButton>
                 )}
               </ModalActions>
