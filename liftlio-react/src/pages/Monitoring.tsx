@@ -397,6 +397,48 @@ const ChannelStatItem = styled.div`
   }
 `;
 
+// Adicionar um componente de tooltip para melhorar a UX
+const CustomTooltip = styled.div`
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: ${props => props.theme.colors.text};
+  color: white;
+  padding: 6px 10px;
+  border-radius: ${props => props.theme.radius.sm};
+  font-size: ${props => props.theme.fontSizes.xs};
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 4px;
+    border-style: solid;
+    border-color: ${props => props.theme.colors.text} transparent transparent transparent;
+  }
+`;
+
+const TooltipContainer = styled.div`
+  position: relative;
+  
+  &:hover ${CustomTooltip} {
+    opacity: 1;
+    visibility: visible;
+    bottom: calc(100% + 10px);
+  }
+`;
+
+// Modificar EngagementPill para mostrar o score de relevância
 const EngagementPill = styled.div`
   background: linear-gradient(135deg, ${props => props.theme.colors.primary}22, ${props => props.theme.colors.primary}44);
   color: ${props => props.theme.colors.primary};
@@ -734,6 +776,8 @@ interface ChannelDetails {
   video_count?: number;        // Número de vídeos
   custom_url?: string;         // URL personalizada do canal
   description?: string;        // Descrição do canal
+  total_mensagens_postadas?: number; // Número total de mensagens postadas
+  avg_relevance_score?: number; // Score médio de relevância
 }
 
 // Default empty array for channels
@@ -2037,22 +2081,45 @@ const YoutubeMonitoring: React.FC = () => {
                     <ChannelInfo>
                       <ChannelName>{channel.channel_name || channel.Nome || channel.name || 'Unnamed Channel'}</ChannelName>
                       <ChannelStats>
-                        <ChannelStatItem>
-                          <IconComponent icon={FaIcons.FaUser} />
-                          {channel.subscriber_count}
-                        </ChannelStatItem>
-                        <ChannelStatItem>
-                          <IconComponent icon={FaIcons.FaEye} />
-                          {channel.view_count}
-                        </ChannelStatItem>
-                        <ChannelStatItem>
-                          <IconComponent icon={FaIcons.FaClock} />
-                          {channel.last_video}
-                        </ChannelStatItem>
-                        <ChannelStatItem>
-                          <IconComponent icon={FaIcons.FaVideo} />
-                          {channelVideoCount[channel.id] || 0} monitored videos
-                        </ChannelStatItem>
+                        <TooltipContainer>
+                          <ChannelStatItem>
+                            <IconComponent icon={FaIcons.FaUser} />
+                            {channel.subscriber_count}
+                            <CustomTooltip>Number of channel subscribers</CustomTooltip>
+                          </ChannelStatItem>
+                        </TooltipContainer>
+                        
+                        <TooltipContainer>
+                          <ChannelStatItem>
+                            <IconComponent icon={FaIcons.FaEye} />
+                            {channel.view_count}
+                            <CustomTooltip>Total view count for the channel</CustomTooltip>
+                          </ChannelStatItem>
+                        </TooltipContainer>
+                        
+                        <TooltipContainer>
+                          <ChannelStatItem>
+                            <IconComponent icon={FaIcons.FaClock} />
+                            {channel.last_video}
+                            <CustomTooltip>When the last video was published</CustomTooltip>
+                          </ChannelStatItem>
+                        </TooltipContainer>
+                        
+                        <TooltipContainer>
+                          <ChannelStatItem>
+                            <IconComponent icon={FaIcons.FaVideo} />
+                            {channelVideoCount[channel.id] || 0} monitored videos
+                            <CustomTooltip>Number of videos being monitored</CustomTooltip>
+                          </ChannelStatItem>
+                        </TooltipContainer>
+                        
+                        <TooltipContainer>
+                          <ChannelStatItem>
+                            <IconComponent icon={FaIcons.FaCommentAlt} />
+                            {channel.total_mensagens_postadas || 0} posts
+                            <CustomTooltip>Number of messages posted to this channel</CustomTooltip>
+                          </ChannelStatItem>
+                        </TooltipContainer>
                       </ChannelStats>
                       
                       {/* Mensagem de instrução */}
@@ -2068,10 +2135,13 @@ const YoutubeMonitoring: React.FC = () => {
                       </ChannelStatItem>
                     </ChannelInfo>
                     
-                    <EngagementPill>
-                      <IconComponent icon={FaIcons.FaChartLine} />
-                      {channel.engagement_rate || channel.engagementRate || '0%'}
-                    </EngagementPill>
+                    <TooltipContainer>
+                      <EngagementPill>
+                        <IconComponent icon={FaIcons.FaChartLine} />
+                        Score: {channel.avg_relevance_score || '0.0'}
+                        <CustomTooltip>Channel relevance score based on engagement metrics</CustomTooltip>
+                      </EngagementPill>
+                    </TooltipContainer>
                   </ChannelCardWrapper>
                 ))
               )}
