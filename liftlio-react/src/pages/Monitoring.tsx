@@ -264,13 +264,11 @@ const ChannelCardWrapper = styled.div<{ active: boolean }>`
   display: flex;
   align-items: center;
   padding: 20px;
-  border: 1px solid ${props => props.active ? props.theme.colors.primary : 'rgba(200, 200, 200, 0.15)'};
-  box-shadow: ${props => props.active ? '0 8px 16px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.15)'};
+  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.tertiary};
+  box-shadow: ${props => props.active ? '0 8px 16px rgba(0,0,0,0.15)' : '0 4px 8px rgba(0,0,0,0.08)'};
   cursor: pointer;
   border-radius: ${props => props.theme.radius.lg};
-  background: ${props => props.active 
-    ? 'linear-gradient(to right, #2c3e50, #34495e)' 
-    : 'linear-gradient(to right, #2c3e50, #34495e)'};
+  background-color: ${props => props.theme.colors.white};
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -278,7 +276,7 @@ const ChannelCardWrapper = styled.div<{ active: boolean }>`
   &:hover {
     transform: translateY(-4px);
     border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
   }
   
   ${props => props.active && `
@@ -294,6 +292,46 @@ const ChannelCardWrapper = styled.div<{ active: boolean }>`
   `}
 `;
 
+// Adicionar background cinza apenas para a lateral da foto
+const ChannelIconWrapper = styled.div`
+  position: relative;
+  margin-right: 20px;
+  padding: 0;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    bottom: -20px;
+    left: -20px;
+    width: 104px; /* 64px (imagem) + 20px (margin-right) + 20px (padding esquerdo) */
+    background: #f2f2f2;
+    border-radius: ${props => props.theme.radius.lg} 0 0 ${props => props.theme.radius.lg};
+    z-index: 0;
+  }
+`;
+
+// Ajustar ChannelIcon para ficar sobre o wrapper
+const ChannelIcon = styled.div`
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(to right, #f0f0f0, #e0e0e0);
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+`;
+
 const ChannelBadge = styled.div<{ status: string }>`
   position: absolute;
   top: 12px;
@@ -302,39 +340,21 @@ const ChannelBadge = styled.div<{ status: string }>`
   border-radius: ${props => props.theme.radius.pill};
   font-size: ${props => props.theme.fontSizes.xs};
   background: ${props => 
-    props.status === 'active' ? 'linear-gradient(135deg, #34C759, #34C75999)' : 
-    props.status === 'pending' ? 'linear-gradient(135deg, #FF9500, #FF950099)' : 
-    'linear-gradient(135deg, #aaa, #aaa99)'};
-  color: white;
+    props.status === 'active' ? props.theme.colors.successLight : 
+    props.status === 'pending' ? props.theme.colors.warningLight : 
+    props.theme.colors.lightGrey};
+  color: ${props => 
+    props.status === 'active' ? props.theme.colors.success : 
+    props.status === 'pending' ? props.theme.colors.warning : 
+    props.theme.colors.darkGrey};
   font-weight: ${props => props.theme.fontWeights.medium};
   display: flex;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   
   svg {
     margin-right: 4px;
     font-size: 10px;
   }
-`;
-
-// Melhorar o componente ChannelIcon com estilo mais profissional
-const ChannelIcon = styled.div`
-  width: 64px;
-  height: 64px;
-  background: ${props => props.theme.colors.gradient.primary};
-  background-size: cover;
-  background-position: center;
-  border-radius: 50%;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 20px;
-  font-size: 24px;
-  flex-shrink: 0;
-  border: 3px solid #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-  overflow: hidden;
 `;
 
 const ChannelInfo = styled.div`
@@ -344,7 +364,7 @@ const ChannelInfo = styled.div`
 const ChannelName = styled.div`
   font-weight: ${props => props.theme.fontWeights.bold};
   font-size: ${props => props.theme.fontSizes.lg};
-  color: white;
+  color: ${props => props.theme.colors.text};
   margin-bottom: 8px;
   display: flex;
   align-items: center;
@@ -367,19 +387,19 @@ const ChannelStats = styled.div`
 const ChannelStatItem = styled.div`
   display: flex;
   align-items: center;
-  color: rgba(255, 255, 255, 0.8);
+  color: ${props => props.theme.colors.darkGrey};
   font-size: ${props => props.theme.fontSizes.sm};
   
   svg {
     margin-right: 6px;
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.9);
+    color: ${props => props.theme.colors.primary};
   }
 `;
 
 const EngagementPill = styled.div`
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
+  background: linear-gradient(135deg, ${props => props.theme.colors.primary}22, ${props => props.theme.colors.primary}44);
+  color: ${props => props.theme.colors.primary};
   padding: 6px 14px;
   border-radius: ${props => props.theme.radius.pill};
   font-size: ${props => props.theme.fontSizes.sm};
@@ -387,12 +407,11 @@ const EngagementPill = styled.div`
   margin-left: auto;
   display: flex;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   
   svg {
     margin-right: 6px;
     font-size: 14px;
-    color: ${props => props.theme.colors.success};
   }
 `;
 
@@ -859,6 +878,7 @@ const ChannelHeaderAvatar = styled.div<{ imageUrl: string }>`
   margin-top: -60px;
   box-shadow: ${props => props.theme.shadows.md};
   flex-shrink: 0;
+  position: relative;
   
   @media (max-width: 768px) {
     margin-bottom: 16px;
@@ -1922,9 +1942,11 @@ const YoutubeMonitoring: React.FC = () => {
                     onClick={() => {}}
                     style={{ opacity: 0.6 }}
                   >
-                    <ChannelIcon>
-                      <IconComponent icon={FaIcons.FaYoutube} />
-                    </ChannelIcon>
+                    <ChannelIconWrapper>
+                      <ChannelIcon>
+                        <IconComponent icon={FaIcons.FaYoutube} />
+                      </ChannelIcon>
+                    </ChannelIconWrapper>
                     
                     <ChannelInfo>
                       <ChannelName>Loading...</ChannelName>
@@ -2002,13 +2024,15 @@ const YoutubeMonitoring: React.FC = () => {
                       {channel.is_active === true ? 'Active' : 'Inactive'}
                     </ChannelBadge>
                     
-                    <ChannelIcon style={channel.imagem ? {
-                      backgroundImage: `url(${channel.imagem})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center'
-                    } : {}}>
-                      {!channel.imagem && <IconComponent icon={FaIcons.FaYoutube} />}
-                    </ChannelIcon>
+                    <ChannelIconWrapper>
+                      <ChannelIcon style={channel.imagem ? {
+                        backgroundImage: `url(${channel.imagem})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      } : {}}>
+                        {!channel.imagem && <IconComponent icon={FaIcons.FaYoutube} />}
+                      </ChannelIcon>
+                    </ChannelIconWrapper>
                     
                     <ChannelInfo>
                       <ChannelName>{channel.channel_name || channel.Nome || channel.name || 'Unnamed Channel'}</ChannelName>
@@ -2034,12 +2058,12 @@ const YoutubeMonitoring: React.FC = () => {
                       {/* Mensagem de instrução */}
                       <ChannelStatItem style={{ 
                         marginTop: '12px', 
-                        color: '#3498db', 
+                        color: '#007bff', 
                         fontWeight: 'bold',
                         display: 'flex',
                         alignItems: 'center' 
                       }}>
-                        <IconComponent icon={FaIcons.FaHandPointer} style={{ color: '#3498db' }} />
+                        <IconComponent icon={FaIcons.FaHandPointer} />
                         <span style={{ marginLeft: '4px' }}>Click to view channel videos</span>
                       </ChannelStatItem>
                     </ChannelInfo>
