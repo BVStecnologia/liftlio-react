@@ -482,11 +482,43 @@ const ChannelStatItem = styled.div`
   align-items: center;
   color: ${props => props.theme.colors.darkGrey};
   font-size: ${props => props.theme.fontSizes.md}; /* Aumentar de sm para md */
+  position: relative;
+  cursor: help;
   
   svg {
     margin-right: 8px; /* Aumentar de 6px para 8px */
     font-size: 16px; /* Aumentar de 14px para 16px */
     color: ${props => props.theme.colors.primary};
+  }
+  
+  &:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+    margin-bottom: 8px;
+  }
+  
+  &:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+    margin-bottom: 3px;
+    z-index: 10;
   }
 `;
 
@@ -2494,88 +2526,40 @@ const YoutubeMonitoring: React.FC = () => {
                   .map(channel => (
                     <ChannelCardWrapper 
                       key={channel.id} 
-                      active={selectedChannel === channel.id}
                       onClick={() => handleChannelSelect(channel.id)}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        setSelectedChannelForToggle(channel);
-                        setIsStatusPopupOpen(true);
-                      }}
+                      active={selectedChannel === channel.id}
                     >
-                      <CardHeader>
-                        <ScoreBadge>
-                          <IconComponent icon={FaIcons.FaChartLine} />
-                          Score: {channel.avg_relevance_score || '0.0'}
-                        </ScoreBadge>
-                        
-                        <ChannelBadge 
-                          status={channel.is_active === true ? 'active' : 'inactive'}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedChannelForToggle(channel);
-                            setIsStatusPopupOpen(true);
-                          }}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          {channel.is_active === true && <IconComponent icon={FaIcons.FaCheck} />}
-                          {channel.is_active === false && <IconComponent icon={FaIcons.FaPause} />}
-                          {channel.is_active === true ? 'Active' : 'Inactive'}
-                        </ChannelBadge>
-                      </CardHeader>
-                      
-                      <CardContent>
-                        <ChannelImageWrapper>
-                          <ChannelImage imageUrl={channel.imagem}>
-                            {!channel.imagem && <IconComponent icon={FaIcons.FaYoutube} />}
-                          </ChannelImage>
-                        </ChannelImageWrapper>
-                        
-                        <ChannelInfoContainer>
-                          <ChannelName>{channel.channel_name || channel.Nome || channel.name || 'Unnamed Channel'}</ChannelName>
-                          
-                          <ChannelStatsGrid>
-                            <StatRow>
-                              <StatIcon>
-                                <IconComponent icon={FaIcons.FaUser} />
-                              </StatIcon>
-                              <StatText>{channel.subscriber_count}</StatText>
-                            </StatRow>
-                            
-                            <StatRow>
-                              <StatIcon>
-                                <IconComponent icon={FaIcons.FaEye} />
-                              </StatIcon>
-                              <StatText>{channel.view_count}</StatText>
-                            </StatRow>
-                            
-                            <StatRow>
-                              <StatIcon>
-                                <IconComponent icon={FaIcons.FaClock} />
-                              </StatIcon>
-                              <StatText>{channel.last_video}</StatText>
-                            </StatRow>
-                            
-                            <StatRow>
-                              <StatIcon>
-                                <IconComponent icon={FaIcons.FaVideo} />
-                              </StatIcon>
-                              <StatText>{channelVideoCount[channel.id] || 0} monitored videos</StatText>
-                            </StatRow>
-                            
-                            <StatRow>
-                              <StatIcon>
-                                <IconComponent icon={FaIcons.FaCommentAlt} />
-                              </StatIcon>
-                              <StatText>{channel.total_mensagens_postadas || 0} posts</StatText>
-                            </StatRow>
-                          </ChannelStatsGrid>
-                          
-                          <ActionArea>
-                            <IconComponent icon={FaIcons.FaHandPointer} />
-                            Click to view channel videos
-                          </ActionArea>
-                        </ChannelInfoContainer>
-                      </CardContent>
+                      <ChannelIcon style={{ backgroundImage: channel.imagem ? `url(${channel.imagem})` : 'none' }}>
+                        {!channel.imagem && <IconComponent icon={FaIcons.FaYoutube} />}
+                      </ChannelIcon>
+                      <ChannelInfo>
+                        <div>
+                          <ChannelName>{channel.channel_name || channel.name || channel.Nome || "YouTube Channel"}</ChannelName>
+                          <ChannelStats>
+                            <ChannelStatItem data-tooltip="Total de inscritos do canal">
+                              <IconComponent icon={FaIcons.FaUserFriends} />
+                              {formatNumber(channel.subscriber_count) || formatNumber(channel.subscribers) || "0"}
+                            </ChannelStatItem>
+                            <ChannelStatItem data-tooltip="Total de visualizações do canal">
+                              <IconComponent icon={FaIcons.FaEye} />
+                              {formatNumber(channel.view_count) || formatNumber(channel.views) || "0"}
+                            </ChannelStatItem>
+                            <ChannelStatItem data-tooltip="Último vídeo publicado">
+                              <IconComponent icon={FaIcons.FaCalendarAlt} />
+                              {channel.last_video || channel.lastVideo || "N/A"}
+                            </ChannelStatItem>
+                            <ChannelStatItem data-tooltip="Taxa de engajamento do canal">
+                              <IconComponent icon={FaIcons.FaChartLine} />
+                              {channel.engagement_rate ? `${typeof channel.engagement_rate === 'number' ? channel.engagement_rate.toFixed(1) : channel.engagement_rate}%` : 
+                               channel.engagementRate ? `${channel.engagementRate}%` : "0%"}
+                            </ChannelStatItem>
+                          </ChannelStats>
+                        </div>
+                        <ActionArea>
+                          <IconComponent icon={FaIcons.FaHandPointer} />
+                          Click to view channel videos
+                        </ActionArea>
+                      </ChannelInfo>
                     </ChannelCardWrapper>
                   ))
               )}
@@ -3142,7 +3126,7 @@ const YoutubeMonitoring: React.FC = () => {
                         <span><IconComponent icon={FaIcons.FaReply} /> Reply:</span>
                         {comment.justificativa_mensagem && (
                           <button 
-                            onClick={() => showJustificationPopup('Reply Justification', comment.justificativa_mensagem)}
+                            onClick={() => showJustificationPopup('Reply Justification', comment.justificativa_mensagem || '')}
                             style={{
                               background: 'none',
                               border: 'none',
@@ -3173,9 +3157,6 @@ const YoutubeMonitoring: React.FC = () => {
           <ButtonRow>
             <ActionButton variant="ghost" leftIcon={<IconComponent icon={FaIcons.FaArrowLeft} />} onClick={() => setActiveTab('videos')}>
               Back to Videos
-            </ActionButton>
-            <ActionButton variant="primary" leftIcon={<IconComponent icon={FaIcons.FaReply} />}>
-              Reply to Comments
             </ActionButton>
           </ButtonRow>
         </ChartContainer>
