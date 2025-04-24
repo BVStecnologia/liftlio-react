@@ -1100,18 +1100,27 @@ const YoutubeMonitoring: React.FC = () => {
       });
       
       if (data && Array.isArray(data)) {
-        console.log('Channel videos data:', data);
+        console.log('Channel videos data:', JSON.stringify(data, null, 2));
         
-        // Verificar e registrar os IDs de vídeo
-        data.forEach(video => {
-          if (!video.video_id) {
-            console.warn('Video sem video_id:', video);
+        // Process data to ensure videos have thumbnail URLs
+        const processedVideos = data.map(video => {
+          // Identificar qual ID do vídeo usar (video_id ou id_video)
+          const youtubeVideoId = video.video_id || video.id_video || '';
+          
+          if (youtubeVideoId) {
+            console.log('Video YouTube ID encontrado:', youtubeVideoId);
+            return {
+              ...video,
+              // Garantir que temos o ID do YouTube em um campo consistente
+              video_id: youtubeVideoId
+            };
           } else {
-            console.log('Video ID encontrado:', video.video_id);
+            console.warn('Video sem ID do YouTube:', video);
+            return video;
           }
         });
         
-        setChannelVideos(data);
+        setChannelVideos(processedVideos);
       } else {
         console.error('Invalid data format received for channel videos');
         setChannelVideos([]);
@@ -2010,54 +2019,68 @@ const YoutubeMonitoring: React.FC = () => {
                   <div>Relevance</div>
                 </VideoTableHeader>
                 
-                {channelVideos.map((video: any) => (
-                  <VideoTableRow 
-                    key={video.id}
-                    onClick={() => handleVideoSelect(video.id)}
-                    style={{ 
-                      cursor: 'pointer', 
-                      background: selectedVideo === video.id ? withOpacity(COLORS.ACCENT, 0.1) : 'inherit',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <VideoTitle>
-                      {video.video_id && (
-                        <VideoThumbnail>
-                          <img 
-                            src={`https://i.ytimg.com/vi/${video.video_id}/hqdefault.jpg`}
-                            alt={video.nome_do_video || "Video thumbnail"}
-                            onError={(e) => {
-                              // Fallback para thumbnail de qualidade padrão se a alta qualidade não estiver disponível
-                              const target = e.target as HTMLImageElement;
-                              console.log(`Erro ao carregar thumbnail: ${target.src}`);
-                              target.src = `https://i.ytimg.com/vi/${video.video_id}/default.jpg`;
-                            }}
-                            style={{ display: 'block' }}
-                          />
-                        </VideoThumbnail>
-                      )}
-                      <VideoTitleText>
-                        {video.nome_do_video || "Untitled Video"}
-                      </VideoTitleText>
-                    </VideoTitle>
-                    <VideoStat>
-                      {video.views ? (video.views >= 1000 ? `${(video.views / 1000).toFixed(1)}K` : video.views) : '0'}
-                      <VideoStatLabel>Views</VideoStatLabel>
-                    </VideoStat>
-                    <VideoStat>
-                      {video.commets || '0'}
-                      <VideoStatLabel>Comments</VideoStatLabel>
-                    </VideoStat>
-                    <VideoStat>
-                      {video.content_category || "Uncategorized"}
-                      <VideoStatLabel>Category</VideoStatLabel>
-                    </VideoStat>
-                    <VideoStat>
-                      {video.relevance_score ? `${(video.relevance_score * 100).toFixed(0)}%` : '0%'}
-                      <VideoStatLabel>Relevance</VideoStatLabel>
-                    </VideoStat>
-                  </VideoTableRow>
-                ))}
+                {channelVideos.map((video: any) => {
+                  // Depuração para cada vídeo
+                  console.log('Renderizando vídeo:', video.id, 'video_id:', video.video_id);
+                  
+                  return (
+                    <VideoTableRow 
+                      key={video.id}
+                      onClick={() => handleVideoSelect(video.id)}
+                      style={{ 
+                        cursor: 'pointer', 
+                        background: selectedVideo === video.id ? withOpacity(COLORS.ACCENT, 0.1) : 'inherit',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <VideoTitle>
+                        {video.video_id ? (
+                          <VideoThumbnail>
+                            <img 
+                              src={`https://i.ytimg.com/vi/${video.video_id}/hqdefault.jpg`}
+                              alt={video.nome_do_video || "Video thumbnail"}
+                              onError={(e) => {
+                                // Fallback para thumbnail de qualidade padrão se a alta qualidade não estiver disponível
+                                const target = e.target as HTMLImageElement;
+                                console.log(`Erro ao carregar thumbnail: ${target.src}`);
+                                target.src = `https://i.ytimg.com/vi/${video.video_id}/default.jpg`;
+                              }}
+                              style={{ 
+                                display: 'block',
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover'
+                              }}
+                            />
+                          </VideoThumbnail>
+                        ) : (
+                          <VideoThumbnail style={{ background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <IconComponent icon={FaIcons.FaVideo} style={{ color: '#777', fontSize: '20px' }} />
+                          </VideoThumbnail>
+                        )}
+                        <VideoTitleText>
+                          {video.nome_do_video || video.title || "Untitled Video"}
+                        </VideoTitleText>
+                      </VideoTitle>
+                      <VideoStat>
+                        {video.views ? (video.views >= 1000 ? `${(video.views / 1000).toFixed(1)}K` : video.views) : '0'}
+                        <VideoStatLabel>Views</VideoStatLabel>
+                      </VideoStat>
+                      <VideoStat>
+                        {video.commets || video.comments || '0'}
+                        <VideoStatLabel>Comments</VideoStatLabel>
+                      </VideoStat>
+                      <VideoStat>
+                        {video.content_category || video.category || "Uncategorized"}
+                        <VideoStatLabel>Category</VideoStatLabel>
+                      </VideoStat>
+                      <VideoStat>
+                        {video.relevance_score ? `${(video.relevance_score * 100).toFixed(0)}%` : '0%'}
+                        <VideoStatLabel>Relevance</VideoStatLabel>
+                      </VideoStat>
+                    </VideoTableRow>
+                  );
+                })}
               </VideoTable>
             </div>
           )}
