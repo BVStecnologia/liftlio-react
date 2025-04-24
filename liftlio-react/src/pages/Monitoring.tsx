@@ -630,6 +630,13 @@ interface ChannelDetails {
   project_id?: string | number;
   Projeto?: number;            // Coluna real da tabela
   channel_id?: string;         // Coluna real da tabela - YouTube channel ID
+  
+  // Novos campos da API atualizada
+  imagem?: string;             // URL da imagem do canal
+  raw_subscriber_count?: number; // Número bruto de inscritos (sem formatação)
+  video_count?: number;        // Número de vídeos
+  custom_url?: string;         // URL personalizada do canal
+  description?: string;        // Descrição do canal
 }
 
 // Default empty array for channels
@@ -1164,15 +1171,33 @@ const YoutubeMonitoring: React.FC = () => {
     setSelectedVideo(null); // Clear selected video
     fetchChannelVideos(channelId);
     
-    // Get the channel data to extract YouTube channel ID
+    // Get the channel data
     const selectedChannelData = channels.find(c => c.id === channelId);
     console.log('Dados do canal encontrado:', selectedChannelData);
     
-    if (selectedChannelData && selectedChannelData.channel_id) {
-      console.log('Buscando detalhes para o channel_id do YouTube:', selectedChannelData.channel_id);
-      fetchChannelDetails(selectedChannelData.channel_id);
-    } else {
-      console.error('Não foi possível encontrar channel_id do YouTube para o canal selecionado');
+    if (selectedChannelData) {
+      // Usar diretamente os dados que já temos ao invés de fazer uma chamada adicional
+      const channelDetails = {
+        title: selectedChannelData.channel_name || 'Canal do YouTube',
+        description: selectedChannelData.description || 'Informações detalhadas sobre este canal não estão disponíveis no momento.',
+        statistics: {
+          subscriberCount: selectedChannelData.raw_subscriber_count || selectedChannelData.subscriber_count || '0',
+          viewCount: typeof selectedChannelData.view_count === 'string' ? 
+                    selectedChannelData.view_count.replace(/[^0-9.]/g, '') : 
+                    selectedChannelData.view_count || '0',
+          videoCount: selectedChannelData.video_count?.toString() || '0'
+        },
+        thumbnails: {
+          high: { url: selectedChannelData.imagem || 'https://via.placeholder.com/150' },
+          medium: { url: selectedChannelData.imagem || 'https://via.placeholder.com/150' },
+          default: { url: selectedChannelData.imagem || 'https://via.placeholder.com/150' }
+        },
+        country: 'BR',
+        customUrl: selectedChannelData.custom_url || null
+      };
+      
+      console.log('Usando dados do canal para o cabeçalho:', channelDetails);
+      setSelectedChannelDetails(channelDetails);
     }
     
     // If in Overview or Channels tab, switch to Videos tab
