@@ -303,8 +303,8 @@ const ChannelIconWrapper = styled.div`
     position: absolute;
     top: 0;
     bottom: 0;
-    left: -20px;
-    width: 104px; /* 64px (imagem) + 20px (margin-right) + 20px (padding esquerdo) */
+    left: -100%; /* Estender até a borda esquerda */
+    width: calc(100% + 84px); /* Largura ajustada para ocupar toda área esquerda */
     background: #f2f2f2;
     border-radius: ${props => props.theme.radius.lg} 0 0 ${props => props.theme.radius.lg};
     z-index: 0;
