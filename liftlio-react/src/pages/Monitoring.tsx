@@ -807,7 +807,7 @@ const YoutubeMonitoring: React.FC = () => {
               <StatCardHeader>
                 <StatLabel>Total Views</StatLabel>
                 <StatIconContainer color="#5856D6">
-                  <IconComponent icon={FaIcons.FaEye} />
+                  <IconComponent icon={FaIcons.FaChartBar} />
                 </StatIconContainer>
               </StatCardHeader>
               <StatValue>{metricsData ? (metricsData.total_views >= 1000000 ? `${(metricsData.total_views / 1000000).toFixed(1)}M` : `${(metricsData.total_views / 1000).toFixed(0)}K`) : '0'}</StatValue>
@@ -817,7 +817,7 @@ const YoutubeMonitoring: React.FC = () => {
               <StatCardHeader>
                 <StatLabel>Total Likes</StatLabel>
                 <StatIconContainer color="#FF9500">
-                  <IconComponent icon={FaIcons.FaThumbsUp} />
+                  <IconComponent icon={FaIcons.FaHeart} />
                 </StatIconContainer>
               </StatCardHeader>
               <StatValue>{metricsData ? (metricsData.total_likes >= 1000000 ? `${(metricsData.total_likes / 1000000).toFixed(1)}M` : `${(metricsData.total_likes / 1000).toFixed(0)}K`) : '0'}</StatValue>
@@ -827,7 +827,7 @@ const YoutubeMonitoring: React.FC = () => {
               <StatCardHeader>
                 <StatLabel>Comments Posted</StatLabel>
                 <StatIconContainer color="#34C759">
-                  <IconComponent icon={FaIcons.FaComment} />
+                  <IconComponent icon={FaIcons.FaComments} />
                 </StatIconContainer>
               </StatCardHeader>
               <StatValue>{metricsData?.posts.toLocaleString() || '0'}</StatValue>
@@ -837,7 +837,7 @@ const YoutubeMonitoring: React.FC = () => {
               <StatCardHeader>
                 <StatLabel>Engagement Rate</StatLabel>
                 <StatIconContainer color="#FF2D55">
-                  <IconComponent icon={FaIcons.FaChartLine} />
+                  <IconComponent icon={FaIcons.FaChartPie} />
                 </StatIconContainer>
               </StatCardHeader>
               <StatValue>{metricsData?.media ? `${parseFloat(metricsData.media).toFixed(1)}%` : '0%'}</StatValue>
