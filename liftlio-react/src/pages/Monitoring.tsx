@@ -2630,14 +2630,15 @@ const YoutubeMonitoring: React.FC = () => {
                   display: 'flex', 
                   justifyContent: 'center', 
                   alignItems: 'center',
-                  fontSize: '10px'  // Reduzir a fonte em aproximadamente 20%
+                  fontSize: '12px',  // Ajustado para ficar apenas 20% menor
+                  paddingBottom: '20px' // Descer um pouco o gráfico para centralizar visualmente
                 }}>
                   <ResponsiveContainer width="85%" height="100%">
-                    <PieChart>
+                    <PieChart margin={{ top: 10, right: 10, bottom: 30, left: 10 }}>
                       <Pie
                         data={getContentDistributionData()}
                         cx="50%"
-                        cy="50%"
+                        cy="55%" // Ajustado para descer um pouco o gráfico
                         labelLine={false}
                         outerRadius={77}
                         innerRadius={46}
