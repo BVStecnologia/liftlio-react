@@ -2900,7 +2900,7 @@ const YoutubeMonitoring: React.FC = () => {
           <ChartHeader>
             <ChartTitle>
               <IconComponent icon={FaIcons.FaComment} />
-              Comments for Video: {channelVideos.find(v => v.id === selectedVideo)?.name || "Selected Video"}
+              Comments for Video: {selectedVideo?.nome_do_video || "Selected Video"}
             </ChartTitle>
           </ChartHeader>
           
@@ -2911,7 +2911,7 @@ const YoutubeMonitoring: React.FC = () => {
               </div>
               <p>Loading comments...</p>
             </div>
-          ) : videoComments.length === 0 ? (
+          ) : currentVideoComments.length === 0 ? (
             <div style={{ padding: '40px 0', textAlign: 'center' }}>
               <div style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}>
                 <IconComponent icon={FaIcons.FaComments} />
@@ -2921,26 +2921,53 @@ const YoutubeMonitoring: React.FC = () => {
             </div>
           ) : (
             <div style={{ padding: '20px' }}>
-              {videoComments.map(comment => (
+              {currentVideoComments.map(comment => (
                 <div 
-                  key={comment.id} 
+                  key={comment.id_comentario} 
                   style={{ 
                     padding: '15px', 
                     borderBottom: '1px solid #eee', 
                     display: 'flex', 
                     flexDirection: 'column', 
-                    gap: '8px' 
+                    gap: '8px',
+                    background: '#fff',
+                    borderRadius: '8px',
+                    marginBottom: '10px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ fontWeight: 'bold' }}>{comment.author_name}</div>
-                    <div style={{ fontSize: '0.8rem', color: '#666' }}>{comment.date}</div>
+                    <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                      {comment.published_at || comment.updated_at || 'N/A'}
+                    </div>
                   </div>
                   <div>{comment.text_original}</div>
                   <div style={{ fontSize: '0.9rem', color: '#666', display: 'flex', gap: '10px' }}>
                     <span><IconComponent icon={FaIcons.FaThumbsUp} /> {comment.like_count}</span>
-                    <span><IconComponent icon={FaIcons.FaReply} /> Reply</span>
+                    <span><IconComponent icon={FaIcons.FaReply} /> {comment.total_reply_count} replies</span>
+                    {comment.lead_score && 
+                      <span><IconComponent icon={FaIcons.FaStar} /> Score: {comment.lead_score}</span>
+                    }
                   </div>
+                  
+                  {comment.mensagem && (
+                    <div style={{ 
+                      marginTop: '8px', 
+                      padding: '8px', 
+                      background: '#f5f8fa', 
+                      borderRadius: '6px',
+                      borderLeft: '3px solid #5F27CD' 
+                    }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#5F27CD', marginBottom: '4px' }}>
+                        <IconComponent icon={FaIcons.FaReply} /> Resposta:
+                      </div>
+                      <div>{comment.mensagem}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>
+                        Status: {comment.respondido ? 'Enviada' : 'Pendente'}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
