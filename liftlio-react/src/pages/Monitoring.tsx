@@ -1830,13 +1830,61 @@ const YoutubeMonitoring: React.FC = () => {
         return;
       }
 
+      // Tentar encontrar o vídeo nos dados para debug
+      const videoData = channelVideos.find(v => v.id === videoId);
+      console.log('DEBUG - Dados completos do vídeo:', videoData);
+      
+      // Ver se há outros IDs disponíveis que possam ser usados
+      const possibleIds = {
+        id: videoId,
+        video_id: videoData?.video_id,
+        video_id_youtube: videoData?.video_id_youtube,
+        id_video: videoData?.id_video
+      };
+      console.log('DEBUG - Possíveis IDs para usar na consulta:', possibleIds);
+      
+      // Fazer a chamada RPC com o ID padrão
+      console.log('Chamando RPC com video_id_param:', videoId);
       const data = await callRPC('get_comments_and_messages_by_video_id', {
         video_id_param: videoId
       });
       
-      console.log('Parâmetro enviado para RPC get_comments_and_messages_by_video_id:', {
-        video_id_param: videoId
-      });
+      console.log('Resposta da RPC:', data);
+      
+      // Se não há dados, tentar com outros IDs possíveis
+      if (!data || (Array.isArray(data) && data.length === 0)) {
+        console.log('Nenhum comentário encontrado com ID padrão. Tentando outros IDs...');
+        
+        // Se temos um video_id diferente do id, tentar com ele
+        if (videoData?.video_id && videoData.video_id !== videoId) {
+          console.log('Tentando com video_id:', videoData.video_id);
+          const dataWithVideoId = await callRPC('get_comments_and_messages_by_video_id', {
+            video_id_param: videoData.video_id
+          });
+          console.log('Resposta usando video_id:', dataWithVideoId);
+          
+          if (dataWithVideoId && Array.isArray(dataWithVideoId) && dataWithVideoId.length > 0) {
+            setCurrentVideoComments(dataWithVideoId);
+            setIsLoadingComments(false);
+            return;
+          }
+        }
+        
+        // Tentar com o video_id_youtube
+        if (videoData?.video_id_youtube) {
+          console.log('Tentando com video_id_youtube:', videoData.video_id_youtube);
+          const dataWithYoutubeId = await callRPC('get_comments_by_youtube_video_id', {
+            youtube_video_id: videoData.video_id_youtube
+          });
+          console.log('Resposta usando video_id_youtube:', dataWithYoutubeId);
+          
+          if (dataWithYoutubeId && Array.isArray(dataWithYoutubeId) && dataWithYoutubeId.length > 0) {
+            setCurrentVideoComments(dataWithYoutubeId);
+            setIsLoadingComments(false);
+            return;
+          }
+        }
+      }
       
       if (data) {
         console.log('Comentários do vídeo recebidos:', data);
