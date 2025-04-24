@@ -435,13 +435,30 @@ const VideoTableHeader = styled.div`
   display: grid;
   grid-template-columns: minmax(400px, 3fr) 100px 100px 150px 100px;
   padding: 16px 24px;
-  border-bottom: 1px solid ${props => props.theme.colors.tertiary};
-  color: ${props => props.theme.colors.darkGrey};
+  background: ${props => props.theme.colors.lightGrey};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  font-size: ${props => props.theme.fontSizes.sm};
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: ${props => withOpacity(COLORS.ACCENT, 0.05)};
+  border-bottom: 1px solid ${props => props.theme.colors.tertiary};
+  color: ${props => props.theme.colors.primary};
+  
+  > div {
+    display: flex;
+    align-items: center;
+    
+    &:not(:first-child) {
+      justify-content: center;
+      position: relative;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: -12px;
+        top: -16px;
+        bottom: -16px;
+        width: 1px;
+        background-color: ${props => props.theme.colors.tertiary};
+      }
+    }
+  }
 `;
 
 const VideoTitle = styled.div`
@@ -476,6 +493,20 @@ const VideoTableRow = styled.div`
   border-bottom: 1px solid ${props => props.theme.colors.tertiary};
   align-items: center;
   transition: all 0.2s ease;
+  
+  > div:not(:first-child) {
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      left: -12px;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background-color: ${props => props.theme.colors.tertiary}80;
+    }
+  }
   
   &:hover {
     background: ${props => props.theme.colors.tertiary}20;
