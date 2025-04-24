@@ -424,11 +424,14 @@ const StatusToggleButton = styled(ButtonUI)`
 const VideoTable = styled.div`
   width: 100%;
   border-collapse: collapse;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-radius: ${props => props.theme.radius.lg};
+  overflow: hidden;
 `;
 
 const VideoTableHeader = styled.div`
   display: grid;
-  grid-template-columns: 3fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: minmax(250px, 3fr) 80px 80px 1fr 80px;
   padding: 16px 24px;
   border-bottom: 1px solid ${props => props.theme.colors.tertiary};
   color: ${props => props.theme.colors.darkGrey};
@@ -436,11 +439,12 @@ const VideoTableHeader = styled.div`
   font-size: ${props => props.theme.fontSizes.sm};
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  background: ${props => withOpacity(COLORS.ACCENT, 0.05)};
 `;
 
 const VideoTableRow = styled.div`
   display: grid;
-  grid-template-columns: 3fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: minmax(250px, 3fr) 80px 80px 1fr 80px;
   padding: 16px 24px;
   border-bottom: 1px solid ${props => props.theme.colors.tertiary};
   align-items: center;
@@ -496,7 +500,11 @@ const VideoThumbnail = styled.div`
 const VideoTitleText = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  max-height: 48px;
+  line-height: 1.2;
   color: ${props => props.theme.colors.primary};
 `;
 
@@ -505,6 +513,10 @@ const VideoStat = styled.div`
   font-weight: ${props => props.theme.fontWeights.medium};
   font-size: ${props => props.theme.fontSizes.md};
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 `;
 
 const VideoStatLabel = styled.div`
@@ -1203,7 +1215,7 @@ const YoutubeMonitoring: React.FC = () => {
       // Usar diretamente os dados que já temos ao invés de fazer uma chamada adicional
       const channelDetails = {
         title: selectedChannelData.channel_name || 'YouTube Channel',
-        description: selectedChannelData.description || 'No detailed information available for this channel at the moment.',
+        description: selectedChannelData.description || '',
         statistics: {
           subscriberCount: selectedChannelData.raw_subscriber_count?.toString() || 
                           (typeof selectedChannelData.subscriber_count === 'string' ? 
@@ -1987,6 +1999,11 @@ const YoutubeMonitoring: React.FC = () => {
                     }}
                   >
                     <VideoTitle>
+                      {video.thumbnail_url && (
+                        <VideoThumbnail>
+                          <img src={video.thumbnail_url} alt={video.nome_do_video || "Video thumbnail"} />
+                        </VideoThumbnail>
+                      )}
                       <VideoTitleText>
                         {video.nome_do_video || "Untitled Video"}
                       </VideoTitleText>
