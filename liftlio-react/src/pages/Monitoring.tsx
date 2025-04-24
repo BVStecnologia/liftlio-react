@@ -938,10 +938,6 @@ const YoutubeMonitoring: React.FC = () => {
           <TabIcon><IconComponent icon={FaIcons.FaComment} /></TabIcon>
           Comments
         </Tab>
-        <Tab active={activeTab === 'automation'} onClick={() => setActiveTab('automation')}>
-          <TabIcon><IconComponent icon={FaIcons.FaRobot} /></TabIcon>
-          Automation
-        </Tab>
       </TabsContainer>
       
       {activeTab === 'overview' && (
@@ -1576,30 +1572,6 @@ const YoutubeMonitoring: React.FC = () => {
             <div style={{ marginTop: '24px' }}>
               <ActionButton variant="primary" leftIcon={<IconComponent icon={FaIcons.FaPlus} />}>
                 Create Template
-              </ActionButton>
-            </div>
-          </div>
-        </ChartContainer>
-      )}
-      
-      {activeTab === 'automation' && (
-        <ChartContainer>
-          <ChartHeader>
-            <ChartTitle>
-              <IconComponent icon={FaIcons.FaRobot} />
-              Automation Rules
-            </ChartTitle>
-          </ChartHeader>
-          
-          <div style={{ padding: '40px 0', textAlign: 'center' }}>
-            <div style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}>
-              <IconComponent icon={FaIcons.FaCogs} />
-            </div>
-            <h3>No automation rules set up</h3>
-            <p>Create rules to automate your YouTube engagement</p>
-            <div style={{ marginTop: '24px' }}>
-              <ActionButton variant="primary" leftIcon={<IconComponent icon={FaIcons.FaPlus} />}>
-                Create Rule
               </ActionButton>
             </div>
           </div>
