@@ -1819,20 +1819,34 @@ const YoutubeMonitoring: React.FC = () => {
   
   // Função para buscar comentários do vídeo selecionado
   const fetchVideoComments = async (videoId: number) => {
+    console.log('Buscando comentários para o vídeo ID:', videoId);
     setIsLoadingComments(true);
     try {
+      // Certificar-se de que estamos usando o ID correto da tabela de vídeos
+      if (!videoId) {
+        console.error('ID do vídeo inválido:', videoId);
+        setCurrentVideoComments([]);
+        setIsLoadingComments(false);
+        return;
+      }
+
       const data = await callRPC('get_comments_and_messages_by_video_id', {
         video_id_param: videoId
       });
       
+      console.log('Parâmetro enviado para RPC get_comments_and_messages_by_video_id:', {
+        video_id_param: videoId
+      });
+      
       if (data) {
-        console.log('Video comments:', data);
+        console.log('Comentários do vídeo recebidos:', data);
         setCurrentVideoComments(Array.isArray(data) ? data : []);
       } else {
+        console.log('Nenhum comentário encontrado para o vídeo ID:', videoId);
         setCurrentVideoComments([]);
       }
     } catch (error) {
-      console.error('Error in fetchVideoComments:', error);
+      console.error('Erro ao buscar comentários do vídeo:', error);
       setCurrentVideoComments([]);
     } finally {
       setIsLoadingComments(false);
@@ -1945,10 +1959,12 @@ const YoutubeMonitoring: React.FC = () => {
   
   // Function to select a video
   const handleVideoSelect = async (videoId: number) => {
+    console.log('Vídeo selecionado, ID:', videoId);
     setActiveTab('comments');
     
     // Encontrar o vídeo selecionado nos dados
     const video = channelVideos.find(v => v.id === videoId);
+    console.log('Dados do vídeo encontrado:', video);
     setSelectedVideo(video || null);
     
     // Buscar comentários do vídeo
