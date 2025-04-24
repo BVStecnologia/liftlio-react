@@ -1294,11 +1294,276 @@ const ModalActionButton = styled(ButtonUI)`
   min-width: 120px;
 `;
 
+// Adicionar interface para tipo de comentário
+interface VideoComment {
+  id_comentario: number;
+  author_name: string;
+  like_count: number;
+  text_original: string;
+  total_reply_count: number;
+  lead_score: string;
+  project_id: number;
+  justificativa_comentario: string;
+  id_mensagem?: number;
+  mensagem?: string;
+  respondido?: boolean;
+  comentario_principal_id?: number;
+  justificativa_mensagem?: string;
+  proxima_postagem?: string;
+  status?: string;
+}
+
+// Componentes para exibição de comentários
+const CommentsContainer = styled.div`
+  margin-top: 20px;
+`;
+
+const CommentCard = styled.div`
+  background: white;
+  border-radius: ${props => props.theme.radius.lg};
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  padding: 20px;
+  margin-bottom: 16px;
+`;
+
+const CommentHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+`;
+
+const CommentAuthor = styled.div`
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+  display: flex;
+  align-items: center;
+
+  svg {
+    margin-right: 8px;
+    color: #666;
+  }
+`;
+
+const CommentStats = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+const CommentStat = styled.div`
+  display: flex;
+  align-items: center;
+  color: #666;
+  font-size: 14px;
+  
+  svg {
+    margin-right: 4px;
+    font-size: 14px;
+  }
+`;
+
+const CommentScore = styled.div`
+  background: #f5f5f5;
+  color: #444;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 4px;
+    font-size: 12px;
+  }
+`;
+
+const CommentText = styled.div`
+  font-size: 15px;
+  line-height: 1.5;
+  color: #444;
+  margin-bottom: 16px;
+  white-space: pre-wrap;
+`;
+
+const JustificationButton = styled.button`
+  background: ${props => props.theme.colors.lightGrey};
+  border: none;
+  border-radius: ${props => props.theme.radius.sm};
+  padding: 6px 12px;
+  font-size: 12px;
+  color: ${props => props.theme.colors.darkGrey};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  
+  svg {
+    margin-right: 4px;
+    font-size: 10px;
+  }
+  
+  &:hover {
+    background: ${props => props.theme.colors.primary}20;
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const JustificationPopup = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const JustificationContent = styled.div`
+  background: white;
+  border-radius: ${props => props.theme.radius.lg};
+  max-width: 600px;
+  width: 90%;
+  padding: 24px;
+  box-shadow: ${props => props.theme.shadows.lg};
+`;
+
+const JustificationHeader = styled.div`
+  font-weight: 600;
+  font-size: 18px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const JustificationText = styled.div`
+  font-size: 15px;
+  line-height: 1.6;
+  color: #444;
+  white-space: pre-wrap;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: ${props => props.theme.radius.md};
+  margin-bottom: 16px;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  
+  &:hover {
+    background: #f5f5f5;
+  }
+`;
+
+const ResponseCard = styled.div`
+  background: #f5f9ff;
+  border-left: 3px solid ${props => props.theme.colors.primary};
+  padding: 16px;
+  margin-left: 24px;
+  margin-top: 12px;
+  border-radius: 0 ${props => props.theme.radius.md} ${props => props.theme.radius.md} 0;
+`;
+
+const ResponseHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+`;
+
+const ResponseTitle = styled.div`
+  font-weight: 500;
+  font-size: 14px;
+  color: ${props => props.theme.colors.primary};
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 6px;
+  }
+`;
+
+const ResponseStatus = styled.div<{ status?: string }>`
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  background: ${props => 
+    props.status === 'posted' ? '#e6f7ee' : 
+    props.status === 'pending' ? '#FFF8E6' : 
+    '#f5f5f5'};
+  color: ${props => 
+    props.status === 'posted' ? '#34C759' : 
+    props.status === 'pending' ? '#FF9500' : 
+    '#999'};
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 4px;
+    font-size: 10px;
+  }
+`;
+
+const ResponseText = styled.div`
+  font-size: 14px;
+  line-height: 1.5;
+  color: #555;
+  margin-bottom: 12px;
+`;
+
+const ResponseFooter = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #888;
+`;
+
+const CommentsHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+`;
+
+const CommentsTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 10px;
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const VideoDetailsSection = styled.div`
+  margin-bottom: 32px;
+`;
+
 // Component implementation
 const YoutubeMonitoring: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<number | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<any | null>(null);
   const [timeframe, setTimeframe] = useState('month');
   const [channelFilter, setChannelFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -1321,6 +1586,9 @@ const YoutubeMonitoring: React.FC = () => {
   const [selectedChannelDetails, setSelectedChannelDetails] = useState<any>(null);
   const [isLoadingChannelDetails, setIsLoadingChannelDetails] = useState(false);
   const [selectedVideoForDetail, setSelectedVideoForDetail] = useState<any>(null);
+  const [currentVideoComments, setCurrentVideoComments] = useState<VideoComment[]>([]);
+  const [showJustification, setShowJustification] = useState<boolean>(false);
+  const [currentJustification, setCurrentJustification] = useState<{ title: string; text: string } | null>(null);
   const { currentProject } = useProject();
   
   useEffect(() => {
@@ -1551,30 +1819,25 @@ const YoutubeMonitoring: React.FC = () => {
   
   // Nova função para buscar comentários de um vídeo específico
   const fetchVideoComments = async (videoId: number) => {
-    if (!videoId) return;
-    
     setIsLoadingComments(true);
     try {
-      // Simular a busca de comentários - no futuro, chamar a RPC real
-      // const data = await callRPC('get_video_comments', { id_video: videoId });
+      const { data, error } = await supabase.rpc('get_comments_and_messages_by_video_id', {
+        video_id_param: videoId
+      });
       
-      // Simulação de dados por enquanto
-      const simulatedComments = [
-        { id: 1, author: "João Silva", text: "Excelente vídeo, muito útil!", date: "2023-09-15", likes: 12 },
-        { id: 2, author: "Maria Oliveira", text: "Gostei muito das dicas. Obrigada por compartilhar!", date: "2023-09-15", likes: 8 },
-        { id: 3, author: "Pedro Santos", text: "Estou seguindo seu canal há meses, conteúdo fantástico!", date: "2023-09-16", likes: 15 },
-        { id: 4, author: "Ana Pereira", text: "Poderia fazer um vídeo sobre configuração de LEDs RGB?", date: "2023-09-16", likes: 4 },
-        { id: 5, author: "Carlos Mendes", text: "Salvou meu projeto! Muito obrigado.", date: "2023-09-17", likes: 10 }
-      ];
-      
-      setTimeout(() => {
-        setVideoComments(simulatedComments);
-        setIsLoadingComments(false);
-      }, 600);
-      
+      if (error) {
+        console.error('Error fetching video comments:', error);
+        setCurrentVideoComments([]);
+      } else if (data) {
+        console.log('Video comments:', data);
+        setCurrentVideoComments(Array.isArray(data) ? data : []);
+      } else {
+        setCurrentVideoComments([]);
+      }
     } catch (error) {
-      console.error('Error fetching video comments:', error);
-      setVideoComments([]);
+      console.error('Error in fetchVideoComments:', error);
+      setCurrentVideoComments([]);
+    } finally {
       setIsLoadingComments(false);
     }
   };
@@ -1684,12 +1947,15 @@ const YoutubeMonitoring: React.FC = () => {
   };
   
   // Function to select a video
-  const handleVideoSelect = (videoId: number) => {
-    setSelectedVideo(videoId);
-    fetchVideoComments(videoId);
-    
-    // Switch to Comments tab
+  const handleVideoSelect = async (videoId: number) => {
     setActiveTab('comments');
+    
+    // Encontrar o vídeo selecionado nos dados
+    const video = channelVideos.find(v => v.id === videoId);
+    setSelectedVideo(video || null);
+    
+    // Buscar comentários do vídeo
+    await fetchVideoComments(videoId);
   };
   
   // Helper function to format numbers
@@ -1732,6 +1998,12 @@ const YoutubeMonitoring: React.FC = () => {
     
     // Returna uma URL para uma imagem de placeholder personalizada
     return `https://placehold.co/640x360/${colors[colorIndex].replace('#', '')}/${firstLetter === videoTitle.charAt(0) ? 'FFFFFF' : '333333'}?text=${encodeURIComponent(firstLetter)}`;
+  };
+  
+  // Função para mostrar popup de justificativa
+  const showJustificationPopup = (title: string, text: string) => {
+    setCurrentJustification({ title, text });
+    setShowJustification(true);
   };
   
   return (
@@ -2600,12 +2872,12 @@ const YoutubeMonitoring: React.FC = () => {
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 'bold' }}>{comment.author}</div>
+                    <div style={{ fontWeight: 'bold' }}>{comment.author_name}</div>
                     <div style={{ fontSize: '0.8rem', color: '#666' }}>{comment.date}</div>
                   </div>
-                  <div>{comment.text}</div>
+                  <div>{comment.text_original}</div>
                   <div style={{ fontSize: '0.9rem', color: '#666', display: 'flex', gap: '10px' }}>
-                    <span><IconComponent icon={FaIcons.FaThumbsUp} /> {comment.likes}</span>
+                    <span><IconComponent icon={FaIcons.FaThumbsUp} /> {comment.like_count}</span>
                     <span><IconComponent icon={FaIcons.FaReply} /> Reply</span>
                   </div>
                 </div>
@@ -2711,6 +2983,31 @@ const YoutubeMonitoring: React.FC = () => {
             </ModalBody>
           </ModalContent>
         </VideoDetailModal>
+      )}
+      
+      {/* Popup de justificativa */}
+      {showJustification && currentJustification && (
+        <JustificationPopup onClick={() => setShowJustification(false)}>
+          <JustificationContent onClick={(e) => e.stopPropagation()}>
+            <JustificationHeader>
+              {currentJustification.title}
+              <CloseButton onClick={() => setShowJustification(false)}>
+                <IconComponent icon={FaIcons.FaTimes} />
+              </CloseButton>
+            </JustificationHeader>
+            
+            <JustificationText>{currentJustification.text}</JustificationText>
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <ButtonUI 
+                variant="ghost" 
+                onClick={() => setShowJustification(false)}
+              >
+                Close
+              </ButtonUI>
+            </div>
+          </JustificationContent>
+        </JustificationPopup>
       )}
     </PageContainer>
   );
