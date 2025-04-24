@@ -254,17 +254,18 @@ const SectionTitle = styled.h2`
 
 const ChannelList = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: 20px;
+  margin-top: 16px;
 `;
 
 // Create a wrapper div that can accept onClick and other interactive props
 const ChannelCardWrapper = styled.div<{ active: boolean }>`
   display: flex;
   align-items: center;
-  padding: 16px;
+  padding: 20px;
   border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.tertiary};
-  box-shadow: ${props => props.active ? props.theme.shadows.md : props.theme.shadows.sm};
+  box-shadow: ${props => props.active ? '0 8px 16px rgba(0,0,0,0.15)' : '0 4px 8px rgba(0,0,0,0.08)'};
   cursor: pointer;
   border-radius: ${props => props.theme.radius.lg};
   background-color: ${props => props.theme.colors.white};
@@ -275,6 +276,7 @@ const ChannelCardWrapper = styled.div<{ active: boolean }>`
   &:hover {
     transform: translateY(-4px);
     border-color: ${props => props.theme.colors.primary};
+    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
   }
   
   ${props => props.active && `
@@ -285,7 +287,7 @@ const ChannelCardWrapper = styled.div<{ active: boolean }>`
       left: 0;
       width: 4px;
       height: 100%;
-      background: ${props.theme.colors.primary};
+      background: linear-gradient(to bottom, ${props.theme.colors.primary}, ${COLORS.ACCENT || props.theme.colors.primary}CC);
     }
   `}
 `;
@@ -294,20 +296,18 @@ const ChannelBadge = styled.div<{ status: string }>`
   position: absolute;
   top: 12px;
   right: 12px;
-  padding: 4px 8px;
+  padding: 4px 12px;
   border-radius: ${props => props.theme.radius.pill};
   font-size: ${props => props.theme.fontSizes.xs};
   background: ${props => 
-    props.status === 'active' ? props.theme.colors.successLight : 
-    props.status === 'pending' ? props.theme.colors.warningLight : 
-    props.theme.colors.lightGrey};
-  color: ${props => 
-    props.status === 'active' ? props.theme.colors.success : 
-    props.status === 'pending' ? props.theme.colors.warning : 
-    props.theme.colors.darkGrey};
+    props.status === 'active' ? 'linear-gradient(135deg, #34C759, #34C75999)' : 
+    props.status === 'pending' ? 'linear-gradient(135deg, #FF9500, #FF950099)' : 
+    'linear-gradient(135deg, #aaa, #aaa99)'};
+  color: white;
   font-weight: ${props => props.theme.fontWeights.medium};
   display: flex;
   align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   
   svg {
     margin-right: 4px;
@@ -315,18 +315,24 @@ const ChannelBadge = styled.div<{ status: string }>`
   }
 `;
 
+// Melhorar o componente ChannelIcon com estilo mais profissional
 const ChannelIcon = styled.div`
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   background: ${props => props.theme.colors.gradient.primary};
+  background-size: cover;
+  background-position: center;
   border-radius: 50%;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 16px;
+  margin-right: 20px;
   font-size: 24px;
   flex-shrink: 0;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  overflow: hidden;
 `;
 
 const ChannelInfo = styled.div`
@@ -334,17 +340,25 @@ const ChannelInfo = styled.div`
 `;
 
 const ChannelName = styled.div`
-  font-weight: ${props => props.theme.fontWeights.semiBold};
-  font-size: ${props => props.theme.fontSizes.md};
+  font-weight: ${props => props.theme.fontWeights.bold};
+  font-size: ${props => props.theme.fontSizes.lg};
   color: ${props => props.theme.colors.text};
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  
+  svg {
+    color: #FF0000; /* YouTube red */
+    margin-left: 8px;
+    font-size: 16px;
+  }
 `;
 
 const ChannelStats = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 16px;
+  margin-top: 10px;
 `;
 
 // Define ChannelStatItem abaixo do estilo ChannelStats
@@ -355,24 +369,27 @@ const ChannelStatItem = styled.div`
   font-size: ${props => props.theme.fontSizes.sm};
   
   svg {
-    margin-right: 4px;
-    font-size: 12px;
+    margin-right: 6px;
+    font-size: 14px;
+    color: ${props => props.theme.colors.primary};
   }
 `;
 
 const EngagementPill = styled.div`
-  background: ${props => props.theme.colors.primary}15;
+  background: linear-gradient(135deg, ${props => props.theme.colors.primary}22, ${props => props.theme.colors.primary}44);
   color: ${props => props.theme.colors.primary};
-  padding: 4px 12px;
+  padding: 6px 14px;
   border-radius: ${props => props.theme.radius.pill};
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.theme.fontWeights.semiBold};
   margin-left: auto;
   display: flex;
   align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   
   svg {
     margin-right: 6px;
+    font-size: 14px;
   }
 `;
 
@@ -1982,8 +1999,12 @@ const YoutubeMonitoring: React.FC = () => {
                       {channel.is_active === true ? 'Active' : 'Inactive'}
                     </ChannelBadge>
                     
-                    <ChannelIcon>
-                      <IconComponent icon={FaIcons.FaYoutube} />
+                    <ChannelIcon style={channel.imagem ? {
+                      backgroundImage: `url(${channel.imagem})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    } : {}}>
+                      {!channel.imagem && <IconComponent icon={FaIcons.FaYoutube} />}
                     </ChannelIcon>
                     
                     <ChannelInfo>
