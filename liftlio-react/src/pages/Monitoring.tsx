@@ -8,6 +8,11 @@ import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
 import { supabase, callRPC } from '../lib/supabaseClient';
+import { format, parseISO } from 'date-fns';
+import { RelevanceIndicator } from '../components/RelevanceIndicator';
+import { LoadingContainer, LoadingText, NoDataContainer, NoDataText } from '../styles/LoadingStyles';
+import Spinner from '../components/Spinner';
+import { VideoMetaText } from '../styles/VideoMetaText';
 
 // Shared styled components
 const PageContainer = styled.div`
@@ -429,9 +434,10 @@ const VideoTable = styled.div`
   overflow: hidden;
 `;
 
+// Atualizar o grid para as colunas terem tamanhos mais adequados
 const VideoTableHeader = styled.div`
   display: grid;
-  grid-template-columns: minmax(450px, 4fr) 80px 80px 1fr 80px;
+  grid-template-columns: minmax(400px, 3fr) 100px 100px 150px 100px;
   padding: 16px 24px;
   border-bottom: 1px solid ${props => props.theme.colors.tertiary};
   color: ${props => props.theme.colors.darkGrey};
@@ -451,44 +457,25 @@ const VideoTitle = styled.div`
 
 const VideoThumbnail = styled.div`
   width: 120px;
-  height: 68px;
-  border-radius: ${props => props.theme.radius.sm};
-  background: #000;
-  overflow: hidden;
+  height: 67px; // Mantém a proporção 16:9
+  border-radius: 8px;
   margin-right: 16px;
-  position: relative;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  transition: all 0.3s ease;
+  overflow: hidden;
   
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    position: relative;
-    z-index: 1;
-  }
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   
-  &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 0;
-    height: 0;
-    border-top: 8px solid transparent;
-    border-left: 14px solid white;
-    border-bottom: 8px solid transparent;
-    opacity: 0.8;
-    z-index: 2;
-    pointer-events: none;
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease-in-out;
   }
 `;
 
+// Atualizar o grid para as linhas
 const VideoTableRow = styled.div`
   display: grid;
-  grid-template-columns: minmax(450px, 4fr) 80px 80px 1fr 80px;
+  grid-template-columns: minmax(400px, 3fr) 100px 100px 150px 100px;
   padding: 16px 24px;
   border-bottom: 1px solid ${props => props.theme.colors.tertiary};
   align-items: center;
@@ -514,6 +501,19 @@ const VideoTitleText = styled.div`
   color: ${props => props.theme.colors.primary};
 `;
 
+// Permitir que o título principal quebre mais linhas (atualizar a definição existente)
+const VideoMainTitle = styled.div`
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  font-size: ${props => props.theme.fontSizes.md};
+  margin-bottom: 4px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+// Ajustar o alinhamento das estatísticas
 const VideoStat = styled.div`
   color: ${props => props.theme.colors.primary};
   font-weight: ${props => props.theme.fontWeights.medium};
@@ -523,6 +523,7 @@ const VideoStat = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  height: 100%;
 `;
 
 const VideoStatLabel = styled.div`
@@ -886,37 +887,30 @@ const ChannelHeaderUrl = styled.a`
   }
 `;
 
-// Melhorar o estilo do título para mostrar mais informações
-const VideoMainTitle = styled.div`
-  font-weight: ${props => props.theme.fontWeights.semiBold};
-  font-size: ${props => props.theme.fontSizes.md};
-  margin-bottom: 4px;
-  line-height: 1.3;
-`;
-
-// Adicionar um componente para a descrição
+// Ajustar o estilo da descrição para ocupar menos espaço
 const VideoDescription = styled.div`
   font-size: ${props => props.theme.fontSizes.sm};
   color: ${props => props.theme.colors.darkGrey};
   margin-top: 6px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.4;
+  opacity: 0.9;
 `;
 
-// Adicionar ícone de expansão para ver mais detalhes
+// Ajustar o botão para ocupar menos espaço vertical
 const ExpandButton = styled.button`
   background: none;
   border: none;
   color: ${props => props.theme.colors.primary};
-  padding: 4px;
-  font-size: 14px;
+  padding: 2px 0;
+  font-size: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  margin-top: 6px;
+  margin-top: 4px;
   opacity: 0.8;
   transition: all 0.2s ease;
   
@@ -926,6 +920,7 @@ const ExpandButton = styled.button`
   
   svg {
     margin-right: 4px;
+    font-size: 10px;
   }
 `;
 
@@ -1292,11 +1287,16 @@ const YoutubeMonitoring: React.FC = () => {
             return {
               ...video,
               // Garantir que temos o ID do YouTube em um campo consistente
-              video_id_youtube: youtubeVideoId
+              video_id_youtube: youtubeVideoId,
+              // Adicionar a URL da thumbnail
+              thumbnailUrl: getYouTubeThumbnailUrl(youtubeVideoId)
             };
           } else {
             console.warn('Video sem ID do YouTube:', video);
-            return video;
+            return {
+              ...video,
+              thumbnailUrl: getThumbnailUrl(video)
+            };
           }
         });
         
@@ -1473,7 +1473,9 @@ const YoutubeMonitoring: React.FC = () => {
   
   // Função para gerar URL de thumbnail do YouTube
   const getYouTubeThumbnailUrl = (videoId: string) => {
-    // Tentar a versão de alta qualidade primeiro (maxresdefault)
+    if (!videoId) return 'https://placehold.co/640x360/5F27CD/FFFFFF?text=No+Image';
+    
+    // Formato de alta qualidade (maxresdefault)
     return `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
   };
   
@@ -2252,8 +2254,8 @@ const YoutubeMonitoring: React.FC = () => {
                           
                           {video.descricao && (
                             <VideoDescription>
-                              {video.descricao.length > 120 
-                                ? `${video.descricao.substring(0, 120)}...` 
+                              {video.descricao.length > 80 
+                                ? `${video.descricao.substring(0, 80)}...` 
                                 : video.descricao}
                             </VideoDescription>
                           )}
@@ -2378,6 +2380,13 @@ const YoutubeMonitoring: React.FC = () => {
                     const videoTitle = selectedVideoForDetail.nome_do_video || selectedVideoForDetail.title || "Untitled";
                     const firstLetter = videoTitle.charAt(0).toUpperCase();
                     (e.target as HTMLImageElement).src = `https://placehold.co/1280x720/5F27CD/FFFFFF?text=${encodeURIComponent(firstLetter)}`;
+                  }}
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block',
+                    objectFit: 'cover',
+                    borderRadius: '8px'
                   }}
                 />
               </ModalThumbnail>
