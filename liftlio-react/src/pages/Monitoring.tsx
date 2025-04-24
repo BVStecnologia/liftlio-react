@@ -442,28 +442,6 @@ const VideoTableHeader = styled.div`
   background: ${props => withOpacity(COLORS.ACCENT, 0.05)};
 `;
 
-const VideoTableRow = styled.div`
-  display: grid;
-  grid-template-columns: minmax(450px, 4fr) 80px 80px 1fr 80px;
-  padding: 16px 24px;
-  border-bottom: 1px solid ${props => props.theme.colors.tertiary};
-  align-items: center;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: ${props => props.theme.colors.tertiary}20;
-    
-    ${VideoThumbnail} {
-      transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-  }
-  
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
 const VideoTitle = styled.div`
   display: flex;
   align-items: center;
@@ -505,6 +483,28 @@ const VideoThumbnail = styled.div`
     opacity: 0.8;
     z-index: 2;
     pointer-events: none;
+  }
+`;
+
+const VideoTableRow = styled.div`
+  display: grid;
+  grid-template-columns: minmax(450px, 4fr) 80px 80px 1fr 80px;
+  padding: 16px 24px;
+  border-bottom: 1px solid ${props => props.theme.colors.tertiary};
+  align-items: center;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${props => props.theme.colors.tertiary}20;
+    
+    ${VideoThumbnail} {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+  }
+  
+  &:last-child {
+    border-bottom: none;
   }
 `;
 
