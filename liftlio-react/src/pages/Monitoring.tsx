@@ -374,6 +374,51 @@ const EngagementPill = styled.div`
   }
 `;
 
+// Estilo para o popup de confirmação
+const StatusPopup = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const PopupContent = styled.div`
+  background: ${props => props.theme.colors.white};
+  border-radius: ${props => props.theme.radius.lg};
+  padding: 24px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: ${props => props.theme.shadows.lg};
+  text-align: center;
+`;
+
+const PopupTitle = styled.h3`
+  font-size: ${props => props.theme.fontSizes.xl};
+  margin-bottom: 16px;
+  color: ${props => props.theme.colors.primary};
+`;
+
+const PopupText = styled.p`
+  margin-bottom: 24px;
+  color: ${props => props.theme.colors.darkGrey};
+`;
+
+const PopupActions = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+`;
+
+const StatusToggleButton = styled(ButtonUI)`
+  min-width: 120px;
+`;
+
 // Video performance section
 const VideoTable = styled.div`
   width: 100%;
@@ -569,19 +614,22 @@ const ActionButton = styled(ButtonUI)`
 interface ChannelDetails {
   id: number;
   name?: string;
-  channel_name?: string;      // From RPC
-  subscriber_count?: string;  // From RPC
-  subscribers?: string;       // For backward compatibility
-  view_count?: string;        // From RPC
-  views?: string;             // For backward compatibility
+  Nome?: string;               // Coluna real da tabela
+  channel_name?: string;       // Vindo da RPC
+  subscriber_count?: string | number;  // Coluna real da tabela e da RPC
+  subscribers?: string;        // Para compatibilidade
+  view_count?: string | number;       // Coluna real da tabela e da RPC
+  views?: string;              // Para compatibilidade
   category?: string;
   status?: string;
-  is_active?: boolean;        // From RPC
-  last_video?: string;        // From RPC
-  lastVideo?: string;         // For backward compatibility
-  engagement_rate?: string;   // From RPC if provided
-  engagementRate?: string;    // For backward compatibility
+  is_active?: boolean;         // Coluna real da tabela - controla o status
+  last_video?: string;         // Da RPC
+  lastVideo?: string;          // Para compatibilidade
+  engagement_rate?: string | number;  // Coluna real da tabela e da RPC
+  engagementRate?: string;     // Para compatibilidade
   project_id?: string | number;
+  Projeto?: number;            // Coluna real da tabela
+  channel_id?: string;         // Coluna real da tabela - YouTube channel ID
 }
 
 // Default empty array for channels
@@ -699,6 +747,9 @@ const YoutubeMonitoring: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [channels, setChannels] = useState<ChannelDetails[]>(defaultChannels);
   const [isLoadingChannels, setIsLoadingChannels] = useState(false);
+  const [selectedChannelForToggle, setSelectedChannelForToggle] = useState<ChannelDetails | null>(null);
+  const [isStatusPopupOpen, setIsStatusPopupOpen] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [metricsData, setMetricsData] = useState<{ 
     total_views: number, 
     total_likes: number, 
@@ -781,6 +832,71 @@ const YoutubeMonitoring: React.FC = () => {
     fetchMetrics();
     fetchChannelDetails();
   }, [currentProject]);
+  
+  // Função para alternar o status ativo/inativo de um canal usando o nome
+  const toggleChannelStatus = async (channel: ChannelDetails, currentStatus: boolean) => {
+    try {
+      setIsUpdatingStatus(true);
+      
+      // Pegando o nome do canal para usar na atualização
+      const channelName = channel.Nome || channel.channel_name || channel.name;
+      
+      if (!channelName) {
+        console.error('Nome do canal não encontrado:', channel);
+        alert('Nome do canal não encontrado. Não é possível atualizar.');
+        return null;
+      }
+      
+      console.log('Atualizando canal:', channelName);
+      console.log('Status atual:', currentStatus);
+      console.log('Novo status será:', !currentStatus);
+      
+      // Garantir que estamos trabalhando com um boolean para o campo is_active
+      const newStatus = !currentStatus;
+      
+      // Atualizar pelo Nome do canal conforme o exemplo fornecido
+      const { data, error } = await supabase
+        .from('Canais do youtube')
+        .update({ is_active: newStatus })
+        .eq('Nome', channelName)
+        .select();
+      
+      // Verificar o resultado
+      if (error) {
+        console.error('Erro ao atualizar o canal:', error.message);
+        console.error('Detalhes do erro:', error);
+        alert(`Erro ao atualizar o canal: ${error.message}`);
+      } else {
+        console.log('Canal atualizado com sucesso:', data);
+        
+        // Atualiza a lista de canais após a mudança bem-sucedida
+        if (currentProject?.id) {
+          try {
+            // Busca os dados atualizados usando a RPC
+            const refreshedData = await callRPC('get_channel_details', { 
+              id_projeto: currentProject.id 
+            });
+            
+            if (refreshedData && Array.isArray(refreshedData)) {
+              setChannels(refreshedData);
+              console.log('Lista de canais atualizada com sucesso');
+            }
+          } catch (refreshError) {
+            console.error('Erro ao atualizar lista de canais:', refreshError);
+          }
+        }
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Erro durante a operação de toggle:', error);
+      alert('Falha ao atualizar o status do canal. Verifique o console para mais detalhes.');
+      return null;
+    } finally {
+      setIsUpdatingStatus(false);
+      setIsStatusPopupOpen(false);
+    }
+  };
   
   // Generate random trend data for stats
   const generateTrendData = (baseline: number, variance: number = 0.1, points: number = 10) => {
@@ -1173,17 +1289,17 @@ const YoutubeMonitoring: React.FC = () => {
                 // Actual channel data
                 channels
                   .filter(channel => {
-                    // Filtro por status
+                    // Filtro por status baseado apenas no campo is_active
                     let statusMatch = false;
                     
                     if (channelFilter === 'all') {
                       statusMatch = true;
                     } else if (channelFilter === 'active') {
-                      // Verifique is_active ou status
-                      statusMatch = (channel.is_active === true) || (channel.status === 'active');
+                      // Usar apenas o campo is_active
+                      statusMatch = (channel.is_active === true);
                     } else if (channelFilter === 'inactive') {
-                      // Verifique is_active ou status
-                      statusMatch = (channel.is_active === false) || (channel.status === 'inactive');
+                      // Usar apenas o campo is_active
+                      statusMatch = (channel.is_active === false);
                     }
                     
                     // Filtro por nome com verificação de segurança
@@ -1200,12 +1316,24 @@ const YoutubeMonitoring: React.FC = () => {
                     key={channel.id} 
                     active={selectedChannel === channel.id}
                     onClick={() => setSelectedChannel(channel.id)}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setSelectedChannelForToggle(channel);
+                      setIsStatusPopupOpen(true);
+                    }}
                   >
-                    <ChannelBadge status={channel.status || 'active'}>
-                      {channel.status === 'active' && <IconComponent icon={FaIcons.FaCheck} />}
-                      {channel.status === 'pending' && <IconComponent icon={FaIcons.FaClock} />}
-                      {channel.status === 'inactive' && <IconComponent icon={FaIcons.FaPause} />}
-                      {channel.status ? channel.status.charAt(0).toUpperCase() + channel.status.slice(1) : 'Active'}
+                    <ChannelBadge 
+                      status={channel.is_active === true ? 'active' : 'inactive'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedChannelForToggle(channel);
+                        setIsStatusPopupOpen(true);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {channel.is_active === true && <IconComponent icon={FaIcons.FaCheck} />}
+                      {channel.is_active === false && <IconComponent icon={FaIcons.FaPause} />}
+                      {channel.is_active === true ? 'Active' : 'Inactive'}
                     </ChannelBadge>
                     
                     <ChannelIcon>
@@ -1213,7 +1341,7 @@ const YoutubeMonitoring: React.FC = () => {
                     </ChannelIcon>
                     
                     <ChannelInfo>
-                      <ChannelName>{channel.channel_name || channel.name || 'Unnamed Channel'}</ChannelName>
+                      <ChannelName>{channel.channel_name || channel.Nome || channel.name || 'Unnamed Channel'}</ChannelName>
                       <ChannelStats>
                         <ChannelStatItem>
                           <IconComponent icon={FaIcons.FaUser} />
@@ -1238,6 +1366,54 @@ const YoutubeMonitoring: React.FC = () => {
                 ))
               )}
             </ChannelList>
+            
+            {/* Status Toggle Popup */}
+            {isStatusPopupOpen && selectedChannelForToggle && (
+              <StatusPopup onClick={() => setIsStatusPopupOpen(false)}>
+                <PopupContent onClick={(e) => e.stopPropagation()}>
+                  <PopupTitle>
+                    {selectedChannelForToggle.is_active === true
+                      ? 'Desativar Canal?' 
+                      : 'Ativar Canal?'}
+                  </PopupTitle>
+                  <PopupText>
+                    {selectedChannelForToggle.is_active === true
+                      ? 'Este canal não será mais monitorado. Você pode reativá-lo depois.'
+                      : 'Este canal será monitorado novamente. Você pode desativá-lo a qualquer momento.'}
+                  </PopupText>
+                  <PopupActions>
+                    <StatusToggleButton 
+                      variant="ghost" 
+                      onClick={() => setIsStatusPopupOpen(false)}
+                      disabled={isUpdatingStatus}
+                    >
+                      Cancel
+                    </StatusToggleButton>
+                    <StatusToggleButton 
+                      variant={selectedChannelForToggle.is_active === true ? "error" : "success"}
+                      onClick={() => toggleChannelStatus(
+                        selectedChannelForToggle, 
+                        !!selectedChannelForToggle.is_active // Converter para boolean
+                      )}
+                      disabled={isUpdatingStatus}
+                      leftIcon={<IconComponent icon={
+                        isUpdatingStatus 
+                          ? FaIcons.FaSpinner 
+                          : selectedChannelForToggle.is_active === true
+                            ? FaIcons.FaPause 
+                            : FaIcons.FaCheck
+                      } />}
+                    >
+                      {isUpdatingStatus 
+                        ? "Updating..." 
+                        : selectedChannelForToggle.is_active === true
+                          ? "Deactivate" 
+                          : "Activate"}
+                    </StatusToggleButton>
+                  </PopupActions>
+                </PopupContent>
+              </StatusPopup>
+            )}
             
             <ButtonRow>
               <ActionButton 
