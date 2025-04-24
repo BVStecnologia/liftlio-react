@@ -431,7 +431,7 @@ const VideoTable = styled.div`
 
 const VideoTableHeader = styled.div`
   display: grid;
-  grid-template-columns: minmax(250px, 3fr) 80px 80px 1fr 80px;
+  grid-template-columns: minmax(450px, 4fr) 80px 80px 1fr 80px;
   padding: 16px 24px;
   border-bottom: 1px solid ${props => props.theme.colors.tertiary};
   color: ${props => props.theme.colors.darkGrey};
@@ -444,14 +444,19 @@ const VideoTableHeader = styled.div`
 
 const VideoTableRow = styled.div`
   display: grid;
-  grid-template-columns: minmax(250px, 3fr) 80px 80px 1fr 80px;
+  grid-template-columns: minmax(450px, 4fr) 80px 80px 1fr 80px;
   padding: 16px 24px;
   border-bottom: 1px solid ${props => props.theme.colors.tertiary};
   align-items: center;
   transition: all 0.2s ease;
   
   &:hover {
-    background: ${props => props.theme.colors.tertiary}10;
+    background: ${props => props.theme.colors.tertiary}20;
+    
+    ${VideoThumbnail} {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
   }
   
   &:last-child {
@@ -467,14 +472,16 @@ const VideoTitle = styled.div`
 `;
 
 const VideoThumbnail = styled.div`
-  width: 80px;
-  height: 45px;
+  width: 120px;
+  height: 68px;
   border-radius: ${props => props.theme.radius.sm};
   background: #000;
   overflow: hidden;
   margin-right: 16px;
   position: relative;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: all 0.3s ease;
   
   img {
     width: 100%;
@@ -502,13 +509,8 @@ const VideoThumbnail = styled.div`
 `;
 
 const VideoTitleText = styled.div`
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  max-height: 48px;
-  line-height: 1.2;
+  display: flex;
+  flex-direction: column;
   color: ${props => props.theme.colors.primary};
 `;
 
@@ -884,6 +886,183 @@ const ChannelHeaderUrl = styled.a`
   }
 `;
 
+// Melhorar o estilo do título para mostrar mais informações
+const VideoMainTitle = styled.div`
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  font-size: ${props => props.theme.fontSizes.md};
+  margin-bottom: 4px;
+  line-height: 1.3;
+`;
+
+// Adicionar um componente para a descrição
+const VideoDescription = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.darkGrey};
+  margin-top: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+`;
+
+// Adicionar ícone de expansão para ver mais detalhes
+const ExpandButton = styled.button`
+  background: none;
+  border: none;
+  color: ${props => props.theme.colors.primary};
+  padding: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    opacity: 1;
+  }
+  
+  svg {
+    margin-right: 4px;
+  }
+`;
+
+// Adicionar um modal para visualizar detalhes completos do vídeo
+const VideoDetailModal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  border-radius: ${props => props.theme.radius.lg};
+  width: 80%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px;
+  border-bottom: 1px solid ${props => props.theme.colors.tertiary};
+`;
+
+const ModalClose = styled.button`
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: ${props => props.theme.colors.darkGrey};
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+`;
+
+const ModalBody = styled.div`
+  padding: 24px;
+`;
+
+const ModalTitle = styled.h3`
+  font-size: ${props => props.theme.fontSizes.xl};
+  font-weight: ${props => props.theme.fontWeights.bold};
+  margin: 0 0 8px;
+  color: ${props => props.theme.colors.primary};
+`;
+
+const ModalThumbnail = styled.div`
+  width: 100%;
+  height: 320px;
+  border-radius: ${props => props.theme.radius.md};
+  overflow: hidden;
+  margin-bottom: 24px;
+  position: relative;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-top: 16px solid transparent;
+    border-left: 28px solid white;
+    border-bottom: 16px solid transparent;
+    opacity: 0.9;
+    pointer-events: none;
+  }
+`;
+
+const ModalDescription = styled.div`
+  font-size: ${props => props.theme.fontSizes.md};
+  line-height: 1.6;
+  color: ${props => props.theme.colors.darkGrey};
+  margin-bottom: 24px;
+  padding: 16px;
+  background: ${props => props.theme.colors.tertiary}20;
+  border-radius: ${props => props.theme.radius.md};
+  max-height: 200px;
+  overflow-y: auto;
+`;
+
+const ModalStats = styled.div`
+  display: flex;
+  gap: 24px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+`;
+
+const ModalStatItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const ModalStatValue = styled.div`
+  font-size: ${props => props.theme.fontSizes.xl};
+  font-weight: ${props => props.theme.fontWeights.bold};
+  color: ${props => props.theme.colors.primary};
+`;
+
+const ModalStatLabel = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.darkGrey};
+  margin-top: 4px;
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 32px;
+`;
+
+const ModalActionButton = styled(ButtonUI)`
+  min-width: 120px;
+`;
+
 // Component implementation
 const YoutubeMonitoring: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -910,6 +1089,7 @@ const YoutubeMonitoring: React.FC = () => {
   const [channelVideoCount, setChannelVideoCount] = useState<{[key: number]: number}>({});
   const [selectedChannelDetails, setSelectedChannelDetails] = useState<any>(null);
   const [isLoadingChannelDetails, setIsLoadingChannelDetails] = useState(false);
+  const [selectedVideoForDetail, setSelectedVideoForDetail] = useState<any>(null);
   const { currentProject } = useProject();
   
   useEffect(() => {
@@ -2039,10 +2219,7 @@ const YoutubeMonitoring: React.FC = () => {
                 </VideoTableHeader>
                 
                 {channelVideos.map((video: any) => {
-                  // Depuração para cada vídeo
-                  console.log('Renderizando vídeo:', video.id, 'video_id_youtube:', video.video_id_youtube);
                   const thumbnailUrl = getThumbnailUrl(video);
-                  console.log('Thumbnail URL gerada:', thumbnailUrl);
                   
                   return (
                     <VideoTableRow 
@@ -2060,8 +2237,6 @@ const YoutubeMonitoring: React.FC = () => {
                             src={thumbnailUrl}
                             alt={video.nome_do_video || "Video thumbnail"}
                             onError={(e) => {
-                              console.log(`Erro ao carregar thumbnail: ${(e.target as HTMLImageElement).src}`);
-                              // Se falhar, tenta o método alternativo de placeholder
                               if ((e.target as HTMLImageElement).src.includes('ytimg.com')) {
                                 const videoTitle = video.nome_do_video || video.title || "Untitled";
                                 const firstLetter = videoTitle.charAt(0).toUpperCase();
@@ -2077,7 +2252,25 @@ const YoutubeMonitoring: React.FC = () => {
                           />
                         </VideoThumbnail>
                         <VideoTitleText>
-                          {video.nome_do_video || video.title || "Untitled Video"}
+                          <VideoMainTitle>{video.nome_do_video || video.title || "Untitled Video"}</VideoMainTitle>
+                          
+                          {video.descricao && (
+                            <VideoDescription>
+                              {video.descricao.length > 120 
+                                ? `${video.descricao.substring(0, 120)}...` 
+                                : video.descricao}
+                            </VideoDescription>
+                          )}
+                          
+                          <ExpandButton 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedVideoForDetail(video);
+                            }}
+                          >
+                            <IconComponent icon={FaIcons.FaExpandAlt} />
+                            Ver detalhes completos
+                          </ExpandButton>
                         </VideoTitleText>
                       </VideoTitle>
                       <VideoStat>
@@ -2174,6 +2367,95 @@ const YoutubeMonitoring: React.FC = () => {
             </ActionButton>
           </ButtonRow>
         </ChartContainer>
+      )}
+      
+      {/* Modal para exibir detalhes completos do vídeo */}
+      {selectedVideoForDetail && (
+        <VideoDetailModal onClick={() => setSelectedVideoForDetail(null)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitle>{selectedVideoForDetail.nome_do_video || selectedVideoForDetail.title || "Untitled Video"}</ModalTitle>
+              <ModalClose onClick={() => setSelectedVideoForDetail(null)}>×</ModalClose>
+            </ModalHeader>
+            <ModalBody>
+              <ModalThumbnail>
+                <img 
+                  src={getThumbnailUrl(selectedVideoForDetail)}
+                  alt={selectedVideoForDetail.nome_do_video || "Video thumbnail"}
+                  onError={(e) => {
+                    const videoTitle = selectedVideoForDetail.nome_do_video || selectedVideoForDetail.title || "Untitled";
+                    const firstLetter = videoTitle.charAt(0).toUpperCase();
+                    (e.target as HTMLImageElement).src = `https://placehold.co/1280x720/5F27CD/FFFFFF?text=${encodeURIComponent(firstLetter)}`;
+                  }}
+                />
+              </ModalThumbnail>
+              
+              {selectedVideoForDetail.descricao && (
+                <ModalDescription>
+                  {selectedVideoForDetail.descricao}
+                </ModalDescription>
+              )}
+              
+              <ModalStats>
+                <ModalStatItem>
+                  <ModalStatValue>
+                    {selectedVideoForDetail.views 
+                      ? (selectedVideoForDetail.views >= 1000 
+                          ? `${(selectedVideoForDetail.views / 1000).toFixed(1)}K` 
+                          : selectedVideoForDetail.views) 
+                      : '0'}
+                  </ModalStatValue>
+                  <ModalStatLabel>Views</ModalStatLabel>
+                </ModalStatItem>
+                
+                <ModalStatItem>
+                  <ModalStatValue>
+                    {selectedVideoForDetail.commets || selectedVideoForDetail.comments || '0'}
+                  </ModalStatValue>
+                  <ModalStatLabel>Comments</ModalStatLabel>
+                </ModalStatItem>
+                
+                <ModalStatItem>
+                  <ModalStatValue>
+                    {selectedVideoForDetail.relevance_score 
+                      ? `${(selectedVideoForDetail.relevance_score * 100).toFixed(0)}%` 
+                      : '0%'}
+                  </ModalStatValue>
+                  <ModalStatLabel>Relevance</ModalStatLabel>
+                </ModalStatItem>
+              </ModalStats>
+              
+              {selectedVideoForDetail.target_audience && (
+                <div>
+                  <h4 style={{ marginBottom: '8px', fontSize: '16px' }}>Target Audience</h4>
+                  <p style={{ color: '#666', marginBottom: '16px' }}>{selectedVideoForDetail.target_audience}</p>
+                </div>
+              )}
+              
+              <ModalActions>
+                <ModalActionButton 
+                  variant="ghost" 
+                  leftIcon={<IconComponent icon={FaIcons.FaTimes} />}
+                  onClick={() => setSelectedVideoForDetail(null)}
+                >
+                  Fechar
+                </ModalActionButton>
+                
+                {selectedVideoForDetail.video_id_youtube && (
+                  <ModalActionButton 
+                    variant="primary" 
+                    leftIcon={<IconComponent icon={FaIcons.FaYoutube} />}
+                    onClick={() => {
+                      window.open(`https://www.youtube.com/watch?v=${selectedVideoForDetail.video_id_youtube}`, '_blank');
+                    }}
+                  >
+                    Ver no YouTube
+                  </ModalActionButton>
+                )}
+              </ModalActions>
+            </ModalBody>
+          </ModalContent>
+        </VideoDetailModal>
       )}
     </PageContainer>
   );
