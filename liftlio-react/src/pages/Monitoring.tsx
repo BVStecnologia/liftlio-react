@@ -439,13 +439,22 @@ const VideoTableHeader = styled.div`
   font-weight: ${props => props.theme.fontWeights.semiBold};
   border-bottom: 1px solid ${props => props.theme.colors.tertiary};
   color: ${props => props.theme.colors.primary};
+  text-transform: uppercase;
+  font-size: ${props => props.theme.fontSizes.sm};
+  letter-spacing: 0.5px;
   
   > div {
     display: flex;
     align-items: center;
     
+    &:first-child {
+      justify-content: flex-start;
+      padding-left: 8px;
+    }
+    
     &:not(:first-child) {
       justify-content: center;
+      text-align: center;
       position: relative;
       
       &::before {
@@ -496,6 +505,8 @@ const VideoTableRow = styled.div`
   
   > div:not(:first-child) {
     position: relative;
+    justify-content: center;
+    text-align: center;
     
     &::before {
       content: '';
