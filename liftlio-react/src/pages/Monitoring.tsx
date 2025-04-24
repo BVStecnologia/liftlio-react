@@ -2625,8 +2625,14 @@ const YoutubeMonitoring: React.FC = () => {
               </ChartHeader>
               
               <ChartBody>
-                <div style={{ height: 230 }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                <div style={{ 
+                  height: 230, 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  fontSize: '10px'  // Reduzir a fonte em aproximadamente 20%
+                }}>
+                  <ResponsiveContainer width="85%" height="100%">
                     <PieChart>
                       <Pie
                         data={getContentDistributionData()}
