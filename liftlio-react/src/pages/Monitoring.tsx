@@ -1651,6 +1651,47 @@ const HighlightedStatText = styled(StatText)`
   font-weight: 600;
 `;
 
+// Adicionar estilos para métricas agrupadas
+const StatSubItem = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+`;
+
+const StatSubIcon = styled.div`
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background-color: rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  
+  svg {
+    font-size: 14px;
+    color: #555;
+  }
+`;
+
+const StatSubContent = styled.div`
+  flex: 1;
+`;
+
+const StatSubLabel = styled.div`
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 4px;
+`;
+
+const StatSubValue = styled.div`
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+`;
+
 // Component implementation
 const YoutubeMonitoring: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -2219,64 +2260,150 @@ const YoutubeMonitoring: React.FC = () => {
       {activeTab === 'overview' && (
         <>
           <StatsGrid>
+            {/* Card 1: Engajamento do Público */}
             <StatCard>
               <StatCardHeader>
-                <StatLabel>Total Views</StatLabel>
+                <StatLabel>Audience Engagement</StatLabel>
                 <StatIconContainer color="#5856D6">
-                  <IconComponent icon={FaIcons.FaChartBar} />
+                  <IconComponent icon={FaIcons.FaUsers} />
                 </StatIconContainer>
               </StatCardHeader>
-              <StatValue>{metricsData ? (metricsData.total_views >= 1000000 ? `${(metricsData.total_views / 1000000).toFixed(1)}M` : `${(metricsData.total_views / 1000).toFixed(0)}K`) : '0'}</StatValue>
-            </StatCard>
-            
-            <StatCard>
-              <StatCardHeader>
-                <StatLabel>Total Likes</StatLabel>
-                <StatIconContainer color="#FF9500">
+              <StatValue>{metricsData ? (metricsData.total_views >= 1000000 ? `${(metricsData.total_views / 1000000).toFixed(1)}M` : `${(metricsData.total_views / 1000).toFixed(0)}K`) : '0'} Views</StatValue>
+              
+              <StatSubItem>
+                <StatSubIcon>
                   <IconComponent icon={FaIcons.FaHeart} />
-                </StatIconContainer>
-              </StatCardHeader>
-              <StatValue>{metricsData ? (metricsData.total_likes >= 1000000 ? `${(metricsData.total_likes / 1000000).toFixed(1)}M` : `${(metricsData.total_likes / 1000).toFixed(0)}K`) : '0'}</StatValue>
-            </StatCard>
-            
-            <StatCard>
-              <StatCardHeader>
-                <StatLabel>Comments Posted</StatLabel>
-                <StatIconContainer color="#34C759">
-                  <IconComponent icon={FaIcons.FaComments} />
-                </StatIconContainer>
-              </StatCardHeader>
-              <StatValue>{metricsData?.posts.toLocaleString() || '0'}</StatValue>
-            </StatCard>
-            
-            <StatCard>
-              <StatCardHeader>
-                <StatLabel>Engagement Rate</StatLabel>
-                <StatIconContainer color="#FF2D55">
+                </StatSubIcon>
+                <StatSubContent>
+                  <StatSubLabel>Total Likes</StatSubLabel>
+                  <StatSubValue>{metricsData ? (metricsData.total_likes >= 1000000 ? `${(metricsData.total_likes / 1000000).toFixed(1)}M` : `${(metricsData.total_likes / 1000).toFixed(0)}K`) : '0'}</StatSubValue>
+                </StatSubContent>
+              </StatSubItem>
+              
+              <StatSubItem>
+                <StatSubIcon>
                   <IconComponent icon={FaIcons.FaChartPie} />
-                </StatIconContainer>
-              </StatCardHeader>
-              <StatValue>{metricsData?.media ? `${parseFloat(metricsData.media).toFixed(1)}%` : '0%'}</StatValue>
+                </StatSubIcon>
+                <StatSubContent>
+                  <StatSubLabel>Engagement Rate</StatSubLabel>
+                  <StatSubValue>{metricsData?.media ? `${parseFloat(metricsData.media).toFixed(1)}%` : '0%'}</StatSubValue>
+                </StatSubContent>
+              </StatSubItem>
             </StatCard>
             
+            {/* Card 2: Canais e Alcance */}
             <StatCard>
               <StatCardHeader>
-                <StatLabel>Total Channels</StatLabel>
+                <StatLabel>Channel Overview</StatLabel>
                 <StatIconContainer color="#007AFF">
                   <IconComponent icon={FaIcons.FaYoutube} />
                 </StatIconContainer>
               </StatCardHeader>
-              <StatValue>{metricsData?.total_channels || '0'}</StatValue>
+              <StatValue>{metricsData?.total_channels || '0'} Channels</StatValue>
+              
+              <StatSubItem>
+                <StatSubIcon>
+                  <IconComponent icon={FaIcons.FaVideo} />
+                </StatSubIcon>
+                <StatSubContent>
+                  <StatSubLabel>Monitored Videos</StatSubLabel>
+                  <StatSubValue>{metricsData?.total_videos || '0'}</StatSubValue>
+                </StatSubContent>
+              </StatSubItem>
+              
+              <StatSubItem>
+                <StatSubIcon>
+                  <IconComponent icon={FaIcons.FaGlobe} />
+                </StatSubIcon>
+                <StatSubContent>
+                  <StatSubLabel>Avg Videos per Channel</StatSubLabel>
+                  <StatSubValue>
+                    {metricsData?.total_channels && metricsData.total_videos 
+                      ? (metricsData.total_videos / metricsData.total_channels).toFixed(1) 
+                      : '0'}
+                  </StatSubValue>
+                </StatSubContent>
+              </StatSubItem>
             </StatCard>
             
+            {/* Card 3: Comentários & Interações */}
             <StatCard>
               <StatCardHeader>
-                <StatLabel>Total Videos</StatLabel>
-                <StatIconContainer color="#5AC8FA">
-                  <IconComponent icon={FaIcons.FaVideo} />
+                <StatLabel>Comments & Interactions</StatLabel>
+                <StatIconContainer color="#34C759">
+                  <IconComponent icon={FaIcons.FaComments} />
                 </StatIconContainer>
               </StatCardHeader>
-              <StatValue>{metricsData?.total_videos || '0'}</StatValue>
+              <StatValue>{metricsData?.posts.toLocaleString() || '0'} Comments</StatValue>
+              
+              <StatSubItem>
+                <StatSubIcon>
+                  <IconComponent icon={FaIcons.FaReplyAll} />
+                </StatSubIcon>
+                <StatSubContent>
+                  <StatSubLabel>Avg Comments per Video</StatSubLabel>
+                  <StatSubValue>
+                    {metricsData?.posts && metricsData.total_videos 
+                      ? (metricsData.posts / metricsData.total_videos).toFixed(1) 
+                      : '0'}
+                  </StatSubValue>
+                </StatSubContent>
+              </StatSubItem>
+              
+              <StatSubItem>
+                <StatSubIcon>
+                  <IconComponent icon={FaIcons.FaThumbsUp} />
+                </StatSubIcon>
+                <StatSubContent>
+                  <StatSubLabel>Likes per 1000 Views</StatSubLabel>
+                  <StatSubValue>
+                    {metricsData?.total_likes && metricsData.total_views 
+                      ? ((metricsData.total_likes / metricsData.total_views) * 1000).toFixed(1) 
+                      : '0'}
+                  </StatSubValue>
+                </StatSubContent>
+              </StatSubItem>
+            </StatCard>
+            
+            {/* Card 4: Performance & Analytics */}
+            <StatCard>
+              <StatCardHeader>
+                <StatLabel>Performance Analytics</StatLabel>
+                <StatIconContainer color="#FF9500">
+                  <IconComponent icon={FaIcons.FaChartLine} />
+                </StatIconContainer>
+              </StatCardHeader>
+              <StatValue>Content Metrics</StatValue>
+              
+              <StatSubItem>
+                <StatSubIcon>
+                  <IconComponent icon={FaIcons.FaEye} />
+                </StatSubIcon>
+                <StatSubContent>
+                  <StatSubLabel>Avg Views per Video</StatSubLabel>
+                  <StatSubValue>
+                    {metricsData?.total_views && metricsData.total_videos
+                      ? formatNumber(Math.round(metricsData.total_views / metricsData.total_videos))
+                      : '0'}
+                  </StatSubValue>
+                </StatSubContent>
+              </StatSubItem>
+              
+              <StatSubItem>
+                <StatSubIcon>
+                  <IconComponent icon={FaIcons.FaBullseye} />
+                </StatSubIcon>
+                <StatSubContent>
+                  <StatSubLabel>Engagement Score</StatSubLabel>
+                  <StatSubValue style={{ color: '#34C759' }}>
+                    {metricsData ? 
+                      (((parseFloat(metricsData.media) * 20) + 
+                      (metricsData.total_videos > 0 ? 40 : 0) + 
+                      (metricsData.posts > 10 ? 40 : metricsData.posts * 4))).toFixed(0) + '/100'
+                      : '0/100'}
+                  </StatSubValue>
+                </StatSubContent>
+              </StatSubItem>
             </StatCard>
           </StatsGrid>
           
