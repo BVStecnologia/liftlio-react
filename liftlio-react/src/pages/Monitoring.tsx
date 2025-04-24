@@ -565,59 +565,27 @@ const ActionButton = styled(ButtonUI)`
   /* Using leftIcon/rightIcon props for icon positioning */
 `;
 
-// Sample data for YouTube channels
-const channels = [
-  { 
-    id: 1,
-    name: 'Tech Enthusiast',
-    subscribers: '1.2M',
-    views: '45M',
-    category: 'Technology',
-    status: 'active',
-    lastVideo: '2 days ago',
-    engagementRate: '8.2%'
-  },
-  { 
-    id: 2,
-    name: 'LED Master',
-    subscribers: '850K',
-    views: '32M',
-    category: 'DIY & Crafts',
-    status: 'active',
-    lastVideo: '1 week ago',
-    engagementRate: '6.5%'
-  },
-  { 
-    id: 3,
-    name: 'Light It Up',
-    subscribers: '2.4M',
-    views: '78M',
-    category: 'Home Improvement',
-    status: 'pending',
-    lastVideo: '3 days ago',
-    engagementRate: '9.1%'
-  },
-  { 
-    id: 4,
-    name: 'DIY Electronics',
-    subscribers: '620K',
-    views: '18M',
-    category: 'Technology',
-    status: 'active',
-    lastVideo: '4 days ago',
-    engagementRate: '7.3%'
-  },
-  { 
-    id: 5,
-    name: 'Smart Home Guide',
-    subscribers: '1.8M',
-    views: '56M',
-    category: 'Tech Reviews',
-    status: 'inactive',
-    lastVideo: '2 weeks ago',
-    engagementRate: '5.9%'
-  }
-];
+// Interface for channel details
+interface ChannelDetails {
+  id: number;
+  name?: string;
+  channel_name?: string;      // From RPC
+  subscriber_count?: string;  // From RPC
+  subscribers?: string;       // For backward compatibility
+  view_count?: string;        // From RPC
+  views?: string;             // For backward compatibility
+  category?: string;
+  status?: string;
+  is_active?: boolean;        // From RPC
+  last_video?: string;        // From RPC
+  lastVideo?: string;         // For backward compatibility
+  engagement_rate?: string;   // From RPC if provided
+  engagementRate?: string;    // For backward compatibility
+  project_id?: string | number;
+}
+
+// Default empty array for channels
+const defaultChannels: ChannelDetails[] = [];
 
 // Enhanced engagement data
 const engagementData = [
@@ -729,6 +697,8 @@ const YoutubeMonitoring: React.FC = () => {
   const [timeframe, setTimeframe] = useState('month');
   const [channelFilter, setChannelFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [channels, setChannels] = useState<ChannelDetails[]>(defaultChannels);
+  const [isLoadingChannels, setIsLoadingChannels] = useState(false);
   const [metricsData, setMetricsData] = useState<{ 
     total_views: number, 
     total_likes: number, 
@@ -753,7 +723,53 @@ const YoutubeMonitoring: React.FC = () => {
       }
     };
     
+    const fetchChannelDetails = async () => {
+      if (!currentProject?.id) return;
+      
+      setIsLoadingChannels(true);
+      try {
+        const data = await callRPC('get_channel_details', { 
+          id_projeto: currentProject.id 
+        });
+        
+        if (data && Array.isArray(data) && data.length > 0) {
+          // Process channels to ensure all required fields are available
+          const processedChannels = data.map(channel => {
+            // Calculate engagement rate if not provided by RPC
+            if (!channel.engagement_rate && !channel.engagementRate) {
+              const subscriberCount = parseInt(channel.subscriber_count || channel.subscribers || '0', 10);
+              const viewCount = parseInt(channel.view_count || channel.views || '0', 10);
+              
+              // Simple engagement calculation if we have both metrics
+              if (subscriberCount > 0 && viewCount > 0) {
+                const ratio = (viewCount / subscriberCount) * 100;
+                channel.engagement_rate = ratio > 100 ? '100%' : `${ratio.toFixed(1)}%`;
+              } else {
+                channel.engagement_rate = '0%';
+              }
+            }
+            
+            return channel;
+          });
+          
+          setChannels(processedChannels);
+          // Set the first channel as selected if available
+          if (processedChannels.length > 0 && processedChannels[0].id) {
+            setSelectedChannel(processedChannels[0].id);
+          }
+        } else {
+          setChannels(defaultChannels);
+        }
+      } catch (error) {
+        console.error('Error fetching channel details:', error);
+        setChannels(defaultChannels);
+      } finally {
+        setIsLoadingChannels(false);
+      }
+    };
+    
     fetchMetrics();
+    fetchChannelDetails();
   }, [currentProject]);
   
   // Generate random trend data for stats
@@ -1105,57 +1121,152 @@ const YoutubeMonitoring: React.FC = () => {
             </ChannelsHeader>
             
             <ChannelList>
-              {channels
-                .filter(channel => 
-                  (channelFilter === 'all' || channel.status === channelFilter) &&
-                  (searchTerm === '' || channel.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                )
-                .map(channel => (
-                <ChannelCardWrapper 
-                  key={channel.id} 
-                  active={selectedChannel === channel.id}
-                  onClick={() => setSelectedChannel(channel.id)}
-                >
-                  <ChannelBadge status={channel.status}>
-                    {channel.status === 'active' && <IconComponent icon={FaIcons.FaCheck} />}
-                    {channel.status === 'pending' && <IconComponent icon={FaIcons.FaClock} />}
-                    {channel.status === 'inactive' && <IconComponent icon={FaIcons.FaPause} />}
-                    {channel.status.charAt(0).toUpperCase() + channel.status.slice(1)}
-                  </ChannelBadge>
-                  
-                  <ChannelIcon>
+              {isLoadingChannels ? (
+                // Loading state with 3 placeholder cards
+                Array(3).fill(0).map((_, index) => (
+                  <ChannelCardWrapper 
+                    key={`loading-${index}`}
+                    active={false}
+                    onClick={() => {}}
+                    style={{ opacity: 0.6 }}
+                  >
+                    <ChannelIcon>
+                      <IconComponent icon={FaIcons.FaYoutube} />
+                    </ChannelIcon>
+                    
+                    <ChannelInfo>
+                      <ChannelName>Loading...</ChannelName>
+                      <ChannelStats>
+                        <ChannelStatItem>
+                          <IconComponent icon={FaIcons.FaUser} />
+                          Loading...
+                        </ChannelStatItem>
+                      </ChannelStats>
+                    </ChannelInfo>
+                  </ChannelCardWrapper>
+                ))
+              ) : channels.length === 0 ? (
+                // Empty state
+                <div style={{ gridColumn: '1 / -1', padding: '40px 0', textAlign: 'center' }}>
+                  <div style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}>
                     <IconComponent icon={FaIcons.FaYoutube} />
-                  </ChannelIcon>
-                  
-                  <ChannelInfo>
-                    <ChannelName>{channel.name}</ChannelName>
-                    <ChannelStats>
-                      <ChannelStatItem>
-                        <IconComponent icon={FaIcons.FaUser} />
-                        {channel.subscribers} subscribers
-                      </ChannelStatItem>
-                      <ChannelStatItem>
-                        <IconComponent icon={FaIcons.FaEye} />
-                        {channel.views} views
-                      </ChannelStatItem>
-                      <ChannelStatItem>
-                        <IconComponent icon={FaIcons.FaClock} />
-                        Last video: {channel.lastVideo}
-                      </ChannelStatItem>
-                    </ChannelStats>
-                  </ChannelInfo>
-                  
-                  <EngagementPill>
-                    <IconComponent icon={FaIcons.FaChartLine} />
-                    {channel.engagementRate}
-                  </EngagementPill>
-                </ChannelCardWrapper>
-              ))}
+                  </div>
+                  <h3>No YouTube channels found</h3>
+                  <p>Add YouTube channels to your project to see them here</p>
+                  <div style={{ marginTop: '24px' }}>
+                    <ActionButton variant="primary" leftIcon={<IconComponent icon={FaIcons.FaPlus} />}>
+                      Add Channel
+                    </ActionButton>
+                  </div>
+                </div>
+              ) : (
+                // Actual channel data
+                channels
+                  .filter(channel => {
+                    // Filtro por status
+                    const statusMatch = channelFilter === 'all' || (channel.status && channel.status === channelFilter);
+                    
+                    // Filtro por nome com verificação de segurança
+                    let nameMatch = searchTerm === '';
+                    if (!nameMatch) {
+                      const channelName = channel.channel_name || channel.name || '';
+                      nameMatch = channelName.toLowerCase().includes(searchTerm.toLowerCase());
+                    }
+                    
+                    return statusMatch && nameMatch;
+                  })
+                  .map(channel => (
+                  <ChannelCardWrapper 
+                    key={channel.id} 
+                    active={selectedChannel === channel.id}
+                    onClick={() => setSelectedChannel(channel.id)}
+                  >
+                    <ChannelBadge status={channel.status || 'active'}>
+                      {channel.status === 'active' && <IconComponent icon={FaIcons.FaCheck} />}
+                      {channel.status === 'pending' && <IconComponent icon={FaIcons.FaClock} />}
+                      {channel.status === 'inactive' && <IconComponent icon={FaIcons.FaPause} />}
+                      {channel.status ? channel.status.charAt(0).toUpperCase() + channel.status.slice(1) : 'Active'}
+                    </ChannelBadge>
+                    
+                    <ChannelIcon>
+                      <IconComponent icon={FaIcons.FaYoutube} />
+                    </ChannelIcon>
+                    
+                    <ChannelInfo>
+                      <ChannelName>{channel.channel_name || channel.name || 'Unnamed Channel'}</ChannelName>
+                      <ChannelStats>
+                        <ChannelStatItem>
+                          <IconComponent icon={FaIcons.FaUser} />
+                          {channel.subscriber_count || channel.subscribers || '0'} subscribers
+                        </ChannelStatItem>
+                        <ChannelStatItem>
+                          <IconComponent icon={FaIcons.FaEye} />
+                          {channel.view_count || channel.views || '0'} views
+                        </ChannelStatItem>
+                        <ChannelStatItem>
+                          <IconComponent icon={FaIcons.FaClock} />
+                          Last video: {channel.last_video || channel.lastVideo || 'N/A'}
+                        </ChannelStatItem>
+                      </ChannelStats>
+                    </ChannelInfo>
+                    
+                    <EngagementPill>
+                      <IconComponent icon={FaIcons.FaChartLine} />
+                      {channel.engagement_rate || channel.engagementRate || '0%'}
+                    </EngagementPill>
+                  </ChannelCardWrapper>
+                ))
+              )}
             </ChannelList>
             
             <ButtonRow>
-              <ActionButton variant="ghost" leftIcon={<IconComponent icon={FaIcons.FaSync} />}>
-                Refresh Data
+              <ActionButton 
+                variant="ghost" 
+                leftIcon={<IconComponent icon={FaIcons.FaSync} />}
+                onClick={() => {
+                  if (currentProject?.id) {
+                    setIsLoadingChannels(true);
+                    callRPC('get_channel_details', { 
+                      id_projeto: currentProject.id 
+                    })
+                    .then(data => {
+                      if (data && Array.isArray(data) && data.length > 0) {
+                        // Process channels to ensure all required fields are available
+                        const processedChannels = data.map(channel => {
+                          // Calculate engagement rate if not provided by RPC
+                          if (!channel.engagement_rate && !channel.engagementRate) {
+                            const subscriberCount = parseInt(channel.subscriber_count || channel.subscribers || '0', 10);
+                            const viewCount = parseInt(channel.view_count || channel.views || '0', 10);
+                            
+                            // Simple engagement calculation if we have both metrics
+                            if (subscriberCount > 0 && viewCount > 0) {
+                              const ratio = (viewCount / subscriberCount) * 100;
+                              channel.engagement_rate = ratio > 100 ? '100%' : `${ratio.toFixed(1)}%`;
+                            } else {
+                              channel.engagement_rate = '0%';
+                            }
+                          }
+                          
+                          return channel;
+                        });
+                        
+                        setChannels(processedChannels);
+                      } else {
+                        setChannels(defaultChannels);
+                      }
+                    })
+                    .catch(error => {
+                      console.error('Error refreshing channel details:', error);
+                      setChannels(defaultChannels);
+                    })
+                    .finally(() => {
+                      setIsLoadingChannels(false);
+                    });
+                  }
+                }}
+                disabled={isLoadingChannels}
+              >
+                {isLoadingChannels ? 'Refreshing...' : 'Refresh Data'}
               </ActionButton>
               <ActionButton variant="primary" leftIcon={<IconComponent icon={FaIcons.FaPlus} />}>
                 Add New Channel
