@@ -1122,24 +1122,35 @@ const YoutubeMonitoring: React.FC = () => {
   
   // Function to fetch detailed channel information
   const fetchChannelDetails = async (channelId: string) => {
-    if (!channelId) return;
+    if (!channelId) {
+      console.log('fetchChannelDetails: Channel ID não fornecido');
+      return;
+    }
     
+    console.log('Iniciando fetchChannelDetails com channel_id:', channelId);
     setIsLoadingChannelDetails(true);
     try {
       const data = await callRPC('call_youtube_channel_details', {
         channel_id: channelId
       });
       
-      console.log('Detailed channel data:', data);
+      console.log('Resposta detalhada da API de canal:', data);
       
-      if (data && Array.isArray(data) && data.length > 0 && data[0].call_youtube_channel_details) {
-        setSelectedChannelDetails(data[0].call_youtube_channel_details);
+      if (data && Array.isArray(data) && data.length > 0) {
+        console.log('Primeiro item da resposta:', data[0]);
+        if (data[0].call_youtube_channel_details) {
+          console.log('Detalhes encontrados, atualizando selectedChannelDetails');
+          setSelectedChannelDetails(data[0].call_youtube_channel_details);
+        } else {
+          console.error('Campo call_youtube_channel_details não encontrado no retorno da API');
+          setSelectedChannelDetails(null);
+        }
       } else {
-        console.error('Invalid channel details data format');
+        console.error('Formato de dados inválido ou vazio para detalhes do canal');
         setSelectedChannelDetails(null);
       }
     } catch (error) {
-      console.error('Error fetching detailed channel info:', error);
+      console.error('Erro ao buscar informações detalhadas do canal:', error);
       setSelectedChannelDetails(null);
     } finally {
       setIsLoadingChannelDetails(false);
@@ -1148,14 +1159,20 @@ const YoutubeMonitoring: React.FC = () => {
 
   // Function to handle channel selection - update to also fetch channel details
   const handleChannelSelect = (channelId: number) => {
+    console.log('Canal selecionado, ID:', channelId);
     setSelectedChannel(channelId);
     setSelectedVideo(null); // Clear selected video
     fetchChannelVideos(channelId);
     
     // Get the channel data to extract YouTube channel ID
     const selectedChannelData = channels.find(c => c.id === channelId);
+    console.log('Dados do canal encontrado:', selectedChannelData);
+    
     if (selectedChannelData && selectedChannelData.channel_id) {
+      console.log('Buscando detalhes para o channel_id do YouTube:', selectedChannelData.channel_id);
       fetchChannelDetails(selectedChannelData.channel_id);
+    } else {
+      console.error('Não foi possível encontrar channel_id do YouTube para o canal selecionado');
     }
     
     // If in Overview or Channels tab, switch to Videos tab
@@ -1811,11 +1828,12 @@ const YoutubeMonitoring: React.FC = () => {
                 <ChannelHeaderAvatar 
                   imageUrl={selectedChannelDetails.thumbnails?.high?.url || 
                            selectedChannelDetails.thumbnails?.medium?.url || 
-                           selectedChannelDetails.thumbnails?.default?.url} 
+                           selectedChannelDetails.thumbnails?.default?.url || 
+                           'https://via.placeholder.com/150'} 
                 />
                 <ChannelHeaderInfo>
                   <ChannelHeaderTitle>
-                    {selectedChannelDetails.title}
+                    {selectedChannelDetails.title || selectedChannelDetails.channel_name || 'Canal do YouTube'}
                     <IconComponent icon={FaIcons.FaYoutube} />
                   </ChannelHeaderTitle>
                   
