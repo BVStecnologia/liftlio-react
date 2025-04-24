@@ -89,63 +89,62 @@ const TabIcon = styled.span`
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 32px;
-  
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
+  gap: 24px;
+  margin-bottom: 40px;
 `;
 
-// Using our Card component to have consistent styling
-const StatCard = styled(Card)`
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
+const StatCard = styled.div`
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
   
   &:hover {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   }
 `;
 
 const StatCardHeader = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: #f9fafb;
+`;
+
+const StatLabel = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  display: flex;
+  align-items: center;
 `;
 
 const StatIconContainer = styled.div<{ color: string }>`
-  width: 48px;
-  height: 48px;
-  border-radius: ${props => props.theme.radius.md};
-  background: ${props => `${props.color}15`};
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background-color: ${props => `${props.color}15`};
   color: ${props => props.color};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-`;
-
-const StatContent = styled.div`
-  flex: 1;
+  
+  svg {
+    font-size: 18px;
+  }
 `;
 
 const StatValue = styled.div`
-  font-size: ${props => props.theme.fontSizes['3xl']};
-  font-weight: ${props => props.theme.fontWeights.bold};
-  color: ${props => props.theme.colors.primary};
-  margin: 12px 0 4px;
-`;
-
-const StatLabel = styled.div`
-  color: ${props => props.theme.colors.darkGrey};
-  font-size: ${props => props.theme.fontSizes.sm};
-  font-weight: ${props => props.theme.fontWeights.medium};
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  padding: 20px 20px 16px;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(247, 250, 255, 0.5));
 `;
 
 const StatChange = styled.div<{ positive: boolean }>`
@@ -1655,16 +1654,22 @@ const HighlightedStatText = styled(StatText)`
 const StatSubItem = styled.div`
   display: flex;
   align-items: center;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  margin: 0;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  background: white;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(247, 250, 255, 0.7);
+  }
 `;
 
 const StatSubIcon = styled.div`
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background-color: rgba(0, 0, 0, 0.06);
+  background-color: rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1672,7 +1677,7 @@ const StatSubIcon = styled.div`
   
   svg {
     font-size: 14px;
-    color: #555;
+    color: #666;
   }
 `;
 
@@ -1681,9 +1686,9 @@ const StatSubContent = styled.div`
 `;
 
 const StatSubLabel = styled.div`
-  font-size: 13px;
-  color: #777;
-  margin-bottom: 4px;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 2px;
 `;
 
 const StatSubValue = styled.div`
@@ -2268,11 +2273,16 @@ const YoutubeMonitoring: React.FC = () => {
                   <IconComponent icon={FaIcons.FaUsers} />
                 </StatIconContainer>
               </StatCardHeader>
-              <StatValue>{metricsData ? (metricsData.total_views >= 1000000 ? `${(metricsData.total_views / 1000000).toFixed(1)}M` : `${(metricsData.total_views / 1000).toFixed(0)}K`) : '0'} Views</StatValue>
+              <StatValue style={{ 
+                background: 'linear-gradient(135deg, rgba(88, 86, 214, 0.05), rgba(88, 86, 214, 0.15))', 
+                color: '#5856D6'
+              }}>
+                {metricsData ? (metricsData.total_views >= 1000000 ? `${(metricsData.total_views / 1000000).toFixed(1)}M` : `${(metricsData.total_views / 1000).toFixed(0)}K`) : '0'} Views
+              </StatValue>
               
               <StatSubItem>
-                <StatSubIcon>
-                  <IconComponent icon={FaIcons.FaHeart} />
+                <StatSubIcon style={{ backgroundColor: 'rgba(88, 86, 214, 0.08)' }}>
+                  <IconComponent icon={FaIcons.FaHeart} style={{ color: '#FF2D55' }} />
                 </StatSubIcon>
                 <StatSubContent>
                   <StatSubLabel>Total Likes</StatSubLabel>
@@ -2281,12 +2291,12 @@ const YoutubeMonitoring: React.FC = () => {
               </StatSubItem>
               
               <StatSubItem>
-                <StatSubIcon>
-                  <IconComponent icon={FaIcons.FaChartPie} />
+                <StatSubIcon style={{ backgroundColor: 'rgba(88, 86, 214, 0.08)' }}>
+                  <IconComponent icon={FaIcons.FaChartPie} style={{ color: '#5856D6' }} />
                 </StatSubIcon>
                 <StatSubContent>
                   <StatSubLabel>Engagement Rate</StatSubLabel>
-                  <StatSubValue>{metricsData?.media ? `${parseFloat(metricsData.media).toFixed(1)}%` : '0%'}</StatSubValue>
+                  <StatSubValue style={{ color: '#5856D6', fontWeight: '700' }}>{metricsData?.media ? `${parseFloat(metricsData.media).toFixed(1)}%` : '0%'}</StatSubValue>
                 </StatSubContent>
               </StatSubItem>
             </StatCard>
@@ -2299,11 +2309,16 @@ const YoutubeMonitoring: React.FC = () => {
                   <IconComponent icon={FaIcons.FaYoutube} />
                 </StatIconContainer>
               </StatCardHeader>
-              <StatValue>{metricsData?.total_channels || '0'} Channels</StatValue>
+              <StatValue style={{ 
+                background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.05), rgba(0, 122, 255, 0.15))', 
+                color: '#007AFF'
+              }}>
+                {metricsData?.total_channels || '0'} Channels
+              </StatValue>
               
               <StatSubItem>
-                <StatSubIcon>
-                  <IconComponent icon={FaIcons.FaVideo} />
+                <StatSubIcon style={{ backgroundColor: 'rgba(0, 122, 255, 0.08)' }}>
+                  <IconComponent icon={FaIcons.FaVideo} style={{ color: '#007AFF' }} />
                 </StatSubIcon>
                 <StatSubContent>
                   <StatSubLabel>Monitored Videos</StatSubLabel>
@@ -2312,12 +2327,12 @@ const YoutubeMonitoring: React.FC = () => {
               </StatSubItem>
               
               <StatSubItem>
-                <StatSubIcon>
-                  <IconComponent icon={FaIcons.FaGlobe} />
+                <StatSubIcon style={{ backgroundColor: 'rgba(0, 122, 255, 0.08)' }}>
+                  <IconComponent icon={FaIcons.FaGlobe} style={{ color: '#5AC8FA' }} />
                 </StatSubIcon>
                 <StatSubContent>
                   <StatSubLabel>Avg Videos per Channel</StatSubLabel>
-                  <StatSubValue>
+                  <StatSubValue style={{ color: '#007AFF', fontWeight: '700' }}>
                     {metricsData?.total_channels && metricsData.total_videos 
                       ? (metricsData.total_videos / metricsData.total_channels).toFixed(1) 
                       : '0'}
@@ -2334,15 +2349,20 @@ const YoutubeMonitoring: React.FC = () => {
                   <IconComponent icon={FaIcons.FaComments} />
                 </StatIconContainer>
               </StatCardHeader>
-              <StatValue>{metricsData?.posts.toLocaleString() || '0'} Comments</StatValue>
+              <StatValue style={{ 
+                background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.05), rgba(52, 199, 89, 0.15))', 
+                color: '#34C759'
+              }}>
+                {metricsData?.posts.toLocaleString() || '0'} Comments
+              </StatValue>
               
               <StatSubItem>
-                <StatSubIcon>
-                  <IconComponent icon={FaIcons.FaReplyAll} />
+                <StatSubIcon style={{ backgroundColor: 'rgba(52, 199, 89, 0.08)' }}>
+                  <IconComponent icon={FaIcons.FaReplyAll} style={{ color: '#34C759' }} />
                 </StatSubIcon>
                 <StatSubContent>
                   <StatSubLabel>Avg Comments per Video</StatSubLabel>
-                  <StatSubValue>
+                  <StatSubValue style={{ color: '#34C759', fontWeight: '700' }}>
                     {metricsData?.posts && metricsData.total_videos 
                       ? (metricsData.posts / metricsData.total_videos).toFixed(1) 
                       : '0'}
@@ -2351,8 +2371,8 @@ const YoutubeMonitoring: React.FC = () => {
               </StatSubItem>
               
               <StatSubItem>
-                <StatSubIcon>
-                  <IconComponent icon={FaIcons.FaThumbsUp} />
+                <StatSubIcon style={{ backgroundColor: 'rgba(52, 199, 89, 0.08)' }}>
+                  <IconComponent icon={FaIcons.FaThumbsUp} style={{ color: '#FF9500' }} />
                 </StatSubIcon>
                 <StatSubContent>
                   <StatSubLabel>Likes per 1000 Views</StatSubLabel>
@@ -2373,15 +2393,20 @@ const YoutubeMonitoring: React.FC = () => {
                   <IconComponent icon={FaIcons.FaChartLine} />
                 </StatIconContainer>
               </StatCardHeader>
-              <StatValue>Content Metrics</StatValue>
+              <StatValue style={{ 
+                background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.05), rgba(255, 149, 0, 0.15))', 
+                color: '#FF9500'
+              }}>
+                Content Metrics
+              </StatValue>
               
               <StatSubItem>
-                <StatSubIcon>
-                  <IconComponent icon={FaIcons.FaEye} />
+                <StatSubIcon style={{ backgroundColor: 'rgba(255, 149, 0, 0.08)' }}>
+                  <IconComponent icon={FaIcons.FaEye} style={{ color: '#FF9500' }} />
                 </StatSubIcon>
                 <StatSubContent>
                   <StatSubLabel>Avg Views per Video</StatSubLabel>
-                  <StatSubValue>
+                  <StatSubValue style={{ color: '#FF9500', fontWeight: '700' }}>
                     {metricsData?.total_views && metricsData.total_videos
                       ? formatNumber(Math.round(metricsData.total_views / metricsData.total_videos))
                       : '0'}
@@ -2390,12 +2415,15 @@ const YoutubeMonitoring: React.FC = () => {
               </StatSubItem>
               
               <StatSubItem>
-                <StatSubIcon>
-                  <IconComponent icon={FaIcons.FaBullseye} />
+                <StatSubIcon style={{ backgroundColor: 'rgba(255, 149, 0, 0.08)' }}>
+                  <IconComponent icon={FaIcons.FaBullseye} style={{ color: '#FF2D55' }} />
                 </StatSubIcon>
                 <StatSubContent>
                   <StatSubLabel>Engagement Score</StatSubLabel>
-                  <StatSubValue style={{ color: '#34C759' }}>
+                  <StatSubValue style={{ 
+                    color: '#34C759', 
+                    fontWeight: '700' 
+                  }}>
                     {metricsData ? 
                       (((parseFloat(metricsData.media) * 20) + 
                       (metricsData.total_videos > 0 ? 40 : 0) + 
