@@ -1020,16 +1020,20 @@ const ModalTitle = styled.h3`
 
 const ModalThumbnail = styled.div`
   width: 100%;
-  height: 320px;
+  position: relative;
+  padding-top: 56.25%; /* Proporção 16:9 (9/16 = 0.5625 = 56.25%) */
   border-radius: ${props => props.theme.radius.md};
   overflow: hidden;
   margin-bottom: 24px;
-  position: relative;
+  background-color: #000;
   
   img {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain; /* Garante que a imagem mantenha a proporção sem cortes */
   }
   
   &::after {
@@ -2418,13 +2422,6 @@ const YoutubeMonitoring: React.FC = () => {
                     const videoTitle = selectedVideoForDetail.nome_do_video || selectedVideoForDetail.title || "Untitled";
                     const firstLetter = videoTitle.charAt(0).toUpperCase();
                     (e.target as HTMLImageElement).src = `https://placehold.co/1280x720/5F27CD/FFFFFF?text=${encodeURIComponent(firstLetter)}`;
-                  }}
-                  style={{
-                    width: '100%',
-                    height: 'auto',
-                    display: 'block',
-                    objectFit: 'cover',
-                    borderRadius: '8px'
                   }}
                 />
               </ModalThumbnail>
