@@ -2622,7 +2622,7 @@ const YoutubeMonitoring: React.FC = () => {
               </ChartHeader>
               
               <ChartBody>
-                <div style={{ height: 300 }}>
+                <div style={{ height: 230 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -2630,11 +2630,11 @@ const YoutubeMonitoring: React.FC = () => {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        outerRadius={100}
-                        innerRadius={60}
+                        outerRadius={77}
+                        innerRadius={46}
                         paddingAngle={5}
                         dataKey="value"
-                        label={({ name, percent }) => `${percent * 100}%`}
+                        label={({ name, percent }) => `${Math.round(percent * 100)}%`}
                       >
                         {getContentDistributionData().map((entry, index) => {
                           const COLORS = ['#5856D6', '#FF9500', '#34C759', '#FF2D55', '#007AFF', '#5AC8FA', '#BF5AF2', '#FF3B30'];
