@@ -133,7 +133,7 @@ const StatIconContainer = styled.div<{ color: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   svg {
     font-size: 18px;
   }
@@ -145,6 +145,17 @@ const StatValue = styled.div`
   color: #333;
   padding: 20px 20px 16px;
   background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(247, 250, 255, 0.5));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
+  @media (max-width: 1366px) {
+    font-size: 24px;
+  }
+  
+  @media (max-width: 992px) {
+    font-size: 22px;
+  }
 `;
 
 const StatChange = styled.div<{ positive: boolean }>`
@@ -649,7 +660,7 @@ const VideoTableHeader = styled.div`
   
   > div {
     display: flex;
-    align-items: center;
+  align-items: center;
     height: 100%;
     
     &:first-child {
@@ -726,8 +737,8 @@ const VideoTableRow = styled.div`
       text-align: center;
       
       &::before {
-        content: '';
-        position: absolute;
+    content: '';
+    position: absolute;
         left: -12px;
         top: 0;
         bottom: 0;
@@ -1697,6 +1708,15 @@ const StatSubValue = styled.div`
   color: #333;
 `;
 
+// Adicionar interface para dados das categorias de conteúdo
+interface ContentCategory {
+  content_category: string;
+  total_videos: number;
+  total_views: string;
+  total_likes: string;
+  media_relevancia: string;
+}
+
 // Component implementation
 const YoutubeMonitoring: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -1730,6 +1750,7 @@ const YoutubeMonitoring: React.FC = () => {
   const [showJustification, setShowJustification] = useState<boolean>(false);
   const [currentJustification, setCurrentJustification] = useState<{ title: string; text: string } | null>(null);
   const { currentProject } = useProject();
+  const [contentCategories, setContentCategories] = useState<ContentCategory[]>([]);
   
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -1804,8 +1825,30 @@ const YoutubeMonitoring: React.FC = () => {
       }
     };
     
+    const fetchContentCategories = async () => {
+      if (!currentProject?.id) return;
+      
+      try {
+        const data = await callRPC('get_top_content_categories', { 
+          id_projeto: currentProject.id 
+        });
+        
+        if (data && Array.isArray(data)) {
+          console.log('Content categories data:', data);
+          setContentCategories(data);
+        } else {
+          console.log('No content categories found or invalid data format');
+          setContentCategories([]);
+        }
+      } catch (error) {
+        console.error('Error fetching content categories:', error);
+        setContentCategories([]);
+      }
+    };
+    
     fetchMetrics();
     fetchChannelDetails();
+    fetchContentCategories(); // Adicionar chamada para a nova função
   }, [currentProject]);
   
   // Function to fetch and store video count for a channel
@@ -2210,6 +2253,45 @@ const YoutubeMonitoring: React.FC = () => {
   // Filtrar comentários para exibir apenas aqueles com status "posted"
   const filteredComments = currentVideoComments.filter(comment => comment.status === 'posted');
   
+  // Atualizar a transformação de dados para o gráfico de distribuição de conteúdo
+  // Implementar uma função para processar os dados de categoria para o gráfico de pizza
+  const getContentDistributionData = () => {
+    if (!contentCategories || contentCategories.length === 0) {
+      // Dados de exemplo caso não existam categorias
+      return [
+        { name: 'Tutorials', value: 35 },
+        { name: 'Reviews', value: 25 },
+        { name: 'Live Streams', value: 15 },
+        { name: 'Shorts', value: 15 },
+        { name: 'Vlogs', value: 10 }
+      ];
+    }
+    
+    // Calcular o total de vídeos para porcentagens
+    const totalVideos = contentCategories.reduce((sum, category) => sum + category.total_videos, 0);
+    
+    // Mapear os dados das categorias para o formato do gráfico
+    return contentCategories.map(category => {
+      // Truncar nomes de categorias ainda mais curtos para display
+      const displayName = category.content_category.length > 15 
+        ? category.content_category.substring(0, 13) + '...' 
+        : category.content_category;
+      
+      // Calcular a porcentagem baseada no número de vídeos
+      const percentage = Math.round((category.total_videos / totalVideos) * 100);
+      
+      return {
+        name: displayName,
+        fullName: category.content_category, // Nome completo para o tooltip
+        value: percentage,
+        videos: category.total_videos,
+        views: category.total_views,
+        likes: category.total_likes,
+        relevance: category.media_relevancia
+      };
+    });
+  };
+  
   return (
     <PageContainer>
       <PageTitle>
@@ -2227,9 +2309,9 @@ const YoutubeMonitoring: React.FC = () => {
           Channels
         </Tab>
         {selectedChannel !== null && (
-          <Tab active={activeTab === 'videos'} onClick={() => setActiveTab('videos')}>
-            <TabIcon><IconComponent icon={FaIcons.FaVideo} /></TabIcon>
-            Videos
+        <Tab active={activeTab === 'videos'} onClick={() => setActiveTab('videos')}>
+          <TabIcon><IconComponent icon={FaIcons.FaVideo} /></TabIcon>
+          Videos
             <ChannelBadge 
               style={{ 
                 marginLeft: '16px',
@@ -2241,12 +2323,12 @@ const YoutubeMonitoring: React.FC = () => {
             >
               {channelVideos.length}
             </ChannelBadge>
-          </Tab>
+        </Tab>
         )}
         {selectedVideo !== null && (
-          <Tab active={activeTab === 'comments'} onClick={() => setActiveTab('comments')}>
-            <TabIcon><IconComponent icon={FaIcons.FaComment} /></TabIcon>
-            Comments
+        <Tab active={activeTab === 'comments'} onClick={() => setActiveTab('comments')}>
+          <TabIcon><IconComponent icon={FaIcons.FaComment} /></TabIcon>
+          Comments
             <ChannelBadge 
               style={{ 
                 marginLeft: '16px',
@@ -2258,7 +2340,7 @@ const YoutubeMonitoring: React.FC = () => {
             >
               {filteredComments.length}
             </ChannelBadge>
-          </Tab>
+        </Tab>
         )}
       </TabsContainer>
       
@@ -2546,29 +2628,78 @@ const YoutubeMonitoring: React.FC = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={contentDistributionData}
+                        data={getContentDistributionData()}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        outerRadius={80}
-                        innerRadius={55}
+                        outerRadius={85}
+                        innerRadius={60}
                         paddingAngle={5}
                         dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, value }) => `${name} ${value}%`}
                       >
-                        <Cell fill="#5856D6" />
-                        <Cell fill="#FF9500" />
-                        <Cell fill="#34C759" />
-                        <Cell fill="#FF2D55" />
-                        <Cell fill="#007AFF" />
+                        {getContentDistributionData().map((entry, index) => {
+                          const COLORS = ['#5856D6', '#FF9500', '#34C759', '#FF2D55', '#007AFF', '#5AC8FA', '#BF5AF2', '#FF3B30'];
+                          return <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />;
+                        })}
                       </Pie>
                       <Tooltip 
-                        formatter={(value) => [`${value}%`, 'Percentage']}
-                        contentStyle={{
-                          background: 'rgba(255, 255, 255, 0.95)',
-                          border: 'none',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div style={{
+                                background: 'white',
+                                padding: '12px 16px',
+                                borderRadius: '8px',
+                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                                border: '1px solid #f0f0f0'
+                              }}>
+                                <div>
+                                  <p style={{ 
+                                    margin: '0 0 8px', 
+                                    fontWeight: 'bold', 
+                                    fontSize: '14px', 
+                                    color: '#333',
+                                    maxWidth: '280px',
+                                    wordWrap: 'break-word'
+                                  }}>
+                                    {data.fullName}
+                                  </p>
+                                  <p style={{ margin: '4px 0', fontSize: '13px', color: '#666' }}>
+                                    <strong>Videos:</strong> {data.videos} ({data.value}%)
+                                  </p>
+                                  <p style={{ margin: '4px 0', fontSize: '13px', color: '#666' }}>
+                                    <strong>Views:</strong> {data.views}
+                                  </p>
+                                  <p style={{ margin: '4px 0', fontSize: '13px', color: '#666' }}>
+                                    <strong>Likes:</strong> {data.likes}
+                                  </p>
+                                  <p style={{ margin: '4px 0', fontSize: '13px', color: '#666' }}>
+                                    <strong>Relevance:</strong> {data.relevance}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Legend
+                        layout="vertical"
+                        verticalAlign="middle"
+                        align="right"
+                        wrapperStyle={{
+                          fontSize: '12px',
+                          paddingLeft: '10px',
+                          maxWidth: '180px',
+                          lineHeight: '1.5'
+                        }}
+                        formatter={(value: any, entry) => {
+                          // Limitar o tamanho do texto na legenda
+                          return typeof value === 'string' && value.length > 12
+                            ? `${value.substring(0, 10)}...` 
+                            : value;
                         }}
                       />
                     </PieChart>
@@ -2702,9 +2833,9 @@ const YoutubeMonitoring: React.FC = () => {
                     style={{ opacity: 0.6 }}
                   >
                     <ChannelIconWrapper>
-                      <ChannelIcon>
-                        <IconComponent icon={FaIcons.FaYoutube} />
-                      </ChannelIcon>
+                    <ChannelIcon>
+                      <IconComponent icon={FaIcons.FaYoutube} />
+                    </ChannelIcon>
                     </ChannelIconWrapper>
                     
                     <ChannelInfo>
@@ -2759,16 +2890,16 @@ const YoutubeMonitoring: React.FC = () => {
                     return statusMatch && nameMatch;
                   })
                   .map(channel => (
-                    <ChannelCardWrapper 
-                      key={channel.id} 
-                      active={selectedChannel === channel.id}
+                  <ChannelCardWrapper 
+                    key={channel.id} 
+                    active={selectedChannel === channel.id}
                       onClick={() => handleChannelSelect(channel.id)}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        setSelectedChannelForToggle(channel);
-                        setIsStatusPopupOpen(true);
-                      }}
-                    >
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setSelectedChannelForToggle(channel);
+                      setIsStatusPopupOpen(true);
+                    }}
+                  >
                       <CardHeader>
                         <InfoTooltip text="Channel relevance score based on engagement">
                           <ScoreBadge>
@@ -2777,19 +2908,19 @@ const YoutubeMonitoring: React.FC = () => {
                           </ScoreBadge>
                         </InfoTooltip>
                         
-                        <ChannelBadge 
-                          status={channel.is_active === true ? 'active' : 'inactive'}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedChannelForToggle(channel);
-                            setIsStatusPopupOpen(true);
-                          }}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          {channel.is_active === true && <IconComponent icon={FaIcons.FaCheck} />}
-                          {channel.is_active === false && <IconComponent icon={FaIcons.FaPause} />}
-                          {channel.is_active === true ? 'Active' : 'Inactive'}
-                        </ChannelBadge>
+                    <ChannelBadge 
+                      status={channel.is_active === true ? 'active' : 'inactive'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedChannelForToggle(channel);
+                        setIsStatusPopupOpen(true);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {channel.is_active === true && <IconComponent icon={FaIcons.FaCheck} />}
+                      {channel.is_active === false && <IconComponent icon={FaIcons.FaPause} />}
+                      {channel.is_active === true ? 'Active' : 'Inactive'}
+                    </ChannelBadge>
                       </CardHeader>
                       
                       <CardContent>
@@ -2800,12 +2931,12 @@ const YoutubeMonitoring: React.FC = () => {
                         </ChannelImageWrapper>
                         
                         <ChannelInfoContainer>
-                          <ChannelName>{channel.channel_name || channel.Nome || channel.name || 'Unnamed Channel'}</ChannelName>
+                      <ChannelName>{channel.channel_name || channel.Nome || channel.name || 'Unnamed Channel'}</ChannelName>
                           
                           <ChannelStatsGrid>
                             <StatRow>
                               <StatIcon>
-                                <IconComponent icon={FaIcons.FaUser} />
+                          <IconComponent icon={FaIcons.FaUser} />
                               </StatIcon>
                               <InfoTooltip text="Total subscribers">
                                 <StatText>{channel.subscriber_count}</StatText>
@@ -2814,7 +2945,7 @@ const YoutubeMonitoring: React.FC = () => {
                             
                             <StatRow>
                               <StatIcon>
-                                <IconComponent icon={FaIcons.FaEye} />
+                          <IconComponent icon={FaIcons.FaEye} />
                               </StatIcon>
                               <InfoTooltip text="Total views">
                                 <StatText>{channel.view_count}</StatText>
@@ -2823,7 +2954,7 @@ const YoutubeMonitoring: React.FC = () => {
                             
                             <StatRow>
                               <StatIcon>
-                                <IconComponent icon={FaIcons.FaClock} />
+                          <IconComponent icon={FaIcons.FaClock} />
                               </StatIcon>
                               <InfoTooltip text="Last video published">
                                 <StatText>{channel.last_video}</StatText>
@@ -2855,8 +2986,8 @@ const YoutubeMonitoring: React.FC = () => {
                           </ActionArea>
                         </ChannelInfoContainer>
                       </CardContent>
-                    </ChannelCardWrapper>
-                  ))
+                  </ChannelCardWrapper>
+                ))
               )}
             </ChannelList>
             
@@ -3082,14 +3213,14 @@ const YoutubeMonitoring: React.FC = () => {
                   background: `${withOpacity(COLORS.ACCENT, 0.05)}`,
                   fontWeight: 'bold' 
                 }}>
-                  <div>Video</div>
-                  <div>Views</div>
-                  <div>Comments</div>
+              <div>Video</div>
+              <div>Views</div>
+              <div>Comments</div>
                   <div>Posts</div>
                   <div>Category</div>
                   <div>Relevance</div>
-                </VideoTableHeader>
-                
+            </VideoTableHeader>
+            
                 {channelVideos.map((video: any) => {
                   const thumbnailUrl = getThumbnailUrl(video);
                   
@@ -3103,8 +3234,8 @@ const YoutubeMonitoring: React.FC = () => {
                         transition: 'all 0.2s ease'
                       }}
                     >
-                      <VideoTitle>
-                        <VideoThumbnail>
+                <VideoTitle>
+                  <VideoThumbnail>
                           <img 
                             src={thumbnailUrl}
                             alt={video.nome_do_video || "Video thumbnail"}
@@ -3122,8 +3253,8 @@ const YoutubeMonitoring: React.FC = () => {
                               objectFit: 'cover'
                             }}
                           />
-                        </VideoThumbnail>
-                        <VideoTitleText>
+                  </VideoThumbnail>
+                  <VideoTitleText>
                           <VideoMainTitle>{video.nome_do_video || video.title || "Untitled Video"}</VideoMainTitle>
                           
                           {video.descricao && (
@@ -3143,28 +3274,28 @@ const YoutubeMonitoring: React.FC = () => {
                             <IconComponent icon={FaIcons.FaExpandAlt} />
                             View full details
                           </ExpandButton>
-                        </VideoTitleText>
-                      </VideoTitle>
-                      <VideoStat>
+                  </VideoTitleText>
+                </VideoTitle>
+                <VideoStat>
                         {video.views ? (video.views >= 1000 ? `${(video.views / 1000).toFixed(1)}K` : video.views) : '0'}
-                      </VideoStat>
-                      <VideoStat>
+                </VideoStat>
+                <VideoStat>
                         {video.commets || video.comments || '0'}
-                      </VideoStat>
-                      <VideoStat>
+                </VideoStat>
+                <VideoStat>
                         {video.total_posts || 0}
                         <VideoStatLabel>Posts</VideoStatLabel>
-                      </VideoStat>
-                      <VideoStat>
+                </VideoStat>
+                <VideoStat>
                         {video.content_category || video.category || "Uncategorized"}
                       </VideoStat>
                       <VideoStat>
                         {video.relevance_score ? `${(video.relevance_score * 100).toFixed(0)}%` : '0%'}
-                      </VideoStat>
-                    </VideoTableRow>
+                </VideoStat>
+              </VideoTableRow>
                   );
                 })}
-              </VideoTable>
+          </VideoTable>
             </div>
           )}
           
@@ -3249,9 +3380,9 @@ const YoutubeMonitoring: React.FC = () => {
                         <IconComponent icon={FaIcons.FaYoutube} style={{ marginRight: '6px' }} />
                         Watch on YouTube
                       </a>
-                    </div>
+            </div>
                   )}
-                </div>
+            </div>
                 
                 <div style={{ flex: '1 1 320px' }}>
                   <h3 style={{ 
@@ -3277,7 +3408,7 @@ const YoutubeMonitoring: React.FC = () => {
                     }}>
                       <IconComponent icon={FaIcons.FaEye} style={{ marginRight: '6px' }} />
                       {selectedVideo.views ? (selectedVideo.views >= 1000 ? `${(selectedVideo.views / 1000).toFixed(1)}K` : selectedVideo.views) : '0'} views
-                    </div>
+          </div>
                     
                     <div style={{ 
                       display: 'flex', 
@@ -3352,10 +3483,10 @@ const YoutubeMonitoring: React.FC = () => {
               <p>Loading comments...</p>
             </div>
           ) : filteredComments.length === 0 ? (
-            <div style={{ padding: '40px 0', textAlign: 'center' }}>
-              <div style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}>
+          <div style={{ padding: '40px 0', textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}>
                 <IconComponent icon={FaIcons.FaComments} />
-              </div>
+            </div>
               <h3>No comments found for this video</h3>
               <p>This video doesn't have any posted comments yet</p>
             </div>
@@ -3380,7 +3511,7 @@ const YoutubeMonitoring: React.FC = () => {
                     <div style={{ fontWeight: 'bold' }}>{comment.author_name}</div>
                     <div style={{ fontSize: '0.8rem', color: '#666' }}>
                       {comment.published_at || comment.updated_at || 'N/A'}
-                    </div>
+          </div>
                   </div>
                   <div>{comment.text_original}</div>
                   <div style={{ fontSize: '0.9rem', color: '#666', display: 'flex', gap: '10px' }}>
