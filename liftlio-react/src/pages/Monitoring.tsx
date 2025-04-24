@@ -1668,7 +1668,9 @@ const YoutubeMonitoring: React.FC = () => {
     total_views: number, 
     total_likes: number, 
     media: string, 
-    posts: number 
+    posts: number,
+    total_channels: number,
+    total_videos: number
   } | null>(null);
   const [channelVideos, setChannelVideos] = useState<any[]>([]);
   const [videoComments, setVideoComments] = useState<any[]>([]);
@@ -2255,6 +2257,26 @@ const YoutubeMonitoring: React.FC = () => {
                 </StatIconContainer>
               </StatCardHeader>
               <StatValue>{metricsData?.media ? `${parseFloat(metricsData.media).toFixed(1)}%` : '0%'}</StatValue>
+            </StatCard>
+            
+            <StatCard>
+              <StatCardHeader>
+                <StatLabel>Total Channels</StatLabel>
+                <StatIconContainer color="#007AFF">
+                  <IconComponent icon={FaIcons.FaYoutube} />
+                </StatIconContainer>
+              </StatCardHeader>
+              <StatValue>{metricsData?.total_channels || '0'}</StatValue>
+            </StatCard>
+            
+            <StatCard>
+              <StatCardHeader>
+                <StatLabel>Total Videos</StatLabel>
+                <StatIconContainer color="#5AC8FA">
+                  <IconComponent icon={FaIcons.FaVideo} />
+                </StatIconContainer>
+              </StatCardHeader>
+              <StatValue>{metricsData?.total_videos || '0'}</StatValue>
             </StatCard>
           </StatsGrid>
           
