@@ -346,6 +346,7 @@ const ChannelStats = styled.div`
   margin-top: 8px;
 `;
 
+// Define ChannelStatItem abaixo do estilo ChannelStats
 const ChannelStatItem = styled.div`
   display: flex;
   align-items: center;
@@ -1176,15 +1177,40 @@ const YoutubeMonitoring: React.FC = () => {
     console.log('Dados do canal encontrado:', selectedChannelData);
     
     if (selectedChannelData) {
+      // Verificar os dados disponíveis no console
+      console.log('Subscriber count:', selectedChannelData.raw_subscriber_count);
+      console.log('View count raw:', selectedChannelData.view_count);
+      
+      // Extrair valores numéricos das estatísticas formatadas
+      let viewCount = '0';
+      if (selectedChannelData.view_count) {
+        if (typeof selectedChannelData.view_count === 'string') {
+          // Extrair apenas o valor numérico (1.8M -> 1800000)
+          if (selectedChannelData.view_count.includes('M')) {
+            const numPart = parseFloat(selectedChannelData.view_count.replace(/[^0-9.]/g, ''));
+            viewCount = (numPart * 1000000).toString();
+          } else if (selectedChannelData.view_count.includes('K')) {
+            const numPart = parseFloat(selectedChannelData.view_count.replace(/[^0-9.]/g, ''));
+            viewCount = (numPart * 1000).toString();
+          } else {
+            viewCount = selectedChannelData.view_count.replace(/[^0-9]/g, '');
+          }
+        } else {
+          viewCount = selectedChannelData.view_count.toString();
+        }
+      }
+      
       // Usar diretamente os dados que já temos ao invés de fazer uma chamada adicional
       const channelDetails = {
         title: selectedChannelData.channel_name || 'Canal do YouTube',
         description: selectedChannelData.description || 'Informações detalhadas sobre este canal não estão disponíveis no momento.',
         statistics: {
-          subscriberCount: selectedChannelData.raw_subscriber_count || selectedChannelData.subscriber_count || '0',
-          viewCount: typeof selectedChannelData.view_count === 'string' ? 
-                    selectedChannelData.view_count.replace(/[^0-9.]/g, '') : 
-                    selectedChannelData.view_count || '0',
+          subscriberCount: selectedChannelData.raw_subscriber_count?.toString() || 
+                          (typeof selectedChannelData.subscriber_count === 'string' ? 
+                            selectedChannelData.subscriber_count.replace(/[^0-9]/g, '') : 
+                            selectedChannelData.subscriber_count?.toString()) || 
+                          '0',
+          viewCount: viewCount,
           videoCount: selectedChannelData.video_count?.toString() || '0'
         },
         thumbnails: {
@@ -1192,7 +1218,7 @@ const YoutubeMonitoring: React.FC = () => {
           medium: { url: selectedChannelData.imagem || 'https://via.placeholder.com/150' },
           default: { url: selectedChannelData.imagem || 'https://via.placeholder.com/150' }
         },
-        country: 'BR',
+        country: 'US', // Alterado para corresponder aos dados reais que mostram US
         customUrl: selectedChannelData.custom_url || null
       };
       
@@ -1685,15 +1711,15 @@ const YoutubeMonitoring: React.FC = () => {
                       <ChannelStats>
                         <ChannelStatItem>
                           <IconComponent icon={FaIcons.FaUser} />
-                          {channel.subscriber_count || channel.subscribers || '0'} subscribers
+                          {channel.subscriber_count}
                         </ChannelStatItem>
                         <ChannelStatItem>
                           <IconComponent icon={FaIcons.FaEye} />
-                          {channel.view_count || channel.views || '0'} views
+                          {channel.view_count}
                         </ChannelStatItem>
                         <ChannelStatItem>
                           <IconComponent icon={FaIcons.FaClock} />
-                          Last video: {channel.last_video || channel.lastVideo || 'N/A'}
+                          {channel.last_video}
                         </ChannelStatItem>
                         <ChannelStatItem>
                           <IconComponent icon={FaIcons.FaVideo} />
