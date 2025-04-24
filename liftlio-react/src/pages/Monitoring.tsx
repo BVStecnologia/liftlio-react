@@ -1817,18 +1817,15 @@ const YoutubeMonitoring: React.FC = () => {
     }
   };
   
-  // Nova função para buscar comentários de um vídeo específico
+  // Função para buscar comentários do vídeo selecionado
   const fetchVideoComments = async (videoId: number) => {
     setIsLoadingComments(true);
     try {
-      const { data, error } = await supabase.rpc('get_comments_and_messages_by_video_id', {
+      const data = await callRPC('get_comments_and_messages_by_video_id', {
         video_id_param: videoId
       });
       
-      if (error) {
-        console.error('Error fetching video comments:', error);
-        setCurrentVideoComments([]);
-      } else if (data) {
+      if (data) {
         console.log('Video comments:', data);
         setCurrentVideoComments(Array.isArray(data) ? data : []);
       } else {
