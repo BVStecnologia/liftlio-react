@@ -920,32 +920,28 @@ const YoutubeMonitoring: React.FC = () => {
     return data;
   };
   
-  // Nova função para buscar vídeos de um canal específico
+  // Function to fetch videos for a specific channel
   const fetchChannelVideos = async (channelId: number) => {
     if (!channelId || !currentProject?.id) return;
     
     setIsLoadingVideos(true);
     try {
-      // Simular a busca de vídeos - no futuro, chamar a RPC real
-      // const data = await callRPC('get_channel_videos', { 
-      //   id_canal: channelId,
-      //   id_projeto: currentProject.id 
-      // });
+      // Use the RPC helper function to call get_videos_by_channel_id
+      const data = await callRPC('get_videos_by_channel_id', {
+        canal_id: channelId
+      });
       
-      // Simulação de dados por enquanto
-      const simulatedData = videoPerformanceData.map(video => ({
-        ...video,
-        channelId: channelId
-      }));
-      
-      setTimeout(() => {
-        setChannelVideos(simulatedData);
-        setIsLoadingVideos(false);
-      }, 800);
-      
+      if (data && Array.isArray(data)) {
+        console.log('Channel videos data:', data);
+        setChannelVideos(data);
+      } else {
+        console.error('Invalid data format received for channel videos');
+        setChannelVideos([]);
+      }
     } catch (error) {
-      console.error('Error fetching channel videos:', error);
+      console.error('Error in channel videos fetch operation:', error);
       setChannelVideos([]);
+    } finally {
       setIsLoadingVideos(false);
     }
   };
@@ -1021,7 +1017,7 @@ const YoutubeMonitoring: React.FC = () => {
           <Tab active={activeTab === 'videos'} onClick={() => setActiveTab('videos')}>
             <TabIcon><IconComponent icon={FaIcons.FaVideo} /></TabIcon>
             Videos
-            <ChannelBadge style={{ marginLeft: '8px' }} status="active">
+            <ChannelBadge style={{ marginLeft: '12px', position: 'relative' }} status="active">
               {channelVideos.length}
             </ChannelBadge>
           </Tab>
@@ -1631,11 +1627,11 @@ const YoutubeMonitoring: React.FC = () => {
                 <div>Video</div>
                 <div>Views</div>
                 <div>Comments</div>
-                <div>Likes</div>
-                <div>Retention</div>
+                <div>Category</div>
+                <div>Relevance</div>
               </VideoTableHeader>
               
-              {channelVideos.map((video) => (
+              {channelVideos.map((video: any) => (
                 <VideoTableRow 
                   key={video.id}
                   onClick={() => handleVideoSelect(video.id)}
@@ -1645,33 +1641,25 @@ const YoutubeMonitoring: React.FC = () => {
                   }}
                 >
                   <VideoTitle>
-                    <VideoThumbnail>
-                      <img src={video.thumbnail} alt={video.name} />
-                    </VideoThumbnail>
                     <VideoTitleText>
-                      {video.name}
-                      {video.badge && (
-                        <VideoBadge type={video.badge}>
-                          {video.badge === 'new' ? 'New' : 'Trending'}
-                        </VideoBadge>
-                      )}
+                      {video.nome_do_video || "Untitled Video"}
                     </VideoTitleText>
                   </VideoTitle>
                   <VideoStat>
-                    {(video.views / 1000).toFixed(0)}K
+                    {video.views ? (video.views >= 1000 ? `${(video.views / 1000).toFixed(1)}K` : video.views) : '0'}
                     <VideoStatLabel>Views</VideoStatLabel>
                   </VideoStat>
                   <VideoStat>
-                    {(video.comments / 1000).toFixed(1)}K
+                    {video.commets || '0'}
                     <VideoStatLabel>Comments</VideoStatLabel>
                   </VideoStat>
                   <VideoStat>
-                    {(video.likes / 1000).toFixed(1)}K
-                    <VideoStatLabel>Likes</VideoStatLabel>
+                    {video.content_category || "Uncategorized"}
+                    <VideoStatLabel>Category</VideoStatLabel>
                   </VideoStat>
                   <VideoStat>
-                    {video.retention}%
-                    <VideoStatLabel>Retention</VideoStatLabel>
+                    {video.relevance_score ? `${(video.relevance_score * 100).toFixed(0)}%` : '0%'}
+                    <VideoStatLabel>Relevance</VideoStatLabel>
                   </VideoStat>
                 </VideoTableRow>
               ))}
