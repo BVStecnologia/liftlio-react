@@ -1104,15 +1104,15 @@ const YoutubeMonitoring: React.FC = () => {
         
         // Process data to ensure videos have thumbnail URLs
         const processedVideos = data.map(video => {
-          // Identificar qual ID do vídeo usar (video_id ou id_video)
-          const youtubeVideoId = video.video_id || video.id_video || '';
+          // Identificar qual ID do vídeo usar (video_id_youtube ou video_id)
+          const youtubeVideoId = video.video_id_youtube || video.video_id || video.id_video || '';
           
           if (youtubeVideoId) {
             console.log('Video YouTube ID encontrado:', youtubeVideoId);
             return {
               ...video,
               // Garantir que temos o ID do YouTube em um campo consistente
-              video_id: youtubeVideoId
+              video_id_youtube: youtubeVideoId
             };
           } else {
             console.warn('Video sem ID do YouTube:', video);
@@ -1300,8 +1300,8 @@ const YoutubeMonitoring: React.FC = () => {
   // Adicionar esta função de utilidade para gerar URLs de thumbnail
   const getThumbnailUrl = (video: any) => {
     // Se temos o ID do vídeo do YouTube, usamos para gerar a URL da thumbnail
-    if (video.video_id) {
-      return `https://i.ytimg.com/vi/${video.video_id}/hqdefault.jpg`;
+    if (video.video_id_youtube) {
+      return `https://i.ytimg.com/vi/${video.video_id_youtube}/hqdefault.jpg`;
     }
     
     // Fallback para uma imagem estática com base na primeira letra do título
@@ -2040,7 +2040,7 @@ const YoutubeMonitoring: React.FC = () => {
                 
                 {channelVideos.map((video: any) => {
                   // Depuração para cada vídeo
-                  console.log('Renderizando vídeo:', video.id, 'video_id:', video.video_id);
+                  console.log('Renderizando vídeo:', video.id, 'video_id_youtube:', video.video_id_youtube);
                   const thumbnailUrl = getThumbnailUrl(video);
                   console.log('Thumbnail URL gerada:', thumbnailUrl);
                   
