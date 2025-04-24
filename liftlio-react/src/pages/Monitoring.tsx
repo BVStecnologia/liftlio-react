@@ -262,35 +262,161 @@ const ChannelList = styled.div`
 // Create a wrapper div that can accept onClick and other interactive props
 const ChannelCardWrapper = styled.div<{ active: boolean }>`
   display: flex;
-  align-items: flex-start; /* Alterado de center para flex-start para melhor organização vertical */
-  padding: 32px 24px; /* Aumentar padding vertical e horizontal */
-  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.tertiary};
-  box-shadow: ${props => props.active ? '0 8px 16px rgba(0,0,0,0.15)' : '0 4px 8px rgba(0,0,0,0.08)'};
-  cursor: pointer;
+  flex-direction: column;
+  padding: 24px;
+  border: none;
   border-radius: ${props => props.theme.radius.lg};
   background-color: ${props => props.theme.colors.white};
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  cursor: pointer;
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
-  min-height: 180px; /* Definir uma altura mínima */
   
   &:hover {
     transform: translateY(-4px);
-    border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
   }
+`;
+
+// Criar header do card com badge de status
+const CardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+`;
+
+// Melhorar a estilização do ChannelBadge conforme imagem
+const ChannelBadge = styled.div<{ status: string }>`
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: ${props => 
+    props.status === 'active' ? '#e6f7ee' : 
+    props.status === 'pending' ? '#FFF8E6' : 
+    '#f5f5f5'};
+  color: ${props => 
+    props.status === 'active' ? '#34C759' : 
+    props.status === 'pending' ? '#FF9500' : 
+    '#999'};
+  display: flex;
+  align-items: center;
   
-  ${props => props.active && `
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 4px;
-      height: 100%;
-      background: linear-gradient(to bottom, ${props.theme.colors.primary}, ${COLORS.ACCENT || props.theme.colors.primary}CC);
-    }
-  `}
+  svg {
+    margin-right: 4px;
+    font-size: 10px;
+  }
+`;
+
+// Score badge conforme imagem
+const ScoreBadge = styled.div`
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #f5f5f5;
+  color: #444;
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 6px;
+    font-size: 12px;
+    color: #666;
+  }
+`;
+
+// Layout principal do card (conteúdo)
+const CardContent = styled.div`
+  display: flex;
+  align-items: flex-start;
+`;
+
+// Área para a imagem do canal
+const ChannelImageWrapper = styled.div`
+  margin-right: 16px;
+`;
+
+// Imagem do canal em círculo
+const ChannelImage = styled.div<{ imageUrl?: string }>`
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-image: ${props => props.imageUrl ? `url(${props.imageUrl})` : 'none'};
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  background-color: ${props => !props.imageUrl ? '#f5f5f5' : 'transparent'};
+  
+  svg {
+    font-size: 24px;
+  }
+`;
+
+// Container das informações do canal
+const ChannelInfoContainer = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+`;
+
+// Nome do canal
+const ChannelName = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 16px;
+`;
+
+// Grid de estatísticas em duas colunas
+const ChannelStatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+`;
+
+// Linha de estatística
+const StatRow = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+// Ícone de estatística
+const StatIcon = styled.div`
+  color: #666;
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  svg {
+    font-size: 16px;
+  }
+`;
+
+// Texto de estatística
+const StatText = styled.div`
+  font-size: 14px;
+  color: #666;
+`;
+
+// Área para o botão "Click to view channel videos"
+const ActionArea = styled.div`
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  color: #007BFF;
+  font-size: 14px;
+  font-weight: 500;
+  
+  svg {
+    margin-right: 8px;
+  }
 `;
 
 // Adicionar background cinza apenas para a lateral da foto
@@ -333,31 +459,6 @@ const ChannelIcon = styled.div`
   z-index: 1;
 `;
 
-const ChannelBadge = styled.div<{ status: string }>`
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 4px 12px;
-  border-radius: ${props => props.theme.radius.pill};
-  font-size: ${props => props.theme.fontSizes.xs};
-  background: ${props => 
-    props.status === 'active' ? props.theme.colors.successLight : 
-    props.status === 'pending' ? props.theme.colors.warningLight : 
-    props.theme.colors.lightGrey};
-  color: ${props => 
-    props.status === 'active' ? props.theme.colors.success : 
-    props.status === 'pending' ? props.theme.colors.warning : 
-    props.theme.colors.darkGrey};
-  font-weight: ${props => props.theme.fontWeights.medium};
-  display: flex;
-  align-items: center;
-  
-  svg {
-    margin-right: 4px;
-    font-size: 10px;
-  }
-`;
-
 const ChannelInfo = styled.div`
   flex: 1;
   min-width: 0; /* Evitar que ultrapasse o container */
@@ -366,21 +467,6 @@ const ChannelInfo = styled.div`
   justify-content: space-between;
   height: 100%;
   padding-top: 6px; /* Adicionar um pequeno padding no topo para alinhar com o ícone maior */
-`;
-
-const ChannelName = styled.div`
-  font-weight: ${props => props.theme.fontWeights.bold};
-  font-size: ${props => props.theme.fontSizes.xl}; /* Aumentar de lg para xl */
-  color: ${props => props.theme.colors.text};
-  margin-bottom: 16px; /* Aumentar espaço entre o nome e as estatísticas */
-  display: flex;
-  align-items: center;
-  
-  svg {
-    color: #FF0000; /* YouTube red */
-    margin-left: 8px;
-    font-size: 18px; /* Aumentar de 16px para 18px */
-  }
 `;
 
 const ChannelStats = styled.div`
@@ -2001,12 +2087,12 @@ const YoutubeMonitoring: React.FC = () => {
                     
                     <ChannelInfo>
                       <ChannelName>Loading...</ChannelName>
-                      <ChannelStats>
+                      <ChannelStatsGrid>
                         <ChannelStatItem>
                           <IconComponent icon={FaIcons.FaUser} />
                           Loading...
                         </ChannelStatItem>
-                      </ChannelStats>
+                      </ChannelStatsGrid>
                     </ChannelInfo>
                   </ChannelCardWrapper>
                 ))
@@ -2051,106 +2137,92 @@ const YoutubeMonitoring: React.FC = () => {
                     return statusMatch && nameMatch;
                   })
                   .map(channel => (
-                  <ChannelCardWrapper 
-                    key={channel.id} 
-                    active={selectedChannel === channel.id}
-                    onClick={() => handleChannelSelect(channel.id)}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      setSelectedChannelForToggle(channel);
-                      setIsStatusPopupOpen(true);
-                    }}
-                  >
-                    <ChannelBadge 
-                      status={channel.is_active === true ? 'active' : 'inactive'}
-                      onClick={(e) => {
-                        e.stopPropagation();
+                    <ChannelCardWrapper 
+                      key={channel.id} 
+                      active={selectedChannel === channel.id}
+                      onClick={() => handleChannelSelect(channel.id)}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
                         setSelectedChannelForToggle(channel);
                         setIsStatusPopupOpen(true);
                       }}
-                      style={{ cursor: 'pointer' }}
                     >
-                      {channel.is_active === true && <IconComponent icon={FaIcons.FaCheck} />}
-                      {channel.is_active === false && <IconComponent icon={FaIcons.FaPause} />}
-                      {channel.is_active === true ? 'Active' : 'Inactive'}
-                    </ChannelBadge>
-                    
-                    <ChannelIconWrapper>
-                      <ChannelIcon style={channel.imagem ? {
-                        backgroundImage: `url(${channel.imagem})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center'
-                      } : {}}>
-                        {!channel.imagem && <IconComponent icon={FaIcons.FaYoutube} />}
-                      </ChannelIcon>
-                    </ChannelIconWrapper>
-                    
-                    <ChannelInfo>
-                      <ChannelName>{channel.channel_name || channel.Nome || channel.name || 'Unnamed Channel'}</ChannelName>
-                      <ChannelStats>
-                        <TooltipContainer>
-                          <ChannelStatItem>
-                            <IconComponent icon={FaIcons.FaUser} />
-                            {channel.subscriber_count}
-                            <CustomTooltip>Number of channel subscribers</CustomTooltip>
-                          </ChannelStatItem>
-                        </TooltipContainer>
+                      <CardHeader>
+                        <ScoreBadge>
+                          <IconComponent icon={FaIcons.FaChartLine} />
+                          Score: {channel.avg_relevance_score || '0.0'}
+                        </ScoreBadge>
                         
-                        <TooltipContainer>
-                          <ChannelStatItem>
-                            <IconComponent icon={FaIcons.FaEye} />
-                            {channel.view_count}
-                            <CustomTooltip>Total view count for the channel</CustomTooltip>
-                          </ChannelStatItem>
-                        </TooltipContainer>
-                        
-                        <TooltipContainer>
-                          <ChannelStatItem>
-                            <IconComponent icon={FaIcons.FaClock} />
-                            {channel.last_video}
-                            <CustomTooltip>When the last video was published</CustomTooltip>
-                          </ChannelStatItem>
-                        </TooltipContainer>
-                        
-                        <TooltipContainer>
-                          <ChannelStatItem>
-                            <IconComponent icon={FaIcons.FaVideo} />
-                            {channelVideoCount[channel.id] || 0} monitored videos
-                            <CustomTooltip>Number of videos being monitored</CustomTooltip>
-                          </ChannelStatItem>
-                        </TooltipContainer>
-                        
-                        <TooltipContainer>
-                          <ChannelStatItem>
-                            <IconComponent icon={FaIcons.FaCommentAlt} />
-                            {channel.total_mensagens_postadas || 0} posts
-                            <CustomTooltip>Number of messages posted to this channel</CustomTooltip>
-                          </ChannelStatItem>
-                        </TooltipContainer>
-                      </ChannelStats>
+                        <ChannelBadge 
+                          status={channel.is_active === true ? 'active' : 'inactive'}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedChannelForToggle(channel);
+                            setIsStatusPopupOpen(true);
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {channel.is_active === true && <IconComponent icon={FaIcons.FaCheck} />}
+                          {channel.is_active === false && <IconComponent icon={FaIcons.FaPause} />}
+                          {channel.is_active === true ? 'Active' : 'Inactive'}
+                        </ChannelBadge>
+                      </CardHeader>
                       
-                      {/* Mensagem de instrução */}
-                      <ChannelStatItem style={{ 
-                        marginTop: '20px', /* Aumentar de 12px para 20px */
-                        color: '#007bff', 
-                        fontWeight: 'bold',
-                        display: 'flex',
-                        alignItems: 'center' 
-                      }}>
-                        <IconComponent icon={FaIcons.FaHandPointer} />
-                        <span style={{ marginLeft: '4px' }}>Click to view channel videos</span>
-                      </ChannelStatItem>
-                    </ChannelInfo>
-                    
-                    <TooltipContainer>
-                      <EngagementPill>
-                        <IconComponent icon={FaIcons.FaChartLine} />
-                        Score: {channel.avg_relevance_score || '0.0'}
-                        <CustomTooltip>Channel relevance score based on engagement metrics</CustomTooltip>
-                      </EngagementPill>
-                    </TooltipContainer>
-                  </ChannelCardWrapper>
-                ))
+                      <CardContent>
+                        <ChannelImageWrapper>
+                          <ChannelImage imageUrl={channel.imagem}>
+                            {!channel.imagem && <IconComponent icon={FaIcons.FaYoutube} />}
+                          </ChannelImage>
+                        </ChannelImageWrapper>
+                        
+                        <ChannelInfoContainer>
+                          <ChannelName>{channel.channel_name || channel.Nome || channel.name || 'Unnamed Channel'}</ChannelName>
+                          
+                          <ChannelStatsGrid>
+                            <StatRow>
+                              <StatIcon>
+                                <IconComponent icon={FaIcons.FaUser} />
+                              </StatIcon>
+                              <StatText>{channel.subscriber_count}</StatText>
+                            </StatRow>
+                            
+                            <StatRow>
+                              <StatIcon>
+                                <IconComponent icon={FaIcons.FaEye} />
+                              </StatIcon>
+                              <StatText>{channel.view_count}</StatText>
+                            </StatRow>
+                            
+                            <StatRow>
+                              <StatIcon>
+                                <IconComponent icon={FaIcons.FaClock} />
+                              </StatIcon>
+                              <StatText>{channel.last_video}</StatText>
+                            </StatRow>
+                            
+                            <StatRow>
+                              <StatIcon>
+                                <IconComponent icon={FaIcons.FaVideo} />
+                              </StatIcon>
+                              <StatText>{channelVideoCount[channel.id] || 0} monitored videos</StatText>
+                            </StatRow>
+                            
+                            <StatRow>
+                              <StatIcon>
+                                <IconComponent icon={FaIcons.FaCommentAlt} />
+                              </StatIcon>
+                              <StatText>{channel.total_mensagens_postadas || 0} posts</StatText>
+                            </StatRow>
+                          </ChannelStatsGrid>
+                          
+                          <ActionArea>
+                            <IconComponent icon={FaIcons.FaHandPointer} />
+                            Click to view channel videos
+                          </ActionArea>
+                        </ChannelInfoContainer>
+                      </CardContent>
+                    </ChannelCardWrapper>
+                  ))
               )}
             </ChannelList>
             
