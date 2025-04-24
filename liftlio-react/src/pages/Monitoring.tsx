@@ -301,8 +301,8 @@ const ChannelIconWrapper = styled.div`
   &::before {
     content: '';
     position: absolute;
-    top: -20px;
-    bottom: -20px;
+    top: 0;
+    bottom: 0;
     left: -20px;
     width: 104px; /* 64px (imagem) + 20px (margin-right) + 20px (padding esquerdo) */
     background: #f2f2f2;
