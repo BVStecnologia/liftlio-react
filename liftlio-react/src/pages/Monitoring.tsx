@@ -2259,11 +2259,11 @@ const YoutubeMonitoring: React.FC = () => {
     if (!contentCategories || contentCategories.length === 0) {
       // Dados de exemplo caso não existam categorias
       return [
-        { name: 'Tutorials', value: 35 },
-        { name: 'Reviews', value: 25 },
-        { name: 'Live Streams', value: 15 },
-        { name: 'Shorts', value: 15 },
-        { name: 'Vlogs', value: 10 }
+        { name: 'Tutorials', value: 35, shortName: 'Tutorials' },
+        { name: 'Reviews', value: 25, shortName: 'Reviews' },
+        { name: 'Live Streams', value: 15, shortName: 'Live...' },
+        { name: 'Shorts', value: 15, shortName: 'Shorts' },
+        { name: 'Vlogs', value: 10, shortName: 'Vlogs' }
       ];
     }
     
@@ -2272,14 +2272,17 @@ const YoutubeMonitoring: React.FC = () => {
     
     // Mapear os dados das categorias para o formato do gráfico
     return contentCategories.map(category => {
-      // Não precisamos mais truncar os nomes agora que removemos as legendas
-      const displayName = category.content_category;
+      // Truncar nomes de categorias para exibição no gráfico
+      const shortName = category.content_category.length > 8
+        ? category.content_category.substring(0, 6) + '...'
+        : category.content_category;
       
       // Calcular a porcentagem baseada no número de vídeos
       const percentage = Math.round((category.total_videos / totalVideos) * 100);
       
       return {
-        name: displayName,
+        name: category.content_category,
+        shortName: shortName,
         fullName: category.content_category, // Nome completo para o tooltip
         value: percentage,
         videos: category.total_videos,
@@ -2634,7 +2637,7 @@ const YoutubeMonitoring: React.FC = () => {
                         innerRadius={46}
                         paddingAngle={5}
                         dataKey="value"
-                        label={({ name, percent }) => `${Math.round(percent * 100)}%`}
+                        label={({ shortName, value }) => `${shortName}: ${value}%`}
                       >
                         {getContentDistributionData().map((entry, index) => {
                           const COLORS = ['#5856D6', '#FF9500', '#34C759', '#FF2D55', '#007AFF', '#5AC8FA', '#BF5AF2', '#FF3B30'];
