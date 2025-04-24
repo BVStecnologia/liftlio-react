@@ -738,6 +738,128 @@ const performanceMetricsData = [
   },
 ];
 
+// Add more styled components for the channel header
+const ChannelHeaderSection = styled.div`
+  margin-bottom: 24px;
+  background: white;
+  border-radius: ${props => props.theme.radius.lg};
+  overflow: hidden;
+  box-shadow: ${props => props.theme.shadows.sm};
+`;
+
+const ChannelHeaderBanner = styled.div`
+  height: 140px;
+  background: linear-gradient(120deg, #1976D2, #64B5F6);
+  position: relative;
+`;
+
+const ChannelHeaderContent = styled.div`
+  display: flex;
+  padding: 0 24px 24px;
+  position: relative;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+const ChannelHeaderAvatar = styled.div<{ imageUrl: string }>`
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid white;
+  background-image: url(${props => props.imageUrl});
+  background-size: cover;
+  background-position: center;
+  margin-top: -60px;
+  box-shadow: ${props => props.theme.shadows.md};
+  flex-shrink: 0;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 16px;
+  }
+`;
+
+const ChannelHeaderInfo = styled.div`
+  flex: 1;
+  margin-left: 24px;
+  
+  @media (max-width: 768px) {
+    margin-left: 0;
+  }
+`;
+
+const ChannelHeaderTitle = styled.h2`
+  font-size: ${props => props.theme.fontSizes['2xl']};
+  font-weight: ${props => props.theme.fontWeights.bold};
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-left: 8px;
+    color: #FF0000;
+  }
+`;
+
+const ChannelHeaderMetrics = styled.div`
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+`;
+
+const ChannelHeaderMetric = styled.div`
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 8px;
+    color: ${COLORS.ACCENT};
+  }
+  
+  span {
+    font-weight: ${props => props.theme.fontWeights.medium};
+  }
+`;
+
+const ChannelHeaderDescription = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.darkGrey};
+  line-height: 1.6;
+  max-height: 120px;
+  overflow-y: auto;
+  position: relative;
+  
+  &:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(transparent, white);
+    pointer-events: none;
+  }
+`;
+
+const ChannelHeaderUrl = styled.a`
+  display: inline-flex;
+  align-items: center;
+  color: ${COLORS.ACCENT};
+  font-size: ${props => props.theme.fontSizes.sm};
+  text-decoration: none;
+  margin-top: 12px;
+  
+  svg {
+    margin-right: 6px;
+  }
+  
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 // Component implementation
 const YoutubeMonitoring: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -762,6 +884,8 @@ const YoutubeMonitoring: React.FC = () => {
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [channelVideoCount, setChannelVideoCount] = useState<{[key: number]: number}>({});
+  const [selectedChannelDetails, setSelectedChannelDetails] = useState<any>(null);
+  const [isLoadingChannelDetails, setIsLoadingChannelDetails] = useState(false);
   const { currentProject } = useProject();
   
   useEffect(() => {
@@ -996,25 +1120,72 @@ const YoutubeMonitoring: React.FC = () => {
     }
   };
   
-  // Função para selecionar um canal
+  // Function to fetch detailed channel information
+  const fetchChannelDetails = async (channelId: string) => {
+    if (!channelId) return;
+    
+    setIsLoadingChannelDetails(true);
+    try {
+      const data = await callRPC('call_youtube_channel_details', {
+        channel_id: channelId
+      });
+      
+      console.log('Detailed channel data:', data);
+      
+      if (data && Array.isArray(data) && data.length > 0 && data[0].call_youtube_channel_details) {
+        setSelectedChannelDetails(data[0].call_youtube_channel_details);
+      } else {
+        console.error('Invalid channel details data format');
+        setSelectedChannelDetails(null);
+      }
+    } catch (error) {
+      console.error('Error fetching detailed channel info:', error);
+      setSelectedChannelDetails(null);
+    } finally {
+      setIsLoadingChannelDetails(false);
+    }
+  };
+
+  // Function to handle channel selection - update to also fetch channel details
   const handleChannelSelect = (channelId: number) => {
     setSelectedChannel(channelId);
-    setSelectedVideo(null); // Limpar seleção de vídeo
+    setSelectedVideo(null); // Clear selected video
     fetchChannelVideos(channelId);
     
-    // Se estiver em Overview ou Channels, mudar para a tab Videos
+    // Get the channel data to extract YouTube channel ID
+    const selectedChannelData = channels.find(c => c.id === channelId);
+    if (selectedChannelData && selectedChannelData.channel_id) {
+      fetchChannelDetails(selectedChannelData.channel_id);
+    }
+    
+    // If in Overview or Channels tab, switch to Videos tab
     if (activeTab === 'overview' || activeTab === 'channels') {
       setActiveTab('videos');
     }
   };
   
-  // Função para selecionar um vídeo
+  // Function to select a video
   const handleVideoSelect = (videoId: number) => {
     setSelectedVideo(videoId);
     fetchVideoComments(videoId);
     
-    // Mudar para a tab Comments
+    // Switch to Comments tab
     setActiveTab('comments');
+  };
+  
+  // Helper function to format numbers
+  const formatNumber = (num: string | number | undefined): string => {
+    if (!num) return '0';
+    
+    const numValue = typeof num === 'string' ? parseInt(num, 10) : num;
+    
+    if (numValue >= 1000000) {
+      return `${(numValue / 1000000).toFixed(1)}M`;
+    } else if (numValue >= 1000) {
+      return `${(numValue / 1000).toFixed(1)}K`;
+    }
+    
+    return numValue.toString();
   };
   
   return (
@@ -1627,6 +1798,65 @@ const YoutubeMonitoring: React.FC = () => {
       
       {activeTab === 'videos' && (
         <ChartContainer>
+          {/* Channel Header Section */}
+          {isLoadingChannelDetails ? (
+            <div style={{ padding: '30px 0', textAlign: 'center' }}>
+              <IconComponent icon={FaIcons.FaSpinner} style={{ fontSize: '24px', animation: 'spin 1s linear infinite' }} />
+              <p>Loading channel details...</p>
+            </div>
+          ) : selectedChannelDetails ? (
+            <ChannelHeaderSection>
+              <ChannelHeaderBanner />
+              <ChannelHeaderContent>
+                <ChannelHeaderAvatar 
+                  imageUrl={selectedChannelDetails.thumbnails?.high?.url || 
+                           selectedChannelDetails.thumbnails?.medium?.url || 
+                           selectedChannelDetails.thumbnails?.default?.url} 
+                />
+                <ChannelHeaderInfo>
+                  <ChannelHeaderTitle>
+                    {selectedChannelDetails.title}
+                    <IconComponent icon={FaIcons.FaYoutube} />
+                  </ChannelHeaderTitle>
+                  
+                  <ChannelHeaderMetrics>
+                    <ChannelHeaderMetric>
+                      <IconComponent icon={FaIcons.FaUser} />
+                      <span>{formatNumber(selectedChannelDetails.statistics?.subscriberCount)} subscribers</span>
+                    </ChannelHeaderMetric>
+                    <ChannelHeaderMetric>
+                      <IconComponent icon={FaIcons.FaEye} />
+                      <span>{formatNumber(selectedChannelDetails.statistics?.viewCount)} views</span>
+                    </ChannelHeaderMetric>
+                    <ChannelHeaderMetric>
+                      <IconComponent icon={FaIcons.FaVideo} />
+                      <span>{formatNumber(selectedChannelDetails.statistics?.videoCount)} videos</span>
+                    </ChannelHeaderMetric>
+                    <ChannelHeaderMetric>
+                      <IconComponent icon={FaIcons.FaGlobe} />
+                      <span>Country: {selectedChannelDetails.country || 'N/A'}</span>
+                    </ChannelHeaderMetric>
+                  </ChannelHeaderMetrics>
+                  
+                  <ChannelHeaderDescription>
+                    {selectedChannelDetails.description || 'No description available.'}
+                  </ChannelHeaderDescription>
+                  
+                  {selectedChannelDetails.customUrl && (
+                    <ChannelHeaderUrl 
+                      href={`https://youtube.com/${selectedChannelDetails.customUrl}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                    >
+                      <IconComponent icon={FaIcons.FaExternalLinkAlt} />
+                      Visit channel
+                    </ChannelHeaderUrl>
+                  )}
+                </ChannelHeaderInfo>
+              </ChannelHeaderContent>
+            </ChannelHeaderSection>
+          ) : null}
+          
           <ChartHeader>
             <ChartTitle>
               <IconComponent icon={FaIcons.FaVideo} />
