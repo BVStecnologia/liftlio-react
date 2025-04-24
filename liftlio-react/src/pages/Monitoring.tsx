@@ -312,19 +312,18 @@ const ChannelBadge = styled.div<{ status: string }>`
 
 // Score badge conforme imagem
 const ScoreBadge = styled.div`
-  padding: 6px 12px;
+  background: rgba(52, 199, 89, 0.1);
+  color: #34C759;
+  padding: 4px 10px;
   border-radius: 20px;
   font-size: 13px;
-  font-weight: 500;
-  background: #f5f5f5;
-  color: #444;
+  font-weight: 600;
   display: flex;
   align-items: center;
   
   svg {
     margin-right: 6px;
     font-size: 12px;
-    color: #666;
   }
 `;
 
@@ -1646,6 +1645,12 @@ const InfoTooltip = ({ text, children }: { text: string; children: React.ReactNo
   );
 };
 
+// Implementar um StatText destacado em verde para certos elementos
+const HighlightedStatText = styled(StatText)`
+  color: #34C759;
+  font-weight: 600;
+`;
+
 // Component implementation
 const YoutubeMonitoring: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -2588,10 +2593,12 @@ const YoutubeMonitoring: React.FC = () => {
                       }}
                     >
                       <CardHeader>
-                        <ScoreBadge>
-                          <IconComponent icon={FaIcons.FaChartLine} />
-                          Score: {channel.avg_relevance_score || '0.0'}
-                        </ScoreBadge>
+                        <InfoTooltip text="Channel relevance score based on engagement">
+                          <ScoreBadge>
+                            <IconComponent icon={FaIcons.FaChartLine} />
+                            Score: {channel.avg_relevance_score || '0.0'}
+                          </ScoreBadge>
+                        </InfoTooltip>
                         
                         <ChannelBadge 
                           status={channel.is_active === true ? 'active' : 'inactive'}
@@ -2623,7 +2630,7 @@ const YoutubeMonitoring: React.FC = () => {
                               <StatIcon>
                                 <IconComponent icon={FaIcons.FaUser} />
                               </StatIcon>
-                              <InfoTooltip text="Total de inscritos do canal">
+                              <InfoTooltip text="Total subscribers">
                                 <StatText>{channel.subscriber_count}</StatText>
                               </InfoTooltip>
                             </StatRow>
@@ -2632,7 +2639,7 @@ const YoutubeMonitoring: React.FC = () => {
                               <StatIcon>
                                 <IconComponent icon={FaIcons.FaEye} />
                               </StatIcon>
-                              <InfoTooltip text="Total de visualizações do canal">
+                              <InfoTooltip text="Total views">
                                 <StatText>{channel.view_count}</StatText>
                               </InfoTooltip>
                             </StatRow>
@@ -2641,7 +2648,7 @@ const YoutubeMonitoring: React.FC = () => {
                               <StatIcon>
                                 <IconComponent icon={FaIcons.FaClock} />
                               </StatIcon>
-                              <InfoTooltip text="Último vídeo publicado">
+                              <InfoTooltip text="Last video published">
                                 <StatText>{channel.last_video}</StatText>
                               </InfoTooltip>
                             </StatRow>
@@ -2650,8 +2657,8 @@ const YoutubeMonitoring: React.FC = () => {
                               <StatIcon>
                                 <IconComponent icon={FaIcons.FaVideo} />
                               </StatIcon>
-                              <InfoTooltip text="Número de vídeos monitorados">
-                                <StatText>{channelVideoCount[channel.id] || 0} monitored videos</StatText>
+                              <InfoTooltip text="Videos currently being monitored">
+                                <HighlightedStatText>{channelVideoCount[channel.id] || 0} monitored videos</HighlightedStatText>
                               </InfoTooltip>
                             </StatRow>
                             
@@ -2659,8 +2666,8 @@ const YoutubeMonitoring: React.FC = () => {
                               <StatIcon>
                                 <IconComponent icon={FaIcons.FaCommentAlt} />
                               </StatIcon>
-                              <InfoTooltip text="Total de mensagens postadas">
-                                <StatText>{channel.total_mensagens_postadas || 0} posts</StatText>
+                              <InfoTooltip text="Messages posted by Liftlio">
+                                <HighlightedStatText>{channel.total_mensagens_postadas || 0} posts</HighlightedStatText>
                               </InfoTooltip>
                             </StatRow>
                           </ChannelStatsGrid>
