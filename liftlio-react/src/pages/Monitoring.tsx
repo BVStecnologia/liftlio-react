@@ -1919,9 +1919,11 @@ const YoutubeMonitoring: React.FC = () => {
                     </ChannelHeaderMetric>
                   </ChannelHeaderMetrics>
                   
-                  <ChannelHeaderDescription>
-                    {selectedChannelDetails.description || 'No description available.'}
-                  </ChannelHeaderDescription>
+                  {selectedChannelDetails.description && selectedChannelDetails.description.trim() !== '' && (
+                    <ChannelHeaderDescription>
+                      {selectedChannelDetails.description}
+                    </ChannelHeaderDescription>
+                  )}
                   
                   {selectedChannelDetails.customUrl && (
                     <ChannelHeaderUrl 
