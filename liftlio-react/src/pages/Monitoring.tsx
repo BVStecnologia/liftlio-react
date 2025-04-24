@@ -833,41 +833,43 @@ const YoutubeMonitoring: React.FC = () => {
     fetchChannelDetails();
   }, [currentProject]);
   
-  // Função para alternar o status ativo/inativo de um canal usando o nome
+  // Função para alternar o status ativo/inativo de um canal usando o ID
   const toggleChannelStatus = async (channel: ChannelDetails, currentStatus: boolean) => {
     try {
       setIsUpdatingStatus(true);
       
-      // Pegando o nome do canal para usar na atualização
-      const channelName = channel.Nome || channel.channel_name || channel.name;
+      // Usando o ID do canal para a atualização (mais seguro e confiável)
+      const channelId = channel.id;
+      const channelName = channel.channel_name || channel.name || channel.Nome;
       
-      if (!channelName) {
-        console.error('Nome do canal não encontrado:', channel);
-        alert('Nome do canal não encontrado. Não é possível atualizar.');
+      if (!channelId) {
+        console.error('Channel ID not found:', channel);
+        alert('Channel ID not found. Cannot update status.');
         return null;
       }
       
-      console.log('Atualizando canal:', channelName);
-      console.log('Status atual:', currentStatus);
-      console.log('Novo status será:', !currentStatus);
+      console.log('Updating channel:', channelName);
+      console.log('Channel ID:', channelId);
+      console.log('Current status:', currentStatus);
+      console.log('New status will be:', !currentStatus);
       
       // Garantir que estamos trabalhando com um boolean para o campo is_active
       const newStatus = !currentStatus;
       
-      // Atualizar pelo Nome do canal conforme o exemplo fornecido
+      // Atualizar pelo ID do canal (mais seguro)
       const { data, error } = await supabase
         .from('Canais do youtube')
         .update({ is_active: newStatus })
-        .eq('Nome', channelName)
+        .eq('id', channelId)
         .select();
       
       // Verificar o resultado
       if (error) {
-        console.error('Erro ao atualizar o canal:', error.message);
-        console.error('Detalhes do erro:', error);
-        alert(`Erro ao atualizar o canal: ${error.message}`);
+        console.error('Error updating channel:', error.message);
+        console.error('Error details:', error);
+        alert(`Error updating channel: ${error.message}`);
       } else {
-        console.log('Canal atualizado com sucesso:', data);
+        console.log('Channel updated successfully:', data);
         
         // Atualiza a lista de canais após a mudança bem-sucedida
         if (currentProject?.id) {
@@ -879,18 +881,18 @@ const YoutubeMonitoring: React.FC = () => {
             
             if (refreshedData && Array.isArray(refreshedData)) {
               setChannels(refreshedData);
-              console.log('Lista de canais atualizada com sucesso');
+              console.log('Channel list updated successfully');
             }
           } catch (refreshError) {
-            console.error('Erro ao atualizar lista de canais:', refreshError);
+            console.error('Error refreshing channel list:', refreshError);
           }
         }
       }
       
       return data;
     } catch (error) {
-      console.error('Erro durante a operação de toggle:', error);
-      alert('Falha ao atualizar o status do canal. Verifique o console para mais detalhes.');
+      console.error('Error during toggle operation:', error);
+      alert('Failed to update channel status. Check console for details.');
       return null;
     } finally {
       setIsUpdatingStatus(false);
@@ -1373,13 +1375,13 @@ const YoutubeMonitoring: React.FC = () => {
                 <PopupContent onClick={(e) => e.stopPropagation()}>
                   <PopupTitle>
                     {selectedChannelForToggle.is_active === true
-                      ? 'Desativar Canal?' 
-                      : 'Ativar Canal?'}
+                      ? 'Deactivate Channel?' 
+                      : 'Activate Channel?'}
                   </PopupTitle>
                   <PopupText>
                     {selectedChannelForToggle.is_active === true
-                      ? 'Este canal não será mais monitorado. Você pode reativá-lo depois.'
-                      : 'Este canal será monitorado novamente. Você pode desativá-lo a qualquer momento.'}
+                      ? 'This channel will no longer be monitored. You can reactivate it later.'
+                      : 'This channel will be monitored again. You can deactivate it any time.'}
                   </PopupText>
                   <PopupActions>
                     <StatusToggleButton 
