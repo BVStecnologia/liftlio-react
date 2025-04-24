@@ -1297,6 +1297,25 @@ const YoutubeMonitoring: React.FC = () => {
     return `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
   };
   
+  // Adicionar esta função de utilidade para gerar URLs de thumbnail
+  const getThumbnailUrl = (video: any) => {
+    // Se temos o ID do vídeo do YouTube, usamos para gerar a URL da thumbnail
+    if (video.video_id) {
+      return `https://i.ytimg.com/vi/${video.video_id}/hqdefault.jpg`;
+    }
+    
+    // Fallback para uma imagem estática com base na primeira letra do título
+    const videoTitle = video.nome_do_video || video.title || "Untitled";
+    const firstLetter = videoTitle.charAt(0).toUpperCase();
+    
+    // Geramos cores diferentes com base na primeira letra do título
+    const colors = ['#5F27CD', '#2D98DA', '#FF9F43', '#EE5253', '#10AC84', '#222F3E', '#5F27CD'];
+    const colorIndex = firstLetter.charCodeAt(0) % colors.length;
+    
+    // Returna uma URL para uma imagem de placeholder personalizada
+    return `https://placehold.co/640x360/${colors[colorIndex].replace('#', '')}/${firstLetter === videoTitle.charAt(0) ? 'FFFFFF' : '333333'}?text=${encodeURIComponent(firstLetter)}`;
+  };
+  
   return (
     <PageContainer>
       <PageTitle>
@@ -2022,6 +2041,8 @@ const YoutubeMonitoring: React.FC = () => {
                 {channelVideos.map((video: any) => {
                   // Depuração para cada vídeo
                   console.log('Renderizando vídeo:', video.id, 'video_id:', video.video_id);
+                  const thumbnailUrl = getThumbnailUrl(video);
+                  console.log('Thumbnail URL gerada:', thumbnailUrl);
                   
                   return (
                     <VideoTableRow 
@@ -2034,30 +2055,27 @@ const YoutubeMonitoring: React.FC = () => {
                       }}
                     >
                       <VideoTitle>
-                        {video.video_id ? (
-                          <VideoThumbnail>
-                            <img 
-                              src={`https://i.ytimg.com/vi/${video.video_id}/hqdefault.jpg`}
-                              alt={video.nome_do_video || "Video thumbnail"}
-                              onError={(e) => {
-                                // Fallback para thumbnail de qualidade padrão se a alta qualidade não estiver disponível
-                                const target = e.target as HTMLImageElement;
-                                console.log(`Erro ao carregar thumbnail: ${target.src}`);
-                                target.src = `https://i.ytimg.com/vi/${video.video_id}/default.jpg`;
-                              }}
-                              style={{ 
-                                display: 'block',
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover'
-                              }}
-                            />
-                          </VideoThumbnail>
-                        ) : (
-                          <VideoThumbnail style={{ background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <IconComponent icon={FaIcons.FaVideo} style={{ color: '#777', fontSize: '20px' }} />
-                          </VideoThumbnail>
-                        )}
+                        <VideoThumbnail>
+                          <img 
+                            src={thumbnailUrl}
+                            alt={video.nome_do_video || "Video thumbnail"}
+                            onError={(e) => {
+                              console.log(`Erro ao carregar thumbnail: ${(e.target as HTMLImageElement).src}`);
+                              // Se falhar, tenta o método alternativo de placeholder
+                              if ((e.target as HTMLImageElement).src.includes('ytimg.com')) {
+                                const videoTitle = video.nome_do_video || video.title || "Untitled";
+                                const firstLetter = videoTitle.charAt(0).toUpperCase();
+                                (e.target as HTMLImageElement).src = `https://placehold.co/640x360/5F27CD/FFFFFF?text=${encodeURIComponent(firstLetter)}`;
+                              }
+                            }}
+                            style={{ 
+                              display: 'block',
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover'
+                            }}
+                          />
+                        </VideoThumbnail>
                         <VideoTitleText>
                           {video.nome_do_video || video.title || "Untitled Video"}
                         </VideoTitleText>
