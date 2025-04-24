@@ -735,6 +735,16 @@ const YoutubeMonitoring: React.FC = () => {
         if (data && Array.isArray(data) && data.length > 0) {
           // Process channels to ensure all required fields are available
           const processedChannels = data.map(channel => {
+            // Set status based on is_active if not already set
+            if (channel.is_active !== undefined && channel.status === undefined) {
+              channel.status = channel.is_active ? 'active' : 'inactive';
+            }
+            
+            // Default to active if neither is defined
+            if (channel.status === undefined && channel.is_active === undefined) {
+              channel.status = 'active';
+            }
+            
             // Calculate engagement rate if not provided by RPC
             if (!channel.engagement_rate && !channel.engagementRate) {
               const subscriberCount = parseInt(channel.subscriber_count || channel.subscribers || '0', 10);
@@ -1097,9 +1107,9 @@ const YoutubeMonitoring: React.FC = () => {
                 <IconComponent icon={FaIcons.FaCheck} />
                 Active
               </FilterButton>
-              <FilterButton active={channelFilter === 'pending'} onClick={() => setChannelFilter('pending')}>
-                <IconComponent icon={FaIcons.FaClock} />
-                Pending
+              <FilterButton active={channelFilter === 'inactive'} onClick={() => setChannelFilter('inactive')}>
+                <IconComponent icon={FaIcons.FaPause} />
+                Inactive
               </FilterButton>
             </FilterGroup>
             
@@ -1164,7 +1174,17 @@ const YoutubeMonitoring: React.FC = () => {
                 channels
                   .filter(channel => {
                     // Filtro por status
-                    const statusMatch = channelFilter === 'all' || (channel.status && channel.status === channelFilter);
+                    let statusMatch = false;
+                    
+                    if (channelFilter === 'all') {
+                      statusMatch = true;
+                    } else if (channelFilter === 'active') {
+                      // Verifique is_active ou status
+                      statusMatch = (channel.is_active === true) || (channel.status === 'active');
+                    } else if (channelFilter === 'inactive') {
+                      // Verifique is_active ou status
+                      statusMatch = (channel.is_active === false) || (channel.status === 'inactive');
+                    }
                     
                     // Filtro por nome com verificação de segurança
                     let nameMatch = searchTerm === '';
@@ -1233,6 +1253,16 @@ const YoutubeMonitoring: React.FC = () => {
                       if (data && Array.isArray(data) && data.length > 0) {
                         // Process channels to ensure all required fields are available
                         const processedChannels = data.map(channel => {
+                          // Set status based on is_active if not already set
+                          if (channel.is_active !== undefined && channel.status === undefined) {
+                            channel.status = channel.is_active ? 'active' : 'inactive';
+                          }
+                          
+                          // Default to active if neither is defined
+                          if (channel.status === undefined && channel.is_active === undefined) {
+                            channel.status = 'active';
+                          }
+                          
                           // Calculate engagement rate if not provided by RPC
                           if (!channel.engagement_rate && !channel.engagementRate) {
                             const subscriberCount = parseInt(channel.subscriber_count || channel.subscribers || '0', 10);
