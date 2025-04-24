@@ -264,11 +264,13 @@ const ChannelCardWrapper = styled.div<{ active: boolean }>`
   display: flex;
   align-items: center;
   padding: 20px;
-  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.tertiary};
-  box-shadow: ${props => props.active ? '0 8px 16px rgba(0,0,0,0.15)' : '0 4px 8px rgba(0,0,0,0.08)'};
+  border: 1px solid ${props => props.active ? props.theme.colors.primary : 'rgba(200, 200, 200, 0.15)'};
+  box-shadow: ${props => props.active ? '0 8px 16px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.15)'};
   cursor: pointer;
   border-radius: ${props => props.theme.radius.lg};
-  background-color: ${props => props.theme.colors.white};
+  background: ${props => props.active 
+    ? 'linear-gradient(to right, #2c3e50, #34495e)' 
+    : 'linear-gradient(to right, #2c3e50, #34495e)'};
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -276,7 +278,7 @@ const ChannelCardWrapper = styled.div<{ active: boolean }>`
   &:hover {
     transform: translateY(-4px);
     border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
   }
   
   ${props => props.active && `
@@ -342,7 +344,7 @@ const ChannelInfo = styled.div`
 const ChannelName = styled.div`
   font-weight: ${props => props.theme.fontWeights.bold};
   font-size: ${props => props.theme.fontSizes.lg};
-  color: ${props => props.theme.colors.text};
+  color: white;
   margin-bottom: 8px;
   display: flex;
   align-items: center;
@@ -365,19 +367,19 @@ const ChannelStats = styled.div`
 const ChannelStatItem = styled.div`
   display: flex;
   align-items: center;
-  color: ${props => props.theme.colors.darkGrey};
+  color: rgba(255, 255, 255, 0.8);
   font-size: ${props => props.theme.fontSizes.sm};
   
   svg {
     margin-right: 6px;
     font-size: 14px;
-    color: ${props => props.theme.colors.primary};
+    color: rgba(255, 255, 255, 0.9);
   }
 `;
 
 const EngagementPill = styled.div`
-  background: linear-gradient(135deg, ${props => props.theme.colors.primary}22, ${props => props.theme.colors.primary}44);
-  color: ${props => props.theme.colors.primary};
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
   padding: 6px 14px;
   border-radius: ${props => props.theme.radius.pill};
   font-size: ${props => props.theme.fontSizes.sm};
@@ -385,11 +387,12 @@ const EngagementPill = styled.div`
   margin-left: auto;
   display: flex;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   
   svg {
     margin-right: 6px;
     font-size: 14px;
+    color: ${props => props.theme.colors.success};
   }
 `;
 
@@ -2031,12 +2034,12 @@ const YoutubeMonitoring: React.FC = () => {
                       {/* Mensagem de instrução */}
                       <ChannelStatItem style={{ 
                         marginTop: '12px', 
-                        color: '#007bff', 
+                        color: '#3498db', 
                         fontWeight: 'bold',
                         display: 'flex',
                         alignItems: 'center' 
                       }}>
-                        <IconComponent icon={FaIcons.FaHandPointer} />
+                        <IconComponent icon={FaIcons.FaHandPointer} style={{ color: '#3498db' }} />
                         <span style={{ marginLeft: '4px' }}>Click to view channel videos</span>
                       </ChannelStatItem>
                     </ChannelInfo>
