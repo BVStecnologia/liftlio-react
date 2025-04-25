@@ -934,17 +934,6 @@ interface ChannelDetails {
 // Default empty array for channels
 const defaultChannels: ChannelDetails[] = [];
 
-// Enhanced engagement data
-const engagementData = [
-  { date: 'Jan', videos: 5, engagement: 145, mentions: 32, channels: 2 },
-  { date: 'Feb', videos: 4, engagement: 165, mentions: 40, channels: 1 },
-  { date: 'Mar', videos: 6, engagement: 180, mentions: 28, channels: 3 },
-  { date: 'Apr', videos: 7, engagement: 220, mentions: 45, channels: 2 },
-  { date: 'May', videos: 3, engagement: 310, mentions: 62, channels: 4 },
-  { date: 'Jun', videos: 2, engagement: 290, mentions: 58, channels: 1 },
-  { date: 'Jul', videos: 8, engagement: 350, mentions: 80, channels: 3 }
-];
-
 // Video performance data with badges
 const videoPerformanceData = [
   { 
@@ -1738,40 +1727,40 @@ interface WeeklyPerformanceData {
 
 // Component implementation
 const YoutubeMonitoring: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<any | null>(null);
-  const [timeframe, setTimeframe] = useState<'week' | 'month' | 'quarter' | 'year'>('week'); // Definindo 'week' como padrão
-  const [channelFilter, setChannelFilter] = useState('all');
+  // Estado para o componente
+  const [activeTab, setActiveTab] = useState<'overview' | 'channels' | 'videos' | 'comments'>('overview');
+  const [channelFilter, setChannelFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [channels, setChannels] = useState<ChannelDetails[]>(defaultChannels);
-  const [isLoadingChannels, setIsLoadingChannels] = useState(false);
-  const [selectedChannelForToggle, setSelectedChannelForToggle] = useState<ChannelDetails | null>(null);
-  const [isStatusPopupOpen, setIsStatusPopupOpen] = useState(false);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [metricsData, setMetricsData] = useState<{ 
-    total_views: number, 
-    total_likes: number, 
-    media: string, 
-    posts: number,
-    total_channels: number,
-    total_videos: number
-  } | null>(null);
+  const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<number | null>(null);
+  const [showChannelDetails, setShowChannelDetails] = useState(false);
+  const [currentChannelDetails, setCurrentChannelDetails] = useState<any>(null);
+  
+  // Estados para dados
+  const [metricsData, setMetricsData] = useState<any>(null);
+  const [channels, setChannels] = useState<ChannelDetails[]>([]);
   const [channelVideos, setChannelVideos] = useState<any[]>([]);
-  const [videoComments, setVideoComments] = useState<any[]>([]);
+  const [currentVideoComments, setCurrentVideoComments] = useState<VideoComment[]>([]);
+  const [contentCategories, setContentCategories] = useState<ContentCategory[]>([]);
+  const [isLoadingChannels, setIsLoadingChannels] = useState(true);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
+  
+  // Estado para justificativas
+  const [showJustification, setShowJustification] = useState(false);
+  const [justificationTitle, setJustificationTitle] = useState('');
+  const [justificationText, setJustificationText] = useState('');
+  
+  // Estado para popup de alteração de status
+  const [isStatusPopupOpen, setIsStatusPopupOpen] = useState(false);
+  const [selectedChannelForToggle, setSelectedChannelForToggle] = useState<ChannelDetails | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [channelVideoCount, setChannelVideoCount] = useState<{[key: number]: number}>({});
   const [selectedChannelDetails, setSelectedChannelDetails] = useState<any>(null);
   const [isLoadingChannelDetails, setIsLoadingChannelDetails] = useState(false);
   const [selectedVideoForDetail, setSelectedVideoForDetail] = useState<any>(null);
-  const [currentVideoComments, setCurrentVideoComments] = useState<VideoComment[]>([]);
-  const [showJustification, setShowJustification] = useState<boolean>(false);
-  const [currentJustification, setCurrentJustification] = useState<{ title: string; text: string } | null>(null);
-  const [dynamicEngagementData, setDynamicEngagementData] = useState<EngagementDataPoint[]>(engagementData);
-  const [loadingEngagementData, setLoadingEngagementData] = useState<boolean>(false);
+  
   const { currentProject } = useProject();
-  const [contentCategories, setContentCategories] = useState<ContentCategory[]>([]);
   
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -1867,174 +1856,10 @@ const YoutubeMonitoring: React.FC = () => {
       }
     };
     
-    const fetchEngagementData = async () => {
-      if (!currentProject?.id) return;
-      
-      setLoadingEngagementData(true);
-      try {
-        // Determinar número de dias baseado no timeframe
-        let days_back = 7; // Padrão: 7 dias
-        if (timeframe === 'week') days_back = 7;
-        else if (timeframe === 'month') days_back = 30;
-        else if (timeframe === 'quarter') days_back = 90;
-        else if (timeframe === 'year') days_back = 365;
-        
-        const project_id_param = currentProject.id;
-        console.log(`Buscando dados de performance: projeto ${project_id_param}, últimos ${days_back} dias`);
-        
-        // Usar a função callRPC
-        const data = await callRPC('get_weekly_project_performance', {
-          days_back,
-          project_id_param
-        });
-        
-        // Debug completo da estrutura de dados recebida
-        console.log('Estrutura completa da resposta da RPC:', JSON.stringify(data));
-        
-        if (!data) {
-          console.error('Erro ao buscar dados de performance: dados vazios');
-          generateFallbackEngagementData();
-          return;
-        }
-        
-        // Verificar a estrutura exata dos dados
-        if (!Array.isArray(data)) {
-          console.error('Erro de formato: data não é um array:', typeof data);
-          generateFallbackEngagementData();
-          return;
-        }
-        
-        if (data.length === 0) {
-          console.error('Erro: array de dados vazio');
-          generateFallbackEngagementData();
-          return;
-        }
-        
-        // Verificar se a propriedade get_weekly_project_performance existe
-        const performanceDataRoot = data[0]?.get_weekly_project_performance;
-        if (!performanceDataRoot) {
-          console.error('Erro: propriedade get_weekly_project_performance não encontrada em data[0]:', data[0]);
-          generateFallbackEngagementData();
-          return;
-        }
-        
-        // Verificar se o resultado é um array
-        if (!Array.isArray(performanceDataRoot)) {
-          console.error('Erro: get_weekly_project_performance não é um array:', typeof performanceDataRoot);
-          generateFallbackEngagementData();
-          return;
-        }
-        
-        console.log('Dados de performance em formato bruto:', performanceDataRoot);
-        
-        // Se não houver dados, usar fallback
-        if (performanceDataRoot.length === 0) {
-          console.log('Aviso: Nenhum dado de performance encontrado para o período');
-          generateFallbackEngagementData();
-          return;
-        }
-        
-        // Debugar um item para entender sua estrutura
-        console.log('Exemplo de item de performance:', performanceDataRoot[0]);
-        
-        // Verificar se os dados estão na ordem correta (mais antigo para mais recente)
-        const sortedData = [...performanceDataRoot].sort((a, b) => {
-          // Garantir que day existe e é uma string válida
-          if (!a.day || !b.day) {
-            console.error('Erro: propriedade day ausente em alguns itens');
-            return 0;
-          }
-          
-          // Ordenar por data (formato YYYY-MM-DD do campo 'day')
-          return new Date(a.day).getTime() - new Date(b.day).getTime();
-        });
-        
-        console.log('Dados ordenados:', sortedData);
-        
-        // Mapear diretamente para os nomes dos campos no gráfico
-        const formattedData: EngagementDataPoint[] = sortedData.map((item: WeeklyPerformanceData) => {
-          // Debug do item sendo processado
-          console.log('Processando item:', item);
-          
-          // Formatar a data para exibição como dia da semana em inglês
-          const date = new Date(item.day);
-          const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-          const weekDay = weekDays[date.getDay()];
-          
-          // Debug das datas
-          console.log(`Data original: ${item.day}, Date object: ${date}, Dia da semana: ${weekDay}`);
-          
-          // Formatar a data conforme o timeframe
-          let displayDate = '';
-          if (timeframe === 'week') {
-            // Para exibição semanal, usar APENAS o dia da semana em inglês
-            displayDate = weekDay;
-          } else {
-            // Para outros timeframes, usar o formato DD/MM da string date
-            displayDate = item.date 
-              ? item.date.substring(0, 5)  // Pegar apenas DD/MM
-              : `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-          }
-          
-          console.log(`Data formatada para exibição: ${displayDate}`);
-          
-          // Garantir que os valores numéricos sejam números, mesmo que venham como strings ou null
-          const mentions = item.mentions !== undefined && item.mentions !== null 
-            ? Number(item.mentions) 
-            : 0;
-          
-          return {
-            date: displayDate,
-            videos: 0,  // Mantemos esses campos para compatibilidade com a interface
-            engagement: 0,
-            mentions,   // Apenas este valor será mostrado no gráfico
-            channels: 0
-          };
-        });
-        
-        console.log('Dados formatados para o gráfico:', formattedData);
-        setDynamicEngagementData(formattedData);
-      } catch (error) {
-        console.error('Erro na chamada de performance:', error);
-        generateFallbackEngagementData();
-      } finally {
-        setLoadingEngagementData(false);
-      }
-    };
-    
-    // Modificar a função de fallback para gerar apenas dados de mensagens
-    const generateFallbackEngagementData = () => {
-      // Se não temos dados reais, geramos dados baseados em intervalos de tempo
-      const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const date = new Date();
-      const today = date.getDay(); // 0 = domingo, 1 = segunda, etc.
-      
-      // Gerar dados para os últimos 7 dias da semana
-      const data: EngagementDataPoint[] = [];
-      for (let i = 6; i >= 0; i--) {
-        const dayIndex = (today - i + 7) % 7; // Garantir que o índice seja positivo
-        const dayName = weekDays[dayIndex];
-        
-        // Gerar um número aleatório de mensagens (1-10)
-        const mentions = Math.floor(Math.random() * 10) + 1;
-        
-        data.push({
-          date: dayName,
-          videos: 0,
-          engagement: 0,
-          mentions: mentions,
-          channels: 0
-        });
-      }
-      
-      setDynamicEngagementData(data);
-    };
-    
     fetchMetrics();
     fetchChannelDetails();
     fetchContentCategories();
-    fetchEngagementData(); // Buscar dados reais de engajamento
-  }, [currentProject, timeframe]);
+  }, [currentProject]);
   
   // Function to fetch and store video count for a channel
   const fetchChannelVideoCount = async (channelId: number) => {
@@ -2431,7 +2256,8 @@ const YoutubeMonitoring: React.FC = () => {
   
   // Função para mostrar popup de justificativa
   const showJustificationPopup = (title: string, text: string) => {
-    setCurrentJustification({ title, text });
+    setJustificationTitle(title);
+    setJustificationText(text);
     setShowJustification(true);
   };
   
@@ -2704,209 +2530,6 @@ const YoutubeMonitoring: React.FC = () => {
               </StatSubItem>
             </StatCard>
           </StatsGrid>
-          
-          <ChartRow>
-            <ChartContainer>
-              <ChartHeader>
-                <ChartTitle>
-                  <IconComponent icon={FaIcons.FaChartArea} />
-                  Engagement Metrics
-                </ChartTitle>
-                <TimeSelector>
-                  <TimeOption active={timeframe === 'week'} onClick={() => setTimeframe('week')}>Week</TimeOption>
-                  <TimeOption active={timeframe === 'month'} onClick={() => setTimeframe('month')}>Month</TimeOption>
-                  <TimeOption active={timeframe === 'quarter'} onClick={() => setTimeframe('quarter')}>Quarter</TimeOption>
-                  <TimeOption active={timeframe === 'year'} onClick={() => setTimeframe('year')}>Year</TimeOption>
-                </TimeSelector>
-              </ChartHeader>
-              
-              <ChartBody>
-                <div style={{ height: 300, width: '100%', padding: '0 16px' }}>
-                  {loadingEngagementData ? (
-                    <div style={{ 
-                      height: '100%', 
-                      display: 'flex', 
-                      justifyContent: 'center', 
-                      alignItems: 'center' 
-                    }}>
-                      <Spinner size="md" />
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart
-                        data={dynamicEngagementData}
-                        margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                      >
-                        <defs>
-                          <linearGradient id="colorMentions" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#34C759" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#34C759" stopOpacity={0.1}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                        <XAxis 
-                          dataKey="date" 
-                          axisLine={false} 
-                          tickLine={false}
-                          height={40}
-                          tick={{ fontSize: 11 }}
-                          angle={0}
-                          textAnchor="middle"
-                          tickFormatter={(value) => {
-                            // No timeframe semanal, value já é o dia da semana (Sun, Mon, etc.)
-                            return value;
-                          }}
-                        />
-                        <YAxis 
-                          axisLine={false} 
-                          tickLine={false}
-                          allowDecimals={false}
-                          tick={{ fontSize: 12 }}
-                        />
-                        <Tooltip 
-                          contentStyle={{
-                            background: 'rgba(255, 255, 255, 0.95)',
-                            border: 'none',
-                            borderRadius: '8px',
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                          }}
-                          formatter={(value, name) => {
-                            // Formatação personalizada para valores no tooltip
-                            // Mapear os nomes em inglês para português para o tooltip
-                            const nameMap: {[key: string]: string} = {
-                              'mentions': 'Mensagens'
-                            };
-                            return [value, nameMap[name as string] || name];
-                          }}
-                          labelFormatter={(label) => {
-                            // No timeframe semanal, label já é o dia da semana
-                            const dayMap: {[key: string]: string} = {
-                              'Sun': 'Domingo',
-                              'Mon': 'Segunda-feira',
-                              'Tue': 'Terça-feira',
-                              'Wed': 'Quarta-feira',
-                              'Thu': 'Quinta-feira',
-                              'Fri': 'Sexta-feira',
-                              'Sat': 'Sábado'
-                            };
-                            
-                            if (timeframe === 'week' && typeof label === 'string' && dayMap[label]) {
-                              return dayMap[label];
-                            }
-                            
-                            return `Data: ${label}`;
-                          }}
-                        />
-                        <Legend verticalAlign="top" height={36} />
-                        <Area 
-                          type="monotone" 
-                          dataKey="mentions" 
-                          name="Mensagens" 
-                          stroke="#34C759" 
-                          fillOpacity={1}
-                          fill="url(#colorMentions)" 
-                          strokeWidth={2}
-                          activeDot={{ r: 6 }} 
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              </ChartBody>
-            </ChartContainer>
-            
-            <ChartContainer>
-              <ChartHeader>
-                <ChartTitle>
-                  <IconComponent icon={FaIcons.FaChartPie} />
-                  Distribuição de Conteúdo
-                </ChartTitle>
-              </ChartHeader>
-              
-              <ChartBody>
-                <div style={{ 
-                  height: 230, 
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  alignItems: 'center',
-                  fontSize: '12px',
-                  paddingBottom: '20px'
-                }}>
-                  <ResponsiveContainer width="85%" height="100%">
-                    <PieChart margin={{ top: 10, right: 10, bottom: 30, left: 10 }}>
-                      <Pie
-                        data={getContentDistributionData()}
-                        cx="50%"
-                        cy="55%"
-                        labelLine={false}
-                        outerRadius={77}
-                        innerRadius={46}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({ shortName, percentage }) => `${shortName}: ${percentage}%`}
-                      >
-                        {getContentDistributionData().map((entry, index) => {
-                          const COLORS = [
-                            '#5856D6', // Roxo
-                            '#FF9500', // Laranja
-                            '#34C759', // Verde
-                            '#FF2D55', // Rosa
-                            '#007AFF', // Azul
-                            '#5AC8FA', // Azul claro
-                            '#BF5AF2', // Roxo claro
-                            '#FF3B30'  // Vermelho
-                          ];
-                          return <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />;
-                        })}
-                      </Pie>
-                      <Tooltip 
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div style={{
-                                background: 'white',
-                                padding: '12px 16px',
-                                borderRadius: '8px',
-                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                                border: '1px solid #f0f0f0',
-                                maxWidth: '280px'
-                              }}>
-                                <div>
-                                  <p style={{ 
-                                    margin: '0 0 8px', 
-                                    fontWeight: 'bold', 
-                                    fontSize: '14px', 
-                                    color: '#333',
-                                    wordWrap: 'break-word'
-                                  }}>
-                                    {data.fullName}
-                                  </p>
-                                  <p style={{ margin: '4px 0', fontSize: '13px', color: '#666' }}>
-                                    <strong>Vídeos:</strong> {data.videos} ({data.percentage}%)
-                                  </p>
-                                  <p style={{ margin: '4px 0', fontSize: '13px', color: '#666' }}>
-                                    <strong>Views:</strong> {data.views}
-                                  </p>
-                                  <p style={{ margin: '4px 0', fontSize: '13px', color: '#666' }}>
-                                    <strong>Likes:</strong> {data.likes}
-                                  </p>
-                                  <p style={{ margin: '4px 0', fontSize: '13px', color: '#666' }}>
-                                    <strong>Relevância:</strong> {data.relevance}
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </ChartBody>
-            </ChartContainer>
-          </ChartRow>
           
           <ChartRow>
             <ChartContainer>
@@ -3877,17 +3500,17 @@ const YoutubeMonitoring: React.FC = () => {
       )}
       
       {/* Popup de justificativa */}
-      {showJustification && currentJustification && (
+      {showJustification && (
         <JustificationPopup onClick={() => setShowJustification(false)}>
           <JustificationContent onClick={(e) => e.stopPropagation()}>
             <JustificationHeader>
-              {currentJustification.title}
+              {justificationTitle}
               <CloseButton onClick={() => setShowJustification(false)}>
                 <IconComponent icon={FaIcons.FaTimes} />
               </CloseButton>
             </JustificationHeader>
             
-            <JustificationText>{currentJustification.text}</JustificationText>
+            <JustificationText>{justificationText}</JustificationText>
             
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <ButtonUI 
