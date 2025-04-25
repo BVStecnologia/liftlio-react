@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useProject } from '../context/ProjectContext';
 import ProcessingIndicator from './ProcessingIndicator';
 
@@ -12,13 +12,26 @@ interface ProcessingWrapperProps {
  */
 const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
   const { currentProject, isInitialProcessing } = useProject();
+  const [showProcessing, setShowProcessing] = useState(false);
   
-  // Se estiver em processamento inicial, mostrar o indicador de processamento
-  if (isInitialProcessing && currentProject) {
+  // Track processing state changes to avoid unnecessary re-renders
+  useEffect(() => {
+    if (isInitialProcessing && currentProject) {
+      setShowProcessing(true);
+    } else {
+      // Only change state if we were previously showing processing
+      if (showProcessing) {
+        setShowProcessing(false);
+      }
+    }
+  }, [isInitialProcessing, currentProject, showProcessing]);
+  
+  // If in initial processing state, show the processing indicator
+  if (showProcessing && currentProject) {
     return <ProcessingIndicator projectId={currentProject.id} />;
   }
   
-  // Caso contrário, renderizar o children normalmente
+  // Otherwise render children normally
   return <>{children}</>;
 };
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { supabase } from '../lib/supabaseClient';
 import { useProject } from '../context/ProjectContext';
@@ -28,14 +28,26 @@ const Container = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color: rgba(22, 30, 46, 0.98);
+  background-color: rgba(18, 24, 38, 0.98);
   color: white;
   overflow: hidden;
-  border-radius: 8px;
-  padding: 2rem 1rem;
+  border-radius: 12px;
+  padding: 3rem 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(20, 30, 48, 0.95), rgba(10, 15, 30, 0.98));
+    z-index: 0;
+  }
   
   @media (max-width: 768px) {
-    padding: 1.5rem 0.5rem;
+    padding: 2rem 1rem;
   }
 `;
 
@@ -46,17 +58,19 @@ const scanTextAnimation = keyframes`
 `;
 
 const Title = styled.h1`
-  font-size: 2.5rem;
+  font-size: 3rem;
   margin-bottom: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   color: white;
   text-align: center;
   position: relative;
   z-index: 10;
   animation: ${scanTextAnimation} 1.5s ease-out forwards;
+  text-shadow: 0 2px 10px rgba(46, 182, 255, 0.5);
+  letter-spacing: 0.5px;
   
   @media (max-width: 768px) {
-    font-size: 2rem;
+    font-size: 2.2rem;
     margin-bottom: 1rem;
   }
   
@@ -66,24 +80,32 @@ const Title = styled.h1`
 `;
 
 const Subtitle = styled.p`
-  font-size: 1.2rem;
-  margin-bottom: 2.5rem;
+  font-size: 1.3rem;
+  margin-bottom: 3rem;
   text-align: center;
   max-width: 700px;
-  padding: 0 1rem;
   animation: ${fadeIn} 1s ease-out forwards;
   animation-delay: 1.5s;
   opacity: 0;
   animation-fill-mode: forwards;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+  font-weight: 400;
+  background: linear-gradient(90deg, rgba(30, 60, 120, 0.4), rgba(40, 80, 160, 0.3), rgba(30, 60, 120, 0.4));
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(70, 130, 180, 0.2);
   
   @media (max-width: 768px) {
-    font-size: 1rem;
-    margin-bottom: 2rem;
+    font-size: 1.1rem;
+    margin-bottom: 2.5rem;
   }
   
   @media (max-width: 480px) {
-    font-size: 0.9rem;
-    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    padding: 0.75rem 1.5rem;
   }
 `;
 
@@ -109,20 +131,29 @@ const Timeline = styled.div`
 
 const StepLine = styled.div`
   position: absolute;
-  left: 25px;
+  left: 30px;
   top: 0;
   bottom: 0;
-  width: 2px;
-  background: rgba(255, 255, 255, 0.2);
+  width: 3px;
+  background: linear-gradient(to bottom, 
+    rgba(70, 130, 180, 0.3),
+    rgba(70, 130, 180, 0.8),
+    rgba(70, 130, 180, 0.3));
   transform: translateX(-50%);
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(46, 182, 255, 0.2);
 `;
 
 const Step = styled.div`
   display: flex;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   position: relative;
   z-index: 2;
+  
+  &:last-child {
+    margin-bottom: 1rem;
+  }
 `;
 
 const iconGlow = keyframes`
@@ -131,8 +162,8 @@ const iconGlow = keyframes`
 `;
 
 const StepIcon = styled.div<StepIndicatorProps>`
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background: ${props => props.active 
     ? 'linear-gradient(135deg, #2e6bff, #2eb6ff)' 
@@ -142,24 +173,26 @@ const StepIcon = styled.div<StepIndicatorProps>`
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-right: 1rem;
+  margin-right: 1.5rem;
   color: white;
-  font-size: 1.4rem;
-  border: 2px solid rgba(255, 255, 255, ${props => props.active ? '0.9' : props.completed ? '0.6' : '0.2'});
+  font-size: 1.6rem;
+  border: 3px solid rgba(255, 255, 255, ${props => props.active ? '0.9' : props.completed ? '0.7' : '0.2'});
   transition: all 0.3s ease;
   position: relative;
   animation: ${props => props.active ? iconGlow : 'none'} 2s infinite;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  transform: ${props => props.active ? 'scale(1.1)' : 'scale(1)'};
 
   /* Efeito de círculo ao redor do ícone ativo */
   &::after {
     content: '';
     position: absolute;
-    top: -8px;
-    left: -8px;
-    right: -8px;
-    bottom: -8px;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
     border-radius: 50%;
-    border: 2px solid rgba(46, 182, 255, ${props => props.active ? '0.6' : '0'});
+    border: 2px solid rgba(46, 182, 255, ${props => props.active ? '0.7' : '0'});
     animation: ${pulse} 2s infinite;
     display: ${props => props.active ? 'block' : 'none'};
   }
@@ -168,33 +201,37 @@ const StepIcon = styled.div<StepIndicatorProps>`
 const StepContent = styled.div<StepIndicatorProps>`
   opacity: ${props => props.active ? '1' : props.completed ? '0.8' : '0.4'};
   transition: all 0.3s ease;
+  transform: ${props => props.active ? 'translateX(5px)' : 'translateX(0)'};
 `;
 
-const StepTitle = styled.h3`
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin: 0 0 0.2rem 0;
+const StepTitle = styled.h3<{ active?: boolean }>`
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 0.3rem 0;
   color: white;
+  letter-spacing: 0.3px;
+  text-shadow: ${props => props.active ? '0 1px 5px rgba(46, 182, 255, 0.4)' : 'none'};
 `;
 
 const StepDescription = styled.p`
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   margin: 0;
-  color: rgba(255, 255, 255, 0.7);
-  max-width: 300px;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 320px;
+  line-height: 1.4;
 `;
 
 // Componente de visualização de dados em processamento
 const DataVisualization = styled.div`
   width: 100%;
-  max-width: 800px;
+  max-width: 850px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 1.5rem;
-  margin-top: 1rem;
-  margin-bottom: 2rem;
-  padding: 0 1rem;
+  gap: 1.8rem;
+  margin-top: 1.5rem;
+  margin-bottom: 3rem;
+  padding: 0 1.5rem;
   z-index: 10;
   position: relative;
 `;
@@ -205,23 +242,31 @@ const scanLineAnimation = keyframes`
 `;
 
 const MetricCard = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: linear-gradient(145deg, rgba(30, 50, 80, 0.4), rgba(20, 35, 60, 0.8));
+  border-radius: 16px;
+  padding: 1.8rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 160px;
-  width: calc(25% - 1.5rem);
-  max-width: 220px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 180px;
+  width: calc(25% - 1.8rem);
+  max-width: 240px;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(70, 130, 180, 0.3);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  transform: translateY(0);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4), 0 0 15px rgba(46, 182, 255, 0.4);
+    border: 1px solid rgba(46, 182, 255, 0.5);
+  }
   
   @media (max-width: 900px) {
-    width: calc(50% - 1.5rem);
+    width: calc(50% - 1.8rem);
   }
   
   @media (max-width: 500px) {
@@ -244,48 +289,67 @@ const MetricCard = styled.div`
 `;
 
 const MetricTitle = styled.h4`
-  font-size: 1rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
-  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 0.7rem 0;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 0.9rem;
 `;
 
 const valueAnimation = keyframes`
-  0%, 100% { color: rgba(255, 255, 255, 0.9); }
-  50% { color: rgba(46, 182, 255, 1); }
+  0%, 100% { color: rgba(255, 255, 255, 0.95); text-shadow: 0 0 5px rgba(46, 182, 255, 0.5); }
+  50% { color: rgba(46, 182, 255, 1); text-shadow: 0 0 15px rgba(46, 182, 255, 0.8); }
+`;
+
+const countAnimation = keyframes`
+  from { transform: scale(0.95); }
+  to { transform: scale(1); }
 `;
 
 const MetricValue = styled.div`
-  font-size: 2.5rem;
-  font-weight: 700;
+  font-size: 3rem;
+  font-weight: 800;
   color: white;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.8rem;
   animation: ${valueAnimation} 3s infinite;
+  font-family: 'Montserrat', sans-serif;
+  animation: ${countAnimation} 0.3s ease-out;
 `;
 
 const MetricSubvalue = styled.div`
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
+  letter-spacing: 0.5px;
 `;
 
 // Mensagem de status
+const pulseBackground = keyframes`
+  0%, 100% { background: linear-gradient(90deg, rgba(30, 40, 60, 0.6), rgba(40, 60, 100, 0.5), rgba(30, 40, 60, 0.6)); }
+  50% { background: linear-gradient(90deg, rgba(40, 60, 100, 0.6), rgba(50, 80, 130, 0.5), rgba(40, 60, 100, 0.6)); }
+`;
+
 const StatusMessage = styled.div`
   width: 100%;
   text-align: center;
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.95);
   z-index: 10;
-  animation: ${fadeIn} 0.5s ease-out;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 1rem;
-  border-radius: 8px;
+  animation: ${fadeIn} 0.5s ease-out, ${pulseBackground} 4s infinite;
+  background: linear-gradient(90deg, rgba(30, 40, 60, 0.6), rgba(40, 60, 100, 0.5), rgba(30, 40, 60, 0.6));
+  padding: 1.2rem;
+  border-radius: 12px;
   max-width: 800px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(70, 130, 180, 0.3);
+  font-weight: 500;
+  letter-spacing: 0.3px;
   
   @media (max-width: 768px) {
-    font-size: 0.9rem;
-    padding: 0.8rem;
+    font-size: 1rem;
+    padding: 1rem;
   }
 `;
 
@@ -369,9 +433,14 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
             updateStatusMessage(newStep);
             
             // Verificar se atingiu o passo final
-            if (newStep === 6 && onComplete) {
+            if (newStep === 6) {
               // Verificar novamente a existência de mensagens
               checkForMessages();
+              
+              // Recarregar a página após 2 segundos ao chegar no status 6
+              setTimeout(() => {
+                window.location.reload();
+              }, 2000);
             }
           }
         }
@@ -428,7 +497,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
   // Função para atualizar a mensagem de status com base no passo atual
   const updateStatusMessage = (step: number) => {
     const messages = [
-      "Searching for active keywords for your project...",
+      "Creating dozens of semantic keywords with search intent...",
       "Finding the most relevant videos for your project...",
       "Storing discovered videos for analysis...",
       "Analyzing video content with advanced AI...",
@@ -444,7 +513,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
   const steps = [
     {
       title: "Keyword Search",
-      description: "Identifying keywords for your project",
+      description: "Creating semantic keywords with search intent",
       icon: FaSearch
     },
     {
@@ -476,7 +545,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
 
   return (
     <Container>
-      <TechBackground zIndex={1} />
+      <TechBackground zIndex={1} opacity={0.3} />
       
       <Title>Preparing Your Intelligent Analysis</Title>
       <Subtitle>

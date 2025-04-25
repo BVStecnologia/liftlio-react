@@ -5,10 +5,12 @@ import COLORS from '../styles/colors';
 interface TechBackgroundProps {
   className?: string;
   zIndex?: number;
+  opacity?: number;
 }
 
 interface BackgroundContainerProps {
   zIndex?: number;
+  opacity?: number;
 }
 
 const BackgroundContainer = styled.div<BackgroundContainerProps>`
@@ -19,11 +21,11 @@ const BackgroundContainer = styled.div<BackgroundContainerProps>`
   height: 100%;
   overflow: hidden;
   z-index: ${props => props.zIndex || 0};
-  opacity: 0.4;
+  opacity: ${props => props.opacity !== undefined ? props.opacity : 0.4};
   pointer-events: none;
 `;
 
-const TechBackground: React.FC<TechBackgroundProps> = ({ className, zIndex }) => {
+const TechBackground: React.FC<TechBackgroundProps> = ({ className, zIndex, opacity }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   useEffect(() => {
@@ -257,7 +259,7 @@ const TechBackground: React.FC<TechBackgroundProps> = ({ className, zIndex }) =>
   }, []);
   
   return (
-    <BackgroundContainer className={className} zIndex={zIndex}>
+    <BackgroundContainer className={className} zIndex={zIndex} opacity={opacity}>
       <canvas ref={canvasRef} />
     </BackgroundContainer>
   );
