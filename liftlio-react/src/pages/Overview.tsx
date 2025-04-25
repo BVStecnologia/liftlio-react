@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { COLORS, withOpacity } from '../styles/colors';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, PieChart, Pie, Cell, BarChart, Bar, Label } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, PieChart, Pie, Cell, BarChart, Bar, Label, AreaChart, Area } from 'recharts';
 import * as FaIcons from 'react-icons/fa';
 import { IconType } from 'react-icons';
 import Card from '../components/Card';
@@ -1360,7 +1360,6 @@ const Input = styled.input`
 // Tipos e configurações para os cards serão definidos dinamicamente com base nos dados reais
 
 // Component types
-type ChartType = 'area' | 'line' | 'bar';
 type TimeframeType = 'day' | 'week' | 'month' | 'year';
 type DataViewType = 'overview' | 'performance' | 'traffic' | 'keywords';
 
@@ -1442,7 +1441,6 @@ const Overview: React.FC = () => {
   };
   
   // States originais que ainda são necessários
-  const [chartType, setChartType] = useState<ChartType>('area');
   const [dataView, setDataView] = useState<DataViewType>('overview');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -3013,185 +3011,74 @@ const Overview: React.FC = () => {
         </StatCard>
       </OverviewGrid>
       
-      {/* Performance Analytics Chart */}
+      {/* Weekly Performance Chart - Simplified Version */}
       <ChartCard gridSpan={12}>
         <ChartHeader>
           <ChartTitle>
             <IconComponent icon={FaIcons.FaChartLine} />
-            Performance Analytics
+            Weekly Performance
           </ChartTitle>
-          <ChartOptions>
-            <ChartOption 
-              active={timeframe === 'week'} 
-              onClick={() => setTimeframe('week')}
-            >
-              Week
-            </ChartOption>
-            <ChartOption 
-              active={timeframe === 'month'} 
-              onClick={() => setTimeframe('month')}
-            >
-              Month
-            </ChartOption>
-            <ChartOption 
-              active={timeframe === 'year'} 
-              onClick={() => setTimeframe('year')}
-            >
-              Year
-            </ChartOption>
-          </ChartOptions>
         </ChartHeader>
         
         <ChartBody>
-          <ChartTabs>
-            <ChartTab 
-              active={chartType === 'area'} 
-              onClick={() => setChartType('area')}
-            >
-              Area Chart
-            </ChartTab>
-            <ChartTab 
-              active={chartType === 'line'} 
-              onClick={() => setChartType('line')}
-            >
-              Line Chart
-            </ChartTab>
-            <ChartTab 
-              active={chartType === 'bar'} 
-              onClick={() => setChartType('bar')}
-            >
-              Bar Chart
-            </ChartTab>
-          </ChartTabs>
-          
           <ChartContainer>
-            <ResponsiveContainer width="100%" height="100%">
-              {chartType === 'area' ? (
-                <AreaChart data={performanceData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorVideos" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2196F3" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#2196F3" stopOpacity={0.2}/>
-                    </linearGradient>
-                    <linearGradient id="colorEngagement" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#FF7A30" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#FF7A30" stopOpacity={0.2}/>
-                    </linearGradient>
-                    <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#4CAF50" stopOpacity={0.2}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                  <YAxis axisLine={false} tickLine={false} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      background: withOpacity(COLORS.SECONDARY, 0.95), 
-                      border: 'none',
-                      borderRadius: '8px',
-                      boxShadow: COLORS.SHADOW.MEDIUM
-                    }} 
-                  />
-                  <Legend />
-                  <Area 
-                    type="monotone" 
-                    dataKey="videos" 
-                    name="Videos"
-                    stroke="#2196F3" 
-                    strokeWidth={2}
-                    fillOpacity={1} 
-                    fill="url(#colorVideos)" 
-                    activeDot={{ r: 8, strokeWidth: 0, fill: "#2196F3" }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="engagement" 
-                    name="Engagement"
-                    stroke="#FF7A30" 
-                    strokeWidth={2}
-                    fillOpacity={1} 
-                    fill="url(#colorEngagement)" 
-                    activeDot={{ r: 6, strokeWidth: 0, fill: "#FF7A30" }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="leads" 
-                    name="Leads"
-                    stroke="#4CAF50" 
-                    strokeWidth={2}
-                    fillOpacity={1} 
-                    fill="url(#colorLeads)" 
-                    activeDot={{ r: 6, strokeWidth: 0, fill: "#4CAF50" }}
-                  />
-                </AreaChart>
-              ) : chartType === 'line' ? (
-                <LineChart data={performanceData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                  <YAxis axisLine={false} tickLine={false} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      background: withOpacity(COLORS.SECONDARY, 0.95), 
-                      border: 'none',
-                      borderRadius: '8px',
-                      boxShadow: COLORS.SHADOW.MEDIUM
-                    }} 
-                  />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="videos" 
-                    name="Videos"
-                    stroke="#2196F3" 
-                    strokeWidth={3}
-                    dot={{ r: 4, strokeWidth: 0, fill: "#2196F3" }}
-                    activeDot={{ r: 8, strokeWidth: 0, fill: "#2196F3" }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="engagement" 
-                    name="Engagement"
-                    stroke="#FF7A30" 
-                    strokeWidth={3}
-                    dot={{ r: 4, strokeWidth: 0, fill: "#FF7A30" }}
-                    activeDot={{ r: 6, strokeWidth: 0, fill: "#FF7A30" }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="leads" 
-                    name="Leads"
-                    stroke="#4CAF50" 
-                    strokeWidth={3}
-                    dot={{ r: 4, strokeWidth: 0, fill: "#4CAF50" }}
-                    activeDot={{ r: 6, strokeWidth: 0, fill: "#4CAF50" }}
-                  />
-                </LineChart>
-              ) : (
-                <BarChart data={performanceData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                  <YAxis axisLine={false} tickLine={false} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      background: withOpacity(COLORS.SECONDARY, 0.95), 
-                      border: 'none',
-                      borderRadius: '8px',
-                      boxShadow: COLORS.SHADOW.MEDIUM
-                    }} 
-                  />
-                  <Legend />
-                  <Bar dataKey="videos" name="Videos" fill="#2196F3" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="engagement" name="Engagement" fill="#FF7A30" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="leads" name="Leads" fill="#4CAF50" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              )}
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart 
+                data={weeklyPerformanceData} 
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)} />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    background: withOpacity(COLORS.SECONDARY, 0.95), 
+                    border: 'none',
+                    borderRadius: '8px',
+                    boxShadow: COLORS.SHADOW.MEDIUM
+                  }} 
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="videos" 
+                  name="Videos"
+                  stroke="#2196F3" 
+                  strokeWidth={3}
+                  dot={{ r: 4, strokeWidth: 0, fill: "#2196F3" }}
+                  activeDot={{ r: 8, strokeWidth: 0, fill: "#2196F3" }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="engagement" 
+                  name="Engagement"
+                  stroke="#FF7A30" 
+                  strokeWidth={3}
+                  dot={{ r: 4, strokeWidth: 0, fill: "#FF7A30" }}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: "#FF7A30" }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="leads" 
+                  name="Leads"
+                  stroke="#4CAF50" 
+                  strokeWidth={3}
+                  dot={{ r: 4, strokeWidth: 0, fill: "#4CAF50" }}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: "#4CAF50" }}
+                />
+              </LineChart>
             </ResponsiveContainer>
           </ChartContainer>
         </ChartBody>
       </ChartCard>
       
-      {/* Add spacing between chart and keywords section */}
       <div style={{ marginTop: '40px' }}></div>
       
       {/* Keywords Insights Section */}
