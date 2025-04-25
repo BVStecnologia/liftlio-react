@@ -2053,37 +2053,34 @@ const YoutubeMonitoring: React.FC = () => {
     };
     
     // Function to fetch detailed channel information
-    const fetchChannelDetails = async (channelId: string) => {
+    const fetchDetailedChannelInfo = async (channelId: string) => {
       if (!channelId) {
-        console.log('fetchChannelDetails: Channel ID não fornecido');
+        console.log('fetchDetailedChannelInfo: Channel ID não fornecido');
         return;
       }
       
-      console.log('Iniciando fetchChannelDetails com channel_id:', channelId);
       setIsLoadingChannelDetails(true);
       try {
-        const data = await callRPC('call_youtube_channel_details', {
-          channel_id: channelId
-        });
+        const { data, error } = await supabase
+          .from('Canais do youtube')
+          .select('*')
+          .eq('channel_id', channelId)
+          .single();
         
-        console.log('Resposta detalhada da API de canal:', data);
-        
-        if (data && Array.isArray(data) && data.length > 0) {
-          console.log('Primeiro item da resposta:', data[0]);
-          if (data[0].call_youtube_channel_details) {
-            console.log('Detalhes encontrados, atualizando selectedChannelDetails');
-            setSelectedChannelDetails(data[0].call_youtube_channel_details);
-          } else {
-            console.error('Campo call_youtube_channel_details não encontrado no retorno da API');
-            setSelectedChannelDetails(null);
-          }
-        } else {
-          console.error('Formato de dados inválido ou vazio para detalhes do canal');
-          setSelectedChannelDetails(null);
+        if (error) {
+          console.error('Error fetching channel details:', error.message);
+          return null;
         }
-      } catch (error) {
-        console.error('Erro ao buscar informações detalhadas do canal:', error);
-        setSelectedChannelDetails(null);
+        
+        if (!data) {
+          console.warn('No channel details found for ID:', channelId);
+          return null;
+        }
+        
+        return data;
+      } catch (err) {
+        console.error('Error in fetchDetailedChannelInfo:', err);
+        return null;
       } finally {
         setIsLoadingChannelDetails(false);
       }
@@ -2264,7 +2261,6 @@ const YoutubeMonitoring: React.FC = () => {
     };
     
     fetchMetrics();
-    fetchChannelDetails();
     fetchContentCategories();
     fetchEngagementData();
   }, [currentProject, activeTab, selectedChannel, selectedVideo, channelFilter, searchTerm, channels, isLoadingChannels, selectedChannelForToggle, isStatusPopupOpen, isUpdatingStatus, metricsData, channelVideos, videoComments, isLoadingVideos, isLoadingComments, channelVideoCount, selectedChannelDetails, isLoadingChannelDetails, selectedVideoForDetail, currentVideoComments, showJustification, currentJustification, dynamicEngagementData, loadingEngagementData, weeklyActivityData, contentCategories]);
