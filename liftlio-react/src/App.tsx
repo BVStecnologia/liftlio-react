@@ -390,10 +390,10 @@ const OAuthHandler = () => {
               console.error('Erro ao marcar integração como ativa:', updateError);
             }
             
-            // Redirecionar diretamente para a página de integrações sem recarregar a página inteira
-            // Isso evita que o fluxo de onboarding seja reiniciado
-            console.log('Redirecionando para a página de integrações...');
-            window.location.href = '/integrations';
+            // Redirecionar para o dashboard para que o usuário possa ver a animação de processamento
+            // Uma vez que o dashboard está envolvido pelo ProcessingWrapper, ele mostrará a tela de carregamento
+            console.log('Redirecionando para o dashboard para mostrar o processamento...');
+            window.location.href = '/dashboard';
           } else {
             alert('Erro: Nenhum ID de projeto encontrado para associar a esta integração.');
           }
@@ -609,7 +609,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
                 <Route path="/monitoring" element={<ProcessingWrapper><Monitoring /></ProcessingWrapper>} />
                 <Route path="/mentions" element={<ProcessingWrapper><Mentions /></ProcessingWrapper>} />
                 <Route path="/settings" element={<Settings />} />
-                <Route path="/integrations" element={<Integrations />} />
+                <Route path="/integrations" element={<ProcessingWrapper><Integrations /></ProcessingWrapper>} />
                 <Route path="/url-test" element={<UrlDataTest />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>

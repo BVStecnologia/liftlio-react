@@ -23,7 +23,7 @@ const Container = styled.div`
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 70vh;
+  min-height: 75vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -32,6 +32,11 @@ const Container = styled.div`
   color: white;
   overflow: hidden;
   border-radius: 8px;
+  padding: 2rem 1rem;
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 0.5rem;
+  }
 `;
 
 // Título com animação de digitalização
@@ -42,40 +47,69 @@ const scanTextAnimation = keyframes`
 
 const Title = styled.h1`
   font-size: 2.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   font-weight: 600;
   color: white;
   text-align: center;
   position: relative;
   z-index: 10;
   animation: ${scanTextAnimation} 1.5s ease-out forwards;
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.8rem;
+  }
 `;
 
 const Subtitle = styled.p`
   font-size: 1.2rem;
-  margin-bottom: 3rem;
-  opacity: 0.8;
+  margin-bottom: 2.5rem;
   text-align: center;
-  max-width: 600px;
+  max-width: 700px;
+  padding: 0 1rem;
   animation: ${fadeIn} 1s ease-out forwards;
   animation-delay: 1.5s;
   opacity: 0;
   animation-fill-mode: forwards;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
 `;
 
 // Timeline
 const Timeline = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
-  margin-bottom: 2rem;
+  align-items: flex-start;
+  margin-bottom: 2.5rem;
+  margin-left: 2rem;
   z-index: 10;
   position: relative;
+  
+  @media (max-width: 768px) {
+    margin-left: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  @media (max-width: 480px) {
+    margin-left: 0.5rem;
+  }
 `;
 
 const StepLine = styled.div`
   position: absolute;
-  left: 50%;
+  left: 25px;
   top: 0;
   bottom: 0;
   width: 2px;
@@ -157,8 +191,10 @@ const DataVisualization = styled.div`
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 2rem;
+  gap: 1.5rem;
   margin-top: 1rem;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
   z-index: 10;
   position: relative;
 `;
@@ -175,11 +211,23 @@ const MetricCard = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 200px;
+  min-width: 160px;
+  width: calc(25% - 1.5rem);
+  max-width: 220px;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  
+  @media (max-width: 900px) {
+    width: calc(50% - 1.5rem);
+  }
+  
+  @media (max-width: 500px) {
+    width: 100%;
+    max-width: 100%;
+  }
 
   /* Linha de scan */
   &::after {
@@ -222,15 +270,23 @@ const MetricSubvalue = styled.div`
 
 // Mensagem de status
 const StatusMessage = styled.div`
-  position: absolute;
-  bottom: 2rem;
-  left: 0;
-  right: 0;
+  width: 100%;
   text-align: center;
   font-size: 1rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.8);
   z-index: 10;
   animation: ${fadeIn} 0.5s ease-out;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  border-radius: 8px;
+  max-width: 800px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    padding: 0.8rem;
+  }
 `;
 
 const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, onComplete }) => {
