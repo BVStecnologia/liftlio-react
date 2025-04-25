@@ -1741,7 +1741,7 @@ const YoutubeMonitoring: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<any | null>(null);
-  const [timeframe, setTimeframe] = useState('month');
+  const [timeframe, setTimeframe] = useState<'week' | 'month' | 'quarter' | 'year'>('week'); // Definindo 'week' como padrão
   const [channelFilter, setChannelFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [channels, setChannels] = useState<ChannelDetails[]>(defaultChannels);
@@ -1907,16 +1907,29 @@ const YoutubeMonitoring: React.FC = () => {
             return new Date(a.day).getTime() - new Date(b.day).getTime();
           });
           
-          // Mapear diretamente para os nomes dos campos no gráfico SEM NENHUMA TRANSFORMAÇÃO adicional
+          // Mapear diretamente para os nomes dos campos no gráfico
           const formattedData: EngagementDataPoint[] = sortedData.map((item: WeeklyPerformanceData) => {
-            // Formatar a data para exibição (DD/MM)
-            const dateParts = item.date.split('/');
-            const formattedDate = dateParts.length >= 2 ? `${dateParts[0]}/${dateParts[1]}` : item.date.substring(0, 5);
+            // Formatar a data para exibição como dia da semana
+            const date = new Date(item.day);
+            const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            const diaSemana = diasSemana[date.getDay()];
             
-            // Usar exatamente os valores retornados pela API, sem multiplicadores ou transformações
-            // Apenas garantindo que sejam números
+            // Se for timeframe semanal, usar o dia da semana
+            // Caso contrário, manter o formato DD/MM
+            let displayDate = '';
+            if (timeframe === 'week') {
+              // Para exibição semanal, mostrar o dia da semana e a data abreviada
+              const dia = date.getDate().toString().padStart(2, '0');
+              const mes = (date.getMonth() + 1).toString().padStart(2, '0');
+              displayDate = `${diaSemana} ${dia}/${mes}`;
+            } else {
+              // Para outros timeframes, manter o formato DD/MM
+              const dateParts = item.date ? item.date.split('/') : [];
+              displayDate = dateParts.length >= 2 ? `${dateParts[0]}/${dateParts[1]}` : item.day.substring(5, 10).replace('-', '/');
+            }
+            
             return {
-              date: formattedDate,
+              date: displayDate,
               videos: Number(item.videos) || 0,
               engagement: Number(item.engagement) || 0,
               mentions: Number(item.mentions) || 0,
@@ -1924,7 +1937,7 @@ const YoutubeMonitoring: React.FC = () => {
             };
           });
           
-          console.log('Dados formatados para o gráfico (sem transformações):', formattedData);
+          console.log('Dados formatados para o gráfico:', formattedData);
           setDynamicEngagementData(formattedData);
         } else {
           console.log('Formato de dados inválido ou vazio, usando dados de fallback');
@@ -2398,11 +2411,11 @@ const YoutubeMonitoring: React.FC = () => {
     if (!contentCategories || contentCategories.length === 0) {
       // Dados de exemplo caso não existam categorias
       return [
-        { name: 'Tutorials', value: 35, shortName: 'Tutorials' },
-        { name: 'Reviews', value: 25, shortName: 'Reviews' },
-        { name: 'Vlogs', value: 15, shortName: 'Live...' },
+        { name: 'Tutoriais', value: 35, shortName: 'Tutoriais' },
+        { name: 'Análises', value: 25, shortName: 'Análises' },
+        { name: 'Vlogs', value: 15, shortName: 'Vlogs' },
         { name: 'Shorts', value: 15, shortName: 'Shorts' },
-        { name: 'Live Streams', value: 10, shortName: 'Vlogs' }
+        { name: 'Lives', value: 10, shortName: 'Lives' }
       ];
     }
     
@@ -2412,9 +2425,10 @@ const YoutubeMonitoring: React.FC = () => {
     // Mapear os dados das categorias para o formato do gráfico
     return contentCategories.map(category => {
       // Truncar nomes de categorias para exibição no gráfico
-      const shortName = category.content_category.length > 8
-        ? category.content_category.substring(0, 6) + '...'
-        : category.content_category;
+      let shortName = category.content_category;
+      if (shortName.length > 10) {
+        shortName = shortName.substring(0, 8) + '...';
+      }
       
       // Calcular a porcentagem baseada no número de vídeos
       const percentage = Math.round((category.total_videos / totalVideos) * 100);
@@ -2423,7 +2437,8 @@ const YoutubeMonitoring: React.FC = () => {
         name: category.content_category,
         shortName: shortName,
         fullName: category.content_category, // Nome completo para o tooltip
-        value: percentage,
+        value: category.total_videos, // Usar o número real de vídeos para o valor
+        percentage: percentage, // Armazenar a porcentagem para exibição
         videos: category.total_videos,
         views: category.total_views,
         likes: category.total_likes,
@@ -2712,12 +2727,24 @@ const YoutubeMonitoring: React.FC = () => {
                           dataKey="date" 
                           axisLine={false} 
                           tickLine={false}
-                          tickFormatter={(value) => value} // Garantir que a data é exibida como esperado
+                          height={40}
+                          tick={{ fontSize: 11 }}
+                          angle={timeframe === 'week' ? 0 : -45}
+                          textAnchor={timeframe === 'week' ? 'middle' : 'end'}
+                          tickFormatter={(value) => {
+                            // Para exibição semanal, separar dia da semana e data
+                            if (timeframe === 'week' && value.includes(' ')) {
+                              const parts = value.split(' ');
+                              return parts[0]; // Retorna apenas o dia da semana
+                            }
+                            return value;
+                          }}
                         />
                         <YAxis 
                           axisLine={false} 
                           tickLine={false}
-                          allowDecimals={false} // Evitar decimais no eixo Y
+                          allowDecimals={false}
+                          tick={{ fontSize: 12 }}
                         />
                         <Tooltip 
                           contentStyle={{
@@ -2739,6 +2766,11 @@ const YoutubeMonitoring: React.FC = () => {
                           }}
                           labelFormatter={(label) => {
                             // Formatação personalizada para o título do tooltip (data)
+                            if (timeframe === 'week' && label.includes(' ')) {
+                              // Para o tooltip da visualização semanal, mostrar o dia da semana e a data completa
+                              const parts = label.split(' ');
+                              return `${parts[0]} - ${parts[1]}`;
+                            }
                             return `Data: ${label}`;
                           }}
                         />
@@ -2794,7 +2826,7 @@ const YoutubeMonitoring: React.FC = () => {
               <ChartHeader>
                 <ChartTitle>
                   <IconComponent icon={FaIcons.FaChartPie} />
-                  Content Distribution
+                  Distribuição de Conteúdo
                 </ChartTitle>
               </ChartHeader>
               
@@ -2804,24 +2836,33 @@ const YoutubeMonitoring: React.FC = () => {
                   display: 'flex', 
                   justifyContent: 'center', 
                   alignItems: 'center',
-                  fontSize: '12px',  // Ajustado para ficar apenas 20% menor
-                  paddingBottom: '20px' // Descer um pouco o gráfico para centralizar visualmente
+                  fontSize: '12px',
+                  paddingBottom: '20px'
                 }}>
                   <ResponsiveContainer width="85%" height="100%">
                     <PieChart margin={{ top: 10, right: 10, bottom: 30, left: 10 }}>
                       <Pie
                         data={getContentDistributionData()}
                         cx="50%"
-                        cy="55%" // Ajustado para descer um pouco o gráfico
+                        cy="55%"
                         labelLine={false}
                         outerRadius={77}
                         innerRadius={46}
                         paddingAngle={5}
                         dataKey="value"
-                        label={({ shortName, value }) => `${shortName}: ${value}%`}
+                        label={({ shortName, percentage }) => `${shortName}: ${percentage}%`}
                       >
                         {getContentDistributionData().map((entry, index) => {
-                          const COLORS = ['#5856D6', '#FF9500', '#34C759', '#FF2D55', '#007AFF', '#5AC8FA', '#BF5AF2', '#FF3B30'];
+                          const COLORS = [
+                            '#5856D6', // Roxo
+                            '#FF9500', // Laranja
+                            '#34C759', // Verde
+                            '#FF2D55', // Rosa
+                            '#007AFF', // Azul
+                            '#5AC8FA', // Azul claro
+                            '#BF5AF2', // Roxo claro
+                            '#FF3B30'  // Vermelho
+                          ];
                           return <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />;
                         })}
                       </Pie>
@@ -2849,7 +2890,7 @@ const YoutubeMonitoring: React.FC = () => {
                                     {data.fullName}
                                   </p>
                                   <p style={{ margin: '4px 0', fontSize: '13px', color: '#666' }}>
-                                    <strong>Videos:</strong> {data.videos} ({data.value}%)
+                                    <strong>Vídeos:</strong> {data.videos} ({data.percentage}%)
                                   </p>
                                   <p style={{ margin: '4px 0', fontSize: '13px', color: '#666' }}>
                                     <strong>Views:</strong> {data.views}
@@ -2858,7 +2899,7 @@ const YoutubeMonitoring: React.FC = () => {
                                     <strong>Likes:</strong> {data.likes}
                                   </p>
                                   <p style={{ margin: '4px 0', fontSize: '13px', color: '#666' }}>
-                                    <strong>Relevance:</strong> {data.relevance}
+                                    <strong>Relevância:</strong> {data.relevance}
                                   </p>
                                 </div>
                               </div>
