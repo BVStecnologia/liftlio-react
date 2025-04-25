@@ -156,6 +156,7 @@ type Project = {
   audience: string;
   keywords?: string;
   country?: string;
+  status?: string;
 };
 
 type ProjectModalProps = {
@@ -250,7 +251,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     const newProject: Project = {
       id: Date.now().toString(),
       ...projectForm,
-      country: countryCode
+      country: countryCode,
+      status: '0'
     };
     
     console.log("Novo projeto:", newProject);
