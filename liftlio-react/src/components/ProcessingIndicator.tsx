@@ -28,12 +28,12 @@ const Container = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color: rgba(18, 24, 38, 0.98);
-  color: white;
+  background-color: #e6edf2;
+  color: #2d3e50;
   overflow: hidden;
   border-radius: 12px;
   padding: 3rem 1.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   
   &::before {
     content: '';
@@ -42,7 +42,7 @@ const Container = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(20, 30, 48, 0.95), rgba(10, 15, 30, 0.98));
+    background: linear-gradient(135deg, rgba(230, 237, 242, 0.97), rgba(220, 232, 242, 0.99));
     z-index: 0;
   }
   
@@ -61,12 +61,12 @@ const Title = styled.h1`
   font-size: 3rem;
   margin-bottom: 1.5rem;
   font-weight: 700;
-  color: white;
+  color: #2d3e50;
   text-align: center;
   position: relative;
   z-index: 10;
   animation: ${scanTextAnimation} 1.5s ease-out forwards;
-  text-shadow: 0 2px 10px rgba(46, 182, 255, 0.5);
+  text-shadow: 0 2px 10px rgba(45, 62, 80, 0.2);
   letter-spacing: 0.5px;
   
   @media (max-width: 768px) {
@@ -88,14 +88,14 @@ const Subtitle = styled.p`
   animation-delay: 1.5s;
   opacity: 0;
   animation-fill-mode: forwards;
-  color: rgba(255, 255, 255, 0.9);
+  color: #34495e;
   line-height: 1.6;
   font-weight: 400;
-  background: linear-gradient(90deg, rgba(30, 60, 120, 0.4), rgba(40, 80, 160, 0.3), rgba(30, 60, 120, 0.4));
+  background: linear-gradient(90deg, rgba(181, 194, 203, 0.2), rgba(181, 194, 203, 0.1), rgba(181, 194, 203, 0.2));
   padding: 1rem 2rem;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(70, 130, 180, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(181, 194, 203, 0.4);
   
   @media (max-width: 768px) {
     font-size: 1.1rem;
@@ -136,12 +136,12 @@ const StepLine = styled.div`
   bottom: 0;
   width: 3px;
   background: linear-gradient(to bottom, 
-    rgba(70, 130, 180, 0.3),
-    rgba(70, 130, 180, 0.8),
-    rgba(70, 130, 180, 0.3));
+    rgba(45, 62, 80, 0.2),
+    rgba(45, 62, 80, 0.5),
+    rgba(45, 62, 80, 0.2));
   transform: translateX(-50%);
   border-radius: 3px;
-  box-shadow: 0 0 8px rgba(46, 182, 255, 0.2);
+  box-shadow: 0 0 8px rgba(45, 62, 80, 0.1);
 `;
 
 const Step = styled.div`
@@ -157,8 +157,8 @@ const Step = styled.div`
 `;
 
 const iconGlow = keyframes`
-  0%, 100% { box-shadow: 0 0 10px rgba(46, 182, 255, 0.7); }
-  50% { box-shadow: 0 0 25px rgba(46, 182, 255, 1); }
+  0%, 100% { box-shadow: 0 0 10px rgba(0, 169, 219, 0.3); }
+  50% { box-shadow: 0 0 25px rgba(0, 169, 219, 0.6); }
 `;
 
 const StepIcon = styled.div<StepIndicatorProps>`
@@ -166,21 +166,25 @@ const StepIcon = styled.div<StepIndicatorProps>`
   height: 60px;
   border-radius: 50%;
   background: ${props => props.active 
-    ? 'linear-gradient(135deg, #2e6bff, #2eb6ff)' 
+    ? 'linear-gradient(135deg, #00A9DB, #0088cc)' 
     : props.completed 
-      ? 'linear-gradient(135deg, #27ae60, #2ecc71)' 
-      : 'rgba(255, 255, 255, 0.1)'};
+      ? 'linear-gradient(135deg, #4CAF50, #2e8540)' 
+      : 'rgba(181, 194, 203, 0.3)'};
   display: flex;
   justify-content: center;
   align-items: center;
   margin-right: 1.5rem;
-  color: white;
+  color: ${props => props.active || props.completed ? 'white' : '#34495e'};
   font-size: 1.6rem;
-  border: 3px solid rgba(255, 255, 255, ${props => props.active ? '0.9' : props.completed ? '0.7' : '0.2'});
+  border: 3px solid ${props => props.active 
+    ? '#00A9DB' 
+    : props.completed 
+      ? '#4CAF50' 
+      : 'rgba(181, 194, 203, 0.4)'};
   transition: all 0.3s ease;
   position: relative;
   animation: ${props => props.active ? iconGlow : 'none'} 2s infinite;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   transform: ${props => props.active ? 'scale(1.1)' : 'scale(1)'};
 
   /* Efeito de círculo ao redor do ícone ativo */
@@ -192,7 +196,7 @@ const StepIcon = styled.div<StepIndicatorProps>`
     right: -10px;
     bottom: -10px;
     border-radius: 50%;
-    border: 2px solid rgba(46, 182, 255, ${props => props.active ? '0.7' : '0'});
+    border: 2px solid ${props => props.active ? 'rgba(0, 169, 219, 0.5)' : 'transparent'};
     animation: ${pulse} 2s infinite;
     display: ${props => props.active ? 'block' : 'none'};
   }
@@ -208,15 +212,15 @@ const StepTitle = styled.h3<{ active?: boolean }>`
   font-size: 1.3rem;
   font-weight: 700;
   margin: 0 0 0.3rem 0;
-  color: white;
+  color: #2d3e50;
   letter-spacing: 0.3px;
-  text-shadow: ${props => props.active ? '0 1px 5px rgba(46, 182, 255, 0.4)' : 'none'};
+  text-shadow: ${props => props.active ? '0 1px 5px rgba(45, 62, 80, 0.2)' : 'none'};
 `;
 
 const StepDescription = styled.p`
   font-size: 0.95rem;
   margin: 0;
-  color: rgba(255, 255, 255, 0.8);
+  color: #34495e;
   max-width: 320px;
   line-height: 1.4;
 `;
@@ -237,12 +241,12 @@ const DataVisualization = styled.div`
 `;
 
 const scanLineAnimation = keyframes`
-  0% { transform: translateY(-100%); opacity: 0.5; }
+  0% { transform: translateY(-100%); opacity: 0.3; }
   100% { transform: translateY(100%); opacity: 0; }
 `;
 
 const MetricCard = styled.div`
-  background: linear-gradient(145deg, rgba(30, 50, 80, 0.4), rgba(20, 35, 60, 0.8));
+  background: white;
   border-radius: 16px;
   padding: 1.8rem;
   display: flex;
@@ -251,18 +255,33 @@ const MetricCard = styled.div`
   min-width: 180px;
   width: calc(25% - 1.8rem);
   max-width: 240px;
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(70, 130, 180, 0.3);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(181, 194, 203, 0.4);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
   transform: translateY(0);
   transition: all 0.3s ease;
   
+  &:nth-child(1) {
+    border-top: 4px solid #00A9DB;
+  }
+  
+  &:nth-child(2) {
+    border-top: 4px solid #FFAA15;
+  }
+  
+  &:nth-child(3) {
+    border-top: 4px solid #4CAF50;
+  }
+  
+  &:nth-child(4) {
+    border-top: 4px solid #e74c3c;
+  }
+  
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4), 0 0 15px rgba(46, 182, 255, 0.4);
-    border: 1px solid rgba(46, 182, 255, 0.5);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+    border-color: rgba(45, 62, 80, 0.3);
   }
   
   @media (max-width: 900px) {
@@ -281,26 +300,25 @@ const MetricCard = styled.div`
     top: 0;
     left: 0;
     width: 100%;
-    height: 5px;
-    background: linear-gradient(90deg, transparent, rgba(46, 182, 255, 0.8), transparent);
+    height: 4px;
+    background: linear-gradient(90deg, transparent, rgba(45, 62, 80, 0.2), transparent);
     animation: ${scanLineAnimation} 2s infinite;
     animation-delay: calc(var(--index) * 0.5s);
   }
 `;
 
 const MetricTitle = styled.h4`
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: #4e6785;
   margin: 0 0 0.7rem 0;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  font-size: 0.9rem;
 `;
 
 const valueAnimation = keyframes`
-  0%, 100% { color: rgba(255, 255, 255, 0.95); text-shadow: 0 0 5px rgba(46, 182, 255, 0.5); }
-  50% { color: rgba(46, 182, 255, 1); text-shadow: 0 0 15px rgba(46, 182, 255, 0.8); }
+  0%, 100% { color: #2d3e50; text-shadow: 0 0 5px rgba(45, 62, 80, 0.1); }
+  50% { color: #00A9DB; text-shadow: 0 0 15px rgba(0, 169, 219, 0.2); }
 `;
 
 const countAnimation = keyframes`
@@ -311,7 +329,7 @@ const countAnimation = keyframes`
 const MetricValue = styled.div`
   font-size: 3rem;
   font-weight: 800;
-  color: white;
+  color: #2d3e50;
   margin-bottom: 0.8rem;
   animation: ${valueAnimation} 3s infinite;
   font-family: 'Montserrat', sans-serif;
@@ -320,30 +338,30 @@ const MetricValue = styled.div`
 
 const MetricSubvalue = styled.div`
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: #34495e;
   font-weight: 400;
   letter-spacing: 0.5px;
 `;
 
 // Mensagem de status
 const pulseBackground = keyframes`
-  0%, 100% { background: linear-gradient(90deg, rgba(30, 40, 60, 0.6), rgba(40, 60, 100, 0.5), rgba(30, 40, 60, 0.6)); }
-  50% { background: linear-gradient(90deg, rgba(40, 60, 100, 0.6), rgba(50, 80, 130, 0.5), rgba(40, 60, 100, 0.6)); }
+  0%, 100% { background: linear-gradient(90deg, rgba(181, 194, 203, 0.15), rgba(181, 194, 203, 0.1), rgba(181, 194, 203, 0.15)); }
+  50% { background: linear-gradient(90deg, rgba(181, 194, 203, 0.25), rgba(181, 194, 203, 0.2), rgba(181, 194, 203, 0.25)); }
 `;
 
 const StatusMessage = styled.div`
   width: 100%;
   text-align: center;
   font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.95);
+  color: #2d3e50;
   z-index: 10;
   animation: ${fadeIn} 0.5s ease-out, ${pulseBackground} 4s infinite;
-  background: linear-gradient(90deg, rgba(30, 40, 60, 0.6), rgba(40, 60, 100, 0.5), rgba(30, 40, 60, 0.6));
+  background: linear-gradient(90deg, rgba(181, 194, 203, 0.15), rgba(181, 194, 203, 0.1), rgba(181, 194, 203, 0.15));
   padding: 1.2rem;
   border-radius: 12px;
   max-width: 800px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(70, 130, 180, 0.3);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(181, 194, 203, 0.4);
   font-weight: 500;
   letter-spacing: 0.3px;
   
