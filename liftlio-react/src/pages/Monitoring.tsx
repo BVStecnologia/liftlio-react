@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { COLORS, withOpacity } from '../styles/colors';
+
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import Card from '../components/Card';
 import ButtonUI from '../components/ui/Button';
@@ -9,6 +10,20 @@ import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
 import { supabase, callRPC } from '../lib/supabaseClient';
 import Spinner from '../components/ui/Spinner';
+
+// Definir paleta de cores para os gráficos
+const CHART_PALETTE = [
+  '#5856D6', // Roxo
+  '#FF9500', // Laranja
+  '#34C759', // Verde
+  '#007AFF', // Azul
+  '#FF2D55', // Rosa
+  '#5AC8FA', // Azul claro
+  '#FFCC00', // Amarelo
+  '#AF52DE', // Roxo escuro
+  '#FF3B30', // Vermelho
+  '#64D2FF', // Ciano
+];
 
 // Shared styled components
 const PageContainer = styled.div`
@@ -1935,8 +1950,10 @@ const YoutubeMonitoring: React.FC = () => {
   const [channelVideos, setChannelVideos] = useState<any[]>([]);
   const [currentVideoComments, setCurrentVideoComments] = useState<VideoComment[]>([]);
   const [contentCategories, setContentCategories] = useState<ContentCategory[]>([]);
+  const [topVideos, setTopVideos] = useState<VideoDetails[]>([]);
   const [isLoadingChannels, setIsLoadingChannels] = useState(true);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
+  const [isLoadingTopVideos, setIsLoadingTopVideos] = useState(true);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   
   // Estado para justificativas
@@ -1968,6 +1985,43 @@ const YoutubeMonitoring: React.FC = () => {
         }
       } catch (error) {
         console.error('Error fetching metrics:', error);
+      }
+    };
+    
+    const fetchTopVideos = async () => {
+      if (!currentProject?.id) return;
+      
+      setIsLoadingTopVideos(true);
+      try {
+        const data = await callRPC('get_videos_by_project_id', { 
+          projeto_id: currentProject.id 
+        });
+        
+        if (data && Array.isArray(data)) {
+          console.log('Top videos data:', data);
+          
+          // Processar dados para garantir que todos os vídeos tenham thumbnails
+          const processedVideos = data.map(video => {
+            const videoId = video.video_id_youtube || '';
+            return {
+              ...video,
+              thumbnailUrl: videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : ''
+            };
+          });
+          
+          // Ordenar por visualizações (do maior para o menor)
+          const sortedVideos = processedVideos.sort((a, b) => {
+            const viewsA = typeof a.views === 'number' ? a.views : parseInt(a.views || '0');
+            const viewsB = typeof b.views === 'number' ? b.views : parseInt(b.views || '0');
+            return viewsB - viewsA;
+          });
+          
+          setTopVideos(sortedVideos);
+        }
+      } catch (err) {
+        console.error('Error in fetchTopVideos:', err);
+      } finally {
+        setIsLoadingTopVideos(false);
       }
     };
     
@@ -2050,6 +2104,7 @@ const YoutubeMonitoring: React.FC = () => {
     };
     
     fetchMetrics();
+    fetchTopVideos();
     fetchChannelDetails();
     fetchContentCategories();
   }, [currentProject]);
@@ -2463,11 +2518,61 @@ const YoutubeMonitoring: React.FC = () => {
     if (!contentCategories || contentCategories.length === 0) {
       // Dados de exemplo caso não existam categorias
       return [
-        { name: 'Tutoriais', value: 35, shortName: 'Tutoriais' },
-        { name: 'Análises', value: 25, shortName: 'Análises' },
-        { name: 'Vlogs', value: 15, shortName: 'Vlogs' },
-        { name: 'Shorts', value: 15, shortName: 'Shorts' },
-        { name: 'Lives', value: 10, shortName: 'Lives' }
+        { 
+          name: 'Tutoriais', 
+          value: 35, 
+          shortName: 'Tutoriais',
+          fullName: 'Tutoriais',
+          percentage: 35,
+          videos: 35,
+          views: "10000",
+          likes: "500",
+          relevance: "8.5"
+        },
+        { 
+          name: 'Análises', 
+          value: 25, 
+          shortName: 'Análises',
+          fullName: 'Análises',
+          percentage: 25,
+          videos: 25,
+          views: "8000",
+          likes: "400",
+          relevance: "7.9"
+        },
+        { 
+          name: 'Vlogs', 
+          value: 15, 
+          shortName: 'Vlogs',
+          fullName: 'Vlogs',
+          percentage: 15,
+          videos: 15,
+          views: "5000",
+          likes: "300",
+          relevance: "7.0"
+        },
+        { 
+          name: 'Shorts', 
+          value: 15, 
+          shortName: 'Shorts',
+          fullName: 'Shorts',
+          percentage: 15,
+          videos: 15,
+          views: "20000",
+          likes: "1500",
+          relevance: "8.0"
+        },
+        { 
+          name: 'Lives', 
+          value: 10, 
+          shortName: 'Lives',
+          fullName: 'Lives',
+          percentage: 10,
+          videos: 10,
+          views: "3000",
+          likes: "200",
+          relevance: "6.5"
+        }
       ];
     }
     
@@ -2492,9 +2597,9 @@ const YoutubeMonitoring: React.FC = () => {
         value: category.total_videos, // Usar o número real de vídeos para o valor
         percentage: percentage, // Armazenar a porcentagem para exibição
         videos: category.total_videos,
-        views: category.total_views,
-        likes: category.total_likes,
-        relevance: category.media_relevancia
+        views: category.total_views || "0",
+        likes: category.total_likes || "0",
+        relevance: category.media_relevancia || "0"
       };
     });
   };
@@ -2736,6 +2841,104 @@ const YoutubeMonitoring: React.FC = () => {
             </StatCard>
           </StatsGrid>
           
+          {/* Categorias de Conteúdo */}
+          <ChartRow>
+            <ChartContainer>
+              <ChartHeader>
+                <ChartTitle>
+                  <IconComponent icon={FaIcons.FaChartPie} />
+                  Content Categories
+                </ChartTitle>
+              </ChartHeader>
+              <ChartBody>
+                <div style={{ display: 'flex', flexDirection: 'row', height: '350px' }}>
+                  <div style={{ flex: '0 0 40%', height: '100%' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={getContentDistributionData()}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={120}
+                          innerRadius={60}
+                          fill="#8884d8"
+                          dataKey="value"
+                          nameKey="shortName"
+                          label={(entry) => entry.shortName}
+                        >
+                          {getContentDistributionData().map((entry, index) => (
+                            <Cell 
+                              key={`cell-${index}`} 
+                              fill={CHART_PALETTE[index % CHART_PALETTE.length]} 
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value, name, props) => [
+                            `${props.payload.percentage}% (${props.payload.videos} videos)`, 
+                            props.payload.fullName
+                          ]} 
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div style={{ flex: '1', padding: '0 20px', overflowY: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid #eee' }}>
+                          <th style={{ padding: '10px', textAlign: 'left', color: '#666' }}>Category</th>
+                          <th style={{ padding: '10px', textAlign: 'center', color: '#666' }}>Videos</th>
+                          <th style={{ padding: '10px', textAlign: 'right', color: '#666' }}>Views</th>
+                          <th style={{ padding: '10px', textAlign: 'right', color: '#666' }}>Likes</th>
+                          <th style={{ padding: '10px', textAlign: 'center', color: '#666' }}>Relevance</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getContentDistributionData().map((category, index) => (
+                          <tr key={index} style={{ borderBottom: '1px solid #f5f5f5' }}>
+                            <td style={{ padding: '12px 10px', textAlign: 'left' }}>
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <div style={{ 
+                                  width: '12px', 
+                                  height: '12px', 
+                                  backgroundColor: CHART_PALETTE[index % CHART_PALETTE.length],
+                                  borderRadius: '2px',
+                                  marginRight: '8px'
+                                }}></div>
+                                {category.name}
+                              </div>
+                            </td>
+                            <td style={{ padding: '12px 10px', textAlign: 'center' }}>{category.videos}</td>
+                            <td style={{ padding: '12px 10px', textAlign: 'right' }}>
+                              {Number(category.views).toLocaleString()}
+                            </td>
+                            <td style={{ padding: '12px 10px', textAlign: 'right' }}>
+                              {Number(category.likes).toLocaleString()}
+                            </td>
+                            <td style={{ padding: '12px 10px', textAlign: 'center' }}>
+                              <span style={{ 
+                                backgroundColor: parseFloat(category.relevance) >= 8 ? '#4CD964' : 
+                                                 parseFloat(category.relevance) >= 6 ? '#FFCC00' : '#FF2D55',
+                                color: parseFloat(category.relevance) >= 6 ? '#333' : '#fff',
+                                padding: '2px 8px',
+                                borderRadius: '10px',
+                                fontSize: '0.8rem',
+                                fontWeight: 'bold'
+                              }}>
+                                {parseFloat(category.relevance).toFixed(1)}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </ChartBody>
+            </ChartContainer>
+          </ChartRow>
+          
           <ChartRow>
             <ChartContainer>
               <ChartHeader>
@@ -2750,39 +2953,128 @@ const YoutubeMonitoring: React.FC = () => {
                   <div>Video</div>
                   <div>Views</div>
                   <div>Comments</div>
-                  <div>Likes</div>
-                  <div>Retention</div>
+                  <div>Category</div>
+                  <div>Relevance</div>
+                  <div>Channel</div>
                 </VideoTableHeader>
                 
-                {videoPerformanceData.map((video) => (
-                  <VideoTableRow key={video.id}>
-                    <VideoTitle>
-                      <VideoThumbnail>
-                        <img src={video.thumbnail} alt={video.name} />
-                      </VideoThumbnail>
-                      <VideoTitleText>
-                        {video.name}
-                        {video.badge && (
-                          <VideoBadge type={video.badge}>
-                            {video.badge === 'new' ? 'New' : 'Trending'}
-                          </VideoBadge>
-                        )}
-                      </VideoTitleText>
-                    </VideoTitle>
-                    <VideoStat>
-                      {(video.views / 1000).toFixed(0)}K
-                    </VideoStat>
-                    <VideoStat>
-                      {(video.comments / 1000).toFixed(1)}K
-                    </VideoStat>
-                    <VideoStat>
-                      {(video.likes / 1000).toFixed(1)}K
-                    </VideoStat>
-                    <VideoStat>
-                      {video.retention}%
-                    </VideoStat>
-                  </VideoTableRow>
-                ))}
+                {isLoadingTopVideos ? (
+                  // Loading state
+                  Array(5).fill(0).map((_, index) => (
+                    <VideoTableRow key={`loading-${index}`} style={{ opacity: 0.6 }}>
+                      <VideoTitle>
+                        <VideoThumbnail style={{ background: '#f0f0f0' }}>
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <IconComponent icon={FaIcons.FaSpinner} style={{ fontSize: '24px', color: '#aaa' }} />
+                          </div>
+                        </VideoThumbnail>
+                        <VideoTitleText>
+                          <div style={{ height: '18px', width: '240px', background: '#f0f0f0', borderRadius: '4px' }}></div>
+                          <div style={{ height: '12px', width: '160px', background: '#f0f0f0', borderRadius: '4px', marginTop: '8px' }}></div>
+                        </VideoTitleText>
+                      </VideoTitle>
+                      <VideoStat>-</VideoStat>
+                      <VideoStat>-</VideoStat>
+                      <VideoStat>-</VideoStat>
+                      <VideoStat>-</VideoStat>
+                      <VideoStat>-</VideoStat>
+                    </VideoTableRow>
+                  ))
+                ) : topVideos.length === 0 ? (
+                  <div style={{ padding: '32px', textAlign: 'center', width: '100%' }}>
+                    <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px', color: '#666' }}>No videos found</div>
+                    <div style={{ fontSize: '14px', color: '#888' }}>No videos have been tracked for this project yet.</div>
+                  </div>
+                ) : (
+                  topVideos.map((video) => (
+                    <VideoTableRow 
+                      key={video.id}
+                      onClick={() => setSelectedVideoForDetail(video)}
+                    >
+                      <VideoTitle>
+                        <VideoThumbnail>
+                          {video.thumbnailUrl ? (
+                            <img 
+                              src={video.thumbnailUrl} 
+                              alt={video.nome_do_video || "Video thumbnail"} 
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = `https://via.placeholder.com/120x68/5F27CD/FFFFFF?text=${video.nome_do_video?.charAt(0) || "V"}`;
+                              }}
+                            />
+                          ) : (
+                            <div style={{ 
+                              width: '100%', 
+                              height: '100%', 
+                              background: '#5F27CD', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontSize: '24px'
+                            }}>
+                              {video.nome_do_video?.charAt(0) || "V"}
+                            </div>
+                          )}
+                        </VideoThumbnail>
+                        <VideoTitleText>
+                          <VideoMainTitle>{video.nome_do_video || "Untitled Video"}</VideoMainTitle>
+                          {video.total_posts > 0 && (
+                            <VideoBadge type="new">
+                              {video.total_posts} {video.total_posts === 1 ? 'post' : 'posts'}
+                            </VideoBadge>
+                          )}
+                        </VideoTitleText>
+                      </VideoTitle>
+                      <VideoStat>
+                        {typeof video.views === 'number' && video.views >= 1000 
+                          ? `${(video.views / 1000).toFixed(0)}K` 
+                          : video.views || '0'}
+                      </VideoStat>
+                      <VideoStat>
+                        {video.commets || video.comments || '0'}
+                      </VideoStat>
+                      <VideoStat>
+                        <span style={{ 
+                          padding: '4px 8px', 
+                          background: '#f0f5ff', 
+                          borderRadius: '12px', 
+                          fontSize: '12px',
+                          color: '#5856D6',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          maxWidth: '120px',
+                          display: 'inline-block'
+                        }}>
+                          {video.content_category || 'Uncategorized'}
+                        </span>
+                      </VideoStat>
+                      <VideoStat>
+                        <span style={{ 
+                          padding: '2px 8px', 
+                          borderRadius: '10px', 
+                          fontSize: '12px',
+                          fontWeight: 'bold',
+                          backgroundColor: typeof video.relevance_score === 'number' 
+                                            ? (video.relevance_score >= 0.8 ? '#4CD964' 
+                                               : video.relevance_score >= 0.6 ? '#FFCC00' : '#FF2D55')
+                                            : (parseFloat(String(video.relevance_score || '0')) >= 0.8 ? '#4CD964'
+                                               : parseFloat(String(video.relevance_score || '0')) >= 0.6 ? '#FFCC00' : '#FF2D55'),
+                          color: typeof video.relevance_score === 'number'
+                                  ? (video.relevance_score >= 0.6 ? '#333' : '#fff')
+                                  : (parseFloat(String(video.relevance_score || '0')) >= 0.6 ? '#333' : '#fff'),
+                        }}>
+                          {video.relevance_score 
+                            ? `${(typeof video.relevance_score === 'number' ? video.relevance_score : parseFloat(String(video.relevance_score)) * 10).toFixed(1)}/10` 
+                            : 'N/A'}
+                        </span>
+                      </VideoStat>
+                      <VideoStat>
+                        {video.canal_nome || 'Unknown'}
+                      </VideoStat>
+                    </VideoTableRow>
+                  ))
+                )}
               </VideoTable>
             </ChartContainer>
           </ChartRow>
