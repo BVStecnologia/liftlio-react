@@ -10,6 +10,7 @@ interface Project {
   user_id?: string;
   link?: string;
   audience?: string;
+  status?: string;
   "Project name"?: string; // Campo legado usado na interface
   projetc_index?: boolean; // Indica se este é o projeto selecionado pelo usuário
   // Adicione outros campos conforme necessário
@@ -28,6 +29,7 @@ type ProjectContextType = {
   isOnboarding: boolean; // Indica se o usuário está em modo onboarding
   onboardingReady: boolean; // Indica se o estado de onboarding foi determinado
   projectIntegrations: any[]; // Lista de integrações do projeto atual
+  isInitialProcessing: boolean; // Indica se o projeto está em processamento inicial
 };
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -42,6 +44,7 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
   const [onboardingStep, setOnboardingStep] = useState(1);
   const [onboardingReady, setOnboardingReady] = useState(false);
   const [projectIntegrations, setProjectIntegrations] = useState<any[]>([]);
+  const [isInitialProcessing, setIsInitialProcessing] = useState(false);
   const isOnboarding = onboardingStep < 4; // Quando onboardingStep < 4, estamos em modo onboarding
   const subscriptionRef = useRef<any>(null);
   
@@ -128,6 +131,55 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
     };
   }, []);
   
+  // Verificar se o projeto tem mensagens e configurar isInitialProcessing
+  useEffect(() => {
+    if (currentProject?.id) {
+      checkProjectProcessingState(currentProject.id);
+    }
+  }, [currentProject]);
+  
+  // Função para verificar o estado de processamento do projeto
+  const checkProjectProcessingState = async (projectId: string | number) => {
+    try {
+      // 1. Verificar se o projeto tem status entre 0 e 5
+      const { data: projectData, error: projectError } = await supabase
+        .from('Projeto')
+        .select('status')
+        .eq('id', projectId)
+        .single();
+        
+      if (projectError) {
+        console.error("Erro ao verificar status do projeto:", projectError);
+        return;
+      }
+      
+      const projectStatus = parseInt(projectData?.status || '6', 10);
+      const isProcessing = projectStatus >= 0 && projectStatus < 6;
+      
+      // 2. Verificar se o projeto tem mensagens
+      const { data: mensagens, error: mensagensError } = await supabase
+        .from('Mensagens')
+        .select('id')
+        .eq('project_id', projectId)
+        .limit(1);
+        
+      if (mensagensError) {
+        console.error("Erro ao verificar mensagens do projeto:", mensagensError);
+        return;
+      }
+      
+      const hasMensagens = mensagens && mensagens.length > 0;
+      
+      // 3. Definir isInitialProcessing: verdadeiro se estiver processando E não tiver mensagens
+      setIsInitialProcessing(isProcessing && !hasMensagens);
+      
+      console.log(`Projeto ${projectId}: status=${projectStatus}, hasMensagens=${hasMensagens}, isInitialProcessing=${isProcessing && !hasMensagens}`);
+      
+    } catch (error) {
+      console.error("Erro ao verificar estado de processamento do projeto:", error);
+    }
+  };
+  
   const fetchProject = async (projectId: string) => {
     setIsLoading(true);
     try {
@@ -153,6 +205,9 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
         if (!data.projetc_index) {
           updateProjectIndex(data);
         }
+        
+        // Verificar estado de processamento
+        checkProjectProcessingState(projectId);
       } else {
         // Se o projeto não existe ou não pertence ao usuário, limpar
         setCurrentProject(null);
@@ -343,6 +398,9 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
         console.log("Atualização confirmada no Supabase, atualizando estado local");
         setCurrentProject(project);
         
+        // Verificar estado de processamento
+        checkProjectProcessingState(project.id);
+        
         // A verificação de integração do YouTube agora é feita no componente Header
         // e usa chave de API em vez da função RPC
         
@@ -530,6 +588,11 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
                 // If current project was updated, update it
                 if (currentProject && currentProject.id === payload.new.id) {
                   setCurrentProject(payload.new);
+                  
+                  // Verificar estado de processamento quando o status muda
+                  if (payload.old.status !== payload.new.status) {
+                    checkProjectProcessingState(payload.new.id);
+                  }
                 }
               } 
               else if (payload.eventType === 'DELETE') {
@@ -569,7 +632,8 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
         onboardingStep,
         isOnboarding,
         onboardingReady,
-        projectIntegrations
+        projectIntegrations,
+        isInitialProcessing
       }}
     >
       {children}

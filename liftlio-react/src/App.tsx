@@ -13,6 +13,7 @@ import Integrations from './pages/Integrations';
 import LoginPage from './pages/LoginPage';
 import ProjectCreationPage from './pages/ProjectCreationPage';
 import LoadingDataIndicator from './components/LoadingDataIndicator';
+import ProcessingWrapper from './components/ProcessingWrapper';
 import UrlDataTest from './components/UrlDataTest';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from './utils/IconHelper';
@@ -603,10 +604,10 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
             <Header toggleSidebar={toggleSidebar} />
             <ContentWrapper>
               <Routes>
-                <Route path="/" element={<Overview />} />
-                <Route path="/dashboard" element={<Overview />} />
-                <Route path="/monitoring" element={<Monitoring />} />
-                <Route path="/mentions" element={<Mentions />} />
+                <Route path="/" element={<ProcessingWrapper><Overview /></ProcessingWrapper>} />
+                <Route path="/dashboard" element={<ProcessingWrapper><Overview /></ProcessingWrapper>} />
+                <Route path="/monitoring" element={<ProcessingWrapper><Monitoring /></ProcessingWrapper>} />
+                <Route path="/mentions" element={<ProcessingWrapper><Mentions /></ProcessingWrapper>} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/integrations" element={<Integrations />} />
                 <Route path="/url-test" element={<UrlDataTest />} />
