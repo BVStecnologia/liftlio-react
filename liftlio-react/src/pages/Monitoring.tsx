@@ -936,13 +936,13 @@ const defaultChannels: ChannelDetails[] = [];
 
 // Enhanced engagement data
 const engagementData = [
-  { date: 'Jan', comments: 145, likes: 1250, views: 25000, subscribers: 250 },
-  { date: 'Feb', comments: 165, likes: 1560, views: 28000, subscribers: 310 },
-  { date: 'Mar', comments: 180, likes: 1980, views: 32000, subscribers: 370 },
-  { date: 'Apr', comments: 220, likes: 2150, views: 38000, subscribers: 450 },
-  { date: 'May', comments: 310, likes: 2840, views: 45000, subscribers: 620 },
-  { date: 'Jun', comments: 290, likes: 2650, views: 42000, subscribers: 580 },
-  { date: 'Jul', comments: 350, likes: 3100, views: 50000, subscribers: 800 }
+  { date: 'Jan', videos: 5, engagement: 145, mentions: 32, channels: 2 },
+  { date: 'Feb', videos: 4, engagement: 165, mentions: 40, channels: 1 },
+  { date: 'Mar', videos: 6, engagement: 180, mentions: 28, channels: 3 },
+  { date: 'Apr', videos: 7, engagement: 220, mentions: 45, channels: 2 },
+  { date: 'May', videos: 3, engagement: 310, mentions: 62, channels: 4 },
+  { date: 'Jun', videos: 2, engagement: 290, mentions: 58, channels: 1 },
+  { date: 'Jul', videos: 8, engagement: 350, mentions: 80, channels: 3 }
 ];
 
 // Video performance data with badges
@@ -1717,13 +1717,13 @@ interface ContentCategory {
   media_relevancia: string;
 }
 
-// Interface para dados de engajamento
+// Interface para dados de engajamento ajustada para refletir os dados reais
 interface EngagementDataPoint {
   date: string;
-  comments: number;
-  likes: number;
-  views: number;
-  subscribers: number;
+  videos: number;     // Vídeos adicionados
+  engagement: number; // Engajamentos/comentários
+  mentions: number;   // Mensagens postadas
+  channels: number;   // Canais adicionados
 }
 
 // Interface para dados do RPC de performance semanal
@@ -1899,13 +1899,13 @@ const YoutubeMonitoring: React.FC = () => {
         if (data && data.length > 0 && data[0].get_weekly_project_performance) {
           const performanceData = data[0].get_weekly_project_performance;
           
-          // Converter os dados para o formato esperado pelo gráfico
+          // Mapear diretamente para os nomes dos campos no gráfico
           const formattedData: EngagementDataPoint[] = performanceData.map((item: WeeklyPerformanceData) => ({
             date: item.date.substring(0, 5), // Pegar apenas o dia/mês
-            comments: item.mentions,         // Menções como comentários
-            likes: item.engagement * 10,     // Engajamento * 10 como curtidas
-            views: item.videos * 100,        // Vídeos * 100 como visualizações
-            subscribers: item.channels * 5   // Canais * 5 como inscritos
+            videos: item.videos,
+            engagement: item.engagement,
+            mentions: item.mentions,
+            channels: item.channels
           }));
           
           setDynamicEngagementData(formattedData);
@@ -1950,17 +1950,17 @@ const YoutubeMonitoring: React.FC = () => {
         baseSubscribers = Math.floor(baseSubscribers * (1 + Math.random() * 0.08));
         
         // Adicionar um pouco de aleatoriedade
-        const views = baseViews + Math.floor(Math.random() * baseViews * 0.2);
-        const likes = baseLikes + Math.floor(Math.random() * baseLikes * 0.3);
-        const comments = baseComments + Math.floor(Math.random() * baseComments * 0.4);
-        const subscribers = baseSubscribers + Math.floor(Math.random() * baseSubscribers * 0.25);
+        const videos = Math.floor(Math.random() * 10) + 1; // 1-10 vídeos
+        const engagement = baseLikes + Math.floor(Math.random() * baseLikes * 0.3);
+        const mentions = baseComments + Math.floor(Math.random() * baseComments * 0.4);
+        const channels = Math.floor(Math.random() * 3) + 1; // 1-3 canais
         
         return {
           date: month,
-          views,
-          likes,
-          comments,
-          subscribers
+          videos,
+          engagement,
+          mentions,
+          channels
         };
       });
       
@@ -2677,15 +2677,15 @@ const YoutubeMonitoring: React.FC = () => {
                             <stop offset="5%" stopColor="#5856D6" stopOpacity={0.8}/>
                             <stop offset="95%" stopColor="#5856D6" stopOpacity={0.1}/>
                           </linearGradient>
-                          <linearGradient id="colorLikes" x1="0" y1="0" x2="0" y2="1">
+                          <linearGradient id="colorEngagement" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#FF9500" stopOpacity={0.8}/>
                             <stop offset="95%" stopColor="#FF9500" stopOpacity={0.1}/>
                           </linearGradient>
-                          <linearGradient id="colorComments" x1="0" y1="0" x2="0" y2="1">
+                          <linearGradient id="colorMentions" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#34C759" stopOpacity={0.8}/>
                             <stop offset="95%" stopColor="#34C759" stopOpacity={0.1}/>
                           </linearGradient>
-                          <linearGradient id="colorSubscribers" x1="0" y1="0" x2="0" y2="1">
+                          <linearGradient id="colorChannels" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#FF2D55" stopOpacity={0.8}/>
                             <stop offset="95%" stopColor="#FF2D55" stopOpacity={0.1}/>
                           </linearGradient>
@@ -2704,8 +2704,8 @@ const YoutubeMonitoring: React.FC = () => {
                         <Legend verticalAlign="top" height={36} />
                         <Area 
                           type="monotone" 
-                          dataKey="views" 
-                          name="Views" 
+                          dataKey="videos" 
+                          name="Vídeos" 
                           stroke="#5856D6" 
                           fillOpacity={1}
                           fill="url(#colorViews)" 
@@ -2714,31 +2714,31 @@ const YoutubeMonitoring: React.FC = () => {
                         />
                         <Area 
                           type="monotone" 
-                          dataKey="likes" 
-                          name="Likes" 
+                          dataKey="engagement" 
+                          name="Engajamentos" 
                           stroke="#FF9500" 
                           fillOpacity={1}
-                          fill="url(#colorLikes)" 
+                          fill="url(#colorEngagement)" 
                           strokeWidth={2}
                           activeDot={{ r: 6 }} 
                         />
                         <Area 
                           type="monotone" 
-                          dataKey="comments" 
-                          name="Comments" 
+                          dataKey="mentions" 
+                          name="Mensagens" 
                           stroke="#34C759" 
                           fillOpacity={1}
-                          fill="url(#colorComments)" 
+                          fill="url(#colorMentions)" 
                           strokeWidth={2}
                           activeDot={{ r: 6 }} 
                         />
                         <Area 
                           type="monotone" 
-                          dataKey="subscribers" 
-                          name="New Subscribers" 
+                          dataKey="channels" 
+                          name="Canais" 
                           stroke="#FF2D55" 
                           fillOpacity={1}
-                          fill="url(#colorSubscribers)" 
+                          fill="url(#colorChannels)" 
                           strokeWidth={2}
                           activeDot={{ r: 6 }} 
                         />
