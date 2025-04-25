@@ -145,16 +145,66 @@ const StatLabel = styled.h3`
 `;
 
 const StatIconContainer = styled.div<{ color: string }>`
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   border-radius: ${props => props.theme.radius.md};
   display: flex;
   align-items: center;
   justify-content: center;
   background: ${props => `linear-gradient(135deg, ${props.color}, ${withOpacity(props.color, 0.7)})`};
   color: white;
-  font-size: 20px;
+  font-size: 18px;
   box-shadow: ${props => props.theme.shadows.sm};
+  position: relative;
+  animation: float 3s ease-in-out infinite;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    background: ${props => `linear-gradient(135deg, ${props.color}33, ${withOpacity(props.color, 0.1)})`};
+    border-radius: ${props => props.theme.radius.md};
+    z-index: -1;
+    animation: glow 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+    100% {
+      transform: translateY(0px);
+    }
+  }
+  
+  @keyframes glow {
+    0% {
+      opacity: 0.5;
+      transform: scale(0.95);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+    100% {
+      opacity: 0.5;
+      transform: scale(0.95);
+    }
+  }
+  
+  /* Ajustar timing para sincronizar todos os ícones */
+  &:nth-child(1) {
+    animation-delay: 0s;
+  }
+  &:nth-child(1)::after {
+    animation-delay: 0s;
+  }
 `;
 
 const StatValue = styled.div`
@@ -760,7 +810,7 @@ const VideoTableHeader = styled.div`
   display: grid;
   grid-template-columns: minmax(400px, 3fr) 100px 100px 100px 150px 100px;
   padding: 16px 24px;
-  background: ${props => props.theme.colors.lightGrey};
+  background: ${props => withOpacity(props.theme.colors.primary, 0.05)};
   font-weight: ${props => props.theme.fontWeights.semiBold};
   border-bottom: 1px solid ${props => props.theme.colors.tertiary};
   color: ${props => props.theme.colors.primary};
