@@ -1907,28 +1907,24 @@ const YoutubeMonitoring: React.FC = () => {
             return new Date(a.day).getTime() - new Date(b.day).getTime();
           });
           
-          // Mapear diretamente para os nomes dos campos no gráfico
+          // Mapear diretamente para os nomes dos campos no gráfico SEM NENHUMA TRANSFORMAÇÃO adicional
           const formattedData: EngagementDataPoint[] = sortedData.map((item: WeeklyPerformanceData) => {
             // Formatar a data para exibição (DD/MM)
             const dateParts = item.date.split('/');
             const formattedDate = dateParts.length >= 2 ? `${dateParts[0]}/${dateParts[1]}` : item.date.substring(0, 5);
             
-            // Converter os valores para números, garantindo que sejam pelo menos 0
-            const videos = typeof item.videos === 'number' ? item.videos : parseInt(item.videos as any) || 0;
-            const engagement = typeof item.engagement === 'number' ? item.engagement : parseInt(item.engagement as any) || 0;
-            const mentions = typeof item.mentions === 'number' ? item.mentions : parseInt(item.mentions as any) || 0;
-            const channels = typeof item.channels === 'number' ? item.channels : parseInt(item.channels as any) || 0;
-            
+            // Usar exatamente os valores retornados pela API, sem multiplicadores ou transformações
+            // Apenas garantindo que sejam números
             return {
               date: formattedDate,
-              videos: videos,
-              engagement: engagement,
-              mentions: mentions,
-              channels: channels
+              videos: Number(item.videos) || 0,
+              engagement: Number(item.engagement) || 0,
+              mentions: Number(item.mentions) || 0,
+              channels: Number(item.channels) || 0
             };
           });
           
-          console.log('Dados formatados para o gráfico:', formattedData);
+          console.log('Dados formatados para o gráfico (sem transformações):', formattedData);
           setDynamicEngagementData(formattedData);
         } else {
           console.log('Formato de dados inválido ou vazio, usando dados de fallback');
@@ -1971,10 +1967,10 @@ const YoutubeMonitoring: React.FC = () => {
         baseSubscribers = Math.floor(baseSubscribers * (1 + Math.random() * 0.08));
         
         // Adicionar um pouco de aleatoriedade
-        const videos = Math.floor(Math.random() * 10) + 1; // 1-10 vídeos
-        const engagement = baseLikes + Math.floor(Math.random() * baseLikes * 0.3);
-        const mentions = baseComments + Math.floor(Math.random() * baseComments * 0.4);
-        const channels = Math.floor(Math.random() * 3) + 1; // 1-3 canais
+        const videos = Math.floor(Math.random() * 5) + 1; // 1-5 vídeos
+        const engagement = Math.floor(Math.random() * 10) + 1; // 1-10 engajamentos  
+        const mentions = Math.floor(Math.random() * 8) + 1; // 1-8 mensagens
+        const channels = Math.floor(Math.random() * 2) + 1; // 1-2 canais
         
         return {
           date: month,
@@ -2404,9 +2400,9 @@ const YoutubeMonitoring: React.FC = () => {
       return [
         { name: 'Tutorials', value: 35, shortName: 'Tutorials' },
         { name: 'Reviews', value: 25, shortName: 'Reviews' },
-        { name: 'Live Streams', value: 15, shortName: 'Live...' },
+        { name: 'Vlogs', value: 15, shortName: 'Live...' },
         { name: 'Shorts', value: 15, shortName: 'Shorts' },
-        { name: 'Vlogs', value: 10, shortName: 'Vlogs' }
+        { name: 'Live Streams', value: 10, shortName: 'Vlogs' }
       ];
     }
     
@@ -2732,7 +2728,14 @@ const YoutubeMonitoring: React.FC = () => {
                           }}
                           formatter={(value, name) => {
                             // Formatação personalizada para valores no tooltip
-                            return [value, name];
+                            // Mapear os nomes em inglês para português para o tooltip
+                            const nameMap: {[key: string]: string} = {
+                              'videos': 'Vídeos',
+                              'engagement': 'Engajamentos',
+                              'mentions': 'Mensagens',
+                              'channels': 'Canais'
+                            };
+                            return [value, nameMap[name as string] || name];
                           }}
                           labelFormatter={(label) => {
                             // Formatação personalizada para o título do tooltip (data)
