@@ -91,11 +91,11 @@ const Subtitle = styled.p`
   color: #34495e;
   line-height: 1.6;
   font-weight: 400;
-  background: linear-gradient(90deg, rgba(181, 194, 203, 0.2), rgba(181, 194, 203, 0.1), rgba(181, 194, 203, 0.2));
+  background: linear-gradient(90deg, rgba(0, 169, 219, 0.08), rgba(0, 169, 219, 0.05), rgba(0, 169, 219, 0.08));
   padding: 1rem 2rem;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(181, 194, 203, 0.4);
+  border: 1px solid rgba(0, 169, 219, 0.2);
   
   @media (max-width: 768px) {
     font-size: 1.1rem;
@@ -136,12 +136,12 @@ const StepLine = styled.div`
   bottom: 0;
   width: 3px;
   background: linear-gradient(to bottom, 
-    rgba(45, 62, 80, 0.2),
-    rgba(45, 62, 80, 0.5),
-    rgba(45, 62, 80, 0.2));
+    rgba(0, 169, 219, 0.2),
+    rgba(0, 169, 219, 0.6),
+    rgba(0, 169, 219, 0.2));
   transform: translateX(-50%);
   border-radius: 3px;
-  box-shadow: 0 0 8px rgba(45, 62, 80, 0.1);
+  box-shadow: 0 0 8px rgba(0, 169, 219, 0.2);
 `;
 
 const Step = styled.div`
@@ -301,7 +301,12 @@ const MetricCard = styled.div`
     left: 0;
     width: 100%;
     height: 4px;
-    background: linear-gradient(90deg, transparent, rgba(45, 62, 80, 0.2), transparent);
+    background: linear-gradient(90deg, transparent, 
+      ${props => props.className === 'card-1' ? 'rgba(0, 169, 219, 0.5)' : 
+      props.className === 'card-2' ? 'rgba(255, 170, 21, 0.5)' : 
+      props.className === 'card-3' ? 'rgba(76, 175, 80, 0.5)' : 
+      'rgba(231, 76, 60, 0.5)'}, 
+      transparent);
     animation: ${scanLineAnimation} 2s infinite;
     animation-delay: calc(var(--index) * 0.5s);
   }
@@ -345,8 +350,8 @@ const MetricSubvalue = styled.div`
 
 // Mensagem de status
 const pulseBackground = keyframes`
-  0%, 100% { background: linear-gradient(90deg, rgba(181, 194, 203, 0.15), rgba(181, 194, 203, 0.1), rgba(181, 194, 203, 0.15)); }
-  50% { background: linear-gradient(90deg, rgba(181, 194, 203, 0.25), rgba(181, 194, 203, 0.2), rgba(181, 194, 203, 0.25)); }
+  0%, 100% { background: linear-gradient(90deg, rgba(0, 169, 219, 0.08), rgba(0, 169, 219, 0.05), rgba(0, 169, 219, 0.08)); }
+  50% { background: linear-gradient(90deg, rgba(0, 169, 219, 0.15), rgba(0, 169, 219, 0.1), rgba(0, 169, 219, 0.15)); }
 `;
 
 const StatusMessage = styled.div`
@@ -356,12 +361,12 @@ const StatusMessage = styled.div`
   color: #2d3e50;
   z-index: 10;
   animation: ${fadeIn} 0.5s ease-out, ${pulseBackground} 4s infinite;
-  background: linear-gradient(90deg, rgba(181, 194, 203, 0.15), rgba(181, 194, 203, 0.1), rgba(181, 194, 203, 0.15));
+  background: linear-gradient(90deg, rgba(0, 169, 219, 0.08), rgba(0, 169, 219, 0.05), rgba(0, 169, 219, 0.08));
   padding: 1.2rem;
   border-radius: 12px;
   max-width: 800px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(181, 194, 203, 0.4);
+  border: 1px solid rgba(0, 169, 219, 0.2);
   font-weight: 500;
   letter-spacing: 0.3px;
   
@@ -567,7 +572,8 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
       
       <Title>Preparing Your Intelligent Analysis</Title>
       <Subtitle>
-        Our technology is analyzing the best engagement opportunities for your project
+        Our AI is analyzing the best engagement opportunities for your project. 
+        Your dashboard will be ready to use in approximately 2-3 minutes.
       </Subtitle>
       
       <Timeline>
@@ -592,25 +598,25 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
       </Timeline>
       
       <DataVisualization>
-        <MetricCard style={{"--index": 0} as any}>
+        <MetricCard className="card-1" style={{"--index": 0} as any}>
           <MetricTitle>Keywords</MetricTitle>
           <MetricValue>{metrics.keywords}</MetricValue>
           <MetricSubvalue>Analyzed</MetricSubvalue>
         </MetricCard>
         
-        <MetricCard style={{"--index": 1} as any}>
+        <MetricCard className="card-2" style={{"--index": 1} as any}>
           <MetricTitle>Videos</MetricTitle>
           <MetricValue>{metrics.videos}</MetricValue>
           <MetricSubvalue>Found</MetricSubvalue>
         </MetricCard>
         
-        <MetricCard style={{"--index": 2} as any}>
+        <MetricCard className="card-3" style={{"--index": 2} as any}>
           <MetricTitle>Comments</MetricTitle>
           <MetricValue>{metrics.comments}</MetricValue>
           <MetricSubvalue>Processed</MetricSubvalue>
         </MetricCard>
         
-        <MetricCard style={{"--index": 3} as any}>
+        <MetricCard className="card-4" style={{"--index": 3} as any}>
           <MetricTitle>Insights</MetricTitle>
           <MetricValue>{metrics.insights}</MetricValue>
           <MetricSubvalue>Discovered</MetricSubvalue>
