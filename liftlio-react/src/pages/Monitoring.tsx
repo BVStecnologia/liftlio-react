@@ -936,13 +936,13 @@ const defaultChannels: ChannelDetails[] = [];
 
 // Enhanced engagement data
 const engagementData = [
-  { date: 'Sun 21/04', videos: 5, mentions: 32, channels: 2 },
-  { date: 'Mon 22/04', videos: 4, mentions: 40, channels: 1 },
-  { date: 'Tue 23/04', videos: 6, mentions: 28, channels: 3 },
-  { date: 'Wed 24/04', videos: 7, mentions: 45, channels: 2 },
-  { date: 'Thu 25/04', videos: 3, mentions: 62, channels: 4 },
-  { date: 'Fri 26/04', videos: 2, mentions: 58, channels: 1 },
-  { date: 'Sat 27/04', videos: 8, mentions: 80, channels: 3 }
+  { date: 'Jan', videos: 5, engagement: 145, mentions: 32, channels: 2 },
+  { date: 'Feb', videos: 4, engagement: 165, mentions: 40, channels: 1 },
+  { date: 'Mar', videos: 6, engagement: 180, mentions: 28, channels: 3 },
+  { date: 'Apr', videos: 7, engagement: 220, mentions: 45, channels: 2 },
+  { date: 'May', videos: 3, engagement: 310, mentions: 62, channels: 4 },
+  { date: 'Jun', videos: 2, engagement: 290, mentions: 58, channels: 1 },
+  { date: 'Jul', videos: 8, engagement: 350, mentions: 80, channels: 3 }
 ];
 
 // Video performance data with badges
@@ -1721,6 +1721,7 @@ interface ContentCategory {
 interface EngagementDataPoint {
   date: string;
   videos: number;     // Vídeos adicionados
+  engagement: number; // Engajamentos/comentários
   mentions: number;   // Mensagens postadas
   channels: number;   // Canais adicionados
 }
@@ -1740,6 +1741,7 @@ const YoutubeMonitoring: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<any | null>(null);
+  const [timeframe, setTimeframe] = useState<'week' | 'month' | 'quarter' | 'year'>('week'); // Definindo 'week' como padrão
   const [channelFilter, setChannelFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [channels, setChannels] = useState<ChannelDetails[]>(defaultChannels);
@@ -1768,7 +1770,6 @@ const YoutubeMonitoring: React.FC = () => {
   const [currentJustification, setCurrentJustification] = useState<{ title: string; text: string } | null>(null);
   const [dynamicEngagementData, setDynamicEngagementData] = useState<EngagementDataPoint[]>(engagementData);
   const [loadingEngagementData, setLoadingEngagementData] = useState<boolean>(false);
-  const [weeklyActivityData, setWeeklyActivityData] = useState<any[]>([]);
   const { currentProject } = useProject();
   const [contentCategories, setContentCategories] = useState<ContentCategory[]>([]);
   
@@ -1871,83 +1872,61 @@ const YoutubeMonitoring: React.FC = () => {
       
       setLoadingEngagementData(true);
       try {
-        const days_back = 7; // Sempre 7 dias (uma semana)
+        // Determinar número de dias baseado no timeframe
+        let days_back = 7; // Padrão: 7 dias
+        if (timeframe === 'week') days_back = 7;
+        else if (timeframe === 'month') days_back = 30;
+        else if (timeframe === 'quarter') days_back = 90;
+        else if (timeframe === 'year') days_back = 365;
+        
         const project_id_param = currentProject.id;
+        console.log(`Buscando dados de performance: projeto ${project_id_param}, últimos ${days_back} dias`);
         
-        console.log(`Fetching weekly activity data: project ${project_id_param}, last ${days_back} days`);
-        
-        // Chamar a RPC para dados semanais usando a função callRPC
+        // Usar a função callRPC como estava originalmente
         const data = await callRPC('get_weekly_project_performance', {
           days_back,
           project_id_param
         });
         
-        console.log('Raw data received from RPC:', data);
-        
         if (!data) {
-          console.error('Error fetching weekly activity data');
-          setWeeklyActivityData([]);
+          console.error('Erro ao buscar dados de performance');
+          generateFallbackEngagementData();
           return;
         }
         
-        // Verifique o formato dos dados recebidos para depuração
-        console.log('Weekly activity data received type:', typeof data);
-        console.log('Is array?', Array.isArray(data));
+        console.log('Dados de performance recebidos:', data);
         
-        let weeklyData = [];
-        
-        // Detecção de formato mais robusta
-        if (Array.isArray(data) && data.length > 0) {
-          if (data[0] && data[0].get_weekly_project_performance) {
-            // Formato esperado: [{ get_weekly_project_performance: [...] }]
-            weeklyData = data[0].get_weekly_project_performance;
-            console.log('Data format 1 detected');
-          } else if (data[0] && typeof data[0] === 'object' && 'day' in data[0]) {
-            // Formato alternativo: os dados já são o array de resultados
-            weeklyData = data;
-            console.log('Data format 2 detected');
-          }
-        } else if (typeof data === 'object' && data !== null) {
-          // Verificar se é um único objeto com a propriedade get_weekly_project_performance
-          if (data.get_weekly_project_performance && Array.isArray(data.get_weekly_project_performance)) {
-            weeklyData = data.get_weekly_project_performance;
-            console.log('Data format 3 detected');
-          }
-        }
-        
-        console.log('Processed weekly data:', weeklyData);
-        
-        if (weeklyData && weeklyData.length > 0) {
-          // Mapear os dias da semana em inglês
-          const weekdaysMap: Record<number, string> = {
-            0: 'Sun',
-            1: 'Mon',
-            2: 'Tue',
-            3: 'Wed',
-            4: 'Thu',
-            5: 'Fri',
-            6: 'Sat'
-          };
+        if (data && Array.isArray(data) && data.length > 0 && data[0].get_weekly_project_performance) {
+          const performanceData = data[0].get_weekly_project_performance;
+          console.log('Dados de performance em formato bruto:', performanceData);
           
-          // Formatar os dados para o gráfico
-          const formattedData = weeklyData.map((item: any) => {
-            let weekday = 'N/A';
-            let fullDate = item.date || 'N/A';
+          // Verificar se os dados estão na ordem correta (mais antigo para mais recente)
+          const sortedData = [...performanceData].sort((a, b) => {
+            // Ordenar por data (formato YYYY-MM-DD do campo 'day')
+            return new Date(a.day).getTime() - new Date(b.day).getTime();
+          });
+          
+          // Mapear diretamente para os nomes dos campos no gráfico
+          const formattedData: EngagementDataPoint[] = sortedData.map((item: WeeklyPerformanceData) => {
+            // Formatar a data para exibição como dia da semana em inglês
+            const date = new Date(item.day);
+            const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const weekDay = weekDays[date.getDay()];
             
-            try {
-              if (item.day) {
-                const date = new Date(item.day);
-                if (!isNaN(date.getTime())) { // Verificar se a data é válida
-                  weekday = weekdaysMap[date.getDay()];
-                }
-              }
-            } catch (err) {
-              console.error('Error parsing date:', item.day, err);
+            // Formatar a data conforme o timeframe
+            let displayDate = '';
+            if (timeframe === 'week') {
+              // Para exibição semanal, mostrar o dia da semana e a data
+              const day = date.getDate().toString().padStart(2, '0');
+              const month = (date.getMonth() + 1).toString().padStart(2, '0');
+              displayDate = `${weekDay} ${day}/${month}`;
+            } else {
+              // Para outros timeframes, usar o formato DD/MM do campo 'date'
+              displayDate = item.date ? item.date.substring(0, 5) : item.day.substring(5, 10).replace('-', '/');
             }
             
             return {
-              weekday,
-              fullDate,
+              date: displayDate,
               videos: Number(item.videos) || 0,
               engagement: Number(item.engagement) || 0,
               mentions: Number(item.mentions) || 0,
@@ -1955,315 +1934,515 @@ const YoutubeMonitoring: React.FC = () => {
             };
           });
           
-          console.log('Formatted data for weekly activity chart:', formattedData);
-          setWeeklyActivityData(formattedData);
+          console.log('Dados formatados para o gráfico:', formattedData);
+          setDynamicEngagementData(formattedData);
         } else {
-          console.warn('Invalid or empty data format for weekly activity');
-          setWeeklyActivityData([]);
+          console.log('Formato de dados inválido ou vazio, usando dados de fallback');
+          generateFallbackEngagementData();
         }
       } catch (error) {
-        console.error('Error in weekly activity call:', error);
-        setWeeklyActivityData([]);
+        console.error('Erro na chamada de performance:', error);
+        generateFallbackEngagementData();
       } finally {
         setLoadingEngagementData(false);
       }
     };
     
-    const fetchVideoComments = async (videoId: number) => {
-      console.log('Buscando comentários para o vídeo ID:', videoId);
-      setIsLoadingComments(true);
-      try {
-        // Certificar-se de que estamos usando o ID correto da tabela de vídeos
-        if (!videoId) {
-          console.error('ID do vídeo inválido:', videoId);
-          setCurrentVideoComments([]);
-          setIsLoadingComments(false);
-          return;
-        }
-
-        // Tentar encontrar o vídeo nos dados para debug
-        const videoData = channelVideos.find(v => v.id === videoId);
-        console.log('DEBUG - Dados completos do vídeo:', videoData);
-        
-        // Ver se há outros IDs disponíveis que possam ser usados
-        const possibleIds = {
-          id: videoId,
-          video_id: videoData?.video_id,
-          video_id_youtube: videoData?.video_id_youtube,
-          id_video: videoData?.id_video
-        };
-        console.log('DEBUG - Possíveis IDs para usar na consulta:', possibleIds);
-        
-        // Fazer a chamada RPC com o ID padrão
-        console.log('Chamando RPC com video_id_param:', videoId);
-        const data = await callRPC('get_comments_and_messages_by_video_id', {
-          video_id_param: videoId
-        });
-        
-        console.log('Resposta da RPC:', data);
-        
-        // Se não há dados, tentar com outros IDs possíveis
-        if (!data || (Array.isArray(data) && data.length === 0)) {
-          console.log('Nenhum comentário encontrado com ID padrão. Tentando outros IDs...');
-          
-          // Se temos um video_id diferente do id, tentar com ele
-          if (videoData?.video_id && videoData.video_id !== videoId) {
-            console.log('Tentando com video_id:', videoData.video_id);
-            const dataWithVideoId = await callRPC('get_comments_and_messages_by_video_id', {
-              video_id_param: videoData.video_id
-            });
-            console.log('Resposta usando video_id:', dataWithVideoId);
-            
-            if (dataWithVideoId && Array.isArray(dataWithVideoId) && dataWithVideoId.length > 0) {
-              setCurrentVideoComments(dataWithVideoId);
-              setIsLoadingComments(false);
-              return;
-            }
-          }
-          
-          // Tentar com o video_id_youtube
-          if (videoData?.video_id_youtube) {
-            console.log('Tentando com video_id_youtube:', videoData.video_id_youtube);
-            const dataWithYoutubeId = await callRPC('get_comments_by_youtube_video_id', {
-              youtube_video_id: videoData.video_id_youtube
-            });
-            console.log('Resposta usando video_id_youtube:', dataWithYoutubeId);
-            
-            if (dataWithYoutubeId && Array.isArray(dataWithYoutubeId) && dataWithYoutubeId.length > 0) {
-              setCurrentVideoComments(dataWithYoutubeId);
-              setIsLoadingComments(false);
-              return;
-            }
-          }
-        }
-        
-        if (data) {
-          console.log('Comentários do vídeo recebidos:', data);
-          setCurrentVideoComments(Array.isArray(data) ? data : []);
-        } else {
-          console.log('Nenhum comentário encontrado para o vídeo ID:', videoId);
-          setCurrentVideoComments([]);
-        }
-      } catch (error) {
-        console.error('Erro ao buscar comentários do vídeo:', error);
-        setCurrentVideoComments([]);
-      } finally {
-        setIsLoadingComments(false);
-      }
-    };
-    
-    // Function to fetch detailed channel information
-    const fetchDetailedChannelInfo = async (channelId: string) => {
-      if (!channelId) {
-        console.log('fetchDetailedChannelInfo: Channel ID não fornecido');
-        return;
+    // Função de fallback para gerar dados quando a API falha
+    const generateFallbackEngagementData = () => {
+      // Se não temos dados reais, geramos dados baseados em intervalos de tempo
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const date = new Date();
+      const currentMonth = date.getMonth();
+      
+      // Determinar os últimos 7 meses até o atual
+      const recentMonths = [];
+      for (let i = 6; i >= 0; i--) {
+        const monthIndex = (currentMonth - i + 12) % 12; // Garante que o índice seja positivo
+        recentMonths.push(months[monthIndex]);
       }
       
-      setIsLoadingChannelDetails(true);
-      try {
-        const { data, error } = await supabase
-          .from('Canais do youtube')
-          .select('*')
-          .eq('channel_id', channelId)
-          .single();
+      // Criar base de views, likes, comments para crescimento gradual
+      let baseViews = 2000 + Math.floor(Math.random() * 5000);
+      let baseLikes = Math.floor(baseViews * 0.05);
+      let baseComments = Math.floor(baseViews * 0.01);
+      let baseSubscribers = Math.floor(baseViews * 0.02);
+      
+      // Gerar pontos de dados com crescimento gradual
+      const data: EngagementDataPoint[] = recentMonths.map((month, index) => {
+        // Adicionar crescimento e variação
+        baseViews = Math.floor(baseViews * (1 + Math.random() * 0.2));
+        baseLikes = Math.floor(baseLikes * (1 + Math.random() * 0.15));
+        baseComments = Math.floor(baseComments * (1 + Math.random() * 0.1));
+        baseSubscribers = Math.floor(baseSubscribers * (1 + Math.random() * 0.08));
         
-        if (error) {
-          console.error('Error fetching channel details:', error.message);
-          return null;
-        }
-        
-        if (!data) {
-          console.warn('No channel details found for ID:', channelId);
-          return null;
-        }
-        
-        return data;
-      } catch (err) {
-        console.error('Error in fetchDetailedChannelInfo:', err);
-        return null;
-      } finally {
-        setIsLoadingChannelDetails(false);
-      }
-    };
-
-    // Function to handle channel selection - update to also fetch channel details
-    const handleChannelSelect = (channelId: number) => {
-      console.log('Canal selecionado, ID:', channelId);
-      setSelectedChannel(channelId);
-      setSelectedVideo(null); // Clear selected video
-      fetchChannelVideos(channelId);
-      
-      // Get the channel data
-      const selectedChannelData = channels.find(c => c.id === channelId);
-      console.log('Dados do canal encontrado:', selectedChannelData);
-      
-      if (selectedChannelData) {
-        // Verificar os dados disponíveis no console
-        console.log('Subscriber count:', selectedChannelData.raw_subscriber_count);
-        console.log('View count raw:', selectedChannelData.view_count);
-        
-        // Extrair valores numéricos das estatísticas formatadas
-        let viewCount = '0';
-        if (selectedChannelData.view_count) {
-          if (typeof selectedChannelData.view_count === 'string') {
-            // Extrair apenas o valor numérico (1.8M -> 1800000)
-            if (selectedChannelData.view_count.includes('M')) {
-              const numPart = parseFloat(selectedChannelData.view_count.replace(/[^0-9.]/g, ''));
-              viewCount = (numPart * 1000000).toString();
-            } else if (selectedChannelData.view_count.includes('K')) {
-              const numPart = parseFloat(selectedChannelData.view_count.replace(/[^0-9.]/g, ''));
-              viewCount = (numPart * 1000).toString();
-            } else {
-              viewCount = selectedChannelData.view_count.replace(/[^0-9]/g, '');
-            }
-          } else {
-            viewCount = selectedChannelData.view_count.toString();
-          }
-        }
-        
-        // Usar diretamente os dados que já temos ao invés de fazer uma chamada adicional
-        const channelDetails = {
-          title: selectedChannelData.channel_name || 'YouTube Channel',
-          description: selectedChannelData.description || '',
-          statistics: {
-            subscriberCount: selectedChannelData.raw_subscriber_count?.toString() || 
-                            (typeof selectedChannelData.subscriber_count === 'string' ? 
-                              selectedChannelData.subscriber_count.replace(/[^0-9]/g, '') : 
-                              selectedChannelData.subscriber_count?.toString()) || 
-                            '0',
-            viewCount: viewCount,
-            videoCount: selectedChannelData.video_count?.toString() || '0'
-          },
-          thumbnails: {
-            high: { url: selectedChannelData.imagem || 'https://via.placeholder.com/150' },
-            medium: { url: selectedChannelData.imagem || 'https://via.placeholder.com/150' },
-            default: { url: selectedChannelData.imagem || 'https://via.placeholder.com/150' }
-          },
-          country: 'US', // Alterado para corresponder aos dados reais que mostram US
-          customUrl: selectedChannelData.custom_url || null
-        };
-        
-        console.log('Usando dados do canal para o cabeçalho:', channelDetails);
-        setSelectedChannelDetails(channelDetails);
-      }
-      
-      // If in Overview or Channels tab, switch to Videos tab
-      if (activeTab === 'overview' || activeTab === 'channels') {
-        setActiveTab('videos');
-      }
-    };
-    
-    // Function to select a video
-    const handleVideoSelect = async (videoId: number) => {
-      console.log('Vídeo selecionado, ID:', videoId);
-      setActiveTab('comments');
-      
-      // Encontrar o vídeo selecionado nos dados
-      const video = channelVideos.find(v => v.id === videoId);
-      console.log('Dados do vídeo encontrado:', video);
-      setSelectedVideo(video || null);
-      
-      // Buscar comentários do vídeo
-      await fetchVideoComments(videoId);
-    };
-    
-    // Helper function to format numbers
-    const formatNumber = (num: string | number | undefined): string => {
-      if (!num) return '0';
-      
-      const numValue = typeof num === 'string' ? parseInt(num, 10) : num;
-      
-      if (numValue >= 1000000) {
-        return `${(numValue / 1000000).toFixed(1)}M`;
-      } else if (numValue >= 1000) {
-        return `${(numValue / 1000).toFixed(1)}K`;
-      }
-      
-      return numValue.toString();
-    };
-    
-    // Função para gerar URL de thumbnail do YouTube
-    const getYouTubeThumbnailUrl = (videoId: string) => {
-      if (!videoId) return 'https://placehold.co/640x360/5F27CD/FFFFFF?text=No+Image';
-      
-      // Formato de alta qualidade (maxresdefault)
-      return `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
-    };
-    
-    // Adicionar esta função de utilidade para gerar URLs de thumbnail
-    const getThumbnailUrl = (video: any) => {
-      // Se temos o ID do vídeo do YouTube, usamos para gerar a URL da thumbnail
-      if (video.video_id_youtube) {
-        return `https://i.ytimg.com/vi/${video.video_id_youtube}/hqdefault.jpg`;
-      }
-      
-      // Fallback para uma imagem estática com base na primeira letra do título
-      const videoTitle = video.nome_do_video || video.title || "Untitled";
-      const firstLetter = videoTitle.charAt(0).toUpperCase();
-      
-      // Geramos cores diferentes com base na primeira letra do título
-      const colors = ['#5F27CD', '#2D98DA', '#FF9F43', '#EE5253', '#10AC84', '#222F3E', '#5F27CD'];
-      const colorIndex = firstLetter.charCodeAt(0) % colors.length;
-      
-      // Returna uma URL para uma imagem de placeholder personalizada
-      return `https://placehold.co/640x360/${colors[colorIndex].replace('#', '')}/${firstLetter === videoTitle.charAt(0) ? 'FFFFFF' : '333333'}?text=${encodeURIComponent(firstLetter)}`;
-    };
-    
-    // Função para mostrar popup de justificativa
-    const showJustificationPopup = (title: string, text: string) => {
-      setCurrentJustification({ title, text });
-      setShowJustification(true);
-    };
-    
-    // Filtrar comentários para exibir apenas aqueles com status "posted"
-    const filteredComments = currentVideoComments.filter(comment => comment.status === 'posted');
-    
-    // Atualizar a transformação de dados para o gráfico de distribuição de conteúdo
-    // Implementar uma função para processar os dados de categoria para o gráfico de pizza
-    const getContentDistributionData = () => {
-      if (!contentCategories || contentCategories.length === 0) {
-        // Dados de exemplo caso não existam categorias
-        return [
-          { name: 'Tutoriais', value: 35, shortName: 'Tutoriais' },
-          { name: 'Análises', value: 25, shortName: 'Análises' },
-          { name: 'Vlogs', value: 15, shortName: 'Vlogs' },
-          { name: 'Shorts', value: 15, shortName: 'Shorts' },
-          { name: 'Lives', value: 10, shortName: 'Lives' }
-        ];
-      }
-      
-      // Calcular o total de vídeos para porcentagens
-      const totalVideos = contentCategories.reduce((sum, category) => sum + category.total_videos, 0);
-      
-      // Mapear os dados das categorias para o formato do gráfico
-      return contentCategories.map(category => {
-        // Truncar nomes de categorias para exibição no gráfico
-        let shortName = category.content_category;
-        if (shortName.length > 10) {
-          shortName = shortName.substring(0, 8) + '...';
-        }
-        
-        // Calcular a porcentagem baseada no número de vídeos
-        const percentage = Math.round((category.total_videos / totalVideos) * 100);
+        // Adicionar um pouco de aleatoriedade
+        const videos = Math.floor(Math.random() * 5) + 1; // 1-5 vídeos
+        const engagement = Math.floor(Math.random() * 10) + 1; // 1-10 engajamentos  
+        const mentions = Math.floor(Math.random() * 8) + 1; // 1-8 mensagens
+        const channels = Math.floor(Math.random() * 2) + 1; // 1-2 canais
         
         return {
-          name: category.content_category,
-          shortName: shortName,
-          fullName: category.content_category, // Nome completo para o tooltip
-          value: category.total_videos, // Usar o número real de vídeos para o valor
-          percentage: percentage, // Armazenar a porcentagem para exibição
-          videos: category.total_videos,
-          views: category.total_views,
-          likes: category.total_likes,
-          relevance: category.media_relevancia
+          date: month,
+          videos,
+          engagement,
+          mentions,
+          channels
         };
       });
+      
+      setDynamicEngagementData(data);
     };
     
     fetchMetrics();
+    fetchChannelDetails();
     fetchContentCategories();
-    fetchEngagementData();
-  }, [currentProject, activeTab, selectedChannel, selectedVideo, channelFilter, searchTerm, channels, isLoadingChannels, selectedChannelForToggle, isStatusPopupOpen, isUpdatingStatus, metricsData, channelVideos, videoComments, isLoadingVideos, isLoadingComments, channelVideoCount, selectedChannelDetails, isLoadingChannelDetails, selectedVideoForDetail, currentVideoComments, showJustification, currentJustification, dynamicEngagementData, loadingEngagementData, weeklyActivityData, contentCategories]);
+    fetchEngagementData(); // Buscar dados reais de engajamento
+  }, [currentProject, timeframe]);
+  
+  // Function to fetch and store video count for a channel
+  const fetchChannelVideoCount = async (channelId: number) => {
+    try {
+      const data = await callRPC('get_videos_by_channel_id', {
+        canal_id: channelId
+      });
+      
+      if (data && Array.isArray(data)) {
+        setChannelVideoCount(prev => ({
+          ...prev,
+          [channelId]: data.length
+        }));
+      }
+    } catch (error) {
+      console.error(`Error fetching video count for channel ${channelId}:`, error);
+    }
+  };
+  
+  // Função para alternar o status ativo/inativo de um canal usando o ID
+  const toggleChannelStatus = async (channel: ChannelDetails, currentStatus: boolean) => {
+    try {
+      setIsUpdatingStatus(true);
+      
+      // Usando o ID do canal para a atualização (mais seguro e confiável)
+      const channelId = channel.id;
+      const channelName = channel.channel_name || channel.name || channel.Nome;
+      
+      if (!channelId) {
+        console.error('Channel ID not found:', channel);
+        alert('Channel ID not found. Cannot update status.');
+        return null;
+      }
+      
+      console.log('Updating channel:', channelName);
+      console.log('Channel ID:', channelId);
+      console.log('Current status:', currentStatus);
+      console.log('New status will be:', !currentStatus);
+      
+      // Garantir que estamos trabalhando com um boolean para o campo is_active
+      const newStatus = !currentStatus;
+      
+      // Atualizar pelo ID do canal (mais seguro)
+      const { data, error } = await supabase
+        .from('Canais do youtube')
+        .update({ is_active: newStatus })
+        .eq('id', channelId)
+        .select();
+      
+      // Verificar o resultado
+      if (error) {
+        console.error('Error updating channel:', error.message);
+        console.error('Error details:', error);
+        alert(`Error updating channel: ${error.message}`);
+      } else {
+        console.log('Channel updated successfully:', data);
+        
+        // Atualiza a lista de canais após a mudança bem-sucedida
+        if (currentProject?.id) {
+          try {
+            // Busca os dados atualizados usando a RPC
+            const refreshedData = await callRPC('get_channel_details', { 
+              id_projeto: currentProject.id 
+            });
+            
+            if (refreshedData && Array.isArray(refreshedData)) {
+              setChannels(refreshedData);
+              console.log('Channel list updated successfully');
+            }
+          } catch (refreshError) {
+            console.error('Error refreshing channel list:', refreshError);
+          }
+        }
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error during toggle operation:', error);
+      alert('Failed to update channel status. Check console for details.');
+      return null;
+    } finally {
+      setIsUpdatingStatus(false);
+      setIsStatusPopupOpen(false);
+    }
+  };
+  
+  // Generate random trend data for stats
+  const generateTrendData = (baseline: number, variance: number = 0.1, points: number = 10) => {
+    const data = [];
+    let current = baseline;
+    
+    for (let i = 0; i < points; i++) {
+      const change = baseline * variance * (Math.random() * 2 - 1);
+      current += change;
+      data.push(current);
+    }
+    
+    return data;
+  };
+  
+  // Function to fetch videos for a specific channel
+  const fetchChannelVideos = async (channelId: number) => {
+    if (!channelId || !currentProject?.id) return;
+    
+    setIsLoadingVideos(true);
+    try {
+      // Use the RPC helper function to call get_videos_by_channel_id
+      const data = await callRPC('get_videos_by_channel_id', {
+        canal_id: channelId
+      });
+      
+      if (data && Array.isArray(data)) {
+        console.log('Channel videos data:', JSON.stringify(data, null, 2));
+        
+        // Process data to ensure videos have thumbnail URLs
+        const processedVideos = data.map(video => {
+          // Identificar qual ID do vídeo usar (video_id_youtube ou video_id)
+          const youtubeVideoId = video.video_id_youtube || video.video_id || video.id_video || '';
+          
+          if (youtubeVideoId) {
+            console.log('Video YouTube ID encontrado:', youtubeVideoId);
+            return {
+              ...video,
+              // Garantir que temos o ID do YouTube em um campo consistente
+              video_id_youtube: youtubeVideoId,
+              // Adicionar a URL da thumbnail
+              thumbnailUrl: getYouTubeThumbnailUrl(youtubeVideoId)
+            };
+          } else {
+            console.warn('Video sem ID do YouTube:', video);
+            return {
+              ...video,
+              thumbnailUrl: getThumbnailUrl(video)
+            };
+          }
+        });
+        
+        setChannelVideos(processedVideos);
+      } else {
+        console.error('Invalid data format received for channel videos');
+        setChannelVideos([]);
+      }
+    } catch (error) {
+      console.error('Error in channel videos fetch operation:', error);
+      setChannelVideos([]);
+    } finally {
+      setIsLoadingVideos(false);
+    }
+  };
+  
+  // Função para buscar comentários do vídeo selecionado
+  const fetchVideoComments = async (videoId: number) => {
+    console.log('Buscando comentários para o vídeo ID:', videoId);
+    setIsLoadingComments(true);
+    try {
+      // Certificar-se de que estamos usando o ID correto da tabela de vídeos
+      if (!videoId) {
+        console.error('ID do vídeo inválido:', videoId);
+        setCurrentVideoComments([]);
+        setIsLoadingComments(false);
+        return;
+      }
+
+      // Tentar encontrar o vídeo nos dados para debug
+      const videoData = channelVideos.find(v => v.id === videoId);
+      console.log('DEBUG - Dados completos do vídeo:', videoData);
+      
+      // Ver se há outros IDs disponíveis que possam ser usados
+      const possibleIds = {
+        id: videoId,
+        video_id: videoData?.video_id,
+        video_id_youtube: videoData?.video_id_youtube,
+        id_video: videoData?.id_video
+      };
+      console.log('DEBUG - Possíveis IDs para usar na consulta:', possibleIds);
+      
+      // Fazer a chamada RPC com o ID padrão
+      console.log('Chamando RPC com video_id_param:', videoId);
+      const data = await callRPC('get_comments_and_messages_by_video_id', {
+        video_id_param: videoId
+      });
+      
+      console.log('Resposta da RPC:', data);
+      
+      // Se não há dados, tentar com outros IDs possíveis
+      if (!data || (Array.isArray(data) && data.length === 0)) {
+        console.log('Nenhum comentário encontrado com ID padrão. Tentando outros IDs...');
+        
+        // Se temos um video_id diferente do id, tentar com ele
+        if (videoData?.video_id && videoData.video_id !== videoId) {
+          console.log('Tentando com video_id:', videoData.video_id);
+          const dataWithVideoId = await callRPC('get_comments_and_messages_by_video_id', {
+            video_id_param: videoData.video_id
+          });
+          console.log('Resposta usando video_id:', dataWithVideoId);
+          
+          if (dataWithVideoId && Array.isArray(dataWithVideoId) && dataWithVideoId.length > 0) {
+            setCurrentVideoComments(dataWithVideoId);
+            setIsLoadingComments(false);
+            return;
+          }
+        }
+        
+        // Tentar com o video_id_youtube
+        if (videoData?.video_id_youtube) {
+          console.log('Tentando com video_id_youtube:', videoData.video_id_youtube);
+          const dataWithYoutubeId = await callRPC('get_comments_by_youtube_video_id', {
+            youtube_video_id: videoData.video_id_youtube
+          });
+          console.log('Resposta usando video_id_youtube:', dataWithYoutubeId);
+          
+          if (dataWithYoutubeId && Array.isArray(dataWithYoutubeId) && dataWithYoutubeId.length > 0) {
+            setCurrentVideoComments(dataWithYoutubeId);
+            setIsLoadingComments(false);
+            return;
+          }
+        }
+      }
+      
+      if (data) {
+        console.log('Comentários do vídeo recebidos:', data);
+        setCurrentVideoComments(Array.isArray(data) ? data : []);
+      } else {
+        console.log('Nenhum comentário encontrado para o vídeo ID:', videoId);
+        setCurrentVideoComments([]);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar comentários do vídeo:', error);
+      setCurrentVideoComments([]);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+  
+  // Function to fetch detailed channel information
+  const fetchChannelDetails = async (channelId: string) => {
+    if (!channelId) {
+      console.log('fetchChannelDetails: Channel ID não fornecido');
+      return;
+    }
+    
+    console.log('Iniciando fetchChannelDetails com channel_id:', channelId);
+    setIsLoadingChannelDetails(true);
+    try {
+      const data = await callRPC('call_youtube_channel_details', {
+        channel_id: channelId
+      });
+      
+      console.log('Resposta detalhada da API de canal:', data);
+      
+      if (data && Array.isArray(data) && data.length > 0) {
+        console.log('Primeiro item da resposta:', data[0]);
+        if (data[0].call_youtube_channel_details) {
+          console.log('Detalhes encontrados, atualizando selectedChannelDetails');
+          setSelectedChannelDetails(data[0].call_youtube_channel_details);
+        } else {
+          console.error('Campo call_youtube_channel_details não encontrado no retorno da API');
+          setSelectedChannelDetails(null);
+        }
+      } else {
+        console.error('Formato de dados inválido ou vazio para detalhes do canal');
+        setSelectedChannelDetails(null);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar informações detalhadas do canal:', error);
+      setSelectedChannelDetails(null);
+    } finally {
+      setIsLoadingChannelDetails(false);
+    }
+  };
+
+  // Function to handle channel selection - update to also fetch channel details
+  const handleChannelSelect = (channelId: number) => {
+    console.log('Canal selecionado, ID:', channelId);
+    setSelectedChannel(channelId);
+    setSelectedVideo(null); // Clear selected video
+    fetchChannelVideos(channelId);
+    
+    // Get the channel data
+    const selectedChannelData = channels.find(c => c.id === channelId);
+    console.log('Dados do canal encontrado:', selectedChannelData);
+    
+    if (selectedChannelData) {
+      // Verificar os dados disponíveis no console
+      console.log('Subscriber count:', selectedChannelData.raw_subscriber_count);
+      console.log('View count raw:', selectedChannelData.view_count);
+      
+      // Extrair valores numéricos das estatísticas formatadas
+      let viewCount = '0';
+      if (selectedChannelData.view_count) {
+        if (typeof selectedChannelData.view_count === 'string') {
+          // Extrair apenas o valor numérico (1.8M -> 1800000)
+          if (selectedChannelData.view_count.includes('M')) {
+            const numPart = parseFloat(selectedChannelData.view_count.replace(/[^0-9.]/g, ''));
+            viewCount = (numPart * 1000000).toString();
+          } else if (selectedChannelData.view_count.includes('K')) {
+            const numPart = parseFloat(selectedChannelData.view_count.replace(/[^0-9.]/g, ''));
+            viewCount = (numPart * 1000).toString();
+          } else {
+            viewCount = selectedChannelData.view_count.replace(/[^0-9]/g, '');
+          }
+        } else {
+          viewCount = selectedChannelData.view_count.toString();
+        }
+      }
+      
+      // Usar diretamente os dados que já temos ao invés de fazer uma chamada adicional
+      const channelDetails = {
+        title: selectedChannelData.channel_name || 'YouTube Channel',
+        description: selectedChannelData.description || '',
+        statistics: {
+          subscriberCount: selectedChannelData.raw_subscriber_count?.toString() || 
+                          (typeof selectedChannelData.subscriber_count === 'string' ? 
+                            selectedChannelData.subscriber_count.replace(/[^0-9]/g, '') : 
+                            selectedChannelData.subscriber_count?.toString()) || 
+                          '0',
+          viewCount: viewCount,
+          videoCount: selectedChannelData.video_count?.toString() || '0'
+        },
+        thumbnails: {
+          high: { url: selectedChannelData.imagem || 'https://via.placeholder.com/150' },
+          medium: { url: selectedChannelData.imagem || 'https://via.placeholder.com/150' },
+          default: { url: selectedChannelData.imagem || 'https://via.placeholder.com/150' }
+        },
+        country: 'US', // Alterado para corresponder aos dados reais que mostram US
+        customUrl: selectedChannelData.custom_url || null
+      };
+      
+      console.log('Usando dados do canal para o cabeçalho:', channelDetails);
+      setSelectedChannelDetails(channelDetails);
+    }
+    
+    // If in Overview or Channels tab, switch to Videos tab
+    if (activeTab === 'overview' || activeTab === 'channels') {
+      setActiveTab('videos');
+    }
+  };
+  
+  // Function to select a video
+  const handleVideoSelect = async (videoId: number) => {
+    console.log('Vídeo selecionado, ID:', videoId);
+    setActiveTab('comments');
+    
+    // Encontrar o vídeo selecionado nos dados
+    const video = channelVideos.find(v => v.id === videoId);
+    console.log('Dados do vídeo encontrado:', video);
+    setSelectedVideo(video || null);
+    
+    // Buscar comentários do vídeo
+    await fetchVideoComments(videoId);
+  };
+  
+  // Helper function to format numbers
+  const formatNumber = (num: string | number | undefined): string => {
+    if (!num) return '0';
+    
+    const numValue = typeof num === 'string' ? parseInt(num, 10) : num;
+    
+    if (numValue >= 1000000) {
+      return `${(numValue / 1000000).toFixed(1)}M`;
+    } else if (numValue >= 1000) {
+      return `${(numValue / 1000).toFixed(1)}K`;
+    }
+    
+    return numValue.toString();
+  };
+  
+  // Função para gerar URL de thumbnail do YouTube
+  const getYouTubeThumbnailUrl = (videoId: string) => {
+    if (!videoId) return 'https://placehold.co/640x360/5F27CD/FFFFFF?text=No+Image';
+    
+    // Formato de alta qualidade (maxresdefault)
+    return `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+  };
+  
+  // Adicionar esta função de utilidade para gerar URLs de thumbnail
+  const getThumbnailUrl = (video: any) => {
+    // Se temos o ID do vídeo do YouTube, usamos para gerar a URL da thumbnail
+    if (video.video_id_youtube) {
+      return `https://i.ytimg.com/vi/${video.video_id_youtube}/hqdefault.jpg`;
+    }
+    
+    // Fallback para uma imagem estática com base na primeira letra do título
+    const videoTitle = video.nome_do_video || video.title || "Untitled";
+    const firstLetter = videoTitle.charAt(0).toUpperCase();
+    
+    // Geramos cores diferentes com base na primeira letra do título
+    const colors = ['#5F27CD', '#2D98DA', '#FF9F43', '#EE5253', '#10AC84', '#222F3E', '#5F27CD'];
+    const colorIndex = firstLetter.charCodeAt(0) % colors.length;
+    
+    // Returna uma URL para uma imagem de placeholder personalizada
+    return `https://placehold.co/640x360/${colors[colorIndex].replace('#', '')}/${firstLetter === videoTitle.charAt(0) ? 'FFFFFF' : '333333'}?text=${encodeURIComponent(firstLetter)}`;
+  };
+  
+  // Função para mostrar popup de justificativa
+  const showJustificationPopup = (title: string, text: string) => {
+    setCurrentJustification({ title, text });
+    setShowJustification(true);
+  };
+  
+  // Filtrar comentários para exibir apenas aqueles com status "posted"
+  const filteredComments = currentVideoComments.filter(comment => comment.status === 'posted');
+  
+  // Atualizar a transformação de dados para o gráfico de distribuição de conteúdo
+  // Implementar uma função para processar os dados de categoria para o gráfico de pizza
+  const getContentDistributionData = () => {
+    if (!contentCategories || contentCategories.length === 0) {
+      // Dados de exemplo caso não existam categorias
+      return [
+        { name: 'Tutoriais', value: 35, shortName: 'Tutoriais' },
+        { name: 'Análises', value: 25, shortName: 'Análises' },
+        { name: 'Vlogs', value: 15, shortName: 'Vlogs' },
+        { name: 'Shorts', value: 15, shortName: 'Shorts' },
+        { name: 'Lives', value: 10, shortName: 'Lives' }
+      ];
+    }
+    
+    // Calcular o total de vídeos para porcentagens
+    const totalVideos = contentCategories.reduce((sum, category) => sum + category.total_videos, 0);
+    
+    // Mapear os dados das categorias para o formato do gráfico
+    return contentCategories.map(category => {
+      // Truncar nomes de categorias para exibição no gráfico
+      let shortName = category.content_category;
+      if (shortName.length > 10) {
+        shortName = shortName.substring(0, 8) + '...';
+      }
+      
+      // Calcular a porcentagem baseada no número de vídeos
+      const percentage = Math.round((category.total_videos / totalVideos) * 100);
+      
+      return {
+        name: category.content_category,
+        shortName: shortName,
+        fullName: category.content_category, // Nome completo para o tooltip
+        value: category.total_videos, // Usar o número real de vídeos para o valor
+        percentage: percentage, // Armazenar a porcentagem para exibição
+        videos: category.total_videos,
+        views: category.total_views,
+        likes: category.total_likes,
+        relevance: category.media_relevancia
+      };
+    });
+  };
   
   return (
     <PageContainer>
@@ -2495,8 +2674,14 @@ const YoutubeMonitoring: React.FC = () => {
               <ChartHeader>
                 <ChartTitle>
                   <IconComponent icon={FaIcons.FaChartArea} />
-                  Weekly Activity
+                  Engagement Metrics
                 </ChartTitle>
+                <TimeSelector>
+                  <TimeOption active={timeframe === 'week'} onClick={() => setTimeframe('week')}>Week</TimeOption>
+                  <TimeOption active={timeframe === 'month'} onClick={() => setTimeframe('month')}>Month</TimeOption>
+                  <TimeOption active={timeframe === 'quarter'} onClick={() => setTimeframe('quarter')}>Quarter</TimeOption>
+                  <TimeOption active={timeframe === 'year'} onClick={() => setTimeframe('year')}>Year</TimeOption>
+                </TimeSelector>
               </ChartHeader>
               
               <ChartBody>
@@ -2510,32 +2695,47 @@ const YoutubeMonitoring: React.FC = () => {
                     }}>
                       <Spinner size="md" />
                     </div>
-                  ) : weeklyActivityData.length === 0 ? (
-                    <div style={{ 
-                      height: '100%', 
-                      display: 'flex', 
-                      justifyContent: 'center', 
-                      alignItems: 'center',
-                      color: '#666',
-                      flexDirection: 'column'
-                    }}>
-                      <IconComponent icon={FaIcons.FaChartLine} style={{ fontSize: '2rem', marginBottom: '1rem', opacity: 0.5 }} />
-                      <span>No activity data to display</span>
-                    </div>
                   ) : (
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={weeklyActivityData}
-                        margin={{ top: 20, right: 30, left: 0, bottom: 15 }}
-                        barGap={10}
+                      <AreaChart
+                        data={dynamicEngagementData}
+                        margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                       >
+                        <defs>
+                          <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#5856D6" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#5856D6" stopOpacity={0.1}/>
+                          </linearGradient>
+                          <linearGradient id="colorEngagement" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#FF9500" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#FF9500" stopOpacity={0.1}/>
+                          </linearGradient>
+                          <linearGradient id="colorMentions" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#34C759" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#34C759" stopOpacity={0.1}/>
+                          </linearGradient>
+                          <linearGradient id="colorChannels" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#FF2D55" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#FF2D55" stopOpacity={0.1}/>
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                         <XAxis 
-                          dataKey="weekday" 
+                          dataKey="date" 
                           axisLine={false} 
                           tickLine={false}
                           height={40}
-                          tick={{ fontSize: 13, fontWeight: 500 }}
+                          tick={{ fontSize: 11 }}
+                          angle={timeframe === 'week' ? 0 : -45}
+                          textAnchor={timeframe === 'week' ? 'middle' : 'end'}
+                          tickFormatter={(value) => {
+                            // Para exibição semanal, separar dia da semana e data
+                            if (timeframe === 'week' && value.includes(' ')) {
+                              const parts = value.split(' ');
+                              return parts[0]; // Retorna apenas o dia da semana (Mon, Tue, etc.)
+                            }
+                            return value;
+                          }}
                         />
                         <YAxis 
                           axisLine={false} 
@@ -2551,49 +2751,68 @@ const YoutubeMonitoring: React.FC = () => {
                             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
                           }}
                           formatter={(value, name) => {
+                            // Formatação personalizada para valores no tooltip
+                            // Mapear os nomes em inglês para português para o tooltip
                             const nameMap: {[key: string]: string} = {
-                              'videos': 'Videos',
-                              'engagement': 'Engagements',
-                              'mentions': 'Messages',
-                              'channels': 'Channels'
+                              'videos': 'Vídeos',
+                              'engagement': 'Engajamentos',
+                              'mentions': 'Mensagens',
+                              'channels': 'Canais'
                             };
                             return [value, nameMap[name as string] || name];
                           }}
                           labelFormatter={(label) => {
-                            const item = weeklyActivityData.find(item => item.weekday === label);
-                            return `Date: ${item?.fullDate || label}`;
+                            // Formatação personalizada para o título do tooltip (data)
+                            if (timeframe === 'week' && label.includes(' ')) {
+                              // Para o tooltip da visualização semanal, mostrar o dia da semana e a data completa
+                              const parts = label.split(' ');
+                              return `${parts[0]} - ${parts[1]}`;
+                            }
+                            return `Data: ${label}`;
                           }}
                         />
                         <Legend verticalAlign="top" height={36} />
-                        <Bar 
+                        <Area 
+                          type="monotone" 
                           dataKey="videos" 
-                          name="Videos" 
-                          fill="#5856D6" 
-                          radius={[4, 4, 0, 0]} 
-                          barSize={16}
+                          name="Vídeos" 
+                          stroke="#5856D6" 
+                          fillOpacity={1}
+                          fill="url(#colorViews)" 
+                          strokeWidth={2}
+                          activeDot={{ r: 6 }} 
                         />
-                        <Bar 
+                        <Area 
+                          type="monotone" 
                           dataKey="engagement" 
-                          name="Engagements" 
-                          fill="#FF9500" 
-                          radius={[4, 4, 0, 0]} 
-                          barSize={16}
+                          name="Engajamentos" 
+                          stroke="#FF9500" 
+                          fillOpacity={1}
+                          fill="url(#colorEngagement)" 
+                          strokeWidth={2}
+                          activeDot={{ r: 6 }} 
                         />
-                        <Bar 
+                        <Area 
+                          type="monotone" 
                           dataKey="mentions" 
-                          name="Messages" 
-                          fill="#34C759" 
-                          radius={[4, 4, 0, 0]} 
-                          barSize={16}
+                          name="Mensagens" 
+                          stroke="#34C759" 
+                          fillOpacity={1}
+                          fill="url(#colorMentions)" 
+                          strokeWidth={2}
+                          activeDot={{ r: 6 }} 
                         />
-                        <Bar 
+                        <Area 
+                          type="monotone" 
                           dataKey="channels" 
-                          name="Channels" 
-                          fill="#FF2D55" 
-                          radius={[4, 4, 0, 0]} 
-                          barSize={16}
+                          name="Canais" 
+                          stroke="#FF2D55" 
+                          fillOpacity={1}
+                          fill="url(#colorChannels)" 
+                          strokeWidth={2}
+                          activeDot={{ r: 6 }} 
                         />
-                      </BarChart>
+                      </AreaChart>
                     </ResponsiveContainer>
                   )}
                 </div>
