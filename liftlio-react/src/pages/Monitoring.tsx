@@ -88,74 +88,77 @@ const TabIcon = styled.span`
 // Modern stats cards grid
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 `;
 
 const StatCard = styled.div`
   background: white;
-  border-radius: 16px;
+  padding: 20px;
+  border-radius: ${props => props.theme.radius.lg};
+  box-shadow: ${props => props.theme.shadows.sm};
+  transition: ${props => props.theme.transitions.default};
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  position: relative;
   overflow: hidden;
-  padding: 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
   
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px);
+    box-shadow: ${props => props.theme.shadows.md};
   }
+`;
+
+const TopGradient = styled.div<{ color?: string }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    ${props => props.color || props.theme.colors.primary}88, 
+    ${props => props.color || props.theme.colors.primary}44
+  );
+  opacity: 0.9;
 `;
 
 const StatCardHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  background: #f9fafb;
+  margin-bottom: 16px;
 `;
 
-const StatLabel = styled.div`
-  font-size: 14px;
-  font-weight: 600;
-  color: #666;
-  display: flex;
-  align-items: center;
+const StatLabel = styled.h3`
+  font-size: ${props => props.theme.fontSizes.md};
+  color: ${props => props.theme.colors.darkGrey};
+  margin: 0;
+  font-weight: ${props => props.theme.fontWeights.medium};
 `;
 
 const StatIconContainer = styled.div<{ color: string }>`
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  background-color: ${props => `${props.color}15`};
-  color: ${props => props.color};
+  width: 48px;
+  height: 48px;
+  border-radius: ${props => props.theme.radius.md};
   display: flex;
   align-items: center;
   justify-content: center;
-
-  svg {
-    font-size: 18px;
-  }
+  background: ${props => `linear-gradient(135deg, ${props.color}, ${withOpacity(props.color, 0.7)})`};
+  color: white;
+  font-size: 20px;
+  box-shadow: ${props => props.theme.shadows.sm};
 `;
 
 const StatValue = styled.div`
-  font-size: 28px;
-  font-weight: 700;
-  color: #333;
-  padding: 20px 20px 16px;
-  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(247, 250, 255, 0.5));
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  
-  @media (max-width: 1366px) {
-    font-size: 24px;
-  }
-  
-  @media (max-width: 992px) {
-    font-size: 22px;
-  }
+  font-size: 36px;
+  font-weight: ${props => props.theme.fontWeights.bold};
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: ${props => props.theme.radius.md};
+  text-align: center;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  color: ${props => props.theme.colors.primary};
 `;
 
 const StatChange = styled.div<{ positive: boolean }>`
@@ -166,6 +169,12 @@ const StatChange = styled.div<{ positive: boolean }>`
   font-weight: ${props => props.theme.fontWeights.medium};
   font-size: ${props => props.theme.fontSizes.sm};
   margin-top: 8px;
+  
+  span {
+    color: ${props => props.theme.colors.darkGrey};
+    margin-left: 6px;
+    font-size: ${props => props.theme.fontSizes.xs};
+  }
 `;
 
 const StatLineSpacer = styled.div`
@@ -176,24 +185,31 @@ const StatLineSpacer = styled.div`
 
 const MinimalTrendLine = styled.div`
   height: 40px;
-  margin-top: 8px;
+  margin-top: 12px;
 `;
 
 // Chart sections styling
 const ChartRow = styled.div`
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
-  
-  @media (max-width: 1200px) {
-    grid-template-columns: 1fr;
-  }
 `;
 
-const ChartContainer = styled(Card)`
-  padding: 0;
+const ChartContainer = styled.div`
+  background: white;
+  border-radius: ${props => props.theme.radius.lg};
+  box-shadow: ${props => props.theme.shadows.sm};
+  margin-bottom: 24px;
   overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  position: relative;
+  
+  &:hover {
+    box-shadow: ${props => props.theme.shadows.md};
+    transform: translateY(-2px);
+    transition: ${props => props.theme.transitions.default};
+  }
 `;
 
 const ChartHeader = styled.div`
@@ -201,29 +217,50 @@ const ChartHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid ${props => props.theme.colors.tertiary};
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+      ${props => props.theme.colors.primary}88, 
+      ${props => props.theme.colors.primary}44
+    );
+    opacity: 0.9;
+  }
 `;
 
 const ChartTitle = styled.h3`
   font-size: ${props => props.theme.fontSizes.lg};
-  font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.primary};
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  color: ${props => props.theme.colors.primary};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  
+  svg {
+    margin-right: 10px;
+    color: ${COLORS.ACCENT};
+  }
 `;
 
 const ChartBody = styled.div`
-  padding: 20px 0;
+  padding: 20px;
 `;
 
 // Modern time selector
 const TimeSelector = styled.div`
   display: flex;
-  background: ${props => props.theme.colors.tertiary};
+  background: ${props => props.theme.colors.tertiary}40;
   border-radius: ${props => props.theme.radius.pill};
   padding: 4px;
+  box-shadow: ${props => props.theme.shadows.sm};
 `;
 
 const TimeOption = styled.button<{ active: boolean }>`
@@ -235,24 +272,45 @@ const TimeOption = styled.button<{ active: boolean }>`
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.regular};
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: ${props => props.theme.transitions.fast};
   box-shadow: ${props => props.active ? props.theme.shadows.sm : 'none'};
   
   &:hover {
     color: ${props => props.theme.colors.primary};
+    background: ${props => !props.active && props.theme.colors.tertiary}20;
   }
 `;
 
 // Channel list styling
 const ChannelsContainer = styled.div`
-  margin-bottom: 32px;
+  background: white;
+  border-radius: ${props => props.theme.radius.lg};
+  box-shadow: ${props => props.theme.shadows.sm};
+  padding: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+      ${props => props.theme.colors.primary}88, 
+      ${props => props.theme.colors.primary}44
+    );
+    opacity: 0.9;
+    border-radius: ${props => props.theme.radius.lg} ${props => props.theme.radius.lg} 0 0;
+  }
 `;
 
 const ChannelsHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 `;
 
 const SectionTitle = styled.h2`
@@ -260,32 +318,60 @@ const SectionTitle = styled.h2`
   font-weight: ${props => props.theme.fontWeights.semiBold};
   color: ${props => props.theme.colors.primary};
   margin: 0;
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 10px;
+    color: ${props => props.theme.colors.primary};
+  }
 `;
 
 const ChannelList = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 20px;
-  margin-top: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
 `;
 
 // Create a wrapper div that can accept onClick and other interactive props
 const ChannelCardWrapper = styled.div<{ active: boolean }>`
-  display: flex;
-  flex-direction: column;
-  padding: 24px;
-  border: none;
+  background: white;
   border-radius: ${props => props.theme.radius.lg};
-  background-color: ${props => props.theme.colors.white};
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  overflow: hidden;
   cursor: pointer;
   position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
+  transition: ${props => props.theme.transitions.default};
+  box-shadow: ${props => props.active ? 
+    props.theme.shadows.md : 
+    props.theme.shadows.sm};
+  border: ${props => props.active ? 
+    `1px solid ${props.theme.colors.primary}40` : 
+    '1px solid rgba(0, 0, 0, 0.03)'};
+  transform: ${props => props.active ? 'translateY(-3px)' : 'none'};
   
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+    box-shadow: ${props => props.theme.shadows.md};
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: ${props => props.active ? 
+      props.theme.colors.primary : 
+      'transparent'};
+    opacity: ${props => props.active ? 1 : 0};
+    transition: ${props => props.theme.transitions.default};
+  }
+  
+  &:hover::before {
+    opacity: 0.8;
+    background: ${props => props.theme.colors.primary};
   }
 `;
 
@@ -293,43 +379,54 @@ const ChannelCardWrapper = styled.div<{ active: boolean }>`
 const CardHeader = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
+  padding: 16px;
+  background: linear-gradient(to right, 
+    ${props => props.theme.colors.lightGrey}40, 
+    ${props => props.theme.colors.lightGrey}80);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 `;
 
 // Melhorar a estilização do ChannelBadge conforme imagem
 const ChannelBadge = styled.div<{ status: string }>`
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: ${props => props.theme.radius.pill};
+  font-size: ${props => props.theme.fontSizes.xs};
+  font-weight: ${props => props.theme.fontWeights.medium};
   background: ${props => 
-    props.status === 'active' ? '#e6f7ee' : 
-    props.status === 'pending' ? '#FFF8E6' : 
-    '#f5f5f5'};
+    props.status === 'active' ? props.theme.colors.successLight : 
+    props.status === 'pending' ? props.theme.colors.warningLight : 
+    props.theme.colors.lightGrey};
   color: ${props => 
-    props.status === 'active' ? '#34C759' : 
-    props.status === 'pending' ? '#FF9500' : 
-    '#999'};
+    props.status === 'active' ? props.theme.colors.success : 
+    props.status === 'pending' ? props.theme.colors.warning : 
+    props.theme.colors.darkGrey};
   display: flex;
   align-items: center;
+  box-shadow: ${props => props.theme.shadows.sm};
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: ${props => props.theme.shadows.md};
+  }
   
   svg {
-    margin-right: 4px;
+    margin-right: 5px;
     font-size: 10px;
   }
 `;
 
 // Score badge conforme imagem
 const ScoreBadge = styled.div`
-  background: rgba(52, 199, 89, 0.1);
-  color: #34C759;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
+  background: ${props => props.theme.colors.successLight};
+  color: ${props => props.theme.colors.success};
+  padding: 5px 12px;
+  border-radius: ${props => props.theme.radius.pill};
+  font-size: ${props => props.theme.fontSizes.sm};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
   display: flex;
   align-items: center;
+  box-shadow: ${props => props.theme.shadows.sm};
   
   svg {
     margin-right: 6px;
@@ -339,13 +436,16 @@ const ScoreBadge = styled.div`
 
 // Layout principal do card (conteúdo)
 const CardContent = styled.div`
+  padding: 16px;
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 16px;
 `;
 
 // Área para a imagem do canal
 const ChannelImageWrapper = styled.div`
-  margin-right: 16px;
+  display: flex;
+  justify-content: center;
 `;
 
 // Imagem do canal em círculo
@@ -353,6 +453,7 @@ const ChannelImage = styled.div<{ imageUrl?: string }>`
   width: 64px;
   height: 64px;
   border-radius: 50%;
+  background-color: ${props => props.imageUrl ? 'transparent' : '#f0f2f5'};
   background-image: ${props => props.imageUrl ? `url(${props.imageUrl})` : 'none'};
   background-size: cover;
   background-position: center;
@@ -808,13 +909,18 @@ const FilterBar = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   gap: 16px;
+  background: ${props => props.theme.colors.lightGrey}30;
+  padding: 16px;
+  border-radius: ${props => props.theme.radius.lg};
+  box-shadow: ${props => props.theme.shadows.sm};
 `;
 
 const FilterGroup = styled.div`
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
 `;
 
 const FilterButton = styled.button<{ active?: boolean }>`
@@ -828,15 +934,19 @@ const FilterButton = styled.button<{ active?: boolean }>`
   display: flex;
   align-items: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: ${props => props.theme.transitions.fast};
+  box-shadow: ${props => props.active ? props.theme.shadows.sm : 'none'};
   
   svg {
     margin-right: 8px;
+    font-size: 14px;
   }
   
   &:hover {
-    background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.lightGrey}20;
+    background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.lightGrey}40;
     border-color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.primary};
+    transform: translateY(-1px);
+    box-shadow: ${props => props.theme.shadows.sm};
   }
 `;
 
@@ -847,17 +957,19 @@ const SearchContainer = styled.div`
 `;
 
 const SearchInput = styled.input`
-  padding: 10px 16px 10px 42px;
+  padding: 12px 16px 12px 42px;
   border: 1px solid ${props => props.theme.colors.lightGrey};
   border-radius: ${props => props.theme.radius.md};
   width: 100%;
   font-size: ${props => props.theme.fontSizes.sm};
-  transition: all 0.2s ease;
+  transition: ${props => props.theme.transitions.fast};
+  box-shadow: ${props => props.theme.shadows.sm};
   
   &:focus {
     outline: none;
     border-color: ${props => props.theme.colors.primary};
     box-shadow: 0 0 0 3px ${props => props.theme.colors.primary}20;
+    transform: translateY(-1px);
   }
 `;
 
@@ -866,13 +978,15 @@ const SearchIcon = styled.span`
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.primary};
   pointer-events: none;
+  font-size: 16px;
 `;
 
 const VideoBadge = styled.span<{ type: string }>`
   display: inline-flex;
-  padding: 2px 8px;
+  align-items: center;
+  padding: 4px 10px;
   font-size: ${props => props.theme.fontSizes.xs};
   font-weight: ${props => props.theme.fontWeights.medium};
   border-radius: ${props => props.theme.radius.pill};
@@ -885,6 +999,19 @@ const VideoBadge = styled.span<{ type: string }>`
     props.type === 'new' ? props.theme.colors.success : 
     props.type === 'trending' ? props.theme.colors.warning : 
     props.theme.colors.info};
+  box-shadow: ${props => props.theme.shadows.sm};
+  
+  svg {
+    margin-right: 4px;
+    font-size: 10px;
+  }
+  
+  &:before {
+    content: '${props => 
+      props.type === 'new' ? "★ New" : 
+      props.type === 'trending' ? "↑ Trending" : 
+      "• Featured"}';
+  }
 `;
 
 // Action buttons
@@ -1654,47 +1781,39 @@ const HighlightedStatText = styled(StatText)`
 const StatSubItem = styled.div`
   display: flex;
   align-items: center;
-  margin: 0;
-  padding: 12px 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.04);
-  background: white;
-  transition: all 0.2s ease;
+  margin-top: 14px;
+  padding: 6px 4px;
+  border-radius: 8px;
   
   &:hover {
-    background: rgba(247, 250, 255, 0.7);
+    background: rgba(0, 0, 0, 0.02);
   }
 `;
 
 const StatSubIcon = styled.div`
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background-color: rgba(0, 0, 0, 0.04);
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
-  
-  svg {
-    font-size: 14px;
-    color: #666;
-  }
+  font-size: 14px;
 `;
 
 const StatSubContent = styled.div`
+  margin-left: 10px;
   flex: 1;
 `;
 
 const StatSubLabel = styled.div`
-  font-size: 12px;
-  color: #888;
+  font-size: 0.8rem;
+  color: #777;
   margin-bottom: 2px;
 `;
 
 const StatSubValue = styled.div`
-  font-size: 16px;
+  font-size: 1.1rem;
   font-weight: 600;
-  color: #333;
 `;
 
 // Adicionar interface para dados das categorias de conteúdo
@@ -2594,31 +2713,6 @@ const YoutubeMonitoring: React.FC = () => {
                   </VideoTableRow>
                 ))}
               </VideoTable>
-            </ChartContainer>
-            
-            <ChartContainer>
-              <ChartHeader>
-                <ChartTitle>
-                  <IconComponent icon={FaIcons.FaBullseye} />
-                  Performance Metrics
-                </ChartTitle>
-              </ChartHeader>
-              
-              <ChartBody>
-                <div style={{ height: 300 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart outerRadius={90} width={500} height={300} data={performanceMetricsData}>
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="category" />
-                      <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                      <Radar name="Your Channel" dataKey="current" stroke="#5856D6" fill="#5856D6" fillOpacity={0.5} />
-                      <Radar name="Industry Benchmark" dataKey="benchmark" stroke="#FF9500" fill="#FF9500" fillOpacity={0.3} />
-                      <Legend />
-                      <Tooltip />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </div>
-              </ChartBody>
             </ChartContainer>
           </ChartRow>
         </>
