@@ -501,13 +501,11 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     return (
       <AppContainer>
         <MainContent>
-          <Header toggleSidebar={toggleSidebar} />
-          <ContentWrapper>
-            <Routes>
-              <Route path="*" element={<Navigate to="/create-project" replace />} />
-              <Route path="/create-project" element={<ProjectCreationPage />} />
-            </Routes>
-          </ContentWrapper>
+          {/* Header escondido na primeira etapa de criação de projeto */}
+          <Routes>
+            <Route path="*" element={<Navigate to="/create-project" replace />} />
+            <Route path="/create-project" element={<ProjectCreationPage />} />
+          </Routes>
         </MainContent>
       </AppContainer>
     );
@@ -581,11 +579,11 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   // Ou usuários que estão adicionando novo projeto (sempre mostrar header)
   return (
     <Routes>
-      {/* Rota para criação de projeto - sem Sidebar */}
+      {/* Rota para criação de projeto - sem Sidebar e sem Header */}
       <Route path="/create-project" element={
         <AppContainer>
           <MainContent style={{ width: '100%' }}>
-            <Header toggleSidebar={toggleSidebar} />
+            {/* Header removido da página de criação de projeto */}
             <ContentWrapper>
               <ProjectCreationPage />
             </ContentWrapper>
