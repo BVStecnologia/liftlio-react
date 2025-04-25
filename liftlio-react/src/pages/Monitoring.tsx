@@ -1882,64 +1882,118 @@ const YoutubeMonitoring: React.FC = () => {
         const project_id_param = currentProject.id;
         console.log(`Buscando dados de performance: projeto ${project_id_param}, últimos ${days_back} dias`);
         
-        // Usar a função callRPC como estava originalmente
+        // Usar a função callRPC
         const data = await callRPC('get_weekly_project_performance', {
           days_back,
           project_id_param
         });
         
+        // Debug completo da estrutura de dados recebida
+        console.log('Estrutura completa da resposta da RPC:', JSON.stringify(data));
+        
         if (!data) {
-          console.error('Erro ao buscar dados de performance');
+          console.error('Erro ao buscar dados de performance: dados vazios');
           generateFallbackEngagementData();
           return;
         }
         
-        console.log('Dados de performance recebidos:', data);
-        
-        if (data && Array.isArray(data) && data.length > 0 && data[0].get_weekly_project_performance) {
-          const performanceData = data[0].get_weekly_project_performance;
-          console.log('Dados de performance em formato bruto:', performanceData);
-          
-          // Verificar se os dados estão na ordem correta (mais antigo para mais recente)
-          const sortedData = [...performanceData].sort((a, b) => {
-            // Ordenar por data (formato YYYY-MM-DD do campo 'day')
-            return new Date(a.day).getTime() - new Date(b.day).getTime();
-          });
-          
-          // Mapear diretamente para os nomes dos campos no gráfico
-          const formattedData: EngagementDataPoint[] = sortedData.map((item: WeeklyPerformanceData) => {
-            // Formatar a data para exibição como dia da semana em inglês
-            const date = new Date(item.day);
-            const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const weekDay = weekDays[date.getDay()];
-            
-            // Formatar a data conforme o timeframe
-            let displayDate = '';
-            if (timeframe === 'week') {
-              // Para exibição semanal, mostrar o dia da semana e a data
-              const day = date.getDate().toString().padStart(2, '0');
-              const month = (date.getMonth() + 1).toString().padStart(2, '0');
-              displayDate = `${weekDay} ${day}/${month}`;
-            } else {
-              // Para outros timeframes, usar o formato DD/MM do campo 'date'
-              displayDate = item.date ? item.date.substring(0, 5) : item.day.substring(5, 10).replace('-', '/');
-            }
-            
-            return {
-              date: displayDate,
-              videos: Number(item.videos) || 0,
-              engagement: Number(item.engagement) || 0,
-              mentions: Number(item.mentions) || 0,
-              channels: Number(item.channels) || 0
-            };
-          });
-          
-          console.log('Dados formatados para o gráfico:', formattedData);
-          setDynamicEngagementData(formattedData);
-        } else {
-          console.log('Formato de dados inválido ou vazio, usando dados de fallback');
+        // Verificar a estrutura exata dos dados
+        if (!Array.isArray(data)) {
+          console.error('Erro de formato: data não é um array:', typeof data);
           generateFallbackEngagementData();
+          return;
         }
+        
+        if (data.length === 0) {
+          console.error('Erro: array de dados vazio');
+          generateFallbackEngagementData();
+          return;
+        }
+        
+        // Verificar se a propriedade get_weekly_project_performance existe
+        const performanceDataRoot = data[0]?.get_weekly_project_performance;
+        if (!performanceDataRoot) {
+          console.error('Erro: propriedade get_weekly_project_performance não encontrada em data[0]:', data[0]);
+          generateFallbackEngagementData();
+          return;
+        }
+        
+        // Verificar se o resultado é um array
+        if (!Array.isArray(performanceDataRoot)) {
+          console.error('Erro: get_weekly_project_performance não é um array:', typeof performanceDataRoot);
+          generateFallbackEngagementData();
+          return;
+        }
+        
+        console.log('Dados de performance em formato bruto:', performanceDataRoot);
+        
+        // Se não houver dados, usar fallback
+        if (performanceDataRoot.length === 0) {
+          console.log('Aviso: Nenhum dado de performance encontrado para o período');
+          generateFallbackEngagementData();
+          return;
+        }
+        
+        // Debugar um item para entender sua estrutura
+        console.log('Exemplo de item de performance:', performanceDataRoot[0]);
+        
+        // Verificar se os dados estão na ordem correta (mais antigo para mais recente)
+        const sortedData = [...performanceDataRoot].sort((a, b) => {
+          // Garantir que day existe e é uma string válida
+          if (!a.day || !b.day) {
+            console.error('Erro: propriedade day ausente em alguns itens');
+            return 0;
+          }
+          
+          // Ordenar por data (formato YYYY-MM-DD do campo 'day')
+          return new Date(a.day).getTime() - new Date(b.day).getTime();
+        });
+        
+        console.log('Dados ordenados:', sortedData);
+        
+        // Mapear diretamente para os nomes dos campos no gráfico
+        const formattedData: EngagementDataPoint[] = sortedData.map((item: WeeklyPerformanceData) => {
+          // Debug do item sendo processado
+          console.log('Processando item:', item);
+          
+          // Formatar a data para exibição como dia da semana em inglês
+          const date = new Date(item.day);
+          const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          const weekDay = weekDays[date.getDay()];
+          
+          // Debug das datas
+          console.log(`Data original: ${item.day}, Date object: ${date}, Dia da semana: ${weekDay}`);
+          
+          // Formatar a data conforme o timeframe
+          let displayDate = '';
+          if (timeframe === 'week') {
+            // Para exibição semanal, usar APENAS o dia da semana em inglês
+            displayDate = weekDay;
+          } else {
+            // Para outros timeframes, usar o formato DD/MM da string date
+            displayDate = item.date 
+              ? item.date.substring(0, 5)  // Pegar apenas DD/MM
+              : `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+          }
+          
+          console.log(`Data formatada para exibição: ${displayDate}`);
+          
+          // Garantir que os valores numéricos sejam números, mesmo que venham como strings ou null
+          const mentions = item.mentions !== undefined && item.mentions !== null 
+            ? Number(item.mentions) 
+            : 0;
+          
+          return {
+            date: displayDate,
+            videos: 0,  // Mantemos esses campos para compatibilidade com a interface
+            engagement: 0,
+            mentions,   // Apenas este valor será mostrado no gráfico
+            channels: 0
+          };
+        });
+        
+        console.log('Dados formatados para o gráfico:', formattedData);
+        setDynamicEngagementData(formattedData);
       } catch (error) {
         console.error('Erro na chamada de performance:', error);
         generateFallbackEngagementData();
@@ -1948,48 +2002,30 @@ const YoutubeMonitoring: React.FC = () => {
       }
     };
     
-    // Função de fallback para gerar dados quando a API falha
+    // Modificar a função de fallback para gerar apenas dados de mensagens
     const generateFallbackEngagementData = () => {
       // Se não temos dados reais, geramos dados baseados em intervalos de tempo
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       const date = new Date();
-      const currentMonth = date.getMonth();
+      const today = date.getDay(); // 0 = domingo, 1 = segunda, etc.
       
-      // Determinar os últimos 7 meses até o atual
-      const recentMonths = [];
+      // Gerar dados para os últimos 7 dias da semana
+      const data: EngagementDataPoint[] = [];
       for (let i = 6; i >= 0; i--) {
-        const monthIndex = (currentMonth - i + 12) % 12; // Garante que o índice seja positivo
-        recentMonths.push(months[monthIndex]);
+        const dayIndex = (today - i + 7) % 7; // Garantir que o índice seja positivo
+        const dayName = weekDays[dayIndex];
+        
+        // Gerar um número aleatório de mensagens (1-10)
+        const mentions = Math.floor(Math.random() * 10) + 1;
+        
+        data.push({
+          date: dayName,
+          videos: 0,
+          engagement: 0,
+          mentions: mentions,
+          channels: 0
+        });
       }
-      
-      // Criar base de views, likes, comments para crescimento gradual
-      let baseViews = 2000 + Math.floor(Math.random() * 5000);
-      let baseLikes = Math.floor(baseViews * 0.05);
-      let baseComments = Math.floor(baseViews * 0.01);
-      let baseSubscribers = Math.floor(baseViews * 0.02);
-      
-      // Gerar pontos de dados com crescimento gradual
-      const data: EngagementDataPoint[] = recentMonths.map((month, index) => {
-        // Adicionar crescimento e variação
-        baseViews = Math.floor(baseViews * (1 + Math.random() * 0.2));
-        baseLikes = Math.floor(baseLikes * (1 + Math.random() * 0.15));
-        baseComments = Math.floor(baseComments * (1 + Math.random() * 0.1));
-        baseSubscribers = Math.floor(baseSubscribers * (1 + Math.random() * 0.08));
-        
-        // Adicionar um pouco de aleatoriedade
-        const videos = Math.floor(Math.random() * 5) + 1; // 1-5 vídeos
-        const engagement = Math.floor(Math.random() * 10) + 1; // 1-10 engajamentos  
-        const mentions = Math.floor(Math.random() * 8) + 1; // 1-8 mensagens
-        const channels = Math.floor(Math.random() * 2) + 1; // 1-2 canais
-        
-        return {
-          date: month,
-          videos,
-          engagement,
-          mentions,
-          channels
-        };
-      });
       
       setDynamicEngagementData(data);
     };
@@ -2702,21 +2738,9 @@ const YoutubeMonitoring: React.FC = () => {
                         margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                       >
                         <defs>
-                          <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#5856D6" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#5856D6" stopOpacity={0.1}/>
-                          </linearGradient>
-                          <linearGradient id="colorEngagement" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#FF9500" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#FF9500" stopOpacity={0.1}/>
-                          </linearGradient>
                           <linearGradient id="colorMentions" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#34C759" stopOpacity={0.8}/>
                             <stop offset="95%" stopColor="#34C759" stopOpacity={0.1}/>
-                          </linearGradient>
-                          <linearGradient id="colorChannels" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#FF2D55" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#FF2D55" stopOpacity={0.1}/>
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
@@ -2726,14 +2750,10 @@ const YoutubeMonitoring: React.FC = () => {
                           tickLine={false}
                           height={40}
                           tick={{ fontSize: 11 }}
-                          angle={timeframe === 'week' ? 0 : -45}
-                          textAnchor={timeframe === 'week' ? 'middle' : 'end'}
+                          angle={0}
+                          textAnchor="middle"
                           tickFormatter={(value) => {
-                            // Para exibição semanal, separar dia da semana e data
-                            if (timeframe === 'week' && value.includes(' ')) {
-                              const parts = value.split(' ');
-                              return parts[0]; // Retorna apenas o dia da semana (Mon, Tue, etc.)
-                            }
+                            // No timeframe semanal, value já é o dia da semana (Sun, Mon, etc.)
                             return value;
                           }}
                         />
@@ -2754,44 +2774,30 @@ const YoutubeMonitoring: React.FC = () => {
                             // Formatação personalizada para valores no tooltip
                             // Mapear os nomes em inglês para português para o tooltip
                             const nameMap: {[key: string]: string} = {
-                              'videos': 'Vídeos',
-                              'engagement': 'Engajamentos',
-                              'mentions': 'Mensagens',
-                              'channels': 'Canais'
+                              'mentions': 'Mensagens'
                             };
                             return [value, nameMap[name as string] || name];
                           }}
                           labelFormatter={(label) => {
-                            // Formatação personalizada para o título do tooltip (data)
-                            if (timeframe === 'week' && label.includes(' ')) {
-                              // Para o tooltip da visualização semanal, mostrar o dia da semana e a data completa
-                              const parts = label.split(' ');
-                              return `${parts[0]} - ${parts[1]}`;
+                            // No timeframe semanal, label já é o dia da semana
+                            const dayMap: {[key: string]: string} = {
+                              'Sun': 'Domingo',
+                              'Mon': 'Segunda-feira',
+                              'Tue': 'Terça-feira',
+                              'Wed': 'Quarta-feira',
+                              'Thu': 'Quinta-feira',
+                              'Fri': 'Sexta-feira',
+                              'Sat': 'Sábado'
+                            };
+                            
+                            if (timeframe === 'week' && typeof label === 'string' && dayMap[label]) {
+                              return dayMap[label];
                             }
+                            
                             return `Data: ${label}`;
                           }}
                         />
                         <Legend verticalAlign="top" height={36} />
-                        <Area 
-                          type="monotone" 
-                          dataKey="videos" 
-                          name="Vídeos" 
-                          stroke="#5856D6" 
-                          fillOpacity={1}
-                          fill="url(#colorViews)" 
-                          strokeWidth={2}
-                          activeDot={{ r: 6 }} 
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="engagement" 
-                          name="Engajamentos" 
-                          stroke="#FF9500" 
-                          fillOpacity={1}
-                          fill="url(#colorEngagement)" 
-                          strokeWidth={2}
-                          activeDot={{ r: 6 }} 
-                        />
                         <Area 
                           type="monotone" 
                           dataKey="mentions" 
@@ -2799,16 +2805,6 @@ const YoutubeMonitoring: React.FC = () => {
                           stroke="#34C759" 
                           fillOpacity={1}
                           fill="url(#colorMentions)" 
-                          strokeWidth={2}
-                          activeDot={{ r: 6 }} 
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="channels" 
-                          name="Canais" 
-                          stroke="#FF2D55" 
-                          fillOpacity={1}
-                          fill="url(#colorChannels)" 
                           strokeWidth={2}
                           activeDot={{ r: 6 }} 
                         />
