@@ -85,17 +85,25 @@ const TabIcon = styled.span`
   justify-content: center;
 `;
 
-// Modern stats cards grid
+// Modern stats cards grid - fixed to 4 columns
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
   margin-bottom: 32px;
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StatCard = styled.div`
   background: white;
-  padding: 20px;
+  padding: 16px;
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.sm};
   transition: ${props => props.theme.transitions.default};
@@ -150,10 +158,10 @@ const StatIconContainer = styled.div<{ color: string }>`
 `;
 
 const StatValue = styled.div`
-  font-size: 36px;
+  font-size: 28px;
   font-weight: ${props => props.theme.fontWeights.bold};
-  margin: 16px 0;
-  padding: 16px;
+  margin: 12px 0;
+  padding: 12px;
   border-radius: ${props => props.theme.radius.md};
   text-align: center;
   line-height: 1.2;
@@ -188,11 +196,11 @@ const MinimalTrendLine = styled.div`
   margin-top: 12px;
 `;
 
-// Chart sections styling
+// Chart sections styling - full width
 const ChartRow = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
-  gap: 24px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
   margin-bottom: 32px;
 `;
 
@@ -741,9 +749,10 @@ const StatusToggleButton = styled(ButtonUI)`
 const VideoTable = styled.div`
   width: 100%;
   border-collapse: collapse;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: ${props => props.theme.shadows.sm};
   border-radius: ${props => props.theme.radius.lg};
   overflow: hidden;
+  margin-top: 24px;
 `;
 
 // Atualizar o grid para as colunas terem tamanhos mais adequados
@@ -2497,6 +2506,7 @@ const YoutubeMonitoring: React.FC = () => {
           <StatsGrid>
             {/* Card 1: Engajamento do Público */}
             <StatCard>
+              <TopGradient color="#5856D6" />
               <StatCardHeader>
                 <StatLabel>Audience Engagement</StatLabel>
                 <StatIconContainer color="#5856D6">
@@ -2505,7 +2515,9 @@ const YoutubeMonitoring: React.FC = () => {
               </StatCardHeader>
               <StatValue style={{ 
                 background: 'linear-gradient(135deg, rgba(88, 86, 214, 0.05), rgba(88, 86, 214, 0.15))', 
-                color: '#5856D6'
+                color: '#5856D6',
+                borderRadius: '8px',
+                padding: '12px 16px'
               }}>
                 {metricsData ? (metricsData.total_views >= 1000000 ? `${(metricsData.total_views / 1000000).toFixed(1)}M` : `${(metricsData.total_views / 1000).toFixed(0)}K`) : '0'} Views
               </StatValue>
@@ -2533,6 +2545,7 @@ const YoutubeMonitoring: React.FC = () => {
             
             {/* Card 2: Canais e Alcance */}
             <StatCard>
+              <TopGradient color="#007AFF" />
               <StatCardHeader>
                 <StatLabel>Channel Overview</StatLabel>
                 <StatIconContainer color="#007AFF">
@@ -2541,7 +2554,9 @@ const YoutubeMonitoring: React.FC = () => {
               </StatCardHeader>
               <StatValue style={{ 
                 background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.05), rgba(0, 122, 255, 0.15))', 
-                color: '#007AFF'
+                color: '#007AFF',
+                borderRadius: '8px',
+                padding: '12px 16px'
               }}>
                 {metricsData?.total_channels || '0'} Channels
               </StatValue>
@@ -2573,6 +2588,7 @@ const YoutubeMonitoring: React.FC = () => {
             
             {/* Card 3: Comentários & Interações */}
             <StatCard>
+              <TopGradient color="#34C759" />
               <StatCardHeader>
                 <StatLabel>Comments & Interactions</StatLabel>
                 <StatIconContainer color="#34C759">
@@ -2581,7 +2597,9 @@ const YoutubeMonitoring: React.FC = () => {
               </StatCardHeader>
               <StatValue style={{ 
                 background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.05), rgba(52, 199, 89, 0.15))', 
-                color: '#34C759'
+                color: '#34C759',
+                borderRadius: '8px',
+                padding: '12px 16px'
               }}>
                 {metricsData?.posts.toLocaleString() || '0'} Comments
               </StatValue>
@@ -2617,6 +2635,7 @@ const YoutubeMonitoring: React.FC = () => {
             
             {/* Card 4: Performance & Analytics */}
             <StatCard>
+              <TopGradient color="#FF9500" />
               <StatCardHeader>
                 <StatLabel>Performance Analytics</StatLabel>
                 <StatIconContainer color="#FF9500">
@@ -2625,7 +2644,9 @@ const YoutubeMonitoring: React.FC = () => {
               </StatCardHeader>
               <StatValue style={{ 
                 background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.05), rgba(255, 149, 0, 0.15))', 
-                color: '#FF9500'
+                color: '#FF9500',
+                borderRadius: '8px',
+                padding: '12px 16px'
               }}>
                 Content Metrics
               </StatValue>
