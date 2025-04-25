@@ -1898,16 +1898,37 @@ const YoutubeMonitoring: React.FC = () => {
         
         if (data && data.length > 0 && data[0].get_weekly_project_performance) {
           const performanceData = data[0].get_weekly_project_performance;
+          console.log('Dados de performance em formato bruto:', performanceData);
+          
+          // Verificar se os dados estão na ordem correta (mais antigo para mais recente)
+          // Se necessário, reverter para que fiquem em ordem cronológica para o gráfico
+          const sortedData = [...performanceData].sort((a, b) => {
+            // Ordenar por data (formato YYYY-MM-DD)
+            return new Date(a.day).getTime() - new Date(b.day).getTime();
+          });
           
           // Mapear diretamente para os nomes dos campos no gráfico
-          const formattedData: EngagementDataPoint[] = performanceData.map((item: WeeklyPerformanceData) => ({
-            date: item.date.substring(0, 5), // Pegar apenas o dia/mês
-            videos: item.videos,
-            engagement: item.engagement,
-            mentions: item.mentions,
-            channels: item.channels
-          }));
+          const formattedData: EngagementDataPoint[] = sortedData.map((item: WeeklyPerformanceData) => {
+            // Formatar a data para exibição (DD/MM)
+            const dateParts = item.date.split('/');
+            const formattedDate = dateParts.length >= 2 ? `${dateParts[0]}/${dateParts[1]}` : item.date.substring(0, 5);
+            
+            // Converter os valores para números, garantindo que sejam pelo menos 0
+            const videos = typeof item.videos === 'number' ? item.videos : parseInt(item.videos as any) || 0;
+            const engagement = typeof item.engagement === 'number' ? item.engagement : parseInt(item.engagement as any) || 0;
+            const mentions = typeof item.mentions === 'number' ? item.mentions : parseInt(item.mentions as any) || 0;
+            const channels = typeof item.channels === 'number' ? item.channels : parseInt(item.channels as any) || 0;
+            
+            return {
+              date: formattedDate,
+              videos: videos,
+              engagement: engagement,
+              mentions: mentions,
+              channels: channels
+            };
+          });
           
+          console.log('Dados formatados para o gráfico:', formattedData);
           setDynamicEngagementData(formattedData);
         } else {
           console.log('Formato de dados inválido ou vazio, usando dados de fallback');
@@ -2691,14 +2712,31 @@ const YoutubeMonitoring: React.FC = () => {
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                        <XAxis dataKey="date" axisLine={false} tickLine={false} />
-                        <YAxis axisLine={false} tickLine={false} />
+                        <XAxis 
+                          dataKey="date" 
+                          axisLine={false} 
+                          tickLine={false}
+                          tickFormatter={(value) => value} // Garantir que a data é exibida como esperado
+                        />
+                        <YAxis 
+                          axisLine={false} 
+                          tickLine={false}
+                          allowDecimals={false} // Evitar decimais no eixo Y
+                        />
                         <Tooltip 
                           contentStyle={{
                             background: 'rgba(255, 255, 255, 0.95)',
                             border: 'none',
                             borderRadius: '8px',
                             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                          }}
+                          formatter={(value, name) => {
+                            // Formatação personalizada para valores no tooltip
+                            return [value, name];
+                          }}
+                          labelFormatter={(label) => {
+                            // Formatação personalizada para o título do tooltip (data)
+                            return `Data: ${label}`;
                           }}
                         />
                         <Legend verticalAlign="top" height={36} />
