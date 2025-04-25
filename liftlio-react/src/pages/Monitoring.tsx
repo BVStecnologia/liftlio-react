@@ -1725,6 +1725,21 @@ interface WeeklyPerformanceData {
   channels: number;
 }
 
+// Interface para os dados de vídeos
+interface VideoDetails {
+  id: number;
+  nome_do_video?: string;
+  title?: string;
+  video_id_youtube?: string;
+  views?: number | string;
+  comments?: number | string;
+  commets?: number | string; // Mantido para compatibilidade com typo existente
+  content_category?: string;
+  relevance_score?: number;
+  descricao?: string;
+  [key: string]: any; // Para propriedades adicionais que possam existir
+}
+
 // Component implementation
 const YoutubeMonitoring: React.FC = () => {
   // Estado para o componente
@@ -1732,7 +1747,7 @@ const YoutubeMonitoring: React.FC = () => {
   const [channelFilter, setChannelFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<number | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<VideoDetails | null>(null);
   const [showChannelDetails, setShowChannelDetails] = useState(false);
   const [currentChannelDetails, setCurrentChannelDetails] = useState<any>(null);
   
@@ -2204,7 +2219,7 @@ const YoutubeMonitoring: React.FC = () => {
     setActiveTab('comments');
     
     // Encontrar o vídeo selecionado nos dados
-    const video = channelVideos.find(v => v.id === videoId);
+    const video = channelVideos.find(v => v.id === videoId) as VideoDetails;
     console.log('Dados do vídeo encontrado:', video);
     setSelectedVideo(video || null);
     
@@ -2236,7 +2251,7 @@ const YoutubeMonitoring: React.FC = () => {
   };
   
   // Adicionar esta função de utilidade para gerar URLs de thumbnail
-  const getThumbnailUrl = (video: any) => {
+  const getThumbnailUrl = (video: VideoDetails) => {
     // Se temos o ID do vídeo do YouTube, usamos para gerar a URL da thumbnail
     if (video.video_id_youtube) {
       return `https://i.ytimg.com/vi/${video.video_id_youtube}/hqdefault.jpg`;
@@ -3229,7 +3244,15 @@ const YoutubeMonitoring: React.FC = () => {
                       color: '#666'
                     }}>
                       <IconComponent icon={FaIcons.FaEye} style={{ marginRight: '6px' }} />
-                      {selectedVideo.views ? (selectedVideo.views >= 1000 ? `${(selectedVideo.views / 1000).toFixed(1)}K` : selectedVideo.views) : '0'} views
+                      {selectedVideo.views 
+                        ? (typeof selectedVideo.views === 'number' 
+                           ? (selectedVideo.views >= 1000 
+                              ? `${(selectedVideo.views / 1000).toFixed(1)}K` 
+                              : selectedVideo.views.toString()) 
+                           : (parseFloat(selectedVideo.views.toString()) >= 1000 
+                              ? `${(parseFloat(selectedVideo.views.toString()) / 1000).toFixed(1)}K` 
+                              : selectedVideo.views.toString())) 
+                        : '0'} views
           </div>
                     
                     <div style={{ 
