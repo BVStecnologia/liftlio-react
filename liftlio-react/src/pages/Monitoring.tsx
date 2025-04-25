@@ -1726,6 +1726,16 @@ interface EngagementDataPoint {
   subscribers: number;
 }
 
+// Interface para dados do RPC de performance semanal
+interface WeeklyPerformanceData {
+  date: string;
+  day: string;
+  videos: number;
+  engagement: number;
+  mentions: number;
+  channels: number;
+}
+
 // Component implementation
 const YoutubeMonitoring: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -1759,6 +1769,7 @@ const YoutubeMonitoring: React.FC = () => {
   const [showJustification, setShowJustification] = useState<boolean>(false);
   const [currentJustification, setCurrentJustification] = useState<{ title: string; text: string } | null>(null);
   const [dynamicEngagementData, setDynamicEngagementData] = useState<EngagementDataPoint[]>(engagementData);
+  const [loadingEngagementData, setLoadingEngagementData] = useState<boolean>(false);
   const { currentProject } = useProject();
   const [contentCategories, setContentCategories] = useState<ContentCategory[]>([]);
   
@@ -1856,7 +1867,62 @@ const YoutubeMonitoring: React.FC = () => {
       }
     };
     
-    const generateEngagementData = () => {
+    const fetchEngagementData = async () => {
+      if (!currentProject?.id) return;
+      
+      setLoadingEngagementData(true);
+      try {
+        // Determinar número de dias baseado no timeframe
+        let days_back = 7; // Padrão: 7 dias
+        if (timeframe === 'week') days_back = 7;
+        else if (timeframe === 'month') days_back = 30;
+        else if (timeframe === 'quarter') days_back = 90;
+        else if (timeframe === 'year') days_back = 365;
+        
+        const project_id_param = currentProject.id;
+        console.log(`Buscando dados de performance: projeto ${project_id_param}, últimos ${days_back} dias`);
+        
+        // Usar a função callRPC do supabaseClient em vez do .rpc diretamente
+        const data = await callRPC('get_weekly_project_performance', {
+          days_back,
+          project_id_param
+        });
+        
+        if (!data) {
+          console.error('Erro ao buscar dados de performance');
+          generateFallbackEngagementData(); // Gerar dados substitutos em caso de erro
+          return;
+        }
+        
+        console.log('Dados de performance recebidos:', data);
+        
+        if (data && data.length > 0 && data[0].get_weekly_project_performance) {
+          const performanceData = data[0].get_weekly_project_performance;
+          
+          // Converter os dados para o formato esperado pelo gráfico
+          const formattedData: EngagementDataPoint[] = performanceData.map((item: WeeklyPerformanceData) => ({
+            date: item.date.substring(0, 5), // Pegar apenas o dia/mês
+            comments: item.mentions,         // Menções como comentários
+            likes: item.engagement * 10,     // Engajamento * 10 como curtidas
+            views: item.videos * 100,        // Vídeos * 100 como visualizações
+            subscribers: item.channels * 5   // Canais * 5 como inscritos
+          }));
+          
+          setDynamicEngagementData(formattedData);
+        } else {
+          console.log('Formato de dados inválido ou vazio, usando dados de fallback');
+          generateFallbackEngagementData();
+        }
+      } catch (error) {
+        console.error('Erro na chamada de performance:', error);
+        generateFallbackEngagementData();
+      } finally {
+        setLoadingEngagementData(false);
+      }
+    };
+    
+    // Função de fallback para gerar dados quando a API falha
+    const generateFallbackEngagementData = () => {
       // Se não temos dados reais, geramos dados baseados em intervalos de tempo
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const date = new Date();
@@ -1904,30 +1970,8 @@ const YoutubeMonitoring: React.FC = () => {
     fetchMetrics();
     fetchChannelDetails();
     fetchContentCategories();
-    generateEngagementData(); // Gerar dados de engajamento
-  }, [currentProject]);
-  
-  // Efeito para atualizar os dados de engajamento quando o timeframe muda
-  useEffect(() => {
-    // Ajustar os dados de engajamento com base no timeframe selecionado
-    const adjustDataByTimeframe = () => {
-      const multiplier = timeframe === 'week' ? 0.25 :
-                         timeframe === 'quarter' ? 3 :
-                         timeframe === 'year' ? 12 : 1; // month é o padrão
-      
-      const adjustedData = dynamicEngagementData.map(point => ({
-        ...point,
-        views: Math.floor(point.views * multiplier),
-        likes: Math.floor(point.likes * multiplier),
-        comments: Math.floor(point.comments * multiplier),
-        subscribers: Math.floor(point.subscribers * multiplier)
-      }));
-      
-      setDynamicEngagementData(adjustedData);
-    };
-    
-    adjustDataByTimeframe();
-  }, [timeframe]);
+    fetchEngagementData(); // Buscar dados reais de engajamento
+  }, [currentProject, timeframe]);
   
   // Function to fetch and store video count for a channel
   const fetchChannelVideoCount = async (channelId: number) => {
@@ -2613,83 +2657,94 @@ const YoutubeMonitoring: React.FC = () => {
               
               <ChartBody>
                 <div style={{ height: 300, width: '100%', padding: '0 16px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={dynamicEngagementData}
-                      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                    >
-                      <defs>
-                        <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#5856D6" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#5856D6" stopOpacity={0.1}/>
-                        </linearGradient>
-                        <linearGradient id="colorLikes" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#FF9500" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#FF9500" stopOpacity={0.1}/>
-                        </linearGradient>
-                        <linearGradient id="colorComments" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#34C759" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#34C759" stopOpacity={0.1}/>
-                        </linearGradient>
-                        <linearGradient id="colorSubscribers" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#FF2D55" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#FF2D55" stopOpacity={0.1}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                      <XAxis dataKey="date" axisLine={false} tickLine={false} />
-                      <YAxis axisLine={false} tickLine={false} />
-                      <Tooltip 
-                        contentStyle={{
-                          background: 'rgba(255, 255, 255, 0.95)',
-                          border: 'none',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                        }}
-                      />
-                      <Legend verticalAlign="top" height={36} />
-                      <Area 
-                        type="monotone" 
-                        dataKey="views" 
-                        name="Views" 
-                        stroke="#5856D6" 
-                        fillOpacity={1}
-                        fill="url(#colorViews)" 
-                        strokeWidth={2}
-                        activeDot={{ r: 6 }} 
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="likes" 
-                        name="Likes" 
-                        stroke="#FF9500" 
-                        fillOpacity={1}
-                        fill="url(#colorLikes)" 
-                        strokeWidth={2}
-                        activeDot={{ r: 6 }} 
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="comments" 
-                        name="Comments" 
-                        stroke="#34C759" 
-                        fillOpacity={1}
-                        fill="url(#colorComments)" 
-                        strokeWidth={2}
-                        activeDot={{ r: 6 }} 
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="subscribers" 
-                        name="New Subscribers" 
-                        stroke="#FF2D55" 
-                        fillOpacity={1}
-                        fill="url(#colorSubscribers)" 
-                        strokeWidth={2}
-                        activeDot={{ r: 6 }} 
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  {loadingEngagementData ? (
+                    <div style={{ 
+                      height: '100%', 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      alignItems: 'center' 
+                    }}>
+                      <Spinner size="md" />
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={dynamicEngagementData}
+                        margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                      >
+                        <defs>
+                          <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#5856D6" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#5856D6" stopOpacity={0.1}/>
+                          </linearGradient>
+                          <linearGradient id="colorLikes" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#FF9500" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#FF9500" stopOpacity={0.1}/>
+                          </linearGradient>
+                          <linearGradient id="colorComments" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#34C759" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#34C759" stopOpacity={0.1}/>
+                          </linearGradient>
+                          <linearGradient id="colorSubscribers" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#FF2D55" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#FF2D55" stopOpacity={0.1}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                        <XAxis dataKey="date" axisLine={false} tickLine={false} />
+                        <YAxis axisLine={false} tickLine={false} />
+                        <Tooltip 
+                          contentStyle={{
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            border: 'none',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                          }}
+                        />
+                        <Legend verticalAlign="top" height={36} />
+                        <Area 
+                          type="monotone" 
+                          dataKey="views" 
+                          name="Views" 
+                          stroke="#5856D6" 
+                          fillOpacity={1}
+                          fill="url(#colorViews)" 
+                          strokeWidth={2}
+                          activeDot={{ r: 6 }} 
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="likes" 
+                          name="Likes" 
+                          stroke="#FF9500" 
+                          fillOpacity={1}
+                          fill="url(#colorLikes)" 
+                          strokeWidth={2}
+                          activeDot={{ r: 6 }} 
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="comments" 
+                          name="Comments" 
+                          stroke="#34C759" 
+                          fillOpacity={1}
+                          fill="url(#colorComments)" 
+                          strokeWidth={2}
+                          activeDot={{ r: 6 }} 
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="subscribers" 
+                          name="New Subscribers" 
+                          stroke="#FF2D55" 
+                          fillOpacity={1}
+                          fill="url(#colorSubscribers)" 
+                          strokeWidth={2}
+                          activeDot={{ r: 6 }} 
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </ChartBody>
             </ChartContainer>
