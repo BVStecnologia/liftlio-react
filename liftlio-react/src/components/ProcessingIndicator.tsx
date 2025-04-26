@@ -456,11 +456,11 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
             updateStatusMessage(newStep);
             
             // Verificar se atingiu o passo final
-            if (newStep === 6) {
+            if (newStep >= 6) {
               // Verificar novamente a existência de mensagens
               checkForMessages();
               
-              // Recarregar a página após 2 segundos ao chegar no status 6
+              // Recarregar a página após 2 segundos ao chegar no status 6 ou superior
               setTimeout(() => {
                 window.location.reload();
               }, 2000);
@@ -481,7 +481,8 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
     }, 2000);
     
     // Verificar mensagens periodicamente enquanto estiver processando
-    const checkForMessagesInterval = setInterval(checkForMessages, 10000);
+    // Aumentando a frequência para 5 segundos para ser mais responsivo
+    const checkForMessagesInterval = setInterval(checkForMessages, 5000);
     
     // Cleanup
     return () => {
@@ -509,8 +510,21 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
       setHasMessages(hasMsgs);
       
       // Se estamos no passo final e temos mensagens, notificar que está completo
-      if (currentStep === 6 && hasMsgs && onComplete) {
+      if (currentStep >= 6 && hasMsgs && onComplete) {
+        console.log("Processamento concluído E dados disponíveis, completando...");
         onComplete();
+        // Recarregar a página para garantir transição para estado final
+        console.log("Condições de conclusão atingidas, recarregando página...");
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      }
+      
+      // Mesmo se ainda não temos mensagens mas estamos no passo 6 ou superior,
+      // agendar outra verificação em 5 segundos
+      if (currentStep >= 6 && !hasMsgs) {
+        console.log("Passo final atingido mas ainda sem mensagens, verificando novamente em 5s");
+        setTimeout(checkForMessages, 5000);
       }
     } catch (err) {
       console.error("Erro ao verificar mensagens:", err);
