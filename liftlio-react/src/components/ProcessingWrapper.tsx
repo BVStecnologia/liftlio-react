@@ -150,7 +150,7 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
   
   // Projeto verificado e pronto para dashboard (internamente ou via sessionStorage)
   if ((verifiedReady && hasMensagens && currentProject) || checkSessionStorageVerification()) {
-    console.log(`Renderizando dashboard para projeto ${currentProject.id} (verificado)`);
+    console.log(`Renderizando dashboard para projeto ${currentProject?.id} (verificado)`);
     return <>{children}</>;
   }
   
