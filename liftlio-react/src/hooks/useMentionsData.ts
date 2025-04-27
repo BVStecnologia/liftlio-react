@@ -92,37 +92,68 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
   
   // Helper function to process data in the interface format
   const processMentionsData = (data: any[]): MentionData[] => {
-    return data.map((item: any) => ({
-      id: item.comment_id,
-      video: {
-        id: item.video_id,
-        youtube_id: item.video_youtube_id || '',
-        thumbnail: item.video_youtube_id ? 
-          `https://i.ytimg.com/vi/${item.video_youtube_id}/hqdefault.jpg` : 
-          '',
-        title: item.video_title || 'No title',
-        views: parseInt(item.video_views) || 0,
-        likes: parseInt(item.video_likes) || 0,
-        channel: item.video_channel || 'Unknown channel'
-      },
-      type: item.msg_type === 1 ? 'LED' : item.msg_type === 2 ? 'BRAND' : 'Outro',
-      score: parseFloat(item.comment_lead_score || '0'),
-      comment: {
-        author: item.comment_author || 'Anonymous',
-        date: item.comment_published_at_formatted || '',
-        text: item.comment_text || '',
-        likes: parseInt(item.comment_likes) || 0,
-        comment_justificativa: item.comment_justificativa || ''
-      },
-      response: {
-        text: item.msg_text || '',
-        date: item.msg_created_at_formatted || null,
-        status: item.mention_status || 'new',
-        msg_justificativa: item.msg_justificativa || ''
-      },
-      favorite: item.is_favorite || item.msg_template || item.template || false,
-      msg_respondido: item.msg_respondido || false
-    }));
+    return data.map((item: any) => {
+      // Determinar a data correta para a resposta com base no status
+      let responseDate = null;
+      if (item.status_das_postagens === 'pending') {
+        // Para menções agendadas, usar scheduled_post_date_timestamp
+        responseDate = item.scheduled_post_date_timestamp 
+          ? new Date(item.scheduled_post_date_timestamp).toLocaleDateString('pt-BR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+          : null;
+      } else if (item.status_das_postagens === 'posted') {
+        // Para menções postadas, usar data_da_ultima_postagem
+        responseDate = item.data_da_ultima_postagem
+          ? new Date(item.data_da_ultima_postagem).toLocaleDateString('pt-BR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+          : item.msg_created_at_formatted; // Fallback para o campo antigo caso data_da_ultima_postagem não esteja disponível
+      } else {
+        // Para outros casos, manter o comportamento original
+        responseDate = item.msg_created_at_formatted;
+      }
+
+      return {
+        id: item.comment_id,
+        video: {
+          id: item.video_id,
+          youtube_id: item.video_youtube_id || '',
+          thumbnail: item.video_youtube_id ? 
+            `https://i.ytimg.com/vi/${item.video_youtube_id}/hqdefault.jpg` : 
+            '',
+          title: item.video_title || 'No title',
+          views: parseInt(item.video_views) || 0,
+          likes: parseInt(item.video_likes) || 0,
+          channel: item.video_channel || 'Unknown channel'
+        },
+        type: item.msg_type === 1 ? 'LED' : item.msg_type === 2 ? 'BRAND' : 'Outro',
+        score: parseFloat(item.comment_lead_score || '0'),
+        comment: {
+          author: item.comment_author || 'Anonymous',
+          date: item.comment_published_at_formatted || '',
+          text: item.comment_text || '',
+          likes: parseInt(item.comment_likes) || 0,
+          comment_justificativa: item.comment_justificativa || ''
+        },
+        response: {
+          text: item.msg_text || '',
+          date: responseDate,
+          status: item.mention_status || 'new',
+          msg_justificativa: item.msg_justificativa || ''
+        },
+        favorite: item.is_favorite || item.msg_template || item.template || false,
+        msg_respondido: item.msg_respondido || false
+      };
+    });
   };
   
   // Helper function to calculate statistics

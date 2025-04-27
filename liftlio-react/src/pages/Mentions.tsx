@@ -11,6 +11,61 @@ import { useProject } from '../context/ProjectContext';
 import { HiPencil } from 'react-icons/hi';
 // Recharts imports removidos pois os gráficos foram removidos
 
+// Função utilitária para formatar datas
+const formatDate = (dateString: string | null): string => {
+  if (!dateString) return 'Data não disponível';
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      // Se o formato de data original for DD/MM/YYYY HH:MM, vamos converter
+      const parts = dateString.split(' ');
+      if (parts.length === 2) {
+        const dateParts = parts[0].split('/');
+        if (dateParts.length === 3) {
+          const [day, month, year] = dateParts;
+          const timeParts = parts[1].split(':');
+          
+          if (timeParts.length === 2) {
+            const [hours, minutes] = timeParts;
+            const newDate = new Date(
+              parseInt(year), 
+              parseInt(month) - 1, 
+              parseInt(day),
+              parseInt(hours),
+              parseInt(minutes)
+            );
+            
+            if (!isNaN(newDate.getTime())) {
+              date.setTime(newDate.getTime());
+            } else {
+              return dateString; // Retornar a string original se não conseguir converter
+            }
+          }
+        }
+      } else {
+        return dateString; // Retornar a string original se não tiver o formato esperado
+      }
+    }
+    
+    // Nomes de dias da semana em inglês
+    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    // Nomes de meses em inglês
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const weekDay = weekDays[date.getDay()];
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${weekDay}, ${day} ${month} ${hours}:${minutes}`;
+  } catch (error) {
+    console.error('Erro ao formatar data:', error);
+    return dateString; // Em caso de erro, retorna a string original
+  }
+};
+
 // Animation keyframes
 const fadeIn = keyframes`
   from {
@@ -783,8 +838,11 @@ const CommentAuthor = styled.div`
 `;
 
 const CommentDate = styled.div`
+  display: flex;
+  align-items: center;
   font-size: ${props => props.theme.fontSizes.xs};
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.textLight};
+  margin-left: 12px;
   
   svg {
     margin-right: 4px;
@@ -1102,16 +1160,28 @@ const FavoriteIndicator = styled.div<{ isFavorite: boolean }>`
   font-size: 24px;
 `;
 
-const ResponseDate = styled.div`
-  font-size: ${props => props.theme.fontSizes.xs};
-  color: ${props => props.theme.colors.darkGrey};
-  margin-top: auto;
+const ResponseDate = styled.div<{ status?: string }>`
+  font-size: 12px;
+  color: ${props => props.theme.colors.textLight};
   display: flex;
   align-items: center;
+  margin-top: 8px;
+  background: ${props => 
+    !props.status || props.status === 'scheduled' 
+      ? withOpacity(props.theme.colors.warning, 0.1) 
+      : withOpacity(props.theme.colors.success, 0.1)};
+  padding: 4px 8px;
+  border-radius: ${props => props.theme.radius.pill};
+  font-weight: 500;
+  width: fit-content;
   
   svg {
-    margin-right: 4px;
+    margin-right: 6px;
     font-size: 10px;
+    color: ${props => 
+      !props.status || props.status === 'scheduled' 
+        ? props.theme.colors.warning
+        : props.theme.colors.success};
   }
 `;
 
@@ -2256,7 +2326,7 @@ const Mentions: React.FC = () => {
                           </CommentAuthor>
                           <CommentDate>
                             <IconComponent icon={FaIcons.FaClock} />
-                            {mention.comment.date}
+                            {formatDate(mention.comment.date)}
                           </CommentDate>
                         </CommentAuthorSection>
                         <CommentEngagement>
@@ -2301,9 +2371,11 @@ const Mentions: React.FC = () => {
                       <ResponseText>
                         {mention.response.text}
                       </ResponseText>
-                      <ResponseDate>
-                        <IconComponent icon={FaIcons.FaCalendarAlt} />
-                        {mention.response.date}
+                      <ResponseDate status={activeTab === 'scheduled' ? 'scheduled' : 'posted'}>
+                        <IconComponent 
+                          icon={activeTab === 'scheduled' ? FaIcons.FaClock : FaIcons.FaCalendarCheck} 
+                        />
+                        {formatDate(mention.response.date)}
                       </ResponseDate>
                       <SeeMoreLink>
                         See more <IconComponent icon={FaIcons.FaChevronRight} />
@@ -2540,7 +2612,7 @@ const Mentions: React.FC = () => {
                 <DetailPopupComment>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                     <strong>{selectedMention.comment.author}</strong>
-                    <span>{selectedMention.comment.date}</span>
+                    <span>{formatDate(selectedMention.comment.date)}</span>
                   </div>
                   <p style={{ margin: '0 0 10px 0', lineHeight: '1.6' }}>{selectedMention.comment.text}</p>
                   <div>
@@ -2615,10 +2687,33 @@ const Mentions: React.FC = () => {
                   <p style={{ margin: '0 0 15px 0', lineHeight: '1.6' }}>{selectedMention.response.text}</p>
                   
                   {selectedMention.response.date && (
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      <IconComponent icon={FaIcons.FaCalendarAlt} /> Data: {selectedMention.response.date}
+                    <div style={{ 
+                      fontSize: '12px', 
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '4px 10px',
+                      borderRadius: '12px',
+                      marginTop: '8px',
+                      background: selectedMention.response.status === 'posted' ? 
+                        'rgba(76, 175, 80, 0.1)' : 
+                        'rgba(255, 170, 21, 0.1)',
+                      color: selectedMention.response.status === 'posted' ?
+                        COLORS.SUCCESS :
+                        COLORS.WARNING
+                    }}>
+                      <IconComponent 
+                        icon={selectedMention.response.status === 'posted' ? 
+                          FaIcons.FaCalendarCheck : 
+                          FaIcons.FaClock
+                        } 
+                        style={{ marginRight: '6px' }}
+                      /> 
+                      Data: {formatDate(selectedMention.response.date)}
                     </div>
                   )}
+                  <SeeMoreLink>
+                    See more <IconComponent icon={FaIcons.FaChevronRight} />
+                  </SeeMoreLink>
                   
                   {selectedMention.response.msg_justificativa && (
                     <div style={{ 
