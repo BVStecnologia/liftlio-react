@@ -823,7 +823,7 @@ const VideoTable = styled.div`
 // Atualizar o grid para as colunas terem tamanhos mais adequados
 const VideoTableHeader = styled.div`
   display: grid;
-  grid-template-columns: minmax(400px, 3fr) 100px 100px 100px 150px 100px;
+  grid-template-columns: minmax(400px, 3fr) 100px 100px 150px 100px;
   padding: 16px 24px;
   background: ${props => withOpacity(props.theme.colors.primary, 0.05)};
   font-weight: ${props => props.theme.fontWeights.semiBold};
@@ -891,7 +891,7 @@ const VideoThumbnail = styled.div`
 // Atualizar o grid para as linhas
 const VideoTableRow = styled.div`
   display: grid;
-  grid-template-columns: minmax(400px, 3fr) 100px 100px 100px 150px 100px;
+  grid-template-columns: minmax(400px, 3fr) 100px 100px 150px 100px;
   padding: 16px 24px;
   border-bottom: 1px solid ${props => props.theme.colors.tertiary};
   align-items: center;
@@ -1978,10 +1978,14 @@ const YoutubeMonitoring: React.FC = () => {
       
       const id_projeto = currentProject.id;
       try {
+        console.log('Buscando métricas do projeto:', id_projeto);
         const data = await callRPC('get_project_metrics', { id_projeto });
         
+        console.log('Métricas retornadas:', data);
         if (data && data.length > 0) {
           setMetricsData(data[0]);
+        } else {
+          console.log('Não foram encontradas métricas para este projeto');
         }
       } catch (error) {
         console.error('Error fetching metrics:', error);
@@ -1993,13 +1997,13 @@ const YoutubeMonitoring: React.FC = () => {
       
       setIsLoadingTopVideos(true);
       try {
+        console.log('Buscando vídeos do projeto:', currentProject.id);
         const data = await callRPC('get_videos_by_project_id', { 
           projeto_id: currentProject.id 
         });
         
+        console.log('Dados de vídeos retornados:', data?.length || 0, 'vídeos');
         if (data && Array.isArray(data)) {
-          console.log('Top videos data:', data);
-          
           // Processar dados para garantir que todos os vídeos tenham thumbnails
           const processedVideos = data.map(video => {
             const videoId = video.video_id_youtube || '';
@@ -2030,10 +2034,12 @@ const YoutubeMonitoring: React.FC = () => {
       
       setIsLoadingChannels(true);
       try {
+        console.log('Buscando detalhes dos canais para o projeto:', currentProject.id);
         const data = await callRPC('get_channel_details', { 
           id_projeto: currentProject.id 
         });
         
+        console.log('Dados de canais retornados:', data?.length || 0, 'canais');
         if (data && Array.isArray(data) && data.length > 0) {
           // Process channels to ensure all required fields are available
           const processedChannels = data.map(channel => {
@@ -2072,6 +2078,7 @@ const YoutubeMonitoring: React.FC = () => {
           });
           
         } else {
+          console.log('Nenhum canal encontrado para este projeto, usando dados padrão');
           setChannels(defaultChannels);
         }
       } catch (error) {
@@ -2086,15 +2093,17 @@ const YoutubeMonitoring: React.FC = () => {
       if (!currentProject?.id) return;
       
       try {
+        console.log('Buscando categorias de conteúdo para o projeto:', currentProject.id);
         const data = await callRPC('get_top_content_categories', { 
           id_projeto: currentProject.id 
         });
         
+        console.log('Dados de categorias retornados:', data);
         if (data && Array.isArray(data)) {
-          console.log('Content categories data:', data);
+          console.log('Categorias de conteúdo encontradas:', data.length);
           setContentCategories(data);
         } else {
-          console.log('No content categories found or invalid data format');
+          console.log('Nenhuma categoria de conteúdo encontrada ou formato de dados inválido');
           setContentCategories([]);
         }
       } catch (error) {
@@ -2103,10 +2112,23 @@ const YoutubeMonitoring: React.FC = () => {
       }
     };
     
+    // Buscar dados imediatamente
     fetchMetrics();
     fetchTopVideos();
     fetchChannelDetails();
     fetchContentCategories();
+    
+    // Configurar intervalo para atualização periódica (a cada 5 minutos)
+    const intervalId = setInterval(() => {
+      console.log('Atualizando dados automáticamente...');
+      fetchMetrics();
+      fetchTopVideos();
+      fetchChannelDetails();
+      fetchContentCategories();
+    }, 5 * 60 * 1000); // 5 minutos
+    
+    // Limpar intervalo quando o componente for desmontado
+    return () => clearInterval(intervalId);
   }, [currentProject]);
   
   // Function to fetch and store video count for a channel
@@ -2516,64 +2538,9 @@ const YoutubeMonitoring: React.FC = () => {
   // Implementar uma função para processar os dados de categoria para o gráfico de pizza
   const getContentDistributionData = () => {
     if (!contentCategories || contentCategories.length === 0) {
-      // Dados de exemplo caso não existam categorias
-      return [
-        { 
-          name: 'Tutoriais', 
-          value: 35, 
-          shortName: 'Tutoriais',
-          fullName: 'Tutoriais',
-          percentage: 35,
-          videos: 35,
-          views: "10000",
-          likes: "500",
-          relevance: "8.5"
-        },
-        { 
-          name: 'Análises', 
-          value: 25, 
-          shortName: 'Análises',
-          fullName: 'Análises',
-          percentage: 25,
-          videos: 25,
-          views: "8000",
-          likes: "400",
-          relevance: "7.9"
-        },
-        { 
-          name: 'Vlogs', 
-          value: 15, 
-          shortName: 'Vlogs',
-          fullName: 'Vlogs',
-          percentage: 15,
-          videos: 15,
-          views: "5000",
-          likes: "300",
-          relevance: "7.0"
-        },
-        { 
-          name: 'Shorts', 
-          value: 15, 
-          shortName: 'Shorts',
-          fullName: 'Shorts',
-          percentage: 15,
-          videos: 15,
-          views: "20000",
-          likes: "1500",
-          relevance: "8.0"
-        },
-        { 
-          name: 'Lives', 
-          value: 10, 
-          shortName: 'Lives',
-          fullName: 'Lives',
-          percentage: 10,
-          videos: 10,
-          views: "3000",
-          likes: "200",
-          relevance: "6.5"
-        }
-      ];
+      // Retornar array vazio em vez de dados de exemplo
+      console.log('Nenhuma categoria de conteúdo encontrada. Retornando array vazio.');
+      return [];
     }
     
     // Calcular o total de vídeos para porcentagens
