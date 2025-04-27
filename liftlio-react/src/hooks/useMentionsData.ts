@@ -67,6 +67,10 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  // Controle de tentativas repetidas
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
+  
   // States for data
   const [mentionsData, setMentionsData] = useState<MentionData[]>([]);
   const [mentionStats, setMentionStats] = useState<MentionStats>({
@@ -220,9 +224,9 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
             .order('scheduled_post_date_timestamp', { ascending: true });  // Ordenar pela data agendada, mais próximas primeiro
         } else if (activeTab === 'posted') {
           console.log('Applying filter for posted mentions (status_das_postagens = posted)');
-          query = query.eq('status_das_postagens', 'posted');
-          // Aplicar ordenação por data da última postagem após a consulta básica
-          query = query.order('data_da_ultima_postagem', { ascending: false }); // Ordenar por data da última postagem
+          query = query
+            .eq('status_das_postagens', 'posted')
+            .order('data_da_ultima_postagem', { ascending: false }); // Ordenar por data da última postagem
         } else if (activeTab === 'favorites' as TabType) {
           console.log('Applying filter for favorite mentions (msg_template=TRUE)');
           
@@ -300,6 +304,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         }
         
         // Execute the main query
+        console.log(`Executing query for tab: ${activeTab} (page ${currentPage})`);
         const { data, error } = await query;
         
         // Execute a separate query to get the total count
@@ -317,10 +322,12 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
           countQuery = countQuery.eq('status_das_postagens', 'posted');
         }
         
-        // Se quisermos buscar somente as menções deste projeto específico, podemos adicionar isso aqui
-        // countQuery = countQuery.eq('scanner_project_id', currentProject.id);
+        console.log(`Executing count query for tab: ${activeTab}`);
+        const { data: countData, error: countError } = await countQuery;
         
-        const { data: countData } = await countQuery;
+        if (countError) {
+          console.error(`Error in count query: ${countError.message}`);
+        }
         
         // Count manually
         const count = countData?.length || 0;
@@ -329,14 +336,41 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
         setTotalItems(count);
         
         console.log(`Results found: ${data?.length || 0} of ${count} total (page ${currentPage} of ${Math.ceil(count / itemsPerPage)})`);
-        if (data?.length === 0) {
-          console.log('No results found with applied filters');
-        } else if (activeTab === 'favorites' as TabType) {
-          // Detailed log for debugging favorites
-          console.log('Favorites found:');
-          data.forEach((item: any, index: number) => {
-            console.log(`Item ${index}: is_favorite=${item.is_favorite}, msg_template=${item.msg_template}, msg_respondido=${item.msg_respondido}`);
+        
+        // Log de depuração detalhado
+        if (data?.length === 0 && count > 0) {
+          console.log(`No results found with applied filters for tab: ${activeTab}`);
+          console.log('Query parameters:', { 
+            projectId,
+            activeTab,
+            currentPage,
+            status: activeTab === 'scheduled' ? 'pending' : activeTab === 'posted' ? 'posted' : 'all'
           });
+          
+          if (retryCount < maxRetries) {
+            // Incrementar contador de tentativas
+            setRetryCount(prev => prev + 1);
+            console.log(`Retry attempt ${retryCount + 1} of ${maxRetries}`);
+            
+            // Se não temos dados mas temos total, tente a primeira página
+            if (currentPage > 1) {
+              console.log(`Retrying with first page since we have ${count} total items but current page ${currentPage} is empty`);
+              setCurrentPage(1);
+            } else {
+              // Se já estamos na primeira página, aguardar e tentar novamente
+              console.log('Already on first page, will retry automatically in 1 second');
+              setTimeout(() => {
+                fetchMentionsData();
+              }, 1000);
+            }
+          } else {
+            console.log(`Max retries (${maxRetries}) reached, giving up.`);
+            // Resetar contador após atingir o máximo
+            setRetryCount(0);
+          }
+        } else if (data?.length > 0) {
+          // Se temos dados, resetar contador de tentativas
+          setRetryCount(0);
         }
         
         if (error) throw error;
@@ -460,6 +494,9 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
       console.log('Não foi possível configurar assinatura em tempo real: ID do projeto não disponível');
       return;
     }
+    
+    // Resetar contagem de retry ao mudar de tab ou página
+    setRetryCount(0);
     
     fetchMentionsData();
     

@@ -2251,20 +2251,51 @@ const Mentions: React.FC = () => {
               <TableRow style={{ justifyContent: 'center', padding: '40px 0' }}>
                 <div style={{ gridColumn: '1 / span 5', textAlign: 'center', color: '#6c757d' }}>
                   <div style={{ fontSize: '48px', opacity: 0.3, marginBottom: '16px' }}>
-                    <IconComponent icon={FaIcons.FaSpinner} />
+                    <SpinnerIcon>
+                      <IconComponent icon={FaIcons.FaSpinner} />
+                    </SpinnerIcon>
                   </div>
                   <p>Loading mentions...</p>
+                </div>
+              </TableRow>
+            ) : error ? (
+              <TableRow style={{ justifyContent: 'center', padding: '40px 0' }}>
+                <div style={{ gridColumn: '1 / span 5', textAlign: 'center', color: '#dc3545' }}>
+                  <div style={{ fontSize: '48px', opacity: 0.3, marginBottom: '16px' }}>
+                    <IconComponent icon={FaIcons.FaExclamationCircle} />
+                  </div>
+                  <p>Error loading mentions. Please try refreshing the page.</p>
+                  <button 
+                    onClick={() => window.location.reload()} 
+                    style={{
+                      padding: '8px 16px',
+                      background: '#dc3545',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      marginTop: '10px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Refresh Page
+                  </button>
                 </div>
               </TableRow>
             ) : localMentionsData.length === 0 ? (
               <TableRow style={{ justifyContent: 'center', padding: '40px 0' }}>
                 <div style={{ gridColumn: '1 / span 5', textAlign: 'center', color: '#6c757d' }}>
                   <div style={{ fontSize: '48px', opacity: 0.3, marginBottom: '16px' }}>
-                    <IconComponent icon={FaIcons.FaInbox} />
+                    <IconComponent icon={activeTab === 'favorites' ? FaIcons.FaHeart : FaIcons.FaInbox} />
                   </div>
-                  <p>{activeTab === 'scheduled' 
-                    ? "Today's scheduled posts will appear here before being published" 
-                    : `No ${activeTab} mentions found`}</p>
+                  {activeTab === 'scheduled' ? (
+                    <p>Today's scheduled posts will appear here before being published</p>
+                  ) : activeTab === 'posted' ? (
+                    <p>No posted mentions found. Check back later for new content.</p>
+                  ) : activeTab === 'favorites' ? (
+                    <p>No favorite mentions yet. Mark posts as favorites to see them here.</p>
+                  ) : (
+                    <p>No mentions found for the selected filter.</p>
+                  )}
                 </div>
               </TableRow>
             ) : (
