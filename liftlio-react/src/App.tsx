@@ -385,6 +385,35 @@ const OAuthHandler = () => {
                 console.error('Não foi possível atualizar o campo Integrações porque não temos o ID da integração');
               }
               
+              // Verificar se o projeto já tem mensagens antes de definir o status para 0
+              const { data: mensagensExistentes, error: mensagensError } = await supabase
+                .from('Mensagens')
+                .select('id')
+                .eq('project_id', projectId)
+                .limit(1);
+                
+              console.log('Verificação de mensagens existentes:', 
+                mensagensExistentes ? `${mensagensExistentes.length} encontradas` : 'Nenhuma', 
+                mensagensError || '');
+              
+              // Apenas definir o status para 0 se o projeto ainda não tiver mensagens
+              if (!mensagensExistentes || mensagensExistentes.length === 0) {
+                console.log('Projeto ainda não tem mensagens, iniciando processamento (status=0)');
+                const { data: statusUpdateData, error: statusUpdateError } = await supabase
+                  .from('Projeto')
+                  .update({
+                    "status": "0"
+                  })
+                  .eq('id', projectId)
+                  .select();
+                  
+                console.log('Atualização do campo status do projeto para iniciar processamento:', 
+                  statusUpdateData ? 'Sucesso' : 'Falha', 
+                  statusUpdateError || '');
+              } else {
+                console.log('Projeto já tem mensagens, mantendo o status atual');
+              }
+              
               console.log('Integração marcada como ativa com sucesso');
             } catch (updateError) {
               console.error('Erro ao marcar integração como ativa:', updateError);
