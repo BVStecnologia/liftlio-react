@@ -586,8 +586,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
       
       <Title>Preparing Your Intelligent Analysis</Title>
       <Subtitle>
-        Our AI is analyzing the best engagement opportunities for your project. 
-        Your dashboard will be ready to use in approximately 2-3 minutes.
+        Our AI is analyzing the best engagement opportunities for your project. This process may take between 4 and 10 minutes, depending on the amount of data. Please keep this tab open.
       </Subtitle>
       
       <Timeline>
@@ -628,12 +627,6 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
           <MetricTitle>Comments</MetricTitle>
           <MetricValue>{metrics.comments}</MetricValue>
           <MetricSubvalue>Processed</MetricSubvalue>
-        </MetricCard>
-        
-        <MetricCard className="card-4" style={{"--index": 3} as any}>
-          <MetricTitle>Insights</MetricTitle>
-          <MetricValue>{metrics.insights}</MetricValue>
-          <MetricSubvalue>Discovered</MetricSubvalue>
         </MetricCard>
       </DataVisualization>
       
