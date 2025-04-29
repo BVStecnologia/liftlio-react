@@ -100,27 +100,13 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
       // Determinar a data correta para a resposta com base no status
       let responseDate = null;
       if (item.status_das_postagens === 'pending') {
-        // Para menções agendadas, usar scheduled_post_date_timestamp
+        // Para menções agendadas, manter o formato original
         responseDate = item.scheduled_post_date_timestamp 
-          ? new Date(item.scheduled_post_date_timestamp).toLocaleDateString('pt-BR', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })
+          ? item.scheduled_post_date_timestamp // Manter timestamp para ser formatado pelo formatDate depois
           : null;
       } else if (item.status_das_postagens === 'posted') {
-        // Para menções postadas, usar data_da_ultima_postagem
-        responseDate = item.data_da_ultima_postagem
-          ? new Date(item.data_da_ultima_postagem).toLocaleDateString('pt-BR', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })
-          : item.msg_created_at_formatted; // Fallback para o campo antigo caso data_da_ultima_postagem não esteja disponível
+        // Para menções postadas, manter o formato original
+        responseDate = item.data_da_ultima_postagem || item.msg_created_at_formatted;
       } else {
         // Para outros casos, manter o comportamento original
         responseDate = item.msg_created_at_formatted;
@@ -693,6 +679,25 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
     }
     
     console.log("=== OPERAÇÃO DE FAVORITO CONCLUÍDA ===");
+  };
+  
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return dateString; // Se não conseguir converter, retorna a string original
+      }
+      
+      // Formato para comentários: DD/MM/YYYY
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      
+      return `${day}/${month}/${year}`;
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return dateString;
+    }
   };
   
   return {

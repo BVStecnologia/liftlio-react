@@ -586,7 +586,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
       
       <Title>Preparing Your Intelligent Analysis</Title>
       <Subtitle>
-        Our AI is analyzing the best engagement opportunities for your project. This process may take between 4 and 10 minutes, depending on the amount of data. Please keep this tab open.
+        Liftlio is analyzing the best engagement opportunities for your project. This process may take between 4 and 10 minutes, depending on the amount of data. Please keep this tab open.
       </Subtitle>
       
       <Timeline>

@@ -3117,7 +3117,7 @@ const Overview: React.FC = () => {
         <KeywordTable>
           <TableHeader>
             <TableCell>Keywords</TableCell>
-            <TableCell>Sentiment</TableCell>
+            {/* <TableCell>Sentiment</TableCell> */}
             <TableCell>Views</TableCell>
             <TableCell>Videos</TableCell>
             <TableCell>Likes</TableCell>
@@ -3151,14 +3151,14 @@ const Overview: React.FC = () => {
             filteredKeywords.map(keyword => (
               <TableRow key={keyword.id}>
                 <KeywordCell>{keyword.keyword}</KeywordCell>
-                <TableCell>
+                {/* <TableCell>
                   <SentimentIndicator 
                     percentage={keyword.sentiment} 
                     size="small"
                     animated={true} 
                     showIcon={true}
                   />
-                </TableCell>
+                </TableCell> */}
                 <NumericCell>{keyword.views.toLocaleString()}</NumericCell>
                 <NumericCell>{keyword.videos}</NumericCell>
                 <NumericCell>{keyword.likes}</NumericCell>
@@ -3239,34 +3239,7 @@ const Overview: React.FC = () => {
                     {keyword.keyword}
                   </h3>
                   
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'space-between',
-                    marginBottom: '12px',
-                  }}>
-                    <span style={{ 
-                      fontSize: '13px', 
-                      color: COLORS.TEXT.SECONDARY, 
-                      display: 'flex', 
-                      alignItems: 'center' 
-                    }}>
-                      Sentiment: 
-                      <span style={{ 
-                        color: keyword.sentiment > 65 ? COLORS.SUCCESS : keyword.sentiment > 35 ? COLORS.WARNING : COLORS.ERROR,
-                        fontWeight: 'bold',
-                        marginLeft: '4px'
-                      }}>
-                        {keyword.sentiment}%
-                      </span>
-                    </span>
-                    <SentimentIndicator 
-                      percentage={keyword.sentiment} 
-                      size="small"
-                      animated={false} 
-                      showIcon={true}
-                    />
-                  </div>
+                  {/* Removido bloco de Sentiment */}
                   
                   <div style={{ 
                     display: 'grid', 

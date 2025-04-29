@@ -12,57 +12,33 @@ import { HiPencil } from 'react-icons/hi';
 // Recharts imports removidos pois os gráficos foram removidos
 
 // Função utilitária para formatar datas
-const formatDate = (dateString: string | null): string => {
-  if (!dateString) return 'Data não disponível';
+const formatDate = (dateString: string | null, isComment: boolean = false) => {
+  if (!dateString) return '';
   
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
-      // Se o formato de data original for DD/MM/YYYY HH:MM, vamos converter
-      const parts = dateString.split(' ');
-      if (parts.length === 2) {
-        const dateParts = parts[0].split('/');
-        if (dateParts.length === 3) {
-          const [day, month, year] = dateParts;
-          const timeParts = parts[1].split(':');
-          
-          if (timeParts.length === 2) {
-            const [hours, minutes] = timeParts;
-            const newDate = new Date(
-              parseInt(year), 
-              parseInt(month) - 1, 
-              parseInt(day),
-              parseInt(hours),
-              parseInt(minutes)
-            );
-            
-            if (!isNaN(newDate.getTime())) {
-              date.setTime(newDate.getTime());
-            } else {
-              return dateString; // Retornar a string original se não conseguir converter
-            }
-          }
-        }
-      } else {
-        return dateString; // Retornar a string original se não tiver o formato esperado
-      }
+      return dateString; // Se não conseguir converter, retorna a string original
     }
     
-    // Nomes de dias da semana em inglês
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    // Nomes de meses em inglês
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
-    const day = date.getDate();
-    const month = months[date.getMonth()];
-    const weekDay = weekDays[date.getDay()];
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    
-    return `${weekDay}, ${day} ${month} ${hours}:${minutes}`;
+    if (isComment) {
+      // Formato para comentários: "dd/mm/yyyy"
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } else {
+      // Formato para respostas: "Wed, 24 Nov" (sem horário)
+      return date.toLocaleDateString('en-GB', {
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short'
+      }).replace(',', '');
+    }
   } catch (error) {
-    console.error('Erro ao formatar data:', error);
-    return dateString; // Em caso de erro, retorna a string original
+    console.error('Error formatting date:', error);
+    return dateString || '';
   }
 };
 
@@ -2357,7 +2333,7 @@ const Mentions: React.FC = () => {
                           </CommentAuthor>
                           <CommentDate>
                             <IconComponent icon={FaIcons.FaClock} />
-                            {formatDate(mention.comment.date)}
+                            {mention.comment.date}
                           </CommentDate>
                         </CommentAuthorSection>
                         <CommentEngagement>
