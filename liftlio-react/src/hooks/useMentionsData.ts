@@ -685,15 +685,42 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) {
+        // Se o formato de data original for DD/MM/YYYY HH:MM, vamos converter
+        const parts = dateString.split(' ');
+        if (parts.length === 2) {
+          const dateParts = parts[0].split('/');
+          if (dateParts.length === 3) {
+            const [day, month, year] = dateParts;
+            const timeParts = parts[1].split(':');
+            
+            if (timeParts.length === 2) {
+              const [hours, minutes] = timeParts;
+              return new Date(
+                parseInt(year),
+                parseInt(month) - 1,
+                parseInt(day),
+                parseInt(hours),
+                parseInt(minutes)
+              ).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+            }
+          }
+        }
         return dateString; // Se não conseguir converter, retorna a string original
       }
       
-      // Formato para comentários: DD/MM/YYYY
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const year = date.getFullYear();
-      
-      return `${day}/${month}/${year}`;
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     } catch (error) {
       console.error('Error formatting date:', error);
       return dateString;

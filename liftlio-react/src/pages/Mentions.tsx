@@ -22,19 +22,23 @@ const formatDate = (dateString: string | null, isComment: boolean = false) => {
     }
     
     if (isComment) {
-      // Formato para comentários: "dd/mm/yyyy"
+      // Formato para comentários: "dd/mm/yyyy HH:MM"
       return date.toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: '2-digit',
-        year: 'numeric'
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       });
     } else {
-      // Formato para respostas: "Wed, 24 Nov" (sem horário)
-      return date.toLocaleDateString('en-GB', {
-        weekday: 'short',
+      // Formato para respostas: "dd/mm/yyyy HH:MM"
+      return date.toLocaleDateString('pt-BR', {
         day: '2-digit',
-        month: 'short'
-      }).replace(',', '');
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     }
   } catch (error) {
     console.error('Error formatting date:', error);

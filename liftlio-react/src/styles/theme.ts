@@ -20,17 +20,33 @@ const baseTheme = {
     lightGrey: COLORS.DOMINANT_LIGHT,
     grey: COLORS.DOMINANT,          // dominant
     darkGrey: COLORS.DOMINANT_DARK,
-    text: COLORS.ACCENT,           // accent para texto
+    text: {
+      primary: COLORS.ACCENT,
+      secondary: COLORS.TEXT.SECONDARY,
+      light: COLORS.TEXT.ON_LIGHT
+    },
+    textLight: COLORS.TEXT.ON_LIGHT,
     
     // Cores semânticas
     success: COLORS.SUCCESS,        // Verde para métricas positivas
-    successLight: COLORS.SUCCESS_LIGHT, 
+    successLight: COLORS.SUCCESS_LIGHT,
+    success_light: COLORS.SUCCESS_LIGHT, // Alias para compatibilidade
     warning: COLORS.WARNING,        // Laranja para avisos
     warningLight: COLORS.WARNING_LIGHT,
+    warning_light: COLORS.WARNING_LIGHT, // Alias para compatibilidade
     error: COLORS.ERROR,            // Vermelho para métricas negativas
     errorLight: COLORS.ERROR_LIGHT,
+    error_light: COLORS.ERROR_LIGHT, // Alias para compatibilidade
     info: COLORS.INFO,
     infoLight: COLORS.INFO_LIGHT,
+    info_light: COLORS.INFO_LIGHT, // Alias para compatibilidade
+    
+    // Cores do tema accent
+    accent: COLORS.ACCENT,
+    ACCENT_LIGHT: COLORS.ACCENT_LIGHT,
+    dominant_light: COLORS.DOMINANT_LIGHT,
+    dominant_lighter: COLORS.DOMINANT_LIGHTER,
+    lightBg: COLORS.DOMINANT_LIGHTER,
     
     sentiment: {
       positive: COLORS.SUCCESS,     // Verde para sentimento positivo
@@ -129,7 +145,11 @@ export const lightTheme = {
     // Mantém as cores da nova paleta
     background: COLORS.DOMINANT,    // Cinza médio (dominant)
     white: COLORS.SECONDARY,        // Branco
-    text: COLORS.ACCENT,           // Azul escuro naval (accent)
+    text: {
+      primary: COLORS.ACCENT,      // Azul escuro naval (accent)
+      secondary: COLORS.TEXT.SECONDARY,
+      light: COLORS.TEXT.ON_LIGHT
+    },
     lightGrey: COLORS.DOMINANT_LIGHT,
     grey: COLORS.DOMINANT,         // dominant
     darkGrey: COLORS.DOMINANT_DARK,
@@ -144,7 +164,11 @@ export const darkTheme = {
     primary: COLORS.ACCENT_LIGHT,    // Versão mais clara do azul escuro naval
     background: COLORS.ACCENT_DARK,  // Versão escura do azul naval
     white: COLORS.ACCENT,            // Azul escuro naval (accent)
-    text: COLORS.SECONDARY,          // Texto branco
+    text: {
+      primary: COLORS.SECONDARY,    // Texto branco
+      secondary: COLORS.TEXT.SECONDARY,
+      light: COLORS.TEXT.ON_LIGHT
+    },
     lightGrey: COLORS.ACCENT_LIGHT,
     grey: COLORS.ACCENT,             // accent
     darkGrey: COLORS.DOMINANT,       // dominant (cinza) para contraste no dark mode
