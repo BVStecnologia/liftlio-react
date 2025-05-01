@@ -13,6 +13,7 @@ interface Project {
   status?: string;
   "Project name"?: string; // Campo legado usado na interface
   projetc_index?: boolean; // Indica se este é o projeto selecionado pelo usuário
+  fuso_horario?: string; // Fuso horário do usuário
   // Adicione outros campos conforme necessário
 }
 
@@ -52,6 +53,10 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
     // Primeiro, vamos verificar se existe um projeto com projetc_index = true
     const fetchIndexedProject = async () => {
       try {
+        // Log do fuso horário atual do navegador para diagnóstico
+        const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        console.log(`Fuso horário atual do navegador: ${currentTimezone}`);
+        
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user || !user.email) {
@@ -137,6 +142,9 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       // Verificação inicial
       checkProjectProcessingState(currentProject.id);
       
+      // Verificar fuso horário e atualizar se necessário
+      checkAndUpdateTimezone(currentProject);
+      
       // Verificar novamente a cada 5 segundos para projetos em processamento
       const intervalId = setInterval(() => {
         if (currentProject?.id) {
@@ -148,6 +156,39 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       return () => clearInterval(intervalId);
     }
   }, [currentProject]);
+  
+  // Função para verificar e atualizar o fuso horário do projeto
+  const checkAndUpdateTimezone = async (project: Project) => {
+    try {
+      // Obter o fuso horário atual do navegador
+      const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      // Se o projeto não tem fuso horário definido ou é diferente do atual
+      if (!project.fuso_horario || project.fuso_horario !== currentTimezone) {
+        console.log(`Atualizando fuso horário do projeto ${project.id} de ${project.fuso_horario || 'não definido'} para ${currentTimezone}`);
+        
+        // Atualizar o fuso horário no Supabase
+        const { error } = await supabase
+          .from('Projeto')
+          .update({ fuso_horario: currentTimezone })
+          .eq('id', project.id);
+          
+        if (error) {
+          console.error("Erro ao atualizar fuso horário:", error);
+        } else {
+          console.log(`Fuso horário atualizado com sucesso para ${currentTimezone}`);
+          
+          // Atualizar o estado local com o novo fuso horário
+          setCurrentProject({
+            ...project,
+            fuso_horario: currentTimezone
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao verificar/atualizar fuso horário:", error);
+    }
+  };
   
   // Função para verificar o estado de processamento do projeto
   const checkProjectProcessingState = async (projectId: string | number) => {

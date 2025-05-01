@@ -157,6 +157,7 @@ type Project = {
   keywords?: string;
   country?: string;
   status?: string;
+  fuso_horario?: string;
 };
 
 type ProjectModalProps = {
@@ -185,7 +186,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     link: '',
     audience: '',
     keywords: '',
-    country: 'US' // Default para Estados Unidos
+    country: 'US', // Default para Estados Unidos
+    fuso_horario: Intl.DateTimeFormat().resolvedOptions().timeZone // Captura automática do fuso horário do usuário
   });
   const [keywordsArray, setKeywordsArray] = useState<string[]>([]);
   const [isGeneratingKeywords, setIsGeneratingKeywords] = useState(false);
@@ -274,7 +276,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       link: '',
       audience: '',
       keywords: '',
-      country: 'US'
+      country: 'US',
+      fuso_horario: Intl.DateTimeFormat().resolvedOptions().timeZone
     });
     setKeywordsArray([]);
   };
