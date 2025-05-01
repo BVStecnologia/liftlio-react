@@ -113,8 +113,10 @@ const baseTheme = {
   fontWeights: {
     light: 300,
     normal: 400,
+    regular: 400,    // Alias para normal
     medium: 500,
     semiBold: 600,
+    semibold: 600,   // Alias para semiBold
     bold: 700,
     extraBold: 800
   },
