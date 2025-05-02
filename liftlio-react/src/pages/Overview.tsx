@@ -477,11 +477,11 @@ const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number; active?: bo
     : 'scale(1)'
   };
   z-index: ${props => props.cardIndex !== undefined ? 10 - props.cardIndex : 1};
-  border: 1px solid ${withOpacity(COLORS.DOMINANT, 0.2)}; // Borda sutil com cor dominante (60%)
+  border: 1px solid rgba(165, 177, 183, 0.3); /* Borda sutil como no MetricCard */
   
   &:hover {
-    transform: translateY(-2px) ${props => props.cardIndex !== undefined ? `scale(${1 - props.cardIndex * 0.01})` : 'scale(1)'};
-    box-shadow: ${COLORS.SHADOW.MEDIUM};
+    transform: translateY(-4px) ${props => props.cardIndex !== undefined ? `scale(${1 - props.cardIndex * 0.01})` : 'scale(1)'};
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
   }
   
   @media (max-width: 1200px) {
@@ -664,32 +664,43 @@ const CardEnergyEffect = styled.div<{ index: number; active: boolean }>`
   overflow: hidden;
   transition: opacity 0.3s ease;
   
+  /* Gradiente superior colorido inspirado no MetricCard */
   &::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 100%;
-    background: linear-gradient(
-      to bottom,
-      transparent 0%,
+    height: 6px;
+    background: linear-gradient(90deg, 
       ${props => 
-        props.index === 0 ? 'rgba(33, 150, 243, 0.02)' : // Blue for Reach
-        props.index === 1 ? 'rgba(255, 122, 48, 0.02)' : // Orange for Activities
-        props.index === 2 ? 'rgba(103, 58, 183, 0.02)' : // Purple for Engagements
-        'rgba(76, 175, 80, 0.02)'         // Green for LEDs
-      } 50%,
-      transparent 100%
+        props.index === 0 ? 'rgba(33, 150, 243, 0.9)' : // Blue for Reach
+        props.index === 1 ? 'rgba(255, 122, 48, 0.9)' : // Orange for Activities
+        props.index === 2 ? 'rgba(103, 58, 183, 0.9)' : // Purple for Engagements
+        'rgba(76, 175, 80, 0.9)'          // Green for LEDs
+      }, 
+      ${props => 
+        props.index === 0 ? 'rgba(33, 150, 243, 0.6)' : // Blue for Reach
+        props.index === 1 ? 'rgba(255, 122, 48, 0.6)' : // Orange for Activities
+        props.index === 2 ? 'rgba(103, 58, 183, 0.6)' : // Purple for Engagements
+        'rgba(76, 175, 80, 0.6)'          // Green for LEDs
+      },
+      ${props => 
+        props.index === 0 ? 'rgba(33, 150, 243, 0.9)' : // Blue for Reach
+        props.index === 1 ? 'rgba(255, 122, 48, 0.9)' : // Orange for Activities
+        props.index === 2 ? 'rgba(103, 58, 183, 0.9)' : // Purple for Engagements
+        'rgba(76, 175, 80, 0.9)'          // Green for LEDs
+      }
     );
-    opacity: ${props => props.active ? 1 : 0};
-    animation: ${props => props.active ? interfaceScan : 'none'} 3s ease-in-out infinite;
+    opacity: 1;
+    z-index: 2;
   }
   
+  /* Efeito de pulso no corpo do card */
   &::after {
     content: '';
     position: absolute;
-    top: 3px; /* Position below the border-top */
+    top: 6px; /* Position below the top gradient */
     left: 0;
     right: 0;
     bottom: 0;
@@ -780,7 +791,7 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
   height: 48px;
   border-radius: 12px;
   background: ${props => props.bgColor};
-  color: white;
+  color: black; /* Mantendo preto conforme solicitado */
   font-size: 1.5rem;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   position: relative;
@@ -825,7 +836,7 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
     z-index: 2;
     width: 24px;
     height: 24px;
-    filter: drop-shadow(0 0 2px rgba(255,255,255,0.6));
+    color: black; /* Garantindo que ícones permaneçam pretos */
   }
   
   @media (max-width: 992px) and (min-width: 768px) {
