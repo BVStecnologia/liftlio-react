@@ -14,16 +14,16 @@ import MetricCard from '../components/ui/MetricCard';
 
 // Definir paleta de cores para os gráficos
 const CHART_PALETTE = [
-  '#5856D6', // Roxo
-  '#FF9500', // Laranja
-  '#34C759', // Verde
-  '#007AFF', // Azul
-  '#FF2D55', // Rosa
-  '#5AC8FA', // Azul claro
-  '#FFCC00', // Amarelo
-  '#AF52DE', // Roxo escuro
-  '#FF3B30', // Vermelho
-  '#64D2FF', // Ciano
+  '#4e6785', // Azul naval claro (ACCENT_LIGHTER)
+  '#34495e', // Azul naval médio (ACCENT_LIGHT) 
+  '#2d3e50', // Azul naval escuro (ACCENT)
+  '#243444', // Azul naval muito escuro (ACCENT_DARK)
+  '#00A9DB', // Azul info
+  '#4CAF50', // Verde
+  '#FFAA15', // Laranja
+  '#e74c3c', // Vermelho
+  '#8a969c', // Cinza
+  '#b5c2cb', // Cinza escuro
 ];
 
 // Shared styled components
@@ -3281,8 +3281,8 @@ const YoutubeMonitoring: React.FC = () => {
                 </ChartTitle>
               </ChartHeader>
               <ChartBody>
-                <div style={{ display: 'flex', flexDirection: 'row', height: '350px' }}>
-                  <div style={{ flex: '0 0 40%', height: '100%' }}>
+                <div style={{ display: 'flex', flexDirection: 'row', height: '280px' }}>
+                  <div style={{ flex: '0 0 35%', height: '100%' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -3290,17 +3290,19 @@ const YoutubeMonitoring: React.FC = () => {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          outerRadius={120}
-                          innerRadius={60}
+                          outerRadius={90}
+                          innerRadius={50}
                           fill="#8884d8"
                           dataKey="value"
                           nameKey="shortName"
                           label={(entry) => entry.shortName}
+                          strokeWidth={1}
                         >
                           {getContentDistributionData().map((entry, index) => (
                             <Cell 
                               key={`cell-${index}`} 
-                              fill={CHART_PALETTE[index % CHART_PALETTE.length]} 
+                              fill={CHART_PALETTE[index % CHART_PALETTE.length]}
+                              stroke="#ffffff"
                             />
                           ))}
                         </Pie>
@@ -3392,12 +3394,12 @@ const YoutubeMonitoring: React.FC = () => {
                             }}>
                               <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <div style={{ 
-                                  width: '14px', 
-                                  height: '14px', 
-                                  background: `linear-gradient(135deg, ${CHART_PALETTE[index % CHART_PALETTE.length]}, ${CHART_PALETTE[index % CHART_PALETTE.length]}cc)`,
-                                  borderRadius: '4px',
-                                  marginRight: '10px',
-                                  boxShadow: `0 1px 3px ${CHART_PALETTE[index % CHART_PALETTE.length]}66`
+                                  width: '10px', 
+                                  height: '10px', 
+                                  background: `${CHART_PALETTE[index % CHART_PALETTE.length]}`,
+                                  borderRadius: '3px',
+                                  marginRight: '8px',
+                                  border: '1px solid white'
                                 }}></div>
                                 <span style={{ fontWeight: '600' }}>{category.name}</span>
                               </div>
