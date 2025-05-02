@@ -196,6 +196,47 @@ const interfaceScan = keyframes`
   }
 `;
 
+// Animação de fluxo de luz para o fundo dos cards
+const cardLightFlow = keyframes`
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+`;
+
+// Tech pulse effect
+const techPulse = keyframes`
+  0% {
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(0, 123, 255, 0.5);
+    opacity: 0.3;
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 30px rgba(0, 123, 255, 0.8);
+    opacity: 0.8;
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(0, 123, 255, 0.5);
+    opacity: 0.3;
+  }
+`;
+
+// Digital data flow
+const digitalFlow = keyframes`
+  0% {
+    background-position: 0% 0%;
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    background-position: 100% 100%;
+    opacity: 0.2;
+  }
+`;
+
 // Gentle indicator pulse
 const indicatorPulse = keyframes`
   0%, 100% {
@@ -660,53 +701,130 @@ const CardEnergyEffect = styled.div<{ index: number; active: boolean }>`
   bottom: 0;
   border-radius: inherit;
   pointer-events: none;
-  z-index: 1;
+  z-index: 0;
   overflow: hidden;
-  transition: opacity 0.3s ease;
+  transition: all 0.5s ease;
   
-  /* Gradiente superior colorido inspirado no MetricCard */
+  /* Cores para cada card baseadas no seu significado */
+  --card-color-primary: ${props => {
+    // Cores baseadas nos ícones específicos de cada card
+    const colors = [
+      '#FFD700', // Amarelo dourado para FaStar (Total Mentions)
+      '#FF6B6B', // Vermelho para FaCalendarDay (Today's Mentions)
+      '#8A2BE2', // Roxo para FaVideo (Videos)
+      '#00BFFF'  // Azul claro para FaBroadcastTower (Channels)
+    ];
+    return colors[props.index < 4 ? props.index : 3];
+  }};
+  --card-color-secondary: ${props => {
+    // Cores secundárias complementares
+    const colors = [
+      '#FFA500', // Laranja para Total Mentions
+      '#FF4757', // Vermelho escuro para Today's Mentions
+      '#9B59B6', // Roxo médio para Videos
+      '#3498DB'  // Azul para Channels
+    ];
+    return colors[props.index < 4 ? props.index : 3];
+  }};
+  
+  /* Fundo futurístico com malha de dados */
+  background: 
+    linear-gradient(135deg, 
+      var(--card-color-primary)20 0%, 
+      var(--card-color-secondary)30 100%
+    ),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  animation: ${digitalFlow} 30s infinite linear;
+  
+  /* Luz pulsante energética ao redor do card */
+  box-shadow: ${props => `0 0 20px var(--card-color-primary)30, inset 0 0 15px var(--card-color-secondary)20`};
+  
+  /* Efeito de luz fluindo pelo card - primeira camada */
+  /* Efeito de luz fluindo e escaneando */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 300%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%
+    );
+    background-size: 100% 100%;
+    animation: ${cardLightFlow} ${props => 6 - props.index * 0.7}s infinite ease-in-out;
+    opacity: ${props => props.active ? 0.9 : 0.5};
+    z-index: 1;
+  }
+  
+  /* Borda superior estilo Tron com brilho energético */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+      var(--card-color-primary), 
+      var(--card-color-secondary),
+      var(--card-color-primary)
+    );
+    box-shadow: 
+      0 0 10px var(--card-color-primary),
+      0 0 20px var(--card-color-secondary);
+    opacity: 1;
+    z-index: 2;
+    animation: ${techPulse} ${props => 3 + props.index * 0.5}s infinite ease-in-out;
+  }
+  
+  /* Partículas de dados flutuantes */
   &::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 6px;
-    background: linear-gradient(90deg, 
-      ${props => 
-        props.index === 0 ? 'rgba(33, 150, 243, 0.9)' : // Blue for Reach
-        props.index === 1 ? 'rgba(255, 122, 48, 0.9)' : // Orange for Activities
-        props.index === 2 ? 'rgba(103, 58, 183, 0.9)' : // Purple for Engagements
-        'rgba(76, 175, 80, 0.9)'          // Green for LEDs
-      }, 
-      ${props => 
-        props.index === 0 ? 'rgba(33, 150, 243, 0.6)' : // Blue for Reach
-        props.index === 1 ? 'rgba(255, 122, 48, 0.6)' : // Orange for Activities
-        props.index === 2 ? 'rgba(103, 58, 183, 0.6)' : // Purple for Engagements
-        'rgba(76, 175, 80, 0.6)'          // Green for LEDs
-      },
-      ${props => 
-        props.index === 0 ? 'rgba(33, 150, 243, 0.9)' : // Blue for Reach
-        props.index === 1 ? 'rgba(255, 122, 48, 0.9)' : // Orange for Activities
-        props.index === 2 ? 'rgba(103, 58, 183, 0.9)' : // Purple for Engagements
-        'rgba(76, 175, 80, 0.9)'          // Green for LEDs
-      }
-    );
-    opacity: 1;
-    z-index: 2;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 20% 30%, var(--card-color-primary)50 1px, transparent 1px),
+      radial-gradient(circle at 40% 70%, var(--card-color-secondary)50 2px, transparent 2px),
+      radial-gradient(circle at 60% 40%, var(--card-color-primary)50 1px, transparent 1px),
+      radial-gradient(circle at 80% 90%, var(--card-color-secondary)50 1px, transparent 1px);
+    background-size: 100px 100px;
+    animation: ${digitalFlow} 15s infinite linear;
+    z-index: 3;
+    opacity: 0.6;
   }
   
-  /* Efeito de pulso no corpo do card */
-  &::after {
-    content: '';
-    position: absolute;
-    top: 6px; /* Position below the top gradient */
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: 0 0 ${props => props.theme.radius.lg} ${props => props.theme.radius.lg};
-    opacity: ${props => props.active ? 0.7 : 0};
-    transition: opacity 0.3s ease;
+  /* Estado hover ultra dinâmico */
+  ${StatCard}:hover & {
+    background: 
+      linear-gradient(135deg, 
+        var(--card-color-primary)40 0%, 
+        var(--card-color-secondary)60 100%
+      ),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    
+    &::before {
+      animation: ${cardLightFlow} 3s infinite ease-in-out;
+      opacity: 1;
+    }
+    
+    &::after {
+      height: 6px;
+      box-shadow: 
+        0 0 15px var(--card-color-primary),
+        0 0 30px var(--card-color-secondary);
+    }
+    
+    /* Iluminação pulsante ao redor do card */
+    box-shadow: 
+      0 0 30px var(--card-color-primary)50,
+      inset 0 0 20px var(--card-color-secondary)30;
   }
 `;
 
