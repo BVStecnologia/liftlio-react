@@ -707,22 +707,22 @@ const CardEnergyEffect = styled.div<{ index: number; active: boolean }>`
   
   /* Cores para cada card baseadas no seu significado */
   --card-color-primary: ${props => {
-    // Cores baseadas nos ícones específicos de cada card
+    // Cores alinhadas com as cores dos ícones dos cards
     const colors = [
-      '#FFD700', // Amarelo dourado para FaStar (Total Mentions)
-      '#FF6B6B', // Vermelho para FaCalendarDay (Today's Mentions)
-      '#8A2BE2', // Roxo para FaVideo (Videos)
-      '#00BFFF'  // Azul claro para FaBroadcastTower (Channels)
+      COLORS.INFO,    // Azul para Channels
+      '#9C27B0',      // Roxo para Videos
+      COLORS.WARNING, // Laranja/Amarelo para Total Mentions
+      COLORS.SUCCESS  // Verde para Today's Mentions
     ];
     return colors[props.index < 4 ? props.index : 3];
   }};
   --card-color-secondary: ${props => {
-    // Cores secundárias complementares
+    // Cores secundárias complementares alinhadas com as cores dos ícones
     const colors = [
-      '#FFA500', // Laranja para Total Mentions
-      '#FF4757', // Vermelho escuro para Today's Mentions
-      '#9B59B6', // Roxo médio para Videos
-      '#3498DB'  // Azul para Channels
+      withOpacity(COLORS.INFO, 0.8),    // Azul mais escuro para Channels
+      withOpacity('#9C27B0', 0.8),      // Roxo mais escuro para Videos
+      withOpacity(COLORS.WARNING, 0.8), // Laranja/Amarelo mais escuro para Total Mentions
+      withOpacity(COLORS.SUCCESS, 0.8)  // Verde mais escuro para Today's Mentions
     ];
     return colors[props.index < 4 ? props.index : 3];
   }};
@@ -909,7 +909,7 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
   height: 48px;
   border-radius: 12px;
   background: ${props => props.bgColor};
-  color: black; /* Mantendo preto conforme solicitado */
+  color: white; /* Alterado para branco conforme solicitação */
   font-size: 1.5rem;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   position: relative;
@@ -954,7 +954,7 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
     z-index: 2;
     width: 24px;
     height: 24px;
-    color: black; /* Garantindo que ícones permaneçam pretos */
+    color: white; /* Alterado para branco conforme solicitação */
   }
   
   @media (max-width: 992px) and (min-width: 768px) {
