@@ -10,6 +10,7 @@ import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
 import { supabase, callRPC } from '../lib/supabaseClient';
 import Spinner from '../components/ui/Spinner';
+import MetricCard from '../components/ui/MetricCard';
 
 // Definir paleta de cores para os gráficos
 const CHART_PALETTE = [
@@ -104,8 +105,43 @@ const TabIcon = styled.span`
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 32px;
+  gap: 24px;
+  margin-bottom: 40px;
+  position: relative;
+  perspective: 800px;
+  
+  /* Create staggered animation for cards */
+  & > *:nth-child(1) {
+    animation-delay: 0.1s;
+  }
+  & > *:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  & > *:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  & > *:nth-child(4) {
+    animation-delay: 0.4s;
+  }
+  
+  /* Add a subtle grid background */
+  &:before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    right: -20px;
+    bottom: -20px;
+    background-image: radial-gradient(
+      rgba(255, 255, 255, 0.1) 1px,
+      transparent 1px
+    );
+    background-size: 30px 30px;
+    background-position: 0 0;
+    opacity: 0.3;
+    z-index: -1;
+    pointer-events: none;
+  }
   
   @media (max-width: 1200px) {
     grid-template-columns: repeat(2, 1fr);
@@ -1946,6 +1982,14 @@ const YoutubeMonitoring: React.FC = () => {
   
   // Estados para dados
   const [metricsData, setMetricsData] = useState<any>(null);
+  const [rpcData, setRpcData] = useState({
+    total_views: 0,
+    total_likes: 0,
+    media: '0',
+    posts: 0,
+    total_channels: 0,
+    total_videos: 0
+  });
   const [channels, setChannels] = useState<ChannelDetails[]>([]);
   const [channelVideos, setChannelVideos] = useState<any[]>([]);
   const [currentVideoComments, setCurrentVideoComments] = useState<VideoComment[]>([]);
@@ -1989,6 +2033,36 @@ const YoutubeMonitoring: React.FC = () => {
         }
       } catch (error) {
         console.error('Error fetching metrics:', error);
+      }
+    };
+    
+    const fetchRpcData = async () => {
+      if (!currentProject?.id) return;
+      
+      try {
+        console.log('Buscando dados RPC do projeto:', currentProject.id);
+        const data = await callRPC('get_project_metrics', {
+          id_projeto: currentProject.id
+        });
+        
+        console.log('Dados RPC retornados:', data);
+        if (data && data[0]) {
+          setRpcData({
+            total_views: data[0].total_views || 0,
+            total_likes: data[0].total_likes || 0,
+            media: data[0].media || '0',
+            posts: data[0].posts || 0,
+            total_channels: data[0].total_channels || 0,
+            total_videos: data[0].total_videos || 0
+          });
+          
+          // Atualizar também o metricsData para manter consistência
+          setMetricsData(data[0]);
+        } else {
+          console.log('Não foram encontradas métricas para este projeto');
+        }
+      } catch (error) {
+        console.error('Error fetching RPC data:', error);
       }
     };
     
@@ -2114,6 +2188,7 @@ const YoutubeMonitoring: React.FC = () => {
     
     // Buscar dados imediatamente
     fetchMetrics();
+    fetchRpcData();
     fetchTopVideos();
     fetchChannelDetails();
     fetchContentCategories();
@@ -2122,6 +2197,7 @@ const YoutubeMonitoring: React.FC = () => {
     const intervalId = setInterval(() => {
       console.log('Atualizando dados automáticamente...');
       fetchMetrics();
+      fetchRpcData();
       fetchTopVideos();
       fetchChannelDetails();
       fetchContentCategories();
@@ -2626,186 +2702,53 @@ const YoutubeMonitoring: React.FC = () => {
       {activeTab === 'overview' && (
         <>
           <StatsGrid>
-            {/* Card 1: Engajamento do Público */}
-            <StatCard>
-              <TopGradient color="#5856D6" />
-              <StatCardHeader>
-                <StatLabel>Audience Engagement</StatLabel>
-                <StatIconContainer color="#5856D6">
-                  <IconComponent icon={FaIcons.FaUsers} />
-                </StatIconContainer>
-              </StatCardHeader>
-              <StatValue style={{ 
-                background: 'linear-gradient(135deg, rgba(88, 86, 214, 0.05), rgba(88, 86, 214, 0.15))', 
-                color: '#5856D6',
-                borderRadius: '8px',
-                padding: '12px 16px'
-              }}>
-                {metricsData ? (metricsData.total_views >= 1000000 ? `${(metricsData.total_views / 1000000).toFixed(1)}M` : `${(metricsData.total_views / 1000).toFixed(0)}K`) : '0'} Views
-              </StatValue>
-              
-              <StatSubItem>
-                <StatSubIcon style={{ backgroundColor: 'rgba(88, 86, 214, 0.08)' }}>
-                  <IconComponent icon={FaIcons.FaHeart} style={{ color: '#FF2D55' }} />
-                </StatSubIcon>
-                <StatSubContent>
-                  <StatSubLabel>Total Likes</StatSubLabel>
-                  <StatSubValue>{metricsData ? (metricsData.total_likes >= 1000000 ? `${(metricsData.total_likes / 1000000).toFixed(1)}M` : `${(metricsData.total_likes / 1000).toFixed(0)}K`) : '0'}</StatSubValue>
-                </StatSubContent>
-              </StatSubItem>
-              
-              <StatSubItem>
-                <StatSubIcon style={{ backgroundColor: 'rgba(88, 86, 214, 0.08)' }}>
-                  <IconComponent icon={FaIcons.FaChartPie} style={{ color: '#5856D6' }} />
-                </StatSubIcon>
-                <StatSubContent>
-                  <StatSubLabel>Engagement Rate</StatSubLabel>
-                  <StatSubValue style={{ color: '#5856D6', fontWeight: '700' }}>{metricsData?.media ? `${parseFloat(metricsData.media).toFixed(1)}%` : '0%'}</StatSubValue>
-                </StatSubContent>
-              </StatSubItem>
-            </StatCard>
+            {/* Card 1: Visualizações Totais */}
+            <MetricCard
+              title="Visualizações Totais"
+              value={rpcData.total_views.toLocaleString()}
+              subtitle="Alcance total do seu conteúdo"
+              icon={<IconComponent icon={FaIcons.FaEye} />}
+              change={15}
+              changeLabel="vs. mês anterior"
+              trend="up"
+              color="#5856D6"
+            />
             
-            {/* Card 2: Canais e Alcance */}
-            <StatCard>
-              <TopGradient color="#007AFF" />
-              <StatCardHeader>
-                <StatLabel>Channel Overview</StatLabel>
-                <StatIconContainer color="#007AFF">
-                  <IconComponent icon={FaIcons.FaYoutube} />
-                </StatIconContainer>
-              </StatCardHeader>
-              <StatValue style={{ 
-                background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.05), rgba(0, 122, 255, 0.15))', 
-                color: '#007AFF',
-                borderRadius: '8px',
-                padding: '12px 16px'
-              }}>
-                {metricsData?.total_channels || '0'} Channels
-              </StatValue>
-              
-              <StatSubItem>
-                <StatSubIcon style={{ backgroundColor: 'rgba(0, 122, 255, 0.08)' }}>
-                  <IconComponent icon={FaIcons.FaVideo} style={{ color: '#007AFF' }} />
-                </StatSubIcon>
-                <StatSubContent>
-                  <StatSubLabel>Monitored Videos</StatSubLabel>
-                  <StatSubValue>{metricsData?.total_videos || '0'}</StatSubValue>
-                </StatSubContent>
-              </StatSubItem>
-              
-              <StatSubItem>
-                <StatSubIcon style={{ backgroundColor: 'rgba(0, 122, 255, 0.08)' }}>
-                  <IconComponent icon={FaIcons.FaGlobe} style={{ color: '#5AC8FA' }} />
-                </StatSubIcon>
-                <StatSubContent>
-                  <StatSubLabel>Avg Videos per Channel</StatSubLabel>
-                  <StatSubValue style={{ color: '#007AFF', fontWeight: '700' }}>
-                    {metricsData?.total_channels && metricsData.total_videos 
-                      ? (metricsData.total_videos / metricsData.total_channels).toFixed(1) 
-                      : '0'}
-                  </StatSubValue>
-                </StatSubContent>
-              </StatSubItem>
-            </StatCard>
+            {/* Card 2: Curtidas */}
+            <MetricCard
+              title="Curtidas"
+              value={rpcData.total_likes.toLocaleString()}
+              subtitle="Engajamento positivo"
+              icon={<IconComponent icon={FaIcons.FaThumbsUp} />}
+              change={8}
+              changeLabel="últimos 30 dias"
+              trend="up"
+              color="#FF9500"
+            />
             
-            {/* Card 3: Comentários & Interações */}
-            <StatCard>
-              <TopGradient color="#34C759" />
-              <StatCardHeader>
-                <StatLabel>Comments & Interactions</StatLabel>
-                <StatIconContainer color="#34C759">
-                  <IconComponent icon={FaIcons.FaComments} />
-                </StatIconContainer>
-              </StatCardHeader>
-              <StatValue style={{ 
-                background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.05), rgba(52, 199, 89, 0.15))', 
-                color: '#34C759',
-                borderRadius: '8px',
-                padding: '12px 16px'
-              }}>
-                {metricsData?.posts.toLocaleString() || '0'} Comments
-              </StatValue>
-              
-              <StatSubItem>
-                <StatSubIcon style={{ backgroundColor: 'rgba(52, 199, 89, 0.08)' }}>
-                  <IconComponent icon={FaIcons.FaReplyAll} style={{ color: '#34C759' }} />
-                </StatSubIcon>
-                <StatSubContent>
-                  <StatSubLabel>Avg Comments per Video</StatSubLabel>
-                  <StatSubValue style={{ color: '#34C759', fontWeight: '700' }}>
-                    {metricsData?.posts && metricsData.total_videos 
-                      ? (metricsData.posts / metricsData.total_videos).toFixed(1) 
-                      : '0'}
-                  </StatSubValue>
-                </StatSubContent>
-              </StatSubItem>
-              
-              <StatSubItem>
-                <StatSubIcon style={{ backgroundColor: 'rgba(52, 199, 89, 0.08)' }}>
-                  <IconComponent icon={FaIcons.FaThumbsUp} style={{ color: '#FF9500' }} />
-                </StatSubIcon>
-                <StatSubContent>
-                  <StatSubLabel>Likes per 1000 Views</StatSubLabel>
-                  <StatSubValue>
-                    {metricsData?.total_likes && metricsData.total_views 
-                      ? ((metricsData.total_likes / metricsData.total_views) * 1000).toFixed(1) 
-                      : '0'}
-                  </StatSubValue>
-                </StatSubContent>
-              </StatSubItem>
-            </StatCard>
+            {/* Card 3: Taxa de Engajamento */}
+            <MetricCard
+              title="Taxa de Engajamento"
+              value={`${parseFloat(rpcData.media).toFixed(1)}%`}
+              subtitle="Média de interações"
+              icon={<IconComponent icon={FaIcons.FaChartLine} />}
+              change={2.5}
+              changeLabel="vs. média global"
+              trend="up"
+              color="#34C759"
+            />
             
-            {/* Card 4: Performance & Analytics */}
-            <StatCard>
-              <TopGradient color="#FF9500" />
-              <StatCardHeader>
-                <StatLabel>Performance Analytics</StatLabel>
-                <StatIconContainer color="#FF9500">
-                  <IconComponent icon={FaIcons.FaChartLine} />
-                </StatIconContainer>
-              </StatCardHeader>
-              <StatValue style={{ 
-                background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.05), rgba(255, 149, 0, 0.15))', 
-                color: '#FF9500',
-                borderRadius: '8px',
-                padding: '12px 16px'
-              }}>
-                Content Metrics
-              </StatValue>
-              
-              <StatSubItem>
-                <StatSubIcon style={{ backgroundColor: 'rgba(255, 149, 0, 0.08)' }}>
-                  <IconComponent icon={FaIcons.FaEye} style={{ color: '#FF9500' }} />
-                </StatSubIcon>
-                <StatSubContent>
-                  <StatSubLabel>Avg Views per Video</StatSubLabel>
-                  <StatSubValue style={{ color: '#FF9500', fontWeight: '700' }}>
-                    {metricsData?.total_views && metricsData.total_videos
-                      ? formatNumber(Math.round(metricsData.total_views / metricsData.total_videos))
-                      : '0'}
-                  </StatSubValue>
-                </StatSubContent>
-              </StatSubItem>
-              
-              <StatSubItem>
-                <StatSubIcon style={{ backgroundColor: 'rgba(255, 149, 0, 0.08)' }}>
-                  <IconComponent icon={FaIcons.FaBullseye} style={{ color: '#FF2D55' }} />
-                </StatSubIcon>
-                <StatSubContent>
-                  <StatSubLabel>Engagement Score</StatSubLabel>
-                  <StatSubValue style={{ 
-                    color: '#34C759', 
-                    fontWeight: '700' 
-                  }}>
-                    {metricsData ? 
-                      (((parseFloat(metricsData.media) * 20) + 
-                      (metricsData.total_videos > 0 ? 40 : 0) + 
-                      (metricsData.posts > 10 ? 40 : metricsData.posts * 4))).toFixed(0) + '/100'
-                      : '0/100'}
-                  </StatSubValue>
-                </StatSubContent>
-              </StatSubItem>
-            </StatCard>
+            {/* Card 4: Vídeos Monitorados */}
+            <MetricCard
+              title="Vídeos"
+              value={rpcData.total_videos.toLocaleString()}
+              subtitle={`${rpcData.posts} posts totais`}
+              icon={<IconComponent icon={FaIcons.FaVideo} />}
+              change={5}
+              changeLabel="novos esta semana"
+              trend="up"
+              color="#007AFF"
+            />
           </StatsGrid>
           
           {/* Categorias de Conteúdo */}
