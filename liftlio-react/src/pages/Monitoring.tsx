@@ -306,18 +306,54 @@ const ChartRow = styled.div`
 `;
 
 const ChartContainer = styled.div`
-  background: white;
+  background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.8));
+  backdrop-filter: blur(10px);
   border-radius: ${props => props.theme.radius.lg};
-  box-shadow: ${props => props.theme.shadows.sm};
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   margin-bottom: 24px;
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   position: relative;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  
+  /* Add subtle tech pattern in background */
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(
+      rgba(0, 0, 0, 0.03) 1px,
+      transparent 1px
+    );
+    background-size: 20px 20px;
+    background-position: 0 0;
+    opacity: 0.5;
+    z-index: -1;
+    pointer-events: none;
+  }
+  
+  /* Add glowing highlight effect */
+  &:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent,
+      rgba(255, 255, 255, 0.8),
+      transparent
+    );
+  }
   
   &:hover {
-    box-shadow: ${props => props.theme.shadows.md};
-    transform: translateY(-2px);
-    transition: ${props => props.theme.transitions.default};
+    box-shadow: 0 12px 42px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.6);
   }
 `;
 
@@ -326,6 +362,7 @@ const ChartHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
+  background: rgba(245, 247, 250, 0.5);
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   position: relative;
   overflow: hidden;
@@ -338,10 +375,28 @@ const ChartHeader = styled.div`
     right: 0;
     height: 4px;
     background: linear-gradient(90deg, 
-      ${props => props.theme.colors.primary}88, 
-      ${props => props.theme.colors.primary}44
+      ${props => props.theme.colors.primary}, 
+      ${props => withOpacity(props.theme.colors.primary, 0.4)}
     );
     opacity: 0.9;
+    box-shadow: 0 2px 8px ${props => withOpacity(props.theme.colors.primary, 0.3)};
+  }
+  
+  /* Add cybernetic dots pattern on the right */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 100%;
+    background-image: radial-gradient(
+      ${props => withOpacity(props.theme.colors.primary, 0.15)} 1px,
+      transparent 1px
+    );
+    background-size: 8px 8px;
+    opacity: 0.5;
+    pointer-events: none;
   }
 `;
 
@@ -352,15 +407,78 @@ const ChartTitle = styled.h3`
   align-items: center;
   color: ${props => props.theme.colors.primary};
   font-weight: ${props => props.theme.fontWeights.semiBold};
+  position: relative;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);
   
   svg {
-    margin-right: 10px;
+    margin-right: 12px;
     color: ${COLORS.ACCENT};
+    font-size: 1.3em;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.15));
+    transition: transform 0.3s ease;
+  }
+  
+  &:hover svg {
+    transform: scale(1.2) rotate(-5deg);
+  }
+  
+  /* Add slight highlight under text */
+  &:after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background: ${props => props.theme.colors.primary};
+    opacity: 0.7;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+  
+  &:hover:after {
+    width: 80px;
   }
 `;
 
 const ChartBody = styled.div`
-  padding: 20px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  
+  /* Add subtle shine effect */
+  &:before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(30deg);
+    animation: shine 8s infinite linear;
+    pointer-events: none;
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+  }
+  
+  @keyframes shine {
+    0% {
+      transform: translateX(-100%) rotate(30deg);
+    }
+    100% {
+      transform: translateX(100%) rotate(30deg);
+    }
+  }
+  
+  &:hover:before {
+    opacity: 0.6;
+  }
 `;
 
 // Modern time selector
@@ -850,29 +968,85 @@ const StatusToggleButton = styled(ButtonUI)`
 const VideoTable = styled.div`
   width: 100%;
   border-collapse: collapse;
-  box-shadow: ${props => props.theme.shadows.sm};
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
   border-radius: ${props => props.theme.radius.lg};
   overflow: hidden;
   margin-top: 24px;
+  position: relative;
+  background: linear-gradient(
+    165deg, 
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.95) 50%,
+    rgba(240, 245, 255, 0.85) 100%
+  );
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  
+  /* Add tech grid pattern overlay */
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: linear-gradient(
+      rgba(65, 88, 208, 0.02) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(65, 88, 208, 0.02) 1px,
+      transparent 1px
+    );
+    background-size: 20px 20px;
+    pointer-events: none;
+    opacity: 0.5;
+    z-index: 0;
+  }
 `;
 
-// Atualizar o grid para as colunas terem tamanhos mais adequados
+// Modern header for video table
 const VideoTableHeader = styled.div`
   display: grid;
   grid-template-columns: minmax(400px, 3fr) 100px 100px 150px 100px;
   padding: 16px 24px;
-  background: ${props => withOpacity(props.theme.colors.primary, 0.05)};
+  background: linear-gradient(
+    90deg, 
+    ${props => withOpacity(props.theme.colors.primary, 0.15)},
+    ${props => withOpacity(props.theme.colors.primary, 0.05)}
+  );
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  border-bottom: 1px solid ${props => props.theme.colors.tertiary};
+  border-bottom: 1px solid ${props => withOpacity(props.theme.colors.primary, 0.15)};
   color: ${props => props.theme.colors.primary};
   text-transform: uppercase;
   font-size: ${props => props.theme.fontSizes.sm};
-  letter-spacing: 0.5px;
+  letter-spacing: 0.7px;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(4px);
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      ${props => withOpacity(props.theme.colors.primary, 0.3)},
+      ${props => withOpacity(props.theme.colors.primary, 0.8)}, 
+      ${props => withOpacity(props.theme.colors.primary, 0.3)}
+    );
+  }
   
   > div {
     display: flex;
-  align-items: center;
+    align-items: center;
     height: 100%;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+    position: relative;
     
     &:first-child {
       justify-content: flex-start;
@@ -888,11 +1062,16 @@ const VideoTableHeader = styled.div`
         content: '';
         position: absolute;
         left: -12px;
-        top: 0;
-        bottom: 0;
-        height: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 60%;
         width: 1px;
-        background-color: ${props => props.theme.colors.tertiary};
+        background: linear-gradient(
+          to bottom,
+          transparent,
+          ${props => props.theme.colors.primary}40,
+          transparent
+        );
       }
     }
   }
@@ -905,33 +1084,116 @@ const VideoTitle = styled.div`
   color: ${props => props.theme.colors.text};
   padding-right: 16px;
   height: 100%;
+  position: relative;
+  z-index: 2;
+  
+  /* Add shine effect on hover at the parent row level */
+  tr:hover & {
+    color: ${props => props.theme.colors.primary};
+  }
 `;
 
 const VideoThumbnail = styled.div`
   width: 120px;
-  height: 67px; // Mantém a proporção 16:9
-  border-radius: 8px;
+  height: 67px; // Maintains 16:9 aspect ratio
+  border-radius: 10px;
   margin-right: 16px;
   flex-shrink: 0;
   overflow: hidden;
+  position: relative;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  /* Add inner border glow effect */
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 10px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+    z-index: 2;
+    pointer-events: none;
+  }
   
-  &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    transition: all 0.2s ease-in-out;
+  /* Add play button overlay on hover */
+  &:after {
+    content: '▶';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    color: white;
+    font-size: 24px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.4);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.2s ease;
+    z-index: 1;
+  }
+  
+  /* Show play button and enhance image on row hover */
+  tr:hover & {
+    transform: scale(1.08) translateX(3px) perspective(100px) rotateY(-5deg);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    
+    &:after {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+  
+  /* Image styles */
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  tr:hover & img {
+    transform: scale(1.1);
   }
 `;
 
-// Atualizar o grid para as linhas
+// Modern video table row
 const VideoTableRow = styled.div`
   display: grid;
   grid-template-columns: minmax(400px, 3fr) 100px 100px 150px 100px;
   padding: 16px 24px;
-  border-bottom: 1px solid ${props => props.theme.colors.tertiary};
+  border-bottom: 1px solid ${props => props.theme.colors.tertiary}30;
   align-items: center;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  cursor: pointer;
+  z-index: 1;
+  
+  /* Add highlight effect on hover */
+  &:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      120deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+  }
   
   > div {
     height: 100%;
@@ -948,29 +1210,40 @@ const VideoTableRow = styled.div`
       text-align: center;
       
       &::before {
-    content: '';
-    position: absolute;
+        content: '';
+        position: absolute;
         left: -12px;
-        top: 0;
-        bottom: 0;
-        height: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 60%;
         width: 1px;
-        background-color: ${props => props.theme.colors.tertiary}80;
+        background: linear-gradient(
+          to bottom,
+          transparent,
+          ${props => props.theme.colors.tertiary}80,
+          transparent
+        );
       }
     }
   }
   
   &:hover {
-    background: ${props => props.theme.colors.tertiary}20;
+    background: ${props => withOpacity(props.theme.colors.primary, 0.05)};
+    transform: translateX(4px);
+    box-shadow: inset 3px 0 0 ${props => props.theme.colors.primary}; 
     
-    ${VideoThumbnail} {
-      transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    &:after {
+      opacity: 1;
     }
   }
   
   &:last-child {
     border-bottom: none;
+  }
+  
+  &:active {
+    transform: translateX(6px);
+    background: ${props => withOpacity(props.theme.colors.primary, 0.08)};
   }
 `;
 
@@ -978,23 +1251,51 @@ const VideoTitleText = styled.div`
   display: flex;
   flex-direction: column;
   color: ${props => props.theme.colors.primary};
+  position: relative;
+  flex: 1;
+  min-width: 0; /* Allow text to truncate properly */
 `;
 
-// Permitir que o título principal quebre mais linhas (atualizar a definição existente)
+// Enhanced video title with modern styling and better readability
 const VideoMainTitle = styled.div`
   font-weight: ${props => props.theme.fontWeights.semiBold};
   font-size: ${props => props.theme.fontSizes.md};
-  margin-bottom: 4px;
-  line-height: 1.3;
+  margin-bottom: 6px;
+  line-height: 1.4;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  color: ${props => props.theme.colors.text};
+  transition: color 0.3s ease;
+  position: relative;
+  
+  /* Add subtle tech-inspired name animation on hover */
+  ${VideoTableRow}:hover & {
+    color: ${props => props.theme.colors.primary};
+    text-shadow: 0 0 1px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Modern hover effect */
+  &:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 0;
+    height: 2px;
+    background-color: ${props => props.theme.colors.primary};
+    transition: width 0.3s ease;
+  }
+  
+  tr:hover &:after {
+    width: 100%;
+  }
 `;
 
-// Ajustar o alinhamento das estatísticas
+// Enhanced video statistics with modern tech styling
 const VideoStat = styled.div`
-  color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.text};
   font-weight: ${props => props.theme.fontWeights.medium};
   font-size: ${props => props.theme.fontSizes.md};
   text-align: center;
@@ -1005,6 +1306,43 @@ const VideoStat = styled.div`
   height: 100%;
   width: 100%;
   padding: 0 8px;
+  position: relative;
+  transition: all 0.3s ease;
+  
+  /* Add data attribute support for numeric formatting */
+  &[data-value]:not([data-value=""]) {
+    font-family: 'SF Mono', 'Consolas', monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.5px;
+  }
+  
+  /* Add hover effect */
+  tr:hover & {
+    color: ${props => props.theme.colors.primary};
+    transform: translateY(-2px);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Add pulsing highlight for emphasis */
+  &:before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    background: ${props => withOpacity(props.theme.colors.primary, 0.1)};
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    z-index: -1;
+    transition: all 0.3s ease;
+  }
+  
+  tr:hover &:before {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0.5;
+  }
 `;
 
 const VideoStatLabel = styled.div`
@@ -1098,29 +1436,67 @@ const VideoBadge = styled.span<{ type: string }>`
   align-items: center;
   padding: 4px 10px;
   font-size: ${props => props.theme.fontSizes.xs};
-  font-weight: ${props => props.theme.fontWeights.medium};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
   border-radius: ${props => props.theme.radius.pill};
   margin-left: 12px;
   background: ${props => 
-    props.type === 'new' ? props.theme.colors.successLight : 
-    props.type === 'trending' ? props.theme.colors.warningLight : 
-    props.theme.colors.infoLight};
+    props.type === 'new' ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.15), rgba(52, 199, 89, 0.3))' : 
+    props.type === 'trending' ? 'linear-gradient(135deg, rgba(255, 149, 0, 0.15), rgba(255, 149, 0, 0.3))' : 
+    'linear-gradient(135deg, rgba(0, 122, 255, 0.15), rgba(0, 122, 255, 0.3))'};
   color: ${props => 
     props.type === 'new' ? props.theme.colors.success : 
     props.type === 'trending' ? props.theme.colors.warning : 
     props.theme.colors.info};
-  box-shadow: ${props => props.theme.shadows.sm};
+  box-shadow: 0 2px 8px ${props => 
+    props.type === 'new' ? 'rgba(52, 199, 89, 0.25)' : 
+    props.type === 'trending' ? 'rgba(255, 149, 0, 0.25)' : 
+    'rgba(0, 122, 255, 0.25)'};
   
-  svg {
-    margin-right: 4px;
-    font-size: 10px;
-  }
+  /* Add border glow */
+  border: 1px solid ${props => 
+    props.type === 'new' ? 'rgba(52, 199, 89, 0.3)' : 
+    props.type === 'trending' ? 'rgba(255, 149, 0, 0.3)' : 
+    'rgba(0, 122, 255, 0.3)'};
   
+  transition: all 0.3s ease;
+  position: relative;
+  
+  /* Add icon/symbol with before pseudo-element */
   &:before {
     content: '${props => 
       props.type === 'new' ? "★ New" : 
       props.type === 'trending' ? "↑ Trending" : 
       "• Featured"}';
+  }
+  
+  /* Add pulsing animation for new items */
+  ${props => props.type === 'new' && `
+    animation: pulse 2s infinite;
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(52, 199, 89, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+    }
+  `}
+  
+  /* Add subtle upward animation for trending items */
+  ${props => props.type === 'trending' && `
+    animation: float 3s ease-in-out infinite;
+    
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-3px); }
+      100% { transform: translateY(0px); }
+    }
+  `}
+  
+  tr:hover & {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px ${props => 
+      props.type === 'new' ? 'rgba(52, 199, 89, 0.3)' : 
+      props.type === 'trending' ? 'rgba(255, 149, 0, 0.3)' : 
+      'rgba(0, 122, 255, 0.3)'};
   }
 `;
 
@@ -2794,47 +3170,155 @@ const YoutubeMonitoring: React.FC = () => {
                     </ResponsiveContainer>
                   </div>
                   <div style={{ flex: '1', padding: '0 20px', overflowY: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <table style={{ 
+                      width: '100%', 
+                      borderCollapse: 'separate',
+                      borderSpacing: '0',
+                      fontFamily: "'SF Pro Display', 'Segoe UI', sans-serif",
+                    }}>
                       <thead>
-                        <tr style={{ borderBottom: '1px solid #eee' }}>
-                          <th style={{ padding: '10px', textAlign: 'left', color: '#666' }}>Category</th>
-                          <th style={{ padding: '10px', textAlign: 'center', color: '#666' }}>Videos</th>
-                          <th style={{ padding: '10px', textAlign: 'right', color: '#666' }}>Views</th>
-                          <th style={{ padding: '10px', textAlign: 'right', color: '#666' }}>Likes</th>
-                          <th style={{ padding: '10px', textAlign: 'center', color: '#666' }}>Relevance</th>
+                        <tr>
+                          <th style={{ 
+                            padding: '12px 16px', 
+                            textAlign: 'left', 
+                            color: '#1F2937',
+                            fontWeight: '600',
+                            fontSize: '14px',
+                            letterSpacing: '0.5px',
+                            borderBottom: '2px solid rgba(99, 102, 241, 0.2)',
+                            textTransform: 'uppercase',
+                          }}>Category</th>
+                          <th style={{ 
+                            padding: '12px 16px', 
+                            textAlign: 'center', 
+                            color: '#1F2937',
+                            fontWeight: '600',
+                            fontSize: '14px',
+                            letterSpacing: '0.5px',
+                            borderBottom: '2px solid rgba(99, 102, 241, 0.2)',
+                            textTransform: 'uppercase',
+                          }}>Videos</th>
+                          <th style={{ 
+                            padding: '12px 16px', 
+                            textAlign: 'right', 
+                            color: '#1F2937',
+                            fontWeight: '600',
+                            fontSize: '14px',
+                            letterSpacing: '0.5px',
+                            borderBottom: '2px solid rgba(99, 102, 241, 0.2)',
+                            textTransform: 'uppercase',
+                          }}>Views</th>
+                          <th style={{ 
+                            padding: '12px 16px', 
+                            textAlign: 'right', 
+                            color: '#1F2937',
+                            fontWeight: '600',
+                            fontSize: '14px',
+                            letterSpacing: '0.5px',
+                            borderBottom: '2px solid rgba(99, 102, 241, 0.2)',
+                            textTransform: 'uppercase',
+                          }}>Likes</th>
+                          <th style={{ 
+                            padding: '12px 16px', 
+                            textAlign: 'center', 
+                            color: '#1F2937',
+                            fontWeight: '600',
+                            fontSize: '14px',
+                            letterSpacing: '0.5px',
+                            borderBottom: '2px solid rgba(99, 102, 241, 0.2)',
+                            textTransform: 'uppercase',
+                          }}>Relevance</th>
                         </tr>
                       </thead>
                       <tbody>
                         {getContentDistributionData().map((category, index) => (
-                          <tr key={index} style={{ borderBottom: '1px solid #f5f5f5' }}>
-                            <td style={{ padding: '12px 10px', textAlign: 'left' }}>
+                          <tr 
+                            key={index} 
+                            style={{ 
+                              transition: 'all 0.2s ease',
+                            }}
+                            className="hover:bg-gray-50"
+                          >
+                            <td style={{ 
+                              padding: '16px', 
+                              textAlign: 'left',
+                              borderBottom: '1px solid rgba(229, 231, 235, 0.7)',
+                              fontWeight: '500',
+                              color: '#111827',
+                            }}>
                               <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <div style={{ 
-                                  width: '12px', 
-                                  height: '12px', 
-                                  backgroundColor: CHART_PALETTE[index % CHART_PALETTE.length],
-                                  borderRadius: '2px',
-                                  marginRight: '8px'
+                                  width: '14px', 
+                                  height: '14px', 
+                                  background: `linear-gradient(135deg, ${CHART_PALETTE[index % CHART_PALETTE.length]}, ${CHART_PALETTE[index % CHART_PALETTE.length]}cc)`,
+                                  borderRadius: '4px',
+                                  marginRight: '10px',
+                                  boxShadow: `0 1px 3px ${CHART_PALETTE[index % CHART_PALETTE.length]}66`
                                 }}></div>
-                                {category.name}
+                                <span style={{ fontWeight: '600' }}>{category.name}</span>
                               </div>
                             </td>
-                            <td style={{ padding: '12px 10px', textAlign: 'center' }}>{category.videos}</td>
-                            <td style={{ padding: '12px 10px', textAlign: 'right' }}>
+                            <td style={{ 
+                              padding: '16px', 
+                              textAlign: 'center',
+                              borderBottom: '1px solid rgba(229, 231, 235, 0.7)',
+                              fontFamily: "'SF Mono', 'Consolas', monospace",
+                              fontVariantNumeric: 'tabular-nums',
+                              fontWeight: '500',
+                              color: '#111827',
+                            }}>{category.videos}</td>
+                            <td style={{ 
+                              padding: '16px', 
+                              textAlign: 'right',
+                              borderBottom: '1px solid rgba(229, 231, 235, 0.7)',
+                              fontFamily: "'SF Mono', 'Consolas', monospace",
+                              fontVariantNumeric: 'tabular-nums',
+                              fontWeight: '500',
+                              color: '#111827',
+                            }}>
                               {Number(category.views).toLocaleString()}
                             </td>
-                            <td style={{ padding: '12px 10px', textAlign: 'right' }}>
+                            <td style={{ 
+                              padding: '16px', 
+                              textAlign: 'right',
+                              borderBottom: '1px solid rgba(229, 231, 235, 0.7)',
+                              fontFamily: "'SF Mono', 'Consolas', monospace",
+                              fontVariantNumeric: 'tabular-nums',
+                              fontWeight: '500',
+                              color: '#111827',
+                            }}>
                               {Number(category.likes).toLocaleString()}
                             </td>
-                            <td style={{ padding: '12px 10px', textAlign: 'center' }}>
+                            <td style={{ 
+                              padding: '16px', 
+                              textAlign: 'center',
+                              borderBottom: '1px solid rgba(229, 231, 235, 0.7)'
+                            }}>
                               <span style={{ 
-                                backgroundColor: parseFloat(category.relevance) >= 8 ? '#4CD964' : 
-                                                 parseFloat(category.relevance) >= 6 ? '#FFCC00' : '#FF2D55',
+                                background: parseFloat(category.relevance) >= 8 
+                                  ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.15), rgba(76, 217, 100, 0.4))' 
+                                  : parseFloat(category.relevance) >= 6 
+                                  ? 'linear-gradient(135deg, rgba(255, 204, 0, 0.15), rgba(255, 204, 0, 0.4))' 
+                                  : 'linear-gradient(135deg, rgba(255, 45, 85, 0.15), rgba(255, 45, 85, 0.4))',
+                                border: parseFloat(category.relevance) >= 8 
+                                  ? '1px solid rgba(76, 217, 100, 0.4)' 
+                                  : parseFloat(category.relevance) >= 6 
+                                  ? '1px solid rgba(255, 204, 0, 0.4)' 
+                                  : '1px solid rgba(255, 45, 85, 0.4)',
                                 color: parseFloat(category.relevance) >= 6 ? '#333' : '#fff',
-                                padding: '2px 8px',
-                                borderRadius: '10px',
-                                fontSize: '0.8rem',
-                                fontWeight: 'bold'
+                                padding: '6px 12px',
+                                borderRadius: '12px',
+                                fontSize: '0.85rem',
+                                fontWeight: 'bold',
+                                display: 'inline-block',
+                                boxShadow: parseFloat(category.relevance) >= 8 
+                                  ? '0 2px 5px rgba(76, 217, 100, 0.2)' 
+                                  : parseFloat(category.relevance) >= 6 
+                                  ? '0 2px 5px rgba(255, 204, 0, 0.2)' 
+                                  : '0 2px 5px rgba(255, 45, 85, 0.2)',
+                                fontFamily: "'SF Mono', 'Consolas', monospace",
+                                letterSpacing: '0.5px',
+                                transition: 'all 0.2s ease',
                               }}>
                                 {parseFloat(category.relevance).toFixed(1)}
                               </span>
@@ -2927,7 +3411,9 @@ const YoutubeMonitoring: React.FC = () => {
                           )}
                         </VideoThumbnail>
                         <VideoTitleText>
-                          <VideoMainTitle>{video.nome_do_video || "Untitled Video"}</VideoMainTitle>
+                          <VideoMainTitle>
+                            {video.nome_do_video || "Untitled Video"}
+                          </VideoMainTitle>
                           {video.total_posts > 0 && (
                             <VideoBadge type="new">
                               {video.total_posts} {video.total_posts === 1 ? 'post' : 'posts'}
@@ -2935,44 +3421,75 @@ const YoutubeMonitoring: React.FC = () => {
                           )}
                         </VideoTitleText>
                       </VideoTitle>
-                      <VideoStat>
+                      <VideoStat data-value={video.views || 0}>
                         {typeof video.views === 'number' && video.views >= 1000 
                           ? `${(video.views / 1000).toFixed(0)}K` 
                           : video.views || '0'}
                       </VideoStat>
-                      <VideoStat>
+                      <VideoStat data-value={video.commets || video.comments || 0}>
                         {video.commets || video.comments || '0'}
                       </VideoStat>
                       <VideoStat>
                         <span style={{ 
-                          padding: '4px 8px', 
-                          background: '#f0f5ff', 
+                          padding: '4px 10px', 
+                          background: 'linear-gradient(135deg, rgba(88, 86, 214, 0.08), rgba(88, 86, 214, 0.2))',
+                          border: '1px solid rgba(88, 86, 214, 0.2)',
                           borderRadius: '12px', 
                           fontSize: '12px',
+                          fontWeight: 'bold',
                           color: '#5856D6',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           maxWidth: '120px',
-                          display: 'inline-block'
+                          display: 'inline-block',
+                          boxShadow: '0 2px 4px rgba(88, 86, 214, 0.1)',
+                          transition: 'all 0.3s ease'
                         }}>
                           {video.content_category || 'Uncategorized'}
                         </span>
                       </VideoStat>
-                      <VideoStat>
+                      <VideoStat data-value={
+                        video.relevance_score 
+                          ? (typeof video.relevance_score === 'number' ? video.relevance_score : parseFloat(String(video.relevance_score)) * 10).toFixed(1)
+                          : 0
+                      }>
                         <span style={{ 
-                          padding: '2px 8px', 
-                          borderRadius: '10px', 
+                          padding: '4px 10px', 
+                          borderRadius: '12px', 
                           fontSize: '12px',
                           fontWeight: 'bold',
-                          backgroundColor: typeof video.relevance_score === 'number' 
-                                            ? (video.relevance_score >= 0.8 ? '#4CD964' 
-                                               : video.relevance_score >= 0.6 ? '#FFCC00' : '#FF2D55')
-                                            : (parseFloat(String(video.relevance_score || '0')) >= 0.8 ? '#4CD964'
-                                               : parseFloat(String(video.relevance_score || '0')) >= 0.6 ? '#FFCC00' : '#FF2D55'),
+                          background: typeof video.relevance_score === 'number' 
+                            ? (video.relevance_score >= 0.8 ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.2), rgba(76, 217, 100, 0.4))' 
+                              : video.relevance_score >= 0.6 ? 'linear-gradient(135deg, rgba(255, 204, 0, 0.2), rgba(255, 204, 0, 0.4))' 
+                              : 'linear-gradient(135deg, rgba(255, 45, 85, 0.2), rgba(255, 45, 85, 0.4))')
+                            : (parseFloat(String(video.relevance_score || '0')) >= 0.8 
+                              ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.2), rgba(76, 217, 100, 0.4))' 
+                              : parseFloat(String(video.relevance_score || '0')) >= 0.6 
+                              ? 'linear-gradient(135deg, rgba(255, 204, 0, 0.2), rgba(255, 204, 0, 0.4))' 
+                              : 'linear-gradient(135deg, rgba(255, 45, 85, 0.2), rgba(255, 45, 85, 0.4))'),
+                          border: typeof video.relevance_score === 'number'
+                            ? (video.relevance_score >= 0.8 ? '1px solid rgba(76, 217, 100, 0.4)' 
+                              : video.relevance_score >= 0.6 ? '1px solid rgba(255, 204, 0, 0.4)' 
+                              : '1px solid rgba(255, 45, 85, 0.4)')
+                            : (parseFloat(String(video.relevance_score || '0')) >= 0.8 
+                              ? '1px solid rgba(76, 217, 100, 0.4)' 
+                              : parseFloat(String(video.relevance_score || '0')) >= 0.6 
+                              ? '1px solid rgba(255, 204, 0, 0.4)' 
+                              : '1px solid rgba(255, 45, 85, 0.4)'),
                           color: typeof video.relevance_score === 'number'
-                                  ? (video.relevance_score >= 0.6 ? '#333' : '#fff')
-                                  : (parseFloat(String(video.relevance_score || '0')) >= 0.6 ? '#333' : '#fff'),
+                            ? (video.relevance_score >= 0.6 ? '#333' : '#fff')
+                            : (parseFloat(String(video.relevance_score || '0')) >= 0.6 ? '#333' : '#fff'),
+                          boxShadow: typeof video.relevance_score === 'number'
+                            ? (video.relevance_score >= 0.8 ? '0 2px 6px rgba(76, 217, 100, 0.2)' 
+                              : video.relevance_score >= 0.6 ? '0 2px 6px rgba(255, 204, 0, 0.2)' 
+                              : '0 2px 6px rgba(255, 45, 85, 0.2)')
+                            : (parseFloat(String(video.relevance_score || '0')) >= 0.8 
+                              ? '0 2px 6px rgba(76, 217, 100, 0.2)' 
+                              : parseFloat(String(video.relevance_score || '0')) >= 0.6 
+                              ? '0 2px 6px rgba(255, 204, 0, 0.2)' 
+                              : '0 2px 6px rgba(255, 45, 85, 0.2)'),
+                          transition: 'all 0.3s ease'
                         }}>
                           {video.relevance_score 
                             ? `${(typeof video.relevance_score === 'number' ? video.relevance_score : parseFloat(String(video.relevance_score)) * 10).toFixed(1)}/10` 
