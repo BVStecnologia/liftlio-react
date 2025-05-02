@@ -168,6 +168,59 @@ const digitalPulse = keyframes`
   }
 `;
 
+// Animação de circuito digital
+const circuitFlow = keyframes`
+  0% {
+    background-position: 0% 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+  90% {
+    opacity: 0.1;
+  }
+  100% {
+    background-position: 100% 100%;
+    opacity: 0;
+  }
+`;
+
+// Efeito de dados pulsantes
+const dataPulse = keyframes`
+  0% {
+    transform: scale(0.95);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.2;
+  }
+`;
+
+// Animação de ondas/matriz de dados
+const dataMatrix = keyframes`
+  0% {
+    background-size: 24px 24px;
+    opacity: 0.05;
+  }
+  50% {
+    background-size: 28px 28px;
+    opacity: 0.15;
+  }
+  100% {
+    background-size: 24px 24px;
+    opacity: 0.05;
+  }
+`;
+
 // Ultra subtle card highlight animation
 const subtleHighlight = keyframes`
   0% {
@@ -520,9 +573,39 @@ const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number; active?: bo
   z-index: ${props => props.cardIndex !== undefined ? 10 - props.cardIndex : 1};
   border: 1px solid rgba(165, 177, 183, 0.3); /* Borda sutil como no MetricCard */
   
+  /* Fundo com degradê sutil baseado na cor do ícone */
+  background: ${props => {
+    // Definir cores de fundo baseadas no índice do card
+    let bgColor = 'linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%)'; // Azul para Channels (default)
+    
+    if (props.cardIndex === 1) {
+      bgColor = 'linear-gradient(135deg, #f5f0ff 0%, #ffffff 100%)'; // Roxo para Videos
+    } else if (props.cardIndex === 2) {
+      bgColor = 'linear-gradient(135deg, #fff8f0 0%, #ffffff 100%)'; // Laranja para Total Mentions
+    } else if (props.cardIndex === 3) {
+      bgColor = 'linear-gradient(135deg, #f0fff5 0%, #ffffff 100%)'; // Verde para Today's Mentions
+    }
+    
+    return bgColor;
+  }};
+  
   &:hover {
     transform: translateY(-4px) ${props => props.cardIndex !== undefined ? `scale(${1 - props.cardIndex * 0.01})` : 'scale(1)'};
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    background: ${props => {
+      // Definir cores de fundo baseadas no índice do card, mais intensas no hover
+      let bgColor = 'linear-gradient(135deg, #e6f4ff 0%, #ffffff 100%)'; // Azul para Channels (default)
+      
+      if (props.cardIndex === 1) {
+        bgColor = 'linear-gradient(135deg, #f0e6ff 0%, #ffffff 100%)'; // Roxo para Videos
+      } else if (props.cardIndex === 2) {
+        bgColor = 'linear-gradient(135deg, #fff1e6 0%, #ffffff 100%)'; // Laranja para Total Mentions
+      } else if (props.cardIndex === 3) {
+        bgColor = 'linear-gradient(135deg, #e6ffe9 0%, #ffffff 100%)'; // Verde para Today's Mentions
+      }
+      
+      return bgColor;
+    }};
   }
   
   @media (max-width: 1200px) {
