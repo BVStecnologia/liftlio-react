@@ -27,6 +27,61 @@ const CHART_PALETTE = [
 ];
 
 // Shared styled components
+// Estilos para componentes de paginação
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding: 0 16px 16px;
+`;
+
+const PaginationInfo = styled.div`
+  font-size: 14px;
+  color: #666;
+`;
+
+const PaginationControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const PaginationButton = styled.button<{ disabled?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #f7f7f9;
+  border: 1px solid #e0e0e0;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  
+  &:hover:not(:disabled) {
+    background: #e9e9ec;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const PaginationPage = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #5F27CD;
+  color: white;
+  font-weight: bold;
+`;
+
 const PageContainer = styled.div`
   padding: 20px;
   max-width: 1600px;
@@ -2390,6 +2445,11 @@ const YoutubeMonitoring: React.FC = () => {
   const [isLoadingChannelDetails, setIsLoadingChannelDetails] = useState(false);
   const [selectedVideoForDetail, setSelectedVideoForDetail] = useState<any>(null);
   
+  // Estados para paginação de vídeos
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(8); // 8 itens por página
+  const [totalVideos, setTotalVideos] = useState<number>(0);
+  
   const { currentProject } = useProject();
   
   useEffect(() => {
@@ -2442,18 +2502,24 @@ const YoutubeMonitoring: React.FC = () => {
       }
     };
     
-    const fetchTopVideos = async () => {
+    const fetchTopVideos = async (page = currentPage) => {
       if (!currentProject?.id) return;
       
       setIsLoadingTopVideos(true);
       try {
-        console.log('Buscando vídeos do projeto:', currentProject.id);
+        console.log('Buscando vídeos do projeto:', currentProject.id, 'página:', page);
         const data = await callRPC('get_videos_by_project_id', { 
-          projeto_id: currentProject.id 
+          projeto_id: currentProject.id,
+          page_number: page,
+          page_size: pageSize
         });
         
         console.log('Dados de vídeos retornados:', data?.length || 0, 'vídeos');
-        if (data && Array.isArray(data)) {
+        if (data && Array.isArray(data) && data.length > 0) {
+          // Extrair informação do total de registros
+          const totalRegistros = data[0]?.total_registros || 0;
+          setTotalVideos(totalRegistros);
+          
           // Processar dados para garantir que todos os vídeos tenham thumbnails
           const processedVideos = data.map(video => {
             const videoId = video.video_id_youtube || '';
@@ -2471,6 +2537,9 @@ const YoutubeMonitoring: React.FC = () => {
           });
           
           setTopVideos(sortedVideos);
+        } else {
+          setTopVideos([]);
+          setTotalVideos(0);
         }
       } catch (err) {
         console.error('Error in fetchTopVideos:', err);
@@ -2562,19 +2631,94 @@ const YoutubeMonitoring: React.FC = () => {
       }
     };
     
+    // Resetar a página atual para 1 quando mudar de projeto
+    setCurrentPage(1);
+    
     // Buscar dados imediatamente
     fetchMetrics();
     fetchRpcData();
-    fetchTopVideos();
+    
+    // Iniciar pela página 1 - inlined para evitar erros de escopo
+    if (currentProject?.id) {
+      setIsLoadingTopVideos(true);
+      callRPC('get_videos_by_project_id', { 
+        projeto_id: currentProject.id,
+        page_number: 1,
+        page_size: pageSize
+      }).then(data => {
+        if (data && Array.isArray(data) && data.length > 0) {
+          const totalRegistros = data[0]?.total_registros || 0;
+          setTotalVideos(totalRegistros);
+          
+          const processedVideos = data.map(video => {
+            const videoId = video.video_id_youtube || '';
+            return {
+              ...video,
+              thumbnailUrl: videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : ''
+            };
+          });
+          
+          setTopVideos(processedVideos.sort((a, b) => {
+            const viewsA = typeof a.views === 'number' ? a.views : parseInt(a.views || '0');
+            const viewsB = typeof b.views === 'number' ? b.views : parseInt(b.views || '0');
+            return viewsB - viewsA;
+          }));
+        } else {
+          setTopVideos([]);
+          setTotalVideos(0);
+        }
+      }).catch(err => {
+        console.error('Error fetching top videos:', err);
+      }).finally(() => {
+        setIsLoadingTopVideos(false);
+      });
+    }
+    
     fetchChannelDetails();
     fetchContentCategories();
     
     // Configurar intervalo para atualização periódica (a cada 5 minutos)
     const intervalId = setInterval(() => {
-      console.log('Atualizando dados automáticamente...');
+      console.log('Updating data automatically...');
       fetchMetrics();
       fetchRpcData();
-      fetchTopVideos();
+      
+      // Buscar a página atual - inlined para evitar erros de escopo
+      if (currentProject?.id) {
+        setIsLoadingTopVideos(true);
+        callRPC('get_videos_by_project_id', { 
+          projeto_id: currentProject.id,
+          page_number: currentPage,
+          page_size: pageSize
+        }).then(data => {
+          if (data && Array.isArray(data) && data.length > 0) {
+            const totalRegistros = data[0]?.total_registros || 0;
+            setTotalVideos(totalRegistros);
+            
+            const processedVideos = data.map(video => {
+              const videoId = video.video_id_youtube || '';
+              return {
+                ...video,
+                thumbnailUrl: videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : ''
+              };
+            });
+            
+            setTopVideos(processedVideos.sort((a, b) => {
+              const viewsA = typeof a.views === 'number' ? a.views : parseInt(a.views || '0');
+              const viewsB = typeof b.views === 'number' ? b.views : parseInt(b.views || '0');
+              return viewsB - viewsA;
+            }));
+          } else {
+            setTopVideos([]);
+            setTotalVideos(0);
+          }
+        }).catch(err => {
+          console.error('Error fetching top videos:', err);
+        }).finally(() => {
+          setIsLoadingTopVideos(false);
+        });
+      }
+      
       fetchChannelDetails();
       fetchContentCategories();
     }, 5 * 60 * 1000); // 5 minutos
@@ -3503,6 +3647,109 @@ const YoutubeMonitoring: React.FC = () => {
                   ))
                 )}
               </VideoTable>
+              
+              {!isLoadingTopVideos && topVideos.length > 0 && (
+                <PaginationContainer>
+                  <PaginationInfo>
+                    Showing {topVideos.length} of {totalVideos} videos
+                  </PaginationInfo>
+                  <PaginationControls>
+                    <PaginationButton 
+                      disabled={currentPage <= 1} 
+                      onClick={() => {
+                        if (currentPage > 1) {
+                          const newPage = currentPage - 1;
+                          setCurrentPage(newPage);
+                          // Use function from parent scope
+                          const fetchVideos = async () => {
+                            if (!currentProject?.id) return;
+                            setIsLoadingTopVideos(true);
+                            try {
+                              const data = await callRPC('get_videos_by_project_id', { 
+                                projeto_id: currentProject.id,
+                                page_number: newPage,
+                                page_size: pageSize
+                              });
+                              
+                              if (data && Array.isArray(data) && data.length > 0) {
+                                const totalRegistros = data[0]?.total_registros || 0;
+                                setTotalVideos(totalRegistros);
+                                
+                                const processedVideos = data.map(video => {
+                                  const videoId = video.video_id_youtube || '';
+                                  return {
+                                    ...video,
+                                    thumbnailUrl: videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : ''
+                                  };
+                                });
+                                
+                                setTopVideos(processedVideos);
+                              } else {
+                                setTopVideos([]);
+                                setTotalVideos(0);
+                              }
+                            } catch (err) {
+                              console.error('Error fetching videos:', err);
+                            } finally {
+                              setIsLoadingTopVideos(false);
+                            }
+                          };
+                          fetchVideos();
+                        }
+                      }}
+                    >
+                      <IconComponent icon={FaIcons.FaChevronLeft} />
+                      Previous
+                    </PaginationButton>
+                    <PaginationPage>{currentPage}</PaginationPage>
+                    <PaginationButton 
+                      disabled={topVideos.length < pageSize || (totalVideos > 0 && currentPage * pageSize >= totalVideos)} 
+                      onClick={() => {
+                        const newPage = currentPage + 1;
+                        setCurrentPage(newPage);
+                        // Use function from parent scope
+                        const fetchVideos = async () => {
+                          if (!currentProject?.id) return;
+                          setIsLoadingTopVideos(true);
+                          try {
+                            const data = await callRPC('get_videos_by_project_id', { 
+                              projeto_id: currentProject.id,
+                              page_number: newPage,
+                              page_size: pageSize
+                            });
+                            
+                            if (data && Array.isArray(data) && data.length > 0) {
+                              const totalRegistros = data[0]?.total_registros || 0;
+                              setTotalVideos(totalRegistros);
+                              
+                              const processedVideos = data.map(video => {
+                                const videoId = video.video_id_youtube || '';
+                                return {
+                                  ...video,
+                                  thumbnailUrl: videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : ''
+                                };
+                              });
+                              
+                              setTopVideos(processedVideos);
+                            } else {
+                              setTopVideos([]);
+                              setTotalVideos(0);
+                            }
+                          } catch (err) {
+                            console.error('Error fetching videos:', err);
+                          } finally {
+                            setIsLoadingTopVideos(false);
+                          }
+                        };
+                        fetchVideos();
+                      }}
+                    >
+                      Next
+                      <IconComponent icon={FaIcons.FaChevronRight} />
+                    </PaginationButton>
+                  </PaginationControls>
+                </PaginationContainer>
+              )}
             </ChartContainer>
           </ChartRow>
         </>
