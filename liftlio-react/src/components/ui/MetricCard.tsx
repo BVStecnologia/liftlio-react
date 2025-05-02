@@ -17,7 +17,7 @@ interface MetricCardProps {
 
 const Card = styled.div<{ isClickable: boolean; color?: string }>`
   background-color: ${props => props.color || props.theme.colors.secondary}; /* White (30%) or custom color */
-  border: 1px solid rgba(165, 177, 183, 0.2); /* Subtle border based on Cinza médio (60%) */
+  border: 1px solid rgba(165, 177, 183, 0.3); /* Stronger subtle border */
   border-radius: 12px;
   padding: 20px;
   display: flex;
@@ -25,20 +25,32 @@ const Card = styled.div<{ isClickable: boolean; color?: string }>`
   height: 100%;
   transition: all 0.3s ease;
   cursor: ${props => (props.isClickable ? 'pointer' : 'default')};
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   position: relative;
   overflow: hidden;
   
-  /* Modernized style with glass-like effect */
+  /* Enhanced glass-like effect with stronger colors */
   backdrop-filter: blur(4px);
   background: linear-gradient(
     135deg, 
-    ${props => `${props.color || props.theme.colors.secondary}20`} 0%, 
-    ${props => `${props.color || props.theme.colors.secondary}80`} 100%
+    ${props => `${props.color || props.theme.colors.secondary}40`} 0%, 
+    ${props => `${props.color || props.theme.colors.secondary}90`} 100%
   );
   
+  /* Add inner highlight for better contrast */
+  &:after {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    right: 1px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.3);
+    z-index: 1;
+  }
+  
   &:hover {
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
     transform: translateY(-4px);
   }
   
@@ -52,7 +64,7 @@ const Card = styled.div<{ isClickable: boolean; color?: string }>`
     background: linear-gradient(
       45deg,
       transparent,
-      ${props => `${props.color || props.theme.colors.secondary}10`},
+      ${props => `${props.color || props.theme.colors.secondary}30`},
       transparent
     );
     background-size: 200% 200%;
@@ -127,17 +139,18 @@ const TitleContainer = styled.div`
 const Title = styled.h3`
   margin: 0;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   color: white;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   letter-spacing: 0.3px;
 `;
 
 const Subtitle = styled.p`
   margin: 4px 0 0 0;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.9);
   letter-spacing: 0.2px;
+  font-weight: 500;
 `;
 
 const ValueContainer = styled.div`
@@ -151,20 +164,39 @@ const Value = styled.div`
   font-weight: 800;
   color: white;
   line-height: 1.2;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   letter-spacing: -0.5px;
   margin: 5px 0;
   position: relative;
   
-  /* Modern digital counter effect with subtle animation */
+  /* Bright text with high contrast */
   background-image: linear-gradient(
     180deg,
     rgba(255, 255, 255, 1.0) 0%,
-    rgba(255, 255, 255, 0.8) 100%
+    rgba(255, 255, 255, 0.95) 100%
   );
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+  
+  /* Enhanced visibility */
+  &:after {
+    content: attr(data-value);
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: -1;
+    background-image: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.1) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: blur(4px);
+  }
   
   /* Animated soft counting effect when card loads */
   animation: countup 1.5s ease-out forwards;
@@ -188,19 +220,19 @@ const ChangeContainer = styled.div<{ trend: 'up' | 'down' | 'neutral' }>`
   color: ${props => {
     switch (props.trend) {
       case 'up':
-        return 'rgba(52, 199, 89, 1)'; // Bright green
+        return 'rgba(52, 255, 89, 1)'; // Bright green
       case 'down':
         return 'rgba(255, 45, 85, 1)'; // Bright red 
       default:
-        return 'rgba(255, 255, 255, 0.7)';
+        return 'rgba(255, 255, 255, 0.9)';
     }
   }};
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(20, 20, 20, 0.3);
   backdrop-filter: blur(5px);
   width: fit-content;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
   animation: fadeIn 1s ease-in-out forwards;
   animation-delay: 0.5s;
@@ -218,31 +250,33 @@ const ChangeContainer = styled.div<{ trend: 'up' | 'down' | 'neutral' }>`
   }
   
   &:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(20, 20, 20, 0.5);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   }
 `;
 
 const ChangeIcon = styled.span`
-  margin-right: 4px;
+  margin-right: 6px;
   font-weight: bold;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-size: 16px;
   
-  /* Add subtle glow effect */
-  text-shadow: 0 0 8px currentColor;
+  /* Add stronger glow effect */
+  text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
 `;
 
 const ChangeValue = styled.span`
-  font-weight: 600;
-  letter-spacing: 0.2px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 `;
 
 const ChangeLabel = styled.span`
   margin-left: 6px;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 500;
 `;
 
 // Enhanced top gradient with modern tech effect
@@ -326,7 +360,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
         {icon && <IconContainer>{icon}</IconContainer>}
       </CardHeader>
       <ValueContainer>
-        <Value>{value}</Value>
+        <Value data-value={value}>{value}</Value>
         {change !== undefined && (
           <ChangeContainer trend={trend}>
             <ChangeIcon>{getTrendIcon()}</ChangeIcon>

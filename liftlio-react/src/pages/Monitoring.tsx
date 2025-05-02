@@ -2702,50 +2702,50 @@ const YoutubeMonitoring: React.FC = () => {
       {activeTab === 'overview' && (
         <>
           <StatsGrid>
-            {/* Card 1: Visualizações Totais */}
+            {/* Card 1: Total Views */}
             <MetricCard
-              title="Visualizações Totais"
+              title="Total Views"
               value={rpcData.total_views.toLocaleString()}
-              subtitle="Alcance total do seu conteúdo"
+              subtitle="Total reach of your content"
               icon={<IconComponent icon={FaIcons.FaEye} />}
               change={15}
-              changeLabel="vs. mês anterior"
+              changeLabel="vs. previous month"
               trend="up"
               color="#5856D6"
             />
             
-            {/* Card 2: Curtidas */}
+            {/* Card 2: Likes */}
             <MetricCard
-              title="Curtidas"
+              title="Likes"
               value={rpcData.total_likes.toLocaleString()}
-              subtitle="Engajamento positivo"
+              subtitle="Positive engagement"
               icon={<IconComponent icon={FaIcons.FaThumbsUp} />}
               change={8}
-              changeLabel="últimos 30 dias"
+              changeLabel="last 30 days"
               trend="up"
               color="#FF9500"
             />
             
-            {/* Card 3: Taxa de Engajamento */}
+            {/* Card 3: Engagement Rate */}
             <MetricCard
-              title="Taxa de Engajamento"
+              title="Engagement Rate"
               value={`${parseFloat(rpcData.media).toFixed(1)}%`}
-              subtitle="Média de interações"
+              subtitle="Average interaction rate"
               icon={<IconComponent icon={FaIcons.FaChartLine} />}
               change={2.5}
-              changeLabel="vs. média global"
+              changeLabel="vs. global average"
               trend="up"
               color="#34C759"
             />
             
-            {/* Card 4: Vídeos Monitorados */}
+            {/* Card 4: Videos */}
             <MetricCard
-              title="Vídeos"
+              title="Videos"
               value={rpcData.total_videos.toLocaleString()}
-              subtitle={`${rpcData.posts} posts totais`}
+              subtitle={`${rpcData.posts} total posts`}
               icon={<IconComponent icon={FaIcons.FaVideo} />}
               change={5}
-              changeLabel="novos esta semana"
+              changeLabel="new this week"
               trend="up"
               color="#007AFF"
             />
