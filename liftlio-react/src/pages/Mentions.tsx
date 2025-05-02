@@ -2682,17 +2682,17 @@ const Mentions: React.FC = () => {
                   <div style={{ 
                     display: 'inline-block',
                     padding: '4px 10px',
-                    background: selectedMention.response.status === 'posted' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 170, 21, 0.1)',
-                    color: selectedMention.response.status === 'posted' ? COLORS.SUCCESS : COLORS.WARNING,
+                    background: activeTab === 'posted' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 170, 21, 0.1)',
+                    color: activeTab === 'posted' ? COLORS.SUCCESS : COLORS.WARNING,
                     borderRadius: '4px',
                     fontSize: '12px',
                     fontWeight: 'bold',
                     marginBottom: '10px',
-                    border: `1px solid ${selectedMention.response.status === 'posted' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 170, 21, 0.2)'}`
+                    border: `1px solid ${activeTab === 'posted' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 170, 21, 0.2)'}`
                   }}>
-                    <IconComponent icon={selectedMention.response.status === 'posted' ? FaIcons.FaCheck : FaIcons.FaClock} />
+                    <IconComponent icon={activeTab === 'posted' ? FaIcons.FaCheck : FaIcons.FaClock} />
                     {' '}
-                    {selectedMention.response.status === 'posted' ? 'Posted' : 'Scheduled'}
+                    {activeTab === 'posted' ? 'Posted' : 'Scheduled'}
                   </div>
                   
                   <p style={{ margin: '0 0 15px 0', lineHeight: '1.6' }}>{selectedMention.response.text}</p>
@@ -2705,15 +2705,15 @@ const Mentions: React.FC = () => {
                       padding: '4px 10px',
                       borderRadius: '12px',
                       marginTop: '8px',
-                      background: selectedMention.response.status === 'posted' ? 
+                      background: activeTab === 'posted' ? 
                         'rgba(76, 175, 80, 0.1)' : 
                         'rgba(255, 170, 21, 0.1)',
-                      color: selectedMention.response.status === 'posted' ?
+                      color: activeTab === 'posted' ?
                         COLORS.SUCCESS :
                         COLORS.WARNING
                     }}>
                       <IconComponent 
-                        icon={selectedMention.response.status === 'posted' ? 
+                        icon={activeTab === 'posted' ? 
                           FaIcons.FaCalendarCheck : 
                           FaIcons.FaClock
                         } 
