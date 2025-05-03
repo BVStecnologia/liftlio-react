@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { COLORS, withOpacity } from '../styles/colors';
 import * as FaIcons from 'react-icons/fa';
@@ -291,15 +291,23 @@ const NotificationBadge = styled.div`
   }
   
   &::after {
-    content: '';
+    content: attr(data-count);
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 10px;
-    height: 10px;
+    top: 4px;
+    right: 4px;
+    min-width: 16px;
+    height: 16px;
     background-color: ${COLORS.ERROR};
     border-radius: 50%;
     box-shadow: 0 0 0 2px ${COLORS.SECONDARY};
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    visibility: var(--notification-visibility, hidden);
   }
 
   @media (max-width: 480px) {
@@ -357,6 +365,23 @@ const NotificationPopup = styled(PopupMenu)`
   @media (max-width: 400px) {
     width: 300px;
     right: -60px;
+  }
+`;
+
+const MarkAsReadButton = styled.button`
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  background: none;
+  border: none;
+  color: ${COLORS.ACCENT};
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+  
+  &:hover {
+    background-color: ${withOpacity(COLORS.ACCENT, 0.1)};
   }
 `;
 
@@ -1234,11 +1259,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     window.location.href = oauthUrl.toString();
   };
   
-  const notifications = [
-    { id: '1', title: 'New mention', message: 'Your product was mentioned on Twitter', time: '2 hours ago' },
-    { id: '2', title: 'Sentiment analysis', message: 'New analysis available for review', time: '5 hours ago' },
-    { id: '3', title: 'Weekly report', message: 'Your weekly report is ready', time: '1 day ago' }
-  ];
+  // Estado para armazenar as notificações do Supabase
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   
   const handleAddProject = async (project: Project) => {
     try {
@@ -1331,6 +1355,314 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     }
   };
   
+  // Função para buscar notificações
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setIsLoadingNotifications(true);
+      
+      // Verificar o valor do projeto atual
+      console.log("Buscando notificações para o projeto:", JSON.stringify(currentProject));
+      
+      // Se não houver projeto selecionado, não mostrar notificações
+      if (!currentProject?.id) {
+        console.log("Nenhum projeto selecionado, não buscar notificações");
+        setNotifications([]);
+        setUnreadCount(0);
+        setIsLoadingNotifications(false);
+        return;
+      }
+      
+      // Extrair o ID do projeto
+      const projetoId = Number(currentProject.id);
+      console.log("ID do projeto atual:", projetoId, typeof projetoId);
+      
+      // ABORDAGEM 1: Consulta direta usando a sintaxe exata da documentação do Supabase
+      console.log("TENTATIVA 1: Consulta direta com sintaxe padrão");
+      let { data: notificacoes1, error: erro1 } = await supabase
+        .from('Notificacoes')
+        .select("*")
+        .eq('projeto_id', projetoId);
+        
+      if (erro1) {
+        console.error("Erro na abordagem 1:", erro1);
+      } else {
+        console.log("Resultado da abordagem 1:", notificacoes1?.length || 0, notificacoes1);
+      }
+      
+      // ABORDAGEM 2: Consulta direta convertendo ID para string - alguns bancos tratam bigint como string
+      console.log("TENTATIVA 2: Consulta com ID como string");
+      let { data: notificacoes2, error: erro2 } = await supabase
+        .from('Notificacoes')
+        .select("*")
+        .eq('projeto_id', String(projetoId));
+        
+      if (erro2) {
+        console.error("Erro na abordagem 2:", erro2);
+      } else {
+        console.log("Resultado da abordagem 2:", notificacoes2?.length || 0, notificacoes2);
+      }
+      
+      // ABORDAGEM 3: Consulta com filtro is não nulo e ordenação
+      console.log("TENTATIVA 3: Consulta com is() e não-nulo");
+      let { data: notificacoes3, error: erro3 } = await supabase
+        .from('Notificacoes')
+        .select("*")
+        .not('projeto_id', 'is', null)
+        .order('created_at', { ascending: false });
+        
+      if (erro3) {
+        console.error("Erro na abordagem 3:", erro3);
+      } else {
+        console.log("Resultado da abordagem 3:", notificacoes3?.length || 0);
+        
+        // Filtrar manualmente pelo projeto ID
+        const filtrado = notificacoes3?.filter((n: any) => {
+          // Tentar diferentes formas de comparação
+          const notifId = n.projeto_id;
+          console.log(`Comparando: ${notifId} (${typeof notifId}) com ${projetoId} (${typeof projetoId})`);
+          return String(notifId) === String(projetoId) || 
+                 Number(notifId) === Number(projetoId);
+        });
+        
+        console.log("Filtrado manualmente:", filtrado?.length || 0, filtrado);
+        
+        if (filtrado && filtrado.length > 0) {
+          // Usar os resultados deste método se encontrados
+          const formattedData = filtrado.map(formatNotification);
+          setNotifications(formattedData);
+          
+          // Calcular notificações não lidas
+          const unread = filtrado.filter((notif: any) => !notif.lido).length;
+          console.log("Notificações não lidas encontradas:", unread);
+          setUnreadCount(unread);
+          setIsLoadingNotifications(false);
+          return;
+        }
+      }
+      
+      // ABORDAGEM 4: Buscar todas e filtrar depois
+      console.log("TENTATIVA 4: Buscar todas e filtrar");
+      let { data: todasNotificacoes, error: erroTodas } = await supabase
+        .from('Notificacoes')
+        .select("*");
+        
+      if (erroTodas) {
+        console.error("Erro ao buscar todas:", erroTodas);
+      } else {
+        console.log("Total de notificações:", todasNotificacoes?.length || 0);
+        
+        // Obter valores únicos de projeto_id de forma compatível com todos os níveis do TypeScript
+        const valoresUnicos = todasNotificacoes ? 
+          Array.from(new Set(todasNotificacoes.map((n: any) => n.projeto_id)))
+          : [];
+          
+        console.log("Valores únicos de projeto_id:", valoresUnicos);
+        
+        // Tentar encontrar qualquer notificação que possa corresponder
+        const possiveisMatches = todasNotificacoes?.filter((n: any) => {
+          if (n.projeto_id === null || n.projeto_id === undefined) return false;
+          
+          // Tentar todas as comparações possíveis
+          return String(n.projeto_id) === String(projetoId) || 
+                 Number(n.projeto_id) === Number(projetoId) ||
+                 n.projeto_id == projetoId; // Comparação fraca para caso de string vs número
+        });
+        
+        console.log("Possíveis matches:", possiveisMatches?.length || 0, possiveisMatches);
+        
+        if (possiveisMatches && possiveisMatches.length > 0) {
+          // Usar estes resultados
+          const formattedData = possiveisMatches.map(formatNotification);
+          setNotifications(formattedData);
+          
+          // Calcular não lidas
+          const unread = possiveisMatches.filter((notif: any) => !notif.lido).length;
+          console.log("Notificações não lidas encontradas:", unread);
+          setUnreadCount(unread);
+        } else {
+          // Sem resultados em nenhuma tentativa
+          console.log("Nenhuma notificação encontrada após todas as tentativas");
+          setNotifications([]);
+          setUnreadCount(0);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao buscar notificações:', error);
+      setNotifications([]);
+      setUnreadCount(0);
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  }, [currentProject]);
+  
+  // Função auxiliar para formatar uma notificação
+  const formatNotification = (notification: any): any => {
+    const createdAt = new Date(notification.created_at);
+    const now = new Date();
+    const diffMs = now.getTime() - createdAt.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    
+    let timeAgo;
+    if (diffMins < 1) {
+      timeAgo = 'just now';
+    } else if (diffMins < 60) {
+      timeAgo = `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`;
+    } else if (diffMins < 1440) { // menos de 24 horas
+      const hours = Math.floor(diffMins / 60);
+      timeAgo = `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+    } else {
+      const days = Math.floor(diffMins / 1440);
+      timeAgo = `${days} ${days === 1 ? 'day' : 'days'} ago`;
+    }
+    
+    return {
+      ...notification,
+      timeAgo
+    };
+  };
+  
+  // Função para marcar uma notificação como lida
+  const markAsRead = async (id: number, event?: React.MouseEvent<HTMLButtonElement>) => {
+    // Impedir propagação do evento para evitar abrir a URL quando clica em "Mark as read"
+    if (event) {
+      event.stopPropagation();
+    }
+    
+    // Verificar se temos um projeto selecionado
+    if (!currentProject?.id) return;
+    
+    try {
+      console.log("Marcando notificação como lida:", id);
+      
+      // Usar o ID exatamente como está no banco (bigint)
+      const { error } = await supabase
+        .from('Notificacoes')
+        .update({ lido: true })
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Erro ao marcar notificação como lida:', error);
+        return;
+      }
+      
+      console.log("Notificação marcada como lida com sucesso");
+      
+      // Atualizar o estado local
+      setNotifications(prev => prev.map(notif => {
+        if (notif.id === id) {
+          return { ...notif, lido: true };
+        }
+        return notif;
+      }));
+      
+      // Atualizar contagem de não lidas
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      
+      // Forçar a atualização das notificações
+      fetchNotifications();
+    } catch (error) {
+      console.error('Erro ao marcar notificação como lida:', error);
+    }
+  };
+  
+  // Função para marcar todas as notificações como lidas
+  const markAllAsRead = async () => {
+    // Verificar se temos um projeto selecionado
+    if (!currentProject?.id) return;
+    
+    try {
+      // Garantir que o projeto_id seja tratado como número bigint
+      const projetoId = Number(currentProject.id);
+      
+      console.log("Marcando todas as notificações como lidas para o projeto:", projetoId);
+      
+      // Usar o update sem filtrar manualmente os IDs
+      const { error } = await supabase
+        .from('Notificacoes')
+        .update({ lido: true })
+        .eq('projeto_id', projetoId)
+        .eq('lido', false);
+      
+      if (error) {
+        console.error('Erro ao marcar todas notificações como lidas:', error);
+        return;
+      }
+      
+      console.log("Todas as notificações marcadas como lidas com sucesso");
+      
+      // Atualizar o estado local
+      setNotifications(prev => 
+        prev.map(notif => ({ ...notif, lido: true }))
+      );
+      
+      // Zerar contagem de não lidas
+      setUnreadCount(0);
+      
+      // Forçar a atualização das notificações
+      fetchNotifications();
+    } catch (error) {
+      console.error('Erro ao marcar todas notificações como lidas:', error);
+    }
+  };
+  
+  // Função para abrir URL da notificação
+  const openNotificationUrl = (notification: any) => {
+    // Verificar se a notificação pertence ao projeto atual
+    if (!currentProject?.id) return;
+    
+    console.log("Abrindo notificação:", notification);
+    
+    // Se tiver URL, abrir em nova aba
+    if (notification.url) {
+      window.open(notification.url, '_blank');
+    }
+    
+    // Marcar como lida quando abre
+    if (!notification.lido) {
+      console.log("Marcando notificação como lida ao abrir:", notification.id);
+      markAsRead(notification.id);
+    }
+  };
+  
+  // Usar useEffect para buscar notificações quando o componente montar ou o projeto mudar
+  useEffect(() => {
+    console.log("useEffect de notificações - Projeto atual:", currentProject?.id);
+    
+    // Configurar apenas a execução inicial, sem polling
+    fetchNotifications();
+    
+    // Configurar realtime subscription para atualizações de notificações
+    let subscription: any;
+    
+    if (currentProject?.id) {
+      const projetoId = Number(currentProject.id);
+      console.log("Configurando subscription para notificações do projeto:", projetoId);
+      
+      // Inscrever-se para alterações na tabela Notificacoes para este projeto
+      subscription = supabase
+        .channel('notificacoes-changes')
+        .on('postgres_changes', {
+          event: '*', // Escutar inserções, atualizações e exclusões
+          schema: 'public',
+          table: 'Notificacoes',
+          filter: `projeto_id=eq.${projetoId}`
+        }, (payload) => {
+          console.log("Alteração detectada nas notificações:", payload);
+          // Atualizar as notificações quando houver qualquer mudança
+          fetchNotifications();
+        })
+        .subscribe();
+    }
+    
+    return () => {
+      console.log("Limpando subscription de notificações");
+      if (subscription) {
+        // Usar o método unsubscribe() da subscription
+        subscription.unsubscribe();
+      }
+    };
+  }, [currentProject?.id, fetchNotifications]); // Incluir fetchNotifications como dependência
+  
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1354,6 +1686,12 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     };
   }, []);
   
+  // Ajuste de debug - forçar visibilidade do badge
+  useEffect(() => {
+    console.log("Estado de unreadCount:", unreadCount);
+    console.log("Estado de visibilidade badge:", unreadCount > 0 ? 'visible' : 'hidden');
+  }, [unreadCount]);
+
   return (
     <>
       <HeaderContainer>
@@ -1486,7 +1824,20 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           )}
         
           <div ref={notificationsRef} style={{ position: 'relative' }}>
-            <NotificationBadge onClick={() => setShowNotifications(!showNotifications)}>
+            <NotificationBadge 
+              onClick={() => {
+                console.log("Clicou no ícone de notificações, unreadCount:", unreadCount);
+                setShowNotifications(!showNotifications);
+                // Forçar busca ao abrir
+                if (!showNotifications) {
+                  fetchNotifications();
+                }
+              }}
+              data-count={unreadCount}
+              style={{ 
+                '--notification-visibility': unreadCount > 0 ? 'visible' : 'hidden' 
+              } as React.CSSProperties}
+            >
               <IconComponent icon={FaIcons.FaBell} />
             </NotificationBadge>
             
@@ -1494,20 +1845,96 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
               <NotificationPopup>
                 <PopupHeader>
                   Notifications
-                  <span>Mark all as read</span>
+                  {/* Mostrar "Mark all as read" apenas se houver notificações não lidas */}
+                  {unreadCount > 0 && (
+                    <span onClick={markAllAsRead}>Mark all as read</span>
+                  )}
                 </PopupHeader>
-                {notifications.map(notification => (
-                  <NotificationItem key={notification.id}>
-                    <h4>{notification.title}</h4>
-                    <p>{notification.message}</p>
-                    <time>{notification.time}</time>
-                  </NotificationItem>
-                ))}
+                {isLoadingNotifications ? (
+                  <div style={{ padding: '20px', textAlign: 'center' }}>
+                    Loading...
+                  </div>
+                ) : notifications.length > 0 ? (
+                  (() => {
+                    // Filtrar notificações: mostrar todas as não lidas + apenas as lidas das últimas 24 horas
+                    const last24Hours = new Date();
+                    last24Hours.setHours(last24Hours.getHours() - 24); // 24 horas atrás
+                    
+                    const filteredNotifications = notifications.filter(notification => {
+                      if (!notification.lido) return true; // Mostrar todas as não lidas
+                      
+                      // Para notificações lidas, verificar se está nas últimas 24 horas
+                      const notifDate = new Date(notification.created_at);
+                      return notifDate >= last24Hours; // Mostrar apenas se for das últimas 24 horas
+                    });
+                    
+                    // Ordenar: não lidas primeiro, depois por data (mais recentes primeiro)
+                    const sortedNotifications = [...filteredNotifications].sort((a, b) => {
+                      // Primeiro ordenar por status de leitura (não lidas primeiro)
+                      if (!a.lido && b.lido) return -1;
+                      if (a.lido && !b.lido) return 1;
+                      
+                      // Se ambas estão no mesmo estado de leitura, ordenar por data (mais recente primeiro)
+                      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                    });
+                    
+                    if (sortedNotifications.length === 0) {
+                      return (
+                        <div style={{ padding: '20px', textAlign: 'center', color: COLORS.TEXT.SECONDARY }}>
+                          No recent notifications
+                        </div>
+                      );
+                    }
+                    
+                    return sortedNotifications.map(notification => (
+                      <NotificationItem 
+                        key={notification.id} 
+                        onClick={() => openNotificationUrl(notification)}
+                        style={{ 
+                          backgroundColor: notification.lido ? 'transparent' : 'rgba(45, 29, 66, 0.05)',
+                          borderLeft: notification.lido ? 'none' : `3px solid ${COLORS.ACCENT}`,
+                          position: 'relative' // Para posicionar o indicador "Read"
+                        }}
+                      >
+                        <h4>
+                          {notification.comando || 'Notification'}
+                          {notification.lido && (
+                            <span style={{
+                              fontSize: '0.65rem',
+                              color: COLORS.TEXT.SECONDARY,
+                              fontWeight: 'normal',
+                              background: 'rgba(0,0,0,0.05)',
+                              padding: '2px 6px',
+                              borderRadius: '8px',
+                              marginLeft: '8px',
+                              verticalAlign: 'middle',
+                              display: 'inline-block'
+                            }}>
+                              Read
+                            </span>
+                          )}
+                        </h4>
+                        <p>{notification.Mensagem}</p>
+                        <time>{notification.timeAgo}</time>
+                        {!notification.lido && (
+                          <MarkAsReadButton onClick={(e) => markAsRead(notification.id, e)}>
+                            Mark as read
+                          </MarkAsReadButton>
+                        )}
+                      </NotificationItem>
+                    ));
+                  })()
+                ) : (
+                  <div style={{ padding: '20px', textAlign: 'center', color: COLORS.TEXT.SECONDARY }}>
+                    No notifications found
+                  </div>
+                )}
               </NotificationPopup>
             )}
           </div>
           
-          <div ref={languageRef} style={{ position: 'relative' }}>
+          {/* Seletor de idioma oculto - pode ser reativado posteriormente se necessário */}
+          <div ref={languageRef} style={{ display: 'none', position: 'relative' }}>
             <LanguageSelector onClick={() => setShowLanguageMenu(!showLanguageMenu)}>
               <IconComponent icon={FaIcons.FaGlobe} />
               {currentLanguage}
