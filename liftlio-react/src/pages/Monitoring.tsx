@@ -1897,46 +1897,138 @@ const VideoDetailModal = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.75);
+  background: rgba(0,0,0,0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s ease-in-out;
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      backdrop-filter: blur(0);
+    }
+    to {
+      opacity: 1;
+      backdrop-filter: blur(5px);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    padding: 10px;
+  }
 `;
 
 const ModalContent = styled.div`
   background: white;
   border-radius: ${props => props.theme.radius.lg};
-  width: 80%;
-  max-width: 900px;
+  width: 85%;
+  max-width: 1100px;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  transform: translateY(0);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  
+  @keyframes slideUp {
+    from {
+      transform: translateY(30px);
+      opacity: 0.5;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  /* Grid pattern background */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      linear-gradient(rgba(0, 0, 0, 0.01) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.01) 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-position: center center;
+    z-index: -1;
+    pointer-events: none;
+  }
+  
+  @media (max-width: 768px) {
+    width: 95%;
+    max-height: 95vh;
+  }
 `;
 
 const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 24px;
-  border-bottom: 1px solid ${props => props.theme.colors.tertiary};
+  padding: 24px 30px;
+  border-bottom: 1px solid ${props => props.theme.colors.tertiary}40;
+  position: relative;
+  
+  /* Add gradient accent */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      ${props => props.theme.colors.primary}10,
+      ${props => props.theme.colors.primary},
+      ${props => props.theme.colors.primary}10
+    );
+    z-index: 1;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 16px 20px;
+  }
 `;
 
 const ModalClose = styled.button`
-  background: none;
+  background: rgba(0, 0, 0, 0.05);
   border: none;
-  font-size: 24px;
+  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   cursor: pointer;
   color: ${props => props.theme.colors.darkGrey};
   padding: 0;
   margin: 0;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: ${props => props.theme.colors.primary};
+    transform: rotate(90deg);
+  }
 `;
 
 const ModalBody = styled.div`
-  padding: 24px;
+  padding: 30px;
+  
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
 `;
 
 const ModalTitle = styled.h3`
@@ -1944,6 +2036,28 @@ const ModalTitle = styled.h3`
   font-weight: ${props => props.theme.fontWeights.bold};
   margin: 0 0 8px;
   color: ${props => props.theme.colors.primary};
+  display: flex;
+  align-items: center;
+  position: relative;
+  
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 24px;
+    background: ${props => props.theme.colors.primary};
+    margin-right: 12px;
+    border-radius: 2px;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: ${props => props.theme.fontSizes.lg};
+    
+    &::before {
+      height: 18px;
+      margin-right: 8px;
+    }
+  }
 `;
 
 const ModalThumbnail = styled.div`
@@ -1952,13 +2066,15 @@ const ModalThumbnail = styled.div`
   padding-top: 56.25%; /* Proporção 16:9 (9/16 = 0.5625 = 56.25%) */
   border-radius: ${props => props.theme.radius.md};
   overflow: hidden;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
   background-color: #000;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  transform: perspective(1000px) rotateX(0deg);
   
   &:hover {
-    transform: scale(1.02);
+    transform: perspective(1000px) rotateX(2deg) scale(1.03);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
   }
   
   img {
@@ -1968,26 +2084,120 @@ const ModalThumbnail = styled.div`
     width: 100%;
     height: 100%;
     object-fit: contain; /* Garante que a imagem mantenha a proporção sem cortes */
+    transition: transform 0.5s ease;
   }
   
+  &:hover img {
+    transform: scale(1.05);
+  }
+  
+  /* Add gradient overlay */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0) 50%
+    );
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+  }
+  
+  &:hover::before {
+    opacity: 0.4;
+  }
+  
+  /* Play button */
   &::after {
     content: '';
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    width: 70px;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    z-index: 2;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+  }
+  
+  /* Play triangle */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 53%;
+    transform: translate(-50%, -50%);
     width: 0;
     height: 0;
-    border-top: 16px solid transparent;
-    border-left: 28px solid white;
-    border-bottom: 16px solid transparent;
-    opacity: 0.9;
+    border-top: 15px solid transparent;
+    border-left: 25px solid white;
+    border-bottom: 15px solid transparent;
+    z-index: 3;
     pointer-events: none;
-    transition: transform 0.3s ease;
+    transition: all 0.3s ease;
   }
   
   &:hover::after {
-    transform: translate(-50%, -50%) scale(1.2);
+    transform: translate(-50%, -50%) scale(1.1);
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  }
+  
+  /* Duration badge */
+  .video-duration {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 2;
+    backdrop-filter: blur(2px);
+  }
+  
+  /* Video quality badge */
+  .video-quality {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 2;
+    backdrop-filter: blur(2px);
+  }
+  
+  @media (max-width: 768px) {
+    margin-bottom: 20px;
+    
+    &::after {
+      width: 50px;
+      height: 50px;
+    }
+    
+    &::before {
+      border-top: 10px solid transparent;
+      border-left: 18px solid white;
+      border-bottom: 10px solid transparent;
+    }
   }
 `;
 
@@ -1995,37 +2205,305 @@ const ModalDescription = styled.div`
   font-size: ${props => props.theme.fontSizes.md};
   line-height: 1.6;
   color: ${props => props.theme.colors.darkGrey};
-  margin-bottom: 24px;
-  padding: 16px;
-  background: ${props => props.theme.colors.tertiary}20;
+  margin-bottom: 28px;
+  padding: 20px;
+  background: ${props => props.theme.colors.tertiary}15;
   border-radius: ${props => props.theme.radius.md};
   max-height: 200px;
   overflow-y: auto;
+  border: 1px solid ${props => props.theme.colors.tertiary}20;
+  position: relative;
+  transition: all 0.3s ease;
+  
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: ${props => props.theme.colors.tertiary}10;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${props => props.theme.colors.tertiary}60;
+    border-radius: 3px;
+  }
+  
+  &:hover {
+    background: ${props => props.theme.colors.tertiary}20;
+    border-color: ${props => props.theme.colors.tertiary}30;
+  }
+  
+  /* Fade out effect at the bottom */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      ${props => props.theme.colors.tertiary}15
+    );
+    pointer-events: none;
+    border-radius: 0 0 ${props => props.theme.radius.md} ${props => props.theme.radius.md};
+  }
+  
+  @media (max-width: 768px) {
+    font-size: ${props => props.theme.fontSizes.sm};
+    padding: 15px;
+    margin-bottom: 20px;
+    max-height: 150px;
+  }
 `;
 
+// Video sections grid layout
+const ModalGridContainer = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+  margin-bottom: 30px;
+  
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+`;
+
+const ModalVideoInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const ModalSidebar = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+// Modal stats section
 const ModalStats = styled.div`
   display: flex;
   gap: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
   flex-wrap: wrap;
+  padding: 16px;
+  background: ${props => props.theme.colors.tertiary}10;
+  border-radius: ${props => props.theme.radius.md};
+  
+  @media (max-width: 768px) {
+    gap: 16px;
+    padding: 12px;
+    margin-bottom: 24px;
+  }
 `;
 
 const ModalStatItem = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 1;
+  min-width: 100px;
+  padding: 12px;
+  border-radius: ${props => props.theme.radius.sm};
+  transition: all 0.3s ease;
+  position: relative;
+  
+  &:hover {
+    background: ${props => props.theme.colors.tertiary}15;
+    transform: translateY(-3px);
+  }
+  
+  /* Add subtle divider */
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: -12px;
+    top: 25%;
+    height: 50%;
+    width: 1px;
+    background: ${props => props.theme.colors.tertiary}30;
+  }
+  
+  @media (max-width: 768px) {
+    min-width: 80px;
+    padding: 8px;
+  }
+`;
+
+const ModalStatIcon = styled.div`
+  font-size: 18px;
+  color: ${props => props.theme.colors.primary};
+  margin-bottom: 6px;
+  
+  svg {
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.1));
+  }
 `;
 
 const ModalStatValue = styled.div`
   font-size: ${props => props.theme.fontSizes.xl};
   font-weight: ${props => props.theme.fontWeights.bold};
   color: ${props => props.theme.colors.primary};
+  margin: 4px 0;
+  font-variant-numeric: tabular-nums;
+  
+  @media (max-width: 768px) {
+    font-size: ${props => props.theme.fontSizes.lg};
+  }
 `;
 
 const ModalStatLabel = styled.div`
   font-size: ${props => props.theme.fontSizes.sm};
   color: ${props => props.theme.colors.darkGrey};
-  margin-top: 4px;
+  margin-top: 2px;
+  text-align: center;
+`;
+
+// Additional information section
+const ModalMetadata = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 30px;
+`;
+
+const ModalMetaItem = styled.div`
+  display: flex;
+  align-items: flex-start;
+  padding: 10px 15px;
+  border-bottom: 1px solid ${props => props.theme.colors.tertiary}20;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const ModalMetaIcon = styled.div`
+  color: ${props => props.theme.colors.primary};
+  margin-right: 12px;
+  margin-top: 3px;
+  font-size: 16px;
+`;
+
+const ModalMetaContent = styled.div`
+  flex: 1;
+`;
+
+const ModalMetaLabel = styled.div`
+  font-size: ${props => props.theme.fontSizes.xs};
+  color: ${props => props.theme.colors.darkGrey};
+  margin-bottom: 2px;
+`;
+
+const ModalMetaValue = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  color: ${props => props.theme.colors.text};
+`;
+
+// Trending section with small chart
+const ModalTrending = styled.div`
+  margin-top: 20px;
+  padding: 16px;
+  background: ${props => props.theme.colors.tertiary}10;
+  border-radius: ${props => props.theme.radius.md};
+  border: 1px solid ${props => props.theme.colors.tertiary}20;
+`;
+
+const ModalTrendingTitle = styled.div`
+  font-size: ${props => props.theme.fontSizes.md};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  color: ${props => props.theme.colors.primary};
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 8px;
+  }
+`;
+
+const ModalTrendingChart = styled.div`
+  height: 80px;
+  margin-bottom: 10px;
+`;
+
+// Top comments section
+const ModalCommentsSection = styled.div`
+  margin-top: 30px;
+`;
+
+const ModalCommentsTitle = styled.h4`
+  font-size: ${props => props.theme.fontSizes.lg};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 10px;
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const ModalCommentsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: ${props => props.theme.colors.tertiary}10;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${props => props.theme.colors.tertiary}60;
+    border-radius: 3px;
+  }
+`;
+
+const ModalCommentItem = styled.div`
+  padding: 12px 15px;
+  background: white;
+  border-radius: ${props => props.theme.radius.md};
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-left: 3px solid ${props => props.theme.colors.primary}80;
+  
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+  }
+`;
+
+const ModalCommentAuthor = styled.div`
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  font-size: ${props => props.theme.fontSizes.sm};
+  margin-bottom: 6px;
+  color: ${props => props.theme.colors.text};
+  display: flex;
+  justify-content: space-between;
+`;
+
+const ModalCommentText = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.darkGrey};
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 `;
 
 const ModalActions = styled.div`
@@ -2033,10 +2511,122 @@ const ModalActions = styled.div`
   justify-content: flex-end;
   gap: 16px;
   margin-top: 32px;
+  border-top: 1px solid ${props => props.theme.colors.tertiary}20;
+  padding-top: 24px;
 `;
 
 const ModalActionButton = styled(ButtonUI)`
   min-width: 120px;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+`;
+
+// Navigation buttons for moving between videos
+const VideoNavButtons = styled.div`
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+`;
+
+const VideoNavButton = styled.button<{ disabled?: boolean }>`
+  background: ${props => props.theme.colors.tertiary}20;
+  border: none;
+  border-radius: ${props => props.theme.radius.md};
+  padding: 12px 20px;
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.disabled ? props.theme.colors.darkGrey : props.theme.colors.primary};
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  opacity: ${props => props.disabled ? 0.6 : 1};
+  transition: all 0.3s ease;
+  
+  &:not(:disabled):hover {
+    background: ${props => props.theme.colors.tertiary}30;
+    transform: translateX(${props => props.children && String(props.children).includes('Anterior') ? '-3px' : '3px'});
+  }
+`;
+
+
+
+// Badge components for videos
+const CategoryBadge = styled.div<{ category?: string }>`
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: ${props => props.theme.radius.pill};
+  font-size: ${props => props.theme.fontSizes.xs};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  margin-right: 10px;
+  margin-top: 10px;
+  
+  /* Determine color based on category */
+  background: ${props => {
+    switch(props.category?.toLowerCase()) {
+      case 'tutorial': 
+      case 'tutorials':
+        return 'linear-gradient(135deg, rgba(0, 122, 255, 0.15), rgba(0, 122, 255, 0.3))';
+      case 'review':
+      case 'reviews':
+        return 'linear-gradient(135deg, rgba(88, 86, 214, 0.15), rgba(88, 86, 214, 0.3))';
+      case 'live':
+      case 'stream':
+      case 'live stream':
+        return 'linear-gradient(135deg, rgba(255, 45, 85, 0.15), rgba(255, 45, 85, 0.3))';
+      case 'vlog':
+      case 'vlogs':
+        return 'linear-gradient(135deg, rgba(52, 199, 89, 0.15), rgba(52, 199, 89, 0.3))';
+      default:
+        return 'linear-gradient(135deg, rgba(255, 149, 0, 0.15), rgba(255, 149, 0, 0.3))';
+    }
+  }};
+  
+  color: ${props => {
+    switch(props.category?.toLowerCase()) {
+      case 'tutorial': 
+      case 'tutorials':
+        return 'rgb(0, 122, 255)';
+      case 'review':
+      case 'reviews':
+        return 'rgb(88, 86, 214)';
+      case 'live':
+      case 'stream':
+      case 'live stream':
+        return 'rgb(255, 45, 85)';
+      case 'vlog':
+      case 'vlogs':
+        return 'rgb(52, 199, 89)';
+      default:
+        return 'rgb(255, 149, 0)';
+    }
+  }};
+  
+  svg {
+    margin-right: 6px;
+  }
+`;
+
+const DateBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  background: ${props => props.theme.colors.tertiary}20;
+  border-radius: ${props => props.theme.radius.pill};
+  font-size: ${props => props.theme.fontSizes.xs};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  color: ${props => props.theme.colors.darkGrey};
+  margin-right: 10px;
+  margin-top: 10px;
+  
+  svg {
+    margin-right: 6px;
+    font-size: 12px;
+  }
 `;
 
 // Adicionar interface para tipo de comentário
@@ -4644,62 +5234,264 @@ const YoutubeMonitoring: React.FC = () => {
           <ModalContent onClick={(e) => e.stopPropagation()}>
             <ModalHeader>
               <ModalTitle>{selectedVideoForDetail.nome_do_video || selectedVideoForDetail.title || "Untitled Video"}</ModalTitle>
-              <ModalClose onClick={() => setSelectedVideoForDetail(null)}>×</ModalClose>
+              <ModalClose onClick={() => setSelectedVideoForDetail(null)}>
+                <IconComponent icon={FaIcons.FaTimes} />
+              </ModalClose>
             </ModalHeader>
+            
             <ModalBody>
-              <ModalThumbnail>
-                <img 
-                  src={getThumbnailUrl(selectedVideoForDetail)}
-                  alt={selectedVideoForDetail.nome_do_video || "Video thumbnail"}
-                  onError={(e) => {
-                    const videoTitle = selectedVideoForDetail.nome_do_video || selectedVideoForDetail.title || "Untitled";
-                    const firstLetter = videoTitle.charAt(0).toUpperCase();
-                    (e.target as HTMLImageElement).src = `https://placehold.co/1280x720/5F27CD/FFFFFF?text=${encodeURIComponent(firstLetter)}`;
+              {/* Navigation buttons between videos */}
+              <VideoNavButtons>
+                <VideoNavButton 
+                  disabled={!topVideos[0] || topVideos[0].id === selectedVideoForDetail.id}
+                  onClick={() => {
+                    if (topVideos.length > 0) {
+                      const currentIndex = topVideos.findIndex(v => v.id === selectedVideoForDetail.id);
+                      if (currentIndex > 0) {
+                        setSelectedVideoForDetail(topVideos[currentIndex - 1]);
+                      }
+                    }
                   }}
-                />
-              </ModalThumbnail>
-              
-              {selectedVideoForDetail.descricao && (
-                <ModalDescription>
-                  {selectedVideoForDetail.descricao}
-                </ModalDescription>
-              )}
-              
-              <ModalStats>
-                <ModalStatItem>
-                  <ModalStatValue>
-                    {selectedVideoForDetail.views 
-                      ? (selectedVideoForDetail.views >= 1000 
-                          ? `${(selectedVideoForDetail.views / 1000).toFixed(1)}K` 
-                          : selectedVideoForDetail.views) 
-                      : '0'}
-                  </ModalStatValue>
-                  <ModalStatLabel>Views</ModalStatLabel>
-                </ModalStatItem>
+                >
+                  <IconComponent icon={FaIcons.FaChevronLeft} />
+                  Previous Video
+                </VideoNavButton>
                 
-                <ModalStatItem>
-                  <ModalStatValue>
-                    {selectedVideoForDetail.commets || selectedVideoForDetail.comments || '0'}
-                  </ModalStatValue>
-                  <ModalStatLabel>Comments</ModalStatLabel>
-                </ModalStatItem>
+                <VideoNavButton 
+                  disabled={!topVideos[topVideos.length - 1] || topVideos[topVideos.length - 1].id === selectedVideoForDetail.id}
+                  onClick={() => {
+                    if (topVideos.length > 0) {
+                      const currentIndex = topVideos.findIndex(v => v.id === selectedVideoForDetail.id);
+                      if (currentIndex < topVideos.length - 1) {
+                        setSelectedVideoForDetail(topVideos[currentIndex + 1]);
+                      }
+                    }
+                  }}
+                >
+                  Next Video
+                  <IconComponent icon={FaIcons.FaChevronRight} />
+                </VideoNavButton>
+              </VideoNavButtons>
+            
+              <ModalGridContainer>
+                <ModalVideoInfo>
+                  {/* Thumbnail with badges */}
+                  <ModalThumbnail>
+                    <img 
+                      src={getThumbnailUrl(selectedVideoForDetail)}
+                      alt={selectedVideoForDetail.nome_do_video || "Video thumbnail"}
+                      onError={(e) => {
+                        const videoTitle = selectedVideoForDetail.nome_do_video || selectedVideoForDetail.title || "Untitled";
+                        const firstLetter = videoTitle.charAt(0).toUpperCase();
+                        (e.target as HTMLImageElement).src = `https://placehold.co/1280x720/5F27CD/FFFFFF?text=${encodeURIComponent(firstLetter)}`;
+                      }}
+                    />
+                    
+                    {/* Video duration badge - this would normally come from API */}
+                    <div className="video-duration">10:23</div>
+                    
+                    {/* Video quality badge - this would normally come from API */}
+                    <div className="video-quality">HD</div>
+                  </ModalThumbnail>
+                  
+                  {/* Category badge */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', marginBottom: '20px' }}>
+                    <CategoryBadge category={selectedVideoForDetail.content_category}>
+                      <IconComponent icon={
+                        selectedVideoForDetail.content_category?.toLowerCase().includes('tutorial') ? FaIcons.FaGraduationCap :
+                        selectedVideoForDetail.content_category?.toLowerCase().includes('review') ? FaIcons.FaStar :
+                        selectedVideoForDetail.content_category?.toLowerCase().includes('live') ? FaIcons.FaVideo :
+                        selectedVideoForDetail.content_category?.toLowerCase().includes('vlog') ? FaIcons.FaCamera :
+                        FaIcons.FaTag
+                      } />
+                      {selectedVideoForDetail.content_category || 'Uncategorized'}
+                    </CategoryBadge>
+                  </div>
+                  
+                  {/* Video description */}
+                  {selectedVideoForDetail.descricao && (
+                    <ModalDescription>
+                      {selectedVideoForDetail.descricao}
+                    </ModalDescription>
+                  )}
+                  
+                  {/* Stats grid with icons */}
+                  <ModalStats>
+                    <ModalStatItem>
+                      <ModalStatIcon>
+                        <IconComponent icon={FaIcons.FaEye} />
+                      </ModalStatIcon>
+                      <ModalStatValue>
+                        {selectedVideoForDetail.views 
+                          ? (selectedVideoForDetail.views >= 1000 
+                              ? `${(Number(selectedVideoForDetail.views) / 1000).toFixed(1)}K` 
+                              : selectedVideoForDetail.views) 
+                          : '0'}
+                      </ModalStatValue>
+                      <ModalStatLabel>Views</ModalStatLabel>
+                    </ModalStatItem>
+                    
+                    <ModalStatItem>
+                      <ModalStatIcon>
+                        <IconComponent icon={FaIcons.FaComment} />
+                      </ModalStatIcon>
+                      <ModalStatValue>
+                        {selectedVideoForDetail.commets || selectedVideoForDetail.comments || '0'}
+                      </ModalStatValue>
+                      <ModalStatLabel>Comments</ModalStatLabel>
+                    </ModalStatItem>
+                    
+                    <ModalStatItem>
+                      <ModalStatIcon>
+                        <IconComponent icon={FaIcons.FaChartLine} />
+                      </ModalStatIcon>
+                      <ModalStatValue>
+                        {selectedVideoForDetail.relevance_score 
+                          ? `${(Number(selectedVideoForDetail.relevance_score) * 100).toFixed(0)}%` 
+                          : '0%'}
+                      </ModalStatValue>
+                      <ModalStatLabel>Relevance</ModalStatLabel>
+                    </ModalStatItem>
+                    
+                    <ModalStatItem>
+                      <ModalStatIcon>
+                        <IconComponent icon={FaIcons.FaThumbsUp} />
+                      </ModalStatIcon>
+                      <ModalStatValue>
+                        {selectedVideoForDetail.likes || '0'}
+                      </ModalStatValue>
+                      <ModalStatLabel>Likes</ModalStatLabel>
+                    </ModalStatItem>
+                  </ModalStats>
+                  
+
+                </ModalVideoInfo>
                 
-                <ModalStatItem>
-                  <ModalStatValue>
-                    {selectedVideoForDetail.relevance_score 
-                      ? `${(selectedVideoForDetail.relevance_score * 100).toFixed(0)}%` 
-                      : '0%'}
-                  </ModalStatValue>
-                  <ModalStatLabel>Relevance</ModalStatLabel>
-                </ModalStatItem>
-              </ModalStats>
-              
-              {selectedVideoForDetail.target_audience && (
-                <div>
-                  <h4 style={{ marginBottom: '8px', fontSize: '16px' }}>Target Audience</h4>
-                  <p style={{ color: '#666', marginBottom: '16px' }}>{selectedVideoForDetail.target_audience}</p>
-                </div>
-              )}
+                <ModalSidebar>
+                  {/* Channel info */}
+                  <div style={{ 
+                    background: '#f9f9f9', 
+                    borderRadius: '10px', 
+                    padding: '15px',
+                    marginBottom: '20px'
+                  }}>
+                    <h4 style={{ 
+                      fontSize: '16px', 
+                      fontWeight: 600, 
+                      marginBottom: '12px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}>
+                      <IconComponent icon={FaIcons.FaYoutube} style={{ marginRight: '8px', color: '#FF0000' }} />
+                      Channel
+                    </h4>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <div style={{ 
+                        width: '40px', 
+                        height: '40px', 
+                        borderRadius: '50%', 
+                        background: '#5F27CD', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        color: 'white',
+                        marginRight: '10px'
+                      }}>
+                        {(selectedVideoForDetail.canal_nome || 'C').charAt(0)}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600 }}>{selectedVideoForDetail.canal_nome || 'Unknown channel'}</div>
+                        <div style={{ fontSize: '12px', color: '#666' }}>
+                          {selectedVideoForDetail.subscriber_count || 'Subscribers unknown'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Additional metadata */}
+                  <ModalMetadata>
+                    <h4 style={{ 
+                      fontSize: '16px', 
+                      fontWeight: 600, 
+                      marginBottom: '8px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}>
+                      <IconComponent icon={FaIcons.FaInfoCircle} style={{ marginRight: '8px' }} />
+                      Video Details
+                    </h4>
+                    
+                    <ModalMetaItem>
+                      <ModalMetaIcon>
+                        <IconComponent icon={FaIcons.FaHashtag} />
+                      </ModalMetaIcon>
+                      <ModalMetaContent>
+                        <ModalMetaLabel>Video ID</ModalMetaLabel>
+                        <ModalMetaValue>{selectedVideoForDetail.video_id_youtube || selectedVideoForDetail.id}</ModalMetaValue>
+                      </ModalMetaContent>
+                    </ModalMetaItem>
+                    
+                    <ModalMetaItem>
+                      <ModalMetaIcon>
+                        <IconComponent icon={FaIcons.FaCalendarAlt} />
+                      </ModalMetaIcon>
+                      <ModalMetaContent>
+                        <ModalMetaLabel>Publication Date</ModalMetaLabel>
+                        <ModalMetaValue>{selectedVideoForDetail.published_at || selectedVideoForDetail.created_at || 'Unknown date'}</ModalMetaValue>
+                      </ModalMetaContent>
+                    </ModalMetaItem>
+                    
+                    {selectedVideoForDetail.target_audience && (
+                      <ModalMetaItem>
+                        <ModalMetaIcon>
+                          <IconComponent icon={FaIcons.FaUsers} />
+                        </ModalMetaIcon>
+                        <ModalMetaContent>
+                          <ModalMetaLabel>Target Audience</ModalMetaLabel>
+                          <ModalMetaValue>{selectedVideoForDetail.target_audience}</ModalMetaValue>
+                        </ModalMetaContent>
+                      </ModalMetaItem>
+                    )}
+                  </ModalMetadata>
+                  
+                  {/* Performance trend chart */}
+                  <ModalTrending>
+                    <ModalTrendingTitle>
+                      <IconComponent icon={FaIcons.FaChartLine} />
+                      View Trend
+                    </ModalTrendingTitle>
+                    
+                    <ModalTrendingChart>
+                      {/* This would normally be a real chart component */}
+                      <div style={{ 
+                        height: '100%', 
+                        background: 'linear-gradient(90deg, rgba(95, 39, 205, 0.1), rgba(95, 39, 205, 0.2))',
+                        borderRadius: '8px',
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}>
+                        {/* Fake chart line */}
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '0',
+                          left: '0',
+                          right: '0',
+                          height: '50px',
+                          background: 'url("data:image/svg+xml,%3Csvg width=\'100%25\' height=\'100%25\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0,50 Q25,30 50,40 T100,30 T150,45 T200,30 T250,35 T300,25\' stroke=\'rgba(95,39,205,0.8)\' stroke-width=\'3\' fill=\'none\'/%3E%3C/svg%3E")',
+                          backgroundSize: 'contain',
+                          backgroundRepeat: 'no-repeat'
+                        }} />
+                      </div>
+                    </ModalTrendingChart>
+                    
+                    <div style={{ fontSize: '12px', color: '#666', textAlign: 'center' }}>
+                      Last 7 days
+                    </div>
+                  </ModalTrending>
+                  
+
+                </ModalSidebar>
+              </ModalGridContainer>
               
               <ModalActions>
                 <ModalActionButton 
