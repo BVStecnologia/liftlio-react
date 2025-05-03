@@ -5032,28 +5032,134 @@ const YoutubeMonitoring: React.FC = () => {
           {/* Adicionar a visualização do vídeo */}
           {selectedVideo && (
             <VideoDetailsSection style={{ 
-              marginBottom: '24px', 
-              padding: '16px',
-              background: 'white',
-              borderRadius: '10px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+              marginBottom: '32px', 
+              padding: '0',
+              background: 'rgba(255, 255, 255, 0.85)',
+              borderRadius: '16px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+              position: 'relative',
+              overflow: 'hidden',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.6)'
             }}>
+              {/* Background com grid e formas geométricas */}
+              <div style={{ 
+                position: 'absolute', 
+                top: 0, 
+                left: 0, 
+                right: 0, 
+                bottom: 0,
+                backgroundImage: `
+                  radial-gradient(circle at 10% 20%, rgba(95, 39, 205, 0.03) 0%, transparent 20%),
+                  radial-gradient(circle at 90% 80%, rgba(52, 199, 89, 0.03) 0%, transparent 20%),
+                  linear-gradient(rgba(0, 0, 0, 0.01) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(0, 0, 0, 0.01) 1px, transparent 1px)
+                `,
+                backgroundSize: '150px 150px, 150px 150px, 20px 20px, 20px 20px',
+                zIndex: 0,
+                opacity: 0.8
+              }}></div>
+              
               <div style={{ 
                 display: 'flex', 
                 flexDirection: 'row',
-                gap: '20px',
-                flexWrap: 'wrap'
+                gap: '24px',
+                flexWrap: 'wrap',
+                padding: '24px',
+                position: 'relative',
+                zIndex: 1
               }}>
                 <div style={{ 
-                  flex: '0 0 320px',
-                  marginBottom: '16px'
+                  flex: '0 0 380px',
+                  marginBottom: '16px',
+                  position: 'relative'
                 }}>
                   <VideoThumbnail style={{ 
                     width: '100%', 
-                    height: '180px',
-                    borderRadius: '8px',
-                    overflow: 'hidden'
+                    height: '215px',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                    transform: 'perspective(800px) rotateY(-5deg)',
+                    transition: 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    border: '2px solid rgba(255, 255, 255, 0.8)',
+                    position: 'relative'
                   }}>
+                    {/* Overlay escuro com gradiente */}
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 50%)',
+                      zIndex: 1
+                    }}></div>
+                    
+                    {/* Botão de play centralizado com pulsação */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '64px',
+                      height: '64px',
+                      borderRadius: '50%',
+                      background: 'rgba(255,255,255,0.25)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 2,
+                      boxShadow: '0 0 0 0 rgba(255, 255, 255, 0.5)',
+                      animation: 'pulse 2s infinite cubic-bezier(0.66, 0, 0, 1)',
+                      cursor: 'pointer',
+                      backdropFilter: 'blur(4px)',
+                      border: '1px solid rgba(255,255,255,0.3)'
+                    }}>
+                      <div style={{
+                        width: 0,
+                        height: 0,
+                        borderTop: '12px solid transparent',
+                        borderLeft: '20px solid white',
+                        borderBottom: '12px solid transparent',
+                        marginLeft: '4px'
+                      }}></div>
+                    </div>
+                    
+                    {/* Duração flutuante */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '12px',
+                      right: '12px',
+                      padding: '4px 8px',
+                      background: 'rgba(0,0,0,0.6)',
+                      color: 'white',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      zIndex: 2,
+                      backdropFilter: 'blur(4px)'
+                    }}>
+                      10:23
+                    </div>
+                    
+                    {/* Badge de qualidade */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '12px',
+                      padding: '4px 8px',
+                      background: 'rgba(0,0,0,0.6)',
+                      color: 'white',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      zIndex: 2,
+                      backdropFilter: 'blur(4px)'
+                    }}>
+                      HD
+                    </div>
+                    
                     <img 
                       src={getThumbnailUrl(selectedVideo)}
                       alt={selectedVideo.nome_do_video || "Video thumbnail"}
@@ -5068,12 +5174,25 @@ const YoutubeMonitoring: React.FC = () => {
                         display: 'block',
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover'
+                        objectFit: 'cover',
+                        transition: 'transform 0.5s ease',
+                        transform: 'scale(1.02)',
+                        zIndex: 0
                       }}
                     />
                   </VideoThumbnail>
-                  {selectedVideo.video_id_youtube && (
-                    <div style={{ marginTop: '8px', textAlign: 'center' }}>
+                  
+                  {/* Metadados flutuantes */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '-12px',
+                    left: '20px',
+                    right: '20px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    zIndex: 3
+                  }}>
+                    {selectedVideo.video_id_youtube && (
                       <a 
                         href={`https://www.youtube.com/watch?v=${selectedVideo.video_id_youtube}`}
                         target="_blank"
@@ -5081,42 +5200,120 @@ const YoutubeMonitoring: React.FC = () => {
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
-                          color: '#5F27CD',
+                          padding: '8px 16px',
+                          background: 'rgba(255, 0, 0, 0.85)',
+                          color: 'white',
                           textDecoration: 'none',
                           fontSize: '14px',
-                          fontWeight: 500
+                          fontWeight: 600,
+                          borderRadius: '20px',
+                          boxShadow: '0 4px 12px rgba(255, 0, 0, 0.3)',
+                          transition: 'all 0.3s ease',
+                          backdropFilter: 'blur(4px)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)'
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-3px)';
+                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(255, 0, 0, 0.4)';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 0, 0, 0.3)';
                         }}
                       >
-                        <IconComponent icon={FaIcons.FaYoutube} style={{ marginRight: '6px' }} />
+                        <IconComponent icon={FaIcons.FaYoutube} style={{ marginRight: '8px', fontSize: '18px' }} />
                         Watch on YouTube
                       </a>
-            </div>
-                  )}
-            </div>
+                    )}
+                  </div>
+                  
+                  {/* Efeito de brilho */}
+                  <style>
+                    {`
+                      @keyframes pulse {
+                        0% {
+                          box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5);
+                        }
+                        70% {
+                          box-shadow: 0 0 0 15px rgba(255, 255, 255, 0);
+                        }
+                        100% {
+                          box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+                        }
+                      }
+                      
+                      @keyframes shimmer {
+                        0% {
+                          transform: translateX(-100%) rotate(25deg);
+                        }
+                        100% {
+                          transform: translateX(100%) rotate(25deg);
+                        }
+                      }
+                    `}
+                  </style>
+                </div>
                 
-                <div style={{ flex: '1 1 320px' }}>
+                <div style={{ 
+                  flex: '1 1 320px',
+                  position: 'relative',
+                  zIndex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center'
+                }}>
                   <h3 style={{ 
-                    margin: '0 0 12px 0',
-                    fontSize: '18px',
-                    fontWeight: '600',
-                    color: '#333'
+                    margin: '0 0 16px 0',
+                    fontSize: '22px',
+                    fontWeight: '700',
+                    color: '#333',
+                    background: 'linear-gradient(135deg, #333, #555)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    position: 'relative',
+                    display: 'inline-block',
+                    maxWidth: '100%'
                   }}>
                     {selectedVideo.nome_do_video || selectedVideo.title || "Untitled Video"}
+                    
+                    {/* Indicador de linha sob o título */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '-6px',
+                      left: '0',
+                      width: '40px',
+                      height: '3px',
+                      background: 'linear-gradient(90deg, #5F27CD, transparent)',
+                      borderRadius: '3px'
+                    }}></div>
                   </h3>
                   
                   <div style={{ 
                     display: 'flex',
                     flexWrap: 'wrap',
-                    gap: '16px',
-                    marginBottom: '16px'
+                    gap: '12px',
+                    marginBottom: '20px'
                   }}>
+                    {/* Badge para estatísticas com glassmorphism */}
                     <div style={{ 
                       display: 'flex', 
                       alignItems: 'center',
+                      padding: '8px 14px',
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      borderRadius: '30px',
+                      backdropFilter: 'blur(4px)',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
                       fontSize: '14px',
-                      color: '#666'
+                      fontWeight: '600',
+                      color: '#444',
+                      transition: 'all 0.3s ease'
                     }}>
-                      <IconComponent icon={FaIcons.FaEye} style={{ marginRight: '6px' }} />
+                      <IconComponent icon={FaIcons.FaEye} style={{ 
+                        marginRight: '8px', 
+                        color: '#5F27CD',
+                        filter: 'drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1))'
+                      }} />
                       {selectedVideo.views 
                         ? (typeof selectedVideo.views === 'number' 
                            ? (selectedVideo.views >= 1000 
@@ -5126,15 +5323,27 @@ const YoutubeMonitoring: React.FC = () => {
                               ? `${(parseFloat(selectedVideo.views.toString()) / 1000).toFixed(1)}K` 
                               : selectedVideo.views.toString())) 
                         : '0'} views
-          </div>
+                    </div>
                     
                     <div style={{ 
                       display: 'flex', 
                       alignItems: 'center',
+                      padding: '8px 14px',
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      borderRadius: '30px',
+                      backdropFilter: 'blur(4px)',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
                       fontSize: '14px',
-                      color: '#666'
+                      fontWeight: '600',
+                      color: '#444',
+                      transition: 'all 0.3s ease'
                     }}>
-                      <IconComponent icon={FaIcons.FaComment} style={{ marginRight: '6px' }} />
+                      <IconComponent icon={FaIcons.FaComment} style={{ 
+                        marginRight: '8px', 
+                        color: '#2D98DA',
+                        filter: 'drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1))'
+                      }} />
                       {selectedVideo.commets || selectedVideo.comments || '0'} comments
                     </div>
                     
@@ -5142,10 +5351,22 @@ const YoutubeMonitoring: React.FC = () => {
                       <div style={{ 
                         display: 'flex', 
                         alignItems: 'center',
+                        padding: '8px 14px',
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        borderRadius: '30px',
+                        backdropFilter: 'blur(4px)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
                         fontSize: '14px',
-                        color: '#666'
+                        fontWeight: '600',
+                        color: '#444',
+                        transition: 'all 0.3s ease'
                       }}>
-                        <IconComponent icon={FaIcons.FaTag} style={{ marginRight: '6px' }} />
+                        <IconComponent icon={FaIcons.FaTag} style={{ 
+                          marginRight: '8px', 
+                          color: '#FF9F43',
+                          filter: 'drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1))'
+                        }} />
                         {selectedVideo.content_category}
                       </div>
                     )}
@@ -5154,13 +5375,34 @@ const YoutubeMonitoring: React.FC = () => {
                       <div style={{ 
                         display: 'flex', 
                         alignItems: 'center',
+                        padding: '8px 14px',
+                        background: selectedVideo.relevance_score > 0.7 
+                          ? 'rgba(52, 199, 89, 0.15)' 
+                          : selectedVideo.relevance_score > 0.5 
+                          ? 'rgba(255, 149, 0, 0.15)' 
+                          : 'rgba(255, 45, 85, 0.15)',
+                        border: '1px solid ' + (selectedVideo.relevance_score > 0.7 
+                          ? 'rgba(52, 199, 89, 0.3)' 
+                          : selectedVideo.relevance_score > 0.5 
+                          ? 'rgba(255, 149, 0, 0.3)' 
+                          : 'rgba(255, 45, 85, 0.3)'),
+                        borderRadius: '30px',
+                        backdropFilter: 'blur(4px)',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
                         fontSize: '14px',
-                        color: '#666',
-                        background: '#f5f5f5',
-                        padding: '4px 10px',
-                        borderRadius: '12px'
+                        fontWeight: '600',
+                        color: selectedVideo.relevance_score > 0.5 ? '#444' : '#fff',
+                        transition: 'all 0.3s ease'
                       }}>
-                        <IconComponent icon={FaIcons.FaChartLine} style={{ marginRight: '6px' }} />
+                        <IconComponent icon={FaIcons.FaChartLine} style={{ 
+                          marginRight: '8px', 
+                          color: selectedVideo.relevance_score > 0.7 
+                            ? '#34C759' 
+                            : selectedVideo.relevance_score > 0.5 
+                            ? '#FF9500' 
+                            : '#FF2D55',
+                          filter: 'drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1))'
+                        }} />
                         Relevance: {(selectedVideo.relevance_score * 100).toFixed(0)}%
                       </div>
                     )}
@@ -5168,14 +5410,45 @@ const YoutubeMonitoring: React.FC = () => {
                   
                   {selectedVideo.descricao && (
                     <div style={{ 
-                      fontSize: '14px',
+                      fontSize: '15px',
+                      lineHeight: '1.6',
                       color: '#555',
                       maxHeight: '100px',
                       overflowY: 'auto',
-                      padding: '10px',
-                      background: '#f9f9f9',
-                      borderRadius: '6px'
+                      padding: '16px',
+                      background: 'rgba(255, 255, 255, 0.6)',
+                      borderRadius: '12px',
+                      backdropFilter: 'blur(8px)',
+                      boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.9), 0 4px 12px rgba(0, 0, 0, 0.06)',
+                      position: 'relative'
                     }}>
+                      {/* Overlay com gradiente para suavizar o texto */}
+                      <div style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: '40px',
+                        background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.8))',
+                        pointerEvents: 'none',
+                        borderRadius: '0 0 12px 12px'
+                      }}></div>
+                      
+                      {/* Efeito de brilho */}
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent)',
+                        transform: 'translateX(-100%) rotate(25deg)',
+                        animation: 'shimmer 6s infinite',
+                        pointerEvents: 'none',
+                        borderRadius: '12px',
+                        opacity: 0.6
+                      }}></div>
+                      
                       {selectedVideo.descricao.length > 300 
                         ? `${selectedVideo.descricao.substring(0, 300)}...` 
                         : selectedVideo.descricao}
