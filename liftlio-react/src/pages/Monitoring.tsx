@@ -1,16 +1,38 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { COLORS, withOpacity } from '../styles/colors';
-
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
-import Card from '../components/Card';
-import ButtonUI from '../components/ui/Button';
+// Import não usado - removido para evitar erros
+// import axios from 'axios';
+import { supabase } from '../lib/supabaseClient';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
-import { supabase, callRPC } from '../lib/supabaseClient';
+import { callRPC } from '../lib/supabaseClient';
+import '../styles/contentCategories.css';
+import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
+import Card from '../components/Card';
+import ButtonUI from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
 import MetricCard from '../components/ui/MetricCard';
+
+// Funções locais de formatação de data
+const formatDate = (date: Date | string | number): string => {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+const formatDateTime = (date: Date | string | number): string => {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+};
 
 // Definir paleta de cores para os gráficos
 const CHART_PALETTE = [
@@ -3933,7 +3955,7 @@ const YoutubeMonitoring: React.FC = () => {
           
           {/* Categorias de Conteúdo */}
           <ChartRow>
-            <ChartContainer>
+            <ChartContainer className="content-categories">
               <ChartHeader>
                 <ChartTitle>
                   <IconComponent icon={FaIcons.FaChartPie} />
@@ -3941,198 +3963,124 @@ const YoutubeMonitoring: React.FC = () => {
                 </ChartTitle>
               </ChartHeader>
               <ChartBody>
-                <div style={{ display: 'flex', flexDirection: 'row', height: '280px' }}>
-                  <div style={{ flex: '0 0 35%', height: '100%' }}>
+                <div className="chart-content">
+                  <div className="pie-container">
+                    <div className="total-count">
+                      <span className="total-count-value">
+                        {contentCategories.reduce((sum, cat) => sum + cat.total_videos, 0).toLocaleString()}
+                      </span>
+                      <span className="total-count-label">Total Videos</span>
+                    </div>
+                    
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
+                        <defs>
+                          {CHART_PALETTE.map((color, index) => (
+                            <linearGradient key={index} id={`colorGradient-${index}`} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor={color} stopOpacity={0.8} />
+                              <stop offset="100%" stopColor={color} stopOpacity={1} />
+                            </linearGradient>
+                          ))}
+                        </defs>
+                        
                         <Pie
                           data={getContentDistributionData()}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          outerRadius={90}
-                          innerRadius={50}
+                          outerRadius={110}
+                          innerRadius={75}
                           fill="#8884d8"
                           dataKey="value"
                           nameKey="shortName"
-                          label={(entry) => entry.shortName}
-                          strokeWidth={1}
+                          paddingAngle={2}
+                          strokeWidth={0}
+                          animationDuration={1000}
+                          animationBegin={200}
+                          isAnimationActive
                         >
                           {getContentDistributionData().map((entry, index) => (
                             <Cell 
                               key={`cell-${index}`} 
-                              fill={CHART_PALETTE[index % CHART_PALETTE.length]}
-                              stroke="#ffffff"
+                              fill={`url(#colorGradient-${index % CHART_PALETTE.length})`}
+                              stroke="white"
+                              strokeWidth={1}
                             />
                           ))}
                         </Pie>
+                        
                         <Tooltip 
                           formatter={(value, name, props) => [
-                            `${props.payload.percentage}% (${props.payload.videos} videos)`, 
+                            `${props.payload.percentage}% (${props.payload.videos} vídeos)`, 
                             props.payload.fullName
                           ]} 
+                          contentStyle={{
+                            background: 'rgba(255, 255, 255, 0.95)',
+                            borderRadius: '12px',
+                            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                            border: 'none',
+                            padding: '12px 16px',
+                            fontSize: '14px'
+                          }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <div style={{ flex: '1', padding: '0 20px', overflowY: 'auto' }}>
-                    <table style={{ 
-                      width: '100%', 
-                      borderCollapse: 'separate',
-                      borderSpacing: '0',
-                      fontFamily: "'SF Pro Display', 'Segoe UI', sans-serif",
-                    }}>
-                      <thead>
-                        <tr>
-                          <th style={{ 
-                            padding: '12px 16px', 
-                            textAlign: 'left', 
-                            color: '#1F2937',
-                            fontWeight: '600',
-                            fontSize: '14px',
-                            letterSpacing: '0.5px',
-                            borderBottom: '2px solid rgba(99, 102, 241, 0.2)',
-                            textTransform: 'uppercase',
-                          }}>Category</th>
-                          <th style={{ 
-                            padding: '12px 16px', 
-                            textAlign: 'center', 
-                            color: '#1F2937',
-                            fontWeight: '600',
-                            fontSize: '14px',
-                            letterSpacing: '0.5px',
-                            borderBottom: '2px solid rgba(99, 102, 241, 0.2)',
-                            textTransform: 'uppercase',
-                          }}>Videos</th>
-                          <th style={{ 
-                            padding: '12px 16px', 
-                            textAlign: 'right', 
-                            color: '#1F2937',
-                            fontWeight: '600',
-                            fontSize: '14px',
-                            letterSpacing: '0.5px',
-                            borderBottom: '2px solid rgba(99, 102, 241, 0.2)',
-                            textTransform: 'uppercase',
-                          }}>Views</th>
-                          <th style={{ 
-                            padding: '12px 16px', 
-                            textAlign: 'right', 
-                            color: '#1F2937',
-                            fontWeight: '600',
-                            fontSize: '14px',
-                            letterSpacing: '0.5px',
-                            borderBottom: '2px solid rgba(99, 102, 241, 0.2)',
-                            textTransform: 'uppercase',
-                          }}>Likes</th>
-                          <th style={{ 
-                            padding: '12px 16px', 
-                            textAlign: 'center', 
-                            color: '#1F2937',
-                            fontWeight: '600',
-                            fontSize: '14px',
-                            letterSpacing: '0.5px',
-                            borderBottom: '2px solid rgba(99, 102, 241, 0.2)',
-                            textTransform: 'uppercase',
-                          }}>Relevance</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {getContentDistributionData().map((category, index) => (
-                          <tr 
-                            key={index} 
-                            style={{ 
-                              transition: 'all 0.2s ease',
-                            }}
-                            className="hover:bg-gray-50"
-                          >
-                            <td style={{ 
-                              padding: '16px', 
-                              textAlign: 'left',
-                              borderBottom: '1px solid rgba(229, 231, 235, 0.7)',
-                              fontWeight: '500',
-                              color: '#111827',
-                            }}>
-                              <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <div style={{ 
-                                  width: '10px', 
-                                  height: '10px', 
-                                  background: `${CHART_PALETTE[index % CHART_PALETTE.length]}`,
-                                  borderRadius: '3px',
-                                  marginRight: '8px',
-                                  border: '1px solid white'
-                                }}></div>
-                                <span style={{ fontWeight: '600' }}>{category.name}</span>
-                              </div>
-                            </td>
-                            <td style={{ 
-                              padding: '16px', 
-                              textAlign: 'center',
-                              borderBottom: '1px solid rgba(229, 231, 235, 0.7)',
-                              fontFamily: "'SF Mono', 'Consolas', monospace",
-                              fontVariantNumeric: 'tabular-nums',
-                              fontWeight: '500',
-                              color: '#111827',
-                            }}>{category.videos}</td>
-                            <td style={{ 
-                              padding: '16px', 
-                              textAlign: 'right',
-                              borderBottom: '1px solid rgba(229, 231, 235, 0.7)',
-                              fontFamily: "'SF Mono', 'Consolas', monospace",
-                              fontVariantNumeric: 'tabular-nums',
-                              fontWeight: '500',
-                              color: '#111827',
-                            }}>
-                              {Number(category.views).toLocaleString()}
-                            </td>
-                            <td style={{ 
-                              padding: '16px', 
-                              textAlign: 'right',
-                              borderBottom: '1px solid rgba(229, 231, 235, 0.7)',
-                              fontFamily: "'SF Mono', 'Consolas', monospace",
-                              fontVariantNumeric: 'tabular-nums',
-                              fontWeight: '500',
-                              color: '#111827',
-                            }}>
-                              {Number(category.likes).toLocaleString()}
-                            </td>
-                            <td style={{ 
-                              padding: '16px', 
-                              textAlign: 'center',
-                              borderBottom: '1px solid rgba(229, 231, 235, 0.7)'
-                            }}>
-                              <span style={{ 
-                                background: parseFloat(category.relevance) >= 8 
-                                  ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.15), rgba(76, 217, 100, 0.4))' 
-                                  : parseFloat(category.relevance) >= 6 
-                                  ? 'linear-gradient(135deg, rgba(255, 204, 0, 0.15), rgba(255, 204, 0, 0.4))' 
-                                  : 'linear-gradient(135deg, rgba(255, 45, 85, 0.15), rgba(255, 45, 85, 0.4))',
-                                border: parseFloat(category.relevance) >= 8 
-                                  ? '1px solid rgba(76, 217, 100, 0.4)' 
-                                  : parseFloat(category.relevance) >= 6 
-                                  ? '1px solid rgba(255, 204, 0, 0.4)' 
-                                  : '1px solid rgba(255, 45, 85, 0.4)',
-                                color: parseFloat(category.relevance) >= 6 ? '#333' : '#fff',
-                                padding: '6px 12px',
-                                borderRadius: '12px',
-                                fontSize: '0.85rem',
-                                fontWeight: 'bold',
-                                display: 'inline-block',
-                                boxShadow: parseFloat(category.relevance) >= 8 
-                                  ? '0 2px 5px rgba(76, 217, 100, 0.2)' 
-                                  : parseFloat(category.relevance) >= 6 
-                                  ? '0 2px 5px rgba(255, 204, 0, 0.2)' 
-                                  : '0 2px 5px rgba(255, 45, 85, 0.2)',
-                                fontFamily: "'SF Mono', 'Consolas', monospace",
-                                letterSpacing: '0.5px',
-                                transition: 'all 0.2s ease',
-                              }}>
+                  
+                  <div className="category-cards">
+                    {getContentDistributionData().map((category, index) => {
+                      const relevanceScore = parseFloat(category.relevance);
+                      const relevanceClass = 
+                        relevanceScore >= 8 ? 'relevance-high' : 
+                        relevanceScore >= 6 ? 'relevance-medium' : 'relevance-low';
+                      
+                      return (
+                        <div className="category-card" key={index}>
+                          <div className="category-name">
+                            <span 
+                              className="category-color" 
+                              style={{ background: CHART_PALETTE[index % CHART_PALETTE.length] }}
+                            ></span>
+                            {category.name}
+                          </div>
+                          
+                          <div className="progress-bar">
+                            <div 
+                              className="progress-value" 
+                              style={{ 
+                                width: `${category.percentage || 0}%`,
+                                background: CHART_PALETTE[index % CHART_PALETTE.length] 
+                              }}
+                            ></div>
+                          </div>
+                          
+                          <div className="metric-row">
+                            <div className="metric">
+                              <span className="metric-value">{category.videos}</span>
+                              <span className="metric-label">Vídeos</span>
+                            </div>
+                            <div className="metric">
+                              <span className="metric-value">
+                                {Number(category.views).toLocaleString()}
+                              </span>
+                              <span className="metric-label">Views</span>
+                            </div>
+                            <div className="metric">
+                              <span className="metric-value">
+                                {Number(category.likes).toLocaleString()}
+                              </span>
+                              <span className="metric-label">Likes</span>
+                            </div>
+                            <div className="metric">
+                              <span className={`relevance-badge ${relevanceClass}`}>
                                 {parseFloat(category.relevance).toFixed(1)}
                               </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                              <span className="metric-label">Relevance</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </ChartBody>
