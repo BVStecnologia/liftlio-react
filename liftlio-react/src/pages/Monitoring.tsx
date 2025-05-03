@@ -3967,9 +3967,9 @@ const YoutubeMonitoring: React.FC = () => {
                   <div className="pie-container">
                     <div className="total-count">
                       <span className="total-count-value">
-                        {contentCategories.reduce((sum, cat) => sum + cat.total_videos, 0).toLocaleString()}
+                        {contentCategories.length}
                       </span>
-                      <span className="total-count-label">Total Videos</span>
+                      <span className="total-count-label">Categories</span>
                     </div>
                     
                     <ResponsiveContainer width="100%" height="100%">
@@ -4029,19 +4029,24 @@ const YoutubeMonitoring: React.FC = () => {
                   
                   <div className="category-cards">
                     {getContentDistributionData().map((category, index) => {
-                      const relevanceScore = parseFloat(category.relevance);
-                      const relevanceClass = 
-                        relevanceScore >= 8 ? 'relevance-high' : 
-                        relevanceScore >= 6 ? 'relevance-medium' : 'relevance-low';
+                      // Calcular a classe de relevância baseada no valor
+                      let relevanceClass = 'relevance-low';
+                      if (parseFloat(category.relevance) >= 8.0) {
+                        relevanceClass = 'relevance-high';
+                      } else if (parseFloat(category.relevance) >= 6.0) {
+                        relevanceClass = 'relevance-medium';
+                      }
                       
                       return (
-                        <div className="category-card" key={index}>
+                        <div key={index} className="category-card">
+                          <div className="card-shine"></div>
+                          <div className="rocket-particles"></div>
                           <div className="category-name">
                             <span 
                               className="category-color" 
-                              style={{ background: CHART_PALETTE[index % CHART_PALETTE.length] }}
+                              style={{ backgroundColor: CHART_PALETTE[index % CHART_PALETTE.length] }}
                             ></span>
-                            {category.name}
+                            {category.fullName}
                           </div>
                           
                           <div className="progress-bar">
