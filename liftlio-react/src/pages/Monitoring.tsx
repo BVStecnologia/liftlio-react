@@ -14,6 +14,7 @@ import Card from '../components/Card';
 import ButtonUI from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
 import MetricCard from '../components/ui/MetricCard';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // Funções locais de formatação de data
 const formatDate = (date: Date | string | number): string => {
@@ -719,6 +720,8 @@ const ChannelBadge = styled.div<{ status: string }>`
     font-size: 10px;
   }
 `;
+
+// VideoBadge já foi definido mais abaixo no código
 
 // Score badge conforme imagem
 const ScoreBadge = styled.div`
@@ -3084,6 +3087,10 @@ interface VideoDetails {
 
 // Component implementation
 const YoutubeMonitoring: React.FC = () => {
+  // Router hooks para manipular URL params
+  const location = useLocation();
+  const navigate = useNavigate();
+  
   // Estado para o componente
   const [activeTab, setActiveTab] = useState<'overview' | 'channels' | 'videos' | 'comments'>('overview');
   const [channelFilter, setChannelFilter] = useState<'all' | 'active' | 'inactive'>('all');
@@ -3133,6 +3140,74 @@ const YoutubeMonitoring: React.FC = () => {
   const [totalVideos, setTotalVideos] = useState<number>(0);
   
   const { currentProject } = useProject();
+  
+  // Função para atualizar os parâmetros da URL
+  const updateUrlParams = (params: {tab?: string, channelId?: number | null, videoId?: number | null}) => {
+    const searchParams = new URLSearchParams(location.search);
+    
+    // Atualizar os parâmetros na URL
+    if (params.tab) {
+      searchParams.set('tab', params.tab);
+    }
+    
+    if (params.channelId) {
+      searchParams.set('channelId', params.channelId.toString());
+    } else if (params.channelId === null) {
+      searchParams.delete('channelId');
+    }
+    
+    if (params.videoId) {
+      searchParams.set('videoId', params.videoId.toString());
+    } else if (params.videoId === null) {
+      searchParams.delete('videoId');
+    }
+    
+    // Atualizar URL sem recarregar a página
+    navigate({
+      pathname: location.pathname,
+      search: searchParams.toString()
+    }, { replace: true });
+  };
+  
+  // Ler parâmetros da URL ao carregar a página
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    
+    // Extrair parâmetros
+    const tabParam = searchParams.get('tab');
+    const channelIdParam = searchParams.get('channelId');
+    const videoIdParam = searchParams.get('videoId');
+    
+    // Configurar estados iniciais baseados nos parâmetros
+    if (tabParam && ['overview', 'channels', 'videos', 'comments'].includes(tabParam)) {
+      setActiveTab(tabParam as any);
+    }
+    
+    // Se tiver channelId na URL, selecionar o canal
+    if (channelIdParam) {
+      const channelId = Number(channelIdParam);
+      setSelectedChannel(channelId);
+      fetchChannelVideos(channelId);
+    }
+    
+    // Se tiver videoId na URL, buscar detalhes do vídeo
+    if (videoIdParam && channelIdParam) {
+      const videoId = Number(videoIdParam);
+      fetchVideoComments(videoId);
+      
+      // Esperar os vídeos do canal carregarem e então selecionar o vídeo
+      const videoCheck = setInterval(() => {
+        const video = channelVideos.find(v => v.id === videoId);
+        if (video) {
+          setSelectedVideo(video);
+          clearInterval(videoCheck);
+        }
+      }, 500);
+      
+      // Limpar o intervalo após 5 segundos para evitar loops infinitos
+      setTimeout(() => clearInterval(videoCheck), 5000);
+    }
+  }, [location.search]); // Executar quando a URL mudar
   
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -3679,12 +3754,19 @@ const YoutubeMonitoring: React.FC = () => {
     }
   };
 
-  // Function to handle channel selection - update to also fetch channel details
+  // Function to handle channel selection - update URL params too
   const handleChannelSelect = (channelId: number) => {
     console.log('Canal selecionado, ID:', channelId);
     setSelectedChannel(channelId);
-    setSelectedVideo(null); // Clear selected video
+    setSelectedVideo(null); // Limpar vídeo selecionado
     fetchChannelVideos(channelId);
+    
+    // Atualizar a URL quando selecionar um canal
+    updateUrlParams({
+      tab: 'videos',
+      channelId: channelId,
+      videoId: null
+    });
     
     // Get the channel data
     const selectedChannelData = channels.find(c => c.id === channelId);
@@ -3746,10 +3828,16 @@ const YoutubeMonitoring: React.FC = () => {
     }
   };
   
-  // Function to select a video
+  // Function to select a video - update URL params too
   const handleVideoSelect = async (videoId: number) => {
     console.log('Vídeo selecionado, ID:', videoId);
     setActiveTab('comments');
+    
+    // Atualizar a URL quando selecionar um vídeo
+    updateUrlParams({
+      tab: 'comments',
+      videoId: videoId
+    });
     
     // Encontrar o vídeo selecionado nos dados
     const video = channelVideos.find(v => v.id === videoId) as VideoDetails;
@@ -3849,6 +3937,32 @@ const YoutubeMonitoring: React.FC = () => {
     });
   };
   
+  // Atualizar a URL quando mudar de aba manualmente
+  const handleTabChange = (tab: 'overview' | 'channels' | 'videos' | 'comments') => {
+    setActiveTab(tab);
+    
+    // Atualizar apenas o parâmetro tab na URL
+    updateUrlParams({
+      tab: tab
+    });
+    
+    // Se mudar para overview ou channels, limpar seleção de vídeo
+    if (tab === 'overview' || tab === 'channels') {
+      setSelectedVideo(null);
+      updateUrlParams({
+        videoId: null
+      });
+    }
+    
+    // Se mudar para overview, limpar seleção de canal também
+    if (tab === 'overview') {
+      setSelectedChannel(null);
+      updateUrlParams({
+        channelId: null
+      });
+    }
+  };
+  
   return (
     <PageContainer>
       <PageTitle>
@@ -3857,16 +3971,16 @@ const YoutubeMonitoring: React.FC = () => {
       </PageTitle>
       
       <TabsContainer>
-        <Tab active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>
+        <Tab active={activeTab === 'overview'} onClick={() => handleTabChange('overview')}>
           <TabIcon><IconComponent icon={FaIcons.FaChartLine} /></TabIcon>
           Overview
         </Tab>
-        <Tab active={activeTab === 'channels'} onClick={() => setActiveTab('channels')}>
+        <Tab active={activeTab === 'channels'} onClick={() => handleTabChange('channels')}>
           <TabIcon><IconComponent icon={FaIcons.FaYoutube} /></TabIcon>
           Channels
         </Tab>
         {selectedChannel !== null && (
-        <Tab active={activeTab === 'videos'} onClick={() => setActiveTab('videos')}>
+        <Tab active={activeTab === 'videos'} onClick={() => handleTabChange('videos')}>
           <TabIcon><IconComponent icon={FaIcons.FaVideo} /></TabIcon>
           Videos
             <ChannelBadge 
@@ -3878,24 +3992,24 @@ const YoutubeMonitoring: React.FC = () => {
               }} 
               status="active"
             >
-              {channelVideos.length}
+              {channels.find(c => c.id === selectedChannel)?.channel_name?.substring(0, 1).toUpperCase() || '?'}
             </ChannelBadge>
         </Tab>
         )}
         {selectedVideo !== null && (
-        <Tab active={activeTab === 'comments'} onClick={() => setActiveTab('comments')}>
-          <TabIcon><IconComponent icon={FaIcons.FaComment} /></TabIcon>
+        <Tab active={activeTab === 'comments'} onClick={() => handleTabChange('comments')}>
+          <TabIcon><IconComponent icon={FaIcons.FaComments} /></TabIcon>
           Comments
-            <ChannelBadge 
+            <ChannelBadge
               style={{ 
                 marginLeft: '16px',
                 display: 'inline-flex',
                 justifyContent: 'center',
                 minWidth: '24px'
-              }} 
-              status="active"
+              }}
+              status="info"
             >
-              {filteredComments.length}
+              {selectedVideo?.title?.substring(0, 1).toUpperCase() || selectedVideo?.nome_do_video?.substring(0, 1).toUpperCase() || '?'}
             </ChannelBadge>
         </Tab>
         )}
@@ -4174,7 +4288,7 @@ const YoutubeMonitoring: React.FC = () => {
                             {video.nome_do_video || "Untitled Video"}
                           </VideoMainTitle>
                           {video.total_posts > 0 && (
-                            <VideoBadge type="new">
+                            <VideoBadge type="featured">
                               <span style={{ marginLeft: '5px', display: 'inline-block' }}>
                                 {video.total_posts} {video.total_posts === 1 ? 'post' : 'posts'}
                               </span>
