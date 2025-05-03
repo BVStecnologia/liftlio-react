@@ -1494,6 +1494,7 @@ const VideoBadge = styled.span<{ type: string }>`
   font-weight: ${props => props.theme.fontWeights.semiBold};
   border-radius: ${props => props.theme.radius.pill};
   margin-left: 12px;
+  width: fit-content; /* Garante que o badge tenha largura proporcional ao conteúdo */
   background: ${props => 
     props.type === 'new' ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.15), rgba(52, 199, 89, 0.3))' : 
     props.type === 'trending' ? 'linear-gradient(135deg, rgba(255, 149, 0, 0.15), rgba(255, 149, 0, 0.3))' : 
@@ -1519,9 +1520,9 @@ const VideoBadge = styled.span<{ type: string }>`
   /* Add icon/symbol with before pseudo-element */
   &:before {
     content: '${props => 
-      props.type === 'new' ? "★ New" : 
-      props.type === 'trending' ? "↑ Trending" : 
-      "• Featured"}';
+      props.type === 'new' ? "★ New " : 
+      props.type === 'trending' ? "↑ Trending " : 
+      "• Featured "}';
   }
   
   /* Add pulsing animation for new items */
@@ -3562,7 +3563,9 @@ const YoutubeMonitoring: React.FC = () => {
                           </VideoMainTitle>
                           {video.total_posts > 0 && (
                             <VideoBadge type="new">
-                              {video.total_posts} {video.total_posts === 1 ? 'post' : 'posts'}
+                              <span style={{ marginLeft: '5px', display: 'inline-block' }}>
+                                {video.total_posts} {video.total_posts === 1 ? 'post' : 'posts'}
+                              </span>
                             </VideoBadge>
                           )}
                         </VideoTitleText>
