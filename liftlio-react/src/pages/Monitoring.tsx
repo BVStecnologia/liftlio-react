@@ -5182,6 +5182,15 @@ const YoutubeMonitoring: React.FC = () => {
             </ChartTitle>
           </ChartHeader>
           
+          <style>
+            {`
+              .comment-card-hover:hover {
+                transform: translateY(-3px) !important;
+                box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+              }
+            `}
+          </style>
+          
           {isLoadingComments ? (
             <div style={{ padding: '40px 0', textAlign: 'center' }}>
               <div style={{ fontSize: '24px', color: '#666', marginBottom: '16px' }}>
@@ -5194,97 +5203,161 @@ const YoutubeMonitoring: React.FC = () => {
             <div style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}>
                 <IconComponent icon={FaIcons.FaComments} />
             </div>
-              <h3>No comments found for this video</h3>
+              <h3>No comments found</h3>
               <p>This video doesn't have any posted comments yet</p>
             </div>
           ) : (
-            <div style={{ padding: '20px' }}>
-              {filteredComments.map(comment => (
-                <div 
-                  key={comment.id_comentario} 
-                  style={{ 
-                    padding: '15px', 
-                    borderBottom: '1px solid #eee', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: '8px',
-                    background: '#fff',
-                    borderRadius: '8px',
-                    marginBottom: '10px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ fontWeight: 'bold' }}>{comment.author_name}</div>
-                    <div style={{ fontSize: '0.8rem', color: '#666' }}>
-                      {comment.published_at || comment.updated_at || 'N/A'}
-          </div>
-                  </div>
-                  <div>{comment.text_original}</div>
-                  <div style={{ fontSize: '0.9rem', color: '#666', display: 'flex', gap: '10px' }}>
-                    <span><IconComponent icon={FaIcons.FaThumbsUp} /> {comment.like_count}</span>
-                    <span><IconComponent icon={FaIcons.FaReply} /> {comment.total_reply_count} replies</span>
-                    {comment.lead_score && 
-                      <span><IconComponent icon={FaIcons.FaStar} /> Score: {comment.lead_score}</span>
-                    }
-                    {comment.justificativa_comentario && (
-                      <button 
-                        onClick={() => showJustificationPopup('Comment Justification', comment.justificativa_comentario)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#5F27CD',
-                          cursor: 'pointer',
+            <CommentsContainer>
+              <CommentsHeader>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <FilterButton 
+                    active={true} 
+                    style={{ marginRight: '8px' }}
+                  >
+                    <IconComponent icon={FaIcons.FaComments} />
+                    All ({filteredComments.length})
+                  </FilterButton>
+                  <FilterButton>
+                    <IconComponent icon={FaIcons.FaReply} />
+                    With Replies ({filteredComments.filter(c => c.mensagem).length})
+                  </FilterButton>
+                  <FilterButton>
+                    <IconComponent icon={FaIcons.FaSortAmountDown} />
+                    Highest Relevance
+                  </FilterButton>
+                </div>
+                <div>
+                  <SearchContainer>
+                    <SearchIcon>
+                      <IconComponent icon={FaIcons.FaSearch} />
+                    </SearchIcon>
+                    <SearchInput 
+                      placeholder="Search comments..." 
+                      style={{ width: '240px' }}
+                    />
+                  </SearchContainer>
+                </div>
+              </CommentsHeader>
+              
+              {filteredComments.map(comment => {
+                // Calcular score para definir a cor do card
+                const scoreValue = parseFloat(comment.lead_score || '0');
+                const scoreClass = scoreValue >= 0.8 ? 'high' : 
+                                   scoreValue >= 0.5 ? 'medium' : 'low';
+                
+                // Criar inicial para avatar
+                const authorInitial = comment.author_name?.charAt(0).toUpperCase() || 'U';
+                
+                return (
+                  <CommentCard 
+                    key={comment.id_comentario}
+                    className="comment-card-hover"
+                    style={{
+                      borderLeft: `4px solid ${
+                        scoreValue >= 0.8 ? '#34C759' : 
+                        scoreValue >= 0.5 ? '#FF9500' : 
+                        '#999'
+                      }`,
+                      transform: 'none',
+                      transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+                    }}
+                  >
+                    <CommentHeader>
+                      <CommentAuthor>
+                        <div style={{ 
+                          width: '36px', 
+                          height: '36px', 
+                          borderRadius: '50%', 
+                          background: `${
+                            scoreValue >= 0.8 ? 'linear-gradient(135deg, #34C759, #2EA043)' : 
+                            scoreValue >= 0.5 ? 'linear-gradient(135deg, #FF9500, #F08200)' : 
+                            'linear-gradient(135deg, #999, #777)'
+                          }`,
                           display: 'flex',
                           alignItems: 'center',
-                          padding: '0',
-                          fontSize: '0.9rem'
-                        }}
-                      >
-                        <IconComponent icon={FaIcons.FaInfoCircle} style={{ marginRight: '4px' }} />
-                        Justification
-                      </button>
-                    )}
-                  </div>
-                  
-                  {comment.mensagem && (
-                    <div style={{ 
-                      marginTop: '8px', 
-                      padding: '8px', 
-                      background: '#f5f8fa', 
-                      borderRadius: '6px',
-                      borderLeft: '3px solid #5F27CD' 
-                    }}>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#5F27CD', marginBottom: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span><IconComponent icon={FaIcons.FaReply} /> Reply:</span>
-                        {comment.justificativa_mensagem && (
-                          <button 
-                            onClick={() => showJustificationPopup('Reply Justification', comment.justificativa_mensagem || '')}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: '#5F27CD',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              padding: '0',
-                              fontSize: '0.85rem'
-                            }}
-                          >
-                            <IconComponent icon={FaIcons.FaInfoCircle} style={{ marginRight: '4px' }} />
-                            Justification
-                          </button>
-                        )}
-                      </div>
-                      <div>{comment.mensagem}</div>
-                      <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>
-                        Status: {comment.respondido ? 'Sent' : 'Pending'}
-                      </div>
+                          justifyContent: 'center',
+                          color: 'white',
+                          fontWeight: 'bold',
+                          marginRight: '10px',
+                          boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+                        }}>
+                          {authorInitial}
+                        </div>
+                        {comment.author_name}
+                      </CommentAuthor>
+                      
+                      <CommentStats>
+                        <DateBadge>
+                          <IconComponent icon={FaIcons.FaCalendarAlt} />
+                          {comment.published_at || comment.updated_at || 'N/A'}
+                        </DateBadge>
+                        
+                        {comment.lead_score && 
+                          <CommentScore score={scoreValue}>
+                            <IconComponent icon={FaIcons.FaStar} />
+                            Score: {comment.lead_score}
+                          </CommentScore>
+                        }
+                      </CommentStats>
+                    </CommentHeader>
+                    
+                    <CommentText>
+                      {comment.text_original}
+                    </CommentText>
+                    
+                    <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
+                      <CommentStat>
+                        <IconComponent icon={FaIcons.FaThumbsUp} />
+                        {comment.like_count}
+                      </CommentStat>
+                      
+                      <CommentStat>
+                        <IconComponent icon={FaIcons.FaReply} />
+                        {comment.total_reply_count} {comment.total_reply_count === 1 ? 'reply' : 'replies'}
+                      </CommentStat>
+                      
+                      {comment.justificativa_comentario && (
+                        <JustificationButton 
+                          onClick={() => showJustificationPopup('Comment Justification', comment.justificativa_comentario)}
+                        >
+                          <IconComponent icon={FaIcons.FaInfoCircle} />
+                          View justification
+                        </JustificationButton>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                    
+                    {comment.mensagem && (
+                      <ResponseCard>
+                        <ResponseHeader>
+                          <ResponseTitle>
+                            <IconComponent icon={FaIcons.FaReply} />
+                            Reply
+                          </ResponseTitle>
+                          
+                          <ResponseStatus status={comment.respondido ? 'posted' : 'pending'}>
+                            <IconComponent icon={comment.respondido ? FaIcons.FaCheck : FaIcons.FaClock} />
+                            {comment.respondido ? 'Sent' : 'Pending'}
+                          </ResponseStatus>
+                        </ResponseHeader>
+                        
+                        <ResponseText>{comment.mensagem}</ResponseText>
+                        
+                        <ResponseFooter>
+                          {comment.justificativa_mensagem && (
+                            <JustificationButton 
+                              onClick={() => showJustificationPopup('Reply Justification', comment.justificativa_mensagem || '')}
+                            >
+                              <IconComponent icon={FaIcons.FaInfoCircle} />
+                              View justification
+                            </JustificationButton>
+                          )}
+                        </ResponseFooter>
+                      </ResponseCard>
+                    )}
+                  </CommentCard>
+                );
+              })}
+            </CommentsContainer>
           )}
           
           <ButtonRow>
