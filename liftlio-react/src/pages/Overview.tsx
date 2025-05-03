@@ -336,20 +336,13 @@ const DashboardHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
-  animation: ${fadeIn} 0.5s ease-out forwards;
+  margin-bottom: 30px;
+  gap: 20px;
+  flex-wrap: wrap;
   
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 24px;
-    width: 100%;
-  }
-  
-  @media (max-width: 480px) {
-    margin-bottom: 20px;
-    padding: 0 4px;
   }
 `;
 
@@ -389,27 +382,59 @@ const AddNewProjectButton = styled.button`
 `;
 
 const PageTitle = styled.h1`
-  font-size: ${props => props.theme.fontSizes['3xl']};
-  font-weight: ${props => props.theme.fontWeights.bold};
-  color: ${COLORS.ACCENT}; /* Cor de destaque (10%) - Azul naval escuro */
-  margin: 0;
   display: flex;
   align-items: center;
-  gap: 14px;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  color: ${COLORS.TEXT.ON_LIGHT};
   
-  svg {
+  div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
     color: ${COLORS.ACCENT};
   }
+`;
+
+// Componente para o cumprimento
+const GreetingContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-left: 20px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: ${props => props.theme.mode === 'dark' 
+    ? 'linear-gradient(135deg, rgba(66, 66, 134, 0.4), rgba(33, 33, 67, 0.2))' 
+    : 'linear-gradient(135deg, rgba(236, 242, 255, 0.8), rgba(222, 232, 255, 0.4))'};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  animation: ${fadeIn} 0.5s ease-out;
   
   @media (max-width: 768px) {
-    font-size: ${props => props.theme.fontSizes['2xl']};
-    gap: 10px;
+    margin-left: 0;
+    margin-top: 10px;
   }
+`;
+
+const GreetingText = styled.span`
+  font-size: 16px;
+  font-weight: 500;
+  color: ${props => props.theme.mode === 'dark' ? COLORS.TEXT.SECONDARY : COLORS.TEXT.ON_LIGHT};
+  white-space: nowrap;
   
-  @media (max-width: 480px) {
-    font-size: ${props => props.theme.fontSizes.xl};
-    gap: 8px;
+  /* Estilo para o texto do nome */
+  strong {
+    color: ${COLORS.ACCENT};
+    font-weight: 600;
   }
+`;
+
+const TimeIcon = styled.span`
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  color: ${COLORS.ACCENT};
 `;
 
 const ActionButtons = styled.div`
@@ -1590,6 +1615,64 @@ const Overview: React.FC = () => {
   const [activeMetrics, setActiveMetrics] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showProjectModal, setShowProjectModal] = useState(false);
+  const [greeting, setGreeting] = useState<string>('');
+  const [userName, setUserName] = useState<string>('');
+  
+  // Função para buscar o nome do usuário
+  const fetchUserName = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Tentamos obter o nome do usuário
+        const name = user.user_metadata?.name || user.email?.split('@')[0] || '';
+        setUserName(name);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar nome do usuário:", error);
+    }
+  };
+  
+  // Função para determinar o cumprimento com base no horário
+  const getGreeting = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    
+    let greetingText = '';
+    
+    // Determinar o cumprimento com base na hora do dia
+    if (hours >= 5 && hours < 12) {
+      greetingText = 'Good morning';
+    } else if (hours >= 12 && hours < 18) {
+      greetingText = 'Good afternoon';
+    } else {
+      greetingText = 'Good evening';
+    }
+    
+    // Adicionar variações especiais para momentos específicos
+    if (hours >= 0 && hours < 5) {
+      greetingText = 'Working late';
+    } else if (hours === 12) {
+      greetingText = 'Time for lunch';
+    } else if (hours >= 22) {
+      greetingText = 'Late hours productivity';
+    }
+    
+    setGreeting(greetingText);
+  };
+  
+  // Chamar a função de cumprimento quando o componente montar
+  useEffect(() => {
+    getGreeting();
+    fetchUserName();
+    
+    // Atualizar o cumprimento a cada minuto para casos de transição entre períodos
+    const intervalId = setInterval(() => {
+      getGreeting();
+    }, 60000);
+    
+    return () => clearInterval(intervalId);
+  }, []);
   
   // Use o hook personalizado para buscar dados do Supabase
   const { 
@@ -1597,7 +1680,7 @@ const Overview: React.FC = () => {
     error, 
     statsData, 
     performanceData, 
-    weeklyPerformanceData, // Incluindo os dados semanais separados
+    weeklyPerformanceData,
     trafficSources, 
     keywordsTable, 
     timeframe,
@@ -2981,13 +3064,27 @@ const Overview: React.FC = () => {
           <div>
             <IconComponent icon={FaIcons.FaChartPie} />
           </div>
-          Dashboard Overview
+          Overview
         </PageTitle>
+        
+        {/* Componente de saudação */}
+        <GreetingContainer>
+          <TimeIcon>
+            <IconComponent icon={
+              greeting.includes('morning') ? FaIcons.FaSun :
+              greeting.includes('afternoon') ? FaIcons.FaCloud :
+              greeting.includes('evening') ? FaIcons.FaMoon :
+              greeting.includes('late') ? FaIcons.FaMoon :
+              greeting.includes('lunch') ? FaIcons.FaUtensils :
+              FaIcons.FaClock
+            } />
+          </TimeIcon>
+          <GreetingText>
+            <strong>{greeting}</strong>, {userName || currentProject?.name?.split(' ')[0] || ''}
+          </GreetingText>
+        </GreetingContainer>
+        
         <ActionButtons>
-          <Button variant="ghost">
-            <IconComponent icon={FaIcons.FaCalendarAlt} />
-            Mar 2025
-          </Button>
           <Button variant="outline">
             <IconComponent icon={FaIcons.FaFileExport} />
             Export
