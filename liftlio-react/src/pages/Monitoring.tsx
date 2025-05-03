@@ -1148,7 +1148,7 @@ const VideoTitle = styled.div`
   }
 `;
 
-const VideoThumbnail = styled.div`
+const VideoThumbnail = styled.div<{ score?: number }>`
   width: 160px;
   height: 90px; // Mantém proporção 16:9 
   border-radius: 10px;
@@ -1156,8 +1156,17 @@ const VideoThumbnail = styled.div`
   flex-shrink: 0;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: perspective(800px) rotateY(0deg);
+  
+  /* Add colored border based on performance score */
+  border: 2px solid ${props => 
+    props.score && props.score >= 0.8 ? 'rgba(52, 199, 89, 0.7)' :
+    props.score && props.score >= 0.6 ? 'rgba(255, 149, 0, 0.7)' :
+    props.score && props.score >= 0.4 ? 'rgba(0, 122, 255, 0.7)' :
+    'rgba(255, 255, 255, 0.3)'
+  };
   
   /* Add inner border glow effect */
   &:before {
@@ -1167,7 +1176,7 @@ const VideoThumbnail = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    border-radius: 10px;
+    border-radius: 8px;
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
     z-index: 2;
     pointer-events: none;
@@ -1230,6 +1239,32 @@ const VideoTableRow = styled.div`
   position: relative;
   cursor: pointer;
   z-index: 1;
+  
+  /* Add alternating row colors */
+  &:nth-child(even) {
+    background: ${props => withOpacity(props.theme.colors.primary, 0.02)};
+  }
+  
+  /* Add animation entry effect */
+  animation: fadeInUp 0.5s ease forwards;
+  animation-delay: calc(0.05s * var(--index, 0));
+  opacity: 0;
+  
+  /* Add alternating row colors */
+  &:nth-child(even) {
+    background: ${props => withOpacity(props.theme.colors.primary, 0.02)};
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
   
   /* Add highlight effect on hover */
   &:after {
@@ -1919,6 +1954,12 @@ const ModalThumbnail = styled.div`
   overflow: hidden;
   margin-bottom: 24px;
   background-color: #000;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.02);
+  }
   
   img {
     position: absolute;
@@ -1942,6 +1983,11 @@ const ModalThumbnail = styled.div`
     border-bottom: 16px solid transparent;
     opacity: 0.9;
     pointer-events: none;
+    transition: transform 0.3s ease;
+  }
+  
+  &:hover::after {
+    transform: translate(-50%, -50%) scale(1.2);
   }
 `;
 
@@ -2025,6 +2071,14 @@ const CommentCard = styled.div`
   box-shadow: 0 2px 10px rgba(0,0,0,0.08);
   padding: 20px;
   margin-bottom: 16px;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+  
+  &:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+    border-left: 3px solid ${props => props.theme.colors.primary};
+  }
 `;
 
 const CommentHeader = styled.div`
@@ -2065,18 +2119,33 @@ const CommentStat = styled.div`
   }
 `;
 
-const CommentScore = styled.div`
-  background: #f5f5f5;
-  color: #444;
-  padding: 4px 8px;
+const CommentScore = styled.div<{ score?: number }>`
+  background: ${props => 
+    props.score && props.score > 0.8 ? '#e6f7ee' :
+    props.score && props.score > 0.6 ? '#fff8e6' :
+    props.score && props.score > 0.4 ? '#e6f1ff' :
+    '#f5f5f5'};
+  color: ${props => 
+    props.score && props.score > 0.8 ? '#34C759' :
+    props.score && props.score > 0.6 ? '#FF9500' :
+    props.score && props.score > 0.4 ? '#007AFF' :
+    '#444'};
+  padding: 4px 10px;
   border-radius: 12px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   display: flex;
   align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  }
   
   svg {
-    margin-right: 4px;
+    margin-right: 5px;
     font-size: 12px;
   }
 `;
