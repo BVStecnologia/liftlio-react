@@ -3992,7 +3992,7 @@ const YoutubeMonitoring: React.FC = () => {
               }} 
               status="active"
             >
-              {channels.find(c => c.id === selectedChannel)?.channel_name?.substring(0, 1).toUpperCase() || '?'}
+              {channelVideos.length}
             </ChannelBadge>
         </Tab>
         )}
@@ -4009,7 +4009,7 @@ const YoutubeMonitoring: React.FC = () => {
               }}
               status="info"
             >
-              {selectedVideo?.title?.substring(0, 1).toUpperCase() || selectedVideo?.nome_do_video?.substring(0, 1).toUpperCase() || '?'}
+              {filteredComments.length}
             </ChannelBadge>
         </Tab>
         )}
