@@ -3194,20 +3194,31 @@ const YoutubeMonitoring: React.FC = () => {
     if (videoIdParam && channelIdParam) {
       const videoId = Number(videoIdParam);
       fetchVideoComments(videoId);
-      
-      // Esperar os vídeos do canal carregarem e então selecionar o vídeo
-      const videoCheck = setInterval(() => {
-        const video = channelVideos.find(v => v.id === videoId);
-        if (video) {
-          setSelectedVideo(video);
-          clearInterval(videoCheck);
-        }
-      }, 500);
-      
-      // Limpar o intervalo após 5 segundos para evitar loops infinitos
-      setTimeout(() => clearInterval(videoCheck), 5000);
     }
   }, [location.search]); // Executar quando a URL mudar
+  
+  // Efeito para selecionar o vídeo quando os dados do canal estiverem carregados
+  useEffect(() => {
+    if (channelVideos.length > 0) {
+      const searchParams = new URLSearchParams(location.search);
+      const videoIdParam = searchParams.get('videoId');
+      
+      if (videoIdParam) {
+        const videoId = Number(videoIdParam);
+        const video = channelVideos.find(v => v.id === videoId);
+        
+        if (video) {
+          setSelectedVideo(video);
+          
+          // Se não estiver na aba de comentários mas tem um vídeo selecionado,
+          // mudar para a aba de comentários
+          if (activeTab !== 'comments') {
+            setActiveTab('comments');
+          }
+        }
+      }
+    }
+  }, [channelVideos, location.search]); // Executar quando os vídeos do canal forem carregados ou a URL mudar
   
   useEffect(() => {
     const fetchMetrics = async () => {
