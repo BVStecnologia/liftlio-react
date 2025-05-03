@@ -1149,8 +1149,8 @@ const VideoTitle = styled.div`
 `;
 
 const VideoThumbnail = styled.div`
-  width: 120px;
-  height: 67px; // Maintains 16:9 aspect ratio
+  width: 160px;
+  height: 90px; // Mantém proporção 16:9 
   border-radius: 10px;
   margin-right: 16px;
   flex-shrink: 0;
