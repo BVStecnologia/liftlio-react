@@ -399,8 +399,15 @@ const DiscoveryInfo = styled.div`
   
   svg {
     margin-right: 4px;
-    color: #FF0000;
-    font-size: 9px;
+    color: #00E5FF;
+    font-size: 11px;
+    animation: pulse 1.5s infinite;
+  }
+  
+  @keyframes pulse {
+    0% { opacity: 0.8; }
+    50% { opacity: 1; }
+    100% { opacity: 0.8; }
   }
 `;
 
@@ -1046,7 +1053,7 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
               <VideoThumbnail image={video.thumbnailUrl} />
               <VideoOverlay />
               <DiscoveryInfo>
-                <IconComponent icon={FaIcons.FaEye} />
+                <IconComponent icon={HiIcons.HiOutlineLightBulb} />
                 Discovered and Engaged
               </DiscoveryInfo>
               <TimeSince>
