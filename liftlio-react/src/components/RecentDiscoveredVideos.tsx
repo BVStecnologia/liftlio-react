@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { COLORS, withOpacity } from '../styles/colors';
 import * as FaIcons from 'react-icons/fa';
+import * as HiIcons from 'react-icons/hi';
 import { IconComponent } from '../utils/IconHelper';
 
 // Interface para definir a estrutura de dados dos vídeos descobertos recentemente
@@ -130,7 +131,7 @@ const DiscoveredVideosTitle = styled.h2`
   
   svg {
     margin-right: 12px;
-    color: #FF0000;
+    color: ${props => props.theme.colors.primary};
     animation: pulse 2s ease-in-out infinite;
   }
   
@@ -148,11 +149,69 @@ const DiscoveredVideoSubtitle = styled.div`
   white-space: normal;
   margin-bottom: 20px;
   line-height: 1.6;
+  padding: 12px 18px;
+  background: rgba(15, 23, 42, 0.03);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: linear-gradient(to bottom, #5951F9, #4590FF);
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100%;
+    background: linear-gradient(to left, 
+      rgba(15, 23, 42, 0.03), 
+      transparent
+    );
+  }
   
   span {
     font-weight: ${props => props.theme.fontWeights.semiBold};
     color: ${props => props.theme.colors.primary};
-    border-bottom: 1px dashed ${props => props.theme.colors.primary}50;
+    position: relative;
+    background: linear-gradient(to bottom, transparent 80%, ${props => withOpacity(props.theme.colors.primary, 0.15)} 80%);
+  }
+  
+  .highlight-value {
+    background: ${props => withOpacity(props.theme.colors.success, 0.12)};
+    color: ${props => props.theme.colors.success};
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: ${props => props.theme.fontWeights.bold};
+    display: inline-flex;
+    align-items: center;
+    margin: 0 4px;
+    border: none;
+  }
+  
+  .early-adopter {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(to right, #5951F9, #4590FF);
+    color: white;
+    font-weight: ${props => props.theme.fontWeights.bold};
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin: 0 4px;
+    box-shadow: 0 2px 6px rgba(73, 84, 244, 0.3);
+    
+    svg {
+      margin-right: 4px;
+      font-size: 12px;
+    }
   }
 `;
 
@@ -581,7 +640,7 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
     <DiscoveredVideosContainer>
       <DiscoveredVideosHeader>
         <DiscoveredVideosTitle>
-          <IconComponent icon={FaIcons.FaRocket} />
+          <IconComponent icon={HiIcons.HiOutlineLightningBolt} />
           Recently Discovered Videos from Monitored Channels
         </DiscoveredVideosTitle>
         
@@ -592,7 +651,9 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
       </DiscoveredVideosHeader>
       
       <DiscoveredVideoSubtitle>
-        Videos that were automatically <span>discovered and engaged with</span> by our monitoring system, capturing early traffic and positioning your content among the first comments.
+        Our AI-powered system <span>automatically identifies</span> and engages with fresh content, 
+        securing <span className="early-adopter"><IconComponent icon={HiIcons.HiOutlineSparkles} />prime positioning</span> in the 
+        <span className="highlight-value"><IconComponent icon={HiIcons.HiOutlineStar} /> top {MOCK_DISCOVERED_VIDEOS[1].position_comment}-{MOCK_DISCOVERED_VIDEOS[0].position_comment} comments</span> to maximize visibility and drive targeted engagement.
       </DiscoveredVideoSubtitle>
       
       <DiscoveredVideosList>
