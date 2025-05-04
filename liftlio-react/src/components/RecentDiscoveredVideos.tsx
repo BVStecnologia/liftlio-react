@@ -400,14 +400,14 @@ const DiscoveredVideosList = styled.div`
 `;
 
 const DiscoveredVideoCard = styled.div`
-  background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(240,245,255,0.85));
+  background: ${props => props.theme.colors.gradient.glass};
   backdrop-filter: blur(10px);
   border-radius: ${props => props.theme.radius.xl};
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  box-shadow: ${props => props.theme.shadows.sm};
+  transition: ${props => props.theme.transitions.springy};
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid ${props => withOpacity(props.theme.colors.secondary, 0.4)};
   flex: 0 0 320px;
   max-width: 320px;
   
@@ -449,7 +449,7 @@ const DiscoveredVideoCard = styled.div`
   
   &:hover {
     transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 12px 30px ${props => withOpacity(props.theme.colors.primary, 0.18)};
+    box-shadow: ${props => props.theme.shadows.hover};
     
     &:after {
       opacity: 1;
@@ -660,16 +660,14 @@ const MetricLabel = styled.div`
 `;
 
 const EngagementSection = styled.div`
-  background: linear-gradient(135deg, 
-    rgba(245, 247, 250, 0.7), 
-    rgba(240, 245, 255, 0.7));
+  background: ${props => props.theme.colors.gradient.glass};
   border-radius: ${props => props.theme.radius.lg};
   padding: 12px;
   position: relative;
   overflow: hidden;
   margin-bottom: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.03);
+  border: 1px solid ${props => withOpacity(props.theme.colors.secondary, 0.8)};
+  box-shadow: ${props => props.theme.shadows.sm};
   
   &::before {
     content: '';
@@ -678,10 +676,7 @@ const EngagementSection = styled.div`
     left: 0;
     width: 100%;
     height: 3px;
-    background: linear-gradient(90deg, 
-      #5951F9,
-      #4590FF
-    );
+    background: ${props => props.theme.colors.gradient.info};
   }
   
   &::after {
@@ -693,7 +688,7 @@ const EngagementSection = styled.div`
     height: 1px;
     background: linear-gradient(90deg,
       transparent,
-      rgba(89, 81, 249, 0.3)
+      ${props => withOpacity(props.theme.colors.info, 0.3)}
     );
   }
 `;
@@ -744,9 +739,9 @@ const EngagementMessage = styled.div`
   line-height: 1.4;
   position: relative;
   padding: 10px 12px;
-  background: white;
+  background: ${props => props.theme.colors.secondary};
   border-radius: ${props => props.theme.radius.md};
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  box-shadow: ${props => props.theme.shadows.sm};
   border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
   height: 65px;
   max-height: 65px;
@@ -758,7 +753,7 @@ const EngagementMessage = styled.div`
   }
   
   &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.03);
+    background: ${props => withOpacity(props.theme.colors.background, 0.1)};
     border-radius: 10px;
   }
   
@@ -788,7 +783,7 @@ const EngagementMessage = styled.div`
     width: 60%;
     height: 1px;
     background: linear-gradient(90deg, 
-      rgba(89, 81, 249, 0.1), 
+      ${props => withOpacity(props.theme.colors.primary, 0.1)}, 
       transparent
     );
     pointer-events: none;
