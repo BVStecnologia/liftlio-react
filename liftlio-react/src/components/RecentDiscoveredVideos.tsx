@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { COLORS, withOpacity } from '../styles/colors';
+import { withOpacity } from '../styles/colors';
 import * as FaIcons from 'react-icons/fa';
 import * as HiIcons from 'react-icons/hi';
 import { IconComponent } from '../utils/IconHelper';
@@ -89,78 +89,29 @@ const MOCK_DISCOVERED_VIDEOS: DiscoveredVideo[] = [
   }
 ];
 
-// Estilos para o componente de vídeos descobertos
+// Estilos atualizados para o componente
 const DiscoveredVideosContainer = styled.div`
   margin-bottom: 30px;
   position: relative;
-  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  background: rgba(255, 255, 255, 0.8);
-  padding: 20px;
+  animation: fadeIn 0.6s ease-out;
+  background: ${props => props.theme.colors.white};
+  padding: 24px;
   border-radius: ${props => props.theme.radius.lg};
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
   
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(15px); }
+    from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
-  }
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: -20px;
-    right: 20px;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 1px solid ${props => withOpacity(props.theme.colors.primary, 0.2)};
-    animation: scanArea 4s linear infinite;
-    z-index: -1;
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    top: -10px;
-    right: 30px;
-    width: 20px;
-    height: 20px;
-    background: ${props => withOpacity(props.theme.colors.primary, 0.05)};
-    border-radius: 50%;
-    animation: pulse 2s ease-in-out infinite;
-    z-index: -1;
-  }
-  
-  @keyframes scanArea {
-    0% { transform: scale(1) rotate(0deg); }
-    100% { transform: scale(1) rotate(360deg); }
-  }
-  
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 0.3; }
-    50% { transform: scale(1.5); opacity: 0.1; }
   }
 `;
 
 const DiscoveredVideosHeader = styled.div`
   display: flex;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 16px;
-  position: relative;
-  overflow: hidden;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: 0;
-    width: 180px;
-    height: 1px;
-    background: linear-gradient(90deg, 
-      ${props => withOpacity(props.theme.colors.primary, 0.7)}, 
-      transparent
-    );
-  }
+  border-bottom: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
+  padding-bottom: 12px;
 `;
 
 const DiscoveredVideosTitle = styled.h2`
@@ -169,250 +120,81 @@ const DiscoveredVideosTitle = styled.h2`
   color: ${props => props.theme.colors.text.primary};
   display: flex;
   align-items: center;
-  margin-right: 16px;
-  position: relative;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -4px;
-    left: 30px;
-    width: 85%;
-    height: 2px;
-    background: linear-gradient(
-      to right, 
-      ${props => props.theme.colors.primary}, 
-      ${props => props.theme.colors.secondary},
-      transparent
-    );
-  }
   
   svg {
-    margin-right: 10px;
+    margin-right: 12px;
     color: ${props => props.theme.colors.primary};
-    animation: scan 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     font-size: 20px;
-    position: relative;
+  }
+`;
+
+const LiveTrackingBadge = styled.div`
+  background: ${props => withOpacity(props.theme.colors.info, 0.9)};
+  color: white;
+  font-size: 10px;
+  font-weight: ${props => props.theme.fontWeights.bold};
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px ${props => withOpacity(props.theme.colors.info, 0.2)};
+  
+  svg {
+    margin-right: 6px;
+    font-size: 9px;
+    animation: pulse 1.5s infinite;
   }
   
-  @keyframes scan {
-    0% { 
-      transform: scale(1) rotate(0deg); 
-      filter: drop-shadow(0 0 0px ${props => props.theme.colors.primary});
-    }
-    50% { 
-      transform: scale(1.1) rotate(5deg); 
-      filter: drop-shadow(0 0 5px ${props => props.theme.colors.primary});
-    }
-    100% { 
-      transform: scale(1) rotate(0deg); 
-      filter: drop-shadow(0 0 0px ${props => props.theme.colors.primary});
-    }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
   }
 `;
 
 const DiscoveredVideoSubtitle = styled.div`
   font-size: ${props => props.theme.fontSizes.sm};
   color: ${props => props.theme.colors.text.secondary};
-  max-width: 100%;
-  white-space: normal;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   line-height: 1.6;
-  padding: 12px 18px;
+  padding: 12px 16px;
   background: ${props => withOpacity(props.theme.colors.background, 0.03)};
   border-radius: ${props => props.theme.radius.md};
-  position: relative;
-  overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 6px;
-    height: 100%;
-    background: linear-gradient(to bottom, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 100px;
-    height: 100%;
-    background: linear-gradient(to left, 
-      ${props => withOpacity(props.theme.colors.background, 0.03)}, 
-      transparent
-    );
-  }
+  border-left: 3px solid ${props => props.theme.colors.primary};
   
   span {
     font-weight: ${props => props.theme.fontWeights.semiBold};
     color: ${props => props.theme.colors.primary};
-    position: relative;
-    background: linear-gradient(to bottom, transparent 80%, ${props => withOpacity(props.theme.colors.primary, 0.15)} 80%);
-  }
-  
-  .highlight-value {
-    background: ${props => withOpacity(props.theme.colors.success, 0.12)};
-    color: ${props => props.theme.colors.success};
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-weight: ${props => props.theme.fontWeights.bold};
-    display: inline-flex;
-    align-items: center;
-    margin: 0 4px;
-    border: none;
-  }
-  
-  .early-adopter {
-    display: inline-flex;
-    align-items: center;
-    background: linear-gradient(to right, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
-    color: white;
-    font-weight: ${props => props.theme.fontWeights.bold};
-    padding: 2px 8px;
-    border-radius: 4px;
-    margin: 0 4px;
-    box-shadow: 0 2px 6px ${props => withOpacity(props.theme.colors.primary, 0.3)};
-    
-    svg {
-      margin-right: 4px;
-      font-size: 12px;
-    }
   }
 `;
 
-const RadarScan = styled.div`
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 2px solid ${props => props.theme.colors.info};
-  top: 50%;
-  left: 10px;
-  transform: translate(-50%, -50%);
-  
-  &::before, &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    border: 2px solid ${props => props.theme.colors.info};
-    transform: translate(-50%, -50%);
-    animation: radar 2s cubic-bezier(0, 0.6, 0.8, 1) infinite;
-    opacity: 0;
-  }
-  
-  &::after {
-    animation-delay: 0.5s;
-  }
-  
-  @keyframes radar {
-    0% {
-      width: 100%;
-      height: 100%;
-      opacity: 0.6;
-    }
-    100% {
-      width: 250%;
-      height: 250%;
-      opacity: 0;
-    }
-  }
-`;
-
-const RecentBadge = styled.div`
-  background: ${props => props.theme.colors.gradient.info};
-  color: ${props => props.theme.colors.secondary};
-  font-size: 10px;
-  font-weight: ${props => props.theme.fontWeights.bold};
-  padding: 3px 8px 3px 24px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  margin-left: 12px;
-  box-shadow: 0 2px 6px ${props => withOpacity(props.theme.colors.info, 0.15)};
-  letter-spacing: 0.5px;
-  position: relative;
-  overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, 
-      rgba(255, 255, 255, 0.05), 
-      rgba(255, 255, 255, 0.1), 
-      rgba(255, 255, 255, 0.05)
-    );
-    transform: translateX(-100%);
-    animation: shimmer 2s infinite;
-  }
-  
-  @keyframes shimmer {
-    100% { transform: translateX(100%); }
-  }
-  
-  svg {
-    margin-right: 4px;
-    font-size: 7px;
-    animation: blink 1.2s ease-in-out infinite;
-    border-radius: 50%;
-  }
-  
-  @keyframes blink {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
-  }
-`;
-
-const DiscoveredVideosList = styled.div`
-  display: flex;
-  flex-direction: row;
+// Grid layout for better organization and responsiveness
+const VideosGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 24px;
-  overflow-x: auto;
-  padding: 12px 0 4px 0;
   
-  &::-webkit-scrollbar {
-    height: 6px;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
   }
-  
-  &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: ${props => withOpacity(props.theme.colors.primary, 0.3)};
-    border-radius: 10px;
-  }
-  
-  /* Add subtle shadow at the edges to indicate scrollable content */
-  mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
 `;
 
-const DiscoveredVideoCard = styled.div`
-  background: ${props => props.theme.colors.gradient.glass};
-  backdrop-filter: blur(10px);
-  border-radius: ${props => props.theme.radius.xl};
+const VideoCard = styled.div`
+  background: ${props => props.theme.colors.white};
+  border-radius: ${props => props.theme.radius.lg};
   overflow: hidden;
-  box-shadow: ${props => props.theme.shadows.sm};
-  transition: ${props => props.theme.transitions.springy};
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
   position: relative;
-  border: 1px solid ${props => withOpacity(props.theme.colors.secondary, 0.3)};
-  flex: 0 0 320px;
-  max-width: 320px;
+  border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
   
-  /* Enhanced tech grid pattern */
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09);
+  }
+  
+  /* Subtle tech pattern */
   &:before {
     content: '';
     position: absolute;
@@ -420,47 +202,20 @@ const DiscoveredVideoCard = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: 
-      radial-gradient(circle at 10px 10px, ${props => withOpacity(props.theme.colors.primary, 0.03)} 2px, transparent 2px),
-      linear-gradient(${props => withOpacity(props.theme.colors.primary, 0.02)} 1px, transparent 1px),
-      linear-gradient(90deg, ${props => withOpacity(props.theme.colors.primary, 0.02)} 1px, transparent 1px);
-    background-size: 30px 30px, 15px 15px, 15px 15px;
+    background-image: linear-gradient(90deg, 
+      ${props => withOpacity(props.theme.colors.primary, 0.01)} 1px, 
+      transparent 1px),
+    linear-gradient(${props => withOpacity(props.theme.colors.primary, 0.01)} 1px, 
+      transparent 1px);
+    background-size: 20px 20px;
     pointer-events: none;
     opacity: 0.5;
-    z-index: 0;
-  }
-  
-  /* Subtle glow effect */
-  &:after {
-    content: '';
-    position: absolute;
-    top: -1px;
-    left: -1px;
-    right: -1px;
-    bottom: -1px;
-    z-index: -1;
-    background: linear-gradient(45deg, 
-      ${props => withOpacity(props.theme.colors.primary, 0)}, 
-      ${props => withOpacity(props.theme.colors.primary, 0.15)}, 
-      ${props => withOpacity(props.theme.colors.primary, 0)});
-    border-radius: ${props => props.theme.radius.xl};
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  
-  &:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: ${props => props.theme.shadows.hover};
-    
-    &:after {
-      opacity: 1;
-    }
   }
 `;
 
 const VideoHeader = styled.div`
   position: relative;
-  height: 160px;
+  height: 170px;
   overflow: hidden;
 `;
 
@@ -470,9 +225,9 @@ const VideoThumbnail = styled.div<{ image: string }>`
   background-image: url(${props => props.image});
   background-size: cover;
   background-position: center;
-  transition: transform 0.5s ease;
+  transition: transform 0.4s ease;
   
-  ${DiscoveredVideoCard}:hover & {
+  ${VideoCard}:hover & {
     transform: scale(1.05);
   }
 `;
@@ -485,54 +240,46 @@ const VideoOverlay = styled.div`
   bottom: 0;
   background: linear-gradient(to top, 
     rgba(0, 0, 0, 0.8) 0%, 
-    rgba(0, 0, 0, 0) 50%);
+    rgba(0, 0, 0, 0.3) 40%,
+    rgba(0, 0, 0, 0.1) 70%);
   z-index: 1;
 `;
 
-const DiscoveryInfo = styled.div`
+const StatusBadge = styled.div`
   position: absolute;
-  top: 8px;
-  left: 8px;
-  background: rgba(45, 62, 80, 0.75); /* Usando ACCENT com opacidade */
-  backdrop-filter: blur(8px);
+  top: 10px;
+  left: 10px;
+  background: rgba(25, 42, 70, 0.8);
+  backdrop-filter: blur(4px);
   border-radius: 4px;
   padding: 4px 8px;
-  color: ${props => props.theme.colors.secondary};
+  color: white;
   font-size: 10px;
   display: flex;
   align-items: center;
   z-index: 2;
-  letter-spacing: 0.3px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   
   svg {
     margin-right: 4px;
     color: ${props => props.theme.colors.info};
     font-size: 11px;
-    animation: pulse 1.5s infinite;
-  }
-  
-  @keyframes pulse {
-    0% { opacity: 0.8; }
-    50% { opacity: 1; }
-    100% { opacity: 0.8; }
   }
 `;
 
-const TimeSince = styled.div`
+const TimeBadge = styled.div`
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(45, 62, 80, 0.75); /* Usando ACCENT com opacidade */
-  backdrop-filter: blur(8px);
+  top: 10px;
+  right: 10px;
+  background: rgba(25, 42, 70, 0.8);
+  backdrop-filter: blur(4px);
   border-radius: 4px;
   padding: 4px 8px;
-  color: ${props => props.theme.colors.secondary};
+  color: white;
   font-size: 10px;
   z-index: 2;
   display: flex;
   align-items: center;
-  letter-spacing: 0.3px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   
   svg {
@@ -544,15 +291,14 @@ const TimeSince = styled.div`
 
 const VideoTitle = styled.h3`
   position: absolute;
-  bottom: 16px;
-  left: 16px;
-  right: 16px;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
   color: white;
-  font-size: ${props => props.theme.fontSizes.lg};
+  font-size: ${props => props.theme.fontSizes.md};
   font-weight: ${props => props.theme.fontWeights.semiBold};
   line-height: 1.4;
   z-index: 2;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -560,41 +306,26 @@ const VideoTitle = styled.h3`
 `;
 
 const VideoContent = styled.div`
-  padding: 14px;
-  position: relative;
+  padding: 16px;
 `;
 
 const ChannelInfo = styled.div`
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.2)};
+  border-bottom: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
 `;
 
 const ChannelImage = styled.div<{ image: string }>`
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: 6px;
   background-image: url(${props => props.image});
   background-size: cover;
   background-position: center;
-  margin-right: 10px;
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 2px 6px rgba(89, 81, 249, 0.15);
-  position: relative;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    border-radius: 10px;
-    background: linear-gradient(45deg, #5951F9, #4590FF);
-    z-index: -1;
-  }
+  margin-right: 12px;
+  border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.2)};
 `;
 
 const ChannelName = styled.div`
@@ -607,91 +338,37 @@ const MetricsRow = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 `;
 
 const MetricItem = styled.div`
   text-align: center;
-  position: relative;
   padding: 8px 4px;
-  background: ${props => withOpacity(props.theme.colors.secondary, 0.9)};
+  background: ${props => withOpacity(props.theme.colors.background, 0.05)};
   border-radius: ${props => props.theme.radius.md};
-  transition: ${props => props.theme.transitions.default};
-  box-shadow: ${props => props.theme.shadows.sm};
-  border: 1px solid ${props => withOpacity(props.theme.colors.secondary, 0.8)};
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  
-  &:hover {
-    background: ${props => props.theme.colors.secondary};
-    transform: translateY(-2px);
-    box-shadow: ${props => props.theme.shadows.md};
-    border-color: ${props => withOpacity(props.theme.colors.primary, 0.2)};
-  }
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, 
-      ${props => withOpacity(props.theme.colors.primary, 0.4)}, transparent);
-  }
+  border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
 `;
 
 const MetricValue = styled.div`
   font-size: ${props => props.theme.fontSizes.md};
   font-weight: ${props => props.theme.fontWeights.bold};
   color: ${props => props.theme.colors.primary};
-  margin-bottom: 2px;
-  font-feature-settings: "tnum";
-  font-variant-numeric: tabular-nums;
+  margin-bottom: 4px;
 `;
 
 const MetricLabel = styled.div`
-  font-size: ${props => props.theme.fontSizes.xs};
+  font-size: 10px;
   color: ${props => props.theme.colors.text.secondary};
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  opacity: 0.8;
 `;
 
 const EngagementSection = styled.div`
-  background: ${props => props.theme.colors.gradient.glass};
-  border-radius: ${props => props.theme.radius.lg};
+  background: ${props => withOpacity(props.theme.colors.background, 0.03)};
+  border-radius: ${props => props.theme.radius.md};
   padding: 12px;
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 12px;
-  border: 1px solid ${props => withOpacity(props.theme.colors.secondary, 0.8)};
-  box-shadow: ${props => props.theme.shadows.sm};
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: ${props => props.theme.colors.gradient.info};
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    top: 3px;
-    right: 0;
-    width: 40%;
-    height: 1px;
-    background: linear-gradient(90deg,
-      transparent,
-      ${props => withOpacity(props.theme.colors.info, 0.3)}
-    );
-  }
+  margin-bottom: 10px;
+  border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
 `;
 
 const EngagementHeader = styled.div`
@@ -703,22 +380,22 @@ const EngagementHeader = styled.div`
 
 const EngagementTitle = styled.div`
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  font-size: ${props => props.theme.fontSizes.xs};
+  font-size: 11px;
   color: ${props => props.theme.colors.text.primary};
   display: flex;
   align-items: center;
-  letter-spacing: 0.5px;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
   
   svg {
     margin-right: 6px;
-    color: #5951F9;
-    font-size: 14px;
+    color: ${props => props.theme.colors.primary};
+    font-size: 12px;
   }
 `;
 
 const EngagementLabel = styled.div`
-  font-size: ${props => props.theme.fontSizes.xs};
+  font-size: 10px;
   background: ${props => withOpacity(props.theme.colors.success, 0.1)};
   color: ${props => props.theme.colors.success};
   padding: 3px 8px;
@@ -726,7 +403,6 @@ const EngagementLabel = styled.div`
   display: flex;
   align-items: center;
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  box-shadow: 0 1px 2px ${props => withOpacity(props.theme.colors.success, 0.1)};
   
   svg {
     margin-right: 4px;
@@ -737,20 +413,18 @@ const EngagementLabel = styled.div`
 const EngagementMessage = styled.div`
   font-size: ${props => props.theme.fontSizes.xs};
   color: ${props => props.theme.colors.text.primary};
-  line-height: 1.4;
-  position: relative;
-  padding: 10px 12px;
-  background: ${props => props.theme.colors.secondary};
-  border-radius: ${props => props.theme.radius.md};
-  box-shadow: ${props => props.theme.shadows.sm};
+  line-height: 1.5;
+  padding: 10px;
+  background: white;
+  border-radius: ${props => props.theme.radius.sm};
   border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
-  height: 65px;
-  max-height: 65px;
+  height: 70px;
   overflow-y: auto;
+  position: relative;
+  padding-left: 18px;
   
-  /* Custom scrollbar styling */
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
   }
   
   &::-webkit-scrollbar-track {
@@ -763,59 +437,28 @@ const EngagementMessage = styled.div`
     border-radius: 10px;
   }
   
-  /* Modern quote styling */
   &::before {
     content: '"';
     position: absolute;
-    top: 6px;
-    left: 10px;
-    font-size: 28px;
+    top: 5px;
+    left: 7px;
+    font-size: 18px;
     line-height: 1;
-    color: ${props => withOpacity(props.theme.colors.primary, 0.15)};
+    color: ${props => withOpacity(props.theme.colors.primary, 0.3)};
     font-family: Georgia, serif;
-    pointer-events: none;
   }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 60%;
-    height: 1px;
-    background: linear-gradient(90deg, 
-      ${props => withOpacity(props.theme.colors.primary, 0.1)}, 
-      transparent
-    );
-    pointer-events: none;
-  }
-  
-  padding-left: 22px;
-  margin-bottom: 6px;
 `;
 
 const ProductMention = styled.span`
   color: ${props => props.theme.colors.primary};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  position: relative;
-  
-  &:after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: ${props => withOpacity(props.theme.colors.primary, 0.2)};
-  }
 `;
 
 const PositionIndicator = styled.div`
   display: flex;
   align-items: center;
-  font-size: ${props => props.theme.fontSizes.xs};
-  margin-top: 6px;
   justify-content: space-between;
+  margin-top: 8px;
 `;
 
 const CommentPosition = styled.div`
@@ -827,11 +470,10 @@ const CommentPosition = styled.div`
   color: ${props => props.theme.colors.primary};
   font-weight: ${props => props.theme.fontWeights.medium};
   font-size: 10px;
-  letter-spacing: 0.3px;
   
   svg {
     margin-right: 4px;
-    font-size: 9px;
+    font-size: 8px;
   }
 `;
 
@@ -840,54 +482,26 @@ const ProjectedViews = styled.div`
   align-items: center;
   color: ${props => props.theme.colors.text.secondary};
   font-size: 10px;
-  padding: 3px 0;
   
   svg {
-    margin-right: 3px;
+    margin-right: 4px;
     color: ${props => props.theme.colors.warning};
     font-size: 9px;
   }
 `;
 
-// Function to format relative time
-const formatTimeAgo = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
-};
-
-// Function to highlight product mentions in text
-const highlightProductMention = (text: string): React.ReactNode => {
-  // Simple approach - in a real app would need more sophisticated parsing
-  const parts = text.split(/(Liftlio)/g);
-  
-  return parts.map((part, i) => 
-    part === 'Liftlio' ? <ProductMention key={i}>{part}</ProductMention> : part
-  );
-};
-
 // Styled components for the modal content
 const VideoDetailContainer = styled.div`
-  background: ${props => withOpacity(props.theme.colors.background, 0.03)};
+  background: white;
   border-radius: ${props => props.theme.radius.lg};
   overflow: hidden;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
 `;
 
 const VideoDetailHeader = styled.div`
   position: relative;
   height: 300px;
   overflow: hidden;
-  border-radius: ${props => props.theme.radius.lg} ${props => props.theme.radius.lg} 0 0;
 `;
 
 const VideoDetailThumbnail = styled.div<{ image: string }>`
@@ -920,15 +534,21 @@ const VideoDetailTitle = styled.h2`
   font-size: ${props => props.theme.fontSizes.xl};
   font-weight: ${props => props.theme.fontWeights.bold};
   z-index: 2;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 `;
 
-const VideoDetailMetaInfo = styled.div`
-  display: flex;
-  gap: 24px;
+const VideoDetailContent = styled.div`
   padding: 24px;
-  background: ${props => props.theme.colors.white};
-  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+`;
+
+const DetailRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 16px;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 `;
 
 const ChannelDetailInfo = styled.div`
@@ -946,7 +566,7 @@ const ChannelDetailImage = styled.div<{ image: string }>`
   background-position: center;
   margin-right: 16px;
   border: 2px solid white;
-  box-shadow: 0 2px 8px ${props => withOpacity(props.theme.colors.primary, 0.2)};
+  box-shadow: 0 2px 8px ${props => withOpacity(props.theme.colors.primary, 0.1)};
 `;
 
 const ChannelDetailText = styled.div`
@@ -964,27 +584,31 @@ const ChannelDetailName = styled.div`
 const ChannelDetailCategory = styled.div`
   font-size: ${props => props.theme.fontSizes.sm};
   color: ${props => props.theme.colors.text.secondary};
+  display: inline-block;
+  padding: 3px 8px;
+  background: ${props => withOpacity(props.theme.colors.background, 0.1)};
+  border-radius: 4px;
 `;
 
-const VideoTimeInfo = styled.div`
+const TimeInfoWrapper = styled.div`
   display: flex;
-  gap: 24px;
+  gap: 20px;
 `;
 
-const VideoTimeItem = styled.div`
+const TimeInfo = styled.div`
   display: flex;
   flex-direction: column;
 `;
 
-const VideoTimeLabel = styled.div`
-  font-size: ${props => props.theme.fontSizes.xs};
+const TimeLabel = styled.div`
+  font-size: 11px;
   color: ${props => props.theme.colors.text.secondary};
   margin-bottom: 4px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 `;
 
-const VideoTimeValue = styled.div`
+const TimeValue = styled.div`
   font-weight: ${props => props.theme.fontWeights.semiBold};
   font-size: ${props => props.theme.fontSizes.md};
   color: ${props => props.theme.colors.text.primary};
@@ -1001,16 +625,23 @@ const DetailMetricsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  padding: 24px;
-  background: ${props => props.theme.colors.white};
+  margin-bottom: 24px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const DetailMetricCard = styled.div`
   background: ${props => withOpacity(props.theme.colors.background, 0.03)};
-  border-radius: ${props => props.theme.radius.lg};
+  border-radius: ${props => props.theme.radius.md};
   padding: 20px 16px;
   text-align: center;
-  border: 1px solid ${props => withOpacity(props.theme.colors.lightGrey, 0.5)};
+  border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
 `;
 
 const DetailMetricValue = styled.div`
@@ -1026,8 +657,7 @@ const DetailMetricLabel = styled.div`
 `;
 
 const DetailEngagementSection = styled.div`
-  padding: 24px;
-  background: ${props => props.theme.colors.white};
+  margin-bottom: 24px;
 `;
 
 const DetailEngagementTitle = styled.h3`
@@ -1046,23 +676,22 @@ const DetailEngagementTitle = styled.h3`
 
 const DetailEngagementContent = styled.div`
   background: ${props => withOpacity(props.theme.colors.background, 0.03)};
-  border-radius: ${props => props.theme.radius.lg};
+  border-radius: ${props => props.theme.radius.md};
   padding: 24px;
   font-size: ${props => props.theme.fontSizes.md};
   line-height: 1.6;
   color: ${props => props.theme.colors.text.primary};
   position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid ${props => withOpacity(props.theme.colors.lightGrey, 0.5)};
+  border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
   
   &::before {
     content: '"';
     position: absolute;
     top: 12px;
     left: 16px;
-    font-size: 60px;
+    font-size: 40px;
     line-height: 1;
-    color: ${props => withOpacity(props.theme.colors.primary, 0.1)};
+    color: ${props => withOpacity(props.theme.colors.primary, 0.2)};
     font-family: Georgia, serif;
   }
   
@@ -1073,9 +702,14 @@ const DetailStatsFooter = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
-  background: ${props => props.theme.colors.white};
-  border-top: 1px solid ${props => props.theme.colors.lightGrey};
+  padding-top: 20px;
+  border-top: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
 `;
 
 const DetailCommentPosition = styled.div`
@@ -1105,6 +739,33 @@ const DetailProjectedViews = styled.div`
   }
 `;
 
+// Function to format relative time
+const formatTimeAgo = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+};
+
+// Function to highlight product mentions in text
+const highlightProductMention = (text: string): React.ReactNode => {
+  // Simple approach - in a real app would need more sophisticated parsing
+  const parts = text.split(/(Liftlio)/g);
+  
+  return parts.map((part, i) => 
+    part === 'Liftlio' ? <ProductMention key={i}>{part}</ProductMention> : part
+  );
+};
+
 // The main component
 const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data }) => {
   // Use provided data or fallback to mock data
@@ -1131,11 +792,10 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
           Recently Discovered Videos from Monitored Channels
         </DiscoveredVideosTitle>
         
-        <RecentBadge>
-          <RadarScan />
-          <IconComponent icon={FaIcons.FaGlobe} style={{ borderRadius: '50%' }} />
+        <LiveTrackingBadge>
+          <IconComponent icon={FaIcons.FaCircle} />
           LIVE TRACKING
-        </RecentBadge>
+        </LiveTrackingBadge>
       </DiscoveredVideosHeader>
       
       <DiscoveredVideoSubtitle>
@@ -1143,24 +803,23 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
         securing prime positioning in the top {MOCK_DISCOVERED_VIDEOS[1].position_comment}-{MOCK_DISCOVERED_VIDEOS[0].position_comment} comments to maximize visibility and drive targeted engagement.
       </DiscoveredVideoSubtitle>
       
-      <DiscoveredVideosList>
+      <VideosGrid>
         {videosToDisplay.map(video => (
-          <DiscoveredVideoCard 
+          <VideoCard 
             key={video.id} 
             onClick={() => openVideoDetails(video)}
-            style={{ cursor: 'pointer' }}
           >
             <VideoHeader>
               <VideoThumbnail image={video.thumbnailUrl} />
               <VideoOverlay />
-              <DiscoveryInfo>
+              <StatusBadge>
                 <IconComponent icon={HiIcons.HiOutlineLightBulb} />
                 Discovered and Engaged
-              </DiscoveryInfo>
-              <TimeSince>
+              </StatusBadge>
+              <TimeBadge>
                 <IconComponent icon={FaIcons.FaClock} />
                 {formatTimeAgo(video.discovered_at)}
-              </TimeSince>
+              </TimeBadge>
               <VideoTitle>{video.nome_do_video}</VideoTitle>
             </VideoHeader>
             
@@ -1177,11 +836,11 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
                 </MetricItem>
                 <MetricItem>
                   <MetricValue>{video.position_comment}</MetricValue>
-                  <MetricLabel>Comment Position</MetricLabel>
+                  <MetricLabel>Comment Pos</MetricLabel>
                 </MetricItem>
                 <MetricItem>
                   <MetricValue>{(video.relevance_score * 10).toFixed(1)}</MetricValue>
-                  <MetricLabel>Relevance Score</MetricLabel>
+                  <MetricLabel>Relevance</MetricLabel>
                 </MetricItem>
               </MetricsRow>
               
@@ -1204,7 +863,7 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
                 <PositionIndicator>
                   <CommentPosition>
                     <IconComponent icon={FaIcons.FaSort} />
-                    Position: #{video.position_comment} of {video.total_comments}
+                    #{video.position_comment} of {video.total_comments}
                   </CommentPosition>
                   
                   <ProjectedViews>
@@ -1214,9 +873,9 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
                 </PositionIndicator>
               </EngagementSection>
             </VideoContent>
-          </DiscoveredVideoCard>
+          </VideoCard>
         ))}
-      </DiscoveredVideosList>
+      </VideosGrid>
       
       {/* Modal for detailed view */}
       {selectedVideo && (
@@ -1233,73 +892,75 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
               <VideoDetailTitle>{selectedVideo.nome_do_video}</VideoDetailTitle>
             </VideoDetailHeader>
             
-            <VideoDetailMetaInfo>
-              <ChannelDetailInfo>
-                <ChannelDetailImage image={selectedVideo.channel_image} />
-                <ChannelDetailText>
-                  <ChannelDetailName>{selectedVideo.channel_name}</ChannelDetailName>
-                  <ChannelDetailCategory>{selectedVideo.content_category}</ChannelDetailCategory>
-                </ChannelDetailText>
-              </ChannelDetailInfo>
-              
-              <VideoTimeInfo>
-                <VideoTimeItem>
-                  <VideoTimeLabel>Discovered</VideoTimeLabel>
-                  <VideoTimeValue>
-                    <IconComponent icon={FaIcons.FaSearchPlus} />
-                    {formatTimeAgo(selectedVideo.discovered_at)}
-                  </VideoTimeValue>
-                </VideoTimeItem>
+            <VideoDetailContent>
+              <DetailRow>
+                <ChannelDetailInfo>
+                  <ChannelDetailImage image={selectedVideo.channel_image} />
+                  <ChannelDetailText>
+                    <ChannelDetailName>{selectedVideo.channel_name}</ChannelDetailName>
+                    <ChannelDetailCategory>{selectedVideo.content_category}</ChannelDetailCategory>
+                  </ChannelDetailText>
+                </ChannelDetailInfo>
                 
-                <VideoTimeItem>
-                  <VideoTimeLabel>Engaged</VideoTimeLabel>
-                  <VideoTimeValue>
-                    <IconComponent icon={FaIcons.FaReply} />
-                    {formatTimeAgo(selectedVideo.engaged_at)}
-                  </VideoTimeValue>
-                </VideoTimeItem>
-              </VideoTimeInfo>
-            </VideoDetailMetaInfo>
-            
-            <DetailMetricsGrid>
-              <DetailMetricCard>
-                <DetailMetricValue>{selectedVideo.views}</DetailMetricValue>
-                <DetailMetricLabel>Current Views</DetailMetricLabel>
-              </DetailMetricCard>
+                <TimeInfoWrapper>
+                  <TimeInfo>
+                    <TimeLabel>Discovered</TimeLabel>
+                    <TimeValue>
+                      <IconComponent icon={FaIcons.FaSearchPlus} />
+                      {formatTimeAgo(selectedVideo.discovered_at)}
+                    </TimeValue>
+                  </TimeInfo>
+                  
+                  <TimeInfo>
+                    <TimeLabel>Engaged</TimeLabel>
+                    <TimeValue>
+                      <IconComponent icon={FaIcons.FaReply} />
+                      {formatTimeAgo(selectedVideo.engaged_at)}
+                    </TimeValue>
+                  </TimeInfo>
+                </TimeInfoWrapper>
+              </DetailRow>
               
-              <DetailMetricCard>
-                <DetailMetricValue>{selectedVideo.projected_views.toLocaleString()}</DetailMetricValue>
-                <DetailMetricLabel>Projected Views</DetailMetricLabel>
-              </DetailMetricCard>
+              <DetailMetricsGrid>
+                <DetailMetricCard>
+                  <DetailMetricValue>{selectedVideo.views}</DetailMetricValue>
+                  <DetailMetricLabel>Current Views</DetailMetricLabel>
+                </DetailMetricCard>
+                
+                <DetailMetricCard>
+                  <DetailMetricValue>{selectedVideo.projected_views.toLocaleString()}</DetailMetricValue>
+                  <DetailMetricLabel>Projected Views</DetailMetricLabel>
+                </DetailMetricCard>
+                
+                <DetailMetricCard>
+                  <DetailMetricValue>{(selectedVideo.relevance_score * 10).toFixed(1)}</DetailMetricValue>
+                  <DetailMetricLabel>Relevance Score</DetailMetricLabel>
+                </DetailMetricCard>
+              </DetailMetricsGrid>
               
-              <DetailMetricCard>
-                <DetailMetricValue>{(selectedVideo.relevance_score * 10).toFixed(1)}</DetailMetricValue>
-                <DetailMetricLabel>Relevance Score</DetailMetricLabel>
-              </DetailMetricCard>
-            </DetailMetricsGrid>
-            
-            <DetailEngagementSection>
-              <DetailEngagementTitle>
-                <IconComponent icon={FaIcons.FaCommentDots} />
-                Auto-Generated Comment
-              </DetailEngagementTitle>
+              <DetailEngagementSection>
+                <DetailEngagementTitle>
+                  <IconComponent icon={FaIcons.FaCommentDots} />
+                  Auto-Generated Comment
+                </DetailEngagementTitle>
+                
+                <DetailEngagementContent>
+                  {highlightProductMention(selectedVideo.engagement_message)}
+                </DetailEngagementContent>
+              </DetailEngagementSection>
               
-              <DetailEngagementContent>
-                {highlightProductMention(selectedVideo.engagement_message)}
-              </DetailEngagementContent>
-            </DetailEngagementSection>
-            
-            <DetailStatsFooter>
-              <DetailCommentPosition>
-                <IconComponent icon={FaIcons.FaSort} />
-                Comment Position: #{selectedVideo.position_comment} out of {selectedVideo.total_comments}
-              </DetailCommentPosition>
-              
-              <DetailProjectedViews>
-                <IconComponent icon={FaIcons.FaChartLine} />
-                Engagement Ratio: {((selectedVideo.position_comment / selectedVideo.total_comments) * 100).toFixed(1)}%
-              </DetailProjectedViews>
-            </DetailStatsFooter>
+              <DetailStatsFooter>
+                <DetailCommentPosition>
+                  <IconComponent icon={FaIcons.FaSort} />
+                  Comment Position: #{selectedVideo.position_comment} out of {selectedVideo.total_comments}
+                </DetailCommentPosition>
+                
+                <DetailProjectedViews>
+                  <IconComponent icon={FaIcons.FaChartLine} />
+                  Engagement Ratio: {((selectedVideo.position_comment / selectedVideo.total_comments) * 100).toFixed(1)}%
+                </DetailProjectedViews>
+              </DetailStatsFooter>
+            </VideoDetailContent>
           </VideoDetailContainer>
         </Modal>
       )}
