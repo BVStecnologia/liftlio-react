@@ -1640,8 +1640,9 @@ interface ChannelDetails {
   view_count?: string | number;       // Coluna real da tabela e da RPC
   views?: string;              // Para compatibilidade
   category?: string;
-  status?: string;
-  is_active?: boolean;         // Coluna real da tabela - controla o status
+  status?: 'active' | 'inactive' | string;
+  is_active?: boolean;         // Coluna real da tabela - controla o status de monitoramento automático
+  desativado_pelo_user?: boolean; // Novo campo - controla desativação explícita pelo usuário
   last_video?: string;         // Da RPC
   lastVideo?: string;          // Para compatibilidade
   engagement_rate?: string | number;  // Coluna real da tabela e da RPC
@@ -3640,9 +3641,14 @@ const YoutubeMonitoring: React.FC = () => {
       const newStatus = !currentStatus;
       
       // Atualizar pelo ID do canal (mais seguro)
+      // Mantemos a atualização original de is_active
+      // E adicionamos a atualização de desativado_pelo_user com o mesmo valor
       const { data, error } = await supabase
         .from('Canais do youtube')
-        .update({ is_active: newStatus })
+        .update({ 
+          is_active: newStatus, // Manter o comportamento original
+          desativado_pelo_user: !newStatus // Quando newStatus é false (desativando), desativado_pelo_user será true
+        })
         .eq('id', channelId)
         .select();
       
@@ -4717,10 +4723,10 @@ const YoutubeMonitoring: React.FC = () => {
                     if (channelFilter === 'all') {
                       statusMatch = true;
                     } else if (channelFilter === 'active') {
-                      // Usar apenas o campo is_active
+                      // Usar apenas o campo is_active como era originalmente
                       statusMatch = (channel.is_active === true);
                     } else if (channelFilter === 'inactive') {
-                      // Usar apenas o campo is_active
+                      // Usar apenas o campo is_active como era originalmente
                       statusMatch = (channel.is_active === false);
                     }
                     
