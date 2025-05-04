@@ -1032,8 +1032,7 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
       
       <DiscoveredVideoSubtitle>
         Our AI-powered system <span>automatically identifies</span> and engages with fresh content, 
-        securing <span className="early-adopter"><IconComponent icon={HiIcons.HiOutlineSparkles} />prime positioning</span> in the 
-        <span className="highlight-value"><IconComponent icon={HiIcons.HiOutlineStar} /> top {MOCK_DISCOVERED_VIDEOS[1].position_comment}-{MOCK_DISCOVERED_VIDEOS[0].position_comment} comments</span> to maximize visibility and drive targeted engagement.
+        securing prime positioning in the top {MOCK_DISCOVERED_VIDEOS[1].position_comment}-{MOCK_DISCOVERED_VIDEOS[0].position_comment} comments to maximize visibility and drive targeted engagement.
       </DiscoveredVideoSubtitle>
       
       <DiscoveredVideosList>
