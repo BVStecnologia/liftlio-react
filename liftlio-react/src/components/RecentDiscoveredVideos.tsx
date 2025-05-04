@@ -98,7 +98,7 @@ const DiscoveredVideosContainer = styled.div`
   padding: 20px;
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(15px); }
@@ -113,7 +113,7 @@ const DiscoveredVideosContainer = styled.div`
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    border: 1px solid ${props => withOpacity(props.theme.colors.primary, 0.3)};
+    border: 1px solid ${props => withOpacity(props.theme.colors.primary, 0.2)};
     animation: scanArea 4s linear infinite;
     z-index: -1;
   }
@@ -125,7 +125,7 @@ const DiscoveredVideosContainer = styled.div`
     right: 30px;
     width: 20px;
     height: 20px;
-    background: ${props => withOpacity(props.theme.colors.primary, 0.1)};
+    background: ${props => withOpacity(props.theme.colors.primary, 0.05)};
     border-radius: 50%;
     animation: pulse 2s ease-in-out infinite;
     z-index: -1;
@@ -137,8 +137,8 @@ const DiscoveredVideosContainer = styled.div`
   }
   
   @keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.5); opacity: 0.2; }
+    0%, 100% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.5); opacity: 0.1; }
   }
 `;
 
@@ -286,8 +286,8 @@ const DiscoveredVideoSubtitle = styled.div`
 
 const RadarScan = styled.div`
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   border: 2px solid ${props => props.theme.colors.info};
   top: 50%;
@@ -316,11 +316,11 @@ const RadarScan = styled.div`
     0% {
       width: 100%;
       height: 100%;
-      opacity: 0.8;
+      opacity: 0.6;
     }
     100% {
-      width: 300%;
-      height: 300%;
+      width: 250%;
+      height: 250%;
       opacity: 0;
     }
   }
@@ -332,11 +332,11 @@ const RecentBadge = styled.div`
   font-size: 10px;
   font-weight: ${props => props.theme.fontWeights.bold};
   padding: 3px 8px 3px 24px;
-  border-radius: 4px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   margin-left: 12px;
-  box-shadow: 0 2px 10px ${props => withOpacity(props.theme.colors.info, 0.2)};
+  box-shadow: 0 2px 6px ${props => withOpacity(props.theme.colors.info, 0.15)};
   letter-spacing: 0.5px;
   position: relative;
   overflow: hidden;
@@ -349,9 +349,9 @@ const RecentBadge = styled.div`
     right: 0;
     bottom: 0;
     background: linear-gradient(90deg, 
+      rgba(255, 255, 255, 0.05), 
       rgba(255, 255, 255, 0.1), 
-      rgba(255, 255, 255, 0.2), 
-      rgba(255, 255, 255, 0.1)
+      rgba(255, 255, 255, 0.05)
     );
     transform: translateX(-100%);
     animation: shimmer 2s infinite;
@@ -365,6 +365,7 @@ const RecentBadge = styled.div`
     margin-right: 4px;
     font-size: 7px;
     animation: blink 1.2s ease-in-out infinite;
+    border-radius: 50%;
   }
   
   @keyframes blink {
@@ -407,7 +408,7 @@ const DiscoveredVideoCard = styled.div`
   box-shadow: ${props => props.theme.shadows.sm};
   transition: ${props => props.theme.transitions.springy};
   position: relative;
-  border: 1px solid ${props => withOpacity(props.theme.colors.secondary, 0.4)};
+  border: 1px solid ${props => withOpacity(props.theme.colors.secondary, 0.3)};
   flex: 0 0 320px;
   max-width: 320px;
   
@@ -420,27 +421,27 @@ const DiscoveredVideoCard = styled.div`
     right: 0;
     bottom: 0;
     background-image: 
-      radial-gradient(circle at 10px 10px, ${props => withOpacity(props.theme.colors.primary, 0.05)} 2px, transparent 2px),
-      linear-gradient(${props => withOpacity(props.theme.colors.primary, 0.03)} 1px, transparent 1px),
-      linear-gradient(90deg, ${props => withOpacity(props.theme.colors.primary, 0.03)} 1px, transparent 1px);
+      radial-gradient(circle at 10px 10px, ${props => withOpacity(props.theme.colors.primary, 0.03)} 2px, transparent 2px),
+      linear-gradient(${props => withOpacity(props.theme.colors.primary, 0.02)} 1px, transparent 1px),
+      linear-gradient(90deg, ${props => withOpacity(props.theme.colors.primary, 0.02)} 1px, transparent 1px);
     background-size: 30px 30px, 15px 15px, 15px 15px;
     pointer-events: none;
     opacity: 0.5;
     z-index: 0;
   }
   
-  /* Enhanced glow effect */
+  /* Subtle glow effect */
   &:after {
     content: '';
     position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
     z-index: -1;
     background: linear-gradient(45deg, 
       ${props => withOpacity(props.theme.colors.primary, 0)}, 
-      ${props => withOpacity(props.theme.colors.primary, 0.25)}, 
+      ${props => withOpacity(props.theme.colors.primary, 0.15)}, 
       ${props => withOpacity(props.theme.colors.primary, 0)});
     border-radius: ${props => props.theme.radius.xl};
     opacity: 0;
@@ -1132,7 +1133,7 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
         
         <RecentBadge>
           <RadarScan />
-          <IconComponent icon={FaIcons.FaCircle} />
+          <IconComponent icon={FaIcons.FaGlobe} style={{ borderRadius: '50%' }} />
           LIVE TRACKING
         </RecentBadge>
       </DiscoveredVideosHeader>
