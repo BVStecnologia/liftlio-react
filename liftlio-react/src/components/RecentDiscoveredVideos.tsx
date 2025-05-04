@@ -94,6 +94,11 @@ const DiscoveredVideosContainer = styled.div`
   margin-bottom: 30px;
   position: relative;
   animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(255, 255, 255, 0.8);
+  padding: 20px;
+  border-radius: ${props => props.theme.radius.lg};
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(15px); }
@@ -373,7 +378,7 @@ const DiscoveredVideosList = styled.div`
   flex-direction: row;
   gap: 24px;
   overflow-x: auto;
-  padding: 12px 0;
+  padding: 12px 0 4px 0;
   
   &::-webkit-scrollbar {
     height: 6px;
@@ -388,6 +393,10 @@ const DiscoveredVideosList = styled.div`
     background: ${props => withOpacity(props.theme.colors.primary, 0.3)};
     border-radius: 10px;
   }
+  
+  /* Add subtle shadow at the edges to indicate scrollable content */
+  mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
 `;
 
 const DiscoveredVideoCard = styled.div`
