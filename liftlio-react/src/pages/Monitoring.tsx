@@ -4174,11 +4174,8 @@ const YoutubeMonitoring: React.FC = () => {
             <MetricCard
               title="Total Views"
               value={rpcData.total_views.toLocaleString()}
-              subtitle="Total reach of your content"
+              subtitle="Total views of all commented videos"
               icon={<IconComponent icon={FaIcons.FaEye} />}
-              change={15}
-              changeLabel="vs. previous month"
-              trend="up"
               color="#5856D6"
             />
             
@@ -4188,9 +4185,6 @@ const YoutubeMonitoring: React.FC = () => {
               value={rpcData.total_likes.toLocaleString()}
               subtitle="Positive engagement"
               icon={<IconComponent icon={FaIcons.FaThumbsUp} />}
-              change={8}
-              changeLabel="last 30 days"
-              trend="up"
               color="#FF9500"
             />
             
@@ -4200,9 +4194,6 @@ const YoutubeMonitoring: React.FC = () => {
               value={`${parseFloat(rpcData.media).toFixed(1)}%`}
               subtitle="Average interaction rate"
               icon={<IconComponent icon={FaIcons.FaChartLine} />}
-              change={2.5}
-              changeLabel="vs. global average"
-              trend="up"
               color="#34C759"
             />
             
@@ -4212,9 +4203,6 @@ const YoutubeMonitoring: React.FC = () => {
               value={rpcData.total_videos.toLocaleString()}
               subtitle={`${rpcData.posts} total posts`}
               icon={<IconComponent icon={FaIcons.FaVideo} />}
-              change={5}
-              changeLabel="new this week"
-              trend="up"
               color="#007AFF"
             />
           </StatsGrid>
