@@ -326,6 +326,9 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
          Project Name: ${projectForm.name}
          Company/Product Name: ${projectForm.company}
          Target Audience Description: ${projectForm.audience}
+         
+         Generate a list of 5 bottom-of-funnel keywords that indicate high purchase intent. Focus on transactional queries — such as comparisons, reviews, or product-versus-product searches — that indicate the user is further along in the buying process. Do not mention prices, free trials, or discounts.
+         
          Respond ONLY with the keywords separated by commas, without any introduction or explanation.`;
       } else {
         // Construir a URL correta
@@ -708,7 +711,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
             )}
             
             <InfoText>
-              Keywords will be generated based on your project information in English.
+              Keywords will be generated based on your project information, focusing on high-purchase intent transactional terms that indicate users who are ready to buy.
             </InfoText>
           </FormGroup>
         
