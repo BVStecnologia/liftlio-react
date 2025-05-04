@@ -3169,6 +3169,57 @@ const YoutubeMonitoring: React.FC = () => {
     }, { replace: true });
   };
   
+  // Função para configurar detalhes do canal a partir do ID
+  const setChannelDetailsFromId = (channelId: number) => {
+    const selectedChannelData = channels.find(c => c.id === channelId);
+    
+    if (selectedChannelData) {
+      // Extrair valores numéricos das estatísticas formatadas
+      let viewCount = '0';
+      if (selectedChannelData.view_count) {
+        if (typeof selectedChannelData.view_count === 'string') {
+          // Extrair apenas o valor numérico (1.8M -> 1800000)
+          if (selectedChannelData.view_count.includes('M')) {
+            const numPart = parseFloat(selectedChannelData.view_count.replace(/[^0-9.]/g, ''));
+            viewCount = (numPart * 1000000).toString();
+          } else if (selectedChannelData.view_count.includes('K')) {
+            const numPart = parseFloat(selectedChannelData.view_count.replace(/[^0-9.]/g, ''));
+            viewCount = (numPart * 1000).toString();
+          } else {
+            viewCount = selectedChannelData.view_count.replace(/[^0-9]/g, '');
+          }
+        } else {
+          viewCount = selectedChannelData.view_count.toString();
+        }
+      }
+      
+      // Usar diretamente os dados que já temos ao invés de fazer uma chamada adicional
+      const channelDetails = {
+        title: selectedChannelData.channel_name || 'YouTube Channel',
+        description: selectedChannelData.description || '',
+        statistics: {
+          subscriberCount: selectedChannelData.raw_subscriber_count?.toString() || 
+                          (typeof selectedChannelData.subscriber_count === 'string' ? 
+                            selectedChannelData.subscriber_count.replace(/[^0-9]/g, '') : 
+                            selectedChannelData.subscriber_count?.toString()) || 
+                          '0',
+          viewCount: viewCount,
+          videoCount: selectedChannelData.video_count?.toString() || '0'
+        },
+        thumbnails: {
+          high: { url: selectedChannelData.imagem || 'https://via.placeholder.com/150' },
+          medium: { url: selectedChannelData.imagem || 'https://via.placeholder.com/150' },
+          default: { url: selectedChannelData.imagem || 'https://via.placeholder.com/150' }
+        },
+        country: 'US', // Alterado para corresponder aos dados reais que mostram US
+        customUrl: selectedChannelData.custom_url || null
+      };
+      
+      console.log('Configurando detalhes do canal:', channelDetails);
+      setSelectedChannelDetails(channelDetails);
+    }
+  };
+
   // Ler parâmetros da URL ao carregar a página
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -3202,6 +3253,7 @@ const YoutubeMonitoring: React.FC = () => {
     if (channelVideos.length > 0) {
       const searchParams = new URLSearchParams(location.search);
       const videoIdParam = searchParams.get('videoId');
+      const tabParam = searchParams.get('tab');
       
       if (videoIdParam) {
         const videoId = Number(videoIdParam);
@@ -3210,16 +3262,25 @@ const YoutubeMonitoring: React.FC = () => {
         if (video) {
           setSelectedVideo(video);
           
-          // Se não estiver na aba de comentários mas tem um vídeo selecionado,
-          // mudar para a aba de comentários
-          if (activeTab !== 'comments') {
+          // Verificar se o usuário não escolheu explicitamente a aba 'videos'
+          // Só mudar para a aba de comentários se a aba atual não for 'comments' E
+          // a aba na URL não for explicitamente 'videos'
+          if (activeTab !== 'comments' && tabParam !== 'videos') {
             setActiveTab('comments');
           }
         }
       }
     }
-  }, [channelVideos, location.search]); // Executar quando os vídeos do canal forem carregados ou a URL mudar
+  }, [channelVideos, location.search, activeTab]); // Executar quando os vídeos do canal forem carregados ou a URL mudar
   
+  // Efeito para configurar detalhes do canal quando os canais são carregados
+  useEffect(() => {
+    if (channels.length > 0 && selectedChannel) {
+      // Se já temos canais carregados e um canal selecionado, configurar os detalhes
+      setChannelDetailsFromId(selectedChannel);
+    }
+  }, [channels, selectedChannel]);
+
   useEffect(() => {
     const fetchMetrics = async () => {
       if (!currentProject?.id) return;
@@ -5645,7 +5706,15 @@ const YoutubeMonitoring: React.FC = () => {
           )}
           
           <ButtonRow>
-            <ActionButton variant="ghost" leftIcon={<IconComponent icon={FaIcons.FaArrowLeft} />} onClick={() => setActiveTab('videos')}>
+            <ActionButton variant="ghost" leftIcon={<IconComponent icon={FaIcons.FaArrowLeft} />} onClick={() => {
+              // Atualizar a aba para vídeos
+              setActiveTab('videos');
+              // Importante: Limpar videoId da URL para evitar que o useEffect force voltar para comments
+              updateUrlParams({
+                tab: 'videos',
+                videoId: null
+              });
+            }}>
               Back to Videos
             </ActionButton>
           </ButtonRow>
