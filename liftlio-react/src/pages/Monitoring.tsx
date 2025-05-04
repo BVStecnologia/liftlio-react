@@ -3229,9 +3229,35 @@ const YoutubeMonitoring: React.FC = () => {
     const channelIdParam = searchParams.get('channelId');
     const videoIdParam = searchParams.get('videoId');
     
+    // Limpar estados se não estiverem presentes na URL
+    if (!channelIdParam) {
+      setSelectedChannel(null);
+    }
+    
+    if (!videoIdParam) {
+      setSelectedVideo(null);
+    }
+    
     // Configurar estados iniciais baseados nos parâmetros
     if (tabParam && ['overview', 'channels', 'videos', 'comments'].includes(tabParam)) {
       setActiveTab(tabParam as any);
+      
+      // Garantir que os estados sejam consistentes com a aba ativa
+      if (tabParam === 'overview' || tabParam === 'channels') {
+        // Em overview ou channels, não deve haver canal ou vídeo selecionado
+        setSelectedChannel(null);
+        setSelectedVideo(null);
+      } else if (tabParam === 'videos' && !channelIdParam) {
+        // Se a aba for videos mas não houver channelId, voltar para channels
+        setActiveTab('channels');
+      } else if (tabParam === 'comments' && !videoIdParam) {
+        // Se a aba for comments mas não houver videoId, voltar para a aba anterior
+        if (channelIdParam) {
+          setActiveTab('videos');
+        } else {
+          setActiveTab('channels');
+        }
+      }
     }
     
     // Se tiver channelId na URL, selecionar o canal
@@ -3262,13 +3288,29 @@ const YoutubeMonitoring: React.FC = () => {
         if (video) {
           setSelectedVideo(video);
           
-          // Verificar se o usuário não escolheu explicitamente a aba 'videos'
-          // Só mudar para a aba de comentários se a aba atual não for 'comments' E
-          // a aba na URL não for explicitamente 'videos'
-          if (activeTab !== 'comments' && tabParam !== 'videos') {
+          // Se a aba na URL for explicitamente 'comments', garantir que estamos nela
+          if (tabParam === 'comments') {
             setActiveTab('comments');
           }
+          // Se não houver aba específica e não estivermos em comments, ir para comments
+          else if (activeTab !== 'comments' && tabParam !== 'videos') {
+            setActiveTab('comments');
+          }
+        } else {
+          // Se o vídeo não for encontrado, limpar o estado e a URL
+          setSelectedVideo(null);
+          if (tabParam === 'comments') {
+            // Se estávamos na aba de comentários, voltar para vídeos
+            setActiveTab('videos');
+            updateUrlParams({
+              tab: 'videos',
+              videoId: null
+            });
+          }
         }
+      } else if (tabParam === 'comments') {
+        // Se estamos na aba de comentários mas não há videoId, voltar para vídeos
+        setActiveTab('videos');
       }
     }
   }, [channelVideos, location.search, activeTab]); // Executar quando os vídeos do canal forem carregados ou a URL mudar
@@ -3896,6 +3938,7 @@ const YoutubeMonitoring: React.FC = () => {
     
     // If in Overview or Channels tab, switch to Videos tab
     if (activeTab === 'overview' || activeTab === 'channels') {
+      // Usamos setActiveTab diretamente aqui para evitar limpar o canal que acabamos de selecionar
       setActiveTab('videos');
     }
   };
@@ -3903,7 +3946,6 @@ const YoutubeMonitoring: React.FC = () => {
   // Function to select a video - update URL params too
   const handleVideoSelect = async (videoId: number) => {
     console.log('Vídeo selecionado, ID:', videoId);
-    setActiveTab('comments');
     
     // Atualizar a URL quando selecionar um vídeo
     updateUrlParams({
@@ -3915,6 +3957,9 @@ const YoutubeMonitoring: React.FC = () => {
     const video = channelVideos.find(v => v.id === videoId) as VideoDetails;
     console.log('Dados do vídeo encontrado:', video);
     setSelectedVideo(video || null);
+    
+    // Usamos setActiveTab diretamente aqui para evitar comportamentos indesejados
+    setActiveTab('comments');
     
     // Buscar comentários do vídeo
     await fetchVideoComments(videoId);
@@ -4011,26 +4056,54 @@ const YoutubeMonitoring: React.FC = () => {
   
   // Atualizar a URL quando mudar de aba manualmente
   const handleTabChange = (tab: 'overview' | 'channels' | 'videos' | 'comments') => {
-    setActiveTab(tab);
+    // Verificar a validade da navegação antes de executar
+    if (tab === 'videos' && selectedChannel === null) {
+      // Não permitir navegação para videos sem um canal selecionado
+      return;
+    }
     
-    // Atualizar apenas o parâmetro tab na URL
-    updateUrlParams({
-      tab: tab
-    });
+    if (tab === 'comments' && selectedVideo === null) {
+      // Não permitir navegação para comments sem um vídeo selecionado
+      return;
+    }
     
-    // Se mudar para overview ou channels, limpar seleção de vídeo
-    if (tab === 'overview' || tab === 'channels') {
+    // Atualizar a aba e limpar estados conforme necessário
+    if (tab === 'overview') {
+      // Limpar tudo ao voltar para overview
       setSelectedVideo(null);
+      setSelectedChannel(null);
+      setActiveTab(tab);
       updateUrlParams({
+        tab: tab,
+        videoId: null,
+        channelId: null
+      });
+    } 
+    else if (tab === 'channels') {
+      // Limpar seleção de vídeo e canal ao voltar para channels
+      setSelectedVideo(null);
+      setSelectedChannel(null);
+      setActiveTab(tab);
+      updateUrlParams({
+        tab: tab,
+        videoId: null,
+        channelId: null
+      });
+    }
+    else if (tab === 'videos') {
+      // Manter canal selecionado, mas limpar vídeo selecionado
+      setSelectedVideo(null);
+      setActiveTab(tab);
+      updateUrlParams({
+        tab: tab,
         videoId: null
       });
     }
-    
-    // Se mudar para overview, limpar seleção de canal também
-    if (tab === 'overview') {
-      setSelectedChannel(null);
+    else {
+      // Para comments, atualizar apenas a aba
+      setActiveTab(tab);
       updateUrlParams({
-        channelId: null
+        tab: tab
       });
     }
   };
@@ -5071,7 +5144,7 @@ const YoutubeMonitoring: React.FC = () => {
           )}
           
           <ButtonRow>
-            <ActionButton variant="ghost" leftIcon={<IconComponent icon={FaIcons.FaArrowLeft} />} onClick={() => setActiveTab('channels')}>
+            <ActionButton variant="ghost" leftIcon={<IconComponent icon={FaIcons.FaArrowLeft} />} onClick={() => handleTabChange('channels')}>
               Back to Channels
             </ActionButton>
             <ActionButton variant="ghost" leftIcon={<IconComponent icon={FaIcons.FaFileExport} />}>
@@ -5706,15 +5779,7 @@ const YoutubeMonitoring: React.FC = () => {
           )}
           
           <ButtonRow>
-            <ActionButton variant="ghost" leftIcon={<IconComponent icon={FaIcons.FaArrowLeft} />} onClick={() => {
-              // Atualizar a aba para vídeos
-              setActiveTab('videos');
-              // Importante: Limpar videoId da URL para evitar que o useEffect force voltar para comments
-              updateUrlParams({
-                tab: 'videos',
-                videoId: null
-              });
-            }}>
+            <ActionButton variant="ghost" leftIcon={<IconComponent icon={FaIcons.FaArrowLeft} />} onClick={() => handleTabChange('videos')}>
               Back to Videos
             </ActionButton>
           </ButtonRow>
