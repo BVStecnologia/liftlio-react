@@ -289,7 +289,7 @@ const RadarScan = styled.div`
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 2px solid ${props => props.theme.colors.primary};
+  border: 2px solid ${props => props.theme.colors.info};
   top: 50%;
   left: 10px;
   transform: translate(-50%, -50%);
@@ -302,7 +302,7 @@ const RadarScan = styled.div`
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    border: 2px solid ${props => props.theme.colors.primary};
+    border: 2px solid ${props => props.theme.colors.info};
     transform: translate(-50%, -50%);
     animation: radar 2s cubic-bezier(0, 0.6, 0.8, 1) infinite;
     opacity: 0;
@@ -327,8 +327,8 @@ const RadarScan = styled.div`
 `;
 
 const RecentBadge = styled.div`
-  background: linear-gradient(90deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
-  color: white;
+  background: ${props => props.theme.colors.gradient.info};
+  color: ${props => props.theme.colors.secondary};
   font-size: 10px;
   font-weight: ${props => props.theme.fontWeights.bold};
   padding: 3px 8px 3px 24px;
@@ -336,7 +336,7 @@ const RecentBadge = styled.div`
   display: flex;
   align-items: center;
   margin-left: 12px;
-  box-shadow: 0 2px 10px ${props => withOpacity(props.theme.colors.primary, 0.2)};
+  box-shadow: 0 2px 10px ${props => withOpacity(props.theme.colors.info, 0.2)};
   letter-spacing: 0.5px;
   position: relative;
   overflow: hidden;
@@ -492,11 +492,11 @@ const DiscoveryInfo = styled.div`
   position: absolute;
   top: 8px;
   left: 8px;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(45, 62, 80, 0.75); /* Usando ACCENT com opacidade */
   backdrop-filter: blur(8px);
   border-radius: 4px;
   padding: 4px 8px;
-  color: white;
+  color: ${props => props.theme.colors.secondary};
   font-size: 10px;
   display: flex;
   align-items: center;
@@ -506,7 +506,7 @@ const DiscoveryInfo = styled.div`
   
   svg {
     margin-right: 4px;
-    color: #00E5FF;
+    color: ${props => props.theme.colors.info};
     font-size: 11px;
     animation: pulse 1.5s infinite;
   }
@@ -522,11 +522,11 @@ const TimeSince = styled.div`
   position: absolute;
   top: 8px;
   right: 8px;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(45, 62, 80, 0.75); /* Usando ACCENT com opacidade */
   backdrop-filter: blur(8px);
   border-radius: 4px;
   padding: 4px 8px;
-  color: white;
+  color: ${props => props.theme.colors.secondary};
   font-size: 10px;
   z-index: 2;
   display: flex;
@@ -536,7 +536,7 @@ const TimeSince = styled.div`
   
   svg {
     margin-right: 4px;
-    color: #4CAF50;
+    color: ${props => props.theme.colors.success};
     font-size: 9px;
   }
 `;
@@ -613,21 +613,21 @@ const MetricItem = styled.div`
   text-align: center;
   position: relative;
   padding: 8px 4px;
-  background: rgba(255, 255, 255, 0.6);
+  background: ${props => withOpacity(props.theme.colors.secondary, 0.9)};
   border-radius: ${props => props.theme.radius.md};
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  transition: ${props => props.theme.transitions.default};
+  box-shadow: ${props => props.theme.shadows.sm};
+  border: 1px solid ${props => withOpacity(props.theme.colors.secondary, 0.8)};
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: ${props => props.theme.colors.secondary};
     transform: translateY(-2px);
-    box-shadow: 0 3px 8px rgba(89, 81, 249, 0.1);
-    border-color: rgba(89, 81, 249, 0.2);
+    box-shadow: ${props => props.theme.shadows.md};
+    border-color: ${props => withOpacity(props.theme.colors.primary, 0.2)};
   }
   
   &::before {
@@ -638,7 +638,7 @@ const MetricItem = styled.div`
     width: 100%;
     height: 2px;
     background: linear-gradient(90deg, transparent, 
-      ${props => props.theme.colors.primary}70, transparent);
+      ${props => withOpacity(props.theme.colors.primary, 0.4)}, transparent);
   }
 `;
 
@@ -723,14 +723,14 @@ const EngagementTitle = styled.div`
 
 const EngagementLabel = styled.div`
   font-size: ${props => props.theme.fontSizes.xs};
-  background: linear-gradient(90deg, #22c55e20, #22c55e10);
-  color: #22c55e;
+  background: ${props => withOpacity(props.theme.colors.success, 0.1)};
+  color: ${props => props.theme.colors.success};
   padding: 3px 8px;
   border-radius: 4px;
   display: flex;
   align-items: center;
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  box-shadow: 0 1px 2px rgba(34, 197, 94, 0.1);
+  box-shadow: 0 1px 2px ${props => withOpacity(props.theme.colors.success, 0.1)};
   
   svg {
     margin-right: 4px;
@@ -823,15 +823,12 @@ const PositionIndicator = styled.div`
 `;
 
 const CommentPosition = styled.div`
-  background: linear-gradient(90deg, 
-    rgba(89, 81, 249, 0.08),
-    rgba(69, 144, 255, 0.05)
-  );
+  background: ${props => withOpacity(props.theme.colors.primary, 0.1)};
   padding: 3px 8px;
   border-radius: 4px;
   display: flex;
   align-items: center;
-  color: #5951F9;
+  color: ${props => props.theme.colors.primary};
   font-weight: ${props => props.theme.fontWeights.medium};
   font-size: 10px;
   letter-spacing: 0.3px;
