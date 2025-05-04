@@ -99,6 +99,42 @@ const DiscoveredVideosContainer = styled.div`
     from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
   }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid ${props => withOpacity(props.theme.colors.primary, 0.3)};
+    animation: scanArea 4s linear infinite;
+    z-index: -1;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    right: 30px;
+    width: 20px;
+    height: 20px;
+    background: ${props => withOpacity(props.theme.colors.primary, 0.1)};
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+    z-index: -1;
+  }
+  
+  @keyframes scanArea {
+    0% { transform: scale(1) rotate(0deg); }
+    100% { transform: scale(1) rotate(360deg); }
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.5); opacity: 0.2; }
+  }
 `;
 
 const DiscoveredVideosHeader = styled.div`
@@ -129,22 +165,43 @@ const DiscoveredVideosTitle = styled.h2`
   display: flex;
   align-items: center;
   margin-right: 16px;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 30px;
+    width: 85%;
+    height: 2px;
+    background: linear-gradient(
+      to right, 
+      ${props => props.theme.colors.primary}, 
+      ${props => props.theme.colors.secondary},
+      transparent
+    );
+  }
   
   svg {
     margin-right: 10px;
     color: ${props => props.theme.colors.primary};
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    animation: scan 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     font-size: 20px;
+    position: relative;
   }
   
-  @keyframes pulse {
-    0%, 100% { 
-      transform: scale(1); 
-      opacity: 1;
+  @keyframes scan {
+    0% { 
+      transform: scale(1) rotate(0deg); 
+      filter: drop-shadow(0 0 0px ${props => props.theme.colors.primary});
     }
     50% { 
-      transform: scale(1.1); 
-      opacity: 0.8;
+      transform: scale(1.1) rotate(5deg); 
+      filter: drop-shadow(0 0 5px ${props => props.theme.colors.primary});
+    }
+    100% { 
+      transform: scale(1) rotate(0deg); 
+      filter: drop-shadow(0 0 0px ${props => props.theme.colors.primary});
     }
   }
 `;
@@ -222,12 +279,54 @@ const DiscoveredVideoSubtitle = styled.div`
   }
 `;
 
+const RadarScan = styled.div`
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid ${props => props.theme.colors.primary};
+  top: 50%;
+  left: 10px;
+  transform: translate(-50%, -50%);
+  
+  &::before, &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid ${props => props.theme.colors.primary};
+    transform: translate(-50%, -50%);
+    animation: radar 2s cubic-bezier(0, 0.6, 0.8, 1) infinite;
+    opacity: 0;
+  }
+  
+  &::after {
+    animation-delay: 0.5s;
+  }
+  
+  @keyframes radar {
+    0% {
+      width: 100%;
+      height: 100%;
+      opacity: 0.8;
+    }
+    100% {
+      width: 300%;
+      height: 300%;
+      opacity: 0;
+    }
+  }
+`;
+
 const RecentBadge = styled.div`
   background: linear-gradient(90deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
   color: white;
   font-size: 10px;
   font-weight: ${props => props.theme.fontWeights.bold};
-  padding: 3px 8px;
+  padding: 3px 8px 3px 24px;
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -260,13 +359,12 @@ const RecentBadge = styled.div`
   svg {
     margin-right: 4px;
     font-size: 7px;
-    animation: pulse-small 1.2s ease-in-out infinite;
+    animation: blink 1.2s ease-in-out infinite;
   }
   
-  @keyframes pulse-small {
-    0% { opacity: 0.6; transform: scale(0.85); }
-    50% { opacity: 1; transform: scale(1); }
-    100% { opacity: 0.6; transform: scale(0.85); }
+  @keyframes blink {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
   }
 `;
 
@@ -1027,11 +1125,12 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
     <DiscoveredVideosContainer>
       <DiscoveredVideosHeader>
         <DiscoveredVideosTitle>
-          <IconComponent icon={HiIcons.HiOutlineLightningBolt} />
+          <IconComponent icon={HiIcons.HiOutlineGlobe} />
           Recently Discovered Videos from Monitored Channels
         </DiscoveredVideosTitle>
         
         <RecentBadge>
+          <RadarScan />
           <IconComponent icon={FaIcons.FaCircle} />
           LIVE TRACKING
         </RecentBadge>
