@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { COLORS, withOpacity } from '../styles/colors';
 import * as FaIcons from 'react-icons/fa';
 import * as HiIcons from 'react-icons/hi';
 import { IconComponent } from '../utils/IconHelper';
+import Modal from './Modal';
 
 // Interface para definir a estrutura de dados dos vídeos descobertos recentemente
 interface DiscoveredVideo {
@@ -115,7 +116,7 @@ const DiscoveredVideosHeader = styled.div`
     width: 180px;
     height: 1px;
     background: linear-gradient(90deg, 
-      #5951F9aa, 
+      ${props => withOpacity(props.theme.colors.primary, 0.7)}, 
       transparent
     );
   }
@@ -124,14 +125,14 @@ const DiscoveredVideosHeader = styled.div`
 const DiscoveredVideosTitle = styled.h2`
   font-size: ${props => props.theme.fontSizes.lg};
   font-weight: ${props => props.theme.fontWeights.bold};
-  color: ${COLORS.ACCENT};
+  color: ${props => props.theme.colors.text.primary};
   display: flex;
   align-items: center;
   margin-right: 16px;
   
   svg {
     margin-right: 10px;
-    color: #5951F9;
+    color: ${props => props.theme.colors.primary};
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     font-size: 20px;
   }
@@ -156,8 +157,8 @@ const DiscoveredVideoSubtitle = styled.div`
   margin-bottom: 20px;
   line-height: 1.6;
   padding: 12px 18px;
-  background: rgba(15, 23, 42, 0.03);
-  border-radius: 12px;
+  background: ${props => withOpacity(props.theme.colors.background, 0.03)};
+  border-radius: ${props => props.theme.radius.md};
   position: relative;
   overflow: hidden;
   
@@ -168,7 +169,7 @@ const DiscoveredVideoSubtitle = styled.div`
     left: 0;
     width: 6px;
     height: 100%;
-    background: linear-gradient(to bottom, #5951F9, #4590FF);
+    background: linear-gradient(to bottom, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
   }
   
   &::after {
@@ -179,7 +180,7 @@ const DiscoveredVideoSubtitle = styled.div`
     width: 100px;
     height: 100%;
     background: linear-gradient(to left, 
-      rgba(15, 23, 42, 0.03), 
+      ${props => withOpacity(props.theme.colors.background, 0.03)}, 
       transparent
     );
   }
@@ -206,13 +207,13 @@ const DiscoveredVideoSubtitle = styled.div`
   .early-adopter {
     display: inline-flex;
     align-items: center;
-    background: linear-gradient(to right, #5951F9, #4590FF);
+    background: linear-gradient(to right, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
     color: white;
     font-weight: ${props => props.theme.fontWeights.bold};
     padding: 2px 8px;
     border-radius: 4px;
     margin: 0 4px;
-    box-shadow: 0 2px 6px rgba(73, 84, 244, 0.3);
+    box-shadow: 0 2px 6px ${props => withOpacity(props.theme.colors.primary, 0.3)};
     
     svg {
       margin-right: 4px;
@@ -222,7 +223,7 @@ const DiscoveredVideoSubtitle = styled.div`
 `;
 
 const RecentBadge = styled.div`
-  background: linear-gradient(90deg, #5951F9, #4590FF);
+  background: linear-gradient(90deg, ${props => props.theme.colors.primary}, ${props => props.theme.colors.secondary});
   color: white;
   font-size: 10px;
   font-weight: ${props => props.theme.fontWeights.bold};
@@ -231,7 +232,7 @@ const RecentBadge = styled.div`
   display: flex;
   align-items: center;
   margin-left: 12px;
-  box-shadow: 0 2px 10px rgba(89, 81, 249, 0.2);
+  box-shadow: 0 2px 10px ${props => withOpacity(props.theme.colors.primary, 0.2)};
   letter-spacing: 0.5px;
   position: relative;
   overflow: hidden;
@@ -312,9 +313,9 @@ const DiscoveredVideoCard = styled.div`
     right: 0;
     bottom: 0;
     background-image: 
-      radial-gradient(circle at 10px 10px, rgba(65, 88, 208, 0.05) 2px, transparent 2px),
-      linear-gradient(rgba(65, 88, 208, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(65, 88, 208, 0.03) 1px, transparent 1px);
+      radial-gradient(circle at 10px 10px, ${props => withOpacity(props.theme.colors.primary, 0.05)} 2px, transparent 2px),
+      linear-gradient(${props => withOpacity(props.theme.colors.primary, 0.03)} 1px, transparent 1px),
+      linear-gradient(90deg, ${props => withOpacity(props.theme.colors.primary, 0.03)} 1px, transparent 1px);
     background-size: 30px 30px, 15px 15px, 15px 15px;
     pointer-events: none;
     opacity: 0.5;
@@ -331,9 +332,9 @@ const DiscoveredVideoCard = styled.div`
     bottom: -2px;
     z-index: -1;
     background: linear-gradient(45deg, 
-      ${props => props.theme.colors.primary}00, 
-      ${props => props.theme.colors.primary}40, 
-      ${props => props.theme.colors.primary}00);
+      ${props => withOpacity(props.theme.colors.primary, 0)}, 
+      ${props => withOpacity(props.theme.colors.primary, 0.25)}, 
+      ${props => withOpacity(props.theme.colors.primary, 0)});
     border-radius: ${props => props.theme.radius.xl};
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -341,7 +342,7 @@ const DiscoveredVideoCard = styled.div`
   
   &:hover {
     transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 12px 30px rgba(89, 81, 249, 0.18);
+    box-shadow: 0 12px 30px ${props => withOpacity(props.theme.colors.primary, 0.18)};
     
     &:after {
       opacity: 1;
@@ -633,6 +634,24 @@ const EngagementMessage = styled.div`
   border-radius: ${props => props.theme.radius.md};
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
   border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
+  height: 65px;
+  max-height: 65px;
+  overflow-y: auto;
+  
+  /* Custom scrollbar styling */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${props => withOpacity(props.theme.colors.primary, 0.2)};
+    border-radius: 10px;
+  }
   
   /* Modern quote styling */
   &::before {
@@ -644,6 +663,7 @@ const EngagementMessage = styled.div`
     line-height: 1;
     color: ${props => withOpacity(props.theme.colors.primary, 0.15)};
     font-family: Georgia, serif;
+    pointer-events: none;
   }
   
   &::after {
@@ -657,14 +677,11 @@ const EngagementMessage = styled.div`
       rgba(89, 81, 249, 0.1), 
       transparent
     );
+    pointer-events: none;
   }
   
   padding-left: 22px;
   margin-bottom: 6px;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
 `;
 
 const ProductMention = styled.span`
@@ -752,10 +769,252 @@ const highlightProductMention = (text: string): React.ReactNode => {
   );
 };
 
+// Styled components for the modal content
+const VideoDetailContainer = styled.div`
+  background: ${props => withOpacity(props.theme.colors.background, 0.03)};
+  border-radius: ${props => props.theme.radius.lg};
+  overflow: hidden;
+`;
+
+const VideoDetailHeader = styled.div`
+  position: relative;
+  height: 300px;
+  overflow: hidden;
+  border-radius: ${props => props.theme.radius.lg} ${props => props.theme.radius.lg} 0 0;
+`;
+
+const VideoDetailThumbnail = styled.div<{ image: string }>`
+  width: 100%;
+  height: 100%;
+  background-image: url(${props => props.image});
+  background-size: cover;
+  background-position: center;
+`;
+
+const VideoDetailOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, 
+    rgba(0, 0, 0, 0.9) 0%, 
+    rgba(0, 0, 0, 0.5) 40%,
+    rgba(0, 0, 0, 0.2) 80%);
+  z-index: 1;
+`;
+
+const VideoDetailTitle = styled.h2`
+  position: absolute;
+  bottom: 20px;
+  left: 24px;
+  right: 24px;
+  color: white;
+  font-size: ${props => props.theme.fontSizes.xl};
+  font-weight: ${props => props.theme.fontWeights.bold};
+  z-index: 2;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+`;
+
+const VideoDetailMetaInfo = styled.div`
+  display: flex;
+  gap: 24px;
+  padding: 24px;
+  background: ${props => props.theme.colors.white};
+  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+`;
+
+const ChannelDetailInfo = styled.div`
+  display: flex;
+  align-items: center;
+  flex: 1;
+`;
+
+const ChannelDetailImage = styled.div<{ image: string }>`
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background-image: url(${props => props.image});
+  background-size: cover;
+  background-position: center;
+  margin-right: 16px;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px ${props => withOpacity(props.theme.colors.primary, 0.2)};
+`;
+
+const ChannelDetailText = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const ChannelDetailName = styled.div`
+  font-weight: ${props => props.theme.fontWeights.bold};
+  font-size: ${props => props.theme.fontSizes.md};
+  color: ${props => props.theme.colors.text.primary};
+  margin-bottom: 4px;
+`;
+
+const ChannelDetailCategory = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.secondary};
+`;
+
+const VideoTimeInfo = styled.div`
+  display: flex;
+  gap: 24px;
+`;
+
+const VideoTimeItem = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const VideoTimeLabel = styled.div`
+  font-size: ${props => props.theme.fontSizes.xs};
+  color: ${props => props.theme.colors.text.secondary};
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+const VideoTimeValue = styled.div`
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  font-size: ${props => props.theme.fontSizes.md};
+  color: ${props => props.theme.colors.text.primary};
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 8px;
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const DetailMetricsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 24px;
+  background: ${props => props.theme.colors.white};
+`;
+
+const DetailMetricCard = styled.div`
+  background: ${props => withOpacity(props.theme.colors.background, 0.03)};
+  border-radius: ${props => props.theme.radius.lg};
+  padding: 20px 16px;
+  text-align: center;
+  border: 1px solid ${props => withOpacity(props.theme.colors.lightGrey, 0.5)};
+`;
+
+const DetailMetricValue = styled.div`
+  font-size: 28px;
+  font-weight: ${props => props.theme.fontWeights.bold};
+  color: ${props => props.theme.colors.primary};
+  margin-bottom: 8px;
+`;
+
+const DetailMetricLabel = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.secondary};
+`;
+
+const DetailEngagementSection = styled.div`
+  padding: 24px;
+  background: ${props => props.theme.colors.white};
+`;
+
+const DetailEngagementTitle = styled.h3`
+  font-size: ${props => props.theme.fontSizes.lg};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  color: ${props => props.theme.colors.text.primary};
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  
+  svg {
+    margin-right: 12px;
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const DetailEngagementContent = styled.div`
+  background: ${props => withOpacity(props.theme.colors.background, 0.03)};
+  border-radius: ${props => props.theme.radius.lg};
+  padding: 24px;
+  font-size: ${props => props.theme.fontSizes.md};
+  line-height: 1.6;
+  color: ${props => props.theme.colors.text.primary};
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid ${props => withOpacity(props.theme.colors.lightGrey, 0.5)};
+  
+  &::before {
+    content: '"';
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    font-size: 60px;
+    line-height: 1;
+    color: ${props => withOpacity(props.theme.colors.primary, 0.1)};
+    font-family: Georgia, serif;
+  }
+  
+  padding-left: 40px;
+`;
+
+const DetailStatsFooter = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  background: ${props => props.theme.colors.white};
+  border-top: 1px solid ${props => props.theme.colors.lightGrey};
+`;
+
+const DetailCommentPosition = styled.div`
+  display: flex;
+  align-items: center;
+  background: ${props => withOpacity(props.theme.colors.primary, 0.1)};
+  padding: 8px 16px;
+  border-radius: ${props => props.theme.radius.md};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  color: ${props => props.theme.colors.primary};
+  
+  svg {
+    margin-right: 8px;
+  }
+`;
+
+const DetailProjectedViews = styled.div`
+  display: flex;
+  align-items: center;
+  font-size: ${props => props.theme.fontSizes.md};
+  color: ${props => props.theme.colors.text.primary};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  
+  svg {
+    margin-right: 8px;
+    color: ${props => props.theme.colors.warning};
+  }
+`;
+
 // The main component
 const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data }) => {
   // Use provided data or fallback to mock data
   const videosToDisplay = data || MOCK_DISCOVERED_VIDEOS;
+  
+  // State for modal
+  const [selectedVideo, setSelectedVideo] = useState<DiscoveredVideo | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const openVideoDetails = (video: DiscoveredVideo) => {
+    setSelectedVideo(video);
+    setIsModalOpen(true);
+  };
+  
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
   
   return (
     <DiscoveredVideosContainer>
@@ -779,7 +1038,11 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
       
       <DiscoveredVideosList>
         {videosToDisplay.map(video => (
-          <DiscoveredVideoCard key={video.id}>
+          <DiscoveredVideoCard 
+            key={video.id} 
+            onClick={() => openVideoDetails(video)}
+            style={{ cursor: 'pointer' }}
+          >
             <VideoHeader>
               <VideoThumbnail image={video.thumbnailUrl} />
               <VideoOverlay />
@@ -847,6 +1110,92 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
           </DiscoveredVideoCard>
         ))}
       </DiscoveredVideosList>
+      
+      {/* Modal for detailed view */}
+      {selectedVideo && (
+        <Modal 
+          isOpen={isModalOpen} 
+          onClose={closeModal} 
+          title="Discovered Video Details"
+          size="large"
+        >
+          <VideoDetailContainer>
+            <VideoDetailHeader>
+              <VideoDetailThumbnail image={selectedVideo.thumbnailUrl} />
+              <VideoDetailOverlay />
+              <VideoDetailTitle>{selectedVideo.nome_do_video}</VideoDetailTitle>
+            </VideoDetailHeader>
+            
+            <VideoDetailMetaInfo>
+              <ChannelDetailInfo>
+                <ChannelDetailImage image={selectedVideo.channel_image} />
+                <ChannelDetailText>
+                  <ChannelDetailName>{selectedVideo.channel_name}</ChannelDetailName>
+                  <ChannelDetailCategory>{selectedVideo.content_category}</ChannelDetailCategory>
+                </ChannelDetailText>
+              </ChannelDetailInfo>
+              
+              <VideoTimeInfo>
+                <VideoTimeItem>
+                  <VideoTimeLabel>Discovered</VideoTimeLabel>
+                  <VideoTimeValue>
+                    <IconComponent icon={FaIcons.FaSearchPlus} />
+                    {formatTimeAgo(selectedVideo.discovered_at)}
+                  </VideoTimeValue>
+                </VideoTimeItem>
+                
+                <VideoTimeItem>
+                  <VideoTimeLabel>Engaged</VideoTimeLabel>
+                  <VideoTimeValue>
+                    <IconComponent icon={FaIcons.FaReply} />
+                    {formatTimeAgo(selectedVideo.engaged_at)}
+                  </VideoTimeValue>
+                </VideoTimeItem>
+              </VideoTimeInfo>
+            </VideoDetailMetaInfo>
+            
+            <DetailMetricsGrid>
+              <DetailMetricCard>
+                <DetailMetricValue>{selectedVideo.views}</DetailMetricValue>
+                <DetailMetricLabel>Current Views</DetailMetricLabel>
+              </DetailMetricCard>
+              
+              <DetailMetricCard>
+                <DetailMetricValue>{selectedVideo.projected_views.toLocaleString()}</DetailMetricValue>
+                <DetailMetricLabel>Projected Views</DetailMetricLabel>
+              </DetailMetricCard>
+              
+              <DetailMetricCard>
+                <DetailMetricValue>{(selectedVideo.relevance_score * 10).toFixed(1)}</DetailMetricValue>
+                <DetailMetricLabel>Relevance Score</DetailMetricLabel>
+              </DetailMetricCard>
+            </DetailMetricsGrid>
+            
+            <DetailEngagementSection>
+              <DetailEngagementTitle>
+                <IconComponent icon={FaIcons.FaCommentDots} />
+                Auto-Generated Comment
+              </DetailEngagementTitle>
+              
+              <DetailEngagementContent>
+                {highlightProductMention(selectedVideo.engagement_message)}
+              </DetailEngagementContent>
+            </DetailEngagementSection>
+            
+            <DetailStatsFooter>
+              <DetailCommentPosition>
+                <IconComponent icon={FaIcons.FaSort} />
+                Comment Position: #{selectedVideo.position_comment} out of {selectedVideo.total_comments}
+              </DetailCommentPosition>
+              
+              <DetailProjectedViews>
+                <IconComponent icon={FaIcons.FaChartLine} />
+                Engagement Ratio: {((selectedVideo.position_comment / selectedVideo.total_comments) * 100).toFixed(1)}%
+              </DetailProjectedViews>
+            </DetailStatsFooter>
+          </VideoDetailContainer>
+        </Modal>
+      )}
     </DiscoveredVideosContainer>
   );
 };
