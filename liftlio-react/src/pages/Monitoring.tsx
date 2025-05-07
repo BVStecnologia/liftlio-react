@@ -16,6 +16,7 @@ import Spinner from '../components/ui/Spinner';
 import MetricCard from '../components/ui/MetricCard';
 import { useLocation, useNavigate } from 'react-router-dom';
 import RecentDiscoveredVideos from '../components/RecentDiscoveredVideos';
+import DiscoveredVideosSection from '../components/DiscoveredVideosSection';
 
 // Funções locais de formatação de data
 const formatDate = (date: Date | string | number): string => {
@@ -4208,7 +4209,7 @@ const YoutubeMonitoring: React.FC = () => {
           </StatsGrid>
           
           {/* Recently Discovered Videos from Monitored Channels */}
-          <RecentDiscoveredVideos />
+          <DiscoveredVideosSection projectId={currentProject?.id} itemsPerPage={3} />
           
           {/* Categorias de Conteúdo */}
           <ChartRow>
