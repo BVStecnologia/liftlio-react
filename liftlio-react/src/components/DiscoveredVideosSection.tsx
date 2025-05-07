@@ -8,27 +8,27 @@ interface DiscoveredVideosSectionProps {
 }
 
 /**
- * Componente que busca e exibe vídeos descobertos para um projeto
- * Utiliza o hook useDiscoveredVideos e passa os dados para o componente RecentDiscoveredVideos
+ * Component that fetches and displays discovered videos for a project
+ * Uses the useDiscoveredVideos hook and passes data to the RecentDiscoveredVideos component
  */
 const DiscoveredVideosSection: React.FC<DiscoveredVideosSectionProps> = ({ 
   projectId,
   itemsPerPage = 3
 }) => {
-  // Usar o hook para buscar os dados
+  // Use the hook to fetch data
   const { videos, loading, error } = useDiscoveredVideos(projectId, {
     itemsPerPage,
-    // Outras opções podem ser adicionadas aqui conforme necessário
+    // Other options can be added here as needed
   });
 
-  // Se ocorrer um erro, não exibir nada ou exibir uma mensagem de erro
+  // If there's an error, log it
   if (error) {
-    console.error('Erro ao carregar vídeos descobertos:', error);
+    console.error('Error loading discovered videos:', error);
   }
 
-  // O componente RecentDiscoveredVideos lida com dados vazios/null
-  // usando dados mockados internamente
-  return <RecentDiscoveredVideos data={videos} />;
+  // The RecentDiscoveredVideos component handles empty/null data
+  // using mocked data internally
+  return <RecentDiscoveredVideos data={videos} projectId={projectId} />;
 };
 
 export default DiscoveredVideosSection;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { callRPC } from '../lib/supabaseClient';
 
-// Interface para a resposta da função RPC
+// Interface for the RPC function response
 interface RPCVideoResponse {
   mensagem_id: number;
   mensagem_texto: string;
@@ -23,11 +23,11 @@ interface RPCVideoResponse {
   total_registros: number;
 }
 
-// Interface do vídeo descoberto para o componente
+// Interface for the discovered video component
 export interface DiscoveredVideo {
   id: number;
   video_id_youtube: string;
-  nome_do_video: string;
+  nome_do_video: string; // video name
   thumbnailUrl: string;
   discovered_at: string;
   engaged_at: string;
@@ -43,17 +43,17 @@ export interface DiscoveredVideo {
   projected_views: number;
 }
 
-// Interface para as opções de filtragem
+// Interface for filtering options
 interface DiscoveredVideosOptions {
   page?: number;
   itemsPerPage?: number;
-  filtroRespondido?: boolean | null;
-  filtroMensagem?: string;
-  filtroVideoId?: number;
+  filtroRespondido?: boolean | null; // filter by responded status
+  filtroMensagem?: string;           // filter by message content
+  filtroVideoId?: number;            // filter by video ID
 }
 
 /**
- * Hook para buscar vídeos descobertos usando RPC do Supabase
+ * Hook to fetch discovered videos using Supabase RPC
  */
 export function useDiscoveredVideos(
   projectId?: string | number,
@@ -63,7 +63,7 @@ export function useDiscoveredVideos(
   const [error, setError] = useState<Error | null>(null);
   const [videos, setVideos] = useState<DiscoveredVideo[]>([]);
   
-  // Função para transformar os dados da RPC para o formato esperado pelo componente
+  // Function to transform RPC data to the format expected by the component
   const mapResponseToVideos = (data: RPCVideoResponse[]): DiscoveredVideo[] => {
     return data.map(item => ({
       id: item.mensagem_id,
@@ -77,16 +77,16 @@ export function useDiscoveredVideos(
       channel_name: item.canal_nome,
       channel_image: `https://ui-avatars.com/api/?name=${encodeURIComponent(item.canal_nome)}&size=80&background=random`,
       engagement_message: item.mensagem_texto,
-      content_category: item.content_category || "Não categorizado",
+      content_category: item.content_category || "Uncategorized",
       relevance_score: item.relevance_score || 0.85,
-      position_comment: item.video_comentarios + 1, // Exatamente como solicitado: total de comentários + 1
+      position_comment: item.video_comentarios + 1, // As requested: total comments + 1
       total_comments: item.video_comentarios,
       projected_views: Math.round(item.video_visualizacoes * (1 + (item.relevance_score || 0.8) / 2))
     }));
   };
 
   useEffect(() => {
-    // Não fazer nada se não tiver ID do projeto
+    // Do nothing if there's no project ID
     if (!projectId) {
       setLoading(false);
       return;
@@ -97,7 +97,7 @@ export function useDiscoveredVideos(
       setError(null);
       
       try {
-        // Fazer chamada RPC diretamente usando a função helper callRPC
+        // Make RPC call directly using the callRPC helper function
         const data = await callRPC('obter_comentarios_postados_por_projeto', {
           id_projeto: projectId,
           pagina_atual: options.page || 1,
@@ -107,7 +107,7 @@ export function useDiscoveredVideos(
           filtro_video_id: options.filtroVideoId
         });
         
-        // Transformar e armazenar os dados se existirem
+        // Transform and store data if it exists
         if (data && data.length > 0) {
           const mappedVideos = mapResponseToVideos(data);
           setVideos(mappedVideos);
@@ -115,7 +115,7 @@ export function useDiscoveredVideos(
           setVideos([]);
         }
       } catch (err) {
-        console.error('Erro ao buscar vídeos descobertos:', err);
+        console.error('Error fetching discovered videos:', err);
         setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
         setLoading(false);

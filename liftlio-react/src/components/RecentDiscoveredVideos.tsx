@@ -1,19 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { withOpacity } from '../styles/colors';
 import * as FaIcons from 'react-icons/fa';
 import * as HiIcons from 'react-icons/hi';
+import * as IoIcons from 'react-icons/io5';
+import * as RiIcons from 'react-icons/ri';
+import * as BiIcons from 'react-icons/bi';
 import { IconComponent } from '../utils/IconHelper';
 import Modal from './Modal';
+import { useMonitoredChannels } from '../hooks/useMonitoredChannels';
 
-// Interface para definir a estrutura de dados dos vídeos descobertos recentemente
+// Interface to define the data structure of recently discovered videos
 interface DiscoveredVideo {
   id: number;
   video_id_youtube: string;
-  nome_do_video: string;
+  nome_do_video: string; // video name
   thumbnailUrl: string;
-  discovered_at: string; // Timestamp de quando o vídeo foi descoberto
-  engaged_at: string;    // Timestamp de quando o comentário foi postado
+  discovered_at: string; // Timestamp when video was discovered
+  engaged_at: string;    // Timestamp when comment was posted
   views: number;
   channel_id: number;
   channel_name: string;
@@ -26,26 +30,27 @@ interface DiscoveredVideo {
   projected_views: number;
 }
 
-// Props para o componente
+// Props for the component
 interface RecentDiscoveredVideosProps {
   data?: DiscoveredVideo[];
+  projectId?: string | number;
 }
 
-// Dados estáticos de exemplo
+// Example static data
 const MOCK_DISCOVERED_VIDEOS: DiscoveredVideo[] = [
   {
     id: 101,
     video_id_youtube: 'dQw4w9WgXcQ',
-    nome_do_video: 'Como aumentar o engagement do seu canal em 2025',
+    nome_do_video: 'How to increase your channel engagement in 2025',
     thumbnailUrl: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg',
-    discovered_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45 minutos atrás
-    engaged_at: new Date(Date.now() - 43 * 60 * 1000).toISOString(),    // 43 minutos atrás (2 min depois)
+    discovered_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45 minutes ago
+    engaged_at: new Date(Date.now() - 43 * 60 * 1000).toISOString(),    // 43 minutes ago (2 min later)
     views: 218,
     channel_id: 1,
     channel_name: 'Marketing Digital Insights',
     channel_image: 'https://via.placeholder.com/80',
-    engagement_message: 'Excelente conteúdo sobre estratégias de engagement! Nós da Liftlio temos visto resultados incríveis com monitoramento integrado que ajuda a identificar tendências antes da concorrência. O vídeo aborda pontos importantes para 2025.',
-    content_category: 'Marketing Digital',
+    engagement_message: 'Excellent content on engagement strategies! At Liftlio, we\'ve seen incredible results with integrated monitoring that helps identify trends ahead of the competition. The video covers key points for 2025.',
+    content_category: 'Digital Marketing',
     relevance_score: 0.92,
     position_comment: 3,
     total_comments: 47,
@@ -54,16 +59,16 @@ const MOCK_DISCOVERED_VIDEOS: DiscoveredVideo[] = [
   {
     id: 102,
     video_id_youtube: 'xvFZjo5PgG0',
-    nome_do_video: 'INTELIGÊNCIA ARTIFICIAL: Como implementar na sua empresa',
+    nome_do_video: 'ARTIFICIAL INTELLIGENCE: How to implement it in your company',
     thumbnailUrl: 'https://img.youtube.com/vi/xvFZjo5PgG0/mqdefault.jpg',
-    discovered_at: new Date(Date.now() - 97 * 60 * 1000).toISOString(), // 1h37min atrás
-    engaged_at: new Date(Date.now() - 96 * 60 * 1000).toISOString(),    // 1h36min atrás (1 min depois)
+    discovered_at: new Date(Date.now() - 97 * 60 * 1000).toISOString(), // 1h37min ago
+    engaged_at: new Date(Date.now() - 96 * 60 * 1000).toISOString(),    // 1h36min ago (1 min later)
     views: 456,
     channel_id: 2,
     channel_name: 'Tech Trends BR',
     channel_image: 'https://via.placeholder.com/80',
-    engagement_message: 'Adorei a abordagem sobre IA! Vale destacar também que ferramentas como a Liftlio facilitam muito a implementação de tecnologias de monitoramento inteligente para empresas de qualquer porte. Grande vídeo!',
-    content_category: 'Tecnologia',
+    engagement_message: 'Loved the approach to AI! It\'s also worth noting that tools like Liftlio greatly facilitate the implementation of intelligent monitoring technologies for companies of any size. Great video!',
+    content_category: 'Technology',
     relevance_score: 0.87,
     position_comment: 1,
     total_comments: 112,
@@ -72,16 +77,16 @@ const MOCK_DISCOVERED_VIDEOS: DiscoveredVideo[] = [
   {
     id: 103,
     video_id_youtube: 'bTWWFg_SkPQ',
-    nome_do_video: 'Transformação Digital: O que toda empresa precisa saber em 2025',
+    nome_do_video: 'Digital Transformation: What every company needs to know in 2025',
     thumbnailUrl: 'https://img.youtube.com/vi/bTWWFg_SkPQ/mqdefault.jpg',
-    discovered_at: new Date(Date.now() - 18 * 60 * 1000).toISOString(), // 18 minutos atrás
-    engaged_at: new Date(Date.now() - 17 * 60 * 1000).toISOString(),    // 17 minutos atrás (1 min depois)
+    discovered_at: new Date(Date.now() - 18 * 60 * 1000).toISOString(), // 18 minutes ago
+    engaged_at: new Date(Date.now() - 17 * 60 * 1000).toISOString(),    // 17 minutes ago (1 min later)
     views: 87,
     channel_id: 3,
-    channel_name: 'Transformação Digital',
+    channel_name: 'Digital Transformation',
     channel_image: 'https://via.placeholder.com/80',
-    engagement_message: 'Conteúdo fundamental para quem quer se preparar para o futuro! Complementando o que foi falado, temos visto que sistemas de monitoramento como o Liftlio têm ajudado empresas a antecipar mudanças de mercado e otimizar suas estratégias digitais.',
-    content_category: 'Negócios',
+    engagement_message: 'Essential content for anyone looking to prepare for the future! Adding to what was mentioned, we\'ve seen that monitoring systems like Liftlio have helped companies anticipate market changes and optimize their digital strategies.',
+    content_category: 'Business',
     relevance_score: 0.94,
     position_comment: 2,
     total_comments: 28,
@@ -149,6 +154,177 @@ const LiveTrackingBadge = styled.div`
   @keyframes pulse {
     0%, 100% { opacity: 0.7; }
     50% { opacity: 1; }
+  }
+`;
+
+// Tech-style monitoring banner that shows active monitoring status
+const BinaryCodeBackground = styled.div`
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30%;
+  height: 100%;
+  overflow: hidden;
+  opacity: 0.1;
+  font-family: monospace;
+  font-size: 10px;
+  color: ${props => props.theme.colors.primary};
+  user-select: none;
+  
+  &:before {
+    content: '01001100 01101001 01100110 01110100 01101100 01101001 01101111 00100000 01001101 01101111 01101110 01101001 01110100 01101111 01110010 01101001 01101110 01100111 00100000 01000001 01100011 01110100 01101001 01110110 01100101 00100000 01000001 01001001 00100000 01010000 01110010 01101111 01100011 01100101 01110011 01110011 01101001 01101110 01100111 00100000 01000100 01100001 01110100 01100001 00100000 01000001 01101110 01100001 01101100 01111001 01110011 01101001 01110011 00100000 01001001 01101110 00100000 01010000 01110010 01101111 01100111 01110010 01100101 01110011 01110011';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 300%;
+    opacity: 0.7;
+    animation: scrollBinary 20s linear infinite;
+  }
+  
+  @keyframes scrollBinary {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+`;
+
+const TechMonitoringBanner = styled.div`
+  position: relative;
+  background: linear-gradient(90deg, 
+    ${props => withOpacity(props.theme.colors.primary, 0.05)} 0%,
+    ${props => withOpacity(props.theme.colors.info, 0.1)} 50%,
+    ${props => withOpacity(props.theme.colors.primary, 0.05)} 100%
+  );
+  border-radius: ${props => props.theme.radius.md};
+  padding: 16px 16px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  border: 1px solid ${props => withOpacity(props.theme.colors.primary, 0.1)};
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  
+  // Tech pattern overlay
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle, ${props => withOpacity(props.theme.colors.primary, 0.1)} 1px, transparent 1px),
+      linear-gradient(90deg, ${props => withOpacity(props.theme.colors.primary, 0.05)} 1px, transparent 1px);
+    background-size: 20px 20px, 20px 20px;
+    pointer-events: none;
+    opacity: 0.4;
+  }
+  
+  // Scan line animation
+  &:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      ${props => withOpacity(props.theme.colors.info, 0.2)} 50%, 
+      transparent 100%);
+    opacity: 0.6;
+    width: 50%;
+    transform: skewX(-20deg);
+    animation: scanAnimation 3s ease-in-out infinite;
+  }
+  
+  @keyframes scanAnimation {
+    0% { transform: translateX(-100%) skewX(-20deg); }
+    100% { transform: translateX(200%) skewX(-20deg); }
+  }
+`;
+
+const MonitoringStatusText = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  color: ${props => props.theme.colors.text.primary};
+  margin-left: 16px;
+  position: relative;
+  z-index: 1;
+  
+  span {
+    color: ${props => props.theme.colors.primary};
+    font-weight: ${props => props.theme.fontWeights.bold};
+  }
+`;
+
+const DataMetricsRow = styled.div`
+  position: absolute;
+  bottom: 4px;
+  right: 16px;
+  display: flex;
+  gap: 16px;
+  z-index: 1;
+  font-size: 10px;
+  color: ${props => props.theme.colors.text.secondary};
+`;
+
+const DataMetric = styled.div`
+  display: flex;
+  align-items: center;
+  
+  span {
+    font-family: 'Courier New', monospace;
+    color: ${props => props.theme.colors.primary};
+    margin-left: 4px;
+    font-weight: ${props => props.theme.fontWeights.semiBold};
+  }
+  
+  svg {
+    color: ${props => props.theme.colors.info};
+    font-size: 10px;
+    margin-right: 4px;
+  }
+`;
+
+const MonitoringIcon = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: ${props => withOpacity(props.theme.colors.background, 0.9)};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 2px 8px ${props => withOpacity(props.theme.colors.primary, 0.2)};
+  
+  svg {
+    color: ${props => props.theme.colors.primary};
+    font-size: 16px;
+    animation: rotateAnimation 4s linear infinite;
+  }
+  
+  &:before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 50%;
+    border: 2px solid ${props => withOpacity(props.theme.colors.primary, 0.3)};
+    animation: pulseRing 2s ease-out infinite;
+  }
+  
+  @keyframes pulseRing {
+    0% { transform: scale(0.8); opacity: 0.8; }
+    50% { transform: scale(1.1); opacity: 0.4; }
+    100% { transform: scale(0.8); opacity: 0.8; }
+  }
+  
+  @keyframes rotateAnimation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 `;
 
@@ -767,13 +943,79 @@ const highlightProductMention = (text: string): React.ReactNode => {
 };
 
 // The main component
-const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data }) => {
+const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data, projectId }) => {
   // Use provided data or fallback to mock data
   const videosToDisplay = data || MOCK_DISCOVERED_VIDEOS;
+  
+  // Fetch real channel count data
+  const { count: channelCount, loading: channelLoading } = useMonitoredChannels(projectId);
   
   // State for modal
   const [selectedVideo, setSelectedVideo] = useState<DiscoveredVideo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // State for monitoring data display
+  const [monitoringStatus, setMonitoringStatus] = useState({
+    activeIcon: RiIcons.RiRadarLine,
+    message: "MONITORING ACTIVE: Scanning YouTube channels for new relevant content",
+    activity: "STANDBY",
+    metrics: {
+      channels: channelCount || 0,
+      scans: 142,
+      videos: 386
+    }
+  });
+  
+  // Update when channel count changes
+  useEffect(() => {
+    if (!channelLoading) {
+      setMonitoringStatus(prev => ({
+        ...prev,
+        metrics: {
+          ...prev.metrics,
+          channels: channelCount
+        }
+      }));
+    }
+  }, [channelCount, channelLoading]);
+  
+  // Simulates changing monitoring status for a more dynamic feel
+  useEffect(() => {
+    let scanCount = 142;
+    
+    const statuses = [
+      { 
+        activeIcon: RiIcons.RiRadarLine, 
+        message: "MONITORING ACTIVE: Scanning YouTube channels for new relevant content",
+        activity: "STANDBY"
+      },
+      { 
+        activeIcon: BiIcons.BiSearch, 
+        message: "AI ANALYSIS: Evaluating content relevance and engagement opportunities",
+        activity: "SCANNING"
+      },
+      { 
+        activeIcon: IoIcons.IoAnalyticsSharp, 
+        message: "OPPORTUNITY DETECTION: Identifying high-value engagement points",
+        activity: "ANALYZING"
+      }
+    ];
+    
+    const interval = setInterval(() => {
+      scanCount += 1;
+      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+      
+      setMonitoringStatus(prev => ({
+        ...randomStatus,
+        metrics: {
+          ...prev.metrics,
+          scans: scanCount,
+        }
+      }));
+    }, 4000);
+    
+    return () => clearInterval(interval);
+  }, []);
   
   const openVideoDetails = (video: DiscoveredVideo) => {
     setSelectedVideo(video);
@@ -797,6 +1039,30 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data })
           LIVE TRACKING
         </LiveTrackingBadge>
       </DiscoveredVideosHeader>
+      
+      <TechMonitoringBanner>
+        <MonitoringIcon>
+          <IconComponent icon={monitoringStatus.activeIcon} />
+        </MonitoringIcon>
+        <MonitoringStatusText>
+          <span>{monitoringStatus.activity}:</span> {monitoringStatus.message}
+        </MonitoringStatusText>
+        <DataMetricsRow>
+          <DataMetric>
+            <IconComponent icon={FaIcons.FaSatelliteDish} />
+            CHANNELS: <span>{monitoringStatus.metrics.channels}</span>
+          </DataMetric>
+          <DataMetric>
+            <IconComponent icon={FaIcons.FaSearch} />
+            SCANS: <span>{monitoringStatus.metrics.scans}</span>
+          </DataMetric>
+          <DataMetric>
+            <IconComponent icon={FaIcons.FaVideo} />
+            VIDEOS: <span>{monitoringStatus.metrics.videos}</span>
+          </DataMetric>
+        </DataMetricsRow>
+        <BinaryCodeBackground />
+      </TechMonitoringBanner>
       
       <DiscoveredVideoSubtitle>
         Our AI-powered system <span>automatically identifies</span> and engages with fresh content, 
