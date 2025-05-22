@@ -62,6 +62,7 @@ export function useDiscoveredVideos(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [videos, setVideos] = useState<DiscoveredVideo[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   
   // Function to transform RPC data to the format expected by the component
   const mapResponseToVideos = (data: RPCVideoResponse[]): DiscoveredVideo[] => {
@@ -111,8 +112,11 @@ export function useDiscoveredVideos(
         if (data && data.length > 0) {
           const mappedVideos = mapResponseToVideos(data);
           setVideos(mappedVideos);
+          // Extract total count from first item (all items have the same total_registros)
+          setTotalCount(data[0].total_registros);
         } else {
           setVideos([]);
+          setTotalCount(0);
         }
       } catch (err) {
         console.error('Error fetching discovered videos:', err);
@@ -125,5 +129,20 @@ export function useDiscoveredVideos(
     fetchVideos();
   }, [projectId, options.page, options.itemsPerPage, options.filtroRespondido, options.filtroMensagem, options.filtroVideoId]);
   
-  return { videos, loading, error };
+  // Calculate pagination information
+  const currentPage = options.page || 1;
+  const itemsPerPage = options.itemsPerPage || 10;
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+  
+  return { 
+    videos, 
+    loading, 
+    error,
+    totalCount,
+    currentPage,
+    itemsPerPage,
+    totalPages,
+    hasNextPage: currentPage < totalPages,
+    hasPrevPage: currentPage > 1
+  };
 }

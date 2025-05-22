@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDiscoveredVideos } from '../hooks/useDiscoveredVideos';
 import RecentDiscoveredVideos from './RecentDiscoveredVideos';
 
@@ -13,10 +13,22 @@ interface DiscoveredVideosSectionProps {
  */
 const DiscoveredVideosSection: React.FC<DiscoveredVideosSectionProps> = ({ 
   projectId,
-  itemsPerPage = 3
+  itemsPerPage = 10
 }) => {
+  // State for pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  
   // Use the hook to fetch data
-  const { videos, loading, error } = useDiscoveredVideos(projectId, {
+  const { 
+    videos, 
+    loading, 
+    error, 
+    totalCount, 
+    totalPages, 
+    hasNextPage, 
+    hasPrevPage 
+  } = useDiscoveredVideos(projectId, {
+    page: currentPage,
     itemsPerPage,
     // Other options can be added here as needed
   });
@@ -26,9 +38,36 @@ const DiscoveredVideosSection: React.FC<DiscoveredVideosSectionProps> = ({
     console.error('Error loading discovered videos:', error);
   }
 
+  // Pagination functions
+  const goToNextPage = () => {
+    if (hasNextPage) {
+      setCurrentPage(prev => prev + 1);
+    }
+  };
+
+  const goToPrevPage = () => {
+    if (hasPrevPage) {
+      setCurrentPage(prev => prev - 1);
+    }
+  };
+
   // The RecentDiscoveredVideos component handles empty/null data
   // using mocked data internally
-  return <RecentDiscoveredVideos data={videos} projectId={projectId} />;
+  return (
+    <RecentDiscoveredVideos 
+      data={videos} 
+      projectId={projectId}
+      loading={loading}
+      // Pagination props
+      currentPage={currentPage}
+      totalPages={totalPages}
+      totalCount={totalCount}
+      hasNextPage={hasNextPage}
+      hasPrevPage={hasPrevPage}
+      onNextPage={goToNextPage}
+      onPrevPage={goToPrevPage}
+    />
+  );
 };
 
 export default DiscoveredVideosSection;

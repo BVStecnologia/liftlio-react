@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { withOpacity } from '../styles/colors';
 import * as FaIcons from 'react-icons/fa';
@@ -34,6 +34,15 @@ interface DiscoveredVideo {
 interface RecentDiscoveredVideosProps {
   data?: DiscoveredVideo[];
   projectId?: string | number;
+  loading?: boolean;
+  // Pagination props
+  currentPage?: number;
+  totalPages?: number;
+  totalCount?: number;
+  hasNextPage?: boolean;
+  hasPrevPage?: boolean;
+  onNextPage?: () => void;
+  onPrevPage?: () => void;
 }
 
 // Example static data
@@ -344,15 +353,48 @@ const DiscoveredVideoSubtitle = styled.div`
   }
 `;
 
-// Grid layout for better organization and responsiveness
-const VideosGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+// Horizontal scroll layout for videos
+const VideosContainer = styled.div`
+  position: relative;
+  margin-bottom: 16px;
+`;
+
+const VideosScrollWrapper = styled.div`
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
   
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    height: 8px;
   }
+  
+  &::-webkit-scrollbar-track {
+    background: ${props => withOpacity(props.theme.colors.background, 0.1)};
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${props => withOpacity(props.theme.colors.primary, 0.3)};
+    border-radius: 10px;
+    
+    &:hover {
+      background: ${props => withOpacity(props.theme.colors.primary, 0.5)};
+    }
+  }
+`;
+
+const VideosGrid = styled.div`
+  display: flex;
+  gap: 24px;
+  padding: 4px;
+  min-width: min-content;
+`;
+
+const VideoCardWrapper = styled.div`
+  min-width: 350px;
+  max-width: 350px;
+  flex-shrink: 0;
 `;
 
 const VideoCard = styled.div`
@@ -942,8 +984,139 @@ const highlightProductMention = (text: string): React.ReactNode => {
   );
 };
 
+// Pagination styled components
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding: 16px 0;
+  border-top: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
+`;
+
+const PaginationInfo = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.secondary};
+  display: flex;
+  align-items: center;
+  
+  span {
+    font-weight: ${props => props.theme.fontWeights.semiBold};
+    color: ${props => props.theme.colors.primary};
+    margin: 0 4px;
+  }
+`;
+
+const PaginationControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const PaginationButton = styled.button<{ disabled?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: ${props => props.theme.radius.md};
+  background: ${props => props.theme.colors.white};
+  border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.2)};
+  color: ${props => props.theme.colors.text.primary};
+  font-size: ${props => props.theme.fontSizes.sm};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  
+  svg {
+    font-size: 14px;
+  }
+  
+  &:hover:not(:disabled) {
+    background: ${props => withOpacity(props.theme.colors.primary, 0.05)};
+    border-color: ${props => withOpacity(props.theme.colors.primary, 0.2)};
+    color: ${props => props.theme.colors.primary};
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: ${props => withOpacity(props.theme.colors.background, 0.1)};
+  }
+`;
+
+const PageIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  border-radius: ${props => props.theme.radius.md};
+  background: ${props => props.theme.colors.primary};
+  color: white;
+  font-weight: ${props => props.theme.fontWeights.bold};
+  font-size: ${props => props.theme.fontSizes.sm};
+`;
+
+// Horizontal scroll navigation buttons
+const ScrollNavButton = styled.button<{ direction: 'left' | 'right' }>`
+  position: absolute;
+  top: 50%;
+  ${props => props.direction}: -20px;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: ${props => props.theme.colors.white};
+  border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.2)};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  svg {
+    color: ${props => props.theme.colors.primary};
+    font-size: 16px;
+  }
+  
+  &:hover {
+    background: ${props => props.theme.colors.primary};
+    border-color: ${props => props.theme.colors.primary};
+    
+    svg {
+      color: white;
+    }
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    
+    &:hover {
+      background: ${props => props.theme.colors.white};
+      
+      svg {
+        color: ${props => props.theme.colors.primary};
+      }
+    }
+  }
+`;
+
 // The main component
-const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data, projectId }) => {
+const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ 
+  data, 
+  projectId,
+  loading = false,
+  currentPage = 1,
+  totalPages = 1,
+  totalCount = 0,
+  hasNextPage = false,
+  hasPrevPage = false,
+  onNextPage,
+  onPrevPage
+}) => {
   // Use provided data or fallback to mock data
   const videosToDisplay = data || MOCK_DISCOVERED_VIDEOS;
   
@@ -953,6 +1126,11 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data, p
   // State for modal
   const [selectedVideo, setSelectedVideo] = useState<DiscoveredVideo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // State for horizontal scroll
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // State for monitoring data display
   const [monitoringStatus, setMonitoringStatus] = useState({
@@ -1017,6 +1195,34 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data, p
     return () => clearInterval(interval);
   }, []);
   
+  // Functions for horizontal scroll navigation
+  const checkScrollButtons = () => {
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      setCanScrollLeft(container.scrollLeft > 0);
+      setCanScrollRight(
+        container.scrollLeft < container.scrollWidth - container.clientWidth
+      );
+    }
+  };
+
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -400, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 400, behavior: 'smooth' });
+    }
+  };
+
+  // Check scroll buttons when videos change
+  useEffect(() => {
+    checkScrollButtons();
+  }, [videosToDisplay]);
+
   const openVideoDetails = (video: DiscoveredVideo) => {
     setSelectedVideo(video);
     setIsModalOpen(true);
@@ -1069,12 +1275,32 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data, p
         securing prime positioning in the top {MOCK_DISCOVERED_VIDEOS[1].position_comment}-{MOCK_DISCOVERED_VIDEOS[0].position_comment} comments to maximize visibility and drive targeted engagement.
       </DiscoveredVideoSubtitle>
       
-      <VideosGrid>
-        {videosToDisplay.map(video => (
-          <VideoCard 
-            key={video.id} 
-            onClick={() => openVideoDetails(video)}
-          >
+      <VideosContainer>
+        {/* Horizontal scroll navigation buttons */}
+        <ScrollNavButton 
+          direction="left" 
+          onClick={scrollLeft}
+          disabled={!canScrollLeft}
+        >
+          <IconComponent icon={FaIcons.FaChevronLeft} />
+        </ScrollNavButton>
+        
+        <ScrollNavButton 
+          direction="right" 
+          onClick={scrollRight}
+          disabled={!canScrollRight}
+        >
+          <IconComponent icon={FaIcons.FaChevronRight} />
+        </ScrollNavButton>
+        
+        <VideosScrollWrapper 
+          ref={scrollContainerRef}
+          onScroll={checkScrollButtons}
+        >
+          <VideosGrid>
+            {videosToDisplay.map(video => (
+              <VideoCardWrapper key={video.id}>
+                <VideoCard onClick={() => openVideoDetails(video)}>
             <VideoHeader>
               <VideoThumbnail image={video.thumbnailUrl} />
               <VideoOverlay />
@@ -1140,8 +1366,43 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({ data, p
               </EngagementSection>
             </VideoContent>
           </VideoCard>
-        ))}
-      </VideosGrid>
+        </VideoCardWrapper>
+            ))}
+          </VideosGrid>
+        </VideosScrollWrapper>
+      </VideosContainer>
+      
+      {/* Pagination Controls */}
+      {totalCount > 0 && (
+        <PaginationContainer>
+          <PaginationInfo>
+            Showing <span>{Math.min((currentPage - 1) * 10 + 1, totalCount)}</span> to{' '}
+            <span>{Math.min(currentPage * 10, totalCount)}</span> of <span>{totalCount}</span> discovered videos
+          </PaginationInfo>
+          
+          <PaginationControls>
+            <PaginationButton 
+              disabled={!hasPrevPage} 
+              onClick={onPrevPage}
+            >
+              <IconComponent icon={FaIcons.FaChevronLeft} />
+              Previous
+            </PaginationButton>
+            
+            <PageIndicator>
+              {currentPage}
+            </PageIndicator>
+            
+            <PaginationButton 
+              disabled={!hasNextPage} 
+              onClick={onNextPage}
+            >
+              Next
+              <IconComponent icon={FaIcons.FaChevronRight} />
+            </PaginationButton>
+          </PaginationControls>
+        </PaginationContainer>
+      )}
       
       {/* Modal for detailed view */}
       {selectedVideo && (

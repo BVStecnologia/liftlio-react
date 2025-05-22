@@ -4209,7 +4209,7 @@ const YoutubeMonitoring: React.FC = () => {
           </StatsGrid>
           
           {/* Recently Discovered Videos from Monitored Channels */}
-          <DiscoveredVideosSection projectId={currentProject?.id} itemsPerPage={3} />
+          <DiscoveredVideosSection projectId={currentProject?.id} itemsPerPage={10} />
           
           {/* Categorias de Conteúdo */}
           <ChartRow>
