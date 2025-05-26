@@ -5,11 +5,13 @@ import { lightTheme, darkTheme } from '../styles/theme';
 type ThemeContextType = {
   isDarkMode: boolean;
   toggleTheme: () => void;
+  theme: typeof lightTheme;
 };
 
 const ThemeContext = createContext<ThemeContextType>({
   isDarkMode: false,
   toggleTheme: () => {},
+  theme: lightTheme,
 });
 
 interface ThemeProviderProps {
@@ -51,7 +53,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const theme = isDarkMode ? darkTheme : lightTheme;
 
   return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
+    <ThemeContext.Provider value={{ isDarkMode, toggleTheme, theme }}>
       <StyledThemeProvider theme={theme}>
         {children}
       </StyledThemeProvider>

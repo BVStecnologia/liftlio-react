@@ -142,38 +142,96 @@ const baseTheme = {
 // Light theme - usando o tema base
 export const lightTheme = {
   ...baseTheme,
+  name: 'light',
   colors: {
     ...baseTheme.colors,
-    // Mantém as cores da nova paleta
-    background: COLORS.DOMINANT,    // Cinza médio (dominant)
-    white: COLORS.SECONDARY,        // Branco
+    // Cores principais
+    background: '#F8F9FA',
+    primary: '#0095FF',
+    secondary: '#6B00CC',
     text: {
-      primary: COLORS.ACCENT,      // Azul escuro naval (accent)
-      secondary: COLORS.TEXT.SECONDARY,
-      light: COLORS.TEXT.ON_LIGHT
+      primary: '#1A1A1A',
+      secondary: '#666666',
+      light: '#9CA3AF'
     },
-    lightGrey: COLORS.DOMINANT_LIGHT,
-    grey: COLORS.DOMINANT,         // dominant
-    darkGrey: COLORS.DOMINANT_DARK,
+    textSecondary: '#666666',
+    
+    // Landing page específico
+    gradient: {
+      ...baseTheme.colors.gradient,
+      landing: 'linear-gradient(135deg, #0095FF 0%, #6B00CC 100%)'
+    },
+    headerBg: 'rgba(248, 249, 250, 0.95)',
+    headerBgSolid: 'rgba(248, 249, 250, 0.98)',
+    cardBg: 'rgba(255, 255, 255, 0.8)',
+    cardHoverBg: 'rgba(255, 255, 255, 0.95)',
+    borderLight: 'rgba(0, 0, 0, 0.1)',
+    badgeBg: 'rgba(0, 149, 255, 0.1)',
+    badgeBorder: 'rgba(0, 149, 255, 0.3)',
+    primaryAlpha: 'rgba(0, 149, 255, 0.15)',
+    secondaryAlpha: 'rgba(107, 0, 204, 0.15)',
+    shadowLarge: 'rgba(0, 0, 0, 0.1)',
+    shadowMedium: 'rgba(0, 0, 0, 0.08)',
+    shimmer: 'rgba(0, 0, 0, 0.05)',
+    metricCardBg: 'rgba(0, 0, 0, 0.03)',
+    floatingBg: 'rgba(107, 0, 204, 0.08)',
+    floatingBorder: 'rgba(107, 0, 204, 0.2)',
+    trustBg: 'rgba(0, 0, 0, 0.02)',
+    featuresBg: '#FFFFFF',
+    statsBg: 'linear-gradient(135deg, rgba(0, 149, 255, 0.03) 0%, rgba(107, 0, 204, 0.03) 100%)',
+    pricingBg: '#F8F9FA',
+    pricingFeaturedBg: 'rgba(0, 149, 255, 0.05)',
+    testimonialsBg: 'rgba(0, 0, 0, 0.02)',
+    ctaBg: 'linear-gradient(135deg, rgba(0, 149, 255, 0.08) 0%, rgba(107, 0, 204, 0.08) 100%)',
+    footerBg: 'rgba(0, 0, 0, 0.04)'
   }
 };
 
 // Dark theme - versão escura personalizada
 export const darkTheme = {
   ...baseTheme,
+  name: 'dark',
   colors: {
     ...baseTheme.colors,
-    primary: COLORS.ACCENT_LIGHT,    // Versão mais clara do azul escuro naval
-    background: COLORS.ACCENT_DARK,  // Versão escura do azul naval
-    white: COLORS.ACCENT,            // Azul escuro naval (accent)
+    // Cores principais
+    background: '#050505',
+    primary: '#00F5FF',
+    secondary: '#8B00FF',
     text: {
-      primary: COLORS.SECONDARY,    // Texto branco
-      secondary: COLORS.TEXT.SECONDARY,
-      light: COLORS.TEXT.ON_LIGHT
+      primary: '#FFFFFF',
+      secondary: '#888888',
+      light: '#D1D5DB'
     },
-    lightGrey: COLORS.ACCENT_LIGHT,
-    grey: COLORS.ACCENT,             // accent
-    darkGrey: COLORS.DOMINANT,       // dominant (cinza) para contraste no dark mode
+    textSecondary: '#888888',
+    
+    // Landing page específico
+    gradient: {
+      ...baseTheme.colors.gradient,
+      landing: 'linear-gradient(135deg, #00F5FF 0%, #8B00FF 100%)'
+    },
+    headerBg: 'rgba(5, 5, 5, 0.95)',
+    headerBgSolid: 'rgba(5, 5, 5, 0.98)',
+    cardBg: 'rgba(255, 255, 255, 0.02)',
+    cardHoverBg: 'rgba(255, 255, 255, 0.05)',
+    borderLight: 'rgba(255, 255, 255, 0.1)',
+    badgeBg: 'rgba(0, 245, 255, 0.1)',
+    badgeBorder: 'rgba(0, 245, 255, 0.3)',
+    primaryAlpha: 'rgba(0, 245, 255, 0.15)',
+    secondaryAlpha: 'rgba(139, 0, 255, 0.15)',
+    shadowLarge: 'rgba(0, 0, 0, 0.3)',
+    shadowMedium: 'rgba(0, 0, 0, 0.2)',
+    shimmer: 'rgba(255, 255, 255, 0.1)',
+    metricCardBg: 'rgba(255, 255, 255, 0.05)',
+    floatingBg: 'rgba(139, 0, 255, 0.1)',
+    floatingBorder: 'rgba(139, 0, 255, 0.3)',
+    trustBg: 'rgba(255, 255, 255, 0.02)',
+    featuresBg: 'rgba(0, 0, 0, 0.5)',
+    statsBg: 'linear-gradient(135deg, rgba(0, 245, 255, 0.05) 0%, rgba(139, 0, 255, 0.05) 100%)',
+    pricingBg: '#050505',
+    pricingFeaturedBg: 'rgba(0, 245, 255, 0.05)',
+    testimonialsBg: 'rgba(0, 0, 0, 0.5)',
+    ctaBg: 'linear-gradient(135deg, rgba(0, 245, 255, 0.1) 0%, rgba(139, 0, 255, 0.1) 100%)',
+    footerBg: 'rgba(0, 0, 0, 0.8)'
   }
 };
 

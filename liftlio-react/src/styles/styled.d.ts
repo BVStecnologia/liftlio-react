@@ -5,6 +5,7 @@ type Theme = typeof theme;
 
 declare module 'styled-components' {
   export interface DefaultTheme extends Theme {
+    name: string;
     colors: {
       primary: string;
       secondary: string;
@@ -24,6 +25,7 @@ declare module 'styled-components' {
         light: string;
       };
       textLight: string;
+      textSecondary?: string;
       success: string;
       successLight: string;
       success_light: string;
@@ -57,8 +59,34 @@ declare module 'styled-components' {
         glass: string;
         dark: string;
         hoverOverlay: string;
+        landing?: string;
       };
       chart: string[];
+      
+      // Landing page specific colors
+      headerBg?: string;
+      headerBgSolid?: string;
+      cardBg?: string;
+      cardHoverBg?: string;
+      borderLight?: string;
+      badgeBg?: string;
+      badgeBorder?: string;
+      primaryAlpha?: string;
+      secondaryAlpha?: string;
+      shadowLarge?: string;
+      shadowMedium?: string;
+      shimmer?: string;
+      metricCardBg?: string;
+      floatingBg?: string;
+      floatingBorder?: string;
+      trustBg?: string;
+      featuresBg?: string;
+      statsBg?: string;
+      pricingBg?: string;
+      pricingFeaturedBg?: string;
+      testimonialsBg?: string;
+      ctaBg?: string;
+      footerBg?: string;
     };
     shadows: {
       sm: string;

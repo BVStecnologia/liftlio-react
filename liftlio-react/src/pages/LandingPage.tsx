@@ -1,0 +1,1763 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import styled, { keyframes, css } from 'styled-components';
+import { FaYoutube, FaChartLine, FaBell, FaRocket, FaCheck, FaArrowRight, FaPlay, FaQuoteLeft, FaGlobe, FaSun, FaMoon, FaShieldAlt, FaClock, FaUsers, FaTrophy } from 'react-icons/fa';
+import { HiSparkles, HiLightningBolt } from 'react-icons/hi';
+import { BiPulse } from 'react-icons/bi';
+import { MdAutoGraph } from 'react-icons/md';
+import { renderIcon } from '../utils/IconHelper';
+import { useTheme } from '../context/ThemeContext';
+
+// Internacionalização
+const translations = {
+  en: {
+    nav: {
+      features: "Features",
+      pricing: "Pricing",
+      testimonials: "Testimonials",
+      login: "Sign In",
+    },
+    hero: {
+      badge: "AI-Powered Brand Monitoring",
+      title: "Turn Every Mention Into",
+      titleHighlight: "Revenue",
+      subtitle: "Monitor your brand mentions on YouTube in real-time. Identify qualified leads, analyze sentiment, and convert views into customers with our intelligent platform.",
+      cta: {
+        primary: "Start Free Trial",
+        secondary: "Watch Demo"
+      },
+      metrics: {
+        mentions: "Mentions",
+        positive: "Positive",
+        leads: "Leads"
+      }
+    },
+    features: {
+      title: "Features That",
+      titleHighlight: "Drive Results",
+      subtitle: "Everything you need to monitor, analyze, and convert mentions into real opportunities",
+      items: [
+        {
+          title: "Real-Time Alerts",
+          description: "Get instant notifications when your brand is mentioned. Never miss an engagement opportunity."
+        },
+        {
+          title: "AI Sentiment Analysis",
+          description: "Advanced AI analyzes context and sentiment, helping you prioritize responses and identify crises quickly."
+        },
+        {
+          title: "Automatic Lead Generation",
+          description: "Automatically identify potential customers interested in your products through qualified mentions."
+        },
+        {
+          title: "Multi-Channel Monitoring",
+          description: "Track multiple YouTube channels simultaneously. Automatically discover new relevant videos."
+        },
+        {
+          title: "Analytics Dashboard",
+          description: "Visualize reach, engagement, and conversion metrics. Make data-driven decisions."
+        },
+        {
+          title: "Smart Keywords",
+          description: "Advanced tracking system that automatically identifies and categorizes relevant keywords."
+        }
+      ]
+    },
+    stats: {
+      monitored: "Mentions Monitored",
+      leads: "Leads Generated",
+      accuracy: "AI Accuracy",
+      monitoring: "Monitoring"
+    },
+    pricing: {
+      title: "Simple Pricing,",
+      titleHighlight: "Powerful Results",
+      subtitle: "Choose the perfect plan for your monitoring needs",
+      monthly: "per month",
+      plans: {
+        starter: {
+          name: "Starter",
+          description: "Perfect for small businesses",
+          mentions: "mentions/month",
+          features: [
+            "Up to 80 mentions/month",
+            "3 monitored channels",
+            "Sentiment analysis",
+            "Basic dashboard",
+            "Email support"
+          ]
+        },
+        professional: {
+          name: "Professional",
+          description: "Ideal for growing companies",
+          mentions: "mentions/month",
+          badge: "Most Popular",
+          features: [
+            "Up to 300 mentions/month",
+            "Unlimited channels",
+            "Advanced AI leads",
+            "Custom reports",
+            "API access",
+            "Priority support"
+          ]
+        },
+        enterprise: {
+          name: "Enterprise",
+          description: "For large organizations",
+          mentions: "mentions/month",
+          features: [
+            "Up to 500 mentions/month",
+            "All Professional features",
+            "Custom AI training",
+            "Dedicated account manager",
+            "SLA guaranteed",
+            "White-label options"
+          ]
+        }
+      },
+      cta: "Start Free Trial"
+    },
+    testimonials: {
+      title: "What Our",
+      titleHighlight: "Customers Say",
+      subtitle: "See how companies are transforming mentions into growth",
+      items: [
+        {
+          text: "Liftlio revolutionized our marketing strategy. We can identify and convert leads that previously went unnoticed.",
+          author: "Sarah Johnson",
+          role: "CMO, TechStart"
+        },
+        {
+          text: "Real-time sentiment analysis helped us prevent several crises and improve our customer service.",
+          author: "Michael Chen",
+          role: "CEO, E-commerce Plus"
+        },
+        {
+          text: "Incredible ROI! In just 3 months, Liftlio paid for itself with the new customers we gained.",
+          author: "Jessica Miller",
+          role: "Sales Director, SaaS Co"
+        }
+      ]
+    },
+    cta: {
+      title: "Ready to",
+      titleHighlight: "Transform",
+      titleEnd: "Your Mentions?",
+      subtitle: "Join thousands of companies already converting mentions into real business opportunities",
+      button: "Start Your Free 14-Day Trial"
+    },
+    footer: {
+      description: "Transforming mentions into business opportunities through intelligent monitoring and real-time analysis.",
+      product: "Product",
+      company: "Company",
+      legal: "Legal",
+      links: {
+        features: "Features",
+        pricing: "Pricing",
+        integrations: "Integrations",
+        api: "API",
+        about: "About",
+        blog: "Blog",
+        careers: "Careers",
+        contact: "Contact",
+        privacy: "Privacy",
+        terms: "Terms",
+        security: "Security"
+      },
+      copyright: "© 2024 Liftlio. All rights reserved."
+    }
+  },
+  pt: {
+    nav: {
+      features: "Recursos",
+      pricing: "Preços",
+      testimonials: "Depoimentos",
+      login: "Entrar",
+    },
+    hero: {
+      badge: "Monitoramento Inteligente com IA",
+      title: "Transforme Menções em",
+      titleHighlight: "Receita",
+      subtitle: "Monitore menções da sua marca no YouTube em tempo real. Identifique leads qualificados, analise sentimentos e converta visualizações em clientes.",
+      cta: {
+        primary: "Teste Grátis",
+        secondary: "Ver Demonstração"
+      },
+      metrics: {
+        mentions: "Menções",
+        positive: "Positivas",
+        leads: "Leads"
+      }
+    },
+    features: {
+      title: "Recursos que",
+      titleHighlight: "Geram Resultados",
+      subtitle: "Tudo o que você precisa para monitorar, analisar e converter menções em oportunidades reais",
+      items: [
+        {
+          title: "Alertas em Tempo Real",
+          description: "Receba notificações instantâneas quando sua marca for mencionada. Nunca perca uma oportunidade."
+        },
+        {
+          title: "Análise de Sentimentos IA",
+          description: "IA avançada analisa contexto e sentimento, ajudando você a priorizar respostas rapidamente."
+        },
+        {
+          title: "Geração Automática de Leads",
+          description: "Identifique automaticamente clientes potenciais interessados em seus produtos."
+        },
+        {
+          title: "Monitoramento Multi-Canal",
+          description: "Acompanhe múltiplos canais do YouTube simultaneamente. Descubra novos vídeos relevantes."
+        },
+        {
+          title: "Dashboard Analytics",
+          description: "Visualize métricas de alcance, engajamento e conversão. Tome decisões baseadas em dados."
+        },
+        {
+          title: "Palavras-chave Inteligentes",
+          description: "Sistema avançado que identifica e categoriza automaticamente palavras-chave relevantes."
+        }
+      ]
+    },
+    stats: {
+      monitored: "Menções Monitoradas",
+      leads: "Leads Gerados",
+      accuracy: "Precisão da IA",
+      monitoring: "Monitoramento"
+    },
+    pricing: {
+      title: "Preços Simples,",
+      titleHighlight: "Resultados Poderosos",
+      subtitle: "Escolha o plano perfeito para suas necessidades",
+      monthly: "por mês",
+      plans: {
+        starter: {
+          name: "Iniciante",
+          description: "Perfeito para pequenas empresas",
+          mentions: "menções/mês",
+          features: [
+            "Até 80 menções/mês",
+            "3 canais monitorados",
+            "Análise de sentimentos",
+            "Dashboard básico",
+            "Suporte por email"
+          ]
+        },
+        professional: {
+          name: "Profissional",
+          description: "Ideal para empresas em crescimento",
+          mentions: "menções/mês",
+          badge: "Mais Popular",
+          features: [
+            "Até 300 menções/mês",
+            "Canais ilimitados",
+            "IA avançada de leads",
+            "Relatórios personalizados",
+            "Acesso à API",
+            "Suporte prioritário"
+          ]
+        },
+        enterprise: {
+          name: "Empresarial",
+          description: "Para grandes organizações",
+          mentions: "menções/mês",
+          features: [
+            "Até 500 menções/mês",
+            "Todos recursos Professional",
+            "IA personalizada",
+            "Gerente de conta dedicado",
+            "SLA garantido",
+            "Opções white-label"
+          ]
+        }
+      },
+      cta: "Começar Teste Grátis"
+    },
+    testimonials: {
+      title: "O Que Nossos",
+      titleHighlight: "Clientes Dizem",
+      subtitle: "Veja como empresas estão transformando menções em crescimento",
+      items: [
+        {
+          text: "O Liftlio revolucionou nossa estratégia de marketing. Conseguimos identificar e converter leads que antes passavam despercebidos.",
+          author: "Ana Silva",
+          role: "CMO, TechStart"
+        },
+        {
+          text: "A análise de sentimentos em tempo real nos ajudou a prevenir várias crises e melhorar nosso atendimento.",
+          author: "Carlos Mendes",
+          role: "CEO, E-commerce Plus"
+        },
+        {
+          text: "ROI incrível! Em apenas 3 meses, o Liftlio se pagou com os novos clientes que conseguimos.",
+          author: "Juliana Costa",
+          role: "Diretora de Vendas, SaaS Co"
+        }
+      ]
+    },
+    cta: {
+      title: "Pronto para",
+      titleHighlight: "Transformar",
+      titleEnd: "suas Menções?",
+      subtitle: "Junte-se a milhares de empresas que já estão convertendo menções em oportunidades reais",
+      button: "Comece seu Teste Grátis de 14 Dias"
+    },
+    footer: {
+      description: "Transformando menções em oportunidades de negócio através de monitoramento inteligente e análise em tempo real.",
+      product: "Produto",
+      company: "Empresa",
+      legal: "Legal",
+      links: {
+        features: "Recursos",
+        pricing: "Preços",
+        integrations: "Integrações",
+        api: "API",
+        about: "Sobre",
+        blog: "Blog",
+        careers: "Carreiras",
+        contact: "Contato",
+        privacy: "Privacidade",
+        terms: "Termos",
+        security: "Segurança"
+      },
+      copyright: "© 2024 Liftlio. Todos os direitos reservados."
+    }
+  }
+};
+
+// Styled Components com suporte a tema
+const LandingContainer = styled.div`
+  font-family: 'Inter', sans-serif;
+  background: ${props => props.theme.colors.background};
+  color: ${props => props.theme.colors.text.primary};
+  overflow-x: hidden;
+  position: relative;
+  transition: background 0.3s ease, color 0.3s ease;
+`;
+
+const Header = styled.header`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 20px 64px;
+  background: ${props => props.theme.colors.headerBg};
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid ${props => props.theme.colors.borderLight};
+  transition: all 0.3s ease;
+
+  @media (max-width: 768px) {
+    padding: 16px 32px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+  }
+`;
+
+const HeaderContent = styled.div`
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const Logo = styled.div`
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  background: ${props => props.theme.colors.gradient.landing};
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const Nav = styled.nav`
+  display: flex;
+  gap: 40px;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const NavLink = styled.a`
+  color: ${props => props.theme.colors.textSecondary};
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const NavButtons = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+const LangButton = styled.button`
+  background: transparent;
+  color: ${props => props.theme.colors.text.primary};
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const ThemeToggle = styled.button`
+  background: transparent;
+  color: ${props => props.theme.colors.text.primary};
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const LoginButton = styled.button`
+  background: transparent;
+  color: ${props => props.theme.colors.text.primary};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: ${props => props.theme.colors.cardBg};
+    border-color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const pulseAnimation = keyframes`
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.1); }
+`;
+
+const floatAnimation = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+`;
+
+const shimmerAnimation = keyframes`
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+`;
+
+const HeroSection = styled.section`
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 64px 80px;
+  position: relative;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    padding: 100px 32px 60px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 80px 16px 40px;
+  }
+`;
+
+const HeroBackground = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: ${props => props.theme.name === 'dark' ? 0.3 : 0.1};
+  background: radial-gradient(circle at 20% 50%, ${props => props.theme.colors.primaryAlpha} 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, ${props => props.theme.colors.secondaryAlpha} 0%, transparent 50%);
+`;
+
+const HeroContent = styled.div`
+  max-width: 1440px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  z-index: 10;
+  position: relative;
+
+  @media (max-width: 968px) {
+    grid-template-columns: 1fr;
+    gap: 60px;
+    text-align: center;
+  }
+`;
+
+const HeroText = styled.div``;
+
+const Badge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: ${props => props.theme.colors.badgeBg};
+  border: 1px solid ${props => props.theme.colors.badgeBorder};
+  padding: 8px 16px;
+  border-radius: 100px;
+  margin-bottom: 24px;
+  color: ${props => props.theme.colors.primary};
+  font-size: 14px;
+  font-weight: 600;
+  animation: ${pulseAnimation} 3s infinite;
+`;
+
+const Title = styled.h1`
+  font-size: 72px;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 24px;
+  letter-spacing: -2px;
+
+  @media (max-width: 768px) {
+    font-size: 48px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 36px;
+  }
+`;
+
+const Gradient = styled.span`
+  background: ${props => props.theme.colors.gradient.landing};
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+`;
+
+const Description = styled.p`
+  font-size: 20px;
+  color: ${props => props.theme.colors.textSecondary};
+  line-height: 1.6;
+  margin-bottom: 40px;
+
+  @media (max-width: 768px) {
+    font-size: 18px;
+  }
+`;
+
+const CTAButtons = styled.div`
+  display: flex;
+  gap: 16px;
+
+  @media (max-width: 968px) {
+    justify-content: center;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    width: 100%;
+  }
+`;
+
+const PrimaryButton = styled.button`
+  background: ${props => props.theme.colors.gradient.landing};
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  &:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px ${props => props.theme.colors.primaryAlpha};
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: center;
+  }
+`;
+
+const SecondaryButton = styled.button`
+  background: transparent;
+  color: ${props => props.theme.colors.text.primary};
+  border: 2px solid ${props => props.theme.colors.borderLight};
+  padding: 16px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    background: ${props => props.theme.colors.cardBg};
+    border-color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.colors.primary};
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: center;
+  }
+`;
+
+const HeroVisual = styled.div`
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  @media (max-width: 968px) {
+    display: none;
+  }
+`;
+
+const DashboardPreview = styled.div`
+  width: 100%;
+  max-width: 600px;
+  background: ${props => props.theme.colors.cardBg};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 60px ${props => props.theme.colors.shadowLarge};
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, ${props => props.theme.colors.primaryAlpha} 0%, transparent 70%);
+    animation: ${pulseAnimation} 4s ease-in-out infinite;
+  }
+`;
+
+const DashboardImage = styled.img`
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  position: relative;
+  z-index: 1;
+`;
+
+const MetricsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+`;
+
+const MetricCard = styled.div`
+  background: ${props => props.theme.colors.metricCardBg};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, ${props => props.theme.colors.shimmer}, transparent);
+    animation: ${shimmerAnimation} 3s infinite;
+  }
+`;
+
+const MetricValue = styled.div`
+  font-size: 28px;
+  font-weight: 700;
+  color: ${props => props.theme.colors.primary};
+  margin-bottom: 4px;
+`;
+
+const MetricLabel = styled.div`
+  font-size: 12px;
+  color: ${props => props.theme.colors.textSecondary};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+const FloatingElement = styled.div`
+  position: absolute;
+  background: ${props => props.theme.colors.floatingBg};
+  border: 1px solid ${props => props.theme.colors.floatingBorder};
+  border-radius: 12px;
+  padding: 16px;
+  animation: ${floatAnimation} 6s ease-in-out infinite;
+`;
+
+const VideoContainer = styled.div`
+  width: 400px;
+  margin: 0 auto 24px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px ${props => props.theme.colors.primaryAlpha};
+  position: relative;
+  
+  video {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  
+  @media (max-width: 480px) {
+    width: 100%;
+    max-width: 400px;
+  }
+`;
+
+const FloatingVideo = styled.div`
+  position: absolute;
+  width: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px ${props => props.theme.colors.shadowMedium};
+  
+  video {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+`;
+
+const TrustSection = styled.section`
+  padding: 60px 64px;
+  background: ${props => props.theme.colors.trustBg};
+  border-top: 1px solid ${props => props.theme.colors.borderLight};
+  border-bottom: 1px solid ${props => props.theme.colors.borderLight};
+
+  @media (max-width: 768px) {
+    padding: 40px 32px;
+  }
+`;
+
+const TrustContainer = styled.div`
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 40px;
+
+  @media (max-width: 768px) {
+    gap: 20px;
+  }
+`;
+
+const TrustItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const TrustIcon = styled.div`
+  font-size: 24px;
+  color: ${props => props.theme.colors.primary};
+`;
+
+const TrustText = styled.div``;
+
+const TrustValue = styled.div`
+  font-size: 24px;
+  font-weight: 700;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const TrustLabel = styled.div`
+  font-size: 14px;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
+const FeaturesSection = styled.section`
+  padding: 100px 64px;
+  background: ${props => props.theme.colors.featuresBg};
+  position: relative;
+
+  @media (max-width: 768px) {
+    padding: 60px 32px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 40px 16px;
+  }
+`;
+
+const FeaturesContainer = styled.div`
+  max-width: 1440px;
+  margin: 0 auto;
+`;
+
+const SectionHeader = styled.div`
+  text-align: center;
+  margin-bottom: 60px;
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 48px;
+  font-weight: 900;
+  margin-bottom: 16px;
+  letter-spacing: -1px;
+
+  @media (max-width: 768px) {
+    font-size: 36px;
+  }
+`;
+
+const SectionDescription = styled.p`
+  font-size: 18px;
+  color: ${props => props.theme.colors.textSecondary};
+  max-width: 600px;
+  margin: 0 auto;
+`;
+
+const FeaturesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 32px;
+  margin-bottom: 60px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FeatureCard = styled.div`
+  background: ${props => props.theme.colors.cardBg};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  border-radius: 16px;
+  padding: 32px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-5px);
+    border-color: ${props => props.theme.colors.primary};
+    background: ${props => props.theme.colors.cardHoverBg};
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: ${props => props.theme.colors.gradient.landing};
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover::before {
+    opacity: 1;
+  }
+`;
+
+const FeatureIcon = styled.div`
+  width: 60px;
+  height: 60px;
+  background: ${props => props.theme.colors.gradient.landing};
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: white;
+`;
+
+const FeatureTitle = styled.h3`
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const FeatureDescription = styled.p`
+  font-size: 16px;
+  color: ${props => props.theme.colors.textSecondary};
+  line-height: 1.6;
+`;
+
+const ComparisonSection = styled.section`
+  padding: 100px 64px;
+  background: ${props => props.theme.colors.background};
+
+  @media (max-width: 768px) {
+    padding: 60px 32px;
+  }
+`;
+
+const ComparisonImage = styled.img`
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: block;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px ${props => props.theme.colors.shadowLarge};
+`;
+
+const StatsSection = styled.section`
+  padding: 80px 64px;
+  background: ${props => props.theme.colors.statsBg};
+
+  @media (max-width: 768px) {
+    padding: 60px 32px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 40px 16px;
+  }
+`;
+
+const StatsGrid = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+  text-align: center;
+
+  @media (max-width: 968px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const StatItem = styled.div``;
+
+const StatNumber = styled.div`
+  font-size: 48px;
+  font-weight: 900;
+  background: ${props => props.theme.colors.gradient.landing};
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+`;
+
+const StatLabel = styled.div`
+  font-size: 18px;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
+const PricingSection = styled.section`
+  padding: 100px 64px;
+  background: ${props => props.theme.colors.pricingBg};
+
+  @media (max-width: 768px) {
+    padding: 60px 32px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 40px 16px;
+  }
+`;
+
+const PricingGrid = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin-top: 60px;
+
+  @media (max-width: 968px) {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+  }
+`;
+
+const PricingCard = styled.div<{ featured?: boolean }>`
+  background: ${props => props.featured ? props.theme.colors.pricingFeaturedBg : props.theme.colors.cardBg};
+  border: 1px solid ${props => props.featured ? props.theme.colors.primary : props.theme.colors.borderLight};
+  border-radius: 16px;
+  padding: 40px 32px;
+  position: relative;
+  transition: all 0.3s ease;
+
+  ${props => props.featured && css`
+    transform: scale(1.05);
+    
+    @media (max-width: 968px) {
+      transform: scale(1);
+    }
+  `}
+
+  &:hover {
+    transform: ${props => props.featured ? 'scale(1.08)' : 'translateY(-5px)'};
+    
+    @media (max-width: 968px) {
+      transform: translateY(-5px);
+    }
+  }
+`;
+
+const PricingBadge = styled.div`
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: ${props => props.theme.colors.gradient.landing};
+  color: white;
+  padding: 4px 16px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+`;
+
+const PricingPlan = styled.div`
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const PricingPrice = styled.div`
+  font-size: 48px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  color: ${props => props.theme.colors.text.primary};
+  
+  span {
+    font-size: 20px;
+    font-weight: 400;
+    color: ${props => props.theme.colors.textSecondary};
+  }
+`;
+
+const PricingDescription = styled.p`
+  font-size: 16px;
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 32px;
+`;
+
+const PricingFeatures = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin-bottom: 32px;
+`;
+
+const PricingFeature = styled.li`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: ${props => props.theme.colors.text.primary};
+  
+  svg {
+    color: ${props => props.theme.colors.primary};
+    flex-shrink: 0;
+  }
+`;
+
+const TestimonialsSection = styled.section`
+  padding: 100px 64px;
+  background: ${props => props.theme.colors.testimonialsBg};
+
+  @media (max-width: 768px) {
+    padding: 60px 32px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 40px 16px;
+  }
+`;
+
+const TestimonialsGrid = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 32px;
+  margin-top: 60px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const TestimonialCard = styled.div`
+  background: ${props => props.theme.colors.cardBg};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  border-radius: 16px;
+  padding: 32px;
+  position: relative;
+`;
+
+const QuoteIcon = styled.div`
+  font-size: 48px;
+  color: ${props => props.theme.colors.primaryAlpha};
+  margin-bottom: 16px;
+`;
+
+const TestimonialText = styled.p`
+  font-size: 16px;
+  line-height: 1.6;
+  color: ${props => props.theme.colors.text.primary};
+  margin-bottom: 24px;
+`;
+
+const TestimonialAuthor = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+const AuthorAvatar = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: ${props => props.theme.colors.gradient.landing};
+`;
+
+const AuthorInfo = styled.div``;
+
+const AuthorName = styled.div`
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const AuthorRole = styled.div`
+  font-size: 14px;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
+const CTASection = styled.section`
+  padding: 120px 64px;
+  text-align: center;
+  background: ${props => props.theme.colors.ctaBg};
+  position: relative;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    padding: 80px 32px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 60px 16px;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, ${props => props.theme.colors.primaryAlpha} 0%, transparent 70%);
+    animation: ${pulseAnimation} 6s ease-in-out infinite;
+  }
+`;
+
+const CTAContent = styled.div`
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+`;
+
+const CTATitle = styled.h2`
+  font-size: 48px;
+  font-weight: 900;
+  margin-bottom: 24px;
+  letter-spacing: -1px;
+
+  @media (max-width: 768px) {
+    font-size: 36px;
+  }
+`;
+
+const CTADescription = styled.p`
+  font-size: 20px;
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 40px;
+`;
+
+const Footer = styled.footer`
+  padding: 60px 64px 40px;
+  background: ${props => props.theme.colors.footerBg};
+  border-top: 1px solid ${props => props.theme.colors.borderLight};
+
+  @media (max-width: 768px) {
+    padding: 40px 32px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 32px 16px;
+  }
+`;
+
+const FooterContent = styled.div`
+  max-width: 1440px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 60px;
+
+  @media (max-width: 968px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FooterColumn = styled.div``;
+
+const FooterTitle = styled.h4`
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const FooterDescription = styled.p`
+  font-size: 14px;
+  color: ${props => props.theme.colors.textSecondary};
+  line-height: 1.6;
+  margin-bottom: 20px;
+`;
+
+const FooterLinks = styled.ul`
+  list-style: none;
+  padding: 0;
+`;
+
+const FooterLink = styled.li`
+  margin-bottom: 12px;
+  
+  a {
+    color: ${props => props.theme.colors.textSecondary};
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s ease;
+    
+    &:hover {
+      color: ${props => props.theme.colors.primary};
+    }
+  }
+`;
+
+const FooterBottom = styled.div`
+  margin-top: 60px;
+  padding-top: 32px;
+  border-top: 1px solid ${props => props.theme.colors.borderLight};
+  text-align: center;
+  font-size: 14px;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
+const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
+  const [scrolled, setScrolled] = useState(false);
+  const [lang, setLang] = useState<'en' | 'pt'>('en');
+  const t = translations[lang];
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleLogin = () => {
+    navigate('/login');
+  };
+
+  const handleGetStarted = () => {
+    navigate('/login');
+  };
+
+  const handleDemo = () => {
+    // Implementar demonstração
+    window.open('https://www.youtube.com/watch?v=demo', '_blank');
+  };
+
+  const toggleLanguage = () => {
+    setLang(lang === 'en' ? 'pt' : 'en');
+  };
+
+  return (
+    <LandingContainer>
+      <Header style={{ 
+        background: scrolled ? theme.colors.headerBgSolid : theme.colors.headerBg,
+        backdropFilter: scrolled ? 'blur(20px)' : 'blur(10px)'
+      }}>
+        <HeaderContent>
+          <Logo>
+            {renderIcon(BiPulse)}
+            LIFTLIO
+          </Logo>
+          <Nav>
+            <NavLink href="#features">{t.nav.features}</NavLink>
+            <NavLink href="#pricing">{t.nav.pricing}</NavLink>
+            <NavLink href="#testimonials">{t.nav.testimonials}</NavLink>
+            <NavButtons>
+              <LangButton onClick={toggleLanguage}>
+                {renderIcon(FaGlobe)} {lang.toUpperCase()}
+              </LangButton>
+              <ThemeToggle onClick={toggleTheme}>
+                {renderIcon(theme.name === 'dark' ? FaSun : FaMoon)}
+              </ThemeToggle>
+              <LoginButton onClick={handleLogin}>{t.nav.login}</LoginButton>
+            </NavButtons>
+          </Nav>
+        </HeaderContent>
+      </Header>
+
+      <HeroSection>
+        <HeroBackground />
+        <HeroContent>
+          <HeroText>
+            <Badge>
+              {renderIcon(HiSparkles)}
+              <span>{t.hero.badge}</span>
+            </Badge>
+            <Title>
+              {t.hero.title}
+              <br />
+              <Gradient>{t.hero.titleHighlight}</Gradient>
+            </Title>
+            <Description>
+              {t.hero.subtitle}
+            </Description>
+            <CTAButtons>
+              <PrimaryButton onClick={handleGetStarted}>
+                {renderIcon(FaRocket)}
+                {t.hero.cta.primary}
+              </PrimaryButton>
+              <SecondaryButton onClick={handleDemo}>
+                {renderIcon(FaPlay)}
+                {t.hero.cta.secondary}
+              </SecondaryButton>
+            </CTAButtons>
+          </HeroText>
+
+          <HeroVisual>
+            <DashboardPreview>
+              <h3 style={{ marginBottom: '24px', fontSize: '20px', fontWeight: '700' }}>
+                Dashboard {lang === 'pt' ? 'em Tempo Real' : 'Real-Time'}
+              </h3>
+              
+              {/* Imagem do Dashboard */}
+              <DashboardImage 
+                src={`/imagens/dashboard-${theme.name}.png`}
+                alt="Liftlio Dashboard"
+                onError={(e) => {
+                  // Fallback se a imagem não existir
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              
+              <MetricsGrid>
+                <MetricCard>
+                  <MetricValue>2.8K</MetricValue>
+                  <MetricLabel>{t.hero.metrics.mentions}</MetricLabel>
+                </MetricCard>
+                <MetricCard>
+                  <MetricValue>89%</MetricValue>
+                  <MetricLabel>{t.hero.metrics.positive}</MetricLabel>
+                </MetricCard>
+                <MetricCard>
+                  <MetricValue>147</MetricValue>
+                  <MetricLabel>{t.hero.metrics.leads}</MetricLabel>
+                </MetricCard>
+              </MetricsGrid>
+            </DashboardPreview>
+            
+            {/* Elementos flutuantes */}
+            <FloatingElement style={{ bottom: '40px', left: '-30px', animationDelay: '2s' }}>
+              <span style={{ fontSize: '24px', color: theme.colors.secondary }}>{renderIcon(FaChartLine)}</span>
+            </FloatingElement>
+          </HeroVisual>
+        </HeroContent>
+      </HeroSection>
+
+      {/* Trust Indicators */}
+      <TrustSection>
+        <TrustContainer>
+          <TrustItem>
+            <TrustIcon>{renderIcon(FaShieldAlt)}</TrustIcon>
+            <TrustText>
+              <TrustValue>100%</TrustValue>
+              <TrustLabel>{lang === 'pt' ? 'Seguro' : 'Secure'}</TrustLabel>
+            </TrustText>
+          </TrustItem>
+          <TrustItem>
+            <TrustIcon>{renderIcon(FaClock)}</TrustIcon>
+            <TrustText>
+              <TrustValue>24/7</TrustValue>
+              <TrustLabel>{lang === 'pt' ? 'Monitoramento' : 'Monitoring'}</TrustLabel>
+            </TrustText>
+          </TrustItem>
+          <TrustItem>
+            <TrustIcon>{renderIcon(FaUsers)}</TrustIcon>
+            <TrustText>
+              <TrustValue>2,000+</TrustValue>
+              <TrustLabel>{lang === 'pt' ? 'Clientes Ativos' : 'Active Clients'}</TrustLabel>
+            </TrustText>
+          </TrustItem>
+          <TrustItem>
+            <TrustIcon>{renderIcon(FaTrophy)}</TrustIcon>
+            <TrustText>
+              <TrustValue>95%</TrustValue>
+              <TrustLabel>{lang === 'pt' ? 'Satisfação' : 'Satisfaction'}</TrustLabel>
+            </TrustText>
+          </TrustItem>
+        </TrustContainer>
+      </TrustSection>
+
+      <FeaturesSection id="features">
+        <FeaturesContainer>
+          <SectionHeader>
+            <SectionTitle>
+              {t.features.title} <Gradient>{t.features.titleHighlight}</Gradient>
+            </SectionTitle>
+            <SectionDescription>
+              {t.features.subtitle}
+            </SectionDescription>
+          </SectionHeader>
+          
+          <FeaturesGrid>
+            <FeatureCard>
+              <FeatureIcon>
+                {renderIcon(FaBell)}
+              </FeatureIcon>
+              <FeatureTitle>{t.features.items[0].title}</FeatureTitle>
+              <FeatureDescription>
+                {t.features.items[0].description}
+              </FeatureDescription>
+            </FeatureCard>
+
+            <FeatureCard>
+              <FeatureIcon>
+                {renderIcon(FaChartLine)}
+              </FeatureIcon>
+              <FeatureTitle>{t.features.items[1].title}</FeatureTitle>
+              <FeatureDescription>
+                {t.features.items[1].description}
+              </FeatureDescription>
+            </FeatureCard>
+
+            <FeatureCard>
+              <FeatureIcon>
+                {renderIcon(FaRocket)}
+              </FeatureIcon>
+              <FeatureTitle>{t.features.items[2].title}</FeatureTitle>
+              <FeatureDescription>
+                {t.features.items[2].description}
+              </FeatureDescription>
+            </FeatureCard>
+
+            <FeatureCard>
+              <FeatureIcon>
+                {renderIcon(FaYoutube)}
+              </FeatureIcon>
+              <FeatureTitle>{t.features.items[3].title}</FeatureTitle>
+              <FeatureDescription>
+                {t.features.items[3].description}
+              </FeatureDescription>
+            </FeatureCard>
+
+            <FeatureCard>
+              <FeatureIcon>
+                {renderIcon(MdAutoGraph)}
+              </FeatureIcon>
+              <FeatureTitle>{t.features.items[4].title}</FeatureTitle>
+              <FeatureDescription>
+                {t.features.items[4].description}
+              </FeatureDescription>
+            </FeatureCard>
+
+            <FeatureCard>
+              <FeatureIcon>
+                {renderIcon(HiLightningBolt)}
+              </FeatureIcon>
+              <FeatureTitle>{t.features.items[5].title}</FeatureTitle>
+              <FeatureDescription>
+                {t.features.items[5].description}
+              </FeatureDescription>
+            </FeatureCard>
+          </FeaturesGrid>
+        </FeaturesContainer>
+      </FeaturesSection>
+
+      {/* Comparison Section */}
+      <ComparisonSection>
+        <SectionHeader>
+          <SectionTitle>
+            {lang === 'pt' ? 'Antes e Depois do' : 'Before and After'} <Gradient>Liftlio</Gradient>
+          </SectionTitle>
+        </SectionHeader>
+        <ComparisonImage 
+          src={`/imagens/comparison-${theme.name}.png`}
+          alt="Before and After Liftlio"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+      </ComparisonSection>
+
+      <StatsSection>
+        <StatsGrid>
+          <StatItem>
+            <StatNumber>10M+</StatNumber>
+            <StatLabel>{t.stats.monitored}</StatLabel>
+          </StatItem>
+          <StatItem>
+            <StatNumber>50K+</StatNumber>
+            <StatLabel>{t.stats.leads}</StatLabel>
+          </StatItem>
+          <StatItem>
+            <StatNumber>95%</StatNumber>
+            <StatLabel>{t.stats.accuracy}</StatLabel>
+          </StatItem>
+          <StatItem>
+            <StatNumber>24/7</StatNumber>
+            <StatLabel>{t.stats.monitoring}</StatLabel>
+          </StatItem>
+        </StatsGrid>
+      </StatsSection>
+
+      <PricingSection id="pricing">
+        <SectionHeader>
+          <SectionTitle>
+            {t.pricing.title} <Gradient>{t.pricing.titleHighlight}</Gradient>
+          </SectionTitle>
+          <SectionDescription>
+            {t.pricing.subtitle}
+          </SectionDescription>
+        </SectionHeader>
+
+        <PricingGrid>
+          <PricingCard>
+            <PricingPlan>{t.pricing.plans.starter.name}</PricingPlan>
+            <PricingPrice>
+              $30<span>/{t.pricing.monthly}</span>
+            </PricingPrice>
+            <PricingDescription>
+              {t.pricing.plans.starter.description}
+            </PricingDescription>
+            <PricingFeatures>
+              {t.pricing.plans.starter.features.map((feature, index) => (
+                <PricingFeature key={index}>
+                  {renderIcon(FaCheck)} {feature}
+                </PricingFeature>
+              ))}
+            </PricingFeatures>
+            <PrimaryButton onClick={handleGetStarted} style={{ width: '100%' }}>
+              {t.pricing.cta}
+            </PrimaryButton>
+          </PricingCard>
+
+          <PricingCard featured>
+            <PricingBadge>{t.pricing.plans.professional.badge}</PricingBadge>
+            <PricingPlan>{t.pricing.plans.professional.name}</PricingPlan>
+            <PricingPrice>
+              $100<span>/{t.pricing.monthly}</span>
+            </PricingPrice>
+            <PricingDescription>
+              {t.pricing.plans.professional.description}
+            </PricingDescription>
+            <PricingFeatures>
+              {t.pricing.plans.professional.features.map((feature, index) => (
+                <PricingFeature key={index}>
+                  {renderIcon(FaCheck)} {feature}
+                </PricingFeature>
+              ))}
+            </PricingFeatures>
+            <PrimaryButton onClick={handleGetStarted} style={{ width: '100%' }}>
+              {t.pricing.cta}
+            </PrimaryButton>
+          </PricingCard>
+
+          <PricingCard>
+            <PricingPlan>{t.pricing.plans.enterprise.name}</PricingPlan>
+            <PricingPrice>
+              $200<span>/{t.pricing.monthly}</span>
+            </PricingPrice>
+            <PricingDescription>
+              {t.pricing.plans.enterprise.description}
+            </PricingDescription>
+            <PricingFeatures>
+              {t.pricing.plans.enterprise.features.map((feature, index) => (
+                <PricingFeature key={index}>
+                  {renderIcon(FaCheck)} {feature}
+                </PricingFeature>
+              ))}
+            </PricingFeatures>
+            <PrimaryButton onClick={handleGetStarted} style={{ width: '100%' }}>
+              {t.pricing.cta}
+            </PrimaryButton>
+          </PricingCard>
+        </PricingGrid>
+      </PricingSection>
+
+      <TestimonialsSection id="testimonials">
+        <SectionHeader>
+          <SectionTitle>
+            {t.testimonials.title} <Gradient>{t.testimonials.titleHighlight}</Gradient>
+          </SectionTitle>
+          <SectionDescription>
+            {t.testimonials.subtitle}
+          </SectionDescription>
+        </SectionHeader>
+        
+        <TestimonialsGrid>
+          {t.testimonials.items.map((testimonial, index) => (
+            <TestimonialCard key={index}>
+              <QuoteIcon>{renderIcon(FaQuoteLeft)}</QuoteIcon>
+              <TestimonialText>
+                "{testimonial.text}"
+              </TestimonialText>
+              <TestimonialAuthor>
+                <AuthorAvatar />
+                <AuthorInfo>
+                  <AuthorName>{testimonial.author}</AuthorName>
+                  <AuthorRole>{testimonial.role}</AuthorRole>
+                </AuthorInfo>
+              </TestimonialAuthor>
+            </TestimonialCard>
+          ))}
+        </TestimonialsGrid>
+      </TestimonialsSection>
+
+      <CTASection>
+        <CTAContent>
+          <CTATitle>
+            {t.cta.title} <Gradient>{t.cta.titleHighlight}</Gradient> {t.cta.titleEnd}
+          </CTATitle>
+          <CTADescription>
+            {t.cta.subtitle}
+          </CTADescription>
+          <PrimaryButton onClick={handleGetStarted} style={{ fontSize: '18px', padding: '20px 40px', margin: '0 auto' }}>
+            {renderIcon(FaRocket)}
+            {t.cta.button}
+          </PrimaryButton>
+        </CTAContent>
+      </CTASection>
+
+      <Footer>
+        <FooterContent>
+          <FooterColumn>
+            <FooterTitle>
+              <Logo style={{ fontSize: '24px' }}>
+                {renderIcon(BiPulse)}
+                LIFTLIO
+              </Logo>
+            </FooterTitle>
+            <FooterDescription>
+              {t.footer.description}
+            </FooterDescription>
+          </FooterColumn>
+
+          <FooterColumn>
+            <FooterTitle>{t.footer.product}</FooterTitle>
+            <FooterLinks>
+              <FooterLink><a href="#features">{t.footer.links.features}</a></FooterLink>
+              <FooterLink><a href="#pricing">{t.footer.links.pricing}</a></FooterLink>
+              <FooterLink><a href="#">{t.footer.links.integrations}</a></FooterLink>
+              <FooterLink><a href="#">{t.footer.links.api}</a></FooterLink>
+            </FooterLinks>
+          </FooterColumn>
+
+          <FooterColumn>
+            <FooterTitle>{t.footer.company}</FooterTitle>
+            <FooterLinks>
+              <FooterLink><a href="#">{t.footer.links.about}</a></FooterLink>
+              <FooterLink><a href="#">{t.footer.links.blog}</a></FooterLink>
+              <FooterLink><a href="#">{t.footer.links.careers}</a></FooterLink>
+              <FooterLink><a href="#">{t.footer.links.contact}</a></FooterLink>
+            </FooterLinks>
+          </FooterColumn>
+
+          <FooterColumn>
+            <FooterTitle>{t.footer.legal}</FooterTitle>
+            <FooterLinks>
+              <FooterLink><a href="#">{t.footer.links.privacy}</a></FooterLink>
+              <FooterLink><a href="#">{t.footer.links.terms}</a></FooterLink>
+              <FooterLink><a href="#">{t.footer.links.security}</a></FooterLink>
+            </FooterLinks>
+          </FooterColumn>
+        </FooterContent>
+
+        <FooterBottom>
+          {t.footer.copyright}
+        </FooterBottom>
+      </Footer>
+    </LandingContainer>
+  );
+};
+
+export default LandingPage;

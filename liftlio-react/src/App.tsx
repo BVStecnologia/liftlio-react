@@ -12,6 +12,7 @@ import Settings from './pages/Settings';
 import Integrations from './pages/Integrations';
 import LoginPage from './pages/LoginPage';
 import ProjectCreationPage from './pages/ProjectCreationPage';
+import LandingPage from './pages/LandingPage';
 import LoadingDataIndicator from './components/LoadingDataIndicator';
 import ProcessingWrapper from './components/ProcessingWrapper';
 import UrlDataTest from './components/UrlDataTest';
@@ -484,8 +485,8 @@ function App() {
             {/* Adicionar OAuthHandler para processar códigos do YouTube em qualquer rota */}
             <OAuthHandler />
             <Routes>
-              {/* Tornar a página de login o ponto de entrada principal */}
-              <Route path="/" element={<LoginPage />} />
+              {/* Landing page como ponto de entrada principal */}
+              <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/*" element={
