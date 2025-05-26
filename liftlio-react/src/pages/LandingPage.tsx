@@ -180,7 +180,7 @@ const translations = {
           ]
         }
       },
-      cta: "Start Free Trial"
+      cta: "Get Started Now"
     },
     testimonials: {
       title: "What Our",
@@ -209,7 +209,7 @@ const translations = {
       titleHighlight: "Transform",
       titleEnd: "Your Mentions?",
       subtitle: "Join thousands of companies already converting mentions into real business opportunities",
-      button: "Start Your Free 14-Day Trial"
+      button: "Start Growing Your Traffic Today"
     },
     footer: {
       description: "Transforming mentions into business opportunities through intelligent monitoring and real-time analysis.",
@@ -401,7 +401,7 @@ const translations = {
           ]
         }
       },
-      cta: "Começar Teste Grátis"
+      cta: "Começar Agora"
     },
     testimonials: {
       title: "O Que Nossos",
@@ -430,7 +430,7 @@ const translations = {
       titleHighlight: "Transformar",
       titleEnd: "suas Menções?",
       subtitle: "Junte-se a milhares de empresas que já estão convertendo menções em oportunidades reais",
-      button: "Comece seu Teste Grátis de 14 Dias"
+      button: "Comece a Crescer seu Tráfego Hoje"
     },
     footer: {
       description: "Transformando menções em oportunidades de negócio através de monitoramento inteligente e análise em tempo real.",
