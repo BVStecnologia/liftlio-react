@@ -19,35 +19,60 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  // Check if dark mode is stored in localStorage or use system preference
+  // Check if dark mode is stored in localStorage or use time-based preference
   const getInitialThemeMode = (): boolean => {
+    // First check if user has manually set a preference
     const savedTheme = localStorage.getItem('darkMode');
     
     if (savedTheme !== null) {
       return savedTheme === 'true';
     }
     
-    // Use system preference as fallback
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // If no preference, use time-based theme
+    // Dark mode from 18:00 (6 PM) to 06:00 (6 AM)
+    const currentHour = new Date().getHours();
+    return currentHour >= 18 || currentHour < 6;
   };
 
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(getInitialThemeMode());
+  const [hasUserPreference, setHasUserPreference] = useState<boolean>(
+    localStorage.getItem('darkMode') !== null
+  );
   
-  // Initialize theme after component mounts to avoid SSR issues
+  // Initialize theme after component mounts
   useEffect(() => {
-    // Always initialize to light mode for consistency
-    setIsDarkMode(false);
-    localStorage.setItem('darkMode', 'false');
-  }, []);
+    // Only set based on time if user hasn't manually toggled
+    if (!hasUserPreference) {
+      const currentHour = new Date().getHours();
+      const shouldBeDark = currentHour >= 18 || currentHour < 6;
+      setIsDarkMode(shouldBeDark);
+    }
+  }, [hasUserPreference]);
 
-  // Update localStorage when theme changes
+  // Check time periodically to update theme if user hasn't set preference
   useEffect(() => {
-    localStorage.setItem('darkMode', isDarkMode.toString());
-  }, [isDarkMode]);
+    if (!hasUserPreference) {
+      const checkTime = () => {
+        const currentHour = new Date().getHours();
+        const shouldBeDark = currentHour >= 18 || currentHour < 6;
+        if (shouldBeDark !== isDarkMode) {
+          setIsDarkMode(shouldBeDark);
+        }
+      };
+
+      // Check every minute
+      const interval = setInterval(checkTime, 60000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [hasUserPreference, isDarkMode]);
 
   // Toggle between light and dark mode
   const toggleTheme = () => {
-    setIsDarkMode(prevMode => !prevMode);
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    setHasUserPreference(true); // User has now set a preference
+    localStorage.setItem('darkMode', newMode.toString());
   };
 
   const theme = isDarkMode ? darkTheme : lightTheme;

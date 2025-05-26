@@ -7,6 +7,7 @@ import { BiPulse } from 'react-icons/bi';
 import { MdAutoGraph } from 'react-icons/md';
 import { renderIcon } from '../utils/IconHelper';
 import { useTheme } from '../context/ThemeContext';
+import Cookies from 'js-cookie';
 
 // Internacionalização
 const translations = {
@@ -1537,7 +1538,20 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
-  const [lang, setLang] = useState<'en' | 'pt'>('en');
+  // Get initial language from cookie or browser preference
+  const getInitialLanguage = (): 'en' | 'pt' => {
+    // First check cookie
+    const savedLang = Cookies.get('language');
+    if (savedLang === 'pt' || savedLang === 'en') {
+      return savedLang;
+    }
+    
+    // Then check browser language
+    const browserLang = navigator.language.toLowerCase();
+    return browserLang.startsWith('pt') ? 'pt' : 'en';
+  };
+
+  const [lang, setLang] = useState<'en' | 'pt'>(getInitialLanguage());
   const t = translations[lang];
 
   useEffect(() => {
@@ -1563,7 +1577,10 @@ const LandingPage: React.FC = () => {
   };
 
   const toggleLanguage = () => {
-    setLang(lang === 'en' ? 'pt' : 'en');
+    const newLang = lang === 'en' ? 'pt' : 'en';
+    setLang(newLang);
+    // Save preference in cookie (expires in 365 days)
+    Cookies.set('language', newLang, { expires: 365 });
   };
 
   return (
