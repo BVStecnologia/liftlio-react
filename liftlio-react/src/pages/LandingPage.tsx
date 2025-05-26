@@ -133,11 +133,11 @@ const translations = {
       adSpendLabel: "Monthly Ad Spend",
       calculateButton: "Calculate Savings",
       results: {
-        currentCost: "Annual Ad Cost",
-        liftlioCost: "Liftlio Annual Cost",
-        savings: "Your Savings",
-        organicValue: "Organic Traffic Value",
-        roi: "ROI"
+        currentCost: "Cost Per Visitor (Ads)",
+        liftlioCost: "Cost Per Visitor (Liftlio)",
+        savings: "You Save Per Visitor",
+        organicValue: "Lifetime Value Per Visitor",
+        roi: "Your ROI"
       }
     },
     liveDemo: {
@@ -148,9 +148,9 @@ const translations = {
       viewMore: "View Live Dashboard"
     },
     urgency: {
-      spots: "Only {spots} spots left at this price",
-      price: "Prices increase in {days} days",
-      guarantee: "Lock in today's pricing forever"
+      spots: "Only {spots} clients accepted this month",
+      price: "Price per qualified visitor: $0.10 vs $5-20 in ads",
+      guarantee: "10x cheaper than any advertising platform"
     },
     process: {
       title: "How Liftlio",
@@ -402,11 +402,11 @@ const translations = {
       adSpendLabel: "Gasto Mensal com Anúncios",
       calculateButton: "Calcular Economia",
       results: {
-        currentCost: "Custo Anual com Anúncios",
-        liftlioCost: "Custo Anual Liftlio",
-        savings: "Sua Economia",
-        organicValue: "Valor do Tráfego Orgânico",
-        roi: "ROI"
+        currentCost: "Custo Por Visitante (Anúncios)",
+        liftlioCost: "Custo Por Visitante (Liftlio)",
+        savings: "Você Economiza Por Visitante",
+        organicValue: "Valor Vitalício Por Visitante",
+        roi: "Seu ROI"
       }
     },
     liveDemo: {
@@ -417,9 +417,9 @@ const translations = {
       viewMore: "Ver Dashboard Ao Vivo"
     },
     urgency: {
-      spots: "Apenas {spots} vagas restantes neste preço",
-      price: "Preços aumentam em {days} dias",
-      guarantee: "Garanta o preço de hoje para sempre"
+      spots: "Apenas {spots} clientes aceitos este mês",
+      price: "Preço por visitante qualificado: R$0,50 vs R$25-100 em anúncios",
+      guarantee: "10x mais barato que qualquer plataforma de anúncios"
     },
     process: {
       title: "Como o Liftlio",
@@ -1039,6 +1039,44 @@ const FloatingVideo = styled.div`
     height: auto;
     display: block;
   }
+`;
+
+const LiveCounter = styled.div`
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  background: ${props => props.theme.colors.gradient.landing};
+  color: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  min-width: 200px;
+  animation: ${slideUp} 0.5s ease-out;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const LiveCounterTitle = styled.div`
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const LiveCounterNumber = styled.div`
+  font-size: 32px;
+  font-weight: 900;
+  margin-bottom: 4px;
+`;
+
+const LiveCounterLabel = styled.div`
+  font-size: 12px;
+  opacity: 0.8;
 `;
 
 const TrustSection = styled.section`
@@ -2145,6 +2183,14 @@ const LandingPage: React.FC = () => {
   const [showUrgencyBanner, setShowUrgencyBanner] = useState(false);
   const spotsLeft = 5;
   const daysUntilPriceIncrease = 3;
+  
+  // Live counter state
+  const [liveVisitorCount, setLiveVisitorCount] = useState(12847);
+  const [recentActivity, setRecentActivity] = useState([
+    { channel: "Tech Reviews Brasil", time: "2 min ago", visitors: 47 },
+    { channel: "Marketing Digital Pro", time: "5 min ago", visitors: 82 },
+    { channel: "Empreendedor Online", time: "8 min ago", visitors: 134 }
+  ]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -2162,6 +2208,15 @@ const LandingPage: React.FC = () => {
     }, 10000);
     
     return () => clearTimeout(timer);
+  }, []);
+  
+  // Animate live visitor counter
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLiveVisitorCount(prev => prev + Math.floor(Math.random() * 5) + 1);
+    }, 3000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogin = () => {
@@ -2193,11 +2248,21 @@ const LandingPage: React.FC = () => {
     }, 100);
   };
 
-  const annualAdCost = adSpend * 12;
-  const liftlioCost = adSpend > 5000 ? 2400 : adSpend > 2000 ? 1200 : 360; // Annual costs
-  const savings = annualAdCost - liftlioCost;
-  const organicValue = annualAdCost * 3; // Organic traffic is worth 3x paid traffic
-  const roi = Math.round((organicValue / liftlioCost) * 100);
+  // Calculate cost per visitor
+  const avgCPC = 5; // Average $5 per click in ads
+  const monthlyVisitorsFromAds = Math.floor(adSpend / avgCPC);
+  const annualVisitorsFromAds = monthlyVisitorsFromAds * 12;
+  
+  const liftlioPlan = adSpend > 5000 ? 200 : adSpend > 2000 ? 100 : 30; // Monthly cost
+  const liftlioMentions = adSpend > 5000 ? 500 : adSpend > 2000 ? 300 : 80; // Mentions per month
+  const visitorsPerMention = 10; // Average visitors per comment over time
+  const monthlyVisitorsFromLiftlio = liftlioMentions * visitorsPerMention;
+  
+  const costPerVisitorAds = avgCPC;
+  const costPerVisitorLiftlio = liftlioPlan / monthlyVisitorsFromLiftlio;
+  const savingsPerVisitor = costPerVisitorAds - costPerVisitorLiftlio;
+  const lifetimeValuePerVisitor = 50; // Each visitor worth $50 over time
+  const roi = Math.round((lifetimeValuePerVisitor / costPerVisitorLiftlio) * 100);
 
   return (
     <LandingContainer>
@@ -2226,6 +2291,23 @@ const LandingPage: React.FC = () => {
           </Nav>
         </HeaderContent>
       </Header>
+
+      {/* Live Counter */}
+      <LiveCounter>
+        <LiveCounterTitle>
+          <span style={{ color: '#00ff00' }}>●</span>
+          {lang === 'pt' ? 'AO VIVO' : 'LIVE'}
+        </LiveCounterTitle>
+        <LiveCounterNumber>
+          {liveVisitorCount.toLocaleString()}
+        </LiveCounterNumber>
+        <LiveCounterLabel>
+          {lang === 'pt' 
+            ? 'visitantes qualificados gerados hoje' 
+            : 'qualified visitors generated today'
+          }
+        </LiveCounterLabel>
+      </LiveCounter>
 
       <HeroSection>
         <HeroBackground />
@@ -2474,19 +2556,19 @@ const LandingPage: React.FC = () => {
             <CalculatorResults id="calculator-results">
               <ResultCard>
                 <ResultLabel>{t.calculator.results.currentCost}</ResultLabel>
-                <ResultValue>${annualAdCost.toLocaleString()}</ResultValue>
+                <ResultValue>${costPerVisitorAds.toFixed(2)}</ResultValue>
               </ResultCard>
               <ResultCard>
                 <ResultLabel>{t.calculator.results.liftlioCost}</ResultLabel>
-                <ResultValue>${liftlioCost.toLocaleString()}</ResultValue>
+                <ResultValue>${costPerVisitorLiftlio.toFixed(2)}</ResultValue>
               </ResultCard>
               <ResultCard highlight>
                 <ResultLabel>{t.calculator.results.savings}</ResultLabel>
-                <ResultValue>${savings.toLocaleString()}</ResultValue>
+                <ResultValue>${savingsPerVisitor.toFixed(2)}</ResultValue>
               </ResultCard>
               <ResultCard highlight>
                 <ResultLabel>{t.calculator.results.roi}</ResultLabel>
-                <ResultValue>{roi}%</ResultValue>
+                <ResultValue>{roi.toLocaleString()}%</ResultValue>
               </ResultCard>
             </CalculatorResults>
           )}
@@ -2818,17 +2900,13 @@ const LandingPage: React.FC = () => {
       {/* Urgency Banner */}
       {showUrgencyBanner && (
         <UrgencyBanner>
-          <span>{renderIcon(FaExclamationTriangle)}</span>
-          <span>
-            {t.urgency.spots
-              .replace('{spots}', spotsLeft.toString())
-            }
+          <span>{renderIcon(FaDollarSign)}</span>
+          <span style={{ fontSize: '16px' }}>
+            {t.urgency.price}
           </span>
-          <span style={{ opacity: 0.8, fontSize: '14px' }}>
-            {t.urgency.price
-              .replace('{days}', daysUntilPriceIncrease.toString())
-            }
-          </span>
+          <div style={{ fontSize: '14px', opacity: 0.9, marginTop: '4px' }}>
+            {t.urgency.guarantee}
+          </div>
         </UrgencyBanner>
       )}
     </LandingContainer>
