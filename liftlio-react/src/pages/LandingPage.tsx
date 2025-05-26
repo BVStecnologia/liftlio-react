@@ -19,13 +19,13 @@ const translations = {
       login: "Sign In",
     },
     hero: {
-      badge: "AI-Powered Brand Monitoring",
-      title: "Turn Every Mention Into",
-      titleHighlight: "Revenue",
-      subtitle: "Monitor your brand mentions on YouTube in real-time. Identify qualified leads, analyze sentiment, and convert views into customers with our intelligent platform.",
+      badge: "Organic Traffic Snowball Effect",
+      title: "Multiply Your Organic Traffic",
+      titleHighlight: "Exponentially",
+      subtitle: "Liftlio finds videos about your niche and responds to comments from qualified leads. Monitor relevant channels to comment as soon as videos are posted, creating a snowball effect of organic traffic that grows forever.",
       cta: {
-        primary: "Start Free Trial",
-        secondary: "Watch Demo"
+        primary: "Start Growing Today",
+        secondary: "See How It Works"
       },
       metrics: {
         mentions: "Mentions",
@@ -39,28 +39,28 @@ const translations = {
       subtitle: "Everything you need to monitor, analyze, and convert mentions into real opportunities",
       items: [
         {
-          title: "Real-Time Alerts",
-          description: "Get instant notifications when your brand is mentioned. Never miss an engagement opportunity."
+          title: "Real-Time Channel Monitoring",
+          description: "Monitor relevant channels 24/7. Comment within minutes of new videos being posted to capture early traffic."
         },
         {
           title: "AI Sentiment Analysis",
           description: "Advanced AI analyzes context and sentiment, helping you prioritize responses and identify crises quickly."
         },
         {
-          title: "Automatic Lead Generation",
-          description: "Automatically identify potential customers interested in your products through qualified mentions."
+          title: "Human-Like Comments",
+          description: "AI creates genuine, helpful comments that cite specific timestamps and provide real value - just like a real user would."
         },
         {
-          title: "Multi-Channel Monitoring",
-          description: "Track multiple YouTube channels simultaneously. Automatically discover new relevant videos."
+          title: "Snowball Traffic Effect",
+          description: "Comments stay forever on videos, continuously bringing qualified leads to your business month after month."
         },
         {
-          title: "Analytics Dashboard",
-          description: "Visualize reach, engagement, and conversion metrics. Make data-driven decisions."
+          title: "Intelligent Scheduling",
+          description: "Posts are scheduled at different times daily, mixing promotional and non-promotional content to appear genuinely human."
         },
         {
-          title: "Smart Keywords",
-          description: "Advanced tracking system that automatically identifies and categorizes relevant keywords."
+          title: "No Blocks, No Bans",
+          description: "Our AI behaves exactly like a helpful YouTube user, not a salesperson. Zero risk of channel penalties."
         }
       ]
     },
@@ -70,34 +70,67 @@ const translations = {
       accuracy: "AI Accuracy",
       monitoring: "Monitoring"
     },
+    exponential: {
+      title: "The Organic Traffic",
+      titleHighlight: "Snowball Effect",
+      subtitle: "Unlike paid ads that stop when you stop paying, Liftlio creates permanent assets that grow exponentially",
+      items: [
+        {
+          month: "Month 1",
+          value: "147",
+          description: "Initial comments on new videos"
+        },
+        {
+          month: "Month 3",
+          value: "892",
+          description: "Comments accumulate as videos gain views"
+        },
+        {
+          month: "Month 6",
+          value: "3,241",
+          description: "Older videos continue bringing traffic"
+        },
+        {
+          month: "Month 12",
+          value: "12,847",
+          description: "Exponential growth from all comments"
+        }
+      ],
+      benefits: [
+        "Comments never expire - they work 24/7 forever",
+        "Zero additional cost as traffic grows",
+        "Builds authority in your niche over time",
+        "Each comment is a permanent salesperson"
+      ]
+    },
     process: {
       title: "How Liftlio",
       titleHighlight: "Works",
-      subtitle: "Our intelligent 6-step process transforms YouTube mentions into qualified leads",
+      subtitle: "Our intelligent 6-step process creates an organic traffic snowball that grows forever",
       steps: [
         {
-          title: "Keyword Search",
-          description: "AI-powered semantic search finds relevant videos based on your keywords"
+          title: "Channel Monitoring",
+          description: "Monitor relevant channels 24/7. Get alerts the moment new videos are posted"
         },
         {
-          title: "Video Discovery",
-          description: "Automatically discovers new videos and trending content in your niche"
+          title: "Video Analysis",
+          description: "AI watches videos and identifies key topics, finding perfect moments to reference"
         },
         {
-          title: "Data Collection",
-          description: "Collects video metadata, comments, and engagement metrics in real-time"
+          title: "Lead Detection",
+          description: "Identifies comments from potential customers asking questions or seeking solutions"
         },
         {
-          title: "AI Analysis",
-          description: "Advanced sentiment analysis and lead scoring using Claude AI"
+          title: "Human-Like Response",
+          description: "Creates helpful comments citing specific timestamps (e.g., 'at 3:42 they mention...')"
         },
         {
-          title: "Lead Qualification",
-          description: "Scores and prioritizes leads based on intent and engagement potential"
+          title: "Natural Behavior",
+          description: "Mixes promotional and non-promotional comments to appear genuinely helpful"
         },
         {
-          title: "Message Generation",
-          description: "Creates personalized responses optimized for conversion"
+          title: "Snowball Effect",
+          description: "Comments stay forever, continuously bringing qualified traffic as videos grow"
         }
       ]
     },
@@ -207,13 +240,13 @@ const translations = {
       login: "Entrar",
     },
     hero: {
-      badge: "Monitoramento Inteligente com IA",
-      title: "Transforme Menções em",
-      titleHighlight: "Receita",
-      subtitle: "Monitore menções da sua marca no YouTube em tempo real. Identifique leads qualificados, analise sentimentos e converta visualizações em clientes.",
+      badge: "Efeito Bola de Neve de Tráfego Orgânico",
+      title: "Multiplique Seu Tráfego Orgânico",
+      titleHighlight: "Exponencialmente",
+      subtitle: "O Liftlio encontra vídeos sobre seu nicho e responde comentários de leads qualificados. Monitora canais relevantes para comentar assim que vídeos são postados, criando uma bola de neve de tráfego orgânico que cresce para sempre.",
       cta: {
-        primary: "Teste Grátis",
-        secondary: "Ver Demonstração"
+        primary: "Comece a Crescer Hoje",
+        secondary: "Veja Como Funciona"
       },
       metrics: {
         mentions: "Menções",
@@ -227,28 +260,28 @@ const translations = {
       subtitle: "Tudo o que você precisa para monitorar, analisar e converter menções em oportunidades reais",
       items: [
         {
-          title: "Alertas em Tempo Real",
-          description: "Receba notificações instantâneas quando sua marca for mencionada. Nunca perca uma oportunidade."
+          title: "Monitoramento de Canais em Tempo Real",
+          description: "Monitore canais relevantes 24/7. Comente em minutos após novos vídeos serem postados para capturar o tráfego inicial."
         },
         {
           title: "Análise de Sentimentos IA",
           description: "IA avançada analisa contexto e sentimento, ajudando você a priorizar respostas rapidamente."
         },
         {
-          title: "Geração Automática de Leads",
-          description: "Identifique automaticamente clientes potenciais interessados em seus produtos."
+          title: "Comentários Humanizados",
+          description: "IA cria comentários genuínos e úteis que citam timestamps específicos e fornecem valor real - como um usuário real faria."
         },
         {
-          title: "Monitoramento Multi-Canal",
-          description: "Acompanhe múltiplos canais do YouTube simultaneamente. Descubra novos vídeos relevantes."
+          title: "Efeito Bola de Neve de Tráfego",
+          description: "Comentários ficam para sempre nos vídeos, trazendo leads qualificados continuamente para seu negócio mês após mês."
         },
         {
-          title: "Dashboard Analytics",
-          description: "Visualize métricas de alcance, engajamento e conversão. Tome decisões baseadas em dados."
+          title: "Agendamento Inteligente",
+          description: "Posts agendados em horários diferentes diariamente, misturando conteúdo promocional e não-promocional para parecer genuinamente humano."
         },
         {
-          title: "Palavras-chave Inteligentes",
-          description: "Sistema avançado que identifica e categoriza automaticamente palavras-chave relevantes."
+          title: "Sem Bloqueios, Sem Banimentos",
+          description: "Nossa IA se comporta exatamente como um usuário útil do YouTube, não como um vendedor. Zero risco de penalidades."
         }
       ]
     },
@@ -258,34 +291,67 @@ const translations = {
       accuracy: "Precisão da IA",
       monitoring: "Monitoramento"
     },
+    exponential: {
+      title: "O Efeito",
+      titleHighlight: "Bola de Neve",
+      subtitle: "Diferente de anúncios pagos que param quando você para de pagar, o Liftlio cria ativos permanentes que crescem exponencialmente",
+      items: [
+        {
+          month: "Mês 1",
+          value: "147",
+          description: "Comentários iniciais em novos vídeos"
+        },
+        {
+          month: "Mês 3",
+          value: "892",
+          description: "Comentários acumulam conforme vídeos ganham views"
+        },
+        {
+          month: "Mês 6",
+          value: "3.241",
+          description: "Vídeos antigos continuam trazendo tráfego"
+        },
+        {
+          month: "Mês 12",
+          value: "12.847",
+          description: "Crescimento exponencial de todos comentários"
+        }
+      ],
+      benefits: [
+        "Comentários nunca expiram - trabalham 24/7 para sempre",
+        "Zero custo adicional conforme tráfego cresce",
+        "Constrói autoridade no seu nicho ao longo do tempo",
+        "Cada comentário é um vendedor permanente"
+      ]
+    },
     process: {
       title: "Como o Liftlio",
       titleHighlight: "Funciona",
-      subtitle: "Nosso processo inteligente de 6 etapas transforma menções do YouTube em leads qualificados",
+      subtitle: "Nosso processo inteligente de 6 etapas cria uma bola de neve de tráfego orgânico que cresce para sempre",
       steps: [
         {
-          title: "Busca por Palavras-chave",
-          description: "Busca semântica com IA encontra vídeos relevantes baseados em suas palavras-chave"
+          title: "Monitoramento de Canais",
+          description: "Monitora canais relevantes 24/7. Recebe alertas no momento que novos vídeos são postados"
         },
         {
-          title: "Descoberta de Vídeos",
-          description: "Descobre automaticamente novos vídeos e conteúdo em alta no seu nicho"
+          title: "Análise de Vídeos",
+          description: "IA assiste vídeos e identifica tópicos-chave, encontrando momentos perfeitos para referenciar"
         },
         {
-          title: "Coleta de Dados",
-          description: "Coleta metadados de vídeos, comentários e métricas de engajamento em tempo real"
+          title: "Detecção de Leads",
+          description: "Identifica comentários de potenciais clientes fazendo perguntas ou buscando soluções"
         },
         {
-          title: "Análise com IA",
-          description: "Análise avançada de sentimentos e pontuação de leads usando Claude IA"
+          title: "Resposta Humanizada",
+          description: "Cria comentários úteis citando timestamps específicos (ex: 'aos 3:42 eles mencionam...')"
         },
         {
-          title: "Qualificação de Leads",
-          description: "Pontua e prioriza leads baseado em intenção e potencial de engajamento"
+          title: "Comportamento Natural",
+          description: "Mistura comentários promocionais e não-promocionais para parecer genuinamente útil"
         },
         {
-          title: "Geração de Mensagens",
-          description: "Cria respostas personalizadas otimizadas para conversão"
+          title: "Efeito Bola de Neve",
+          description: "Comentários ficam para sempre, trazendo tráfego qualificado continuamente conforme vídeos crescem"
         }
       ]
     },
@@ -727,10 +793,12 @@ const HeroVisual = styled.div`
 const DashboardPreview = styled.div`
   width: 100%;
   max-width: 600px;
-  background: ${props => props.theme.colors.cardBg};
+  background: ${props => props.theme.name === 'light' 
+    ? 'rgba(255, 255, 255, 0.95)' 
+    : props.theme.colors.cardBg};
   border: 1px solid ${props => props.theme.colors.borderLight};
   border-radius: 16px;
-  padding: 24px;
+  padding: 32px;
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(10px);
@@ -1175,6 +1243,117 @@ const ComparisonImage = styled.img`
   display: block;
   border-radius: 16px;
   box-shadow: 0 20px 60px ${props => props.theme.colors.shadowLarge};
+`;
+
+const ExponentialSection = styled.section`
+  padding: 100px 64px;
+  background: linear-gradient(135deg, 
+    ${props => props.theme.colors.primaryAlpha} 0%, 
+    ${props => props.theme.colors.secondaryAlpha} 100%
+  );
+  position: relative;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    padding: 60px 32px;
+  }
+`;
+
+const ExponentialContent = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+`;
+
+const ExponentialGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  margin-bottom: 60px;
+
+  @media (max-width: 968px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ExponentialItem = styled.div`
+  text-align: center;
+  padding: 32px;
+  background: ${props => props.theme.colors.cardBg};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  border-radius: 16px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px ${props => props.theme.colors.shadowLarge};
+  }
+`;
+
+const ExponentialMonth = styled.div`
+  font-size: 14px;
+  color: ${props => props.theme.colors.primary};
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+`;
+
+const ExponentialValue = styled.div`
+  font-size: 48px;
+  font-weight: 900;
+  background: ${props => props.theme.colors.gradient.landing};
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 12px;
+`;
+
+const ExponentialDescription = styled.div`
+  font-size: 14px;
+  color: ${props => props.theme.colors.textSecondary};
+  line-height: 1.6;
+`;
+
+const BenefitsList = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const BenefitItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: ${props => props.theme.colors.cardBg};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  border-radius: 12px;
+`;
+
+const BenefitIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  background: ${props => props.theme.colors.gradient.landing};
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+`;
+
+const BenefitText = styled.div`
+  font-size: 16px;
+  color: ${props => props.theme.colors.text.primary};
+  line-height: 1.6;
 `;
 
 const StatsSection = styled.section`
@@ -1910,6 +2089,41 @@ const LandingPage: React.FC = () => {
           </StatItem>
         </StatsGrid>
       </StatsSection>
+
+      {/* Exponential Growth Section */}
+      <ExponentialSection>
+        <ExponentialContent>
+          <SectionHeader>
+            <SectionTitle>
+              {t.exponential.title} <Gradient>{t.exponential.titleHighlight}</Gradient>
+            </SectionTitle>
+            <SectionDescription>
+              {t.exponential.subtitle}
+            </SectionDescription>
+          </SectionHeader>
+
+          <ExponentialGrid>
+            {t.exponential.items.map((item, index) => (
+              <ExponentialItem key={index}>
+                <ExponentialMonth>{item.month}</ExponentialMonth>
+                <ExponentialValue>{item.value}</ExponentialValue>
+                <ExponentialDescription>{item.description}</ExponentialDescription>
+              </ExponentialItem>
+            ))}
+          </ExponentialGrid>
+
+          <BenefitsList>
+            {t.exponential.benefits.map((benefit, index) => (
+              <BenefitItem key={index}>
+                <BenefitIcon>
+                  {renderIcon(FaCheck)}
+                </BenefitIcon>
+                <BenefitText>{benefit}</BenefitText>
+              </BenefitItem>
+            ))}
+          </BenefitsList>
+        </ExponentialContent>
+      </ExponentialSection>
 
       <PricingSection id="pricing">
         <SectionHeader>
