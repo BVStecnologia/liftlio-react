@@ -69,6 +69,37 @@ const translations = {
       accuracy: "AI Accuracy",
       monitoring: "Monitoring"
     },
+    process: {
+      title: "How Liftlio",
+      titleHighlight: "Works",
+      subtitle: "Our intelligent 6-step process transforms YouTube mentions into qualified leads",
+      steps: [
+        {
+          title: "Keyword Search",
+          description: "AI-powered semantic search finds relevant videos based on your keywords"
+        },
+        {
+          title: "Video Discovery",
+          description: "Automatically discovers new videos and trending content in your niche"
+        },
+        {
+          title: "Data Collection",
+          description: "Collects video metadata, comments, and engagement metrics in real-time"
+        },
+        {
+          title: "AI Analysis",
+          description: "Advanced sentiment analysis and lead scoring using Claude AI"
+        },
+        {
+          title: "Lead Qualification",
+          description: "Scores and prioritizes leads based on intent and engagement potential"
+        },
+        {
+          title: "Message Generation",
+          description: "Creates personalized responses optimized for conversion"
+        }
+      ]
+    },
     pricing: {
       title: "Simple Pricing,",
       titleHighlight: "Powerful Results",
@@ -225,6 +256,37 @@ const translations = {
       leads: "Leads Gerados",
       accuracy: "Precisão da IA",
       monitoring: "Monitoramento"
+    },
+    process: {
+      title: "Como o Liftlio",
+      titleHighlight: "Funciona",
+      subtitle: "Nosso processo inteligente de 6 etapas transforma menções do YouTube em leads qualificados",
+      steps: [
+        {
+          title: "Busca por Palavras-chave",
+          description: "Busca semântica com IA encontra vídeos relevantes baseados em suas palavras-chave"
+        },
+        {
+          title: "Descoberta de Vídeos",
+          description: "Descobre automaticamente novos vídeos e conteúdo em alta no seu nicho"
+        },
+        {
+          title: "Coleta de Dados",
+          description: "Coleta metadados de vídeos, comentários e métricas de engajamento em tempo real"
+        },
+        {
+          title: "Análise com IA",
+          description: "Análise avançada de sentimentos e pontuação de leads usando Claude IA"
+        },
+        {
+          title: "Qualificação de Leads",
+          description: "Pontua e prioriza leads baseado em intenção e potencial de engajamento"
+        },
+        {
+          title: "Geração de Mensagens",
+          description: "Cria respostas personalizadas otimizadas para conversão"
+        }
+      ]
     },
     pricing: {
       title: "Preços Simples,",
@@ -940,6 +1002,162 @@ const FeatureDescription = styled.p`
   line-height: 1.6;
 `;
 
+const VisualDemoSection = styled.section`
+  padding: 100px 64px;
+  background: ${props => props.theme.colors.background};
+  position: relative;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    padding: 60px 32px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 40px 16px;
+  }
+`;
+
+const DemoGrid = styled.div`
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+`;
+
+const DemoCard = styled.div<{ reverse?: boolean }>`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  
+  ${props => props.reverse && `
+    direction: rtl;
+    & > * {
+      direction: ltr;
+    }
+  `}
+
+  @media (max-width: 968px) {
+    grid-template-columns: 1fr;
+    direction: ltr;
+    
+    & > * {
+      direction: ltr;
+    }
+  }
+`;
+
+const DemoImage = styled.img`
+  width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px ${props => props.theme.colors.shadowLarge};
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+`;
+
+const DemoContent = styled.div`
+  max-width: 500px;
+`;
+
+const DemoTitle = styled.h3`
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: ${props => props.theme.colors.text.primary};
+
+  @media (max-width: 768px) {
+    font-size: 28px;
+  }
+`;
+
+const DemoDescription = styled.p`
+  font-size: 18px;
+  color: ${props => props.theme.colors.textSecondary};
+  line-height: 1.6;
+`;
+
+const ProcessSection = styled.section`
+  padding: 100px 64px;
+  background: linear-gradient(180deg, 
+    ${props => props.theme.colors.background} 0%, 
+    ${props => props.theme.colors.statsBg} 100%
+  );
+  position: relative;
+
+  @media (max-width: 768px) {
+    padding: 60px 32px;
+  }
+`;
+
+const ProcessGrid = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  position: relative;
+
+  @media (max-width: 968px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ProcessStep = styled.div`
+  text-align: center;
+  position: relative;
+`;
+
+const ProcessNumber = styled.div`
+  width: 60px;
+  height: 60px;
+  background: ${props => props.theme.colors.gradient.landing};
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: white;
+  margin: 0 auto 20px;
+  position: relative;
+  z-index: 2;
+`;
+
+const ProcessTitle = styled.h4`
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const ProcessDescription = styled.p`
+  font-size: 14px;
+  color: ${props => props.theme.colors.textSecondary};
+  line-height: 1.6;
+`;
+
+const ProcessConnector = styled.div`
+  position: absolute;
+  top: 30px;
+  left: 60px;
+  right: -40px;
+  height: 2px;
+  background: ${props => props.theme.colors.borderLight};
+  z-index: 1;
+
+  @media (max-width: 968px) {
+    display: none;
+  }
+`;
+
 const ComparisonSection = styled.section`
   padding: 100px 64px;
   background: ${props => props.theme.colors.background};
@@ -1412,7 +1630,10 @@ const LandingPage: React.FC = () => {
               
               {/* Imagem do Dashboard */}
               <DashboardImage 
-                src={`/imagens/dashboard-${theme.name}.png`}
+                src={theme.name === 'dark' 
+                  ? "/imagens/DASHBOARD HERO - VERSÃO ESCURA.png" 
+                  : "/imagens/DASHBOARD HERO - VERSÃO clara.png"
+                }
                 alt="Liftlio Dashboard"
                 onError={(e) => {
                   // Fallback se a imagem não existir
@@ -1553,21 +1774,104 @@ const LandingPage: React.FC = () => {
         </FeaturesContainer>
       </FeaturesSection>
 
-      {/* Comparison Section */}
-      <ComparisonSection>
+      {/* Visual Demo Section */}
+      <VisualDemoSection>
         <SectionHeader>
           <SectionTitle>
-            {lang === 'pt' ? 'Antes e Depois do' : 'Before and After'} <Gradient>Liftlio</Gradient>
+            {lang === 'pt' ? 'Veja o' : 'See'} <Gradient>Liftlio</Gradient> {lang === 'pt' ? 'em Ação' : 'in Action'}
           </SectionTitle>
+          <SectionDescription>
+            {lang === 'pt' 
+              ? 'Transforme menções em oportunidades com nossa plataforma inteligente'
+              : 'Transform mentions into opportunities with our intelligent platform'
+            }
+          </SectionDescription>
         </SectionHeader>
-        <ComparisonImage 
-          src={`/imagens/comparison-${theme.name}.png`}
-          alt="Before and After Liftlio"
-          onError={(e) => {
-            e.currentTarget.style.display = 'none';
-          }}
-        />
-      </ComparisonSection>
+
+        <DemoGrid>
+          <DemoCard>
+            <DemoImage 
+              src={theme.name === 'dark' 
+                ? "/imagens/DASHBOARD HERO - VERSÃO ESCURA.png" 
+                : "/imagens/DASHBOARD HERO - VERSÃO clara.png"
+              }
+              alt="Liftlio Dashboard"
+            />
+            <DemoContent>
+              <DemoTitle>
+                {lang === 'pt' ? 'Dashboard em Tempo Real' : 'Real-Time Dashboard'}
+              </DemoTitle>
+              <DemoDescription>
+                {lang === 'pt' 
+                  ? 'Monitore menções, sentimentos e leads em um painel intuitivo e poderoso.'
+                  : 'Monitor mentions, sentiment, and leads in an intuitive and powerful dashboard.'
+                }
+              </DemoDescription>
+            </DemoContent>
+          </DemoCard>
+
+          <DemoCard reverse>
+            <DemoImage 
+              src="/imagens/TRANSFORMAÇÃO EMPRESARIAL.png"
+              alt="Business Transformation"
+            />
+            <DemoContent>
+              <DemoTitle>
+                {lang === 'pt' ? 'Transformação Comprovada' : 'Proven Transformation'}
+              </DemoTitle>
+              <DemoDescription>
+                {lang === 'pt' 
+                  ? 'De zero leads para 147 leads qualificados em apenas 30 dias. Resultados reais, crescimento real.'
+                  : 'From zero leads to 147 qualified leads in just 30 days. Real results, real growth.'
+                }
+              </DemoDescription>
+            </DemoContent>
+          </DemoCard>
+
+          <DemoCard>
+            <DemoImage 
+              src="/imagens/CEO CELEBRATION MOMENT.png"
+              alt="Success Story"
+            />
+            <DemoContent>
+              <DemoTitle>
+                {lang === 'pt' ? 'Histórias de Sucesso' : 'Success Stories'}
+              </DemoTitle>
+              <DemoDescription>
+                {lang === 'pt' 
+                  ? 'CEOs e líderes celebram resultados extraordinários com o Liftlio. Junte-se a eles!'
+                  : 'CEOs and leaders celebrate extraordinary results with Liftlio. Join them!'
+                }
+              </DemoDescription>
+            </DemoContent>
+          </DemoCard>
+        </DemoGrid>
+      </VisualDemoSection>
+
+      {/* Process Section */}
+      <ProcessSection>
+        <SectionHeader>
+          <SectionTitle>
+            {t.process.title} <Gradient>{t.process.titleHighlight}</Gradient>
+          </SectionTitle>
+          <SectionDescription>
+            {t.process.subtitle}
+          </SectionDescription>
+        </SectionHeader>
+
+        <ProcessGrid>
+          {t.process.steps.map((step, index) => (
+            <ProcessStep key={index}>
+              <ProcessNumber>{index + 1}</ProcessNumber>
+              <ProcessTitle>{step.title}</ProcessTitle>
+              <ProcessDescription>{step.description}</ProcessDescription>
+              {index < t.process.steps.length - 1 && index % 3 !== 2 && (
+                <ProcessConnector />
+              )}
+            </ProcessStep>
+          ))}
+        </ProcessGrid>
+      </ProcessSection>
 
       <StatsSection>
         <StatsGrid>
