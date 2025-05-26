@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
-import { FaYoutube, FaChartLine, FaBell, FaRocket, FaCheck, FaArrowRight, FaPlay, FaQuoteLeft, FaGlobe, FaSun, FaMoon, FaShieldAlt, FaClock, FaUsers, FaTrophy } from 'react-icons/fa';
+import { FaYoutube, FaChartLine, FaBell, FaRocket, FaCheck, FaArrowRight, FaPlay, FaQuoteLeft, FaGlobe, FaSun, FaMoon, FaShieldAlt, FaClock, FaUsers, FaTrophy, FaFire, FaDollarSign, FaExclamationTriangle, FaLock, FaInfinity } from 'react-icons/fa';
 import { HiSparkles, HiLightningBolt } from 'react-icons/hi';
 import { BiPulse } from 'react-icons/bi';
-import { MdAutoGraph } from 'react-icons/md';
+import { MdAutoGraph, MdTrendingUp } from 'react-icons/md';
+import { AiOutlineCalculator } from 'react-icons/ai';
 import { renderIcon } from '../utils/IconHelper';
 import { useTheme } from '../context/ThemeContext';
 import Cookies from 'js-cookie';
@@ -102,6 +103,54 @@ const translations = {
         "Builds authority in your niche over time",
         "Each comment is a permanent salesperson"
       ]
+    },
+    painPoints: {
+      title: "Stop Burning Money on",
+      titleHighlight: "Paid Ads",
+      subtitle: "Every day you wait, your competitors are building permanent organic traffic while you're renting temporary clicks",
+      items: [
+        {
+          icon: "fire",
+          title: "Ads Cost $5-20 Per Click",
+          description: "And they disappear the moment you stop paying"
+        },
+        {
+          icon: "warning",
+          title: "Ad Costs Keep Rising",
+          description: "CPCs increased 50% last year alone"
+        },
+        {
+          icon: "infinity",
+          title: "Organic Traffic is Forever",
+          description: "One comment can bring leads for years"
+        }
+      ]
+    },
+    calculator: {
+      title: "See Your",
+      titleHighlight: "Savings",
+      subtitle: "Compare your current ad spend with Liftlio's permanent organic traffic",
+      adSpendLabel: "Monthly Ad Spend",
+      calculateButton: "Calculate Savings",
+      results: {
+        currentCost: "Annual Ad Cost",
+        liftlioCost: "Liftlio Annual Cost",
+        savings: "Your Savings",
+        organicValue: "Organic Traffic Value",
+        roi: "ROI"
+      }
+    },
+    liveDemo: {
+      title: "Watch Liftlio",
+      titleHighlight: "In Action",
+      subtitle: "See real comments being posted right now",
+      recentActivity: "Recent Activity",
+      viewMore: "View Live Dashboard"
+    },
+    urgency: {
+      spots: "Only {spots} spots left at this price",
+      price: "Prices increase in {days} days",
+      guarantee: "Lock in today's pricing forever"
     },
     process: {
       title: "How Liftlio",
@@ -324,6 +373,54 @@ const translations = {
         "Cada comentário é um vendedor permanente"
       ]
     },
+    painPoints: {
+      title: "Pare de Queimar Dinheiro com",
+      titleHighlight: "Anúncios Pagos",
+      subtitle: "A cada dia que você espera, seus concorrentes estão construindo tráfego orgânico permanente enquanto você aluga cliques temporários",
+      items: [
+        {
+          icon: "fire",
+          title: "Anúncios Custam R$5-20 Por Clique",
+          description: "E desaparecem no momento que você para de pagar"
+        },
+        {
+          icon: "warning",
+          title: "Custos de Anúncios Só Aumentam",
+          description: "CPCs aumentaram 50% só no ano passado"
+        },
+        {
+          icon: "infinity",
+          title: "Tráfego Orgânico é Para Sempre",
+          description: "Um comentário pode trazer leads por anos"
+        }
+      ]
+    },
+    calculator: {
+      title: "Veja Sua",
+      titleHighlight: "Economia",
+      subtitle: "Compare seu gasto atual com anúncios com o tráfego orgânico permanente do Liftlio",
+      adSpendLabel: "Gasto Mensal com Anúncios",
+      calculateButton: "Calcular Economia",
+      results: {
+        currentCost: "Custo Anual com Anúncios",
+        liftlioCost: "Custo Anual Liftlio",
+        savings: "Sua Economia",
+        organicValue: "Valor do Tráfego Orgânico",
+        roi: "ROI"
+      }
+    },
+    liveDemo: {
+      title: "Veja o Liftlio",
+      titleHighlight: "Em Ação",
+      subtitle: "Veja comentários reais sendo postados agora mesmo",
+      recentActivity: "Atividade Recente",
+      viewMore: "Ver Dashboard Ao Vivo"
+    },
+    urgency: {
+      spots: "Apenas {spots} vagas restantes neste preço",
+      price: "Preços aumentam em {days} dias",
+      guarantee: "Garanta o preço de hoje para sempre"
+    },
     process: {
       title: "Como o Liftlio",
       titleHighlight: "Funciona",
@@ -455,6 +552,44 @@ const translations = {
   }
 };
 
+// Animations
+const slideUp = keyframes`
+  from {
+    transform: translateX(-50%) translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+`;
+
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const pulseAnimation = keyframes`
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+`;
+
 // Styled Components com suporte a tema
 const LandingContainer = styled.div`
   font-family: 'Inter', sans-serif;
@@ -581,11 +716,6 @@ const LoginButton = styled.button`
     border-color: ${props => props.theme.colors.primary};
     color: ${props => props.theme.colors.primary};
   }
-`;
-
-const pulseAnimation = keyframes`
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.1); }
 `;
 
 const floatAnimation = keyframes`
@@ -958,6 +1088,280 @@ const TrustValue = styled.div`
 const TrustLabel = styled.div`
   font-size: 14px;
   color: ${props => props.theme.colors.textSecondary};
+`;
+
+const PainPointsSection = styled.section`
+  padding: 100px 64px;
+  background: linear-gradient(135deg, 
+    ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 0, 0, 0.05)' 
+      : 'rgba(255, 0, 0, 0.02)'} 0%, 
+    ${props => props.theme.colors.background} 100%
+  );
+  position: relative;
+
+  @media (max-width: 768px) {
+    padding: 60px 32px;
+  }
+`;
+
+const PainPointsGrid = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  margin-top: 60px;
+
+  @media (max-width: 968px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const PainPointCard = styled.div`
+  text-align: center;
+  padding: 40px;
+  background: ${props => props.theme.colors.cardBg};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  border-radius: 16px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px ${props => props.theme.colors.shadowLarge};
+    border-color: rgba(255, 0, 0, 0.3);
+  }
+`;
+
+const PainPointIcon = styled.div<{ icon: string }>`
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  background: ${props => props.icon === 'fire' 
+    ? 'linear-gradient(135deg, #FF6B6B 0%, #FF0000 100%)'
+    : props.icon === 'warning'
+    ? 'linear-gradient(135deg, #FFD93D 0%, #FF9800 100%)'
+    : 'linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%)'
+  };
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  color: white;
+`;
+
+const PainPointTitle = styled.h3`
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const PainPointDescription = styled.p`
+  font-size: 16px;
+  color: ${props => props.theme.colors.textSecondary};
+  line-height: 1.6;
+`;
+
+const CalculatorSection = styled.section`
+  padding: 100px 64px;
+  background: ${props => props.theme.colors.background};
+  position: relative;
+
+  @media (max-width: 768px) {
+    padding: 60px 32px;
+  }
+`;
+
+const CalculatorContainer = styled.div`
+  max-width: 1000px;
+  margin: 0 auto;
+  background: ${props => props.theme.colors.cardBg};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  border-radius: 24px;
+  padding: 48px;
+  box-shadow: 0 20px 60px ${props => props.theme.colors.shadowLarge};
+
+  @media (max-width: 768px) {
+    padding: 32px 24px;
+  }
+`;
+
+const CalculatorInput = styled.div`
+  margin-bottom: 40px;
+`;
+
+const CalculatorLabel = styled.label`
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const CalculatorSlider = styled.input`
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: ${props => props.theme.colors.borderLight};
+  outline: none;
+  -webkit-appearance: none;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: ${props => props.theme.colors.gradient.landing};
+    cursor: pointer;
+  }
+
+  &::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: ${props => props.theme.colors.gradient.landing};
+    cursor: pointer;
+  }
+`;
+
+const CalculatorValue = styled.div`
+  text-align: center;
+  font-size: 48px;
+  font-weight: 900;
+  background: ${props => props.theme.colors.gradient.landing};
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 20px 0;
+`;
+
+const CalculatorResults = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 40px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ResultCard = styled.div<{ highlight?: boolean }>`
+  padding: 24px;
+  background: ${props => props.highlight 
+    ? props.theme.colors.gradient.landing 
+    : props.theme.colors.metricCardBg};
+  border: 1px solid ${props => props.highlight 
+    ? 'transparent' 
+    : props.theme.colors.borderLight};
+  border-radius: 12px;
+  text-align: center;
+  color: ${props => props.highlight ? 'white' : 'inherit'};
+`;
+
+const ResultLabel = styled.div`
+  font-size: 14px;
+  opacity: 0.8;
+  margin-bottom: 8px;
+`;
+
+const ResultValue = styled.div`
+  font-size: 32px;
+  font-weight: 800;
+`;
+
+const LiveDemoSection = styled.section`
+  padding: 100px 64px;
+  background: ${props => props.theme.colors.featuresBg};
+  position: relative;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    padding: 60px 32px;
+  }
+`;
+
+const LiveDemoContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+`;
+
+const ActivityFeed = styled.div`
+  background: ${props => props.theme.colors.cardBg};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  border-radius: 16px;
+  padding: 32px;
+  max-height: 400px;
+  overflow-y: auto;
+`;
+
+const ActivityItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: ${props => props.theme.colors.metricCardBg};
+  border-radius: 12px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateX(10px);
+    box-shadow: 0 5px 20px ${props => props.theme.colors.shadowMedium};
+  }
+`;
+
+const ActivityIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  background: ${props => props.theme.colors.gradient.landing};
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+`;
+
+const ActivityContent = styled.div`
+  flex: 1;
+`;
+
+const ActivityTitle = styled.div`
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const ActivityTime = styled.div`
+  font-size: 14px;
+  color: ${props => props.theme.colors.textSecondary};
+`;
+
+const UrgencyBanner = styled.div`
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: ${props => props.theme.colors.gradient.landing};
+  color: white;
+  padding: 16px 32px;
+  border-radius: 100px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-weight: 600;
+  animation: ${slideUp} 0.5s ease-out;
+
+  @media (max-width: 640px) {
+    width: calc(100% - 40px);
+    padding: 12px 20px;
+    font-size: 14px;
+  }
 `;
 
 const FeaturesSection = styled.section`
@@ -1732,6 +2136,15 @@ const LandingPage: React.FC = () => {
 
   const [lang, setLang] = useState<'en' | 'pt'>(getInitialLanguage());
   const t = translations[lang];
+  
+  // Calculator state
+  const [adSpend, setAdSpend] = useState(1000);
+  const [showCalculatorResults, setShowCalculatorResults] = useState(false);
+  
+  // Urgency state
+  const [showUrgencyBanner, setShowUrgencyBanner] = useState(false);
+  const spotsLeft = 5;
+  const daysUntilPriceIncrease = 3;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -1740,6 +2153,15 @@ const LandingPage: React.FC = () => {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Show urgency banner after 10 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowUrgencyBanner(true);
+    }, 10000);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const handleLogin = () => {
@@ -1761,6 +2183,21 @@ const LandingPage: React.FC = () => {
     // Save preference in cookie (expires in 365 days)
     Cookies.set('language', newLang, { expires: 365 });
   };
+
+  // Calculator functions
+  const calculateROI = () => {
+    setShowCalculatorResults(true);
+    // Scroll to results
+    setTimeout(() => {
+      document.getElementById('calculator-results')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
+  const annualAdCost = adSpend * 12;
+  const liftlioCost = adSpend > 5000 ? 2400 : adSpend > 2000 ? 1200 : 360; // Annual costs
+  const savings = annualAdCost - liftlioCost;
+  const organicValue = annualAdCost * 3; // Organic traffic is worth 3x paid traffic
+  const roi = Math.round((organicValue / liftlioCost) * 100);
 
   return (
     <LandingContainer>
@@ -1895,6 +2332,34 @@ const LandingPage: React.FC = () => {
         </TrustContainer>
       </TrustSection>
 
+      {/* Pain Points Section */}
+      <PainPointsSection>
+        <SectionHeader>
+          <SectionTitle>
+            {t.painPoints.title} <Gradient>{t.painPoints.titleHighlight}</Gradient>
+          </SectionTitle>
+          <SectionDescription>
+            {t.painPoints.subtitle}
+          </SectionDescription>
+        </SectionHeader>
+
+        <PainPointsGrid>
+          {t.painPoints.items.map((item, index) => (
+            <PainPointCard key={index}>
+              <PainPointIcon icon={item.icon}>
+                {renderIcon(
+                  item.icon === 'fire' ? FaFire :
+                  item.icon === 'warning' ? FaExclamationTriangle :
+                  FaInfinity
+                )}
+              </PainPointIcon>
+              <PainPointTitle>{item.title}</PainPointTitle>
+              <PainPointDescription>{item.description}</PainPointDescription>
+            </PainPointCard>
+          ))}
+        </PainPointsGrid>
+      </PainPointsSection>
+
       <FeaturesSection id="features">
         <FeaturesContainer>
           <SectionHeader>
@@ -1969,6 +2434,64 @@ const LandingPage: React.FC = () => {
           </FeaturesGrid>
         </FeaturesContainer>
       </FeaturesSection>
+
+      {/* Calculator Section */}
+      <CalculatorSection>
+        <SectionHeader>
+          <SectionTitle>
+            {t.calculator.title} <Gradient>{t.calculator.titleHighlight}</Gradient>
+          </SectionTitle>
+          <SectionDescription>
+            {t.calculator.subtitle}
+          </SectionDescription>
+        </SectionHeader>
+
+        <CalculatorContainer>
+          <CalculatorInput>
+            <CalculatorLabel>
+              {t.calculator.adSpendLabel}: ${adSpend.toLocaleString()}
+            </CalculatorLabel>
+            <CalculatorSlider
+              type="range"
+              min="100"
+              max="10000"
+              step="100"
+              value={adSpend}
+              onChange={(e) => setAdSpend(Number(e.target.value))}
+            />
+          </CalculatorInput>
+
+          <CalculatorValue>
+            ${adSpend.toLocaleString()}/month
+          </CalculatorValue>
+
+          <PrimaryButton onClick={calculateROI} style={{ margin: '0 auto', display: 'block' }}>
+            {renderIcon(AiOutlineCalculator)}
+            {t.calculator.calculateButton}
+          </PrimaryButton>
+
+          {showCalculatorResults && (
+            <CalculatorResults id="calculator-results">
+              <ResultCard>
+                <ResultLabel>{t.calculator.results.currentCost}</ResultLabel>
+                <ResultValue>${annualAdCost.toLocaleString()}</ResultValue>
+              </ResultCard>
+              <ResultCard>
+                <ResultLabel>{t.calculator.results.liftlioCost}</ResultLabel>
+                <ResultValue>${liftlioCost.toLocaleString()}</ResultValue>
+              </ResultCard>
+              <ResultCard highlight>
+                <ResultLabel>{t.calculator.results.savings}</ResultLabel>
+                <ResultValue>${savings.toLocaleString()}</ResultValue>
+              </ResultCard>
+              <ResultCard highlight>
+                <ResultLabel>{t.calculator.results.roi}</ResultLabel>
+                <ResultValue>{roi}%</ResultValue>
+              </ResultCard>
+            </CalculatorResults>
+          )}
+        </CalculatorContainer>
+      </CalculatorSection>
 
       {/* Visual Demo Section */}
       <VisualDemoSection>
@@ -2291,6 +2814,23 @@ const LandingPage: React.FC = () => {
           {t.footer.copyright}
         </FooterBottom>
       </Footer>
+
+      {/* Urgency Banner */}
+      {showUrgencyBanner && (
+        <UrgencyBanner>
+          <span>{renderIcon(FaExclamationTriangle)}</span>
+          <span>
+            {t.urgency.spots
+              .replace('{spots}', spotsLeft.toString())
+            }
+          </span>
+          <span style={{ opacity: 0.8, fontSize: '14px' }}>
+            {t.urgency.price
+              .replace('{days}', daysUntilPriceIncrease.toString())
+            }
+          </span>
+        </UrgencyBanner>
+      )}
     </LandingContainer>
   );
 };
