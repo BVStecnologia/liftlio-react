@@ -27,7 +27,18 @@ interface ThemeProviderProps {
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Check if dark mode is stored in localStorage or use dark theme as default
   const getInitialThemeMode = (): boolean => {
-    // First check if user has manually set a preference
+    // Check for theme version to handle legacy users
+    const themeVersion = localStorage.getItem('themeVersion');
+    const currentVersion = 'v2'; // Increment this when you want to reset theme preferences
+    
+    // If it's a new version or no version, force dark theme
+    if (themeVersion !== currentVersion) {
+      localStorage.setItem('themeVersion', currentVersion);
+      localStorage.setItem('darkMode', 'true');
+      return true;
+    }
+    
+    // Otherwise check saved preference
     const savedTheme = localStorage.getItem('darkMode');
     
     if (savedTheme !== null) {
@@ -48,6 +59,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // If user hasn't manually toggled, ensure dark theme is set
     if (!hasUserPreference) {
       setIsDarkMode(true);
+      localStorage.setItem('darkMode', 'true');
     }
   }, [hasUserPreference]);
 
