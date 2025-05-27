@@ -2451,7 +2451,7 @@ const LandingPage: React.FC = () => {
             loop 
             muted 
             playsInline
-            poster="/imagens/DASHBOARD HERO - VERSÃO ESCURA.png"
+            poster="/imagens/dashboard-hero-dark.png"
             style={{ borderRadius: '20px' }}
           >
             <source src="/Videos/video-liftlio-comentarios-clientes.mp4" type="video/mp4" />
