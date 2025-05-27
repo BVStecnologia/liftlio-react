@@ -2454,7 +2454,7 @@ const LandingPage: React.FC = () => {
             poster="/imagens/DASHBOARD HERO - VERSÃO ESCURA.png"
             style={{ borderRadius: '20px' }}
           >
-            <source src="/Videos/Vídeo_Liftlio_De_Comentários_a_Clientes.mp4" type="video/mp4" />
+            <source src="/Videos/video-liftlio-comentarios-clientes.mp4" type="video/mp4" />
             {lang === 'pt' ? 'Seu navegador não suporta vídeos HTML5.' : 'Your browser does not support HTML5 video.'}
           </video>
         </VideoContainer>
