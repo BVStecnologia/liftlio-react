@@ -2356,8 +2356,8 @@ const LandingPage: React.FC = () => {
               {/* Imagem do Dashboard */}
               <DashboardImage 
                 src={theme.name === 'dark' 
-                  ? "/imagens/DASHBOARD HERO - VERSÃO ESCURA.png" 
-                  : "/imagens/DASHBOARD HERO - VERSÃO clara.png"
+                  ? "/imagens/dashboard-hero-dark.png" 
+                  : "/imagens/dashboard-hero-light.png"
                 }
                 alt="Liftlio Dashboard"
                 onError={(e) => {
@@ -2659,7 +2659,7 @@ const LandingPage: React.FC = () => {
 
           <DemoCard reverse>
             <DemoImage 
-              src="/imagens/TRANSFORMAÇÃO EMPRESARIAL.png"
+              src="/imagens/transformacao-empresarial.png"
               alt="Business Transformation"
             />
             <DemoContent>
