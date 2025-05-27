@@ -1696,6 +1696,7 @@ const ComparisonImage = styled.img`
   box-shadow: 0 20px 60px ${props => props.theme.colors.shadowLarge};
 `;
 
+
 const ExponentialSection = styled.section`
   padding: 100px 64px;
   background: linear-gradient(135deg, 
@@ -2694,6 +2695,225 @@ const LandingPage: React.FC = () => {
           </DemoCard>
         </DemoGrid>
       </VisualDemoSection>
+
+      {/* NEW Real Results Section - EXTREMELY PERSUASIVE */}
+      <section style={{
+        padding: '100px 64px',
+        background: theme.name === 'dark' 
+          ? 'linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)' 
+          : 'linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <SectionHeader>
+          <SectionTitle>
+            {lang === 'en' ? 'Real Results. Real Growth.' : 'Resultados Reais. Crescimento Real.'}
+          </SectionTitle>
+          <SectionDescription style={{ fontSize: '20px', fontWeight: '600', marginBottom: '40px' }}>
+            {lang === 'en' 
+              ? '🚀 See how companies are multiplying their organic traffic in just 30 days'
+              : '🚀 Veja como empresas estão multiplicando seu tráfego orgânico em apenas 30 dias'
+            }
+          </SectionDescription>
+        </SectionHeader>
+
+        {/* Live Metrics Banner */}
+        <div style={{ 
+          maxWidth: '1200px', 
+          margin: '0 auto 60px', 
+          padding: '32px',
+          background: theme.colors.gradient.landing,
+          borderRadius: '24px',
+          color: 'white',
+          textAlign: 'center',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '40px' }}>
+            <div>
+              <div style={{ fontSize: '48px', fontWeight: '900' }}>1,118,903</div>
+              <div style={{ fontSize: '18px', opacity: 0.9 }}>
+                {lang === 'en' ? 'Views Monitored' : 'Visualizações Monitoradas'}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '48px', fontWeight: '900' }}>90,573</div>
+              <div style={{ fontSize: '18px', opacity: 0.9 }}>
+                {lang === 'en' ? 'Engagements Generated' : 'Engajamentos Gerados'}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '48px', fontWeight: '900' }}>8.2%</div>
+              <div style={{ fontSize: '18px', opacity: 0.9 }}>
+                {lang === 'en' ? 'Conversion Rate' : 'Taxa de Conversão'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DemoGrid>
+          {/* LIVE DASHBOARD PREVIEW */}
+          <DemoCard style={{ gridColumn: 'span 2' }}>
+            <div style={{ 
+              position: 'relative',
+              overflow: 'hidden',
+              borderRadius: '16px',
+              boxShadow: '0 30px 80px rgba(0,0,0,0.2)'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '20px',
+                left: '20px',
+                background: theme.colors.gradient.landing,
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '20px',
+                fontSize: '14px',
+                fontWeight: '700',
+                zIndex: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <div style={{
+                  width: '8px',
+                  height: '8px',
+                  background: 'white',
+                  borderRadius: '50%',
+                  animation: 'pulse 2s infinite'
+                }}></div>
+                LIVE DASHBOARD
+              </div>
+              <DemoImage 
+                src="/imagens/Captura de Tela 2025-05-27 às 15.58.00.png"
+                alt="Liftlio Live Dashboard"
+                style={{ width: '100%', height: 'auto' }}
+              />
+            </div>
+            <DemoContent style={{ padding: '40px' }}>
+              <DemoTitle style={{ fontSize: '32px', marginBottom: '20px' }}>
+                {lang === 'en' 
+                  ? '🎯 18 Channels. 30 Videos. 87 Qualified Mentions.'
+                  : '🎯 18 Canais. 30 Vídeos. 87 Menções Qualificadas.'
+                }
+              </DemoTitle>
+              <DemoDescription style={{ fontSize: '18px', lineHeight: '1.8' }}>
+                {lang === 'en' 
+                  ? 'This is a REAL dashboard from a client who started just 30 days ago. Each mention is a qualified lead who showed genuine interest. Imagine these numbers growing exponentially month after month.'
+                  : 'Este é um dashboard REAL de um cliente que começou há apenas 30 dias. Cada menção é um lead qualificado que demonstrou interesse genuíno. Imagine esses números crescendo exponencialmente mês após mês.'
+                }
+              </DemoDescription>
+              <div style={{ marginTop: '30px' }}>
+                <PrimaryButton onClick={handleGetStarted} style={{ fontSize: '20px', padding: '20px 40px' }}>
+                  {renderIcon(FaRocket)}
+                  {lang === 'en' ? 'I Want These Results Now' : 'Quero Esses Resultados Agora'}
+                </PrimaryButton>
+              </div>
+            </DemoContent>
+          </DemoCard>
+
+          {/* AI DETECTION SHOWCASE */}
+          <DemoCard>
+            <DemoImage 
+              src="/imagens/Captura de Tela 2025-05-27 às 15.53.34.png"
+              alt="AI-Powered Detection"
+            />
+            <DemoContent>
+              <DemoTitle style={{ color: theme.colors.success }}>
+                {lang === 'en' 
+                  ? '🤖 AI Detects Opportunities in Real-Time'
+                  : '🤖 IA Detecta Oportunidades em Tempo Real'
+                }
+              </DemoTitle>
+              <DemoDescription>
+                {lang === 'en' 
+                  ? 'Our AI analyzes EVERY comment and identifies leads ready to buy. 90% score = almost guaranteed customer!'
+                  : 'Nossa IA analisa CADA comentário e identifica leads prontos para comprar. Score de 90% = cliente quase garantido!'
+                }
+              </DemoDescription>
+            </DemoContent>
+          </DemoCard>
+
+          {/* MONITORING POWER */}
+          <DemoCard>
+            <DemoImage 
+              src="/imagens/Captura de Tela 2025-05-27 às 15.58.36.png"
+              alt="YouTube Monitoring Power"
+            />
+            <DemoContent>
+              <DemoTitle style={{ background: theme.colors.gradient.landing, 
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}> 
+                {lang === 'en' 
+                  ? '📈 1.1M+ Views Monitored'
+                  : '📈 1.1M+ Visualizações Monitoradas'
+                }
+              </DemoTitle>
+              <DemoDescription>
+                {lang === 'en' 
+                  ? '24/7 monitoring of ALL relevant videos. Never miss a business opportunity again.'
+                  : 'Monitoramento 24/7 de TODOS os vídeos relevantes. Nunca perca uma oportunidade de negócio novamente.'
+                }
+              </DemoDescription>
+            </DemoContent>
+          </DemoCard>
+
+          {/* MENTION DETAILS */}
+          <DemoCard style={{ gridColumn: 'span 2' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <DemoImage 
+                src="/imagens/Captura de Tela 2025-05-27 às 15.45.34.png"
+                alt="Smart Comment System"
+              />
+              <DemoImage 
+                src="/imagens/Captura de Tela 2025-05-27 às 15.56.49.png"
+                alt="Mentions Dashboard"
+              />
+            </div>
+            <DemoContent>
+              <DemoTitle style={{ fontSize: '28px', textAlign: 'center' }}>
+                {lang === 'en' 
+                  ? '💬 Smart Comments that Convert'
+                  : '💬 Comentários Inteligentes que Convertem'
+                }
+              </DemoTitle>
+              <DemoDescription style={{ fontSize: '16px', textAlign: 'center' }}>
+                {lang === 'en' 
+                  ? 'Our comments are SO natural they look human-written. They cite specific timestamps, add real value, and NEVER look like spam. Result: 10x more conversions than traditional ads.'
+                  : 'Nossos comentários são TÃO naturais que parecem escritos por humanos. Eles citam timestamps específicos, agregam valor real e NUNCA parecem spam. Resultado: 10x mais conversões que anúncios tradicionais.'
+                }
+              </DemoDescription>
+            </DemoContent>
+          </DemoCard>
+        </DemoGrid>
+
+        {/* URGENCY CTA */}
+        <div style={{ 
+          textAlign: 'center', 
+          marginTop: '80px',
+          padding: '40px',
+          background: theme.name === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          borderRadius: '24px',
+          border: `2px dashed ${theme.colors.primary}`
+        }}>
+          <h3 style={{ fontSize: '36px', marginBottom: '20px' }}>
+            {lang === 'en' 
+              ? '⚠️ Every Day Without Liftlio = Money Lost'
+              : '⚠️ Cada Dia Sem Liftlio = Dinheiro Perdido'
+            }
+          </h3>
+          <p style={{ fontSize: '20px', marginBottom: '30px', opacity: 0.9 }}>
+            {lang === 'en' 
+              ? 'While you read this, your competitors are capturing leads that could be yours.'
+              : 'Enquanto você lê isso, seus concorrentes estão capturando leads que poderiam ser seus.'
+            }
+          </p>
+          <PrimaryButton onClick={handleGetStarted} style={{ fontSize: '20px', padding: '20px 40px' }}>
+            {renderIcon(FaRocket)}
+            {lang === 'en' ? 'Start Growing Today' : 'Comece a Crescer Hoje'}
+          </PrimaryButton>
+        </div>
+      </section>
 
       {/* Process Section */}
       <ProcessSection>
