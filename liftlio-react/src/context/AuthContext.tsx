@@ -72,11 +72,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
       } else if (provider === 'email' && credentials) {
         console.log('Attempting email login for:', credentials.email);
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email: credentials.email,
           password: credentials.password,
         })
-        console.log('Email login result:', data ? 'Success' : 'Failed', error?.message || '');
+        console.log('Email login result:', error ? 'Failed' : 'Success', error?.message || '');
         if (error) throw error
       }
     } catch (error) {
