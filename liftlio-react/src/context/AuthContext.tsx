@@ -25,6 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Configura o listener para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event: AuthChangeEvent, session: Session | null) => {
+        console.log('Auth state changed:', _event, 'Session:', session ? 'Active' : 'None');
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
@@ -34,6 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Carrega a sessão atual na inicialização
     supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
       const { session } = data
+      console.log('Initial session check:', session ? 'Found' : 'Not found', 'Environment:', window.location.hostname);
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -48,22 +50,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (provider === 'google') {
         // Para login com Google, precisamos garantir que o redirecionamento volte para a página inicial
-        // Determine the correct redirect URL based on environment
-        let redirectUrl = `${window.location.origin}/auth/callback`;
-        
-        // If we're in production at liftlio.fly.dev
-        if (window.location.hostname === 'liftlio.fly.dev') {
-          // Using only the origin without the path to handle Google's redirect peculiarities
-          redirectUrl = 'https://liftlio.fly.dev';
-          
-          // Add explicit site URL to localStorage for cross-domain validation
-          localStorage.setItem('siteUrl', 'https://liftlio.fly.dev');
-        } else {
-          // Store the development URL
-          localStorage.setItem('siteUrl', window.location.origin);
-        }
+        // Always use the full callback URL for consistency
+        const redirectUrl = `${window.location.origin}/auth/callback`;
         
         console.log('Using redirect URL:', redirectUrl);
+        console.log('Current environment:', window.location.hostname);
         
         const { error } = await supabase.auth.signInWithOAuth({
           provider,
@@ -80,10 +71,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("OAuth sign-in initiated")
         
       } else if (provider === 'email' && credentials) {
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log('Attempting email login for:', credentials.email);
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: credentials.email,
           password: credentials.password,
         })
+        console.log('Email login result:', data ? 'Success' : 'Failed', error?.message || '');
         if (error) throw error
       }
     } catch (error) {
