@@ -1696,6 +1696,90 @@ const ComparisonImage = styled.img`
   box-shadow: 0 20px 60px ${props => props.theme.colors.shadowLarge};
 `;
 
+// Laptop mockup components
+const LaptopContainer = styled.div`
+  position: relative;
+  max-width: 100%;
+  margin: 0 auto;
+`;
+
+const LaptopScreen = styled.div`
+  position: relative;
+  background: #1a1a1a;
+  border-radius: 12px 12px 0 0;
+  padding: 8px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 20px 40px rgba(0, 0, 0, 0.2);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: #333;
+    border-radius: 50%;
+  }
+`;
+
+const LaptopScreenContent = styled.div`
+  position: relative;
+  background: #000;
+  border-radius: 4px;
+  overflow: hidden;
+  
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.1) 0%, 
+      transparent 50%, 
+      rgba(255, 255, 255, 0.05) 100%
+    );
+    pointer-events: none;
+  }
+`;
+
+const LaptopBase = styled.div`
+  background: linear-gradient(to bottom, #c5c5c5 0%, #a8a8a8 100%);
+  height: 20px;
+  border-radius: 0 0 20px 20px;
+  position: relative;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 4px;
+    background: #888;
+    border-radius: 0 0 10px 10px;
+  }
+`;
+
+const LaptopWrapper = styled.div<{ rotate?: number; scale?: number }>`
+  transform: ${props => `perspective(1000px) rotateY(${props.rotate || 0}deg) scale(${props.scale || 1})`};
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: ${props => `perspective(1000px) rotateY(${props.rotate || 0}deg) scale(${(props.scale || 1) * 1.05})`};
+  }
+`;
+
 
 const ExponentialSection = styled.section`
   padding: 100px 64px;
@@ -2753,42 +2837,43 @@ const LandingPage: React.FC = () => {
         <DemoGrid>
           {/* LIVE DASHBOARD PREVIEW */}
           <DemoCard style={{ gridColumn: 'span 2' }}>
-            <div style={{ 
-              position: 'relative',
-              overflow: 'hidden',
-              borderRadius: '16px',
-              boxShadow: '0 30px 80px rgba(0,0,0,0.2)'
-            }}>
-              <div style={{
-                position: 'absolute',
-                top: '20px',
-                left: '20px',
-                background: theme.colors.gradient.landing,
-                color: 'white',
-                padding: '8px 16px',
-                borderRadius: '20px',
-                fontSize: '14px',
-                fontWeight: '700',
-                zIndex: 2,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  background: 'white',
-                  borderRadius: '50%',
-                  animation: 'pulse 2s infinite'
-                }}></div>
-                LIVE DASHBOARD
-              </div>
-              <DemoImage 
-                src="/imagens/Captura de Tela 2025-05-27 às 15.58.00.png"
-                alt="Liftlio Live Dashboard"
-                style={{ width: '100%', height: 'auto' }}
-              />
-            </div>
+            <LaptopWrapper rotate={-5} scale={0.95}>
+              <LaptopContainer>
+                <LaptopScreen>
+                  <div style={{
+                    position: 'absolute',
+                    top: '20px',
+                    left: '20px',
+                    background: theme.colors.gradient.landing,
+                    color: 'white',
+                    padding: '8px 16px',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    zIndex: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <div style={{
+                      width: '8px',
+                      height: '8px',
+                      background: 'white',
+                      borderRadius: '50%',
+                      animation: 'pulse 2s infinite'
+                    }}></div>
+                    LIVE DASHBOARD
+                  </div>
+                  <LaptopScreenContent>
+                    <img 
+                      src="/imagens/Captura de Tela 2025-05-27 às 15.58.00.png"
+                      alt="Liftlio Live Dashboard"
+                    />
+                  </LaptopScreenContent>
+                </LaptopScreen>
+                <LaptopBase />
+              </LaptopContainer>
+            </LaptopWrapper>
             <DemoContent style={{ padding: '40px' }}>
               <DemoTitle style={{ fontSize: '32px', marginBottom: '20px' }}>
                 {lang === 'en' 
@@ -2813,10 +2898,19 @@ const LandingPage: React.FC = () => {
 
           {/* AI DETECTION SHOWCASE */}
           <DemoCard>
-            <DemoImage 
-              src="/imagens/Captura de Tela 2025-05-27 às 15.53.34.png"
-              alt="AI-Powered Detection"
-            />
+            <LaptopWrapper rotate={10} scale={0.9}>
+              <LaptopContainer>
+                <LaptopScreen>
+                  <LaptopScreenContent>
+                    <img 
+                      src="/imagens/Captura de Tela 2025-05-27 às 15.57.31.png"
+                      alt="AI-Powered Detection"
+                    />
+                  </LaptopScreenContent>
+                </LaptopScreen>
+                <LaptopBase />
+              </LaptopContainer>
+            </LaptopWrapper>
             <DemoContent>
               <DemoTitle style={{ color: theme.colors.success }}>
                 {lang === 'en' 
@@ -2826,8 +2920,8 @@ const LandingPage: React.FC = () => {
               </DemoTitle>
               <DemoDescription>
                 {lang === 'en' 
-                  ? 'Our AI analyzes EVERY comment and identifies leads ready to buy. 90% score = almost guaranteed customer!'
-                  : 'Nossa IA analisa CADA comentário e identifica leads prontos para comprar. Score de 90% = cliente quase garantido!'
+                  ? 'Our AI identifies the best videos to comment on. Smart algorithms find opportunities before your competitors!'
+                  : 'Nossa IA identifica os melhores vídeos para comentar. Algoritmos inteligentes encontram oportunidades antes dos concorrentes!'
                 }
               </DemoDescription>
             </DemoContent>
@@ -2835,10 +2929,19 @@ const LandingPage: React.FC = () => {
 
           {/* MONITORING POWER */}
           <DemoCard>
-            <DemoImage 
-              src="/imagens/Captura de Tela 2025-05-27 às 15.58.36.png"
-              alt="YouTube Monitoring Power"
-            />
+            <LaptopWrapper rotate={-10} scale={0.9}>
+              <LaptopContainer>
+                <LaptopScreen>
+                  <LaptopScreenContent>
+                    <img 
+                      src="/imagens/Captura de Tela 2025-05-27 às 15.58.36.png"
+                      alt="YouTube Monitoring Power"
+                    />
+                  </LaptopScreenContent>
+                </LaptopScreen>
+                <LaptopBase />
+              </LaptopContainer>
+            </LaptopWrapper>
             <DemoContent>
               <DemoTitle style={{ background: theme.colors.gradient.landing, 
                 WebkitBackgroundClip: 'text',
@@ -2860,15 +2963,33 @@ const LandingPage: React.FC = () => {
 
           {/* MENTION DETAILS */}
           <DemoCard style={{ gridColumn: 'span 2' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <DemoImage 
-                src="/imagens/Captura de Tela 2025-05-27 às 15.45.34.png"
-                alt="Smart Comment System"
-              />
-              <DemoImage 
-                src="/imagens/Captura de Tela 2025-05-27 às 15.56.49.png"
-                alt="Mentions Dashboard"
-              />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+              <LaptopWrapper rotate={15} scale={0.85}>
+                <LaptopContainer>
+                  <LaptopScreen>
+                    <LaptopScreenContent>
+                      <img 
+                        src="/imagens/Captura de Tela 2025-05-27 às 15.56.49.png"
+                        alt="Mentions Dashboard"
+                      />
+                    </LaptopScreenContent>
+                  </LaptopScreen>
+                  <LaptopBase />
+                </LaptopContainer>
+              </LaptopWrapper>
+              <LaptopWrapper rotate={-15} scale={0.85}>
+                <LaptopContainer>
+                  <LaptopScreen>
+                    <LaptopScreenContent>
+                      <img 
+                        src="/imagens/Captura de Tela 2025-05-27 às 15.58.57.png"
+                        alt="Performance Analytics"
+                      />
+                    </LaptopScreenContent>
+                  </LaptopScreen>
+                  <LaptopBase />
+                </LaptopContainer>
+              </LaptopWrapper>
             </div>
             <DemoContent>
               <DemoTitle style={{ fontSize: '28px', textAlign: 'center' }}>
@@ -2879,8 +3000,8 @@ const LandingPage: React.FC = () => {
               </DemoTitle>
               <DemoDescription style={{ fontSize: '16px', textAlign: 'center' }}>
                 {lang === 'en' 
-                  ? 'Our comments are SO natural they look human-written. They cite specific timestamps, add real value, and NEVER look like spam. Result: 10x more conversions than traditional ads.'
-                  : 'Nossos comentários são TÃO naturais que parecem escritos por humanos. Eles citam timestamps específicos, agregam valor real e NUNCA parecem spam. Resultado: 10x mais conversões que anúncios tradicionais.'
+                  ? 'Track every mention, analyze performance, and watch your organic traffic grow exponentially. Our AI ensures maximum conversion with human-like interactions.'
+                  : 'Acompanhe cada menção, analise o desempenho e veja seu tráfego orgânico crescer exponencialmente. Nossa IA garante máxima conversão com interações humanizadas.'
                 }
               </DemoDescription>
             </DemoContent>
