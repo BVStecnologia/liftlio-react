@@ -16,19 +16,13 @@ import ProjectModal from '../components/ProjectModal';
 import { supabase } from '../lib/supabaseClient';
 import { PieLabelRenderProps } from 'recharts';
 
-// Efeito de onda sincronizado para cima e para baixo
+// Efeito de onda suave e fluido
 const waveEffect = keyframes`
   0% {
     transform: translateY(0) scale(1);
   }
-  25% {
-    transform: translateY(-4px) scale(1.02);
-  }
   50% {
-    transform: translateY(0) scale(1);
-  }
-  75% {
-    transform: translateY(4px) scale(1.02);
+    transform: translateY(-8px) scale(1.02);
   }
   100% {
     transform: translateY(0) scale(1);
@@ -966,8 +960,9 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
   font-size: 1.5rem;
   position: relative;
   overflow: hidden;
-  animation: ${waveEffect} 2s infinite ease-in-out;
+  animation: ${waveEffect} 3s infinite cubic-bezier(0.4, 0, 0.6, 1);
   animation-delay: ${props => props.animationDelay || '0s'};
+  transition: all 0.3s ease;
   
   svg {
     position: relative;
@@ -975,6 +970,11 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
     width: 24px;
     height: 24px;
     color: white;
+  }
+  
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   }
   
   @media (max-width: 992px) and (min-width: 768px) {
@@ -3093,7 +3093,7 @@ const Overview: React.FC = () => {
               <StatIconContainer>
                 <StatIcon 
                   bgColor={stat.color} 
-                  animationDelay={`0s`}
+                  animationDelay={`${index * 0.2}s`}
                 >
                   {stat.title === 'Total Mentions' && <IconComponent icon={FaIcons.FaStar} />}
                   {stat.title === 'Today\'s Mentions' && <IconComponent icon={FaIcons.FaCalendarDay} />}

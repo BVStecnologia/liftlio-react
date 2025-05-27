@@ -15,6 +15,10 @@ import Integrations from './pages/Integrations';
 import LoginPage from './pages/LoginPage';
 import ProjectCreationPage from './pages/ProjectCreationPage';
 import LandingPage from './pages/LandingPage';
+import About from './pages/About';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import Security from './pages/Security';
 import LoadingDataIndicator from './components/LoadingDataIndicator';
 import ProcessingWrapper from './components/ProcessingWrapper';
 import UrlDataTest from './components/UrlDataTest';
@@ -327,6 +331,9 @@ const OAuthHandler = () => {
             // Este marcador será verificado antes de iniciar um novo fluxo OAuth
             localStorage.setItem('recentIntegration', 'true');
             
+            // Marcar que devemos ir para o dashboard após OAuth
+            localStorage.setItem('postOAuthDestination', '/dashboard');
+            
             // Configurar expiração do marcador (60 segundos)
             setTimeout(() => {
               localStorage.removeItem('recentIntegration');
@@ -438,7 +445,12 @@ const OAuthHandler = () => {
             // Redirecionar para o dashboard para que o usuário possa ver a animação de processamento
             // Uma vez que o dashboard está envolvido pelo ProcessingWrapper, ele mostrará a tela de carregamento
             console.log('Redirecionando para o dashboard para mostrar o processamento...');
-            window.location.href = '/dashboard';
+            
+            // Aguardar um momento para garantir que o token foi salvo
+            setTimeout(() => {
+              // Usar replace para garantir que não volte para a página com o código OAuth
+              window.location.replace('/dashboard');
+            }, 1000);
           } else {
             alert('Erro: Nenhum ID de projeto encontrado para associar a esta integração.');
           }
@@ -505,6 +517,13 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              
+              {/* Páginas institucionais */}
+              <Route path="/about" element={<About />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/security" element={<Security />} />
+              
               <Route path="/*" element={
                 <ProtectedLayout 
                   sidebarOpen={sidebarOpen} 
@@ -524,13 +543,41 @@ function App() {
 const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean, toggleSidebar: () => void }) => {
   const { user, loading } = useAuth();
   const { isOnboarding, onboardingReady, hasProjects, isLoading, projects, projectIntegrations } = useProject();
+  const [isInitializing, setIsInitializing] = useState(true);
+  const navigate = useNavigate();
   
-  // Aguardar o carregamento da autenticação e do estado de onboarding
-  if (loading || !onboardingReady || isLoading) {
+  // Effect para garantir que mostramos loading até tudo estar pronto
+  useEffect(() => {
+    // Só remover o loading quando TODAS as condições estiverem resolvidas
+    if (!loading && onboardingReady && !isLoading) {
+      // Delay maior para garantir que tudo está carregado, especialmente após OAuth
+      const timer = setTimeout(() => {
+        setIsInitializing(false);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, onboardingReady, isLoading]);
+  
+  // Verificar se temos um destino pós-OAuth pendente
+  useEffect(() => {
+    const postOAuthDestination = localStorage.getItem('postOAuthDestination');
+    if (postOAuthDestination && user && !loading && !isLoading) {
+      console.log('Redirecionando para destino pós-OAuth:', postOAuthDestination);
+      localStorage.removeItem('postOAuthDestination');
+      // Usar navigate em vez de window.location para evitar recarregamento
+      navigate(postOAuthDestination, { replace: true });
+    }
+  }, [user, loading, isLoading, navigate]);
+  
+  // Mostrar loading até TODAS as verificações estarem completas
+  if (loading || !onboardingReady || isLoading || isInitializing) {
     return (
       <div style={{
         height: '100vh',
-        backgroundColor: getThemeBackground()
+        backgroundColor: getThemeBackground(),
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}>
         <LoadingDataIndicator />
       </div>

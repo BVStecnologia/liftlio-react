@@ -89,18 +89,30 @@ const CardHeader = styled.div`
   margin-bottom: 15px;
 `;
 
-const IconContainer = styled.div`
+const IconContainer = styled.div<{ iconColor?: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background-color: ${props => props.theme.colors.accent.primary};
-  color: white;
-  font-size: 22px;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85))' 
+    : props.theme.colors.accent.primary};
+  color: ${props => props.iconColor || (props.theme.name === 'dark' ? props.iconColor : 'white')};
+  font-size: 24px;
   position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: ${props => props.theme.name === 'dark'
+    ? '0 6px 20px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.6)'
+    : '0 4px 12px rgba(0, 0, 0, 0.15)'};
+  border: ${props => props.theme.name === 'dark' ? 'none' : 'none'};
+  
+  /* Enhanced icon styles for better visibility */
+  svg {
+    filter: ${props => props.theme.name === 'dark' 
+      ? 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))' 
+      : 'none'};
+  }
   
   /* Futuristic glowing effect */
   &:after {
@@ -109,11 +121,27 @@ const IconContainer = styled.div`
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
+    background: ${props => props.theme.name === 'dark' 
+      ? `radial-gradient(circle, ${props.iconColor || props.theme.colors.accent.primary}40 0%, transparent 60%)`
+      : 'rgba(255, 255, 255, 0.1)'};
     z-index: -1;
-    filter: blur(8px);
+    filter: blur(12px);
     animation: pulse 3s infinite;
   }
+  
+  /* Additional glow layer for dark theme */
+  ${props => props.theme.name === 'dark' && `
+    &:before {
+      content: '';
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: radial-gradient(circle, ${props.iconColor || props.theme.colors.accent.primary}20 0%, transparent 70%);
+      z-index: -2;
+      filter: blur(20px);
+    }
+  `}
   
   @keyframes pulse {
     0% {
@@ -326,7 +354,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
           <Title>{title}</Title>
           {subtitle && <Subtitle>{subtitle}</Subtitle>}
         </TitleContainer>
-        {icon && <IconContainer>{icon}</IconContainer>}
+        {icon && <IconContainer iconColor={color}>{icon}</IconContainer>}
       </CardHeader>
       <ValueContainer>
         <Value data-value={value}>{value}</Value>

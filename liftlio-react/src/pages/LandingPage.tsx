@@ -9,6 +9,7 @@ import { AiOutlineCalculator } from 'react-icons/ai';
 import { renderIcon } from '../utils/IconHelper';
 import { useTheme } from '../context/ThemeContext';
 import Cookies from 'js-cookie';
+import Testimonials from '../components/Testimonials';
 
 // Internacionalização
 const translations = {
@@ -1008,12 +1009,15 @@ const FloatingElement = styled.div`
 `;
 
 const VideoContainer = styled.div`
-  width: 400px;
-  margin: 0 auto 24px;
-  border-radius: 16px;
+  width: 100%;
+  max-width: 800px;
+  margin: 40px auto;
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 20px 60px ${props => props.theme.colors.primaryAlpha};
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
   position: relative;
+  background: #000;
+  border: 2px solid ${props => props.theme.name === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
   
   video {
     width: 100%;
@@ -1021,9 +1025,14 @@ const VideoContainer = styled.div`
     display: block;
   }
   
-  @media (max-width: 480px) {
-    width: 100%;
-    max-width: 400px;
+  @media (max-width: 968px) {
+    max-width: 600px;
+  }
+  
+  @media (max-width: 768px) {
+    width: 95%;
+    max-width: 500px;
+    margin: 20px auto;
   }
 `;
 
@@ -2116,12 +2125,12 @@ const FooterTitle = styled.h4`
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 20px;
-  color: ${props => props.theme.colors.text.primary};
+  color: ${props => props.theme.name === 'light' ? '#ffffff' : props.theme.colors.text.primary};
 `;
 
 const FooterDescription = styled.p`
   font-size: 14px;
-  color: ${props => props.theme.colors.textSecondary};
+  color: ${props => props.theme.name === 'light' ? 'rgba(255, 255, 255, 0.8)' : props.theme.colors.textSecondary};
   line-height: 1.6;
   margin-bottom: 20px;
 `;
@@ -2135,13 +2144,13 @@ const FooterLink = styled.li`
   margin-bottom: 12px;
   
   a {
-    color: ${props => props.theme.colors.textSecondary};
+    color: ${props => props.theme.name === 'light' ? 'rgba(255, 255, 255, 0.7)' : props.theme.colors.textSecondary};
     text-decoration: none;
     font-size: 14px;
     transition: color 0.3s ease;
     
     &:hover {
-      color: ${props => props.theme.colors.primary};
+      color: ${props => props.theme.name === 'light' ? '#ffffff' : props.theme.colors.primary};
     }
   }
 `;
@@ -2149,10 +2158,10 @@ const FooterLink = styled.li`
 const FooterBottom = styled.div`
   margin-top: 60px;
   padding-top: 32px;
-  border-top: 1px solid ${props => props.theme.colors.borderLight};
+  border-top: 1px solid ${props => props.theme.name === 'light' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.borderLight};
   text-align: center;
   font-size: 14px;
-  color: ${props => props.theme.colors.textSecondary};
+  color: ${props => props.theme.name === 'light' ? 'rgba(255, 255, 255, 0.6)' : props.theme.colors.textSecondary};
 `;
 
 const LandingPage: React.FC = () => {
@@ -2180,7 +2189,7 @@ const LandingPage: React.FC = () => {
   const [showCalculatorResults, setShowCalculatorResults] = useState(false);
   
   // Urgency state
-  const [showUrgencyBanner, setShowUrgencyBanner] = useState(false);
+  const [showUrgencyBanner, setShowUrgencyBanner] = useState(false); // Disabled - removing floating elements
   const spotsLeft = 5;
   const daysUntilPriceIncrease = 3;
   
@@ -2201,14 +2210,14 @@ const LandingPage: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Show urgency banner after 10 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowUrgencyBanner(true);
-    }, 10000);
-    
-    return () => clearTimeout(timer);
-  }, []);
+  // Show urgency banner after 10 seconds - DISABLED
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     setShowUrgencyBanner(true);
+  //   }, 10000);
+  //   
+  //   return () => clearTimeout(timer);
+  // }, []);
   
   // Animate live visitor counter
   useEffect(() => {
@@ -2293,6 +2302,7 @@ const LandingPage: React.FC = () => {
       </Header>
 
       {/* Live Counter */}
+      {/* LiveCounter removido 
       <LiveCounter>
         <LiveCounterTitle>
           <span style={{ color: '#00ff00' }}>●</span>
@@ -2307,7 +2317,7 @@ const LandingPage: React.FC = () => {
             : 'qualified visitors generated today'
           }
         </LiveCounterLabel>
-      </LiveCounter>
+      </LiveCounter> */}
 
       <HeroSection>
         <HeroBackground />
@@ -2413,6 +2423,42 @@ const LandingPage: React.FC = () => {
           </TrustItem>
         </TrustContainer>
       </TrustSection>
+
+      {/* Video Section */}
+      <section style={{
+        padding: '100px 64px',
+        background: theme.name === 'dark' ? '#0a0a0a' : '#fafafa',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <SectionHeader>
+          <SectionTitle>
+            {lang === 'pt' ? 'Veja o Liftlio em' : 'See Liftlio in'} 
+            <Gradient> {lang === 'pt' ? 'Ação' : 'Action'}</Gradient>
+          </SectionTitle>
+          <SectionDescription>
+            {lang === 'pt' 
+              ? 'Descubra como transformamos comentários em oportunidades de negócio reais'
+              : 'Discover how we transform comments into real business opportunities'
+            }
+          </SectionDescription>
+        </SectionHeader>
+        
+        <VideoContainer>
+          <video 
+            controls
+            autoPlay
+            loop 
+            muted 
+            playsInline
+            poster="/imagens/DASHBOARD HERO - VERSÃO ESCURA.png"
+            style={{ borderRadius: '20px' }}
+          >
+            <source src="/Videos/Vídeo_Liftlio_De_Comentários_a_Clientes.mp4" type="video/mp4" />
+            {lang === 'pt' ? 'Seu navegador não suporta vídeos HTML5.' : 'Your browser does not support HTML5 video.'}
+          </video>
+        </VideoContainer>
+      </section>
 
       {/* Pain Points Section */}
       <PainPointsSection>
@@ -2804,36 +2850,11 @@ const LandingPage: React.FC = () => {
         </PricingGrid>
       </PricingSection>
 
-      <TestimonialsSection id="testimonials">
-        <SectionHeader>
-          <SectionTitle>
-            {t.testimonials.title} <Gradient>{t.testimonials.titleHighlight}</Gradient>
-          </SectionTitle>
-          <SectionDescription>
-            {t.testimonials.subtitle}
-          </SectionDescription>
-        </SectionHeader>
-        
-        <TestimonialsGrid>
-          {t.testimonials.items.map((testimonial, index) => (
-            <TestimonialCard key={index}>
-              <QuoteIcon>{renderIcon(FaQuoteLeft)}</QuoteIcon>
-              <TestimonialText>
-                "{testimonial.text}"
-              </TestimonialText>
-              <TestimonialAuthor>
-                <AuthorAvatar />
-                <AuthorInfo>
-                  <AuthorName>{testimonial.author}</AuthorName>
-                  <AuthorRole>{testimonial.role}</AuthorRole>
-                </AuthorInfo>
-              </TestimonialAuthor>
-            </TestimonialCard>
-          ))}
-        </TestimonialsGrid>
-      </TestimonialsSection>
+      <div id="testimonials">
+        <Testimonials language={lang} />
+      </div>
 
-      <CTASection>
+      <CTASection style={{ background: theme.name === 'dark' ? '#1a1a1a' : '#f5f5f5' }}>
         <CTAContent>
           <CTATitle>
             {t.cta.title} <Gradient>{t.cta.titleHighlight}</Gradient> {t.cta.titleEnd}
@@ -2852,7 +2873,12 @@ const LandingPage: React.FC = () => {
         <FooterContent>
           <FooterColumn>
             <FooterTitle>
-              <Logo style={{ fontSize: '24px' }}>
+              <Logo style={{ 
+                fontSize: '24px', 
+                color: theme.name === 'light' ? '#ffffff' : theme.colors.primary,
+                fontWeight: 900,
+                opacity: 1
+              }}>
                 {renderIcon(BiPulse)}
                 LIFTLIO
               </Logo>
@@ -2875,19 +2901,16 @@ const LandingPage: React.FC = () => {
           <FooterColumn>
             <FooterTitle>{t.footer.company}</FooterTitle>
             <FooterLinks>
-              <FooterLink><a href="#">{t.footer.links.about}</a></FooterLink>
-              <FooterLink><a href="#">{t.footer.links.blog}</a></FooterLink>
-              <FooterLink><a href="#">{t.footer.links.careers}</a></FooterLink>
-              <FooterLink><a href="#">{t.footer.links.contact}</a></FooterLink>
+              <FooterLink><a href="/about">{t.footer.links.about}</a></FooterLink>
             </FooterLinks>
           </FooterColumn>
 
           <FooterColumn>
             <FooterTitle>{t.footer.legal}</FooterTitle>
             <FooterLinks>
-              <FooterLink><a href="#">{t.footer.links.privacy}</a></FooterLink>
-              <FooterLink><a href="#">{t.footer.links.terms}</a></FooterLink>
-              <FooterLink><a href="#">{t.footer.links.security}</a></FooterLink>
+              <FooterLink><a href="/privacy">{t.footer.links.privacy}</a></FooterLink>
+              <FooterLink><a href="/terms">{t.footer.links.terms}</a></FooterLink>
+              <FooterLink><a href="/security">{t.footer.links.security}</a></FooterLink>
             </FooterLinks>
           </FooterColumn>
         </FooterContent>
@@ -2897,8 +2920,8 @@ const LandingPage: React.FC = () => {
         </FooterBottom>
       </Footer>
 
-      {/* Urgency Banner */}
-      {showUrgencyBanner && (
+      {/* Urgency Banner - DISABLED */}
+      {/* {showUrgencyBanner && (
         <UrgencyBanner>
           <span>{renderIcon(FaDollarSign)}</span>
           <span style={{ fontSize: '16px' }}>
@@ -2908,7 +2931,7 @@ const LandingPage: React.FC = () => {
             {t.urgency.guarantee}
           </div>
         </UrgencyBanner>
-      )}
+      )} */}
     </LandingContainer>
   );
 };
