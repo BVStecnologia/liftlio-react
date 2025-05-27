@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { supabaseUrl, supabaseAnonKey } from '../lib/supabaseClient';
+import { useLanguage } from '../context/LanguageContext';
 
 const Container = styled.div`
   padding: 20px;
   margin: 20px;
   max-width: 800px;
-  border: 1px solid #ccc;
+  border: 1px solid ${props => props.theme.colors.border.primary};
   border-radius: 8px;
-  background-color: #fff;
+  background-color: ${props => props.theme.colors.bg.secondary};
 `;
 
 const Form = styled.form`
@@ -19,33 +20,35 @@ const Form = styled.form`
 
 const Input = styled.input`
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid ${props => props.theme.colors.border.primary};
   border-radius: 4px;
   font-size: 16px;
+  background-color: ${props => props.theme.colors.bg.primary};
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const Button = styled.button`
   padding: 10px 15px;
-  background-color: #4c84ff;
-  color: white;
+  background-color: ${props => props.theme.components.button.primary.bg};
+  color: ${props => props.theme.components.button.primary.text};
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
   
   &:hover {
-    background-color: #3a6cd1;
+    background-color: ${props => props.theme.components.button.primary.hover};
   }
   
   &:disabled {
-    background-color: #ccc;
+    background-color: ${props => props.theme.components.button.primary.disabled};
     cursor: not-allowed;
   }
 `;
 
 const ResultContainer = styled.div`
   margin-top: 20px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid ${props => props.theme.colors.border.divider};
   padding-top: 15px;
 `;
 
@@ -54,22 +57,24 @@ const ResultHeader = styled.h3`
 `;
 
 const ResultBox = styled.pre`
-  background-color: #f5f5f5;
+  background-color: ${props => props.theme.colors.bg.tertiary};
+  color: ${props => props.theme.colors.text.primary};
   padding: 15px;
   border-radius: 4px;
   overflow: auto;
   font-family: monospace;
   white-space: pre-wrap;
   max-height: 300px;
+  border: 1px solid ${props => props.theme.colors.border.secondary};
 `;
 
 const Loader = styled.div`
   display: inline-block;
   width: 20px;
   height: 20px;
-  border: 3px solid rgba(0, 0, 0, 0.1);
+  border: 3px solid ${props => props.theme.colors.border.secondary};
   border-radius: 50%;
-  border-top-color: #4c84ff;
+  border-top-color: ${props => props.theme.colors.accent.primary};
   animation: spin 1s ease-in-out infinite;
   margin-left: 10px;
   

@@ -1,6 +1,6 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
-import { COLORS } from '../../styles/colors';
+import { useTheme } from '../../context/ThemeContext';
 
 interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -28,13 +28,15 @@ const pulseAnimation = keyframes`
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(45, 62, 80, 0); }
 `;
 
-const SpinnerOverlay = styled.div<{ fullPage: boolean }>`
+const SpinnerOverlay = styled.div<{ fullPage: boolean; $isDarkTheme: boolean }>`
   position: ${props => props.fullPage ? 'fixed' : 'absolute'};
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: ${props => props.$isDarkTheme 
+    ? 'rgba(0, 0, 0, 0.85)' 
+    : 'rgba(255, 255, 255, 0.85)'};
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -85,9 +87,9 @@ const SpinnerElement = styled.div<{
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
 `;
 
-const SpinnerText = styled.div<{ size: string }>`
+const SpinnerText = styled.div<{ size: string; $isDarkTheme: boolean }>`
   margin-top: 16px;
-  color: ${COLORS.TEXT.ON_LIGHT};
+  color: ${props => props.$isDarkTheme ? '#E4E4E7' : '#2D3E50'};
   font-weight: 500;
   font-size: ${props => {
     switch (props.size) {
@@ -102,10 +104,10 @@ const SpinnerText = styled.div<{ size: string }>`
   animation: ${breatheAnimation} 2s ease-in-out infinite;
 `;
 
-const SpinnerDot = styled.div<{ delay: number }>`
+const SpinnerDot = styled.div<{ delay: number; $isDarkTheme: boolean }>`
   width: 8px;
   height: 8px;
-  background-color: ${COLORS.ACCENT};
+  background-color: ${props => props.$isDarkTheme ? '#3B82F6' : '#4F46E5'};
   border-radius: 50%;
   margin: 2px;
   animation: ${pulseAnimation} 1.5s ease-in-out infinite;
@@ -133,15 +135,21 @@ const hexToRgb = (hex: string) => {
 
 const Spinner: React.FC<SpinnerProps> = ({
   size = 'md',
-  color = COLORS.ACCENT,
+  color,
   thickness = 2,
   speed = 0.8,
   fullPage = false,
   text,
   withOverlay = false
 }) => {
+  const { isDarkMode } = useTheme();
+  
+  // Use theme-aware default color if none provided
+  const defaultColor = isDarkMode ? '#3B82F6' : '#4F46E5';
+  const actualColor = color || defaultColor;
+  
   // Convert hex color to RGB for opacity control
-  const rgbColor = hexToRgb(color);
+  const rgbColor = hexToRgb(actualColor);
   
   const spinner = (
     <SpinnerContainer fullPage={fullPage}>
@@ -151,18 +159,18 @@ const Spinner: React.FC<SpinnerProps> = ({
         thickness={thickness} 
         speed={speed}
       />
-      {text && <SpinnerText size={size}>{text}</SpinnerText>}
+      {text && <SpinnerText size={size} $isDarkTheme={isDarkMode}>{text}</SpinnerText>}
       <DotsContainer>
-        <SpinnerDot delay={0} />
-        <SpinnerDot delay={0.3} />
-        <SpinnerDot delay={0.6} />
+        <SpinnerDot delay={0} $isDarkTheme={isDarkMode} />
+        <SpinnerDot delay={0.3} $isDarkTheme={isDarkMode} />
+        <SpinnerDot delay={0.6} $isDarkTheme={isDarkMode} />
       </DotsContainer>
     </SpinnerContainer>
   );
   
   if (withOverlay || fullPage) {
     return (
-      <SpinnerOverlay fullPage={fullPage}>
+      <SpinnerOverlay fullPage={fullPage} $isDarkTheme={isDarkMode}>
         {spinner}
       </SpinnerOverlay>
     );

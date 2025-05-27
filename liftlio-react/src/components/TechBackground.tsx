@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
+import { useTheme } from '../context/ThemeContext';
 import COLORS from '../styles/colors';
 
 interface TechBackgroundProps {
@@ -27,6 +28,7 @@ const BackgroundContainer = styled.div<BackgroundContainerProps>`
 
 const TechBackground: React.FC<TechBackgroundProps> = ({ className, zIndex, opacity }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { isDarkMode } = useTheme();
   
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -175,8 +177,9 @@ const TechBackground: React.FC<TechBackgroundProps> = ({ className, zIndex, opac
           const maxDistance = Math.min(canvas.width, canvas.height) / 3;
           const opacity = 1 - (distance / maxDistance);
           
-          // Set line style
-          ctx.strokeStyle = `rgba(45, 62, 80, ${opacity * 0.4})`;
+          // Set line style - adapt for dark mode
+          const lineColor = isDarkMode ? '255, 255, 255' : '45, 62, 80';
+          ctx.strokeStyle = `rgba(${lineColor}, ${opacity * 0.4})`;
           ctx.lineWidth = 1;
           ctx.stroke();
         });
@@ -208,7 +211,8 @@ const TechBackground: React.FC<TechBackgroundProps> = ({ className, zIndex, opac
         // Draw node
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(52, 73, 94, ${node.alpha})`;
+        const nodeColor = isDarkMode ? '255, 255, 255' : '52, 73, 94';
+        ctx.fillStyle = `rgba(${nodeColor}, ${node.alpha})`;
         ctx.fill();
       });
       
@@ -256,7 +260,7 @@ const TechBackground: React.FC<TechBackgroundProps> = ({ className, zIndex, opac
       document.removeEventListener('mouseleave', handleMouseLeave);
       cancelAnimationFrame(animationId);
     };
-  }, []);
+  }, [isDarkMode]);
   
   return (
     <BackgroundContainer className={className} zIndex={zIndex} opacity={opacity}>

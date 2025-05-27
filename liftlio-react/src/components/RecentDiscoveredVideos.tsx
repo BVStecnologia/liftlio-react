@@ -108,10 +108,14 @@ const DiscoveredVideosContainer = styled.div`
   margin-bottom: 30px;
   position: relative;
   animation: fadeIn 0.6s ease-out;
-  background: ${props => props.theme.colors.white};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.03)' 
+    : props.theme.colors.white};
   padding: 24px;
   border-radius: ${props => props.theme.radius.lg};
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: ${props => props.theme.name === 'dark' 
+    ? '0 3px 10px rgba(0, 0, 0, 0.3)' 
+    : '0 3px 10px rgba(0, 0, 0, 0.05)'};
   
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
@@ -398,14 +402,20 @@ const VideoCardWrapper = styled.div`
 `;
 
 const VideoCard = styled.div`
-  background: ${props => props.theme.colors.white};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(45, 45, 55, 0.95)' 
+    : props.theme.colors.white};
   border-radius: ${props => props.theme.radius.lg};
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: ${props => props.theme.name === 'dark'
+    ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+    : '0 4px 12px rgba(0, 0, 0, 0.05)'};
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
   position: relative;
-  border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.1)'
+    : withOpacity(props.theme.colors.tertiary, 0.1)};
   
   &:hover {
     transform: translateY(-5px);
@@ -562,9 +572,13 @@ const MetricsRow = styled.div`
 const MetricItem = styled.div`
   text-align: center;
   padding: 8px 4px;
-  background: ${props => withOpacity(props.theme.colors.background, 0.05)};
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.05)'
+    : withOpacity(props.theme.colors.background, 0.05)};
   border-radius: ${props => props.theme.radius.md};
-  border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.08)'
+    : withOpacity(props.theme.colors.tertiary, 0.1)};
 `;
 
 const MetricValue = styled.div`
@@ -582,11 +596,15 @@ const MetricLabel = styled.div`
 `;
 
 const EngagementSection = styled.div`
-  background: ${props => withOpacity(props.theme.colors.background, 0.03)};
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.03)'
+    : withOpacity(props.theme.colors.background, 0.03)};
   border-radius: ${props => props.theme.radius.md};
   padding: 12px;
   margin-bottom: 10px;
-  border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.08)'
+    : withOpacity(props.theme.colors.tertiary, 0.1)};
 `;
 
 const EngagementHeader = styled.div`
@@ -633,9 +651,13 @@ const EngagementMessage = styled.div`
   color: ${props => props.theme.colors.text.primary};
   line-height: 1.5;
   padding: 10px;
-  background: white;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(20, 20, 25, 0.95)' 
+    : 'white'};
   border-radius: ${props => props.theme.radius.sm};
-  border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.15)'
+    : withOpacity(props.theme.colors.tertiary, 0.1)};
   height: 70px;
   overflow-y: auto;
   position: relative;
@@ -710,7 +732,9 @@ const ProjectedViews = styled.div`
 
 // Styled components for the modal content
 const VideoDetailContainer = styled.div`
-  background: white;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(30, 30, 30, 0.95)' 
+    : 'white'};
   border-radius: ${props => props.theme.radius.lg};
   overflow: hidden;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
@@ -1019,7 +1043,9 @@ const PaginationButton = styled.button<{ disabled?: boolean }>`
   gap: 8px;
   padding: 8px 16px;
   border-radius: ${props => props.theme.radius.md};
-  background: ${props => props.theme.colors.white};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(40, 40, 40, 0.95)' 
+    : props.theme.colors.white};
   border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.2)};
   color: ${props => props.theme.colors.text.primary};
   font-size: ${props => props.theme.fontSizes.sm};
@@ -1066,7 +1092,9 @@ const ScrollNavButton = styled.button<{ direction: 'left' | 'right' }>`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: ${props => props.theme.colors.white};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(40, 40, 40, 0.95)' 
+    : props.theme.colors.white};
   border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.2)};
   display: flex;
   align-items: center;
@@ -1095,7 +1123,9 @@ const ScrollNavButton = styled.button<{ direction: 'left' | 'right' }>`
     cursor: not-allowed;
     
     &:hover {
-      background: ${props => props.theme.colors.white};
+      background: ${props => props.theme.name === 'dark' 
+        ? 'rgba(40, 40, 40, 0.95)' 
+        : props.theme.colors.white};
       
       svg {
         color: ${props => props.theme.colors.primary};

@@ -222,22 +222,15 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       
       const hasMensagens = mensagens && mensagens.length > 0;
       
-      // 3. Definir isInitialProcessing: verdadeiro se estiver processando E não tiver mensagens
-      const shouldBeProcessing = isProcessing && !hasMensagens;
+      // 3. Definir isInitialProcessing: verdadeiro se estiver processando OU não tiver mensagens
+      const shouldBeProcessing = isProcessing || !hasMensagens;
       
-      // Verificar se o projeto está marcado como verificado na sessionStorage
-      const isVerifiedInSession = sessionStorage.getItem(`projeto_${projectId}_verified`) === 'true';
-      
-      // Se o projeto estiver marcado como verificado na sessionStorage,
-      // NÃO marcar como processando mesmo que ainda não tenha mensagens
-      const finalProcessingState = isVerifiedInSession ? false : shouldBeProcessing;
-      
-      if (finalProcessingState !== isInitialProcessing) {
-        console.log(`Atualizando estado de processamento para projeto ${projectId}: ${finalProcessingState}`);
-        setIsInitialProcessing(finalProcessingState);
+      if (shouldBeProcessing !== isInitialProcessing) {
+        console.log(`Atualizando estado de processamento para projeto ${projectId}: ${shouldBeProcessing}`);
+        setIsInitialProcessing(shouldBeProcessing);
       }
       
-      console.log(`Projeto ${projectId}: status=${projectStatus}, hasMensagens=${hasMensagens}, isInitialProcessing=${finalProcessingState}, verificadoSession=${isVerifiedInSession}`);
+      console.log(`Projeto ${projectId}: status=${projectStatus}, hasMensagens=${hasMensagens}, isInitialProcessing=${shouldBeProcessing}`);
       
     } catch (error) {
       console.error("Erro ao verificar estado de processamento do projeto:", error);

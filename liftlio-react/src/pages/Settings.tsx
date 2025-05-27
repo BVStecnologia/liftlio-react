@@ -12,6 +12,8 @@ import {
 } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
 
 // Helper function to render icons safely (to avoid the import conflict)
@@ -272,25 +274,32 @@ const InfoTooltip = styled.div`
 const Input = styled.input<{ changed?: boolean }>`
   width: 100%;
   padding: 12px 15px;
-  border: 1px solid ${props => props.changed ? props.theme.colors.primary : props.theme.colors.grey};
+  border: 1px solid ${props => props.changed ? props.theme.colors.primary : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.grey};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
   transition: all 0.2s ease;
-  background-color: ${props => props.changed ? 'rgba(94, 53, 177, 0.05)' : 'white'};
+  background-color: ${props => {
+    if (props.changed) {
+      return props.theme.name === 'dark' ? 'rgba(94, 53, 177, 0.1)' : 'rgba(94, 53, 177, 0.05)';
+    }
+    return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'white';
+  }};
+  color: ${props => props.theme.colors.text.primary};
   
   &:focus {
     border-color: ${props => props.theme.colors.primary};
     outline: none;
-    box-shadow: 0 0 0 3px rgba(94, 53, 177, 0.2);
+    box-shadow: 0 0 0 3px ${props => props.theme.name === 'dark' ? 'rgba(94, 53, 177, 0.3)' : 'rgba(94, 53, 177, 0.2)'};
   }
   
   &:disabled {
-    background-color: ${props => props.theme.colors.lightGrey};
+    background-color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.03)' : props.theme.colors.lightGrey};
     cursor: not-allowed;
+    opacity: 0.6;
   }
   
   &::placeholder {
-    color: ${props => props.theme.colors.grey};
+    color: ${props => props.theme.colors.text.secondary};
   }
 `;
 
@@ -336,21 +345,32 @@ const TextArea = styled.textarea<{ changed?: boolean }>`
 const Select = styled.select<{ changed?: boolean }>`
   width: 100%;
   padding: 12px 15px;
-  border: 1px solid ${props => props.changed ? props.theme.colors.primary : props.theme.colors.grey};
+  border: 1px solid ${props => props.changed ? props.theme.colors.primary : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.grey};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
-  background-color: ${props => props.changed ? 'rgba(94, 53, 177, 0.05)' : 'white'};
+  background-color: ${props => {
+    if (props.changed) {
+      return props.theme.name === 'dark' ? 'rgba(94, 53, 177, 0.1)' : 'rgba(94, 53, 177, 0.05)';
+    }
+    return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'white';
+  }};
+  color: ${props => props.theme.colors.text.primary};
   cursor: pointer;
   transition: all 0.2s ease;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='${props => props.theme.name === 'dark' ? '%23999' : '%23666'}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 15px center;
   
   &:focus {
     border-color: ${props => props.theme.colors.primary};
     outline: none;
-    box-shadow: 0 0 0 3px rgba(94, 53, 177, 0.2);
+    box-shadow: 0 0 0 3px ${props => props.theme.name === 'dark' ? 'rgba(94, 53, 177, 0.3)' : 'rgba(94, 53, 177, 0.2)'};
+  }
+  
+  option {
+    background-color: ${props => props.theme.name === 'dark' ? '#1a1a1a' : 'white'};
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 
@@ -1253,6 +1273,8 @@ const NegativeKeywordRemove = styled.button`
 const Settings: React.FC<{}> = () => {
   // Get current project from context
   const { currentProject } = useProject();
+  const { t } = useLanguage();
+  const { theme } = useTheme();
   
   // State for negative keywords
   const [newNegativeKeyword, setNewNegativeKeyword] = useState('');
@@ -1662,7 +1684,7 @@ const Settings: React.FC<{}> = () => {
     <IconContext.Provider value={{ className: 'react-icons' }}>
       <PageContainer>
         <PageHeader>
-          <PageTitle>Settings</PageTitle>
+          <PageTitle>{t('settings.title')}</PageTitle>
         </PageHeader>
         
         <TabsContainer>
@@ -1672,7 +1694,7 @@ const Settings: React.FC<{}> = () => {
             style={{ animationDelay: '0.1s' }}
           >
             {renderIcon(FaCog)}
-            Project
+            {t('settings.general')}
           </TabItem>
           <TabItem 
             active={activeTab === 'account'} 
@@ -1680,7 +1702,7 @@ const Settings: React.FC<{}> = () => {
             style={{ animationDelay: '0.2s' }}
           >
             {renderIcon(FaUser)}
-            Account
+            {t('settings.profile')}
           </TabItem>
           <TabItem 
             active={activeTab === 'notifications'} 
@@ -1688,7 +1710,7 @@ const Settings: React.FC<{}> = () => {
             style={{ animationDelay: '0.3s' }}
           >
             {renderIcon(FaBell)}
-            Notifications
+            {t('settings.notifications')}
           </TabItem>
         </TabsContainer>
         
@@ -1697,21 +1719,21 @@ const Settings: React.FC<{}> = () => {
             <Card>
               <LoadingOverlay>
                 <Spinner />
-                <div className="loading-text">Loading project settings...</div>
+                <div className="loading-text">{t('loading.projectData')}</div>
               </LoadingOverlay>
             </Card>
           ) : activeTab === 'project' && (
             <Card>
               <SectionTitle>
                 {renderIcon(FaCog)}
-                Project Settings
+                {t('settings.projectSettings')}
               </SectionTitle>
               
               <FormSection>
                 <FormRow>
                   <FormGroup>
                     <Label htmlFor="projectName">
-                      Project name
+                      {t('settings.projectName')}
                       <span 
                         className="info-icon" 
                         onMouseEnter={() => setShowTooltip('projectName')}
@@ -1736,7 +1758,7 @@ const Settings: React.FC<{}> = () => {
                   
                   <FormGroup>
                     <Label htmlFor="projectLink">
-                      Project link
+                      {t('settings.website')}
                       <span 
                         className="info-icon" 
                         onMouseEnter={() => setShowTooltip('projectLink')}
@@ -1764,11 +1786,11 @@ const Settings: React.FC<{}> = () => {
                 </FormRow>
                 
                 <FormGroup>
-                  <Label htmlFor="companyName">Company or product name</Label>
+                  <Label htmlFor="companyName">{t('settings.company')}</Label>
                   <Input 
                     id="companyName" 
                     type="text" 
-                    placeholder="Enter your company or product name" 
+                    placeholder={t('project.companyPlaceholder')} 
                     value={projectData.description_service ? 
                       (projectData.description_service.split('Company or product name:')[1]?.split('Audience description:')[0]?.trim() || '') : ''}
                     onChange={(e) => {
@@ -1784,10 +1806,10 @@ const Settings: React.FC<{}> = () => {
                 </FormGroup>
                 
                 <FormGroup>
-                  <Label htmlFor="audienceDescription">Audience description</Label>
+                  <Label htmlFor="audienceDescription">{t('settings.audience')}</Label>
                   <TextArea 
                     id="audienceDescription" 
-                    placeholder="Describe your target audience"
+                    placeholder={t('project.audiencePlaceholder')}
                     value={projectData.description_service ? 
                       (projectData.description_service.split('Audience description:')[1]?.trim() || '') : ''}
                     onChange={(e) => {
@@ -1806,7 +1828,7 @@ const Settings: React.FC<{}> = () => {
               
               <FormSection>
                 <FormGroup>
-                  <Label htmlFor="region">Region</Label>
+                  <Label htmlFor="region">{t('settings.country')}</Label>
                   <Select 
                     id="region" 
                     value={projectData["País"] || "US"}
@@ -1823,19 +1845,19 @@ const Settings: React.FC<{}> = () => {
               <FormSection>
                 <SectionTitle>
                   {renderIcon(FaDatabase)}
-                  Keyword Scanners
+                  {t('settings.keywordScanners')}
                 </SectionTitle>
                 
                 {currentProject?.id ? (
                   <KeywordScannersList projectId={currentProject.id} />
                 ) : (
-                  <div>Select a project to view keyword scanners</div>
+                  <div>{t('settings.selectProject')}</div>
                 )}
                 
                 <FormGroup style={{ marginTop: '30px' }}>
-                  <Label>Negative Keywords</Label>
+                  <Label>{t('settings.negativeKeywords')}</Label>
                   <div style={{ marginBottom: '10px', fontSize: '14px', color: '#666' }}>
-                    Keywords that will be excluded from monitoring and analysis
+                    {t('settings.negativeKeywordsDescription')}
                   </div>
                   
                   {getNegativeKeywords().length > 0 ? (
@@ -1853,14 +1875,20 @@ const Settings: React.FC<{}> = () => {
                       ))}
                     </NegativeKeywordsContainer>
                   ) : (
-                    <div style={{ padding: '15px', backgroundColor: '#f9f9f9', borderRadius: '8px', marginBottom: '15px' }}>
-                      No negative keywords set. Add keywords to exclude unwanted content.
+                    <div style={{ 
+                      padding: '15px', 
+                      backgroundColor: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f9f9f9', 
+                      borderRadius: '8px', 
+                      marginBottom: '15px',
+                      color: theme.colors.text.secondary 
+                    }}>
+                      {t('settings.noNegativeKeywords')}
                     </div>
                   )}
                   
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <Input
-                      placeholder="Add new negative keyword"
+                      placeholder={t('settings.addNegativeKeywordPlaceholder')}
                       value={newNegativeKeyword}
                       onChange={(e) => setNewNegativeKeyword(e.target.value)}
                       onKeyPress={(e) => {
@@ -1876,7 +1904,7 @@ const Settings: React.FC<{}> = () => {
                       onClick={addNegativeKeyword}
                       disabled={!newNegativeKeyword.trim()}
                     >
-                      Add
+                      {t('common.add')}
                     </ActionButton>
                   </div>
                 </FormGroup>

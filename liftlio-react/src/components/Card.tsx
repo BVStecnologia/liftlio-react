@@ -48,7 +48,7 @@ const CardContainer = styled.div<{
   elevation?: 'low' | 'medium' | 'high';
   hoverEffect?: boolean;
 }>`
-  background-color: ${props => props.theme.colors.white};
+  background-color: ${props => props.theme.components.card.bg};
   border-radius: ${props => props.theme.radius.lg};
   width: ${props => props.fullWidth ? '100%' : 'auto'};
   padding: ${props => props.padding || '24px'};
@@ -188,7 +188,7 @@ const CardHeader = styled.div`
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 12px;
-  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+  border-bottom: 1px solid ${props => props.theme.colors.border.primary};
   
   @media (max-width: 768px) {
     margin-bottom: 16px;
@@ -225,7 +225,7 @@ const CardIcon = styled.span`
 const CardTitle = styled.h3`
   font-size: ${props => props.theme.fontSizes.lg};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.text.primary};
   margin: 0;
   
   @media (max-width: 768px) {
@@ -247,7 +247,7 @@ const CardContent = styled.div<{ collapsed: boolean }>`
 const CollapseButton = styled.button`
   background: none;
   border: none;
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -256,8 +256,8 @@ const CollapseButton = styled.button`
   transition: all 0.2s ease;
   
   &:hover {
-    background-color: ${props => props.theme.colors.lightGrey};
-    color: ${props => props.theme.colors.primary};
+    background-color: ${props => props.theme.colors.bg.hover};
+    color: ${props => props.theme.colors.accent.primary};
   }
   
   svg {

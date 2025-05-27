@@ -3,9 +3,13 @@ import styled, { keyframes } from 'styled-components';
 import { COLORS, withOpacity } from '../styles/colors';
 import * as FaIcons from 'react-icons/fa';
 import ProjectModal from './ProjectModal';
+import ThemeToggle from './ThemeToggle';
+import LanguageSelector from './LanguageSelector';
 import { IconComponent } from '../utils/IconHelper';
 import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabaseClient';
 
 // Import the MobileNavToggle from App.tsx
@@ -21,18 +25,15 @@ const HeaderContainer = styled.header`
   justify-content: space-between;
   align-items: center;
   padding: 12px 24px;
-  background-color: ${COLORS.SECONDARY}; /* Branco (30%) */
-  box-shadow: ${COLORS.SHADOW.LIGHT};
-  border-bottom: 1px solid ${COLORS.BORDER.DEFAULT}; /* Cinza médio (60%) */
-  color: ${COLORS.TEXT.ON_LIGHT};
-  --color-dominant: ${COLORS.DOMINANT};
-  --color-secondary: ${COLORS.SECONDARY};
-  --color-accent: ${COLORS.ACCENT};
+  background-color: ${props => props.theme.components.header.bg};
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid ${props => props.theme.components.header.border};
+  color: ${props => props.theme.components.header.text};
   position: sticky;
   top: 0;
-  z-index: 900; /* High but lower than sidebar (1000) */
+  z-index: 900;
   backdrop-filter: blur(10px);
-  background-color: rgba(255, 255, 255, 0.95);
+  transition: all 0.3s ease;
 
   @media (max-width: 768px) {
     padding: 10px 16px;
@@ -43,15 +44,14 @@ const HeaderContainer = styled.header`
 const ProjectSelector = styled.div`
   display: flex;
   align-items: center;
-  background: ${COLORS.ACCENT}; /* Azul naval escuro (10%) */
-  color: ${COLORS.TEXT.ON_DARK};
+  background: ${props => props.theme.components.header.bg};
+  color: ${props => props.theme.components.header.text};
+  border: 1px solid ${props => props.theme.components.header.border};
   padding: 10px 18px;
   border-radius: 12px; /* Mais arredondado para modernidade */
   cursor: pointer;
   font-weight: ${props => props.theme.fontWeights.medium};
-  box-shadow: ${COLORS.SHADOW.MEDIUM}, 
-              inset 0 0 0 1px ${withOpacity(COLORS.SECONDARY, 0.08)},
-              0 0 0 rgba(45, 62, 80, 0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.35s cubic-bezier(0.17, 0.67, 0.29, 0.96);
   position: relative;
   overflow: hidden;
@@ -86,20 +86,32 @@ const ProjectSelector = styled.div`
     height: 140%;
     top: -20%;
     left: -10%;
-    background: linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.05) 10%,
-      rgba(255, 255, 255, 0.9) 50%,
-      rgba(255, 255, 255, 0.05) 90%,
-      rgba(255, 255, 255, 0) 100%
-    );
+    background: ${props => props.theme.name === 'dark' 
+      ? `linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(255, 255, 255, 0.05) 10%,
+          rgba(255, 255, 255, 0.9) 50%,
+          rgba(255, 255, 255, 0.05) 90%,
+          rgba(255, 255, 255, 0) 100%
+        )`
+      : `linear-gradient(
+          to bottom,
+          rgba(103, 58, 183, 0) 0%,
+          rgba(103, 58, 183, 0.1) 10%,
+          rgba(103, 58, 183, 0.8) 50%,
+          rgba(103, 58, 183, 0.1) 90%,
+          rgba(103, 58, 183, 0) 100%
+        )`
+    };
     transform: rotate(20deg) translateZ(5px);
     z-index: 2;
-    box-shadow: 0 0 25px rgba(45, 62, 80, 0.8),
-                0 0 45px rgba(45, 62, 80, 0.3);
+    box-shadow: ${props => props.theme.name === 'dark'
+      ? '0 0 25px rgba(45, 62, 80, 0.8), 0 0 45px rgba(45, 62, 80, 0.3)'
+      : '0 0 25px rgba(103, 58, 183, 0.4), 0 0 45px rgba(103, 58, 183, 0.2)'
+    };
     filter: blur(0.2px);
-    opacity: 0.8;
+    opacity: ${props => props.theme.name === 'dark' ? '0.8' : '0.6'};
     animation: projectSelectorBeam 5s cubic-bezier(0.17, 0.67, 0.29, 0.96) infinite;
     animation-delay: 1s;
   }
@@ -145,15 +157,15 @@ const ProjectSelector = styled.div`
   
   &:hover {
     transform: perspective(800px) translateY(-3px) translateZ(4px) scale(1.01);
-    background: linear-gradient(135deg, ${COLORS.ACCENT} 0%, ${COLORS.ACCENT_LIGHT} 100%);
-    box-shadow: ${COLORS.SHADOW.STRONG}, 
-                inset 0 0 0 1px ${withOpacity(COLORS.SECONDARY, 0.15)},
-                0 0 20px ${withOpacity(COLORS.ACCENT, 0.4)};
+    background: ${props => props.theme.colors.bg.hover};
+    box-shadow: ${props => props.theme.shadows.lg};
     
     &::after {
       animation-duration: 3s;
-      box-shadow: 0 0 30px rgba(45, 62, 80, 0.9),
-                  0 0 60px rgba(45, 62, 80, 0.4);
+      box-shadow: ${props => props.theme.name === 'dark'
+        ? '0 0 30px rgba(45, 62, 80, 0.9), 0 0 60px rgba(45, 62, 80, 0.4)'
+        : '0 0 30px rgba(103, 58, 183, 0.5), 0 0 60px rgba(103, 58, 183, 0.3)'
+      };
     }
     
     &:before {
@@ -231,13 +243,13 @@ const PopupMenu = styled.div`
   top: 100%;
   right: 0;
   width: 250px;
-  background-color: ${COLORS.SECONDARY};
+  background-color: ${props => props.theme.components.modal.bg};
   border-radius: ${props => props.theme.radius.md};
-  box-shadow: ${COLORS.SHADOW.STRONG};
+  box-shadow: ${props => props.theme.shadows.lg};
   z-index: ${props => props.theme.zIndices.dropdown};
   overflow: hidden;
   margin-top: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid ${props => props.theme.colors.border.primary};
 
   @media (max-width: 480px) {
     width: 200px;
@@ -252,21 +264,22 @@ const PopupMenuItem = styled.div`
   align-items: center;
   position: relative;
   border-left: 3px solid transparent;
+  color: ${props => props.theme.colors.text.primary};
 
   &:hover {
-    background-color: ${COLORS.DOMINANT_LIGHTER};
-    border-left: 3px solid ${COLORS.ACCENT};
+    background-color: ${props => props.theme.colors.bg.hover};
+    border-left: 3px solid ${props => props.theme.colors.accent.primary};
   }
 
   &:active {
-    background-color: ${props => `${props.theme.colors.primary}14`};
+    background-color: ${props => props.theme.colors.bg.active};
   }
 
   svg {
     margin-right: 12px;
     font-size: 1rem;
-    color: ${COLORS.ACCENT};
-    opacity: 0.7;
+    color: ${props => props.theme.colors.text.secondary};
+    opacity: 0.8;
   }
 `;
 
@@ -282,12 +295,12 @@ const NotificationBadge = styled.div`
   transition: all 0.2s ease;
   
   &:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: ${props => props.theme.colors.bg.hover};
   }
   
   svg {
     font-size: 1.3rem;
-    color: ${COLORS.TEXT.SECONDARY};
+    color: ${props => props.theme.colors.text.secondary};
   }
   
   &::after {
@@ -297,9 +310,9 @@ const NotificationBadge = styled.div`
     right: 4px;
     min-width: 16px;
     height: 16px;
-    background-color: ${COLORS.ERROR};
+    background-color: ${props => props.theme.name === 'dark' ? '#52525B' : '#6B7280'};
     border-radius: 50%;
-    box-shadow: 0 0 0 2px ${COLORS.SECONDARY};
+    box-shadow: 0 0 0 2px ${props => props.theme.components.modal.bg};
     color: white;
     font-size: 10px;
     font-weight: bold;
@@ -347,10 +360,10 @@ const NotificationPopup = styled(PopupMenu)`
     right: 16px;
     width: 12px;
     height: 12px;
-    background: white;
+    background: ${props => props.theme.components.modal.bg};
     transform: rotate(45deg);
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
-    border-left: 1px solid rgba(0, 0, 0, 0.08);
+    border-top: 1px solid ${props => props.theme.colors.border.primary};
+    border-left: 1px solid ${props => props.theme.colors.border.primary};
   }
 
   @media (max-width: 768px) {
@@ -374,26 +387,26 @@ const MarkAsReadButton = styled.button`
   top: 10px;
   background: none;
   border: none;
-  color: ${COLORS.ACCENT};
+  color: ${props => props.theme.colors.accent.primary};
   font-size: 0.75rem;
   cursor: pointer;
   padding: 3px 6px;
   border-radius: 4px;
   
   &:hover {
-    background-color: ${withOpacity(COLORS.ACCENT, 0.1)};
+    background-color: ${props => props.theme.colors.bg.hover};
   }
 `;
 
 const NotificationItem = styled.div`
   padding: 14px 18px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid ${props => props.theme.colors.border.primary};
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
   
   &:hover {
-    background-color: rgba(45, 29, 66, 0.03);
+    background-color: ${props => props.theme.colors.bg.hover};
   }
 
   &:last-child {
@@ -404,20 +417,20 @@ const NotificationItem = styled.div`
     font-weight: ${props => props.theme.fontWeights.medium};
     margin: 0 0 6px 0;
     font-size: 0.9rem;
-    color: ${COLORS.TEXT.ON_LIGHT};
+    color: ${props => props.theme.colors.text.primary};
   }
   
   p {
     margin: 0;
     font-size: 0.85rem;
-    color: ${COLORS.TEXT.SECONDARY};
+    color: ${props => props.theme.colors.text.secondary};
     line-height: 1.4;
   }
   
   time {
     display: block;
     font-size: 0.75rem;
-    color: ${COLORS.DOMINANT_DARK};
+    color: ${props => props.theme.colors.text.secondary};
     margin-top: 8px;
   }
 
@@ -437,18 +450,18 @@ const NotificationItem = styled.div`
 
 const PopupHeader = styled.div`
   padding: 14px 18px;
-  border-bottom: 1px solid ${COLORS.BORDER.DEFAULT};
+  border-bottom: 1px solid ${props => props.theme.colors.border.primary};
   font-weight: ${props => props.theme.fontWeights.medium};
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: ${COLORS.DOMINANT_LIGHTER};
+  background-color: ${props => props.theme.colors.bg.secondary};
   font-size: 0.95rem;
-  color: ${COLORS.TEXT.ON_LIGHT};
+  color: ${props => props.theme.colors.text.primary};
   
   span {
     font-size: 0.8rem;
-    color: ${COLORS.ACCENT};
+    color: ${props => props.theme.colors.accent.primary};
     cursor: pointer;
     transition: all 0.2s ease;
     
@@ -469,7 +482,7 @@ const UserProfile = styled.div`
   transition: all 0.2s ease;
   
   &:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: ${props => props.theme.colors.bg.hover};
   }
 
   @media (max-width: 480px) {
@@ -497,10 +510,10 @@ const UserPopup = styled(PopupMenu)`
     right: 16px;
     width: 12px;
     height: 12px;
-    background: white;
+    background: ${props => props.theme.components.modal.bg};
     transform: rotate(45deg);
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
-    border-left: 1px solid rgba(0, 0, 0, 0.08);
+    border-top: 1px solid ${props => props.theme.colors.border.primary};
+    border-left: 1px solid ${props => props.theme.colors.border.primary};
   }
 
   @media (max-width: 480px) {
@@ -712,20 +725,20 @@ const UserAvatar = styled.div`
 
 const UserInfo = styled.div`
   padding: 18px;
-  border-bottom: 1px solid ${COLORS.BORDER.DEFAULT};
+  border-bottom: 1px solid ${props => props.theme.colors.border.primary};
   text-align: center;
-  background-color: ${COLORS.DOMINANT_LIGHTER};
+  background-color: ${props => props.theme.colors.bg.secondary};
   
   h4 {
     margin: 10px 0 5px;
     font-weight: ${props => props.theme.fontWeights.medium};
-    color: ${COLORS.TEXT.ON_LIGHT};
+    color: ${props => props.theme.colors.text.primary};
   }
   
   p {
     margin: 0;
     font-size: 0.8rem;
-    color: ${COLORS.TEXT.SECONDARY};
+    color: ${props => props.theme.colors.text.secondary};
   }
   
   .profile-avatar {
@@ -742,8 +755,8 @@ const AddProjectButton = styled.button`
   padding: 8px 14px;
   border-radius: ${props => props.theme.radius.md};
   border: none;
-  background: ${COLORS.ACCENT}; /* Azul naval escuro (10%) */
-  color: ${COLORS.TEXT.ON_DARK};
+  background: ${props => props.theme.colors.accent.primary};
+  color: white;
   font-weight: ${props => props.theme.fontWeights.medium};
   font-size: ${props => props.theme.fontSizes.sm};
   margin-right: 20px; /* Position it at the header right section */
@@ -903,34 +916,65 @@ const AddProjectButton = styled.button`
   }
 `;
 
-const LanguageSelector = styled.div`
+const ThemeToggleButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'};
+  background: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#ffffff'};
+  color: ${props => props.theme.colors.text.primary};
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px ${props => props.theme.colors.shadowMedium};
+    background: ${props => props.theme.name === 'dark' ? props.theme.colors.primary : props.theme.colors.primary};
+    color: ${props => props.theme.name === 'dark' ? '#000' : '#fff'};
+    border-color: ${props => props.theme.colors.primary};
+  }
+  
+  svg {
+    font-size: 18px;
+  }
+`;
+
+const LanguageSelectorButton = styled.div`
   position: relative;
   cursor: pointer;
   display: flex;
   align-items: center;
-  padding: 6px 10px;
-  border-radius: 8px; /* Menos arredondado */
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#ffffff'};
+  border: 1px solid ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'};
+  color: ${props => props.theme.colors.text.primary};
   transition: all 0.2s ease;
+  gap: 8px;
   
   &:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : '#f0f0f0'};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px ${props => props.theme.colors.shadowMedium};
   }
   
   svg {
-    font-size: 1.3rem;
-    color: ${COLORS.TEXT.SECONDARY};
-    margin-right: 5px;
+    font-size: 1.2rem;
   }
 
   @media (max-width: 768px) {
-    padding: 4px 8px;
+    padding: 6px 12px;
+    font-size: 14px;
   }
 
   @media (max-width: 480px) {
-    padding: 4px 6px;
+    padding: 4px 8px;
     
     svg {
-      font-size: 1.1rem;
+      font-size: 1rem;
     }
   }
 `;
@@ -969,11 +1013,11 @@ const ProjectsDropdown = styled.div`
   left: 0;
   z-index: ${props => props.theme.zIndices.dropdown};
   width: 280px;
-  background-color: white;
+  background-color: ${props => props.theme.components.modal.bg};
   border-radius: ${props => props.theme.radius.md};
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: ${props => props.theme.shadows.lg};
   margin-top: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid ${props => props.theme.colors.border.primary};
   overflow: hidden;
   animation: fadeIn 0.2s ease;
 
@@ -989,10 +1033,10 @@ const ProjectsDropdown = styled.div`
     left: 40px;
     width: 12px;
     height: 12px;
-    background: white;
+    background: ${props => props.theme.components.modal.bg};
     transform: rotate(45deg);
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
-    border-left: 1px solid rgba(0, 0, 0, 0.08);
+    border-top: 1px solid ${props => props.theme.colors.border.primary};
+    border-left: 1px solid ${props => props.theme.colors.border.primary};
   }
 
   @media (max-width: 480px) {
@@ -1026,6 +1070,7 @@ const ProjectItem = styled.div`
   border-left: 2px solid transparent;
   position: relative;
   overflow: hidden;
+  color: ${props => props.theme.colors.text.primary};
   
   &:before {
     content: '';
@@ -1052,9 +1097,9 @@ const ProjectItem = styled.div`
     }
     
     svg {
-      color: ${props => props.theme.colors.primary};
-      filter: drop-shadow(0 0 3px ${props => `${props.theme.colors.primary}4D`});
-      transform: scale(1.1);
+      color: ${props => props.theme.colors.text.primary};
+      opacity: 1;
+      transform: scale(1.05);
     }
   }
   
@@ -1065,7 +1110,7 @@ const ProjectItem = styled.div`
   svg {
     margin-right: 12px;
     font-size: 1rem;
-    color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.colors.text.secondary};
     position: relative;
     z-index: 2;
     transition: all 0.3s ease;
@@ -1114,7 +1159,9 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const { user, signOut } = useAuth();
   const { currentProject, setCurrentProject, projects } = useProject();
-  const [currentLanguage, setCurrentLanguage] = useState('EN');
+  const { theme, toggleTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
+  const [currentLanguage, setCurrentLanguage] = useState(language.toUpperCase());
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showProjectsDropdown, setShowProjectsDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -1703,12 +1750,12 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
               </ProjectIcon>
               {currentProject && projects.some(p => p.id === currentProject.id) ? 
                 (currentProject["Project name"] || currentProject.name) : 
-                "Select a project"}
+                t('header.selectProject')}
             </ProjectSelector>
             
             {showProjectsDropdown && (
               <ProjectsDropdown>
-                <PopupHeader>Your Projects</PopupHeader>
+                <PopupHeader>{t('header.selectProject')}</PopupHeader>
                 {projects.length > 0 ? (
                   <>
                     {projects.map(project => (
@@ -1719,18 +1766,18 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                     ))}
                     <ProjectItem onClick={() => setShowProjectModal(true)} style={{borderTop: '1px solid rgba(0,0,0,0.1)', marginTop: '10px', paddingTop: '15px'}}>
                       <IconComponent icon={FaIcons.FaPlus} />
-                      New Project
+                      {t('header.createProject')}
                     </ProjectItem>
                   </>
                 ) : (
                   <>
                     <ProjectItem>
                       <IconComponent icon={FaIcons.FaExclamationCircle} />
-                      No projects found
+                      {t('project.error')}
                     </ProjectItem>
                     <ProjectItem onClick={() => setShowProjectModal(true)} style={{borderTop: '1px solid rgba(0,0,0,0.1)', marginTop: '10px', paddingTop: '15px'}}>
                       <IconComponent icon={FaIcons.FaPlus} />
-                      Create Project
+                                              {t('header.createProject')}
                     </ProjectItem>
                   </>
                 )}
@@ -1844,7 +1891,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             {showNotifications && (
               <NotificationPopup>
                 <PopupHeader>
-                  Notifications
+                  {t('header.notifications')}
                   {/* Mostrar "Mark all as read" apenas se houver notificações não lidas */}
                   {unreadCount > 0 && (
                     <span onClick={markAllAsRead}>Mark all as read</span>
@@ -1880,7 +1927,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                     
                     if (sortedNotifications.length === 0) {
                       return (
-                        <div style={{ padding: '20px', textAlign: 'center', color: COLORS.TEXT.SECONDARY }}>
+                        <div style={{ padding: '20px', textAlign: 'center', color: theme.colors.text.secondary }}>
                           No recent notifications
                         </div>
                       );
@@ -1892,7 +1939,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                         onClick={() => openNotificationUrl(notification)}
                         style={{ 
                           backgroundColor: notification.lido ? 'transparent' : 'rgba(45, 29, 66, 0.05)',
-                          borderLeft: notification.lido ? 'none' : `3px solid ${COLORS.ACCENT}`,
+                          borderLeft: notification.lido ? 'none' : `3px solid ${theme.colors.accent.primary}`,
                           position: 'relative' // Para posicionar o indicador "Read"
                         }}
                       >
@@ -1901,7 +1948,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                           {notification.lido && (
                             <span style={{
                               fontSize: '0.65rem',
-                              color: COLORS.TEXT.SECONDARY,
+                              color: theme.colors.text.secondary,
                               fontWeight: 'normal',
                               background: 'rgba(0,0,0,0.05)',
                               padding: '2px 6px',
@@ -1925,7 +1972,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                     ));
                   })()
                 ) : (
-                  <div style={{ padding: '20px', textAlign: 'center', color: COLORS.TEXT.SECONDARY }}>
+                  <div style={{ padding: '20px', textAlign: 'center', color: theme.colors.text.secondary }}>
                     No notifications found
                   </div>
                 )}
@@ -1933,26 +1980,11 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             )}
           </div>
           
-          {/* Seletor de idioma oculto - pode ser reativado posteriormente se necessário */}
-          <div ref={languageRef} style={{ display: 'none', position: 'relative' }}>
-            <LanguageSelector onClick={() => setShowLanguageMenu(!showLanguageMenu)}>
-              <IconComponent icon={FaIcons.FaGlobe} />
-              {currentLanguage}
-            </LanguageSelector>
-            
-            {showLanguageMenu && (
-              <LanguagePopup>
-                <PopupMenuItem onClick={() => handleLanguageChange('EN')}>
-                  <IconComponent icon={FaIcons.FaFlag} />
-                  English
-                </PopupMenuItem>
-                <PopupMenuItem onClick={() => handleLanguageChange('PT')}>
-                  <IconComponent icon={FaIcons.FaFlag} />
-                  Português
-                </PopupMenuItem>
-              </LanguagePopup>
-            )}
-          </div>
+          {/* Tema Toggle */}
+          <ThemeToggle />
+          
+          {/* Seletor de idioma */}
+          <LanguageSelector />
           
           <div ref={userMenuRef} style={{ position: 'relative' }}>
             <UserProfile onClick={() => setShowUserMenu(!showUserMenu)}>

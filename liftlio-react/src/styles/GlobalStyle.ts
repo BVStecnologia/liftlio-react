@@ -70,22 +70,69 @@ const GlobalStyle = createGlobalStyle`
   
   /* Improve scrolling experience */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 8px !important;
+    height: 8px !important;
   }
   
   ::-webkit-scrollbar-track {
-    background: ${props => props.theme.colors.tertiaryLight};
-    border-radius: 8px;
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.05)' 
+      : 'rgba(0, 0, 0, 0.05)'} !important;
+    border-radius: 8px !important;
   }
   
   ::-webkit-scrollbar-thumb {
-    background: ${props => props.theme.colors.tertiary};
-    border-radius: 8px;
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.2)' 
+      : 'rgba(0, 0, 0, 0.2)'} !important;
+    border-radius: 8px !important;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: ${props => props.theme.colors.tertiaryDark};
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.3)' 
+      : 'rgba(0, 0, 0, 0.3)'} !important;
+  }
+  
+  /* Apply to all elements including body and html to ensure consistency */
+  *, html, body {
+    scrollbar-width: thin;
+    scrollbar-color: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05)' 
+      : 'rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05)'};
+  }
+  
+  *::-webkit-scrollbar,
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    width: 8px !important;
+    height: 8px !important;
+  }
+  
+  *::-webkit-scrollbar-track,
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track {
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.05)' 
+      : 'rgba(0, 0, 0, 0.05)'} !important;
+    border-radius: 8px !important;
+  }
+  
+  *::-webkit-scrollbar-thumb,
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb {
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.2)' 
+      : 'rgba(0, 0, 0, 0.2)'} !important;
+    border-radius: 8px !important;
+  }
+  
+  *::-webkit-scrollbar-thumb:hover,
+  html::-webkit-scrollbar-thumb:hover,
+  body::-webkit-scrollbar-thumb:hover {
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.3)' 
+      : 'rgba(0, 0, 0, 0.3)'} !important;
   }
   
   @media (max-width: 768px) {

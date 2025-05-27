@@ -7,6 +7,8 @@ import { supabase } from '../lib/supabaseClient';
 import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import { callRPC } from '../lib/supabaseClient';
 import '../styles/contentCategories.css';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
@@ -37,19 +39,35 @@ const formatDateTime = (date: Date | string | number): string => {
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 };
 
-// Definir paleta de cores para os gráficos
-const CHART_PALETTE = [
-  '#4e6785', // Azul naval claro (ACCENT_LIGHTER)
-  '#34495e', // Azul naval médio (ACCENT_LIGHT) 
-  '#2d3e50', // Azul naval escuro (ACCENT)
-  '#243444', // Azul naval muito escuro (ACCENT_DARK)
-  '#00A9DB', // Azul info
-  '#4CAF50', // Verde
-  '#FFAA15', // Laranja
-  '#e74c3c', // Vermelho
-  '#8a969c', // Cinza
-  '#b5c2cb', // Cinza escuro
-];
+// Função para gerar paleta de cores baseada no tema
+const getChartPalette = (isDarkTheme: boolean) => {
+  if (isDarkTheme) {
+    return [
+      '#6B8FBE', // Azul naval claro mais brilhante
+      '#5A7BA6', // Azul naval médio mais brilhante
+      '#4A6A91', // Azul naval escuro mais brilhante
+      '#3B5873', // Azul naval muito escuro mais brilhante
+      '#3BBEFF', // Azul info mais brilhante
+      '#66D66F', // Verde mais brilhante
+      '#FFB84D', // Laranja mais brilhante
+      '#FF6B6B', // Vermelho mais brilhante
+      '#B0BEC5', // Cinza mais claro
+      '#CFD8DC', // Cinza mais claro ainda
+    ];
+  }
+  return [
+    '#4e6785', // Azul naval claro
+    '#34495e', // Azul naval médio
+    '#2d3e50', // Azul naval escuro
+    '#243444', // Azul naval muito escuro
+    '#00A9DB', // Azul info
+    '#4CAF50', // Verde
+    '#FFAA15', // Laranja
+    '#e74c3c', // Vermelho
+    '#8a969c', // Cinza
+    '#b5c2cb', // Cinza escuro
+  ];
+};
 
 // Shared styled components
 // Estilos para componentes de paginação
@@ -63,7 +81,7 @@ const PaginationContainer = styled.div`
 
 const PaginationInfo = styled.div`
   font-size: 14px;
-  color: #666;
+  color: ${props => props.theme.colors.text.secondary};
 `;
 
 const PaginationControls = styled.div`
@@ -78,15 +96,21 @@ const PaginationButton = styled.button<{ disabled?: boolean }>`
   gap: 8px;
   padding: 8px 16px;
   border-radius: 8px;
-  background: #f7f7f9;
-  border: 1px solid #e0e0e0;
-  color: #333;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.05)' 
+    : '#f7f7f9'};
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : '#e0e0e0'};
+  color: ${props => props.theme.colors.text.primary};
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   
   &:hover:not(:disabled) {
-    background: #e9e9ec;
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.1)' 
+      : '#e9e9ec'};
   }
   
   &:disabled {
@@ -102,8 +126,12 @@ const PaginationPage = styled.div`
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: #5F27CD;
-  color: white;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.2)' 
+    : '#5F27CD'};
+  color: ${props => props.theme.name === 'dark' 
+    ? props.theme.colors.text.primary 
+    : 'white'};
   font-weight: bold;
 `;
 
@@ -111,14 +139,16 @@ const PageContainer = styled.div`
   padding: 20px;
   max-width: 1600px;
   margin: 0 auto;
-  background-color: ${COLORS.DOMINANT}; /* Dominant color (60%) - Cinza médio */
+  background-color: ${props => props.theme.name === 'dark' 
+    ? '#0A0A0A' 
+    : COLORS.DOMINANT};
 `;
 
 const PageTitle = styled.h1`
   font-size: ${props => props.theme.fontSizes['2xl']};
   font-weight: ${props => props.theme.fontWeights.bold};
   margin-bottom: 24px;
-  color: ${COLORS.ACCENT}; /* Accent color (10%) - Azul naval escuro */
+  color: ${props => props.theme.colors.text.primary};
   display: flex;
   align-items: center;
   
@@ -152,13 +182,18 @@ const Tab = styled.button<{ active: boolean }>`
   border: none;
   position: relative;
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.regular};
-  color: ${props => props.active ? COLORS.ACCENT : COLORS.TEXT.SECONDARY};
+  color: ${props => {
+    if (props.active) {
+      return props.theme.name === 'dark' ? '#FFFFFF' : COLORS.ACCENT;
+    }
+    return props.theme.name === 'dark' ? '#9CA3AF' : COLORS.TEXT.SECONDARY;
+  }};
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: ${props => props.theme.fontSizes.md};
   
   &:hover {
-    color: ${COLORS.ACCENT};
+    color: ${props => props.theme.name === 'dark' ? '#FFFFFF' : COLORS.ACCENT};
   }
   
   &::after {
@@ -168,7 +203,12 @@ const Tab = styled.button<{ active: boolean }>`
     left: 0;
     right: 0;
     height: 3px;
-    background: ${props => props.active ? COLORS.ACCENT : 'transparent'};
+    background: ${props => {
+      if (props.active) {
+        return props.theme.name === 'dark' ? '#4B5563' : COLORS.ACCENT;
+      }
+      return 'transparent';
+    }};
     z-index: 1;
     transition: all 0.3s ease;
   }
@@ -233,12 +273,16 @@ const StatsGrid = styled.div`
 `;
 
 const StatCard = styled.div`
-  background: white;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.03)' 
+    : 'white'};
   padding: 16px;
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.sm};
   transition: ${props => props.theme.transitions.default};
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'rgba(0, 0, 0, 0.03)'};
   position: relative;
   overflow: hidden;
   
@@ -270,7 +314,7 @@ const StatCardHeader = styled.div`
 
 const StatLabel = styled.h3`
   font-size: ${props => props.theme.fontSizes.md};
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   margin: 0;
   font-weight: ${props => props.theme.fontWeights.medium};
 `;
@@ -282,8 +326,10 @@ const StatIconContainer = styled.div<{ color: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${props => `linear-gradient(135deg, ${props.color}, ${withOpacity(props.color, 0.7)})`};
-  color: white;
+  background: ${props => props.theme.name === 'dark' 
+    ? `linear-gradient(135deg, ${withOpacity(props.color, 0.3)}, ${withOpacity(props.color, 0.2)})` 
+    : `linear-gradient(135deg, ${props.color}, ${withOpacity(props.color, 0.7)})`};
+  color: ${props => props.theme.name === 'dark' ? props.color : '#FFFFFF'};
   font-size: 18px;
   box-shadow: ${props => props.theme.shadows.sm};
   position: relative;
@@ -347,7 +393,7 @@ const StatValue = styled.div`
   text-align: center;
   line-height: 1.2;
   letter-spacing: -0.5px;
-  color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const StatChange = styled.div<{ positive: boolean }>`
@@ -360,7 +406,7 @@ const StatChange = styled.div<{ positive: boolean }>`
   margin-top: 8px;
   
   span {
-    color: ${props => props.theme.colors.darkGrey};
+    color: ${props => props.theme.colors.text.secondary};
     margin-left: 6px;
     font-size: ${props => props.theme.fontSizes.xs};
   }
@@ -368,7 +414,9 @@ const StatChange = styled.div<{ positive: boolean }>`
 
 const StatLineSpacer = styled.div`
   height: 1px;
-  background: ${props => props.theme.colors.lightGrey};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : props.theme.colors.lightGrey};
   margin: 16px 0;
 `;
 
@@ -386,13 +434,19 @@ const ChartRow = styled.div`
 `;
 
 const ChartContainer = styled.div`
-  background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.8));
+  background: ${props => props.theme.name === 'dark' 
+    ? 'linear-gradient(135deg, rgba(30,30,30,0.9), rgba(20,20,20,0.9))' 
+    : 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.8))'};
   backdrop-filter: blur(10px);
   border-radius: ${props => props.theme.radius.lg};
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  box-shadow: ${props => props.theme.name === 'dark' 
+    ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+    : '0 8px 32px rgba(0, 0, 0, 0.08)'};
   margin-bottom: 24px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'rgba(255, 255, 255, 0.4)'};
   position: relative;
   transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
   
@@ -442,8 +496,12 @@ const ChartHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  background: rgba(245, 247, 250, 0.5);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.05)' 
+    : 'rgba(245, 247, 250, 0.5)'};
+  border-bottom: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'rgba(0, 0, 0, 0.05)'};
   position: relative;
   overflow: hidden;
   
@@ -485,14 +543,16 @@ const ChartTitle = styled.h3`
   margin: 0;
   display: flex;
   align-items: center;
-  color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.text.primary};
   font-weight: ${props => props.theme.fontWeights.semiBold};
   position: relative;
-  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);
+  text-shadow: ${props => props.theme.name === 'dark' 
+    ? 'none' 
+    : '0 1px 1px rgba(255, 255, 255, 0.7)'};
   
   svg {
     margin-right: 12px;
-    color: ${COLORS.ACCENT};
+    color: ${props => props.theme.colors.text.primary};
     font-size: 1.3em;
     filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.15));
     transition: transform 0.3s ease;
@@ -564,7 +624,9 @@ const ChartBody = styled.div`
 // Modern time selector
 const TimeSelector = styled.div`
   display: flex;
-  background: ${props => props.theme.colors.tertiary}40;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : props.theme.colors.tertiary + '40'};
   border-radius: ${props => props.theme.radius.pill};
   padding: 4px;
   box-shadow: ${props => props.theme.shadows.sm};
@@ -572,8 +634,20 @@ const TimeSelector = styled.div`
 
 const TimeOption = styled.button<{ active: boolean }>`
   padding: 8px 16px;
-  background: ${props => props.active ? props.theme.colors.secondary : 'transparent'}; /* White (30%) if active */
-  color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.darkGrey};
+  background: ${props => {
+    if (props.active) {
+      return props.theme.name === 'dark' 
+        ? 'rgba(255, 255, 255, 0.2)' 
+        : props.theme.colors.secondary;
+    }
+    return 'transparent';
+  }};
+  color: ${props => {
+    if (props.active) {
+      return props.theme.colors.text.primary;
+    }
+    return props.theme.colors.text.secondary;
+  }};
   border: none;
   border-radius: ${props => props.theme.radius.pill};
   font-size: ${props => props.theme.fontSizes.sm};
@@ -583,18 +657,24 @@ const TimeOption = styled.button<{ active: boolean }>`
   box-shadow: ${props => props.active ? props.theme.shadows.sm : 'none'};
   
   &:hover {
-    color: ${props => props.theme.colors.primary};
-    background: ${props => !props.active && props.theme.colors.tertiary}20;
+    color: ${props => props.theme.colors.text.primary};
+    background: ${props => !props.active && props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.05)' 
+      : !props.active && props.theme.colors.tertiary + '20'};
   }
 `;
 
 // Channel list styling
 const ChannelsContainer = styled.div`
-  background: white;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.03)' 
+    : 'white'};
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.sm};
   padding: 24px;
-  border: 1px solid rgba(0, 0, 0, 0.03);
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'rgba(0, 0, 0, 0.03)'};
   position: relative;
   
   &::before {
@@ -623,14 +703,14 @@ const ChannelsHeader = styled.div`
 const SectionTitle = styled.h2`
   font-size: ${props => props.theme.fontSizes.xl};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.text.primary};
   margin: 0;
   display: flex;
   align-items: center;
   
   svg {
     margin-right: 10px;
-    color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 
@@ -643,7 +723,9 @@ const ChannelList = styled.div`
 
 // Create a wrapper div that can accept onClick and other interactive props
 const ChannelCardWrapper = styled.div<{ active: boolean }>`
-  background: white;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.03)' 
+    : 'white'};
   border-radius: ${props => props.theme.radius.lg};
   overflow: hidden;
   cursor: pointer;
@@ -653,8 +735,8 @@ const ChannelCardWrapper = styled.div<{ active: boolean }>`
     props.theme.shadows.md : 
     props.theme.shadows.sm};
   border: ${props => props.active ? 
-    `1px solid ${props.theme.colors.primary}40` : 
-    '1px solid rgba(0, 0, 0, 0.03)'};
+    `1px solid ${props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.3)' : props.theme.colors.primary + '40'}` : 
+    props.theme.name === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.03)'};
   transform: ${props => props.active ? 'translateY(-3px)' : 'none'};
   
   &:hover {
@@ -687,10 +769,12 @@ const CardHeader = styled.div`
   display: flex;
   justify-content: space-between;
   padding: 16px;
-  background: linear-gradient(to right, 
-    ${props => props.theme.colors.lightGrey}40, 
-    ${props => props.theme.colors.lightGrey}80);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  background: ${props => props.theme.name === 'dark' 
+    ? 'linear-gradient(to right, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.08))' 
+    : `linear-gradient(to right, ${props.theme.colors.lightGrey}40, ${props.theme.colors.lightGrey}80)`};
+  border-bottom: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'rgba(0, 0, 0, 0.04)'};
 `;
 
 // Melhorar a estilização do ChannelBadge conforme imagem
@@ -699,14 +783,20 @@ const ChannelBadge = styled.div<{ status: string }>`
   border-radius: ${props => props.theme.radius.pill};
   font-size: ${props => props.theme.fontSizes.xs};
   font-weight: ${props => props.theme.fontWeights.medium};
-  background: ${props => 
-    props.status === 'active' ? props.theme.colors.successLight : 
-    props.status === 'pending' ? props.theme.colors.warningLight : 
-    props.theme.colors.lightGrey};
+  background: ${props => {
+    if (props.theme.name === 'dark') {
+      return props.status === 'active' ? 'rgba(76, 175, 80, 0.2)' : 
+             props.status === 'pending' ? 'rgba(255, 170, 21, 0.2)' : 
+             'rgba(255, 255, 255, 0.1)';
+    }
+    return props.status === 'active' ? props.theme.colors.successLight : 
+           props.status === 'pending' ? props.theme.colors.warningLight : 
+           props.theme.colors.lightGrey;
+  }};
   color: ${props => 
     props.status === 'active' ? props.theme.colors.success : 
     props.status === 'pending' ? props.theme.colors.warning : 
-    props.theme.colors.darkGrey};
+    props.theme.colors.text.secondary};
   display: flex;
   align-items: center;
   box-shadow: ${props => props.theme.shadows.sm};
@@ -727,7 +817,9 @@ const ChannelBadge = styled.div<{ status: string }>`
 
 // Score badge conforme imagem
 const ScoreBadge = styled.div`
-  background: ${props => props.theme.colors.successLight};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(76, 175, 80, 0.2)' 
+    : props.theme.colors.successLight};
   color: ${props => props.theme.colors.success};
   padding: 5px 12px;
   border-radius: ${props => props.theme.radius.pill};
@@ -762,15 +854,15 @@ const ChannelImage = styled.div<{ imageUrl?: string }>`
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background-color: ${props => props.imageUrl ? 'transparent' : '#f0f2f5'};
+  background-color: ${props => props.imageUrl ? 'transparent' : 
+    props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#f0f2f5'};
   background-image: ${props => props.imageUrl ? `url(${props.imageUrl})` : 'none'};
   background-size: cover;
   background-position: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #888;
-  background-color: ${props => !props.imageUrl ? '#f5f5f5' : 'transparent'};
+  color: ${props => props.theme.colors.text.secondary};
   
   svg {
     font-size: 24px;
@@ -788,7 +880,7 @@ const ChannelInfoContainer = styled.div`
 const ChannelName = styled.h3`
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: ${props => props.theme.colors.text.primary};
   margin: 0 0 16px;
 `;
 
@@ -807,7 +899,7 @@ const StatRow = styled.div`
 
 // Ícone de estatística
 const StatIcon = styled.div`
-  color: #666;
+  color: ${props => props.theme.colors.text.secondary};
   margin-right: 10px;
   display: flex;
   align-items: center;
@@ -821,7 +913,7 @@ const StatIcon = styled.div`
 // Texto de estatística
 const StatText = styled.div`
   font-size: 14px;
-  color: #666;
+  color: ${props => props.theme.colors.text.secondary};
 `;
 
 // Área para o botão "Click to view channel videos"
@@ -829,7 +921,9 @@ const ActionArea = styled.div`
   margin-top: 20px;
   display: flex;
   align-items: center;
-  color: #007BFF;
+  color: ${props => props.theme.name === 'dark' 
+    ? props.theme.colors.accent.primary 
+    : '#007BFF'};
   font-size: 14px;
   font-weight: 500;
   
@@ -851,7 +945,9 @@ const ChannelIconWrapper = styled.div`
     bottom: 0;
     left: -100%; /* Estender até a borda esquerda */
     width: calc(100% + 84px); /* Largura ajustada para ocupar toda área esquerda */
-    background: #f2f2f2;
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.05)' 
+      : '#f2f2f2'};
     border-radius: ${props => props.theme.radius.lg} 0 0 ${props => props.theme.radius.lg};
     z-index: 0;
   }
@@ -861,17 +957,19 @@ const ChannelIconWrapper = styled.div`
 const ChannelIcon = styled.div`
   width: 80px; /* Aumentar de 64px para 80px */
   height: 80px; /* Aumentar de 64px para 80px */
-  background: linear-gradient(to right, #f0f0f0, #e0e0e0);
+  background: ${props => props.theme.name === 'dark' 
+    ? 'linear-gradient(to right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))' 
+    : 'linear-gradient(to right, #f0f0f0, #e0e0e0)'};
   background-size: cover;
   background-position: center;
   border-radius: 50%;
-  color: white;
+  color: ${props => props.theme.name === 'dark' ? props.theme.colors.text.primary : 'white'};
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 30px; /* Aumentar de 24px para 30px */
   flex-shrink: 0;
-  border: 3px solid #fff;
+  border: 3px solid ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#fff'};
   box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   overflow: hidden;
   position: relative;
@@ -916,8 +1014,8 @@ const ChannelStatItem = styled.div`
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
+    background: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)'};
+    color: ${props => props.theme.name === 'dark' ? props.theme.colors.text.primary : 'white'};
     padding: 6px 10px;
     border-radius: 4px;
     font-size: 12px;
@@ -948,7 +1046,7 @@ const CustomTooltip = styled.div`
   left: 50%;
   transform: translateX(-50%);
   background: ${props => props.theme.colors.text};
-  color: white;
+  color: ${props => props.theme.name === 'dark' ? props.theme.colors.background : 'white'};
   padding: 6px 10px;
   border-radius: ${props => props.theme.radius.sm};
   font-size: ${props => props.theme.fontSizes.xs};
@@ -1008,7 +1106,8 @@ const StatusPopup = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: ${props => props.theme.name === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.7)'};
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1016,24 +1115,29 @@ const StatusPopup = styled.div`
 `;
 
 const PopupContent = styled.div`
-  background: ${props => props.theme.colors.white};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(30, 30, 30, 0.95)' 
+    : 'white'};
   border-radius: ${props => props.theme.radius.lg};
   padding: 24px;
   width: 400px;
   max-width: 90%;
   box-shadow: ${props => props.theme.shadows.lg};
   text-align: center;
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'transparent'};
 `;
 
 const PopupTitle = styled.h3`
   font-size: ${props => props.theme.fontSizes.xl};
   margin-bottom: 16px;
-  color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const PopupText = styled.p`
   margin-bottom: 24px;
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
 `;
 
 const PopupActions = styled.div`
@@ -1050,19 +1154,20 @@ const StatusToggleButton = styled(ButtonUI)`
 const VideoTable = styled.div`
   width: 100%;
   border-collapse: collapse;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: ${props => props.theme.name === 'dark' 
+    ? '0 8px 30px rgba(0, 0, 0, 0.3)' 
+    : '0 8px 30px rgba(0, 0, 0, 0.08)'};
   border-radius: ${props => props.theme.radius.lg};
   overflow: hidden;
   margin-top: 24px;
   position: relative;
-  background: linear-gradient(
-    165deg, 
-    rgba(255, 255, 255, 0.9) 0%,
-    rgba(255, 255, 255, 0.95) 50%,
-    rgba(240, 245, 255, 0.85) 100%
-  );
+  background: ${props => props.theme.name === 'dark' 
+    ? 'linear-gradient(165deg, rgba(30, 30, 30, 0.9) 0%, rgba(25, 25, 25, 0.95) 50%, rgba(20, 20, 25, 0.85) 100%)' 
+    : 'linear-gradient(165deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.95) 50%, rgba(240, 245, 255, 0.85) 100%)'};
   backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'rgba(255, 255, 255, 0.4)'};
   
   /* Add tech grid pattern overlay */
   &:before {
@@ -1093,14 +1198,14 @@ const VideoTableHeader = styled.div`
   display: grid;
   grid-template-columns: minmax(400px, 3fr) 100px 100px 150px 100px;
   padding: 16px 24px;
-  background: linear-gradient(
-    90deg, 
-    ${props => withOpacity(props.theme.colors.primary, 0.15)},
-    ${props => withOpacity(props.theme.colors.primary, 0.05)}
-  );
+  background: ${props => props.theme.name === 'dark' 
+    ? 'linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))' 
+    : `linear-gradient(90deg, ${withOpacity(props.theme.colors.primary, 0.15)}, ${withOpacity(props.theme.colors.primary, 0.05)})`};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  border-bottom: 1px solid ${props => withOpacity(props.theme.colors.primary, 0.15)};
-  color: ${props => props.theme.colors.primary};
+  border-bottom: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : withOpacity(props.theme.colors.primary, 0.15)};
+  color: ${props => props.theme.colors.text.primary};
   text-transform: uppercase;
   font-size: ${props => props.theme.fontSizes.sm};
   letter-spacing: 0.7px;
@@ -1163,7 +1268,7 @@ const VideoTitle = styled.div`
   display: flex;
   align-items: flex-start;
   font-weight: ${props => props.theme.fontWeights.medium};
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.text.primary};
   padding-right: 16px;
   height: 100%;
   position: relative;
@@ -1171,7 +1276,9 @@ const VideoTitle = styled.div`
   
   /* Add shine effect on hover at the parent row level */
   tr:hover & {
-    color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.name === 'dark' 
+      ? props.theme.colors.accent.primary 
+      : props.theme.colors.primary};
   }
 `;
 
@@ -1260,7 +1367,9 @@ const VideoTableRow = styled.div`
   display: grid;
   grid-template-columns: minmax(400px, 3fr) 100px 100px 150px 100px;
   padding: 16px 24px;
-  border-bottom: 1px solid ${props => props.theme.colors.tertiary}30;
+  border-bottom: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : props.theme.colors.tertiary + '30'};
   align-items: center;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
@@ -1269,7 +1378,9 @@ const VideoTableRow = styled.div`
   
   /* Add alternating row colors */
   &:nth-child(even) {
-    background: ${props => withOpacity(props.theme.colors.primary, 0.02)};
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.02)' 
+      : withOpacity(props.theme.colors.primary, 0.02)};
   }
   
   /* Add animation entry effect */
@@ -1279,7 +1390,9 @@ const VideoTableRow = styled.div`
   
   /* Add alternating row colors */
   &:nth-child(even) {
-    background: ${props => withOpacity(props.theme.colors.primary, 0.02)};
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.02)' 
+      : withOpacity(props.theme.colors.primary, 0.02)};
   }
   
   @keyframes fadeInUp {
@@ -1337,7 +1450,9 @@ const VideoTableRow = styled.div`
         background: linear-gradient(
           to bottom,
           transparent,
-          ${props => props.theme.colors.tertiary}80,
+          ${props => props.theme.name === 'dark' 
+            ? 'rgba(255, 255, 255, 0.2)' 
+            : props.theme.colors.tertiary + '80'},
           transparent
         );
       }
@@ -1490,9 +1605,34 @@ const FilterGroup = styled.div`
 
 const FilterButton = styled.button<{ active?: boolean }>`
   padding: 10px 16px;
-  background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.secondary};
-  color: ${props => props.active ? props.theme.colors.secondary : props.theme.colors.darkGrey};
-  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.tertiary};
+  background: ${props => {
+    if (props.active) {
+      return props.theme.name === 'dark' 
+        ? 'rgba(255, 255, 255, 0.2)' 
+        : props.theme.colors.primary;
+    }
+    return props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.05)' 
+      : props.theme.colors.secondary;
+  }};
+  color: ${props => {
+    if (props.active) {
+      return props.theme.name === 'dark' 
+        ? props.theme.colors.text.primary 
+        : props.theme.colors.secondary;
+    }
+    return props.theme.colors.text.secondary;
+  }};
+  border: 1px solid ${props => {
+    if (props.active) {
+      return props.theme.name === 'dark' 
+        ? 'rgba(255, 255, 255, 0.3)' 
+        : props.theme.colors.primary;
+    }
+    return props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.1)' 
+      : props.theme.colors.tertiary;
+  }};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.regular};
@@ -1508,8 +1648,19 @@ const FilterButton = styled.button<{ active?: boolean }>`
   }
   
   &:hover {
-    background: ${props => props.active ? props.theme.colors.primary : props.theme.colors.lightGrey}40;
-    border-color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.primary};
+    background: ${props => {
+      if (props.active) {
+        return props.theme.name === 'dark' 
+          ? 'rgba(255, 255, 255, 0.25)' 
+          : props.theme.colors.primary;
+      }
+      return props.theme.name === 'dark' 
+        ? 'rgba(255, 255, 255, 0.1)' 
+        : props.theme.colors.lightGrey + '40';
+    }};
+    border-color: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.3)' 
+      : props.theme.colors.primary};
     transform: translateY(-1px);
     box-shadow: ${props => props.theme.shadows.sm};
   }
@@ -1523,18 +1674,32 @@ const SearchContainer = styled.div`
 
 const SearchInput = styled.input`
   padding: 12px 16px 12px 42px;
-  border: 1px solid ${props => props.theme.colors.lightGrey};
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : props.theme.colors.lightGrey};
   border-radius: ${props => props.theme.radius.md};
   width: 100%;
   font-size: ${props => props.theme.fontSizes.sm};
   transition: ${props => props.theme.transitions.fast};
   box-shadow: ${props => props.theme.shadows.sm};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.05)' 
+    : 'white'};
+  color: ${props => props.theme.colors.text.primary};
   
   &:focus {
     outline: none;
-    border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 0 0 3px ${props => props.theme.colors.primary}20;
+    border-color: ${props => props.theme.name === 'dark' 
+      ? props.theme.colors.accent.primary 
+      : props.theme.colors.primary};
+    box-shadow: 0 0 0 3px ${props => props.theme.name === 'dark' 
+      ? props.theme.colors.accent.primary + '20' 
+      : props.theme.colors.primary + '20'};
     transform: translateY(-1px);
+  }
+  
+  &::placeholder {
+    color: ${props => props.theme.colors.text.secondary};
   }
 `;
 
@@ -1543,7 +1708,7 @@ const SearchIcon = styled.span`
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.text.secondary};
   pointer-events: none;
   font-size: 16px;
 `;
@@ -1629,6 +1794,22 @@ const ButtonRow = styled.div`
 // Extend the Button component with some additional styling
 const ActionButton = styled(ButtonUI)`
   /* Using leftIcon/rightIcon props for icon positioning */
+  
+  /* Override primary variant for dark theme */
+  ${props => props.variant === 'primary' && props.theme.name === 'dark' && `
+    background-color: rgba(95, 39, 205, 0.9);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
+    &:hover {
+      background-color: rgba(95, 39, 205, 1);
+      box-shadow: 0 4px 10px rgba(95, 39, 205, 0.3);
+    }
+    
+    &:active {
+      background-color: rgba(75, 29, 185, 0.9);
+    }
+  `}
 `;
 
 // Interface for channel details
@@ -1761,10 +1942,15 @@ const performanceMetricsData = [
 // Add more styled components for the channel header
 const ChannelHeaderSection = styled.div`
   margin-bottom: 24px;
-  background: white;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(30, 30, 30, 0.95)' 
+    : 'white'};
   border-radius: ${props => props.theme.radius.lg};
   overflow: hidden;
   box-shadow: ${props => props.theme.shadows.sm};
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'transparent'};
 `;
 
 const ChannelHeaderBanner = styled.div`
@@ -1787,7 +1973,7 @@ const ChannelHeaderAvatar = styled.div<{ imageUrl: string }>`
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  border: 4px solid white;
+  border: 4px solid ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'white'};
   background-image: url(${props => props.imageUrl});
   background-size: cover;
   background-position: center;
@@ -1816,6 +2002,7 @@ const ChannelHeaderTitle = styled.h2`
   margin: 0 0 8px;
   display: flex;
   align-items: center;
+  color: ${props => props.theme.colors.text.primary};
   
   svg {
     margin-left: 8px;
@@ -1833,10 +2020,13 @@ const ChannelHeaderMetrics = styled.div`
 const ChannelHeaderMetric = styled.div`
   display: flex;
   align-items: center;
+  color: ${props => props.theme.colors.text.primary};
   
   svg {
     margin-right: 8px;
-    color: ${COLORS.ACCENT};
+    color: ${props => props.theme.name === 'dark' 
+      ? props.theme.colors.accent.primary 
+      : COLORS.ACCENT};
   }
   
   span {
@@ -1846,7 +2036,7 @@ const ChannelHeaderMetric = styled.div`
 
 const ChannelHeaderDescription = styled.div`
   font-size: ${props => props.theme.fontSizes.sm};
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   line-height: 1.6;
   max-height: 120px;
   overflow-y: auto;
@@ -1859,7 +2049,9 @@ const ChannelHeaderDescription = styled.div`
     left: 0;
     right: 0;
     height: 40px;
-    background: linear-gradient(transparent, white);
+    background: ${props => props.theme.name === 'dark' 
+      ? 'linear-gradient(transparent, rgba(30, 30, 30, 0.95))' 
+      : 'linear-gradient(transparent, white)'};
     pointer-events: none;
   }
 `;
@@ -1867,7 +2059,9 @@ const ChannelHeaderDescription = styled.div`
 const ChannelHeaderUrl = styled.a`
   display: inline-flex;
   align-items: center;
-  color: ${COLORS.ACCENT};
+  color: ${props => props.theme.name === 'dark' 
+    ? props.theme.colors.accent.primary 
+    : COLORS.ACCENT};
   font-size: ${props => props.theme.fontSizes.sm};
   text-decoration: none;
   margin-top: 12px;
@@ -1884,7 +2078,7 @@ const ChannelHeaderUrl = styled.a`
 // Ajustar o estilo da descrição para ocupar menos espaço
 const VideoDescription = styled.div`
   font-size: ${props => props.theme.fontSizes.sm};
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   margin-top: 6px;
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -1951,17 +2145,23 @@ const VideoDetailModal = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: white;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(30, 30, 30, 0.95)' 
+    : 'white'};
   border-radius: ${props => props.theme.radius.lg};
   width: 85%;
   max-width: 1100px;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  box-shadow: ${props => props.theme.name === 'dark'
+    ? '0 20px 50px rgba(0,0,0,0.5)'
+    : '0 20px 50px rgba(0,0,0,0.3)'};
   transform: translateY(0);
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.1)'
+    : 'rgba(0, 0, 0, 0.1)'};
   
   @keyframes slideUp {
     from {
@@ -1983,8 +2183,8 @@ const ModalContent = styled.div`
     right: 0;
     bottom: 0;
     background-image: 
-      linear-gradient(rgba(0, 0, 0, 0.01) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 0, 0, 0.01) 1px, transparent 1px);
+      linear-gradient(${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.01)' : 'rgba(0, 0, 0, 0.01)'} 1px, transparent 1px),
+      linear-gradient(90deg, ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.01)' : 'rgba(0, 0, 0, 0.01)'} 1px, transparent 1px);
     background-size: 20px 20px;
     background-position: center center;
     z-index: -1;
@@ -2028,14 +2228,16 @@ const ModalHeader = styled.div`
 `;
 
 const ModalClose = styled.button`
-  background: rgba(0, 0, 0, 0.05);
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.05)'
+    : 'rgba(0, 0, 0, 0.05)'};
   border: none;
   font-size: 20px;
   width: 36px;
   height: 36px;
   border-radius: 50%;
   cursor: pointer;
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   padding: 0;
   margin: 0;
   line-height: 1;
@@ -2045,7 +2247,9 @@ const ModalClose = styled.button`
   transition: all 0.2s ease;
   
   &:hover {
-    background: rgba(0, 0, 0, 0.1);
+    background: ${props => props.theme.name === 'dark'
+      ? 'rgba(255, 255, 255, 0.1)'
+      : 'rgba(0, 0, 0, 0.1)'};
     color: ${props => props.theme.colors.primary};
     transform: rotate(90deg);
   }
@@ -2095,7 +2299,7 @@ const ModalThumbnail = styled.div`
   border-radius: ${props => props.theme.radius.md};
   overflow: hidden;
   margin-bottom: 30px;
-  background-color: #000;
+  background-color: ${props => props.theme.name === 'dark' ? '#1A1A1A' : '#000'};
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
   transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
   transform: perspective(1000px) rotateX(0deg);
@@ -2232,14 +2436,18 @@ const ModalThumbnail = styled.div`
 const ModalDescription = styled.div`
   font-size: ${props => props.theme.fontSizes.md};
   line-height: 1.6;
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   margin-bottom: 28px;
   padding: 20px;
-  background: ${props => props.theme.colors.tertiary}15;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.05)' 
+    : props.theme.colors.tertiary + '15'};
   border-radius: ${props => props.theme.radius.md};
   max-height: 200px;
   overflow-y: auto;
-  border: 1px solid ${props => props.theme.colors.tertiary}20;
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : props.theme.colors.tertiary + '20'};
   position: relative;
   transition: all 0.3s ease;
   
@@ -2319,7 +2527,9 @@ const ModalStats = styled.div`
   margin-bottom: 30px;
   flex-wrap: wrap;
   padding: 16px;
-  background: ${props => props.theme.colors.tertiary}10;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.03)' 
+    : props.theme.colors.tertiary + '10'};
   border-radius: ${props => props.theme.radius.md};
   
   @media (max-width: 768px) {
@@ -2341,7 +2551,9 @@ const ModalStatItem = styled.div`
   position: relative;
   
   &:hover {
-    background: ${props => props.theme.colors.tertiary}15;
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.05)' 
+      : props.theme.colors.tertiary + '15'};
     transform: translateY(-3px);
   }
   
@@ -2364,7 +2576,9 @@ const ModalStatItem = styled.div`
 
 const ModalStatIcon = styled.div`
   font-size: 18px;
-  color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.name === 'dark' 
+    ? props.theme.colors.accent.primary 
+    : props.theme.colors.primary};
   margin-bottom: 6px;
   
   svg {
@@ -2375,7 +2589,7 @@ const ModalStatIcon = styled.div`
 const ModalStatValue = styled.div`
   font-size: ${props => props.theme.fontSizes.xl};
   font-weight: ${props => props.theme.fontWeights.bold};
-  color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.text.primary};
   margin: 4px 0;
   font-variant-numeric: tabular-nums;
   
@@ -2386,7 +2600,7 @@ const ModalStatValue = styled.div`
 
 const ModalStatLabel = styled.div`
   font-size: ${props => props.theme.fontSizes.sm};
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   margin-top: 2px;
   text-align: center;
 `;
@@ -2503,13 +2717,21 @@ const ModalCommentsList = styled.div`
 
 const ModalCommentItem = styled.div`
   padding: 12px 15px;
-  background: white;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.03)' 
+    : 'white'};
   border-radius: ${props => props.theme.radius.md};
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  border-left: 3px solid ${props => props.theme.colors.primary}80;
+  box-shadow: ${props => props.theme.name === 'dark' 
+    ? '0 2px 8px rgba(0,0,0,0.3)' 
+    : '0 2px 8px rgba(0,0,0,0.05)'};
+  border-left: 3px solid ${props => props.theme.name === 'dark' 
+    ? props.theme.colors.accent.primary + '80' 
+    : props.theme.colors.primary + '80'};
   
   &:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: ${props => props.theme.name === 'dark' 
+      ? '0 4px 12px rgba(0,0,0,0.4)' 
+      : '0 4px 12px rgba(0,0,0,0.1)'};
     transform: translateY(-2px);
   }
 `;
@@ -2518,14 +2740,14 @@ const ModalCommentAuthor = styled.div`
   font-weight: ${props => props.theme.fontWeights.semiBold};
   font-size: ${props => props.theme.fontSizes.sm};
   margin-bottom: 6px;
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.text.primary};
   display: flex;
   justify-content: space-between;
 `;
 
 const ModalCommentText = styled.div`
   font-size: ${props => props.theme.fontSizes.sm};
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   line-height: 1.5;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2546,6 +2768,35 @@ const ModalActions = styled.div`
 const ModalActionButton = styled(ButtonUI)`
   min-width: 120px;
   transition: all 0.3s ease;
+  
+  /* Override primary variant for dark theme */
+  ${props => props.variant === 'primary' && props.theme.name === 'dark' && `
+    background-color: rgba(95, 39, 205, 0.9);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    
+    &:hover {
+      background-color: rgba(95, 39, 205, 1);
+      box-shadow: 0 4px 10px rgba(95, 39, 205, 0.3);
+    }
+    
+    &:active {
+      background-color: rgba(75, 29, 185, 0.9);
+    }
+  `}
+  
+  /* Override ghost variant for dark theme */
+  ${props => props.variant === 'ghost' && props.theme.name === 'dark' && `
+    color: ${props.theme.colors.text.primary};
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    &:active {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+  `}
   
   &:hover {
     transform: translateY(-2px);
@@ -2643,11 +2894,13 @@ const DateBadge = styled.div`
   display: inline-flex;
   align-items: center;
   padding: 5px 12px;
-  background: ${props => props.theme.colors.tertiary}20;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : props.theme.colors.tertiary + '20'};
   border-radius: ${props => props.theme.radius.pill};
   font-size: ${props => props.theme.fontSizes.xs};
   font-weight: ${props => props.theme.fontWeights.medium};
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   margin-right: 10px;
   margin-top: 10px;
   
@@ -2684,16 +2937,25 @@ const CommentsContainer = styled.div`
 `;
 
 const CommentCard = styled.div`
-  background: white;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(30, 30, 30, 0.95)' 
+    : 'white'};
   border-radius: ${props => props.theme.radius.lg};
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  box-shadow: ${props => props.theme.name === 'dark'
+    ? '0 2px 10px rgba(0,0,0,0.3)'
+    : '0 2px 10px rgba(0,0,0,0.08)'};
   padding: 20px;
   margin-bottom: 16px;
   transition: all 0.3s ease;
   border-left: 3px solid transparent;
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'transparent'};
   
   &:hover {
-    box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+    box-shadow: ${props => props.theme.name === 'dark'
+      ? '0 5px 15px rgba(0,0,0,0.4)'
+      : '0 5px 15px rgba(0,0,0,0.12)'};
     transform: translateY(-2px);
     border-left: 3px solid ${props => props.theme.colors.primary};
   }
@@ -2709,13 +2971,13 @@ const CommentHeader = styled.div`
 const CommentAuthor = styled.div`
   font-weight: 600;
   font-size: 16px;
-  color: #333;
+  color: ${props => props.theme.colors.text.primary};
   display: flex;
   align-items: center;
 
   svg {
     margin-right: 8px;
-    color: #666;
+    color: ${props => props.theme.colors.text.secondary};
   }
 `;
 
@@ -2728,7 +2990,7 @@ const CommentStats = styled.div`
 const CommentStat = styled.div`
   display: flex;
   align-items: center;
-  color: #666;
+  color: ${props => props.theme.colors.text.secondary};
   font-size: 14px;
   
   svg {
@@ -2738,11 +3000,18 @@ const CommentStat = styled.div`
 `;
 
 const CommentScore = styled.div<{ score?: number }>`
-  background: ${props => 
-    props.score && props.score > 0.8 ? '#e6f7ee' :
-    props.score && props.score > 0.6 ? '#fff8e6' :
-    props.score && props.score > 0.4 ? '#e6f1ff' :
-    '#f5f5f5'};
+  background: ${props => {
+    if (props.theme.name === 'dark') {
+      return props.score && props.score > 0.8 ? 'rgba(76, 175, 80, 0.2)' :
+             props.score && props.score > 0.6 ? 'rgba(255, 170, 21, 0.2)' :
+             props.score && props.score > 0.4 ? 'rgba(59, 130, 246, 0.2)' :
+             'rgba(255, 255, 255, 0.05)';
+    }
+    return props.score && props.score > 0.8 ? '#e6f7ee' :
+           props.score && props.score > 0.6 ? '#fff8e6' :
+           props.score && props.score > 0.4 ? '#e6f1ff' :
+           '#f5f5f5';
+  }};
   color: ${props => 
     props.score && props.score > 0.8 ? '#34C759' :
     props.score && props.score > 0.6 ? '#FF9500' :
@@ -2771,18 +3040,20 @@ const CommentScore = styled.div<{ score?: number }>`
 const CommentText = styled.div`
   font-size: 15px;
   line-height: 1.5;
-  color: #444;
+  color: ${props => props.theme.colors.text.primary};
   margin-bottom: 16px;
   white-space: pre-wrap;
 `;
 
 const JustificationButton = styled.button`
-  background: ${props => props.theme.colors.lightGrey};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : props.theme.colors.lightGrey};
   border: none;
   border-radius: ${props => props.theme.radius.sm};
   padding: 6px 12px;
   font-size: 12px;
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2813,12 +3084,17 @@ const JustificationPopup = styled.div`
 `;
 
 const JustificationContent = styled.div`
-  background: white;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(30, 30, 30, 0.95)' 
+    : 'white'};
   border-radius: ${props => props.theme.radius.lg};
   max-width: 600px;
   width: 90%;
   padding: 24px;
   box-shadow: ${props => props.theme.shadows.lg};
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'transparent'};
 `;
 
 const JustificationHeader = styled.div`
@@ -2828,15 +3104,18 @@ const JustificationHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const JustificationText = styled.div`
   font-size: 15px;
   line-height: 1.6;
-  color: #444;
+  color: ${props => props.theme.colors.text.primary};
   white-space: pre-wrap;
   padding: 16px;
-  background: #f9f9f9;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.05)' 
+    : '#f9f9f9'};
   border-radius: ${props => props.theme.radius.md};
   margin-bottom: 16px;
 `;
@@ -2846,7 +3125,7 @@ const CloseButton = styled.button`
   border: none;
   font-size: 20px;
   cursor: pointer;
-  color: #666;
+  color: ${props => props.theme.colors.text.secondary};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2855,13 +3134,19 @@ const CloseButton = styled.button`
   border-radius: 50%;
   
   &:hover {
-    background: #f5f5f5;
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.1)' 
+      : '#f5f5f5'};
   }
 `;
 
 const ResponseCard = styled.div`
-  background: #f5f9ff;
-  border-left: 3px solid ${props => props.theme.colors.primary};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(59, 130, 246, 0.1)' 
+    : '#f5f9ff'};
+  border-left: 3px solid ${props => props.theme.name === 'dark' 
+    ? props.theme.colors.accent.primary 
+    : props.theme.colors.primary};
   padding: 16px;
   margin-left: 24px;
   margin-top: 12px;
@@ -2891,14 +3176,20 @@ const ResponseStatus = styled.div<{ status?: string }>`
   padding: 4px 8px;
   border-radius: 12px;
   font-size: 12px;
-  background: ${props => 
-    props.status === 'posted' ? '#e6f7ee' : 
-    props.status === 'pending' ? '#FFF8E6' : 
-    '#f5f5f5'};
+  background: ${props => {
+    if (props.theme.name === 'dark') {
+      return props.status === 'posted' ? 'rgba(76, 175, 80, 0.2)' : 
+             props.status === 'pending' ? 'rgba(255, 170, 21, 0.2)' : 
+             'rgba(255, 255, 255, 0.1)';
+    }
+    return props.status === 'posted' ? '#e6f7ee' : 
+           props.status === 'pending' ? '#FFF8E6' : 
+           '#f5f5f5';
+  }};
   color: ${props => 
     props.status === 'posted' ? '#34C759' : 
     props.status === 'pending' ? '#FF9500' : 
-    '#999'};
+    props.theme.colors.text.secondary};
   display: flex;
   align-items: center;
   
@@ -2911,7 +3202,7 @@ const ResponseStatus = styled.div<{ status?: string }>`
 const ResponseText = styled.div`
   font-size: 14px;
   line-height: 1.5;
-  color: #555;
+  color: ${props => props.theme.colors.text.primary};
   margin-bottom: 12px;
 `;
 
@@ -2920,7 +3211,7 @@ const ResponseFooter = styled.div`
   justify-content: space-between;
   align-items: center;
   font-size: 12px;
-  color: #888;
+  color: ${props => props.theme.colors.text.secondary};
 `;
 
 const CommentsHeader = styled.div`
@@ -2933,7 +3224,7 @@ const CommentsHeader = styled.div`
 const CommentsTitle = styled.h3`
   font-size: 20px;
   font-weight: 600;
-  color: #333;
+  color: ${props => props.theme.colors.text.primary};
   display: flex;
   align-items: center;
   
@@ -3036,13 +3327,14 @@ const StatSubContent = styled.div`
 
 const StatSubLabel = styled.div`
   font-size: 0.8rem;
-  color: #777;
+  color: ${props => props.theme.colors.text.secondary};
   margin-bottom: 2px;
 `;
 
 const StatSubValue = styled.div`
   font-size: 1.1rem;
   font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 // Adicionar interface para dados das categorias de conteúdo
@@ -3094,6 +3386,12 @@ const YoutubeMonitoring: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
+  // Theme hook
+  const { theme } = useTheme();
+  
+  // Chart palette based on theme
+  const chartPalette = getChartPalette(theme.name === 'dark');
+  
   // Estado para o componente
   const [activeTab, setActiveTab] = useState<'overview' | 'channels' | 'videos' | 'comments'>('overview');
   const [channelFilter, setChannelFilter] = useState<'all' | 'active' | 'inactive'>('all');
@@ -3143,6 +3441,7 @@ const YoutubeMonitoring: React.FC = () => {
   const [totalVideos, setTotalVideos] = useState<number>(0);
   
   const { currentProject } = useProject();
+  const { t } = useLanguage();
   
   // Função para atualizar os parâmetros da URL
   const updateUrlParams = (params: {tab?: string, channelId?: number | null, videoId?: number | null}) => {
@@ -4213,7 +4512,13 @@ const YoutubeMonitoring: React.FC = () => {
           
           {/* Categorias de Conteúdo */}
           <ChartRow>
-            <ChartContainer className="content-categories">
+            <ChartContainer 
+              className="content-categories"
+              style={{
+                background: theme.name === 'dark' 
+                  ? 'linear-gradient(145deg, rgba(30, 30, 35, 0.95), rgba(35, 35, 40, 0.95))' 
+                  : undefined
+              }}>
               <ChartHeader>
                 <ChartTitle>
                   <IconComponent icon={FaIcons.FaChartPie} />
@@ -4224,16 +4529,21 @@ const YoutubeMonitoring: React.FC = () => {
                 <div className="chart-content">
                   <div className="pie-container">
                     <div className="total-count">
-                      <span className="total-count-value">
+                      <span className="total-count-value" style={{
+                        color: theme.name === 'dark' ? theme.colors.primary : undefined
+                      }}>
                         {contentCategories.length}
                       </span>
-                      <span className="total-count-label">Categories</span>
+                      <span className="total-count-label" style={{
+                        color: theme.name === 'dark' ? theme.colors.text.secondary : undefined,
+                        background: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : undefined
+                      }}>Categories</span>
                     </div>
                     
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <defs>
-                          {CHART_PALETTE.map((color, index) => (
+                          {chartPalette.map((color, index) => (
                             <linearGradient key={index} id={`colorGradient-${index}`} x1="0" y1="0" x2="0" y2="1">
                               <stop offset="0%" stopColor={color} stopOpacity={0.8} />
                               <stop offset="100%" stopColor={color} stopOpacity={1} />
@@ -4248,7 +4558,7 @@ const YoutubeMonitoring: React.FC = () => {
                           labelLine={false}
                           outerRadius={110}
                           innerRadius={75}
-                          fill="#8884d8"
+                          fill={chartPalette[0]}
                           dataKey="value"
                           nameKey="shortName"
                           paddingAngle={2}
@@ -4260,7 +4570,7 @@ const YoutubeMonitoring: React.FC = () => {
                           {getContentDistributionData().map((entry, index) => (
                             <Cell 
                               key={`cell-${index}`} 
-                              fill={`url(#colorGradient-${index % CHART_PALETTE.length})`}
+                              fill={`url(#colorGradient-${index % chartPalette.length})`}
                               stroke="white"
                               strokeWidth={1}
                             />
@@ -4273,19 +4583,22 @@ const YoutubeMonitoring: React.FC = () => {
                             props.payload.fullName
                           ]} 
                           contentStyle={{
-                            background: 'rgba(255, 255, 255, 0.95)',
+                            background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                             borderRadius: '12px',
-                            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-                            border: 'none',
+                            boxShadow: theme.name === 'dark' ? '0 8px 24px rgba(0, 0, 0, 0.4)' : '0 8px 24px rgba(0, 0, 0, 0.12)',
+                            border: theme.name === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
                             padding: '12px 16px',
-                            fontSize: '14px'
+                            fontSize: '14px',
+                            color: theme.colors.text.primary
                           }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
                   
-                  <div className="category-cards">
+                  <div className="category-cards" style={{
+                    scrollbarColor: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05)' : undefined
+                  }}>
                     {getContentDistributionData().map((category, index) => {
                       // Calcular a classe de relevância baseada no valor
                       let relevanceClass = 'relevance-low';
@@ -4296,43 +4609,63 @@ const YoutubeMonitoring: React.FC = () => {
                       }
                       
                       return (
-                        <div key={index} className="category-card">
+                        <div key={index} className="category-card" style={{
+                          background: theme.name === 'dark' ? 'rgba(40, 40, 45, 0.8)' : undefined,
+                          backdropFilter: theme.name === 'dark' ? 'blur(10px)' : undefined,
+                          border: theme.name === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : undefined
+                        }}>
                           <div className="card-shine"></div>
                           <div className="rocket-particles"></div>
-                          <div className="category-name">
+                          <div className="category-name" style={{
+                            color: theme.name === 'dark' ? theme.colors.text.primary : undefined
+                          }}>
                             <span 
                               className="category-color" 
-                              style={{ backgroundColor: CHART_PALETTE[index % CHART_PALETTE.length] }}
+                              style={{ backgroundColor: chartPalette[index % chartPalette.length] }}
                             ></span>
                             {category.fullName}
                           </div>
                           
-                          <div className="progress-bar">
+                          <div className="progress-bar" style={{
+                            background: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : undefined
+                          }}>
                             <div 
                               className="progress-value" 
                               style={{ 
                                 width: `${category.percentage || 0}%`,
-                                background: CHART_PALETTE[index % CHART_PALETTE.length] 
+                                background: chartPalette[index % chartPalette.length] 
                               }}
                             ></div>
                           </div>
                           
                           <div className="metric-row">
                             <div className="metric">
-                              <span className="metric-value">{category.videos}</span>
-                              <span className="metric-label">Vídeos</span>
+                              <span className="metric-value" style={{
+                                color: theme.name === 'dark' ? theme.colors.text.primary : undefined
+                              }}>{category.videos}</span>
+                              <span className="metric-label" style={{
+                                color: theme.name === 'dark' ? theme.colors.text.secondary : undefined
+                              }}>Vídeos</span>
                             </div>
                             <div className="metric">
-                              <span className="metric-value">
+                              <span className="metric-value" style={{
+                                color: theme.name === 'dark' ? theme.colors.text.primary : undefined
+                              }}>
                                 {Number(category.views).toLocaleString()}
                               </span>
-                              <span className="metric-label">Views</span>
+                              <span className="metric-label" style={{
+                                color: theme.name === 'dark' ? theme.colors.text.secondary : undefined
+                              }}>Views</span>
                             </div>
                             <div className="metric">
-                              <span className="metric-value">
+                              <span className="metric-value" style={{
+                                color: theme.name === 'dark' ? theme.colors.text.primary : undefined
+                              }}>
                                 {Number(category.likes).toLocaleString()}
                               </span>
-                              <span className="metric-label">Likes</span>
+                              <span className="metric-label" style={{
+                                color: theme.name === 'dark' ? theme.colors.text.secondary : undefined
+                              }}>Likes</span>
                             </div>
                             <div className="metric">
                               <span className={`relevance-badge ${relevanceClass}`}>
@@ -5927,17 +6260,19 @@ const YoutubeMonitoring: React.FC = () => {
                 <ModalSidebar>
                   {/* Channel info */}
                   <div style={{ 
-                    background: '#f9f9f9', 
+                    background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : '#f9f9f9', 
                     borderRadius: '10px', 
                     padding: '15px',
-                    marginBottom: '20px'
+                    marginBottom: '20px',
+                    border: theme.name === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none'
                   }}>
                     <h4 style={{ 
                       fontSize: '16px', 
                       fontWeight: 600, 
                       marginBottom: '12px',
                       display: 'flex',
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      color: theme.colors.text.primary
                     }}>
                       <IconComponent icon={FaIcons.FaYoutube} style={{ marginRight: '8px', color: '#FF0000' }} />
                       Channel
@@ -5957,8 +6292,8 @@ const YoutubeMonitoring: React.FC = () => {
                         {(selectedVideoForDetail.canal_nome || 'C').charAt(0)}
                       </div>
                       <div>
-                        <div style={{ fontWeight: 600 }}>{selectedVideoForDetail.canal_nome || 'Unknown channel'}</div>
-                        <div style={{ fontSize: '12px', color: '#666' }}>
+                        <div style={{ fontWeight: 600, color: theme.colors.text.primary }}>{selectedVideoForDetail.canal_nome || 'Unknown channel'}</div>
+                        <div style={{ fontSize: '12px', color: theme.colors.text.secondary }}>
                           {selectedVideoForDetail.subscriber_count || 'Subscribers unknown'}
                         </div>
                       </div>

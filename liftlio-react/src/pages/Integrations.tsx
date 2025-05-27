@@ -7,6 +7,8 @@ import { FaYoutube, FaReddit, FaLinkedin, FaFacebook, FaTwitter, FaInstagram,
          FaArrowRight, FaTimes, FaClock } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabaseClient';
 import LoadingDataIndicator from '../components/LoadingDataIndicator';
 
@@ -62,15 +64,21 @@ const SearchInput = styled.input`
   width: 100%;
   padding: 12px 20px;
   font-size: ${props => props.theme.fontSizes.md};
-  border: 1px solid ${props => props.theme.colors.lightGrey};
+  border: 1px solid ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.lightGrey};
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.sm};
   transition: all 0.3s ease;
+  background-color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'white'};
+  color: ${props => props.theme.colors.text.primary};
   
   &:focus {
     outline: none;
     border-color: ${props => props.theme.colors.primary};
     box-shadow: 0 0 0 3px ${props => `${props.theme.colors.primary}33`};
+  }
+  
+  &::placeholder {
+    color: ${props => props.theme.colors.text.secondary};
   }
 `;
 
@@ -83,16 +91,28 @@ const Categories = styled.div`
 
 const CategoryTag = styled.button<{ active: boolean }>`
   padding: 8px 16px;
-  background-color: ${props => props.active ? props.theme.colors.primary : 'white'};
-  color: ${props => props.active ? 'white' : props.theme.colors.darkGrey};
-  border: 1px solid ${props => props.active ? 'transparent' : props.theme.colors.lightGrey};
+  background-color: ${props => {
+    if (props.active) return props.theme.colors.primary;
+    return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'white';
+  }};
+  color: ${props => {
+    if (props.active) return 'white';
+    return props.theme.colors.text.primary;
+  }};
+  border: 1px solid ${props => {
+    if (props.active) return 'transparent';
+    return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.lightGrey;
+  }};
   border-radius: 20px;
   font-size: ${props => props.theme.fontSizes.sm};
   cursor: pointer;
   transition: all 0.2s ease;
   
   &:hover {
-    background-color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.lightGrey};
+    background-color: ${props => {
+      if (props.active) return props.theme.colors.primary;
+      return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.lightGrey;
+    }};
     transform: translateY(-2px);
   }
 `;
@@ -108,9 +128,10 @@ const IntegrationCard = styled.div<{ status: string }>`
   display: flex;
   flex-direction: column;
   padding: 25px;
-  background-color: ${props => props.theme.colors.white};
+  background-color: ${props => props.theme.name === 'dark' ? 'rgba(30, 30, 35, 0.95)' : props.theme.colors.white};
   border-radius: ${props => props.theme.radius.lg};
-  box-shadow: ${props => props.theme.shadows.md};
+  box-shadow: ${props => props.theme.name === 'dark' ? '0 4px 15px rgba(0, 0, 0, 0.3)' : props.theme.shadows.md};
+  border: 1px solid ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'};
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -136,7 +157,8 @@ const IntegrationCard = styled.div<{ status: string }>`
     right: 0;
     width: 100px;
     height: 100px;
-    background: linear-gradient(135deg, transparent 50%, rgba(245, 245, 255, 0.5) 50%);
+    background: linear-gradient(135deg, transparent 50%, ${props => 
+      props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(245, 245, 255, 0.5)'} 50%);
     pointer-events: none;
   }
 `;
@@ -187,7 +209,7 @@ const StatusBadge = styled.div<{ status: 'connected' | 'pending' | 'disconnected
       default: return props.theme.colors.lightGrey;
     }
   }};
-  border: 2px solid white;
+  border: 2px solid ${props => props.theme.name === 'dark' ? 'rgba(30, 30, 35, 0.95)' : 'white'};
   font-size: 10px;
   color: white;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -226,7 +248,7 @@ const IntegrationStatus = styled.div<{ status: 'connected' | 'pending' | 'discon
 `;
 
 const IntegrationDescription = styled.p`
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   font-size: ${props => props.theme.fontSizes.sm};
   margin-bottom: 20px;
   line-height: 1.5;
@@ -241,8 +263,8 @@ const IntegrationFeatures = styled.div`
 `;
 
 const FeatureTag = styled.span`
-  background-color: ${props => props.theme.colors.lightGrey};
-  color: ${props => props.theme.colors.darkGrey};
+  background-color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : props.theme.colors.lightGrey};
+  color: ${props => props.theme.colors.text.secondary};
   padding: 4px 10px;
   border-radius: 12px;
   font-size: ${props => props.theme.fontSizes.xs};
@@ -259,17 +281,29 @@ const ActionButton = styled.button<{ variant: 'primary' | 'secondary' | 'danger'
   background-color: ${props => {
     switch (props.variant) {
       case 'primary':
-        return props.theme.colors.primary;
+        return props.theme.name === 'dark' ? 'rgba(94, 53, 177, 0.9)' : props.theme.colors.primary;
       case 'secondary':
-        return 'transparent';
+        return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'transparent';
       case 'danger':
         return props.theme.colors.error;
       default:
         return props.theme.colors.primary;
     }
   }};
-  color: ${props => props.variant === 'secondary' ? props.theme.colors.primary : 'white'};
-  border: ${props => props.variant === 'secondary' ? `1px solid ${props.theme.colors.primary}` : 'none'};
+  color: ${props => {
+    if (props.variant === 'secondary') {
+      return props.theme.name === 'dark' ? props.theme.colors.text.primary : props.theme.colors.primary;
+    }
+    return 'white';
+  }};
+  border: ${props => {
+    if (props.variant === 'secondary') {
+      return props.theme.name === 'dark' 
+        ? '1px solid rgba(255, 255, 255, 0.2)' 
+        : `1px solid ${props.theme.colors.primary}`;
+    }
+    return 'none';
+  }};
   padding: 10px 18px;
   border-radius: ${props => props.theme.radius.md};
   font-weight: ${props => props.theme.fontWeights.medium};
@@ -337,8 +371,11 @@ const ActionButton = styled.button<{ variant: 'primary' | 'secondary' | 'danger'
 `;
 
 const APICard = styled(Card)`
-  background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+  background: ${props => props.theme.name === 'dark' 
+    ? 'linear-gradient(135deg, rgba(30, 30, 35, 0.95) 0%, rgba(35, 35, 40, 0.95) 100%)'
+    : 'linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%)'};
   border-top: 4px solid ${props => props.theme.colors.primary};
+  border: 1px solid ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'};
 `;
 
 const APICardContent = styled.div`
@@ -375,13 +412,16 @@ const APICardTitle = styled.h2`
   font-size: ${props => props.theme.fontSizes.xl};
   font-weight: ${props => props.theme.fontWeights.bold};
   margin: 0;
-  background: ${props => props.theme.colors.gradient.primary};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)'
+    : props.theme.colors.gradient.primary};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 `;
 
 const APICardDescription = styled.p`
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   font-size: ${props => props.theme.fontSizes.md};
   line-height: 1.6;
   margin-bottom: 10px;
@@ -409,7 +449,7 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background-color: white;
+  background-color: ${props => props.theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'white'};
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.lg};
   width: 500px;
@@ -419,6 +459,8 @@ const ModalContent = styled.div`
   padding: 30px;
   position: relative;
   animation: ${fadeIn} 0.4s ease;
+  border: 1px solid ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'transparent'};
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const ModalHeader = styled.div`
@@ -458,7 +500,7 @@ const ModalCloseButton = styled.button`
   border: none;
   cursor: pointer;
   font-size: 1.5rem;
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   transition: all 0.2s ease;
   
   &:hover {
@@ -472,14 +514,16 @@ const ModalBody = styled.div`
 `;
 
 const ModalText = styled.p`
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   font-size: ${props => props.theme.fontSizes.md};
   line-height: 1.6;
   margin-bottom: 20px;
 `;
 
 const ModalInfo = styled.div`
-  background-color: ${props => `${props.theme.colors.primary}15`};
+  background-color: ${props => props.theme.name === 'dark' 
+    ? 'rgba(94, 53, 177, 0.1)' 
+    : `${props.theme.colors.primary}15`};
   border-left: 4px solid ${props => props.theme.colors.primary};
   padding: 15px;
   border-radius: ${props => props.theme.radius.md};
@@ -625,6 +669,8 @@ interface Integration {
 
 const Integrations: React.FC = () => {
   const { currentProject } = useProject();
+  const { t } = useLanguage();
+  const { theme } = useTheme();
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -979,12 +1025,14 @@ const Integrations: React.FC = () => {
         {showSuccessMessage && (
           <div style={{
             padding: '12px 20px',
-            backgroundColor: '#4CAF50',
-            color: 'white',
+            backgroundColor: theme.name === 'dark' ? 'rgba(76, 175, 80, 0.2)' : '#4CAF50',
+            color: theme.name === 'dark' ? '#4CAF50' : 'white',
             borderRadius: '8px',
             marginBottom: '20px',
             display: 'flex',
-            alignItems: 'center'
+            alignItems: 'center',
+            border: theme.name === 'dark' ? '1px solid rgba(76, 175, 80, 0.3)' : 'none',
+            gap: '8px'
           }}>
             {renderIcon(FaCheck)} 
             YouTube integration successfully connected!

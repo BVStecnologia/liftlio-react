@@ -20,7 +20,7 @@ const Container = styled.div`
 const IllustrationWrapper = styled.div`
   margin-bottom: 30px;
   font-size: 80px;
-  color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.text.secondary};
   opacity: 0.8;
   position: relative;
   z-index: 2;
@@ -30,14 +30,14 @@ const Title = styled.h2`
   font-size: 24px;
   font-weight: 600;
   margin-bottom: 15px;
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.text.primary};
   position: relative;
   z-index: 2;
 `;
 
 const Description = styled.p`
   font-size: 16px;
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   margin-bottom: 30px;
   max-width: 500px;
   line-height: 1.6;
@@ -47,14 +47,21 @@ const Description = styled.p`
 
 const ActionButton = styled.button`
   padding: 12px 24px;
-  background: ${props => props.theme.colors.primary};
-  color: white;
+  background: ${props => props.theme.colors.text.primary};
+  color: ${props => props.theme.colors.bg.primary};
   border: none;
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
   position: relative;
   z-index: 2;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${props => props.theme.colors.text.secondary};
+    transform: translateY(-2px);
+    box-shadow: ${props => props.theme.shadows.md};
+  }
 `;
 
 const StepIndicator = styled.div`
@@ -70,8 +77,8 @@ const Step = styled.div<{ active: boolean }>`
   height: 4px;
   border-radius: 2px;
   background-color: ${props => props.active 
-    ? props.theme.colors.primary
-    : '#D0D0D0'};
+    ? props.theme.colors.text.primary
+    : props.theme.colors.border.primary};
   position: relative;
   z-index: 2;
 `;

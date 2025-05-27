@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import GlobalStyle from './styles/GlobalStyle';
+import { GlobalThemeStyles, useGlobalTheme } from './styles/GlobalThemeSystem';
 import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Overview from './pages/Overview';
@@ -41,7 +43,7 @@ const AppContainer = styled.div`
 const MainContent = styled.main`
   flex: 1;
   overflow-y: auto;
-  background-color: ${props => props.theme.colors.tertiary}; /* Dominant color - Cinza médio (60%) */
+  background-color: ${props => props.theme.colors.background};
   width: 100%;
 `;
 
@@ -181,6 +183,19 @@ const FloatingMenuButton = styled.button`
   }
 `;
 
+// Helper function to get theme-aware background color
+const getThemeBackground = (): string => {
+  const savedTheme = localStorage.getItem('darkMode');
+  
+  if (savedTheme !== null) {
+    return savedTheme === 'true' ? '#0A0A0B' : '#f0f2f5';
+  }
+  
+  // If no preference, use time-based theme
+  const currentHour = new Date().getHours();
+  const isDarkMode = currentHour >= 18 || currentHour < 6;
+  return isDarkMode ? '#0A0A0B' : '#f0f2f5';
+};
 
 // Componente OAuthHandler para processar códigos de autorização do YouTube em qualquer rota
 const OAuthHandler = () => {
@@ -478,10 +493,11 @@ function App() {
 
   return (
     <ThemeProvider>
-      <GlobalStyle />
-      <AuthProvider>
-        <ProjectProvider>
-          <Router>
+      <LanguageProvider>
+        <GlobalStyle />
+        <AuthProvider>
+          <ProjectProvider>
+            <Router>
             {/* Adicionar OAuthHandler para processar códigos do YouTube em qualquer rota */}
             <OAuthHandler />
             <Routes>
@@ -496,9 +512,10 @@ function App() {
                 />
               } />
             </Routes>
-          </Router>
-        </ProjectProvider>
-      </AuthProvider>
+            </Router>
+          </ProjectProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }
@@ -513,7 +530,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     return (
       <div style={{
         height: '100vh',
-        backgroundColor: '#f0f2f5'
+        backgroundColor: getThemeBackground()
       }}>
         <LoadingDataIndicator />
       </div>
@@ -720,7 +737,7 @@ const AuthCallback = () => {
   return (
     <div style={{
       height: '100vh',
-      backgroundColor: '#f0f2f5'
+      backgroundColor: getThemeBackground()
     }}>
       <LoadingDataIndicator />
     </div>

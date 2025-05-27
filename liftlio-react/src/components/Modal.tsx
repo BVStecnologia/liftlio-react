@@ -9,7 +9,7 @@ const ModalOverlay = styled.div<{ isOpen: boolean }>`
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: ${props => props.theme.components.modal.overlay};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,21 +44,21 @@ const ModalHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
-  background-color: ${props => props.theme.colors.white};
+  border-bottom: 1px solid ${props => props.theme.components.modal.border};
+  background-color: ${props => props.theme.components.modal.bg};
 `;
 
 const ModalTitle = styled.h3`
   font-size: ${props => props.theme.fontSizes.xl};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.text.primary};
   margin: 0;
 `;
 
 const CloseButton = styled.button`
   background: none;
   border: none;
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   font-size: 20px;
   cursor: pointer;
   display: flex;
@@ -67,6 +67,13 @@ const CloseButton = styled.button`
   width: 36px;
   height: 36px;
   border-radius: ${props => props.theme.radius.circle};
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: ${props => props.theme.components.modal.bg};
+    opacity: 0.8;
+    color: ${props => props.theme.colors.text.primary};
+  }
 `;
 
 const ModalBody = styled.div`
@@ -74,7 +81,8 @@ const ModalBody = styled.div`
   flex: 1;
   overflow-y: auto;
   max-height: 70vh;
-  background-color: ${props => props.theme.colors.white};
+  background-color: ${props => props.theme.components.modal.bg};
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const ModalFooter = styled.div`
@@ -82,8 +90,8 @@ const ModalFooter = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  border-top: 1px solid ${props => props.theme.colors.lightGrey};
-  background-color: ${props => props.theme.colors.white};
+  border-top: 1px solid ${props => props.theme.components.modal.border};
+  background-color: ${props => props.theme.components.modal.bg};
 `;
 
 type ModalProps = {

@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { supabase } from '../lib/supabaseClient';
 import { useProject } from '../context/ProjectContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import TechBackground from './TechBackground';
 import { FaSearch, FaVideo, FaDatabase, FaBrain, FaComments, FaRocket } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
@@ -18,6 +20,29 @@ interface ProcessingIndicatorProps {
   onComplete?: () => void;
 }
 
+interface MetricCardProps {
+  isActive?: boolean;
+  isCompleted?: boolean;
+}
+
+// Animação de partículas flutuantes
+const floatingParticles = keyframes`
+  0% {
+    transform: translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) rotate(360deg);
+    opacity: 0;
+  }
+`;
+
 // Container principal
 const Container = styled.div`
   position: relative;
@@ -28,12 +53,12 @@ const Container = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color: #e6edf2;
-  color: #2d3e50;
+  background-color: ${props => props.theme.colors.bg.primary};
+  color: ${props => props.theme.colors.text.primary};
   overflow: hidden;
   border-radius: 12px;
   padding: 3rem 1.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: ${props => props.theme.colors.shadow.lg};
   
   &::before {
     content: '';
@@ -42,13 +67,36 @@ const Container = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(230, 237, 242, 0.97), rgba(220, 232, 242, 0.99));
+    background: ${props => props.theme.name === 'dark'
+      ? 'radial-gradient(ellipse at center, rgba(0, 169, 219, 0.05) 0%, transparent 70%)'
+      : props.theme.colors.bg.secondary};
     z-index: 0;
   }
   
   @media (max-width: 768px) {
     padding: 2rem 1rem;
   }
+`;
+
+const FloatingParticle = styled.div`
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(0, 169, 219, 0.6);
+  border-radius: 50%;
+  animation: ${floatingParticles} 20s linear infinite;
+  z-index: 1;
+  box-shadow: 0 0 10px rgba(0, 169, 219, 0.4);
+  
+  &:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 25s; }
+  &:nth-child(2) { left: 20%; animation-delay: 2s; animation-duration: 20s; }
+  &:nth-child(3) { left: 30%; animation-delay: 4s; animation-duration: 22s; }
+  &:nth-child(4) { left: 40%; animation-delay: 6s; animation-duration: 18s; }
+  &:nth-child(5) { left: 50%; animation-delay: 8s; animation-duration: 24s; }
+  &:nth-child(6) { left: 60%; animation-delay: 10s; animation-duration: 21s; }
+  &:nth-child(7) { left: 70%; animation-delay: 12s; animation-duration: 19s; }
+  &:nth-child(8) { left: 80%; animation-delay: 14s; animation-duration: 23s; }
+  &:nth-child(9) { left: 90%; animation-delay: 16s; animation-duration: 20s; }
 `;
 
 // Título com animação de digitalização
@@ -61,12 +109,12 @@ const Title = styled.h1`
   font-size: 3rem;
   margin-bottom: 1.5rem;
   font-weight: 700;
-  color: #2d3e50;
+  color: ${props => props.theme.colors.text.primary};
   text-align: center;
   position: relative;
   z-index: 10;
   animation: ${scanTextAnimation} 1.5s ease-out forwards;
-  text-shadow: 0 2px 10px rgba(45, 62, 80, 0.2);
+  text-shadow: ${props => props.theme.colors.shadow.sm};
   letter-spacing: 0.5px;
   
   @media (max-width: 768px) {
@@ -88,14 +136,14 @@ const Subtitle = styled.p`
   animation-delay: 1.5s;
   opacity: 0;
   animation-fill-mode: forwards;
-  color: #34495e;
+  color: ${props => props.theme.colors.text.secondary};
   line-height: 1.6;
   font-weight: 400;
-  background: linear-gradient(90deg, rgba(0, 169, 219, 0.08), rgba(0, 169, 219, 0.05), rgba(0, 169, 219, 0.08));
+  background: ${props => props.theme.colors.status.infoBg};
   padding: 1rem 2rem;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 169, 219, 0.2);
+  box-shadow: ${props => props.theme.colors.shadow.md};
+  border: 1px solid ${props => props.theme.colors.border.secondary};
   
   @media (max-width: 768px) {
     font-size: 1.1rem;
@@ -169,22 +217,22 @@ const StepIcon = styled.div<StepIndicatorProps>`
     ? 'linear-gradient(135deg, #00A9DB, #0088cc)' 
     : props.completed 
       ? 'linear-gradient(135deg, #4CAF50, #2e8540)' 
-      : 'rgba(181, 194, 203, 0.3)'};
+      : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(181, 194, 203, 0.3)'};
   display: flex;
   justify-content: center;
   align-items: center;
   margin-right: 1.5rem;
-  color: ${props => props.active || props.completed ? 'white' : '#34495e'};
+  color: ${props => props.active || props.completed ? 'white' : props.theme.colors.text.secondary};
   font-size: 1.6rem;
   border: 3px solid ${props => props.active 
     ? '#00A9DB' 
     : props.completed 
       ? '#4CAF50' 
-      : 'rgba(181, 194, 203, 0.4)'};
+      : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(181, 194, 203, 0.4)'};
   transition: all 0.3s ease;
   position: relative;
   animation: ${props => props.active ? iconGlow : 'none'} 2s infinite;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: ${props => props.theme.shadows.md};
   transform: ${props => props.active ? 'scale(1.1)' : 'scale(1)'};
 
   /* Efeito de círculo ao redor do ícone ativo */
@@ -245,9 +293,27 @@ const scanLineAnimation = keyframes`
   100% { transform: translateY(100%); opacity: 0; }
 `;
 
-const MetricCard = styled.div`
-  background: white;
-  border-radius: 16px;
+const valuePulse = keyframes`
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+`;
+
+const MetricCard = styled.div<MetricCardProps>`
+  background: ${props => {
+    if (props.theme.name === 'dark') {
+      if (props.isCompleted) {
+        return 'linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(46, 133, 64, 0.1))';
+      }
+      if (props.isActive) {
+        return 'linear-gradient(135deg, rgba(0, 169, 219, 0.15), rgba(0, 136, 204, 0.1))';
+      }
+      return 'linear-gradient(135deg, rgba(20, 20, 25, 0.8), rgba(30, 30, 35, 0.6))';
+    }
+    return 'white';
+  }};
+  backdrop-filter: ${props => props.theme.name === 'dark' ? 'blur(20px)' : 'none'};
+  border-radius: 20px;
   padding: 1.8rem;
   display: flex;
   flex-direction: column;
@@ -257,10 +323,25 @@ const MetricCard = styled.div`
   max-width: 240px;
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(181, 194, 203, 0.4);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-  transform: translateY(0);
-  transition: all 0.3s ease;
+  opacity: ${props => props.isActive || props.isCompleted ? 1 : 0.5};
+  border: 1px solid ${props => {
+    if (props.isCompleted) return props.theme.name === 'dark' ? 'rgba(76, 175, 80, 0.4)' : 'rgba(76, 175, 80, 0.6)';
+    if (props.isActive) return props.theme.name === 'dark' ? 'rgba(0, 169, 219, 0.4)' : 'rgba(0, 169, 219, 0.6)';
+    return props.theme.name === 'dark' ? 'rgba(0, 169, 219, 0.2)' : 'rgba(181, 194, 203, 0.4)';
+  }};
+  box-shadow: ${props => {
+    if (props.isActive || props.isCompleted) {
+      const color = props.isCompleted ? '76, 175, 80' : '0, 169, 219';
+      return props.theme.name === 'dark'
+        ? `0 8px 32px rgba(${color}, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)`
+        : `0 8px 30px rgba(${color}, 0.2)`;
+    }
+    return props.theme.name === 'dark'
+      ? '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+      : '0 8px 30px rgba(0, 0, 0, 0.08)';
+  }};
+  transform: translateY(0) ${props => props.isActive ? 'scale(1.02)' : 'scale(1)'};
+  transition: all 0.5s ease;
   
   &:nth-child(1) {
     border-top: 4px solid #00A9DB;
@@ -280,8 +361,8 @@ const MetricCard = styled.div`
   
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
-    border-color: rgba(45, 62, 80, 0.3);
+    box-shadow: ${props => props.theme.shadows.lg};
+    border-color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(45, 62, 80, 0.3)'};
   }
   
   @media (max-width: 900px) {
@@ -331,14 +412,14 @@ const countAnimation = keyframes`
   to { transform: scale(1); }
 `;
 
-const MetricValue = styled.div`
+const MetricValue = styled.div<{ isChanging?: boolean }>`
   font-size: 3rem;
   font-weight: 800;
-  color: #2d3e50;
+  color: ${props => props.theme.colors.text.primary};
   margin-bottom: 0.8rem;
-  animation: ${valueAnimation} 3s infinite;
   font-family: 'Montserrat', sans-serif;
-  animation: ${countAnimation} 0.3s ease-out;
+  animation: ${props => props.isChanging ? valuePulse : 'none'} 0.5s ease-out;
+  transition: color 0.3s ease;
 `;
 
 const MetricSubvalue = styled.div`
@@ -377,15 +458,24 @@ const StatusMessage = styled.div`
 `;
 
 const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, onComplete }) => {
+  const { t } = useLanguage();
+  const { isDarkMode } = useTheme();
+  
   // Estados
   const [currentStep, setCurrentStep] = useState(0);
-  const [statusMessage, setStatusMessage] = useState('Initializing analysis...');
+  const [statusMessage, setStatusMessage] = useState(t('processing.searchingVideos'));
   const [hasMessages, setHasMessages] = useState(false);
   const [metrics, setMetrics] = useState({
     keywords: 0,
     videos: 0,
     comments: 0,
     insights: 0
+  });
+  const [changingMetrics, setChangingMetrics] = useState({
+    keywords: false,
+    videos: false,
+    comments: false,
+    insights: false
   });
 
   // Verificar se o projeto tem mensagens
@@ -470,14 +560,43 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
       })
       .subscribe();
       
-    // Simular valores de métricas incrementando ao longo do tempo
+    // Simular valores de métricas incrementando ao longo do tempo baseado no passo atual
     const metricsInterval = setInterval(() => {
-      setMetrics(prev => ({
-        keywords: Math.min(prev.keywords + Math.floor(Math.random() * 3), 50),
-        videos: Math.min(prev.videos + Math.floor(Math.random() * 2), 30),
-        comments: Math.min(prev.comments + Math.floor(Math.random() * 5), 120),
-        insights: Math.min(prev.insights + Math.floor(Math.random() * 1), 15)
-      }));
+      setMetrics(prev => {
+        const newMetrics = { ...prev };
+        const changes = { keywords: false, videos: false, comments: false, insights: false };
+        
+        // Atualizar métricas baseado no passo atual
+        if (currentStep >= 0) {
+          const newKeywords = Math.min(prev.keywords + Math.floor(Math.random() * 3), 50);
+          if (newKeywords !== prev.keywords) {
+            newMetrics.keywords = newKeywords;
+            changes.keywords = true;
+          }
+        }
+        
+        if (currentStep >= 1) {
+          const newVideos = Math.min(prev.videos + Math.floor(Math.random() * 2), 30);
+          if (newVideos !== prev.videos) {
+            newMetrics.videos = newVideos;
+            changes.videos = true;
+          }
+        }
+        
+        if (currentStep >= 3) {
+          const newComments = Math.min(prev.comments + Math.floor(Math.random() * 5), 120);
+          if (newComments !== prev.comments) {
+            newMetrics.comments = newComments;
+            changes.comments = true;
+          }
+        }
+        
+        // Marcar métricas como mudando para animação
+        setChangingMetrics(changes);
+        setTimeout(() => setChangingMetrics({ keywords: false, videos: false, comments: false, insights: false }), 500);
+        
+        return newMetrics;
+      });
     }, 2000);
     
     // Verificar mensagens periodicamente enquanto estiver processando
@@ -534,48 +653,48 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
   // Função para atualizar a mensagem de status com base no passo atual
   const updateStatusMessage = (step: number) => {
     const messages = [
-      "Creating dozens of semantic keywords with search intent...",
-      "Finding the most relevant videos for your project...",
-      "Storing discovered videos for analysis...",
-      "Analyzing video content with advanced AI...",
-      "Processing and evaluating relevant comments...",
-      "Creating personalized engagement messages...",
-      "Preparation complete! Loading your dashboard..."
+      t('processing.searchingVideos'),
+      t('processing.analyzingContent'),
+      t('processing.extractingData'),
+      t('processing.processingComments'),
+      t('processing.generatingInsights'),
+      t('processing.finalizing'),
+      t('processing.completed')
     ];
     
-    setStatusMessage(messages[step] || "Processing data...");
+    setStatusMessage(messages[step] || t('common.loading'));
   };
 
   // Definições de cada etapa do processo
   const steps = [
     {
-      title: "Keyword Search",
-      description: "Creating semantic keywords with search intent",
+      title: t('overview.keywords'),
+      description: t('processing.searchingVideos'),
       icon: FaSearch
     },
     {
-      title: "Video Location",
-      description: "Finding the most relevant videos",
+      title: t('overview.videos'),
+      description: t('processing.analyzingContent'),
       icon: FaVideo
     },
     {
-      title: "Data Storage",
-      description: "Saving discovered videos for analysis",
+      title: t('common.save'),
+      description: t('processing.extractingData'),
       icon: FaDatabase
     },
     {
-      title: "Content Analysis",
-      description: "Processing videos with artificial intelligence",
+      title: t('processing.analyzingContent'),
+      description: t('processing.processingComments'),
       icon: FaBrain
     },
     {
-      title: "Comment Evaluation",
-      description: "Analyzing the most relevant comments",
+      title: t('mentions.title'),
+      description: t('processing.generatingInsights'),
       icon: FaComments
     },
     {
-      title: "Message Creation",
-      description: "Generating personalized engagement messages",
+      title: t('processing.finalizing'),
+      description: t('processing.completed'),
       icon: FaRocket
     }
   ];
@@ -584,9 +703,14 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
     <Container>
       <TechBackground zIndex={1} opacity={0.3} />
       
-      <Title>Preparing Your Intelligent Analysis</Title>
+      {/* Partículas flutuantes apenas no tema escuro */}
+      {isDarkMode && [...Array(9)].map((_, i) => (
+        <FloatingParticle key={i} />
+      ))}
+      
+      <Title>{t('processing.title')}</Title>
       <Subtitle>
-        Liftlio is analyzing the best engagement opportunities for your project. This process may take between 4 and 10 minutes, depending on the amount of data. Please keep this tab open.
+        {t('processing.subtitle')}
       </Subtitle>
       
       <Timeline>
@@ -611,22 +735,43 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ projectId, on
       </Timeline>
       
       <DataVisualization>
-        <MetricCard className="card-1" style={{"--index": 0} as any}>
-          <MetricTitle>Keywords</MetricTitle>
-          <MetricValue>{metrics.keywords}</MetricValue>
-          <MetricSubvalue>Analyzed</MetricSubvalue>
+        <MetricCard 
+          className="card-1" 
+          style={{"--index": 0} as any}
+          isActive={currentStep === 0}
+          isCompleted={currentStep > 0}
+        >
+          <MetricTitle>{t('overview.keywords')}</MetricTitle>
+          <MetricValue isChanging={changingMetrics.keywords}>
+            {metrics.keywords}
+          </MetricValue>
+          <MetricSubvalue>{t('processing.analyzingContent')}</MetricSubvalue>
         </MetricCard>
         
-        <MetricCard className="card-2" style={{"--index": 1} as any}>
-          <MetricTitle>Videos</MetricTitle>
-          <MetricValue>{metrics.videos}</MetricValue>
-          <MetricSubvalue>Found</MetricSubvalue>
+        <MetricCard 
+          className="card-2" 
+          style={{"--index": 1} as any}
+          isActive={currentStep === 1 || currentStep === 2}
+          isCompleted={currentStep > 2}
+        >
+          <MetricTitle>{t('overview.videos')}</MetricTitle>
+          <MetricValue isChanging={changingMetrics.videos}>
+            {metrics.videos}
+          </MetricValue>
+          <MetricSubvalue>{t('processing.searchingVideos')}</MetricSubvalue>
         </MetricCard>
         
-        <MetricCard className="card-3" style={{"--index": 2} as any}>
-          <MetricTitle>Comments</MetricTitle>
-          <MetricValue>{metrics.comments}</MetricValue>
-          <MetricSubvalue>Processed</MetricSubvalue>
+        <MetricCard 
+          className="card-3" 
+          style={{"--index": 2} as any}
+          isActive={currentStep === 3 || currentStep === 4}
+          isCompleted={currentStep > 4}
+        >
+          <MetricTitle>{t('mentions.title')}</MetricTitle>
+          <MetricValue isChanging={changingMetrics.comments}>
+            {metrics.comments}
+          </MetricValue>
+          <MetricSubvalue>{t('processing.processingComments')}</MetricSubvalue>
         </MetricCard>
       </DataVisualization>
       

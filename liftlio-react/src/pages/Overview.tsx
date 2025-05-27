@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import styled, { keyframes, css } from 'styled-components';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import styled, { keyframes, css, useTheme } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { COLORS, withOpacity } from '../styles/colors';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, PieChart, Pie, Cell, BarChart, Bar, Label, AreaChart, Area } from 'recharts';
@@ -10,29 +10,31 @@ import SentimentIndicator from '../components/SentimentIndicator';
 import { IconComponent } from '../utils/IconHelper';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useProject } from '../context/ProjectContext';
+import { useLanguage } from '../context/LanguageContext';
 import EmptyState from '../components/EmptyState';
 import ProjectModal from '../components/ProjectModal';
 import { supabase } from '../lib/supabaseClient';
 import { PieLabelRenderProps } from 'recharts';
 
-// Efeito de onda para os ícones
+// Efeito de onda sincronizado para cima e para baixo
 const waveEffect = keyframes`
   0% {
-    transform: scale(1);
-    opacity: 0.8;
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+    transform: translateY(0) scale(1);
+  }
+  25% {
+    transform: translateY(-4px) scale(1.02);
   }
   50% {
-    transform: scale(1.05);
-    opacity: 1;
-    box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.4);
+    transform: translateY(0) scale(1);
+  }
+  75% {
+    transform: translateY(4px) scale(1.02);
   }
   100% {
-    transform: scale(1);
-    opacity: 0.8;
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    transform: translateY(0) scale(1);
   }
 `;
+
 
 // Efeito de transição da esquerda para direita
 const leftToRightWave = keyframes`
@@ -87,12 +89,19 @@ const ShimmerBar = styled.div`
   height: 10px;
   border-radius: 6px;
   width: 60%;
-  background: linear-gradient(90deg, 
-    ${props => props.theme.colors.primaryDark} 0%, 
-    ${props => props.theme.colors.primary} 30%, 
-    ${props => props.theme.colors.primaryLight} 60%, 
-    ${props => props.theme.colors.primary} 80%, 
-    ${props => props.theme.colors.primaryDark} 100%);
+  background: ${props => props.theme.name === 'dark'
+    ? `linear-gradient(90deg, 
+        ${props.theme.colors.accent.primary}33 0%, 
+        ${props.theme.colors.accent.primary} 30%, 
+        ${props.theme.colors.accent.primary}33 60%, 
+        ${props.theme.colors.accent.primary} 80%, 
+        ${props.theme.colors.accent.primary}33 100%)`
+    : `linear-gradient(90deg, 
+        ${props.theme.colors.accent.primary}33 0%, 
+        ${props.theme.colors.accent.primary} 30%, 
+        ${props.theme.colors.accent.primary}33 60%, 
+        ${props.theme.colors.accent.primary} 80%, 
+        ${props.theme.colors.accent.primary}33 100%)`};
   background-size: 200% 100%;
   animation: ${shimmer} 2s linear infinite;
   transition: width 0.5s ease;
@@ -104,7 +113,9 @@ const ShimmerOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+  background: ${props => props.theme.name === 'dark' 
+    ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%)'
+    : 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%)'};
   background-size: 200% 100%;
   animation: ${shimmer} 2s linear infinite;
   z-index: 1;
@@ -319,7 +330,7 @@ const PageContainer = styled.div`
   padding: 24px;
   position: relative;
   overflow: hidden;
-  background-color: ${COLORS.DOMINANT}; /* Dominant color (60%) for main background */
+  background-color: ${props => props.theme.colors.bg.primary};
   
   @media (max-width: 768px) {
     padding: 16px 12px;
@@ -387,14 +398,14 @@ const PageTitle = styled.h1`
   font-size: 24px;
   font-weight: 700;
   margin: 0;
-  color: ${COLORS.TEXT.ON_LIGHT};
+  color: ${props => props.theme.colors.text.primary};
   
   div {
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 12px;
-    color: ${COLORS.ACCENT};
+    color: ${props => props.theme.colors.accent.primary};
   }
 `;
 
@@ -405,9 +416,12 @@ const GreetingContainer = styled.div`
   margin-left: 20px;
   padding: 8px 16px;
   border-radius: 20px;
-  background: ${props => props.theme.mode === 'dark' 
-    ? 'linear-gradient(135deg, rgba(66, 66, 134, 0.4), rgba(33, 33, 67, 0.2))' 
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.05)' 
     : 'linear-gradient(135deg, rgba(236, 242, 255, 0.8), rgba(222, 232, 255, 0.4))'};
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'transparent'};
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   animation: ${fadeIn} 0.5s ease-out;
   
@@ -420,12 +434,12 @@ const GreetingContainer = styled.div`
 const GreetingText = styled.span`
   font-size: 16px;
   font-weight: 500;
-  color: ${props => props.theme.mode === 'dark' ? COLORS.TEXT.SECONDARY : COLORS.TEXT.ON_LIGHT};
+  color: ${props => props.theme.colors.text.primary};
   white-space: nowrap;
   
   /* Estilo para o texto do nome */
   strong {
-    color: ${COLORS.ACCENT};
+    color: ${props => props.theme.colors.accent.primary};
     font-weight: 600;
   }
 `;
@@ -434,7 +448,7 @@ const TimeIcon = styled.span`
   margin-right: 10px;
   display: flex;
   align-items: center;
-  color: ${COLORS.ACCENT};
+  color: ${props => props.theme.colors.text.secondary};
 `;
 
 const ActionButtons = styled.div`
@@ -582,10 +596,10 @@ const OverviewGrid = styled.div`
 
 // Enhanced stat card with modern tech-inspired design
 const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number; active?: boolean }>`
-  background: ${COLORS.SECONDARY}; // Branco - Secondary color (30%)
+  background: ${props => props.theme.components.card.bg};
   border-radius: 16px;
   padding: 24px;
-  box-shadow: ${COLORS.SHADOW.LIGHT};
+  box-shadow: ${props => props.theme.shadows.md};
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -596,41 +610,15 @@ const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number; active?: bo
     : 'scale(1)'
   };
   z-index: ${props => props.cardIndex !== undefined ? 10 - props.cardIndex : 1};
-  border: 1px solid rgba(165, 177, 183, 0.3); /* Borda sutil como no MetricCard */
+  border: 1px solid ${props => props.theme.colors.border.primary};
   
-  /* Fundo com degradê sutil baseado na cor do ícone */
-  background: ${props => {
-    // Definir cores de fundo baseadas no índice do card
-    let bgColor = 'linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%)'; // Azul para Channels (default)
-    
-    if (props.cardIndex === 1) {
-      bgColor = 'linear-gradient(135deg, #f5f0ff 0%, #ffffff 100%)'; // Roxo para Videos
-    } else if (props.cardIndex === 2) {
-      bgColor = 'linear-gradient(135deg, #fff8f0 0%, #ffffff 100%)'; // Laranja para Total Mentions
-    } else if (props.cardIndex === 3) {
-      bgColor = 'linear-gradient(135deg, #f0fff5 0%, #ffffff 100%)'; // Verde para Today's Mentions
-    }
-    
-    return bgColor;
-  }};
+  /* Fundo simples sem gradientes coloridos */
+  background: ${props => props.theme.components.card.bg};
   
   &:hover {
     transform: translateY(-4px) ${props => props.cardIndex !== undefined ? `scale(${1 - props.cardIndex * 0.01})` : 'scale(1)'};
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-    background: ${props => {
-      // Definir cores de fundo baseadas no índice do card, mais intensas no hover
-      let bgColor = 'linear-gradient(135deg, #e6f4ff 0%, #ffffff 100%)'; // Azul para Channels (default)
-      
-      if (props.cardIndex === 1) {
-        bgColor = 'linear-gradient(135deg, #f0e6ff 0%, #ffffff 100%)'; // Roxo para Videos
-      } else if (props.cardIndex === 2) {
-        bgColor = 'linear-gradient(135deg, #fff1e6 0%, #ffffff 100%)'; // Laranja para Total Mentions
-      } else if (props.cardIndex === 3) {
-        bgColor = 'linear-gradient(135deg, #e6ffe9 0%, #ffffff 100%)'; // Verde para Today's Mentions
-      }
-      
-      return bgColor;
-    }};
+    background: ${props => props.theme.colors.bg.hover};
   }
   
   @media (max-width: 1200px) {
@@ -651,7 +639,7 @@ const FunnelArrow = keyframes`
 const StatCardTitle = styled.h3`
   font-size: ${props => props.theme.fontSizes.md};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${COLORS.TEXT.SECONDARY}; /* Dominant color shade (60%) */
+  color: ${props => props.theme.colors.text.secondary};
   margin: 0 0 16px 0;
   display: flex;
   align-items: center;
@@ -659,7 +647,7 @@ const StatCardTitle = styled.h3`
   position: relative;
   
   svg {
-    color: ${COLORS.TEXT.SECONDARY}; /* Dominant color shade (60%) */
+    color: ${props => props.theme.colors.text.secondary};
   }
 `;
 
@@ -802,50 +790,7 @@ const FlowParticle = styled.div<{ index: number; active: boolean }>`
 
 // Extremely subtle card highlight effect
 const CardEnergyEffect = styled.div<{ index: number; active: boolean }>`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-  transition: all 0.5s ease;
-  
-  /* Cores para cada card baseadas no seu significado */
-  --card-color-primary: ${props => {
-    // Cores alinhadas com as cores dos ícones dos cards
-    const colors = [
-      COLORS.INFO,    // Azul para Channels
-      '#9C27B0',      // Roxo para Videos
-      COLORS.WARNING, // Laranja/Amarelo para Total Mentions
-      COLORS.SUCCESS  // Verde para Today's Mentions
-    ];
-    return colors[props.index < 4 ? props.index : 3];
-  }};
-  --card-color-secondary: ${props => {
-    // Cores secundárias complementares alinhadas com as cores dos ícones
-    const colors = [
-      withOpacity(COLORS.INFO, 0.8),    // Azul mais escuro para Channels
-      withOpacity('#9C27B0', 0.8),      // Roxo mais escuro para Videos
-      withOpacity(COLORS.WARNING, 0.8), // Laranja/Amarelo mais escuro para Total Mentions
-      withOpacity(COLORS.SUCCESS, 0.8)  // Verde mais escuro para Today's Mentions
-    ];
-    return colors[props.index < 4 ? props.index : 3];
-  }};
-  
-  /* Fundo futurístico com malha de dados */
-  background: 
-    linear-gradient(135deg, 
-      var(--card-color-primary)20 0%, 
-      var(--card-color-secondary)30 100%
-    ),
-    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  animation: ${digitalFlow} 30s infinite linear;
-  
-  /* Luz pulsante energética ao redor do card */
-  box-shadow: ${props => `0 0 20px var(--card-color-primary)30, inset 0 0 15px var(--card-color-secondary)20`};
+  display: none; /* Remove completamente o efeito colorido */
   
   /* Efeito de luz fluindo pelo card - primeira camada */
   /* Efeito de luz fluindo e escaneando */
@@ -961,7 +906,7 @@ const StatContent = styled.div`
 const StatValue = styled.div`
   font-size: ${props => props.theme.fontSizes['4xl']};
   font-weight: ${props => props.theme.fontWeights.bold};
-  color: ${props => props.theme.colors.primary}; /* Accent color (10%) for stat values */
+  color: ${props => props.theme.colors.text.primary};
   margin-bottom: 8px;
   letter-spacing: -0.5px;
   word-break: break-word;
@@ -993,7 +938,7 @@ const StatGrowth = styled.div<{ positive?: boolean }>`
 `;
 
 const StatLabel = styled.div`
-  color: ${props => props.theme.colors.darkGrey}; /* Dominant color dark shade (60%) */
+  color: ${props => props.theme.colors.text.secondary};
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.theme.fontWeights.medium};
   display: flex;
@@ -1017,52 +962,19 @@ const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
   height: 48px;
   border-radius: 12px;
   background: ${props => props.bgColor};
-  color: white; /* Alterado para branco conforme solicitação */
+  color: white;
   font-size: 1.5rem;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   position: relative;
   overflow: hidden;
-  animation: ${waveEffect} 3s infinite ease-in-out;
+  animation: ${waveEffect} 2s infinite ease-in-out;
   animation-delay: ${props => props.animationDelay || '0s'};
-  
-  &:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, 
-      rgba(255,255,255,0) 0%, 
-      rgba(255,255,255,0.3) 50%, 
-      rgba(255,255,255,0) 100%
-    );
-    background-size: 200% 100%;
-    animation: ${leftToRightWave} 3s infinite ease-in-out;
-    animation-delay: ${props => props.animationDelay || '0s'};
-    z-index: 1;
-  }
-  
-  &:after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
-    opacity: 0;
-    animation: ${pulse} 2s infinite ease-out;
-    border-radius: 12px;
-    z-index: 1;
-  }
   
   svg {
     position: relative;
     z-index: 2;
     width: 24px;
     height: 24px;
-    color: white; /* Alterado para branco conforme solicitação */
+    color: white;
   }
   
   @media (max-width: 992px) and (min-width: 768px) {
@@ -1111,14 +1023,14 @@ const ChartHeader = styled.div`
 const ChartTitle = styled.h3`
   font-size: ${props => props.theme.fontSizes.lg};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${COLORS.ACCENT};
+  color: ${props => props.theme.colors.text.primary};
   margin: 0;
   display: flex;
   align-items: center;
   gap: 10px;
   
   svg {
-    color: ${COLORS.DOMINANT_DARK};
+    color: ${props => props.theme.colors.text.secondary};
   }
 `;
 
@@ -1242,10 +1154,10 @@ const TableHeader = styled.div`
   display: grid;
   grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 2fr 1.2fr 1.5fr;
   padding: 16px 24px;
-  background: ${COLORS.SECONDARY}; /* Secondary color (30%) for header background */
-  border-bottom: 1px solid ${withOpacity(COLORS.DOMINANT_LIGHT, 0.2)}; /* Dominant light color (60%) with transparency */
+  background: ${props => props.theme.components.card.bg};
+  border-bottom: 1px solid ${props => props.theme.colors.border.primary};
   font-weight: 600;
-  color: ${COLORS.TEXT.SECONDARY}; /* Text secondary color for header */
+  color: ${props => props.theme.colors.text.secondary};
   font-size: 14px;
   min-width: 1000px;
   
@@ -1307,12 +1219,12 @@ const TableCell = styled.div`
 
 const KeywordCell = styled(TableCell)`
   font-weight: 600;
-  color: ${COLORS.TEXT.ON_LIGHT};
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const NumericCell = styled(TableCell)`
   font-weight: 600;
-  color: ${COLORS.TEXT.SECONDARY};
+  color: ${props => props.theme.colors.text.secondary};
 `;
 
 // Video links styling
@@ -1423,7 +1335,7 @@ const QuickStatRow = styled.div`
 const QuickStat = styled.div`
   flex: 1;
   padding: 20px;
-  background: white;
+  background: ${props => props.theme.components.card.bg};
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.sm};
   display: flex;
@@ -1516,14 +1428,14 @@ const ContentHeader = styled.div`
 const ContentTitle = styled.h2`
   font-size: ${props => props.theme.fontSizes.xl};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.text.primary};
   margin: 0;
   display: flex;
   align-items: center;
   gap: 10px;
   
   svg {
-    color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.colors.accent.primary};
   }
   
   @media (max-width: 768px) {
@@ -1609,8 +1521,10 @@ const renderIcon = (iconName: string) => {
 
 // Main component
 const Overview: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const { currentProject, hasProjects, projectIntegrations, onboardingStep, setCurrentProject } = useProject();
+  const { t } = useLanguage();
   const [activeChart, setActiveChart] = useState<'line' | 'bar'>('line');
   const [activeMetrics, setActiveMetrics] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -1913,7 +1827,7 @@ const Overview: React.FC = () => {
     justify-content: center;
     align-items: center;
     position: relative;
-    background: white;
+    background: ${props => props.theme.components.card.bg};
     overflow: hidden;
     
     @keyframes spin {
@@ -2115,7 +2029,7 @@ const Overview: React.FC = () => {
       transform: translate(-50%, -50%);
       width: 65px;
       height: 65px;
-      background: white;
+      background: ${props => props.theme.components.card.bg};
       border-radius: 50%;
       box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
     }
@@ -2138,9 +2052,9 @@ const Overview: React.FC = () => {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #2196F3;
+    background: ${props => props.theme.colors.accent.primary};
     filter: blur(1px);
-    box-shadow: 0 0 8px rgba(33, 150, 243, 0.6);
+    box-shadow: 0 0 8px ${props => props.theme.colors.accent.primary}99;
   `;
 
   const LoadingRipple = keyframes`
@@ -2178,7 +2092,7 @@ const Overview: React.FC = () => {
   const BusinessMetric = styled.div`
     position: absolute;
     padding: 10px 15px;
-    background: white;
+    background: ${props => props.theme.components.card.bg};
     border-radius: 10px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     display: flex;
@@ -2239,11 +2153,11 @@ const Overview: React.FC = () => {
   const [loadProgress, setLoadProgress] = useState(0);
   
   const sampleTrafficData = [
-    { name: 'YouTube', value: 400, color: '#FF0000' },
-    { name: 'Facebook', value: 300, color: '#3b5998' },
-    { name: 'Instagram', value: 300, color: '#C13584' },
-    { name: 'TikTok', value: 200, color: '#000000' },
-    { name: 'Twitter', value: 100, color: '#1DA1F2' }
+    { name: 'YouTube', value: 400, color: theme.colors.accent.primary },
+    { name: 'Facebook', value: 300, color: theme.colors.accent.secondary },
+    { name: 'Instagram', value: 300, color: theme.colors.accent.tertiary },
+    { name: 'TikTok', value: 200, color: theme.colors.status.warning },
+    { name: 'Twitter', value: 100, color: theme.colors.status.info }
   ];
   
   // Animação de progresso de carregamento
@@ -2520,11 +2434,11 @@ const Overview: React.FC = () => {
             />
             <div style={{
               width: '100%',
-              background: 'rgba(240, 240, 250, 0.4)',
+              background: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(240, 240, 250, 0.4)',
               borderRadius: '8px',
               padding: '4px',
               margin: '15px 0',
-              boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
+              boxShadow: theme.name === 'dark' ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)' : 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
               overflow: 'hidden',
               position: 'relative',
               zIndex: 2
@@ -2534,7 +2448,7 @@ const Overview: React.FC = () => {
                 textAlign: 'center',
                 marginTop: '10px',
                 fontSize: '14px',
-                color: '#666',
+                color: theme.colors.text.secondary,
                 position: 'relative',
                 zIndex: 2
               }}>
@@ -2552,10 +2466,21 @@ const Overview: React.FC = () => {
   // Mostrar animação de carregamento com gráficos interativos
   if (loading) {
     return (
-      <PageContainer>
+      <div style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        width: '100%', 
+        height: '100%', 
+        backgroundColor: theme.colors.bg.primary,
+        zIndex: 9999 
+      }}>
+        <PageContainer style={{ height: '100%' }}>
         <LoadingAnimation style={{ 
-          background: 'linear-gradient(180deg, #f7f9fc 0%, #ffffff 100%)',
-          boxShadow: '0 10px 50px rgba(0, 0, 0, 0.05)'
+          background: theme.name === 'dark' 
+            ? `linear-gradient(180deg, ${theme.colors.bg.primary} 0%, ${theme.colors.bg.secondary} 100%)`
+            : 'linear-gradient(180deg, #f7f9fc 0%, #ffffff 100%)',
+          boxShadow: theme.name === 'dark' ? '0 10px 50px rgba(0, 0, 0, 0.5)' : '0 10px 50px rgba(0, 0, 0, 0.05)'
         }}>
           {/* Texto removido para melhor responsividade */}
           
@@ -2572,51 +2497,51 @@ const Overview: React.FC = () => {
               width: '48%',
               minWidth: '280px',
               height: '280px',
-              background: 'white',
+              background: theme.name === 'dark' ? theme.components.card.bg : '#ffffff',
               borderRadius: '12px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+              boxShadow: theme.name === 'dark' ? '0 4px 20px rgba(0, 0, 0, 0.3)' : '0 4px 20px rgba(0, 0, 0, 0.06)',
               padding: '12px',
               position: 'relative',
               overflow: 'hidden'
             }}>
               <ShimmerOverlay className="loading-shimmer" />
               
-              <h3 style={{ marginBottom: '12px', color: '#1976D2', fontSize: '14px' }}>Performance Overview</h3>
+              <h3 style={{ marginBottom: '12px', color: theme.colors.text.primary, fontSize: '14px' }}>Performance Overview</h3>
               
               <ResponsiveContainer width="100%" height="85%">
                 <AreaChart data={samplePerformanceData}>
                   <defs>
                     <linearGradient id="colorVideos" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2196F3" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#2196F3" stopOpacity={0.1}/>
+                      <stop offset="5%" stopColor={theme.colors.accent.primary} stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor={theme.colors.accent.primary} stopOpacity={0.1}/>
                     </linearGradient>
                     <linearGradient id="colorEngagement" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#673AB7" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#673AB7" stopOpacity={0.1}/>
+                      <stop offset="5%" stopColor={theme.colors.accent.secondary} stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor={theme.colors.accent.secondary} stopOpacity={0.1}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
-                  <XAxis dataKey="name" tick={{ fill: '#666' }} />
-                  <YAxis tick={{ fill: '#666' }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={theme.colors.border.primary} />
+                  <XAxis dataKey="name" tick={{ fill: theme.colors.text.secondary }} />
+                  <YAxis tick={{ fill: theme.colors.text.secondary }} />
                   <Tooltip 
                     contentStyle={{
-                      background: 'rgba(255,255,255,0.9)',
-                      border: 'none',
+                      background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                      border: `1px solid ${theme.colors.border.primary}`,
                       borderRadius: '8px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                      boxShadow: theme.colors.shadow.md
                     }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="videos" 
-                    stroke="#2196F3" 
+                    stroke={theme.colors.accent.primary} 
                     fill="url(#colorVideos)" 
                     activeDot={{ r: 8 }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="engagement" 
-                    stroke="#673AB7" 
+                    stroke={theme.colors.accent.secondary} 
                     fill="url(#colorEngagement)" 
                     activeDot={{ r: 8 }} 
                   />
@@ -2629,16 +2554,16 @@ const Overview: React.FC = () => {
               width: '48%',
               minWidth: '280px',
               height: '280px',
-              background: 'white',
+              background: theme.name === 'dark' ? theme.components.card.bg : '#ffffff',
               borderRadius: '12px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
+              boxShadow: theme.name === 'dark' ? '0 4px 20px rgba(0, 0, 0, 0.3)' : '0 4px 20px rgba(0, 0, 0, 0.06)',
               padding: '12px',
               position: 'relative',
               overflow: 'hidden'
             }}>
               <ShimmerOverlay className="loading-shimmer" />
               
-              <h3 style={{ marginBottom: '12px', color: '#1976D2', fontSize: '14px' }}>Traffic Sources</h3>
+              <h3 style={{ marginBottom: '12px', color: theme.colors.text.primary, fontSize: '14px' }}>Traffic Sources</h3>
               
               <ResponsiveContainer width="100%" height="85%">
                 <PieChart>
@@ -2657,10 +2582,10 @@ const Overview: React.FC = () => {
                   </Pie>
                   <Tooltip 
                     contentStyle={{
-                      background: 'rgba(255,255,255,0.9)',
-                      border: 'none',
+                      background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                      border: `1px solid ${theme.colors.border.primary}`,
                       borderRadius: '8px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                      boxShadow: theme.colors.shadow.md
                     }}
                   />
                 </PieChart>
@@ -2680,7 +2605,7 @@ const Overview: React.FC = () => {
             <div style={{
               width: '100%',
               height: '6px',
-              background: 'rgba(33, 150, 243, 0.1)',
+              background: theme.colors.border.primary,
               borderRadius: '3px',
               overflow: 'hidden',
               marginBottom: '10px'
@@ -2688,15 +2613,15 @@ const Overview: React.FC = () => {
               <div style={{
                 height: '100%',
                 width: `${loadProgress}%`,
-                background: 'linear-gradient(90deg, #1976D2, #2196F3)',
+                background: `linear-gradient(90deg, ${theme.colors.accent.primary}, ${theme.colors.accent.secondary})`,
                 borderRadius: '3px',
-                boxShadow: '0 0 10px rgba(33, 150, 243, 0.5)',
+                boxShadow: `0 0 10px ${theme.colors.accent.primary}33`,
                 transition: 'width 0.5s ease-out'
               }} />
             </div>
             <div style={{
               fontSize: '12px',
-              color: '#666',
+              color: theme.colors.text.secondary,
               fontWeight: 500
             }}>
               {`${Math.round(loadProgress)}%`}
@@ -2710,12 +2635,13 @@ const Overview: React.FC = () => {
               style={{
                 ...getRandomDotStyles(i),
                 opacity: 0.2,
-                boxShadow: '0 0 12px rgba(33, 150, 243, 0.3)'
+                boxShadow: `0 0 12px ${theme.colors.accent.primary}4D`
               }}
             />
           ))}
         </LoadingAnimation>
       </PageContainer>
+      </div>
     );
   }
   
@@ -2755,7 +2681,7 @@ const Overview: React.FC = () => {
     &::before, &::after {
       content: '';
       position: absolute;
-      background: white;
+      background: ${props => props.theme.components.card.bg};
       border-radius: 4px;
     }
     
@@ -2775,18 +2701,18 @@ const Overview: React.FC = () => {
   const ErrorTitle = styled.h3`
     font-size: 28px;
     font-weight: 600;
-    color: #d32f2f;
+    color: ${props => props.theme.name === 'dark' ? '#ff6b6b' : '#d32f2f'};
     margin-bottom: 15px;
   `;
 
   const ErrorMessage = styled.div`
     font-size: 16px;
-    color: #555;
+    color: ${props => props.theme.colors.text.secondary};
     max-width: 500px;
-    background: rgba(211, 47, 47, 0.05);
+    background: ${props => props.theme.name === 'dark' ? 'rgba(255, 107, 107, 0.1)' : 'rgba(211, 47, 47, 0.05)'};
     padding: 20px;
     border-radius: 12px;
-    border-left: 4px solid #d32f2f;
+    border-left: 4px solid ${props => props.theme.name === 'dark' ? '#ff6b6b' : '#d32f2f'};
     text-align: left;
     position: relative;
     
@@ -2797,7 +2723,7 @@ const Overview: React.FC = () => {
       left: -12px;
       width: 24px;
       height: 24px;
-      background: #d32f2f;
+      background: ${props => props.theme.name === 'dark' ? '#ff6b6b' : '#d32f2f'};
       color: white;
       border-radius: 50%;
       display: flex;
@@ -2812,7 +2738,7 @@ const Overview: React.FC = () => {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: rgba(211, 47, 47, 0.3);
+    background: ${props => props.theme.name === 'dark' ? 'rgba(255, 107, 107, 0.3)' : 'rgba(211, 47, 47, 0.3)'};
   `;
 
   // Helper para gerar estilos aleatórios para partículas de erro
@@ -2875,7 +2801,7 @@ const Overview: React.FC = () => {
     height: 70vh;
     text-align: center;
     padding: 50px 20px;
-    background: rgba(103, 58, 183, 0.01);
+    background: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(103, 58, 183, 0.01)'};
     border-radius: 16px;
     position: relative;
     overflow: hidden;
@@ -2894,7 +2820,7 @@ const Overview: React.FC = () => {
     svg {
       width: 100%;
       height: 100%;
-      color: #673AB7;
+      color: ${props => props.theme.name === 'dark' ? '#00a9db' : '#673AB7'};
       opacity: 0.7;
     }
   `;
@@ -2902,7 +2828,7 @@ const Overview: React.FC = () => {
   const EmptyTitle = styled.h3`
     font-size: 28px;
     font-weight: 600;
-    background: linear-gradient(90deg, #673AB7, #2196F3);
+    background: linear-gradient(90deg, ${props => props.theme.name === 'dark' ? '#00a9db' : '#673AB7'}, #2196F3);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -2911,13 +2837,13 @@ const Overview: React.FC = () => {
 
   const EmptyMessage = styled.p`
     font-size: 18px;
-    color: #555;
+    color: ${props => props.theme.colors.text.secondary};
     margin-bottom: 30px;
   `;
 
   const EmptyButton = styled.button`
     padding: 12px 24px;
-    background: linear-gradient(135deg, #673AB7 0%, #2196F3 100%);
+    background: linear-gradient(135deg, ${props => props.theme.name === 'dark' ? '#00a9db' : '#673AB7'} 0%, #2196F3 100%);
     color: white;
     border: none;
     border-radius: 30px;
@@ -2925,11 +2851,11 @@ const Overview: React.FC = () => {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(103, 58, 183, 0.3);
+    box-shadow: 0 4px 15px ${props => props.theme.name === 'dark' ? 'rgba(0, 169, 219, 0.3)' : 'rgba(103, 58, 183, 0.3)'};
     
     &:hover {
       transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(103, 58, 183, 0.4);
+      box-shadow: 0 6px 20px ${props => props.theme.name === 'dark' ? 'rgba(0, 169, 219, 0.4)' : 'rgba(103, 58, 183, 0.4)'};
     }
   `;
 
@@ -2939,8 +2865,8 @@ const Overview: React.FC = () => {
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: linear-gradient(rgba(103, 58, 183, 0.03) 1px, transparent 1px),
-                     linear-gradient(90deg, rgba(103, 58, 183, 0.03) 1px, transparent 1px);
+    background-image: linear-gradient(${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(103, 58, 183, 0.03)'} 1px, transparent 1px),
+                     linear-gradient(90deg, ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(103, 58, 183, 0.03)'} 1px, transparent 1px);
     background-size: 20px 20px;
     z-index: -1;
   `;
@@ -2950,7 +2876,7 @@ const Overview: React.FC = () => {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: rgba(103, 58, 183, 0.2);
+    background: ${props => props.theme.name === 'dark' ? 'rgba(0, 169, 219, 0.2)' : 'rgba(103, 58, 183, 0.2)'};
   `;
 
   // Helper para gerar estilos aleatórios para pontos decorativos
@@ -3167,14 +3093,7 @@ const Overview: React.FC = () => {
               <StatIconContainer>
                 <StatIcon 
                   bgColor={stat.color} 
-                  animationDelay={`${index * 0.8}s`}
-                  style={{
-                    filter: activeLeds[index as keyof typeof activeLeds] ? 
-                      'brightness(1.05)' : 'none',
-                    transition: 'all 0.4s ease',
-                    transform: activeLeds[index as keyof typeof activeLeds] ? 'scale(1.02)' : 'scale(1)',
-                    opacity: activeLeds[index as keyof typeof activeLeds] ? 1 : 0.9
-                  }}
+                  animationDelay={`0s`}
                 >
                   {stat.title === 'Total Mentions' && <IconComponent icon={FaIcons.FaStar} />}
                   {stat.title === 'Today\'s Mentions' && <IconComponent icon={FaIcons.FaCalendarDay} />}
@@ -3197,7 +3116,7 @@ const Overview: React.FC = () => {
               fontSize: '15px', 
               fontWeight: 'normal', 
               marginLeft: '8px',
-              color: COLORS.TEXT.SECONDARY,
+              color: theme.colors.text.secondary,
               opacity: 0.9
             }}>
               Top Mentions by Channel
@@ -3215,6 +3134,7 @@ const Overview: React.FC = () => {
                   paddingAngle={5}
                   dataKey="value"
                   nameKey="name"
+                  strokeWidth={0}
                   label={(props: PieLabelRenderProps) => {
                     const RADIAN = Math.PI / 180;
                     const { cx, cy, midAngle, outerRadius, name, value } = props;
@@ -3237,7 +3157,7 @@ const Overview: React.FC = () => {
                       <text 
                         x={x} 
                         y={y} 
-                        fill="#333333" 
+                        fill={theme.colors.text.primary} 
                         textAnchor={textAnchor}
                         dominantBaseline="central"
                         fontSize={12}
@@ -3277,10 +3197,11 @@ const Overview: React.FC = () => {
                 <Tooltip 
                   formatter={(value) => [`${value}`, 'Mentions']}
                   contentStyle={{
-                    background: withOpacity(COLORS.SECONDARY, 0.95),
-                    border: 'none',
+                    background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    border: `1px solid ${theme.colors.border.primary}`,
                     borderRadius: '8px',
-                    boxShadow: COLORS.SHADOW.MEDIUM
+                    boxShadow: theme.shadows.md,
+                    color: theme.colors.text.primary
                   }}
                 />
               </PieChart>
@@ -3304,10 +3225,11 @@ const Overview: React.FC = () => {
                 <YAxis axisLine={false} tickLine={false} />
                 <Tooltip
                   contentStyle={{
-                    background: withOpacity(COLORS.SECONDARY, 0.95),
-                    border: 'none',
+                    background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    border: `1px solid ${theme.colors.border.primary}`,
                     borderRadius: '8px',
-                    boxShadow: COLORS.SHADOW.MEDIUM
+                    boxShadow: theme.shadows.md,
+                    color: theme.colors.text.primary
                   }}
                 />
                 <Legend />
@@ -3348,10 +3270,11 @@ const Overview: React.FC = () => {
                 />
                 <Tooltip 
                   contentStyle={{ 
-                    background: withOpacity(COLORS.SECONDARY, 0.95), 
-                    border: 'none',
+                    background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    border: `1px solid ${theme.colors.border.primary}`,
                     borderRadius: '8px',
-                    boxShadow: COLORS.SHADOW.MEDIUM
+                    boxShadow: theme.shadows.md,
+                    color: theme.colors.text.primary
                   }} 
                 />
                 <Legend />
@@ -3402,10 +3325,9 @@ const Overview: React.FC = () => {
           display: 'flex', 
           alignItems: 'center',
           gap: '12px',
-          fontSize: '22px',
-          color: COLORS.TEXT.ON_LIGHT
+          fontSize: '22px'
         }}>
-          <IconComponent icon={FaIcons.FaHashtag} style={{ color: COLORS.INFO }} />
+          <IconComponent icon={FaIcons.FaHashtag} style={{ color: theme.colors.accent.primary }} />
           <span style={{ fontWeight: 600 }}>Keywords & Insights</span>
         </ContentTitle>
         <AddNewProjectButton 
@@ -3500,7 +3422,7 @@ const Overview: React.FC = () => {
             padding: '40px 0', 
             textAlign: 'center',
             color: '#6c757d',
-            background: 'white',
+            background: theme.name === 'dark' ? theme.components.card.bg : '#ffffff',
             borderRadius: '12px',
             marginBottom: '16px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
@@ -3543,7 +3465,7 @@ const Overview: React.FC = () => {
                     fontSize: '18px', 
                     margin: '0 0 12px 0', 
                     fontWeight: 600,
-                    color: COLORS.TEXT.ON_LIGHT,
+                    color: theme.colors.text.primary,
                   }}>
                     {keyword.keyword}
                   </h3>
@@ -3560,31 +3482,31 @@ const Overview: React.FC = () => {
                       <div style={{ 
                         fontSize: '20px', 
                         fontWeight: 'bold',
-                        color: COLORS.INFO
+                        color: theme.colors.accent.primary
                       }}>
                         {keyword.views.toLocaleString()}
                       </div>
-                      <div style={{ fontSize: '12px', color: COLORS.TEXT.SECONDARY }}>Views</div>
+                      <div style={{ fontSize: '12px', color: theme.colors.text.secondary }}>Views</div>
                     </div>
                     <div style={{ textAlign: 'center' }}>
                       <div style={{ 
                         fontSize: '20px', 
                         fontWeight: 'bold',
-                        color: COLORS.INFO
+                        color: theme.colors.accent.primary
                       }}>
                         {keyword.videos}
                       </div>
-                      <div style={{ fontSize: '12px', color: COLORS.TEXT.SECONDARY }}>Videos</div>
+                      <div style={{ fontSize: '12px', color: theme.colors.text.secondary }}>Videos</div>
                     </div>
                     <div style={{ textAlign: 'center' }}>
                       <div style={{ 
                         fontSize: '20px', 
                         fontWeight: 'bold',
-                        color: COLORS.INFO
+                        color: theme.colors.accent.primary
                       }}>
                         {keyword.likes}
                       </div>
-                      <div style={{ fontSize: '12px', color: COLORS.TEXT.SECONDARY }}>Likes</div>
+                      <div style={{ fontSize: '12px', color: theme.colors.text.secondary }}>Likes</div>
                     </div>
                   </div>
                   
@@ -3596,7 +3518,7 @@ const Overview: React.FC = () => {
                       fontSize: '13px',
                       margin: '0 0 6px 0',
                       fontWeight: 500,
-                      color: COLORS.TEXT.SECONDARY
+                      color: theme.colors.text.secondary
                     }}>
                       Top Videos:
                     </p>
@@ -3606,7 +3528,7 @@ const Overview: React.FC = () => {
                           padding: '4px 0',
                           fontSize: '12px'
                         }}>
-                          <IconComponent icon={FaIcons.FaPlayCircle} style={{ color: COLORS.INFO }} />
+                          <IconComponent icon={FaIcons.FaPlayCircle} style={{ color: theme.colors.accent.primary }} />
                           {video}
                         </VideoLink>
                       ))}

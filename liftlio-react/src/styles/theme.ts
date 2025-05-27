@@ -1,4 +1,5 @@
 import COLORS from './colors';
+import { lightTheme as globalLight, darkTheme as globalDark } from './GlobalThemeSystem';
 
 // Base theme object with shared properties
 const baseTheme = {
@@ -139,15 +140,17 @@ const baseTheme = {
   }
 };
 
-// Light theme - usando o tema base
+// Light theme - mesclando com o sistema global
 export const lightTheme = {
   ...baseTheme,
+  ...globalLight,
   name: 'light',
   colors: {
+    ...globalLight.colors,
     ...baseTheme.colors,
     // Cores principais
     background: '#F8F9FA',
-    primary: '#0095FF',
+    primary: '#2D3E50',
     secondary: '#6B00CC',
     text: {
       primary: '#1A1A1A',
@@ -159,7 +162,7 @@ export const lightTheme = {
     // Landing page específico
     gradient: {
       ...baseTheme.colors.gradient,
-      landing: 'linear-gradient(135deg, #0095FF 0%, #6B00CC 100%)'
+      landing: 'linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 100%)'
     },
     headerBg: 'rgba(248, 249, 250, 0.95)',
     headerBgSolid: 'rgba(248, 249, 250, 0.98)',
@@ -168,7 +171,7 @@ export const lightTheme = {
     borderLight: 'rgba(0, 0, 0, 0.1)',
     badgeBg: 'rgba(0, 149, 255, 0.1)',
     badgeBorder: 'rgba(0, 149, 255, 0.3)',
-    primaryAlpha: 'rgba(0, 149, 255, 0.15)',
+    primaryAlpha: 'rgba(0, 0, 0, 0.05)',
     secondaryAlpha: 'rgba(107, 0, 204, 0.15)',
     shadowLarge: 'rgba(0, 0, 0, 0.1)',
     shadowMedium: 'rgba(0, 0, 0, 0.08)',
@@ -182,20 +185,22 @@ export const lightTheme = {
     pricingBg: '#F8F9FA',
     pricingFeaturedBg: 'rgba(0, 149, 255, 0.05)',
     testimonialsBg: 'rgba(0, 0, 0, 0.02)',
-    ctaBg: 'linear-gradient(135deg, rgba(0, 149, 255, 0.08) 0%, rgba(107, 0, 204, 0.08) 100%)',
+    ctaBg: 'linear-gradient(135deg, rgba(240, 240, 240, 0.5) 0%, rgba(248, 248, 248, 0.5) 100%)',
     footerBg: 'rgba(0, 0, 0, 0.04)'
   }
 };
 
-// Dark theme - versão escura personalizada
+// Dark theme - mesclando com o sistema global
 export const darkTheme = {
   ...baseTheme,
+  ...globalDark,
   name: 'dark',
   colors: {
+    ...globalDark.colors,
     ...baseTheme.colors,
     // Cores principais
     background: '#050505',
-    primary: '#00F5FF',
+    primary: '#E0E0E0',
     secondary: '#8B00FF',
     text: {
       primary: '#FFFFFF',
@@ -207,7 +212,7 @@ export const darkTheme = {
     // Landing page específico
     gradient: {
       ...baseTheme.colors.gradient,
-      landing: 'linear-gradient(135deg, #00F5FF 0%, #8B00FF 100%)'
+      landing: 'linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%)'
     },
     headerBg: 'rgba(5, 5, 5, 0.95)',
     headerBgSolid: 'rgba(5, 5, 5, 0.98)',
@@ -216,7 +221,7 @@ export const darkTheme = {
     borderLight: 'rgba(255, 255, 255, 0.1)',
     badgeBg: 'rgba(0, 245, 255, 0.1)',
     badgeBorder: 'rgba(0, 245, 255, 0.3)',
-    primaryAlpha: 'rgba(0, 245, 255, 0.15)',
+    primaryAlpha: 'rgba(255, 255, 255, 0.05)',
     secondaryAlpha: 'rgba(139, 0, 255, 0.15)',
     shadowLarge: 'rgba(0, 0, 0, 0.3)',
     shadowMedium: 'rgba(0, 0, 0, 0.2)',
@@ -230,7 +235,7 @@ export const darkTheme = {
     pricingBg: '#050505',
     pricingFeaturedBg: 'rgba(0, 245, 255, 0.05)',
     testimonialsBg: 'rgba(0, 0, 0, 0.5)',
-    ctaBg: 'linear-gradient(135deg, rgba(0, 245, 255, 0.1) 0%, rgba(139, 0, 255, 0.1) 100%)',
+    ctaBg: 'linear-gradient(135deg, rgba(20, 20, 20, 0.5) 0%, rgba(30, 30, 30, 0.5) 100%)',
     footerBg: 'rgba(0, 0, 0, 0.8)'
   }
 };

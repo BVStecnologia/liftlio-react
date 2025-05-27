@@ -56,8 +56,27 @@ const PageContainer = styled.div`
 `;
 
 const LoadingDataIndicator: React.FC = () => {
+  // Check for dark mode from localStorage or time of day
+  const getIsDarkMode = (): boolean => {
+    const savedTheme = localStorage.getItem('darkMode');
+    
+    if (savedTheme !== null) {
+      return savedTheme === 'true';
+    }
+    
+    // If no preference, use time-based theme
+    // Dark mode from 18:00 (6 PM) to 06:00 (6 AM)
+    const currentHour = new Date().getHours();
+    return currentHour >= 18 || currentHour < 6;
+  };
+  
+  const isDarkMode = getIsDarkMode();
+  const bgColor = isDarkMode ? '#0A0A0B' : '#f0f2f5';
+  const textColor = isDarkMode ? '#E4E4E7' : '#1976D2';
+  const tickColor = isDarkMode ? '#E4E4E7' : '#333';
+  
   return (
-    <PageContainer>
+    <PageContainer style={{ backgroundColor: bgColor }}>
       <LoadingAnimation style={{ 
         background: 'transparent',
         boxShadow: 'none'
@@ -84,7 +103,7 @@ const LoadingDataIndicator: React.FC = () => {
           }}>
             <ShimmerOverlay className="loading-shimmer" />
             
-            <h3 style={{ marginBottom: '12px', color: '#1976D2', fontSize: '16px', fontWeight: 'bold', position: 'relative', zIndex: 2, textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>Performance Overview</h3>
+            <h3 style={{ marginBottom: '12px', color: textColor, fontSize: '16px', fontWeight: 'bold', position: 'relative', zIndex: 2, textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>Performance Overview</h3>
             
             <ResponsiveContainer width="100%" height="85%">
               <AreaChart data={samplePerformanceData}>
@@ -98,9 +117,9 @@ const LoadingDataIndicator: React.FC = () => {
                     <stop offset="95%" stopColor="#673AB7" stopOpacity={0.3}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.15)" />
-                <XAxis dataKey="name" tick={{ fill: '#333' }} />
-                <YAxis tick={{ fill: '#333' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.1)"} />
+                <XAxis dataKey="name" tick={{ fill: tickColor }} />
+                <YAxis tick={{ fill: tickColor }} />
                 <Tooltip 
                   contentStyle={{
                     background: 'rgba(255,255,255,0.9)',
@@ -141,7 +160,7 @@ const LoadingDataIndicator: React.FC = () => {
           }}>
             <ShimmerOverlay className="loading-shimmer" />
             
-            <h3 style={{ marginBottom: '12px', color: '#1976D2', fontSize: '16px', fontWeight: 'bold', position: 'relative', zIndex: 2, textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>Traffic Sources</h3>
+            <h3 style={{ marginBottom: '12px', color: textColor, fontSize: '16px', fontWeight: 'bold', position: 'relative', zIndex: 2, textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>Traffic Sources</h3>
             
             <ResponsiveContainer width="100%" height="85%">
               <PieChart>

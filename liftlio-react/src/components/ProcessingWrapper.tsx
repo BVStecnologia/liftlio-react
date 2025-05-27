@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useProject } from '../context/ProjectContext';
 import ProcessingIndicator from './ProcessingIndicator';
+import LoadingScreen from './LoadingScreen';
 import { supabase } from '../lib/supabaseClient';
 
 interface ProcessingWrapperProps {
@@ -16,6 +17,7 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
   const [showProcessing, setShowProcessing] = useState(false);
   const [verifiedReady, setVerifiedReady] = useState(false);
   const [hasMensagens, setHasMensagens] = useState(false);
+  const [isCheckingInitial, setIsCheckingInitial] = useState(true); // Novo estado para verificação inicial
   
   // Verifica diretamente se existem mensagens para o projeto
   const checkForMessages = useCallback(async (projectId: string | number) => {
@@ -68,21 +70,11 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
 
   // Efeito principal para verificação completa do estado
   useEffect(() => {
-    // Primeiramente verificar se o projeto já está marcado como verificado
     if (currentProject?.id) {
-      const isVerified = sessionStorage.getItem(`projeto_${currentProject.id}_verified`) === 'true';
-      
-      if (isVerified) {
-        console.log(`Projeto ${currentProject.id} já marcado como verificado na sessionStorage`);
-        setVerifiedReady(true);
-        setShowProcessing(false);
-        setHasMensagens(true);
-        return; // Não precisamos verificar novamente
-      }
-      
-      console.log(`Novo projeto selecionado (${currentProject.id}), reiniciando verificação...`);
+      console.log(`Novo projeto selecionado (${currentProject.id}), iniciando verificação...`);
+      setIsCheckingInitial(true); // Começar em estado de verificação
       setVerifiedReady(false);
-      setShowProcessing(true); // Mostrar processamento por padrão até verificar completamente
+      setShowProcessing(false); // NÃO mostrar processamento até confirmar que precisa
       
       // Função de verificação completa
       const verifyProjectState = async () => {
@@ -92,30 +84,22 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
         const status = await checkProjectStatus(projectId);
         const hasMessages = await checkForMessages(projectId);
         
-        // Regras de decisão:
+        // Regras de decisão simples:
         // 1. Se status < 6: mostrar processamento
-        // 2. Se status >= 6 E tem mensagens: mostrar dashboard
-        // 3. Se status >= 6 E NÃO tem mensagens: mostrar processamento
+        // 2. Se status >= 6 E NÃO tem mensagens: mostrar processamento
+        // 3. Se status >= 6 E tem mensagens: mostrar dashboard
         
-        // Regra adicional: Se 'isInitialProcessing' do contexto ainda for true,
-        // SEMPRE mostrar processamento independente de outros fatores
+        const shouldShowProcessing = status < 6 || (status >= 6 && !hasMessages);
         
-        if (status >= 6 && hasMessages && !isInitialProcessing) {
-          console.log(`Projeto ${projectId} está pronto para exibição (status=${status}, hasMensagens=${hasMessages}, isInitialProcessing=${isInitialProcessing})`);
-          
-          // Armazenar informação na sessionStorage para persistir após recargas
-          sessionStorage.setItem(`projeto_${projectId}_verified`, 'true');
-          
+        // Após primeira verificação, desativar checking inicial
+        setIsCheckingInitial(false);
+        
+        if (!shouldShowProcessing) {
+          console.log(`Projeto ${projectId} está pronto para exibição (status=${status}, hasMensagens=${hasMessages})`);
           setShowProcessing(false);
           setVerifiedReady(true);
         } else {
-          console.log(`Projeto ${projectId} ainda em processamento ou sem dados (status=${status}, hasMensagens=${hasMessages}, isInitialProcessing=${isInitialProcessing})`);
-          
-          // Se no passo final com mensagens mas 'isInitialProcessing' ainda true
-          if (status >= 6 && hasMessages && isInitialProcessing) {
-            console.log("Condições verificadas, mas isInitialProcessing ainda é true. Aguardando sincronização do contexto...");
-          }
-          
+          console.log(`Projeto ${projectId} ainda em processamento ou sem dados (status=${status}, hasMensagens=${hasMessages})`);
           setShowProcessing(true);
           
           // Continuar verificando enquanto não estiver pronto, com intervalo mais curto
@@ -129,38 +113,23 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
     }
   }, [currentProject, checkForMessages, checkProjectStatus]);
   
-  // Verificar também sessionStorage para persistência após recargas
-  const checkSessionStorageVerification = () => {
-    if (currentProject?.id) {
-      return sessionStorage.getItem(`projeto_${currentProject.id}_verified`) === 'true';
-    }
-    return false;
-  };
+  // Regras de renderização com verificação inicial:
+  // 1. Se está verificando inicial: mostrar LoadingScreen
+  // 2. Se showProcessing é true: mostrar ProcessingIndicator
+  // 3. Se showProcessing é false: mostrar dashboard (children)
   
-  // Regras de renderização:
-  // 1. Se foi verificado e está pronto (local ou sessionStorage): mostrar dashboard (children)
-  // 2. Se 'isInitialProcessing' ainda é true: SEMPRE mostrar processamento 
-  // 3. Em todos os outros casos: mostrar processamento até verificação completa
-  
-  // Verificar se o projeto está marcado como processando no contexto global
-  if (isInitialProcessing && currentProject) {
-    console.log(`Forçando exibição do processamento para projeto ${currentProject.id} (isInitialProcessing=true)`);
-    return <ProcessingIndicator projectId={currentProject.id} />;
+  if (isCheckingInitial) {
+    console.log(`Verificando estado inicial do projeto ${currentProject?.id}...`);
+    return <LoadingScreen />;
   }
   
-  // Projeto verificado e pronto para dashboard (internamente ou via sessionStorage)
-  if ((verifiedReady && hasMensagens && currentProject) || checkSessionStorageVerification()) {
-    console.log(`Renderizando dashboard para projeto ${currentProject?.id} (verificado)`);
-    return <>{children}</>;
-  }
-  
-  // Em todos os outros casos (incluindo verificação inicial), mostrar processamento
-  if (currentProject) {
+  if (showProcessing && currentProject) {
     console.log(`Renderizando indicador de processamento para projeto ${currentProject.id}`);
     return <ProcessingIndicator projectId={currentProject.id} />;
   }
   
-  // Fallback (não deveria ocorrer se a navegação estiver protegida)
+  // Projeto está pronto, mostrar dashboard
+  console.log(`Renderizando dashboard para projeto ${currentProject?.id}`);
   return <>{children}</>;
 };
 

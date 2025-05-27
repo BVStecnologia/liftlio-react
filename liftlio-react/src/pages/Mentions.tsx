@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import styled, { keyframes, css } from 'styled-components';
+import styled, { keyframes, css, useTheme } from 'styled-components';
 import { COLORS, withOpacity } from '../styles/colors';
 import Card from '../components/Card';
 import { IconContext } from 'react-icons';
@@ -8,7 +8,9 @@ import { IconComponent } from '../utils/IconHelper';
 import { useMentionsData, TimeframeType, TabType, MentionData } from '../hooks/useMentionsData';
 import { supabase } from '../lib/supabaseClient';
 import { useProject } from '../context/ProjectContext';
+import { useLanguage } from '../context/LanguageContext';
 import { HiPencil } from 'react-icons/hi';
+import { useDashboardTheme } from '../styles/dashboardTheme';
 // Recharts imports removidos pois os gráficos foram removidos
 
 // Função utilitária para formatar datas
@@ -119,17 +121,25 @@ const shimmer = keyframes`
 `;
 
 // Page title with improved styling
-const PageContainer = styled.div`
-  padding: 16px;
+const PageContainer = styled.div<{ isBlurred?: boolean }>`
+  padding: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.layout.contentPadding;
+  }};
   animation: ${fadeIn} 0.6s ease-out forwards;
-  background-color: ${props => props.theme.colors.tertiary}; /* Dominant color (60%) - Cinza médio */
+  background-color: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.layout.mainBg;
+  }};
+  transition: filter 0.3s ease;
+  filter: ${props => props.isBlurred ? 'blur(5px)' : 'none'};
   
   @media (max-width: 768px) {
-    padding: 12px;
+    padding: 20px;
   }
   
   @media (max-width: 480px) {
-    padding: 8px;
+    padding: 16px;
   }
 `;
 
@@ -137,14 +147,14 @@ const PageTitle = styled.h1`
   font-size: ${props => props.theme.fontSizes['2xl']};
   font-weight: ${props => props.theme.fontWeights.bold};
   margin-bottom: 24px;
-  color: ${COLORS.TEXT.ON_LIGHT};
+  color: ${props => props.theme.colors.text.primary};
   display: flex;
   align-items: center;
   position: relative;
   
   svg {
     margin-right: 12px;
-    color: ${COLORS.ACCENT};
+    color: ${props => props.theme.colors.text.secondary};
     animation: ${pulse} 3s infinite;
   }
   
@@ -155,7 +165,7 @@ const PageTitle = styled.h1`
     bottom: -8px;
     width: 60px;
     height: 3px;
-    background: ${COLORS.GRADIENT.PRIMARY};
+    background: ${props => props.theme.colors.text.secondary};
     border-radius: 3px;
   }
   
@@ -174,14 +184,27 @@ const PageTitle = styled.h1`
 const TabContainer = styled.div`
   display: flex;
   margin-bottom: 30px;
-  background: ${COLORS.DOMINANT_LIGHTER};
-  border-radius: ${props => props.theme.radius.pill};
+  background: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.tabs.containerBg;
+  }};
+  border-radius: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.layout.borderRadius.pill;
+  }};
   padding: 5px;
   width: fit-content;
-  box-shadow: ${COLORS.SHADOW.LIGHT};
+  box-shadow: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.tabs.containerShadow;
+  }};
   position: relative;
   animation: ${fadeIn} 0.8s ease-out forwards;
   white-space: nowrap;
+  border: 1px solid ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.tabs.containerBorder;
+  }};
   
   &::before {
     content: '';
@@ -190,10 +213,9 @@ const TabContainer = styled.div`
     right: -5px;
     bottom: -5px;
     left: -5px;
-    background: linear-gradient(90deg, 
-      ${withOpacity(COLORS.ACCENT, 0.05)}, 
-      ${withOpacity(COLORS.INFO, 0.05)}, 
-      ${withOpacity(COLORS.ACCENT, 0.05)});
+    background: ${props => props.theme.name === 'dark' 
+      ? 'linear-gradient(90deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02))'
+      : 'linear-gradient(90deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.02))'};
     border-radius: ${props => props.theme.radius.pill};
     z-index: -1;
     animation: ${shimmer} 3s infinite linear;
@@ -221,11 +243,20 @@ const tabHoverEffect = css`
 
 const Tab = styled.button<{ active: boolean }>`
   padding: 10px 20px;
-  background: ${props => props.active ? COLORS.SECONDARY : 'transparent'};
+  background: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return props.active ? dt.tabs.activeBg : dt.tabs.inactiveBg;
+  }};
   border: none;
-  border-radius: ${props => props.theme.radius.pill};
+  border-radius: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.layout.borderRadius.pill;
+  }};
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.normal};
-  color: ${props => props.active ? COLORS.ACCENT : COLORS.TEXT.SECONDARY};
+  color: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return props.active ? dt.tabs.activeText : dt.tabs.inactiveText;
+  }};
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   box-shadow: ${props => props.active ? '0 2px 4px rgba(0, 0, 0, 0.05)' : 'none'};
@@ -242,20 +273,23 @@ const Tab = styled.button<{ active: boolean }>`
     left: 0;
     width: 100%;
     height: 2px;
-    background: ${props => props.active ? COLORS.ACCENT : 'transparent'};
+    background: ${props => props.active ? props.theme.colors.text.primary : 'transparent'};
     transition: background 0.3s ease;
-    opacity: 1;
+    opacity: ${props => props.active ? 0.8 : 0};
   }
   
   ${props => props.active && tabHoverEffect}
   
   &:hover {
-    background: ${props => props.active ? COLORS.SECONDARY : withOpacity(COLORS.SECONDARY, 0.8)};
-    color: ${COLORS.ACCENT};
+    background: ${props => {
+      const dt = useDashboardTheme(props.theme.name);
+      return props.active ? dt.tabs.activeBg : dt.tabs.hoverBg;
+    }};
+    color: ${props => props.theme.colors.text.primary};
     
     &::after {
-      background: ${COLORS.ACCENT};
-      opacity: ${props => props.active ? 1 : 0.5};
+      background: ${props => props.theme.colors.text.secondary};
+      opacity: ${props => props.active ? 0.8 : 0.4};
     }
   }
   
@@ -276,14 +310,30 @@ const Tab = styled.button<{ active: boolean }>`
 
 // Mentions container with modern design
 const MentionsContainer = styled(Card)`
-  border-radius: ${props => props.theme.radius.lg};
+  border-radius: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.layout.borderRadius.large;
+  }};
   overflow: hidden;
   animation: ${fadeIn} 1s ease-out forwards;
-  box-shadow: ${props => props.theme.shadows.lg};
-  border: 1px solid ${withOpacity(COLORS.ACCENT, 0.1)};
+  box-shadow: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.shadows.large;
+  }};
+  border: 1px solid ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.borders.default;
+  }};
+  background: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.layout.containerBg;
+  }};
   
   &:hover {
-    box-shadow: ${COLORS.SHADOW.STRONG};
+    box-shadow: ${props => {
+      const dt = useDashboardTheme(props.theme.name);
+      return dt.shadows.large;
+    }};
     transition: box-shadow 0.3s ease;
   }
 `;
@@ -310,13 +360,22 @@ const TableHeader = styled.div`
   display: grid;
   grid-template-columns: 2.5fr 1fr 2.5fr 3fr 1fr;
   padding: 16px 20px;
-  border-bottom: 1px solid ${COLORS.BORDER.DEFAULT};
-  color: ${COLORS.TEXT.SECONDARY};
+  border-bottom: 1px solid ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.table.headerBorder;
+  }};
+  color: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.table.headerText;
+  }};
   font-weight: ${props => props.theme.fontWeights.semiBold};
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: ${COLORS.DOMINANT_LIGHTER};
+  background: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.table.headerBg;
+  }};
   position: sticky;
   top: 0;
   z-index: 10;
@@ -337,8 +396,18 @@ const TableHeader = styled.div`
 const TableRow = styled.div<{ index?: number, isFavorite?: boolean }>`
   display: grid;
   grid-template-columns: 2.5fr 1fr 2.5fr 3fr 1fr;
-  padding: 20px;
-  border-bottom: 1px solid ${props => props.theme.colors.dominant_light};
+  padding: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.table.cellPadding;
+  }};
+  background: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.table.rowBg;
+  }};
+  border-bottom: 1px solid ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.table.rowBorder;
+  }};
   align-items: stretch;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
@@ -352,9 +421,15 @@ const TableRow = styled.div<{ index?: number, isFavorite?: boolean }>`
   border-left: 4px solid transparent;
   
   &:hover {
-    background-color: ${props => withOpacity(props.theme.colors.accent, 0.08)};
+    background-color: ${props => {
+      const dt = useDashboardTheme(props.theme.name);
+      return dt.table.rowHoverBg;
+    }};
     transform: translateY(-2px);
-    box-shadow: ${props => props.theme.shadows.md};
+    box-shadow: ${props => {
+      const dt = useDashboardTheme(props.theme.name);
+      return dt.shadows.medium;
+    }};
     z-index: 1;
   }
   
@@ -414,13 +489,13 @@ const playButtonPulse = keyframes`
 
 const glow = keyframes`
   0% {
-    box-shadow: 0 0 5px ${withOpacity(COLORS.ACCENT, 0.5)};
+    box-shadow: 0 0 5px rgba(128, 128, 128, 0.3);
   }
   50% {
-    box-shadow: 0 0 15px ${withOpacity(COLORS.ACCENT, 0.8)}, 0 0 30px ${withOpacity(COLORS.ACCENT, 0.4)};
+    box-shadow: 0 0 15px rgba(128, 128, 128, 0.5), 0 0 30px rgba(128, 128, 128, 0.2);
   }
   100% {
-    box-shadow: 0 0 5px ${withOpacity(COLORS.ACCENT, 0.5)};
+    box-shadow: 0 0 5px rgba(128, 128, 128, 0.3);
   }
 `;
 
@@ -440,7 +515,7 @@ const VideoThumbnailWrapper = styled.div`
 const VideoThumbnail = styled.div`
   width: 210px;
   height: 120px;
-  background-color: ${props => props.theme.colors.accent};
+  background-color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'};
   border-radius: ${props => props.theme.radius.md};
   overflow: hidden;
   position: relative;
@@ -466,9 +541,9 @@ const VideoThumbnail = styled.div`
     bottom: 0;
     background: linear-gradient(
       120deg,
-      ${props => withOpacity(props.theme.colors.accent, 0)} 40%,
-      ${props => withOpacity(props.theme.colors.accent, 0.2)} 50%,
-      ${props => withOpacity(props.theme.colors.accent, 0)} 60%
+      transparent 40%,
+      ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'} 50%,
+      transparent 60%
     );
     z-index: 2;
     transform: translateX(-100%);
@@ -535,7 +610,10 @@ const VideoInfo = styled.div`
 const VideoTitle = styled.h3`
   font-size: ${props => props.theme.fontSizes.md};
   margin-bottom: 8px;
-  color: ${COLORS.TEXT.ON_LIGHT};
+  color: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.text.primary;
+  }};
   font-weight: ${props => props.theme.fontWeights.semiBold};
   line-height: 1.4;
   
@@ -561,7 +639,10 @@ const VideoStats = styled.div`
   display: flex;
   align-items: center;
   gap: 15px;
-  color: ${COLORS.TEXT.SECONDARY};
+  color: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.text.secondary;
+  }};
   font-size: ${props => props.theme.fontSizes.sm};
   margin-top: 4px;
   
@@ -577,7 +658,7 @@ const VideoAction = styled.div`
 const ViewDetailsButton = styled.button`
   background: transparent;
   border: none;
-  color: ${COLORS.ACCENT};
+  color: ${props => props.theme.colors.text.secondary};
   font-size: ${props => props.theme.fontSizes.sm};
   padding: 0;
   cursor: pointer;
@@ -587,6 +668,7 @@ const ViewDetailsButton = styled.button`
   
   &:hover {
     text-decoration: underline;
+    color: ${props => props.theme.colors.text.primary};
   }
   
   svg {
@@ -612,7 +694,7 @@ const LedScoreLabel = styled.div`
   font-size: ${props => props.theme.fontSizes.xs};
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: ${COLORS.TEXT.SECONDARY};
+  color: ${props => props.theme.colors.text.secondary};
   margin-bottom: 8px;
   font-weight: ${props => props.theme.fontWeights.medium};
   position: relative;
@@ -625,7 +707,7 @@ const LedScoreLabel = styled.div`
     transform: translateX(-50%);
     width: 0;
     height: 2px;
-    background: ${COLORS.GRADIENT.PRIMARY};
+    background: ${props => props.theme.colors.text.secondary};
     transition: width 0.3s ease;
   }
   
@@ -668,15 +750,30 @@ const subtleFill = keyframes`
 // Componente clean para o score
 const ScoreCardContainer = styled.div`
   width: 120px;
-  background: ${props => props.theme.colors.secondary};
-  border-radius: ${props => props.theme.radius.sm};
+  background: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.cards.comment.bg;
+  }};
+  border-radius: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.layout.borderRadius.small;
+  }};
   padding: 10px;
-  box-shadow: ${props => props.theme.shadows.sm};
-  border: 1px solid ${props => props.theme.colors.dominant_light};
+  box-shadow: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.shadows.small;
+  }};
+  border: 1px solid ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.borders.light;
+  }};
   transition: all 0.2s ease;
   
   &:hover {
-    box-shadow: ${props => props.theme.shadows.md};
+    box-shadow: ${props => {
+      const dt = useDashboardTheme(props.theme.name);
+      return dt.shadows.medium;
+    }};
   }
 `;
 
@@ -693,18 +790,29 @@ const ScoreLabel = styled.div`
 const TypeBadge = styled.span<{ type: string }>`
   font-size: 10px;
   padding: 2px 6px;
-  border-radius: ${props => props.theme.radius.sm};
+  border-radius: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.layout.borderRadius.small;
+  }};
   background: ${props => {
-    if (props.type === 'LED') return props.theme.colors.info_light; 
-    if (props.type === 'BRAND') return props.theme.colors.success_light;
-    return props.theme.colors.dominant_lighter; // Fallback para outros tipos
+    const dt = useDashboardTheme(props.theme.name);
+    if (props.type === 'BRAND') return dt.badges.brand.bg;
+    if (props.type === 'QUALITY') return dt.badges.quality.bg;
+    return dt.borders.light;
   }};
   color: ${props => {
-    if (props.type === 'LED') return props.theme.colors.info; 
-    if (props.type === 'BRAND') return props.theme.colors.success;
-    return props.theme.colors.text.secondary; // Fallback para outros tipos
+    const dt = useDashboardTheme(props.theme.name);
+    if (props.type === 'BRAND') return dt.badges.brand.text;
+    if (props.type === 'QUALITY') return dt.badges.quality.text;
+    return dt.text.secondary;
   }};
   font-weight: 600;
+  border: 1px solid ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    if (props.type === 'BRAND') return dt.badges.brand.border;
+    if (props.type === 'QUALITY') return dt.badges.quality.border;
+    return 'transparent';
+  }};
 `;
 
 const ScoreValueRow = styled.div`
@@ -718,9 +826,9 @@ const ScoreValue = styled.div<{ score: number }>`
   font-size: 18px;
   font-weight: 700;
   color: ${props => {
-    if (props.score >= 70) return props.theme.colors.success;
-    if (props.score >= 40) return props.theme.colors.warning;
-    return props.theme.colors.error;
+    if (props.score >= 70) return '#4CAF50';
+    if (props.score >= 40) return '#FFB74D';
+    return '#FF5252';
   }};
 `;
 
@@ -729,16 +837,10 @@ const ScoreQualityBadge = styled.div<{ score: number }>`
   font-weight: 600;
   padding: 2px 6px;
   border-radius: ${props => props.theme.radius.sm};
-  background: ${props => {
-    if (props.score >= 70) return props.theme.colors.success_light;
-    if (props.score >= 40) return props.theme.colors.warning_light;
-    return props.theme.colors.error_light;
-  }};
-  color: ${props => {
-    if (props.score >= 70) return props.theme.colors.success;
-    if (props.score >= 40) return props.theme.colors.warning;
-    return props.theme.colors.error;
-  }};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'rgba(0, 0, 0, 0.05)'};
+  color: ${props => props.theme.colors.text.secondary};
 `;
 
 const ScoreMeterContainer = styled.div`
@@ -754,9 +856,9 @@ const ScoreMeterFill = styled.div<{ score: number }>`
   height: 100%;
   width: var(--fill-width);
   background: ${props => {
-    if (props.score >= 70) return props.theme.colors.success;
-    if (props.score >= 40) return props.theme.colors.warning;
-    return props.theme.colors.error;
+    if (props.score >= 70) return '#4CAF50';
+    if (props.score >= 40) return '#FFB74D';
+    return '#FF5252';
   }};
   border-radius: 2px;
   animation: ${subtleFill} 0.6s ease-out;
@@ -775,13 +877,32 @@ const CommentCell = styled(TableCell)`
 const CommentInfo = styled.div`
   display: flex;
   flex-direction: column;
-  background: ${props => props.theme.colors.dominant_lighter};
-  border-radius: ${props => props.theme.radius.md};
-  padding: 16px;
+  background: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.cards.comment.bg;
+  }};
+  border-radius: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.layout.borderRadius.medium;
+  }};
+  padding: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.cards.comment.padding;
+  }};
   width: 90%;
   position: relative;
-  box-shadow: ${props => props.theme.shadows.sm};
-  border-left: 4px solid ${props => props.theme.colors.primary};
+  box-shadow: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.cards.comment.shadow;
+  }};
+  border: 1px solid ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.cards.comment.border;
+  }};
+  border-left: 4px solid ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.cards.comment.borderLeft;
+  }};
   
   &::after {
     content: '';
@@ -792,7 +913,10 @@ const CommentInfo = styled.div`
     height: 0;
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
-    border-top: 10px solid ${props => props.theme.colors.dominant_lighter};
+    border-top: 10px solid ${props => {
+      const dt = useDashboardTheme(props.theme.name);
+      return dt.cards.comment.bg;
+    }};
   }
 `;
 
@@ -806,7 +930,10 @@ const CommentAuthorSection = styled.div``;
 
 const CommentAuthor = styled.div`
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.text};
+  color: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.text.primary;
+  }};
   margin-bottom: 4px;
   display: flex;
   align-items: center;
@@ -854,7 +981,10 @@ const EngagementBadge = styled.div`
 const CommentText = styled.div`
   font-size: ${props => props.theme.fontSizes.md};
   line-height: 1.5;
-  color: ${props => props.theme.colors.text};
+  color: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.text.primary;
+  }};
   margin-bottom: 8px;
   position: relative;
   height: 65px; /* Altura fixa para manter consistência */
@@ -898,16 +1028,38 @@ const ResponseCell = styled(TableCell)`
 const ResponseInfo = styled.div<{ status?: string }>`
   display: flex;
   flex-direction: column;
-  background: ${props => props.theme.colors.secondary};
-  border-radius: ${props => props.theme.radius.md};
-  padding: 16px;
+  background: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.cards.response.bg;
+  }};
+  border-radius: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.layout.borderRadius.medium;
+  }};
+  padding: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.cards.response.padding;
+  }};
   width: 90%;
   position: relative;
-  box-shadow: ${props => props.theme.shadows.sm};
-  border-left: 4px solid ${props => 
-    !props.status || props.status === 'scheduled' ? props.theme.colors.warning : 
-    props.status === 'posted' || props.status === 'published' ? props.theme.colors.success : 
-    props.theme.colors.tertiary};
+  box-shadow: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.cards.response.shadow;
+  }};
+  border: 1px solid ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.cards.response.border;
+  }};
+  border-left: 4px solid ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    if (!props.status || props.status === 'scheduled') {
+      return dt.cards.response.borderLeftScheduled;
+    }
+    if (props.status === 'posted' || props.status === 'published') {
+      return dt.cards.response.borderLeftPublished;
+    }
+    return dt.cards.response.borderLeftDefault;
+  }};
 `;
 
 const ResponseStatusBadge = styled.div<{ status?: string }>`
@@ -915,17 +1067,45 @@ const ResponseStatusBadge = styled.div<{ status?: string }>`
   top: -10px;
   right: 15px;
   padding: 4px 12px;
-  border-radius: ${props => props.theme.radius.sm};
+  border-radius: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.layout.borderRadius.small;
+  }};
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
-  color: ${props => props.theme.colors.secondary};
-  background: ${props => 
-    !props.status || props.status === 'scheduled' ? props.theme.colors.warning : 
-    props.status === 'posted' || props.status === 'published' ? props.theme.colors.success : 
-    props.theme.colors.tertiary};
-  box-shadow: ${props => props.theme.shadows.sm};
+  color: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    if (!props.status || props.status === 'scheduled') {
+      return dt.badges.scheduled.text;
+    }
+    if (props.status === 'posted' || props.status === 'published') {
+      return dt.badges.published.text;
+    }
+    return dt.accent.primary;
+  }};
+  background: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    if (!props.status || props.status === 'scheduled') {
+      return dt.badges.scheduled.bg;
+    }
+    if (props.status === 'posted' || props.status === 'published') {
+      return dt.badges.published.bg;
+    }
+    return dt.borders.light;
+  }};
+  border: 1px solid ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    if (!props.status || props.status === 'scheduled') {
+      return dt.badges.scheduled.border;
+    }
+    if (props.status === 'posted' || props.status === 'published') {
+      return dt.badges.published.border;
+    }
+    return dt.borders.default;
+  }};
+  box-shadow: none;
   display: flex;
   align-items: center;
   
@@ -938,7 +1118,10 @@ const ResponseStatusBadge = styled.div<{ status?: string }>`
 const ResponseText = styled.div`
   font-size: ${props => props.theme.fontSizes.md};
   line-height: 1.5;
-  color: ${props => props.theme.colors.text};
+  color: ${props => {
+    const dt = useDashboardTheme(props.theme.name);
+    return dt.text.primary;
+  }};
   margin-bottom: 12px;
   height: 65px; /* Altura fixa para manter consistência */
   
@@ -957,16 +1140,17 @@ const DetailPopupOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(45, 62, 80, 0.85); /* Using accent color with opacity */
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: ${props => props.theme.zIndices.modal};
-  backdrop-filter: blur(5px);
+  z-index: ${props => props.theme.zIndices.modal || 1000};
+  animation: ${fadeIn} 0.3s ease-out;
 `;
 
 const DetailPopupContent = styled.div`
-  background: ${props => props.theme.colors.white};
+  background: ${props => props.theme.components.card.bg};
   border-radius: ${props => props.theme.radius.lg};
   padding: 30px;
   width: 80%;
@@ -975,14 +1159,24 @@ const DetailPopupContent = styled.div`
   overflow-y: auto;
   box-shadow: ${props => props.theme.shadows.xl};
   position: relative;
+  border: 1px solid ${props => props.theme.colors.border.primary};
   
-  /* Design moderno com borda gradiente */
-  border: 1px solid transparent;
-  background-clip: padding-box;
+  @keyframes modalZoom {
+    from {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  animation: modalZoom 0.3s ease-out;
   
   /* Estilização da barra de rolagem para mantê-la discreta */
   scrollbar-width: thin;
-  scrollbar-color: ${props => withOpacity(props.theme.colors.accent, 0.3)} transparent;
+  scrollbar-color: ${props => props.theme.colors.text.secondary} transparent;
   
   &::-webkit-scrollbar {
     width: 8px;
@@ -993,13 +1187,13 @@ const DetailPopupContent = styled.div`
   }
   
   &::-webkit-scrollbar-thumb {
-    background-color: ${props => withOpacity(props.theme.colors.accent, 0.3)};
+    background-color: ${props => props.theme.colors.text.secondary};
     border-radius: 20px;
     border: 2px solid transparent;
   }
   
   &::-webkit-scrollbar-thumb:hover {
-    background-color: ${props => withOpacity(props.theme.colors.accent, 0.5)};
+    background-color: ${props => props.theme.colors.text.primary};
   }
   
   &::before {
@@ -1023,12 +1217,12 @@ const DetailPopupHeader = styled.div`
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid ${props => props.theme.colors.lightGrey};
+  border-bottom: 1px solid ${props => props.theme.colors.border.primary};
 `;
 
 const DetailPopupTitle = styled.h2`
   font-size: ${props => props.theme.fontSizes.xl};
-  color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.text.primary};
   margin: 0;
   font-weight: 600;
 `;
@@ -1036,13 +1230,13 @@ const DetailPopupTitle = styled.h2`
 const DetailPopupCloseButton = styled.button`
   background: transparent;
   border: none;
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   font-size: 28px;
   cursor: pointer;
   transition: color 0.2s;
   
   &:hover {
-    color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 
@@ -1084,7 +1278,7 @@ const DetailPopupVideoInfo = styled.div`
 const DetailPopupVideoTitle = styled.h3`
   font-size: ${props => props.theme.fontSizes.lg};
   margin-bottom: 10px;
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.text.primary};
   font-weight: ${props => props.theme.fontWeights.semiBold};
 `;
 
@@ -1105,31 +1299,36 @@ const DetailPopupSection = styled.div`
 const DetailPopupSectionTitle = styled.h4`
   font-size: ${props => props.theme.fontSizes.md};
   margin-bottom: 10px;
-  color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.text.primary};
   font-weight: ${props => props.theme.fontWeights.semiBold};
   display: flex;
   align-items: center;
   
   svg {
     margin-right: 8px;
+    color: ${props => props.theme.colors.text.secondary};
   }
 `;
 
 const DetailPopupComment = styled.div`
-  background: rgba(45, 62, 80, 0.03);
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.05)' 
+    : 'rgba(0, 0, 0, 0.03)'};
   border-radius: ${props => props.theme.radius.md};
   padding: 20px;
   box-shadow: ${props => props.theme.shadows.sm};
   margin-bottom: 20px;
-  border: 1px solid rgba(45, 62, 80, 0.08);
+  border: 1px solid ${props => props.theme.colors.border.primary};
 `;
 
 const DetailPopupResponse = styled.div`
-  background: rgba(45, 62, 80, 0.05);
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.08)' 
+    : 'rgba(0, 0, 0, 0.05)'};
   border-radius: ${props => props.theme.radius.md};
   padding: 20px;
   box-shadow: ${props => props.theme.shadows.sm};
-  border: 1px solid rgba(45, 62, 80, 0.1);
+  border: 1px solid ${props => props.theme.colors.border.primary};
 `;
 
 const FavoriteIndicator = styled.div<{ isFavorite: boolean }>`
@@ -1195,14 +1394,14 @@ const ActionsCell = styled(TableCell)`
 
 const ActionButton = styled.button<{ variant?: 'primary' | 'secondary' | 'favorite' }>`
   background: ${props => 
-    props.variant === 'primary' ? props.theme.colors.secondary : 
+    props.variant === 'primary' ? (props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)') : 
     props.variant === 'favorite' ? withOpacity(props.theme.colors.error, 0.1) : 
-    withOpacity(props.theme.colors.accent, 0.1)};
+    withOpacity(props.theme.colors.text.secondary, 0.1)};
   border: ${props => 
-    props.variant === 'primary' ? `1px solid ${withOpacity(props.theme.colors.accent, 0.3)}` : 'none'};
+    props.variant === 'primary' ? `1px solid ${props.theme.colors.border.primary}` : 'none'};
   color: ${props => 
     props.variant === 'favorite' ? props.theme.colors.error : 
-    props.theme.colors.accent};
+    props.theme.colors.text.secondary};
   cursor: pointer;
   padding: 8px;
   width: 38px;
@@ -1219,8 +1418,11 @@ const ActionButton = styled.button<{ variant?: 'primary' | 'secondary' | 'favori
     box-shadow: ${props => props.theme.shadows.md};
     background: ${props => 
       props.variant === 'favorite' ? withOpacity(props.theme.colors.error, 0.2) : 
-      props.variant === 'primary' ? props.theme.colors.secondary : 
-      withOpacity(props.theme.colors.accent, 0.2)};
+      props.variant === 'primary' ? (props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)') : 
+      withOpacity(props.theme.colors.text.secondary, 0.2)};
+    color: ${props => 
+      props.variant === 'favorite' ? props.theme.colors.error : 
+      props.theme.colors.text.primary};
   }
   
   svg {
@@ -1236,7 +1438,7 @@ const ActionButtonsGroup = styled.div`
 
 const ActionLabel = styled.div`
   font-size: ${props => props.theme.fontSizes.xs};
-  color: ${COLORS.TEXT.SECONDARY};
+  color: ${props => props.theme.colors.text.secondary};
   margin-bottom: 4px;
   text-align: center;
 `;
@@ -1248,23 +1450,40 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: ${props => withOpacity(props.theme.colors.accent, 0.5)};
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: ${props => props.theme.zIndices.modal};
+  z-index: ${props => props.theme.zIndices.modal || 1000};
+  animation: ${fadeIn} 0.3s ease-out;
 `;
 
 const ModalContent = styled.div`
-  background: ${props => props.theme.colors.secondary};
+  background: ${props => props.theme.components.card.bg};
   border-radius: ${props => props.theme.radius.lg};
   padding: 24px;
   width: 600px;
   max-width: 90vw;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: ${COLORS.SHADOW.STRONG};
+  box-shadow: ${props => props.theme.shadows.xl};
   position: relative;
+  animation: ${fadeIn} 0.4s ease-out;
+  transform: scale(1);
+  
+  @keyframes modalZoom {
+    from {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  animation: modalZoom 0.3s ease-out;
 `;
 
 const ModalHeader = styled.div`
@@ -1273,12 +1492,12 @@ const ModalHeader = styled.div`
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 1px solid ${COLORS.BORDER.DEFAULT};
+  border-bottom: 1px solid ${props => props.theme.colors.border.primary};
 `;
 
 const ModalTitle = styled.h2`
   font-size: ${props => props.theme.fontSizes.xl};
-  color: ${COLORS.ACCENT};
+  color: ${props => props.theme.colors.text.primary};
   margin: 0;
   font-weight: ${props => props.theme.fontWeights.semiBold};
   display: flex;
@@ -1286,6 +1505,7 @@ const ModalTitle = styled.h2`
   
   svg {
     margin-right: 12px;
+    color: ${props => props.theme.colors.accent.primary};
   }
 `;
 
@@ -1294,11 +1514,11 @@ const CloseButton = styled.button`
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: ${COLORS.TEXT.SECONDARY};
+  color: ${props => props.theme.colors.text.secondary};
   transition: all 0.2s ease;
   
   &:hover {
-    color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 
@@ -1322,17 +1542,19 @@ const Label = styled.label`
 
 const TextArea = styled.textarea`
   padding: 12px;
-  border: 1px solid ${COLORS.BORDER.DEFAULT};
+  border: 1px solid ${props => props.theme.colors.border.primary};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
   min-height: 120px;
   resize: vertical;
   transition: all 0.2s ease;
+  background: ${props => props.theme.colors.bg.secondary};
+  color: ${props => props.theme.colors.text.primary};
   
   &:focus {
     outline: none;
-    border-color: ${COLORS.ACCENT};
-    box-shadow: 0 0 0 2px ${withOpacity(COLORS.ACCENT, 0.2)};
+    border-color: ${props => props.theme.colors.text.secondary};
+    box-shadow: 0 0 0 2px ${props => withOpacity(props.theme.colors.text.secondary, 0.2)};
   }
 `;
 
@@ -1350,26 +1572,25 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
   font-weight: ${props => props.theme.fontWeights.medium};
   cursor: pointer;
   transition: all 0.2s ease;
-  border: none;
   
   background: ${props => props.variant === 'primary' 
-    ? COLORS.GRADIENT.PRIMARY 
+    ? props.theme.colors.text.primary 
     : 'transparent'};
   color: ${props => props.variant === 'primary' 
-    ? COLORS.TEXT.ON_DARK 
-    : COLORS.TEXT.SECONDARY};
+    ? props.theme.colors.bg.primary 
+    : props.theme.colors.text.secondary};
   border: ${props => props.variant === 'primary' 
     ? 'none' 
-    : `1px solid ${COLORS.BORDER.DEFAULT}`};
+    : `1px solid ${props.theme.colors.border.primary}`};
   
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${props => props.variant === 'primary' 
-      ? COLORS.SHADOW.MEDIUM 
+      ? props.theme.shadows.md 
       : 'none'};
     background: ${props => props.variant === 'primary' 
-      ? COLORS.GRADIENT.PRIMARY 
-      : COLORS.DOMINANT_LIGHTER};
+      ? props.theme.colors.text.secondary 
+      : props.theme.colors.bg.tertiary};
   }
 `;
 
@@ -1377,8 +1598,8 @@ const SpecialInstructionsButton = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
-  background: ${COLORS.ACCENT};
-  color: white;
+  background: ${props => props.theme.colors.text.primary};
+  color: ${props => props.theme.colors.bg.primary};
   border: none;
   border-radius: ${props => props.theme.radius.md};
   padding: 10px 16px;
@@ -1386,12 +1607,12 @@ const SpecialInstructionsButton = styled.button`
   font-weight: ${props => props.theme.fontWeights.medium};
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: ${COLORS.SHADOW.LIGHT};
+  box-shadow: ${props => props.theme.shadows.sm};
   
   &:hover {
-    background: ${props => props.theme.colors.primary};
+    background: ${props => props.theme.colors.text.secondary};
     transform: translateY(-2px);
-    box-shadow: ${COLORS.SHADOW.MEDIUM};
+    box-shadow: ${props => props.theme.shadows.md};
   }
   
   svg {
@@ -1650,14 +1871,24 @@ const Toast = styled.div<{ visible: boolean, success?: boolean }>`
 
 const PageInfo = styled.div`
   font-size: ${props => props.theme.fontSizes.sm};
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   margin: 0 12px;
 `;
 
 const PageButton = styled.button<{ active?: boolean; disabled?: boolean }>`
-  background: ${props => props.active ? props.theme.colors.primary : 'white'};
-  color: ${props => props.active ? 'white' : props.disabled ? props.theme.colors.grey : props.theme.colors.primary};
-  border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.lightGrey};
+  background: ${props => {
+    if (props.active) return props.theme.colors.primary;
+    return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'white';
+  }};
+  color: ${props => {
+    if (props.active) return 'white';
+    if (props.disabled) return props.theme.colors.text.secondary;
+    return props.theme.colors.primary;
+  }};
+  border: 1px solid ${props => {
+    if (props.active) return props.theme.colors.primary;
+    return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.border.primary;
+  }};
   border-radius: ${props => props.theme.radius.md};
   width: 36px;
   height: 36px;
@@ -1669,7 +1900,11 @@ const PageButton = styled.button<{ active?: boolean; disabled?: boolean }>`
   opacity: ${props => props.disabled ? 0.5 : 1};
   
   &:hover {
-    background: ${props => props.disabled ? 'white' : props.active ? props.theme.colors.primary : '#f0f0f5'};
+    background: ${props => {
+      if (props.disabled) return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'white';
+      if (props.active) return props.theme.colors.primary;
+      return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : '#f0f0f5';
+    }};
     transform: ${props => props.disabled ? 'none' : 'translateY(-2px)'};
     box-shadow: ${props => props.disabled ? 'none' : props.theme.shadows.sm};
   }
@@ -1699,6 +1934,7 @@ interface EditModalProps {
 
 const EditResponseModal: React.FC<EditModalProps> = ({ isOpen, onClose, mention, onSave }) => {
   const [responseText, setResponseText] = useState('');
+  const theme = useTheme();
   
   React.useEffect(() => {
     if (mention) {
@@ -1738,7 +1974,12 @@ const EditResponseModal: React.FC<EditModalProps> = ({ isOpen, onClose, mention,
           
           <FormGroup>
             <Label>Comment</Label>
-            <div style={{ padding: '10px', background: '#f9f8fc', borderRadius: '8px' }}>
+            <div style={{ 
+              padding: '10px', 
+              background: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f9f8fc', 
+              borderRadius: '8px',
+              color: theme.colors.text.primary
+            }}>
               {mention.comment.text}
             </div>
           </FormGroup>
@@ -1765,6 +2006,9 @@ const EditResponseModal: React.FC<EditModalProps> = ({ isOpen, onClose, mention,
 const Mentions: React.FC = () => {
   // Obter o projeto atual do contexto (será usado em vários lugares no componente)
   const { currentProject } = useProject();
+  const { t } = useLanguage();
+  const theme = useTheme();
+  const dashTheme = useDashboardTheme(theme.name);
   
   const [activeTab, setActiveTab] = useState<TabType>('scheduled');
   
@@ -2193,7 +2437,7 @@ const Mentions: React.FC = () => {
         {toast.message}
       </Toast>
       
-      <PageContainer>
+      <PageContainer isBlurred={editModalOpen || instructionsModalOpen || !!selectedMention}>
         <PageTitle>
           <IconComponent icon={FaIcons.FaComments} />
           Mentions
@@ -2528,7 +2772,7 @@ const Mentions: React.FC = () => {
             
             <div style={{ marginBottom: '20px' }}>
               <h3>Recommend what Liftlio should NOT do in responses</h3>
-              <p style={{ color: COLORS.TEXT.SECONDARY }}>
+              <p style={{ color: theme.colors.text.secondary }}>
                 Tell Liftlio what to avoid when generating responses to comments. This helps maintain 
                 compliance and optimize your audience engagement.
               </p>
@@ -2543,7 +2787,7 @@ const Mentions: React.FC = () => {
                 height: '200px',
                 padding: '12px',
                 borderRadius: '8px',
-                border: `1px solid ${COLORS.BORDER.DEFAULT}`,
+                border: `1px solid ${theme.colors.border.primary}`,
                 resize: 'vertical',
                 fontSize: '16px',
                 marginBottom: '20px'
@@ -2594,7 +2838,7 @@ const Mentions: React.FC = () => {
                 <div style={{ marginTop: 'auto' }}>
                   <button 
                     style={{ 
-                      background: `${COLORS.ACCENT}`,
+                      background: theme.colors.text.primary,
                       border: 'none',
                       padding: '8px 16px',
                       borderRadius: '20px',
@@ -2603,8 +2847,8 @@ const Mentions: React.FC = () => {
                       gap: '8px',
                       cursor: 'pointer',
                       marginTop: '15px',
-                      color: 'white',
-                      boxShadow: '0 4px 8px rgba(45, 62, 80, 0.3)'
+                      color: theme.colors.bg.primary,
+                      boxShadow: theme.shadows.md
                     }}
                     onClick={() => window.open(`https://www.youtube.com/watch?v=${selectedMention.video.youtube_id}`, '_blank')}
                   >

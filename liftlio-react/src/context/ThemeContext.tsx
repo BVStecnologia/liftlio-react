@@ -1,17 +1,23 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { lightTheme, darkTheme } from '../styles/theme';
+import { lightTheme as baseLightTheme, darkTheme as baseDarkTheme, GlobalThemeStyles } from '../styles/GlobalThemeSystem';
+import { PageSpecificStyles } from '../styles/pageSpecificStyles';
+import { extendTheme, ExtendedTheme } from '../styles/themeExtensions';
 
 type ThemeContextType = {
   isDarkMode: boolean;
   toggleTheme: () => void;
-  theme: typeof lightTheme;
+  theme: ExtendedTheme;
 };
 
+// Criar temas estendidos
+const lightTheme = extendTheme(baseLightTheme);
+const darkTheme = extendTheme(baseDarkTheme);
+
 const ThemeContext = createContext<ThemeContextType>({
-  isDarkMode: false,
+  isDarkMode: true,
   toggleTheme: () => {},
-  theme: lightTheme,
+  theme: darkTheme,
 });
 
 interface ThemeProviderProps {
@@ -19,7 +25,7 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  // Check if dark mode is stored in localStorage or use time-based preference
+  // Check if dark mode is stored in localStorage or use dark theme as default
   const getInitialThemeMode = (): boolean => {
     // First check if user has manually set a preference
     const savedTheme = localStorage.getItem('darkMode');
@@ -28,10 +34,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       return savedTheme === 'true';
     }
     
-    // If no preference, use time-based theme
-    // Dark mode from 18:00 (6 PM) to 06:00 (6 AM)
-    const currentHour = new Date().getHours();
-    return currentHour >= 18 || currentHour < 6;
+    // If no preference, default to dark theme
+    return true;
   };
 
   const [isDarkMode, setIsDarkMode] = useState<boolean>(getInitialThemeMode());
@@ -41,31 +45,13 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   
   // Initialize theme after component mounts
   useEffect(() => {
-    // Only set based on time if user hasn't manually toggled
+    // If user hasn't manually toggled, ensure dark theme is set
     if (!hasUserPreference) {
-      const currentHour = new Date().getHours();
-      const shouldBeDark = currentHour >= 18 || currentHour < 6;
-      setIsDarkMode(shouldBeDark);
+      setIsDarkMode(true);
     }
   }, [hasUserPreference]);
 
-  // Check time periodically to update theme if user hasn't set preference
-  useEffect(() => {
-    if (!hasUserPreference) {
-      const checkTime = () => {
-        const currentHour = new Date().getHours();
-        const shouldBeDark = currentHour >= 18 || currentHour < 6;
-        if (shouldBeDark !== isDarkMode) {
-          setIsDarkMode(shouldBeDark);
-        }
-      };
-
-      // Check every minute
-      const interval = setInterval(checkTime, 60000);
-      
-      return () => clearInterval(interval);
-    }
-  }, [hasUserPreference, isDarkMode]);
+  // Removed time-based theme switching since we're defaulting to dark theme
 
   // Toggle between light and dark mode
   const toggleTheme = () => {
@@ -80,6 +66,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   return (
     <ThemeContext.Provider value={{ isDarkMode, toggleTheme, theme }}>
       <StyledThemeProvider theme={theme}>
+        <GlobalThemeStyles theme={theme} />
+        <PageSpecificStyles theme={theme} />
         {children}
       </StyledThemeProvider>
     </ThemeContext.Provider>

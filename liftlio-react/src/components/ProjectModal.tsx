@@ -20,45 +20,78 @@ const FormGroup = styled.div`
 const Label = styled.label`
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.theme.fontWeights.medium};
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.text.secondary};
 `;
 
 const Input = styled.input`
   padding: 12px 16px;
-  border: 1px solid ${props => props.theme.colors.grey};
+  border: 1px solid ${props => props.theme.components.input.border};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
+  background-color: ${props => props.theme.components.input.bg};
+  color: ${props => props.theme.components.input.text};
+  transition: all 0.2s ease;
   
   &:focus {
     outline: none;
+    border-color: ${props => props.theme.components.input.borderFocus};
+    box-shadow: 0 0 0 3px ${props => props.theme.name === 'dark' ? 'rgba(0, 245, 255, 0.1)' : 'rgba(0, 149, 255, 0.1)'};
+  }
+  
+  &::placeholder {
+    color: ${props => props.theme.components.input.placeholder};
+  }
+  
+  &:disabled {
+    background-color: ${props => props.theme.components.input.disabled};
+    cursor: not-allowed;
   }
 `;
 
 const TextArea = styled.textarea`
   padding: 12px 16px;
-  border: 1px solid ${props => props.theme.colors.grey};
+  border: 1px solid ${props => props.theme.components.input.border};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
   min-height: 100px;
   width: 100%;
   box-sizing: border-box;
   resize: vertical;
+  background-color: ${props => props.theme.components.input.bg};
+  color: ${props => props.theme.components.input.text};
+  transition: all 0.2s ease;
   
   &:focus {
     outline: none;
+    border-color: ${props => props.theme.components.input.borderFocus};
+    box-shadow: 0 0 0 3px ${props => props.theme.name === 'dark' ? 'rgba(0, 245, 255, 0.1)' : 'rgba(0, 149, 255, 0.1)'};
+  }
+  
+  &::placeholder {
+    color: ${props => props.theme.components.input.placeholder};
   }
 `;
 
 // Componente Select estilizado
 const Select = styled.select`
   padding: 12px 16px;
-  border: 1px solid ${props => props.theme.colors.grey};
+  border: 1px solid ${props => props.theme.components.input.border};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
-  background-color: white;
+  background-color: ${props => props.theme.components.input.bg};
+  color: ${props => props.theme.components.input.text};
+  transition: all 0.2s ease;
+  cursor: pointer;
   
   &:focus {
     outline: none;
+    border-color: ${props => props.theme.components.input.borderFocus};
+    box-shadow: 0 0 0 3px ${props => props.theme.name === 'dark' ? 'rgba(0, 245, 255, 0.1)' : 'rgba(0, 149, 255, 0.1)'};
+  }
+  
+  option {
+    background-color: ${props => props.theme.components.input.bg};
+    color: ${props => props.theme.components.input.text};
   }
 `;
 
@@ -86,16 +119,34 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary'; disabled?: boo
   font-size: ${props => props.theme.fontSizes.md};
   font-weight: ${props => props.theme.fontWeights.medium};
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
-  opacity: ${props => props.disabled ? 0.6 : 1};
+  transition: all 0.2s ease;
   
   ${props => props.variant === 'primary' ? `
-    background: ${props.theme.colors.primary};
-    color: white;
-    border: none;
+    background: ${props.theme.components.button.primary.bg};
+    color: ${props.theme.components.button.primary.text};
+    border: 1px solid ${props.theme.components.button.primary.border};
+    
+    &:hover:not(:disabled) {
+      background: ${props.theme.components.button.primary.hover};
+    }
+    
+    &:disabled {
+      background: ${props.theme.components.button.primary.disabled};
+      opacity: 0.6;
+    }
   ` : `
-    background: white;
-    color: ${props.theme.colors.text};
-    border: 1px solid ${props.theme.colors.grey};
+    background: ${props.theme.components.button.secondary.bg};
+    color: ${props.theme.components.button.secondary.text};
+    border: 1px solid ${props.theme.components.button.secondary.border};
+    
+    &:hover:not(:disabled) {
+      background: ${props.theme.components.button.secondary.hover};
+    }
+    
+    &:disabled {
+      background: ${props.theme.components.button.secondary.disabled};
+      opacity: 0.6;
+    }
   `}
 `;
 

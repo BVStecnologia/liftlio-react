@@ -6,6 +6,7 @@ import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabaseClient';
 
 interface SidebarProps {
@@ -21,13 +22,14 @@ const slideIn = keyframes`
 const SidebarContainer = styled.aside<{ isOpen: boolean }>`
   width: 240px;
   height: 100%;
-  background: ${props => props.theme.colors.primary}; /* Azul naval escuro (10%) */
-  color: ${props => props.theme.colors.secondary}; /* White (30%) */
+  background: ${props => props.theme.components.sidebar.bg};
+  color: ${props => props.theme.components.sidebar.text};
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  box-shadow: ${props => props.theme.shadows.lg};
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   z-index: 1000; /* Higher z-index to appear above header */
+  border-right: 1px solid ${props => props.theme.components.sidebar.border};
   
   @media (min-width: 769px) {
     position: relative;
@@ -88,7 +90,7 @@ const Logo = styled.div`
   position: relative;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
-  color: #fff;
+  color: ${props => props.theme.components.sidebar.textActive};
   text-transform: uppercase;
   
   @media (max-width: 768px) {
@@ -122,18 +124,11 @@ const Logo = styled.div`
     transition: width 0.5s ease;
   }
   
-  /* Glowing text with thin elegant effect */
+  /* Text sem efeitos especiais */
   span {
     position: relative;
     z-index: 2;
-    background: linear-gradient(90deg, #fff, ${props => props.theme.colors.tertiary}, #fff);
-    background-size: 200% auto;
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    animation: gradientShift 8s linear infinite;
-    /* Fine, thin text outline */
-    text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
+    color: ${props => props.theme.components.sidebar.textActive};
   }
   
   /* Thin glowing line underneath */
@@ -234,7 +229,7 @@ const NavItem = styled(NavLink)`
   display: flex;
   align-items: center;
   padding: 15px 24px;
-  color: rgba(255, 255, 255, 0.7);
+  color: ${props => props.theme.components.sidebar.text};
   transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
   position: relative;
   text-decoration: none;
@@ -259,63 +254,18 @@ const NavItem = styled(NavLink)`
     font-size: 1.3rem;
   }
   
-  /* Barra lateral de destaque */
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(to bottom, 
-      ${props => props.theme.colors.primary} 0%,
-      ${props => props.theme.colors.primaryLight} 50%,
-      ${props => props.theme.colors.primary} 100%
-    );
-    box-shadow: 0 0 15px 1px rgba(79, 172, 254, 0.4);
-    transform: translateX(-4px) translateZ(2px);
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    opacity: 0;
-  }
+  /* Barra lateral de destaque - removida */
   
-  /* Fundo de destaque */
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(120deg, 
-      rgba(255, 255, 255, 0.05) 0%, 
-      rgba(255, 255, 255, 0.07) 40%,
-      rgba(255, 255, 255, 0.03) 100%
-    );
-    transform: scaleX(0);
-    transform-origin: right;
-    transition: transform 0.5s cubic-bezier(0.17, 0.67, 0.83, 0.67);
-    z-index: -1;
-  }
+  /* Removido efeito de fundo complexo para simplificar */
   
   /* Efeito de hover */
   &:hover {
-    color: white;
-    transform: translateX(4px) translateZ(5px);
+    color: ${props => props.theme.components.sidebar.textActive};
+    background: ${props => props.theme.components.sidebar.itemHover};
     
-    &::after {
-      transform: scaleX(1);
-      transform-origin: left;
-    }
-    
-    &::before {
-      opacity: 0.7;
-      transform: translateX(-2px) translateZ(2px);
-    }
-    
-    /* Parallax no ícone */
+    /* Ícone no hover */
     svg {
-      transform: translateX(5px) translateZ(15px) scale(1.2);
-      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
+      transform: scale(1.05);
     }
   }
   
@@ -327,48 +277,23 @@ const NavItem = styled(NavLink)`
   
   /* Item ativo */
   &.active {
-    color: white;
-    background: linear-gradient(90deg,
-      rgba(255, 255, 255, 0.15) 0%,
-      rgba(255, 255, 255, 0.08) 70%,
-      rgba(255, 255, 255, 0.02) 100%
-    );
-    padding-left: 30px;
+    color: ${props => props.theme.components.sidebar.textActive};
+    background: ${props => props.theme.components.sidebar.itemActive};
+    padding-left: 24px;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
                 inset 0 -1px 0 rgba(255, 255, 255, 0.05);
     
-    &::before {
-      transform: translateX(0) translateZ(3px);
-      opacity: 1;
-      box-shadow: 0 0 20px 1px rgba(79, 172, 254, 0.7);
-    }
-    
-    /* Efeito pulsante no ícone ativo */
+    /* Ícone ativo */
     svg {
-      transform: translateZ(10px) scale(1.25);
-      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.8));
-      animation: iconPulse 2s infinite alternate ease-in-out;
-    }
-    
-    @keyframes iconPulse {
-      0% {
-        filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
-        transform: translateZ(10px) scale(1.25);
-      }
-      100% {
-        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
-        transform: translateZ(12px) scale(1.3);
-      }
+      transform: scale(1.1);
     }
   }
 
-  /* Ícone com transformação 3D */
+  /* Ícone */
   svg {
     margin-right: 12px;
     font-size: 1.2rem;
-    transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
-    transform: translateZ(5px);
-    will-change: transform, filter;
+    transition: all 0.3s ease;
   }
   
   /* Rótulo com perspectiva */
@@ -387,7 +312,7 @@ const NavItem = styled(NavLink)`
 
 const Divider = styled.div`
   height: 1px;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: ${props => props.theme.components.sidebar.border};
   margin: 10px 12px;
 `;
 
@@ -413,13 +338,14 @@ const PremiumSection = styled.div`
 `;
 
 const PremiumBadge = styled.div`
-  background: rgba(255, 255, 255, 0.1);
+  background: ${props => props.theme.components.sidebar.bg};
+  opacity: 0.9;
   border-radius: 12px;
   padding: 20px 16px;
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid ${props => props.theme.components.sidebar.border};
   
   @media (max-width: 768px) {
     padding: 20px 16px;
@@ -580,9 +506,9 @@ const PremiumFeature = styled.div`
 const UpgradeButton = styled.div`
   padding: 14px 0;
   margin-top: 0;
-  background: ${props => props.theme.colors.primary}; /* Cor de destaque - Azul naval escuro (10%) */
-  color: white;
-  font-weight: 700;
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
   text-align: center;
   border-radius: 10px;
   cursor: pointer;
@@ -590,8 +516,8 @@ const UpgradeButton = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3), 
-              0 0 15px rgba(255, 255, 255, 0.05) inset;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
   overflow: hidden;
   letter-spacing: 0.5px;
@@ -757,9 +683,9 @@ const UpgradeButton = styled.div`
   }
   
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 20px rgba(79, 172, 254, 0.4),
-                0 0 20px rgba(138, 84, 255, 0.3) inset;
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     letter-spacing: 0.8px;
     
     &::before {
@@ -776,7 +702,7 @@ const UpgradeButton = styled.div`
     }
     
     .upgrade-text {
-      color: #FFC107;
+      color: rgba(255, 255, 255, 1);
     }
     
     /* Rocket Animation on Hover */
@@ -822,7 +748,6 @@ const UpgradeButton = styled.div`
   }
   
   .upgrade-text {
-    color: #FFC107;
     transition: all 0.5s ease;
   }
   
@@ -894,27 +819,6 @@ const NavItemIcon = styled.span`
   margin-right: 12px;
   font-size: 1.2rem;
   position: relative;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    width: 6px;
-    height: 6px;
-    background: ${props => props.theme.colors.tertiary};
-    border-radius: 50%;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%) scale(0);
-    transition: transform 0.3s ease;
-    opacity: 0;
-  }
-  
-  .active & {
-    &::after {
-      transform: translateX(-50%) scale(1);
-      opacity: 1;
-    }
-  }
 `;
 
 const AddButton = styled.button`
@@ -939,13 +843,8 @@ const AddButton = styled.button`
 
 // Removing user section as per the reference image
 
-const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: 'FaHome' },
-  { path: '/mentions', label: 'Mentions', icon: 'FaComments' },
-  { path: '/monitoring', label: 'Monitoring', icon: 'FaYoutube' },
-  { path: '/settings', label: 'Settings', icon: 'FaCog' },
-  { path: '/integrations', label: 'Integrations', icon: 'FaPlug' }
-];
+// Movido para dentro do componente para ter acesso ao t()
+// const navItems definido dentro do componente Sidebar
 
 type Project = {
   id: string;
@@ -1194,8 +1093,18 @@ const SidebarOverlay = styled.div<{ isOpen: boolean }>`
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
   const { currentProject } = useProject();
-  const { isDarkMode } = useTheme();
+  const { theme } = useTheme();
+  const { t, language } = useLanguage();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  
+  // Navigation items with translations
+  const navItems = [
+    { path: '/dashboard', label: t('nav.overview'), icon: 'FaHome' },
+    { path: '/mentions', label: t('nav.mentions'), icon: 'FaComments' },
+    { path: '/monitoring', label: t('nav.monitoring'), icon: 'FaYoutube' },
+    { path: '/settings', label: t('nav.settings'), icon: 'FaCog' },
+    { path: '/integrations', label: t('nav.integrations'), icon: 'FaPlug' }
+  ];
   
   // Claude Insights state
   const [currentInsight, setCurrentInsight] = useState(0);
@@ -1302,13 +1211,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
     }
   };
   
-  // Determine language based on browser or user setting
-  // For now we'll hardcode to English - this could be replaced with actual language detection
-  const getLanguage = (): 'en' | 'pt' => {
-    // This could be replaced with actual language detection logic
-    return 'en';
-  };
-  const language = getLanguage();
+  // Language is now provided by useLanguage hook
   
   // Fetch insights when the component mounts or when the project changes
   useEffect(() => {
@@ -1431,40 +1334,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
                     <Dot key={index} active={index === currentInsight} />
                   ))}
                 </InsightDots>
-                
-                <UpgradeButton
-                  onMouseEnter={() => setHoveredItem('upgrade')}
-                  onMouseLeave={() => setHoveredItem(null)}
-                  aria-label="Upgrade to Premium"
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      // Handle upgrade click
-                      console.log('Upgrade clicked');
-                    }
-                  }}
-                >
-                  <span className="crown-icon">
-                    <IconComponent icon={FaIcons.FaCrown} />
-                  </span>
-                  <span className="upgrade-text">Upgrade Now</span>
-                  <Tooltip visible={hoveredItem === 'upgrade'}>
-                    Unlock Liftlio's full potential!
-                  </Tooltip>
-                  <div className="rocket">
-                    <div className="rocket-body"></div>
-                    <div className="rocket-window"></div>
-                    <div className="fins">
-                      <div className="fin-left"></div>
-                      <div className="fin-right"></div>
-                    </div>
-                    <div className="fire"></div>
-                    <div className="smoke-particle"></div>
-                    <div className="smoke-particle"></div>
-                    <div className="smoke-particle"></div>
-                  </div>
-                </UpgradeButton>
               </PremiumBadge>
             </PremiumSection>
           </NavContainer>

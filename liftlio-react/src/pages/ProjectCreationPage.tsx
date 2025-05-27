@@ -13,7 +13,7 @@ const PageContainer = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: ${props => props.theme.colors.background};
+  background-color: ${props => props.theme.colors.bg.primary};
   position: relative;
 `;
 
@@ -24,7 +24,7 @@ const ContentWrapper = styled.div`
   justify-content: center;
   min-height: calc(100vh - 70px); // Altura total menos altura do header
   padding: 2rem;
-  background-color: ${props => props.theme.colors.background};
+  background-color: ${props => props.theme.colors.bg.primary};
   position: relative;
   
   @media (max-width: 768px) {
@@ -42,8 +42,8 @@ const WelcomeContainer = styled.div`
   margin: 0 auto;
   box-shadow: ${props => props.theme.shadows.lg};
   border-radius: ${props => props.theme.radius.md};
-  background-color: ${props => props.theme.colors.white};
-  color: ${props => props.theme.colors.text};
+  background-color: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : props.theme.colors.white};
+  color: ${props => props.theme.colors.text.primary};
   position: relative;
   overflow: hidden;
   
@@ -65,7 +65,7 @@ const WelcomeContainer = styled.div`
 
 const Title = styled.h1`
   font-size: ${props => props.theme.fontSizes['2xl']};
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.text.primary};
   font-weight: ${props => props.theme.fontWeights.semiBold};
   text-align: center;
   margin-bottom: 1rem;
@@ -73,7 +73,7 @@ const Title = styled.h1`
 
 const Description = styled.p`
   font-size: ${props => props.theme.fontSizes.md};
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.colors.text.secondary};
   text-align: center;
   margin-bottom: 2rem;
   line-height: 1.6;
@@ -138,7 +138,7 @@ const StepIndicator = styled.div`
     left: 10%;
     right: 10%;
     height: 2px;
-    background-color: ${props => props.theme.colors.lightGrey};
+    background-color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : props.theme.colors.lightGrey};
     z-index: 0;
   }
 `;
@@ -154,18 +154,18 @@ const StepDot = styled.div<{ active: boolean; completed: boolean }>`
     props.completed 
       ? props.theme.colors.primary 
       : props.active 
-        ? props.theme.colors.white 
-        : props.theme.colors.lightGrey};
+        ? props.theme.name === 'dark' ? props.theme.colors.bg.secondary : props.theme.colors.white 
+        : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : props.theme.colors.lightGrey};
   border: 2px solid ${props => 
     props.active || props.completed 
       ? props.theme.colors.primary 
-      : props.theme.colors.lightGrey};
+      : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.lightGrey};
   color: ${props => 
     props.completed 
       ? props.theme.colors.white 
       : props.active 
         ? props.theme.colors.primary 
-        : props.theme.colors.darkGrey};
+        : props.theme.name === 'dark' ? props.theme.colors.text.secondary : props.theme.colors.darkGrey};
   font-weight: ${props => props.theme.fontWeights.bold};
   transition: all 0.3s ease;
   box-shadow: ${props => 
@@ -183,7 +183,7 @@ const StepDot = styled.div<{ active: boolean; completed: boolean }>`
 
 const StepLabel = styled.div<{ active: boolean }>`
   font-size: ${props => props.theme.fontSizes.sm};
-  color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.darkGrey};
+  color: ${props => props.active ? props.theme.colors.primary : (props.theme.name === 'dark' ? props.theme.colors.text.secondary : props.theme.colors.darkGrey)};
   margin-top: 10px;
   text-align: center;
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.medium};

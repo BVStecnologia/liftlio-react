@@ -16,8 +16,8 @@ interface MetricCardProps {
 }
 
 const Card = styled.div<{ isClickable: boolean; color?: string }>`
-  background-color: ${props => props.color || props.theme.colors.secondary}; /* White (30%) or custom color */
-  border: 1px solid rgba(165, 177, 183, 0.3); /* Stronger subtle border */
+  background-color: ${props => props.color || props.theme.components.card.bg}; /* Theme-aware card background */
+  border: 1px solid ${props => props.theme.colors.border.primary}; /* Theme-aware border */
   border-radius: 12px;
   padding: 20px;
   display: flex;
@@ -29,13 +29,12 @@ const Card = styled.div<{ isClickable: boolean; color?: string }>`
   position: relative;
   overflow: hidden;
   
-  /* Enhanced glass-like effect with stronger colors */
+  /* Enhanced glass-like effect with theme-aware colors */
   backdrop-filter: blur(4px);
-  background: linear-gradient(
-    135deg, 
-    ${props => `${props.color || props.theme.colors.secondary}40`} 0%, 
-    ${props => `${props.color || props.theme.colors.secondary}90`} 100%
-  );
+  background: ${props => props.color ? 
+    `linear-gradient(135deg, ${props.color}40 0%, ${props.color}90 100%)` :
+    props.theme.components.card.bg
+  };
   
   /* Add inner highlight for better contrast */
   &:after {
@@ -64,7 +63,7 @@ const Card = styled.div<{ isClickable: boolean; color?: string }>`
     background: linear-gradient(
       45deg,
       transparent,
-      ${props => `${props.color || props.theme.colors.secondary}30`},
+      ${props => props.color ? `${props.color}30` : 'rgba(255, 255, 255, 0.1)'},
       transparent
     );
     background-size: 200% 200%;
@@ -97,7 +96,7 @@ const IconContainer = styled.div`
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: ${props => props.theme.colors.accent.primary};
   color: white;
   font-size: 22px;
   position: relative;
@@ -140,15 +139,15 @@ const Title = styled.h3`
   margin: 0;
   font-size: 16px;
   font-weight: 700;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  color: ${props => props.theme.colors.text.primary};
+  text-shadow: none;
   letter-spacing: 0.3px;
 `;
 
 const Subtitle = styled.p`
   margin: 4px 0 0 0;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.9);
+  color: ${props => props.theme.colors.text.secondary};
   letter-spacing: 0.2px;
   font-weight: 500;
 `;
@@ -162,41 +161,12 @@ const ValueContainer = styled.div`
 const Value = styled.div`
   font-size: 38px;
   font-weight: 800;
-  color: white;
+  color: ${props => props.theme.colors.text.primary};
   line-height: 1.2;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   letter-spacing: -0.5px;
   margin: 5px 0;
   position: relative;
   
-  /* Bright text with high contrast */
-  background-image: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 1.0) 0%,
-    rgba(255, 255, 255, 0.95) 100%
-  );
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
-  
-  /* Enhanced visibility */
-  &:after {
-    content: attr(data-value);
-    position: absolute;
-    left: 0;
-    top: 0;
-    z-index: -1;
-    background-image: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.2) 0%,
-      rgba(255, 255, 255, 0.1) 100%
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    filter: blur(4px);
-  }
   
   /* Animated soft counting effect when card loads */
   animation: countup 1.5s ease-out forwards;
@@ -351,7 +321,6 @@ const MetricCard: React.FC<MetricCardProps> = ({
   
   return (
     <Card isClickable={!!onClick} onClick={onClick} className={className} color={color}>
-      <TopGradient color={color} />
       <CardHeader>
         <TitleContainer>
           <Title>{title}</Title>

@@ -56,8 +56,8 @@ const LoginContainer = styled.div`
   margin: 0 auto;
   box-shadow: ${props => props.theme.shadows.lg};
   border-radius: ${props => props.theme.radius.md};
-  background-color: ${props => props.theme.colors.white};
-  color: ${props => props.theme.colors.text};
+  background-color: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : props.theme.colors.white};
+  color: ${props => props.theme.colors.text.primary};
   position: relative;
   overflow: hidden;
   
@@ -88,17 +88,25 @@ const LogoContainer = styled.div`
 const Logo = styled.div`
   font-size: 2.5rem;
   font-weight: ${props => props.theme.fontWeights.bold};
-  color: #2d3e50;
+  color: ${props => props.theme.name === 'dark' ? '#00a9db' : '#2d3e50'};
   margin-bottom: 0.5rem;
   letter-spacing: -0.5px;
   position: relative;
   z-index: 2;
-  text-shadow: 0 1px 3px rgba(0, 169, 219, 0.2);
+  text-shadow: ${props => props.theme.name === 'dark' 
+    ? '0 0 20px rgba(0, 169, 219, 0.5), 0 0 40px rgba(0, 169, 219, 0.3)' 
+    : '0 1px 3px rgba(0, 169, 219, 0.2)'};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'linear-gradient(135deg, #00a9db 0%, #0080ff 100%)' 
+    : 'none'};
+  -webkit-background-clip: ${props => props.theme.name === 'dark' ? 'text' : 'initial'};
+  -webkit-text-fill-color: ${props => props.theme.name === 'dark' ? 'transparent' : 'initial'};
+  background-clip: ${props => props.theme.name === 'dark' ? 'text' : 'initial'};
 `
 
 const Tagline = styled.p`
   font-size: ${props => props.theme.fontSizes.sm};
-  color: ${props => props.theme.colors.darkGrey};
+  color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.7)' : props.theme.colors.darkGrey};
   text-align: center;
   margin-top: 0;
   margin-bottom: 0.5rem;
@@ -106,7 +114,7 @@ const Tagline = styled.p`
 
 const PowerPhrase = styled.div`
   font-size: ${props => props.theme.fontSizes.md};
-  color: #2d3e50;
+  color: ${props => props.theme.name === 'dark' ? props.theme.colors.text.secondary : '#2d3e50'};
   text-align: center;
   font-weight: ${props => props.theme.fontWeights.medium};
   margin-bottom: 1.5rem;
@@ -184,10 +192,12 @@ const Label = styled.label`
 const Input = styled.input`
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid ${props => props.theme.colors.lightGrey};
+  border: 1px solid ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : props.theme.colors.lightGrey};
   border-radius: ${props => props.theme.radius.sm};
   font-size: ${props => props.theme.fontSizes.md};
   transition: all ${props => props.theme.transitions.default};
+  background-color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : props.theme.colors.white};
+  color: ${props => props.theme.colors.text.primary};
   
   &:focus {
     outline: none;
@@ -259,9 +269,9 @@ const GoogleButton = styled.button`
   align-items: center;
   justify-content: center;
   padding: 14px 20px;
-  background-color: ${props => props.theme.colors.white};
-  color: ${props => props.theme.colors.text};
-  border: 1px solid ${props => props.theme.colors.lightGrey};
+  background-color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : props.theme.colors.white};
+  color: ${props => props.theme.colors.text.primary};
+  border: 1px solid ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.lightGrey};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
   font-weight: ${props => props.theme.fontWeights.medium};
@@ -275,7 +285,8 @@ const GoogleButton = styled.button`
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${props => props.theme.shadows.md};
-    border-color: ${props => props.theme.colors.grey};
+    border-color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.3)' : props.theme.colors.grey};
+    background-color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.15)' : '#f8f9fa'};
   }
   
   &:active {
@@ -322,7 +333,7 @@ const OrDivider = styled.div`
     content: '';
     flex: 1;
     height: 1px;
-    background-color: ${props => props.theme.colors.lightGrey};
+    background-color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : props.theme.colors.lightGrey};
   }
   
   span {
@@ -363,7 +374,7 @@ const ErrorMessage = styled.div`
   color: ${props => props.theme.colors.error};
   margin-top: 1.5rem;
   font-size: ${props => props.theme.fontSizes.sm};
-  background-color: ${props => props.theme.colors.errorLight};
+  background-color: ${props => props.theme.name === 'dark' ? 'rgba(239, 68, 68, 0.1)' : props.theme.colors.errorLight};
   padding: 0.8rem 1rem;
   border-radius: ${props => props.theme.radius.sm};
   width: 100%;
@@ -381,7 +392,7 @@ const SuccessMessage = styled.div`
   color: ${props => props.theme.colors.success};
   margin-top: 1.5rem;
   font-size: ${props => props.theme.fontSizes.sm};
-  background-color: ${props => props.theme.colors.successLight};
+  background-color: ${props => props.theme.name === 'dark' ? 'rgba(52, 211, 153, 0.1)' : props.theme.colors.successLight};
   padding: 0.8rem 1rem;
   border-radius: ${props => props.theme.radius.sm};
   width: 100%;
@@ -433,6 +444,19 @@ const GoogleIcon = () => (
     />
   </svg>
 )
+
+const BackButton = styled(Button)`
+  margin-top: 1rem;
+  background: transparent;
+  color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6c757d'};
+  box-shadow: none;
+  border: 1px solid ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#e9ecef'};
+  
+  &:hover {
+    background: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'};
+    border-color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : '#dee2e6'};
+  }
+`;
 
 const Footer = styled.div`
   margin-top: 2rem;
@@ -651,23 +675,16 @@ const Login: React.FC = () => {
             </ButtonContent>
           </GoogleButton>
           
-          <Button 
+          <BackButton 
             onClick={() => {
               setIsEmailLogin(false)
               setError(null)
               setSuccess(null)
             }}
-            style={{ 
-              marginTop: '1rem', 
-              background: 'transparent', 
-              color: '#6c757d', 
-              boxShadow: 'none',
-              border: '1px solid #e9ecef' 
-            }}
             type="button"
           >
             Back to Login Options
-          </Button>
+          </BackButton>
         </FormContainer>
       ) : (
         <>

@@ -71,7 +71,7 @@ const LoginPageContainer = styled.div`
   justify-content: center;
   min-height: 100vh;
   padding: 2rem;
-  background-color: white;
+  background-color: ${props => props.theme.colors.bg.primary};
   position: relative;
   overflow: hidden;
   
