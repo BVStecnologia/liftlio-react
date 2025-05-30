@@ -2,39 +2,39 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Página principal -->
   <url>
-    <loc>https://www.liftlio.com/</loc>
+    <loc>https://liftlio.com/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   
   <!-- Página de login -->
   <url>
-    <loc>https://www.liftlio.com/login</loc>
+    <loc>https://liftlio.com/login</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <!-- Páginas institucionais -->
   <url>
-    <loc>https://www.liftlio.com/about</loc>
+    <loc>https://liftlio.com/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
-    <loc>https://www.liftlio.com/privacy</loc>
+    <loc>https://liftlio.com/privacy</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://www.liftlio.com/terms</loc>
+    <loc>https://liftlio.com/terms</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://www.liftlio.com/security</loc>
+    <loc>https://liftlio.com/security</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
