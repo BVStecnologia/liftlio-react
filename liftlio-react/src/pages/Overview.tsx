@@ -357,19 +357,19 @@ const AddNewProjectButton = styled.button`
   align-items: center;
   justify-content: center;
   padding: 8px 16px;
-  background: ${COLORS.ACCENT};
-  color: ${COLORS.TEXT.ON_DARK};
+  background: ${props => props.theme.colors.accent.primary};
+  color: ${props => props.theme.colors.text.inverse};
   border: none;
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: ${COLORS.SHADOW.LIGHT};
+  box-shadow: ${props => props.theme.shadows.md};
   
   &:hover {
-    background: ${COLORS.ACCENT_LIGHT};
+    background: ${props => props.theme.colors.accent.secondary};
     transform: translateY(-2px);
-    box-shadow: ${COLORS.SHADOW.MEDIUM};
+    box-shadow: ${props => props.theme.shadows.lg};
   }
   
   &:active {
@@ -514,49 +514,49 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost' | 'ou
   ${props => {
     if (props.variant === 'primary') {
       return css`
-        background: ${COLORS.GRADIENT.PRIMARY}; /* Accent color (10%) for primary buttons */
-        color: ${COLORS.TEXT.ON_DARK}; /* Text on dark backgrounds */
+        background: ${props.theme.colors.accent.primary};
+        color: ${props.theme.colors.text.inverse};
         border: none;
-        box-shadow: ${COLORS.SHADOW.LIGHT};
+        box-shadow: ${props.theme.shadows.md};
         
         &:hover {
-          box-shadow: ${COLORS.SHADOW.MEDIUM};
+          box-shadow: ${props.theme.shadows.lg};
           transform: translateY(-2px);
         }
       `;
     } else if (props.variant === 'secondary') {
       return css`
-        background: ${COLORS.GRADIENT.SECONDARY}; /* Dominant color (60%) for secondary buttons */
-        color: ${COLORS.TEXT.ON_DARK}; /* Secondary color (30%) for text */
+        background: ${props.theme.colors.accent.secondary};
+        color: ${props.theme.colors.text.inverse};
         border: none;
-        box-shadow: ${COLORS.SHADOW.LIGHT};
+        box-shadow: ${props.theme.shadows.md};
         
         &:hover {
-          box-shadow: ${COLORS.SHADOW.MEDIUM};
+          box-shadow: ${props.theme.shadows.lg};
           transform: translateY(-2px);
         }
       `;
     } else if (props.variant === 'outline') {
       return css`
         background: transparent;
-        color: ${COLORS.ACCENT}; /* Accent color (10%) for text */
-        border: 1px solid ${COLORS.ACCENT}; /* Accent color (10%) for border */
+        color: ${props.theme.colors.accent.primary};
+        border: 1px solid ${props.theme.colors.accent.primary};
         
         &:hover {
-          background: ${withOpacity(COLORS.ACCENT, 0.1)};
+          background: ${props.theme.colors.bg.hover};
           transform: translateY(-2px);
         }
       `;
     } else {
       return css`
         background: transparent;
-        color: ${COLORS.TEXT.SECONDARY}; /* Dominant color dark shade (60%) */
-        border: 1px solid ${COLORS.BORDER.DEFAULT}; /* Dominant color (60%) */
+        color: ${props.theme.colors.text.secondary};
+        border: 1px solid ${props.theme.colors.border.primary};
         
         &:hover {
-          background: ${COLORS.DOMINANT_LIGHTER}; /* Dominant color light shade (60%) */
-          border-color: ${COLORS.TEXT.SECONDARY}; /* Dominant color dark shade (60%) */
-          color: ${COLORS.ACCENT}; /* Accent color (10%) on hover */
+          background: ${props.theme.colors.bg.hover};
+          border-color: ${props.theme.colors.border.focus};
+          color: ${props.theme.colors.text.primary};
           transform: translateY(-2px);
         }
       `;
@@ -593,7 +593,7 @@ const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number; active?: bo
   background: ${props => props.theme.components.card.bg};
   border-radius: 16px;
   padding: 24px;
-  box-shadow: ${props => props.theme.shadows.md};
+  box-shadow: ${props => props.theme.components.card.shadow};
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -604,15 +604,12 @@ const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number; active?: bo
     : 'scale(1)'
   };
   z-index: ${props => props.cardIndex !== undefined ? 10 - props.cardIndex : 1};
-  border: 1px solid ${props => props.theme.colors.border.primary};
-  
-  /* Fundo simples sem gradientes coloridos */
-  background: ${props => props.theme.components.card.bg};
+  border: 1px solid ${props => props.theme.components.card.border};
   
   &:hover {
     transform: translateY(-4px) ${props => props.cardIndex !== undefined ? `scale(${1 - props.cardIndex * 0.01})` : 'scale(1)'};
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-    background: ${props => props.theme.colors.bg.hover};
+    box-shadow: ${props => props.theme.name === 'dark' ? '0 10px 30px rgba(0, 0, 0, 0.8)' : '0 10px 20px rgba(0, 0, 0, 0.15)'};
+    background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.tertiary : props.theme.colors.bg.hover};
   }
   
   @media (max-width: 1200px) {
@@ -1006,7 +1003,7 @@ const ChartHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid ${COLORS.BORDER.DEFAULT};
+  border-bottom: 1px solid ${props => props.theme.colors.border.primary};
   
   @media (max-width: 768px) {
     padding: 16px 20px;
@@ -1064,9 +1061,15 @@ const ChartOptions = styled.div`
 
 const ChartOption = styled.button<{ active: boolean }>`
   padding: 8px 16px;
-  background: ${props => props.active ? COLORS.ACCENT : COLORS.SECONDARY};
-  color: ${props => props.active ? COLORS.TEXT.ON_DARK : COLORS.TEXT.SECONDARY};
-  border: 1px solid ${props => props.active ? COLORS.ACCENT : withOpacity(COLORS.BORDER.DEFAULT, 0.5)};
+  background: ${props => props.active 
+    ? props.theme.colors.accent.primary 
+    : props.theme.colors.bg.secondary};
+  color: ${props => props.active 
+    ? props.theme.colors.text.inverse 
+    : props.theme.colors.text.secondary};
+  border: 1px solid ${props => props.active 
+    ? props.theme.colors.accent.primary 
+    : props.theme.colors.border.primary};
   border-radius: 24px;
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.medium};
@@ -1080,9 +1083,13 @@ const ChartOption = styled.button<{ active: boolean }>`
   }
   
   &:hover {
-    border-color: ${COLORS.ACCENT};
-    background: ${props => props.active ? COLORS.ACCENT_LIGHT : withOpacity(COLORS.DOMINANT_LIGHTER, 0.2)};
-    color: ${props => props.active ? COLORS.TEXT.ON_DARK : COLORS.ACCENT};
+    border-color: ${props => props.theme.colors.accent.primary};
+    background: ${props => props.active 
+      ? props.theme.colors.accent.secondary 
+      : props.theme.colors.bg.hover};
+    color: ${props => props.active 
+      ? props.theme.colors.text.inverse 
+      : props.theme.colors.accent.primary};
     transform: translateY(-2px);
   }
 `;
@@ -1103,10 +1110,10 @@ const ChartTab = styled.button<{ active: boolean }>`
   padding: 12px 20px;
   background: transparent;
   border: none;
-  border-bottom: 2px solid ${props => props.active ? COLORS.ACCENT : 'transparent'};
+  border-bottom: 2px solid ${props => props.active ? props.theme.colors.accent.primary : 'transparent'};
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.active ? props.theme.fontWeights.semiBold : props.theme.fontWeights.medium};
-  color: ${props => props.active ? COLORS.ACCENT : COLORS.TEXT.SECONDARY};
+  color: ${props => props.active ? props.theme.colors.accent.primary : props.theme.colors.text.secondary};
   cursor: pointer;
   transition: all 0.2s ease;
   
@@ -1122,22 +1129,22 @@ const ChartTab = styled.button<{ active: boolean }>`
   }
   
   &:hover {
-    color: ${COLORS.ACCENT};
+    color: ${props => props.theme.colors.accent.primary};
   }
 `;
 
 // Keyword insights section
 const KeywordTable = styled.div`
-  background: ${COLORS.SECONDARY}; /* Secondary color (30%) for content areas */
+  background: ${props => props.theme.components.card.bg};
   border-radius: 16px;
-  box-shadow: ${COLORS.SHADOW.LIGHT};
+  box-shadow: ${props => props.theme.components.card.shadow};
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   animation: ${fadeIn} 0.8s ease-out forwards;
   margin-top: 32px;
   width: 100%;
   position: relative;
-  border: 1px solid ${withOpacity(COLORS.DOMINANT, 0.2)}; /* Subtle border with dominant color (60%) */
+  border: 1px solid ${props => props.theme.components.card.border};
   
   @media (max-width: 768px) {
     margin-top: 24px;
@@ -1175,15 +1182,15 @@ const TableRow = styled.div`
   display: grid;
   grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 2fr 1.2fr 1.5fr;
   padding: 16px 24px;
-  border-bottom: 1px solid ${withOpacity(COLORS.DOMINANT_LIGHT, 0.2)};
+  border-bottom: 1px solid ${props => props.theme.colors.border.divider};
   align-items: center;
   transition: all 0.2s ease;
   min-width: 1000px;
   
   &:hover {
-    background-color: ${withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)};
+    background-color: ${props => props.theme.colors.bg.hover};
     transform: translateY(-2px);
-    box-shadow: ${COLORS.SHADOW.LIGHT};
+    box-shadow: ${props => props.theme.shadows.md};
   }
   
   &:last-child {
@@ -1243,7 +1250,7 @@ const VideoLinks = styled.div`
 `;
 
 const VideoLink = styled.a`
-  color: ${COLORS.INFO};
+  color: ${props => props.theme.colors.text.link};
   font-size: 14px;
   text-decoration: none;
   display: flex;
@@ -1252,13 +1259,13 @@ const VideoLink = styled.a`
   
   &:hover {
     transform: translateX(4px);
-    color: ${COLORS.ACCENT};
+    color: ${props => props.theme.colors.text.linkHover};
   }
   
   svg {
     margin-right: 6px;
     font-size: 0.9rem;
-    color: ${COLORS.INFO};
+    color: ${props => props.theme.colors.text.link};
   }
   
   @media (max-width: 1200px) {
@@ -1274,14 +1281,14 @@ const VideoLink = styled.a`
 
 // Tags styling
 const CategoryTag = styled.span`
-  background: ${COLORS.GRADIENT.PRIMARY};
-  color: ${COLORS.TEXT.ON_DARK};
+  background: ${props => props.theme.colors.accent.primary};
+  color: ${props => props.theme.colors.text.inverse};
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
   display: inline-block;
-  box-shadow: ${COLORS.SHADOW.LIGHT};
+  box-shadow: ${props => props.theme.shadows.sm};
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
@@ -1299,8 +1306,8 @@ const CategoryTag = styled.span`
 `;
 
 const AudienceTag = styled.span`
-  background-color: ${withOpacity(COLORS.DOMINANT_LIGHT, 0.7)};
-  color: ${COLORS.TEXT.ON_LIGHT};
+  background-color: ${props => props.theme.colors.bg.tertiary};
+  color: ${props => props.theme.colors.text.primary};
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 12px;
@@ -3220,7 +3227,7 @@ const Overview: React.FC = () => {
           <ChartContainer style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyPerformanceData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.colors.border.divider} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} />
                 <YAxis axisLine={false} tickLine={false} />
                 <Tooltip
@@ -3233,9 +3240,9 @@ const Overview: React.FC = () => {
                   }}
                 />
                 <Legend />
-                <Bar dataKey="videos" name="Videos" fill="#1976D2" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="engagement" name="Engagement" fill="#FF5722" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="leads" name="Mentions" fill="#2E7D32" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="videos" name="Videos" fill={theme.name === 'dark' ? '#42A5F5' : '#1976D2'} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="engagement" name="Engagement" fill={theme.name === 'dark' ? '#FFB74D' : '#FF5722'} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="leads" name="Mentions" fill={theme.name === 'dark' ? '#66BB6A' : '#2E7D32'} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -3258,7 +3265,7 @@ const Overview: React.FC = () => {
                 data={weeklyPerformanceData} 
                 margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.colors.border.divider} />
                 <XAxis 
                   dataKey="name" 
                   axisLine={false} 
@@ -3282,28 +3289,28 @@ const Overview: React.FC = () => {
                   type="monotone" 
                   dataKey="videos" 
                   name="Videos"
-                  stroke="#2196F3" 
+                  stroke={theme.name === 'dark' ? '#42A5F5' : '#2196F3'} 
                   strokeWidth={3}
-                  dot={{ r: 4, strokeWidth: 0, fill: "#2196F3" }}
-                  activeDot={{ r: 8, strokeWidth: 0, fill: "#2196F3" }}
+                  dot={{ r: 4, strokeWidth: 0, fill: theme.name === 'dark' ? '#42A5F5' : '#2196F3' }}
+                  activeDot={{ r: 8, strokeWidth: 0, fill: theme.name === 'dark' ? '#42A5F5' : '#2196F3' }}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="engagement" 
                   name="Engagement"
-                  stroke="#FF7A30" 
+                  stroke={theme.name === 'dark' ? '#FFB74D' : '#FF7A30'} 
                   strokeWidth={3}
-                  dot={{ r: 4, strokeWidth: 0, fill: "#FF7A30" }}
-                  activeDot={{ r: 6, strokeWidth: 0, fill: "#FF7A30" }}
+                  dot={{ r: 4, strokeWidth: 0, fill: theme.name === 'dark' ? '#FFB74D' : '#FF7A30' }}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: theme.name === 'dark' ? '#FFB74D' : '#FF7A30' }}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="leads" 
                   name="Leads"
-                  stroke="#4CAF50" 
+                  stroke={theme.name === 'dark' ? '#66BB6A' : '#4CAF50'} 
                   strokeWidth={3}
-                  dot={{ r: 4, strokeWidth: 0, fill: "#4CAF50" }}
-                  activeDot={{ r: 6, strokeWidth: 0, fill: "#4CAF50" }}
+                  dot={{ r: 4, strokeWidth: 0, fill: theme.name === 'dark' ? '#66BB6A' : '#4CAF50' }}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: theme.name === 'dark' ? '#66BB6A' : '#4CAF50' }}
                 />
               </LineChart>
             </ResponsiveContainer>
