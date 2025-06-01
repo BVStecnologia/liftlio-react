@@ -1278,9 +1278,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     setYoutubeStatus({ checked: false, connected: false });
     
     // Determinar o URI de redirecionamento baseado no ambiente
-    const isProduction = window.location.hostname === 'liftlio.fly.dev';
+    const hostname = window.location.hostname;
+    const isProduction = hostname === 'liftlio.fly.dev' || hostname === 'liftlio.com';
     const redirectUri = isProduction 
-      ? 'https://liftlio.fly.dev' 
+      ? `https://${hostname}` 
       : 'http://localhost:3000';
       
     const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
