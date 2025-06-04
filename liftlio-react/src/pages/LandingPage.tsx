@@ -2337,14 +2337,14 @@ const LandingPage: React.FC = () => {
         </TrustContainer>
       </TrustSection>
 
+      {/* Trending Topics Carousel */}
+      <TrendingTopicsCarousel />
+
       {/* Market Trends Section */}
       <MarketTrends key={lang} />
 
       {/* Live Intelligence Engine Section */}
       <LiveIntelligenceEngine key={`lie-${lang}`} />
-
-      {/* Trending Topics Carousel */}
-      <TrendingTopicsCarousel />
 
       {/* Pain Points Section */}
       <PainPointsSection>
