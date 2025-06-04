@@ -10,6 +10,7 @@ import { renderIcon } from '../utils/IconHelper';
 import { useTheme } from '../context/ThemeContext';
 import Cookies from 'js-cookie';
 import Testimonials from '../components/Testimonials';
+import MarketTrends from '../components/MarketTrends';
 
 // Internacionalização
 const translations = {
@@ -2509,41 +2510,8 @@ const LandingPage: React.FC = () => {
         </TrustContainer>
       </TrustSection>
 
-      {/* Video Section */}
-      <section style={{
-        padding: '100px 64px',
-        background: theme.name === 'dark' ? '#0a0a0a' : '#fafafa',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <SectionHeader>
-          <SectionTitle>
-            {lang === 'pt' ? 'Veja o Liftlio em' : 'See Liftlio in'} 
-            <Gradient> {lang === 'pt' ? 'Ação' : 'Action'}</Gradient>
-          </SectionTitle>
-          <SectionDescription>
-            {lang === 'pt' 
-              ? 'Descubra como transformamos comentários em oportunidades de negócio reais'
-              : 'Discover how we transform comments into real business opportunities'
-            }
-          </SectionDescription>
-        </SectionHeader>
-        
-        <VideoContainer>
-          <video 
-            controls
-            autoPlay
-            loop 
-            muted 
-            playsInline
-            poster="/imagens/dashboard-hero-dark.png"
-            style={{ borderRadius: '20px' }}
-          >
-            <source src="/Videos/video-liftlio-comentarios-clientes.mp4" type="video/mp4" />
-            {lang === 'pt' ? 'Seu navegador não suporta vídeos HTML5.' : 'Your browser does not support HTML5 video.'}
-          </video>
-        </VideoContainer>
-      </section>
+      {/* Market Trends Section */}
+      <MarketTrends />
 
       {/* Pain Points Section */}
       <PainPointsSection>
