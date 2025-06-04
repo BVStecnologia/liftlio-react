@@ -4,363 +4,360 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { 
-  FaYoutube, FaBrain, FaCommentDots, FaRocket,
-  FaCheckCircle, FaChartLine, FaBell
+  FaYoutube, FaSearch, FaCommentDots, FaRocket,
+  FaFire, FaChartLine, FaBell, FaEye, FaClock,
+  FaUsers, FaCheckCircle
 } from 'react-icons/fa';
-import { HiSparkles } from 'react-icons/hi';
+import { HiSparkles, HiLightningBolt } from 'react-icons/hi';
 import { BiAnalyse, BiTargetLock } from 'react-icons/bi';
-import { MdAutoAwesome, MdTimeline } from 'react-icons/md';
+import { MdAutoAwesome } from 'react-icons/md';
 import { renderIcon } from '../utils/IconHelper';
 
-// Futuristic Animations
-const hologram = keyframes`
+// Animations
+const scan = keyframes`
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+`;
+
+const pulse = keyframes`
   0%, 100% { 
+    transform: scale(1);
     opacity: 0.8;
-    transform: rotateY(0deg) rotateX(0deg) scale(1);
   }
-  25% { 
+  50% { 
+    transform: scale(1.05);
     opacity: 1;
-    transform: rotateY(180deg) rotateX(10deg) scale(1.05);
-  }
-  50% {
-    opacity: 0.9;
-    transform: rotateY(360deg) rotateX(-10deg) scale(1);
-  }
-  75% {
-    opacity: 1;
-    transform: rotateY(540deg) rotateX(10deg) scale(1.05);
   }
 `;
 
-const dataStream = keyframes`
-  0% { transform: translateY(100vh); opacity: 0; }
+const glow = keyframes`
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4),
+                0 0 40px rgba(102, 126, 234, 0.2);
+  }
+  50% { 
+    box-shadow: 0 0 40px rgba(102, 126, 234, 0.8),
+                0 0 80px rgba(102, 126, 234, 0.4);
+  }
+`;
+
+const dataFlow = keyframes`
+  0% { transform: translateY(100%); opacity: 0; }
   10% { opacity: 1; }
   90% { opacity: 1; }
-  100% { transform: translateY(-100vh); opacity: 0; }
+  100% { transform: translateY(-100%); opacity: 0; }
 `;
 
-const circuitFlow = keyframes`
-  0% { 
-    stroke-dashoffset: 1000;
-    filter: drop-shadow(0 0 2px #667eea);
-  }
-  50% {
-    filter: drop-shadow(0 0 10px #667eea) drop-shadow(0 0 20px #667eea);
-  }
-  100% { 
-    stroke-dashoffset: 0;
-    filter: drop-shadow(0 0 2px #667eea);
-  }
+const typing = keyframes`
+  from { width: 0; }
+  to { width: 100%; }
 `;
 
-const pulse3D = keyframes`
-  0%, 100% { 
-    transform: scale(1) translateZ(0);
-    box-shadow: 0 0 30px rgba(102, 126, 234, 0.4);
-  }
-  50% { 
-    transform: scale(1.1) translateZ(20px);
-    box-shadow: 0 0 60px rgba(102, 126, 234, 0.8), 
-                0 0 120px rgba(102, 126, 234, 0.4);
-  }
+const float = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 `;
 
-const matrixRain = keyframes`
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
-`;
-
-const neonGlow = keyframes`
-  0%, 100% { 
-    filter: brightness(1) contrast(1);
-    text-shadow: 0 0 10px currentColor,
-                 0 0 20px currentColor,
-                 0 0 40px currentColor;
-  }
-  50% { 
-    filter: brightness(1.5) contrast(1.2);
-    text-shadow: 0 0 20px currentColor,
-                 0 0 40px currentColor,
-                 0 0 80px currentColor;
-  }
-`;
-
-// Main Components
+// Styled Components
 const Section = styled.section`
   min-height: 100vh;
   padding: 40px 20px;
-  background: ${props => props.theme.name === 'dark' ? '#0a0a0a' : '#f5f5f5'};
+  background: ${props => props.theme.name === 'dark' ? '#0a0a0a' : '#fafafa'};
   position: relative;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const MatrixBackground = styled.div`
-  position: absolute;
-  inset: 0;
-  opacity: 0.03;
-  overflow: hidden;
-  pointer-events: none;
-  
-  &::before {
-    content: '01010101010101010101010101010101010101';
-    position: absolute;
-    top: -100%;
-    left: 0;
-    width: 100%;
-    height: 200%;
-    font-family: 'Courier New', monospace;
-    font-size: 20px;
-    color: #667eea;
-    word-break: break-all;
-    animation: ${matrixRain} 20s linear infinite;
-  }
 `;
 
 const Container = styled.div`
   max-width: 1400px;
-  width: 100%;
   margin: 0 auto;
   position: relative;
   z-index: 1;
 `;
 
 const Title = styled(motion.h2)`
-  font-size: clamp(2rem, 5vw, 4rem);
+  font-size: clamp(2.5rem, 5vw, 4rem);
   font-weight: 900;
   text-align: center;
-  margin-bottom: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  animation: ${neonGlow} 3s ease-in-out infinite;
 `;
 
-const MainVisualization = styled.div`
+const Subtitle = styled(motion.p)`
+  font-size: 1.25rem;
+  color: ${props => props.theme.textSecondary};
+  text-align: center;
+  margin-bottom: 3rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
+const MainStage = styled.div`
+  background: ${props => props.theme.name === 'dark' 
+    ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
+    : 'linear-gradient(135deg, #f5f5f5 0%, #e9ecef 100%)'};
+  border-radius: 24px;
+  padding: 3rem;
   position: relative;
-  width: 100%;
-  aspect-ratio: 16/10;
-  max-height: 80vh;
-  margin: 0 auto;
-  perspective: 1000px;
-  transform-style: preserve-3d;
-`;
-
-const HolographicDisplay = styled.div`
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, 
-    rgba(10, 10, 10, 0.95) 0%, 
-    rgba(20, 20, 40, 0.95) 100%
-  );
-  border: 2px solid rgba(102, 126, 234, 0.3);
-  border-radius: 20px;
   overflow: hidden;
-  transform: rotateX(5deg);
-  animation: ${hologram} 20s ease-in-out infinite;
-  box-shadow: 
-    0 20px 60px rgba(102, 126, 234, 0.4),
-    inset 0 0 120px rgba(102, 126, 234, 0.1);
-    
-  &::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    background: linear-gradient(45deg, 
-      transparent 30%, 
-      rgba(102, 126, 234, 0.1) 50%, 
-      transparent 70%
-    );
-    animation: ${dataStream} 3s linear infinite;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  border: 1px solid ${props => props.theme.border};
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem;
   }
 `;
 
-const CircuitBoard = styled.svg`
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.1;
-  pointer-events: none;
-`;
-
-const ProcessFlow = styled.div`
-  position: absolute;
-  inset: 20px;
+const StageHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+`;
+
+const StageTitle = styled.h3`
+  font-size: 1.5rem;
+  color: ${props => props.theme.text};
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   
-  @media (max-width: 768px) {
-    flex-direction: column;
+  svg {
+    color: #667eea;
   }
 `;
 
-const ProcessNode = styled(motion.div)<{ isActive: boolean }>`
-  flex: 1;
-  height: 100%;
-  position: relative;
+const LiveIndicator = styled.div`
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 0.5rem;
+  color: #ef4444;
+  font-weight: 600;
+  
+  &::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: #ef4444;
+    border-radius: 50%;
+    animation: ${pulse} 2s ease-in-out infinite;
+  }
+`;
+
+const ProcessVisualization = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+`;
+
+const ProcessStep = styled(motion.div)<{ isActive: boolean }>`
+  background: ${props => props.isActive
+    ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)'
+    : props.theme.cardBackground};
+  border: 2px solid ${props => props.isActive ? '#667eea' : props.theme.border};
+  border-radius: 16px;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
   
   ${props => props.isActive && css`
-    z-index: 10;
+    animation: ${glow} 2s ease-in-out infinite;
   `}
 `;
 
-const NodeCore = styled(motion.div)<{ isActive: boolean }>`
-  width: 120px;
-  height: 120px;
-  background: ${props => props.isActive 
-    ? 'radial-gradient(circle, #667eea 0%, #764ba2 50%, #f093fb 100%)'
-    : 'radial-gradient(circle, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.1) 100%)'
-  };
+const StepHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+`;
+
+const StepNumber = styled.div<{ isActive: boolean }>`
+  width: 40px;
+  height: 40px;
+  background: ${props => props.isActive
+    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    : props.theme.border};
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1.125rem;
+`;
+
+const StepTitle = styled.h4`
+  font-size: 1.125rem;
+  color: ${props => props.theme.text};
+  margin: 0;
+`;
+
+const StepContent = styled.div`
+  color: ${props => props.theme.textSecondary};
+  font-size: 0.875rem;
+  line-height: 1.6;
+`;
+
+const VideoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 3px;
+  }
+`;
+
+const VideoCard = styled(motion.div)<{ isHot?: boolean }>`
+  background: ${props => props.theme.cardBackground};
+  border: 1px solid ${props => props.isHot ? '#ef4444' : props.theme.border};
+  border-radius: 8px;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
   position: relative;
-  transition: all 0.5s ease;
-  ${props => props.isActive && css`
-    animation: ${pulse3D} 2s ease-in-out infinite;
+  
+  ${props => props.isHot && css`
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
   `}
   
-  svg {
-    font-size: 3rem;
-    color: white;
-    filter: drop-shadow(0 0 20px currentColor);
-  }
-  
-  &::before {
-    content: '';
-    position: absolute;
-    inset: -20px;
-    border: 2px solid ${props => props.isActive ? '#667eea' : 'rgba(102, 126, 234, 0.2)'};
-    border-radius: 50%;
-    opacity: ${props => props.isActive ? 0.5 : 0.2};
-    animation: ${props => props.isActive ? `${hologram} 3s linear infinite` : 'none'};
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    inset: -40px;
-    border: 1px solid ${props => props.isActive ? '#764ba2' : 'rgba(118, 75, 162, 0.1)'};
-    border-radius: 50%;
-    opacity: ${props => props.isActive ? 0.3 : 0.1};
-    animation: ${props => props.isActive ? `${hologram} 5s linear infinite reverse` : 'none'};
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 `;
 
-const NodeLabel = styled(motion.div)<{ isActive: boolean }>`
-  margin-top: 30px;
-  text-align: center;
-  
-  h3 {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: ${props => props.isActive ? '#667eea' : props.theme.textSecondary};
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    ${props => props.isActive && css`
-      animation: ${neonGlow} 2s ease-in-out infinite;
-    `}
-  }
-  
-  p {
-    font-size: 0.875rem;
-    color: ${props => props.theme.textSecondary};
-    opacity: ${props => props.isActive ? 1 : 0.7};
-  }
-`;
-
-const ConnectionLine = styled.svg`
-  position: absolute;
-  top: 50%;
-  left: 120px;
-  width: calc(100% - 240px);
-  height: 2px;
-  transform: translateY(-50%);
-  z-index: 1;
-  
-  path {
-    stroke: url(#gradient);
-    stroke-width: 2;
-    fill: none;
-    stroke-dasharray: 1000;
-    animation: ${circuitFlow} 3s ease-in-out infinite;
-  }
-`;
-
-const CentralDisplay = styled(motion.div)`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 800px;
-  background: rgba(0, 0, 0, 0.8);
-  border: 1px solid rgba(102, 126, 234, 0.5);
-  border-radius: 20px;
-  padding: 2rem;
-  backdrop-filter: blur(20px);
-  box-shadow: 
-    0 0 60px rgba(102, 126, 234, 0.4),
-    inset 0 0 60px rgba(102, 126, 234, 0.1);
-  z-index: 20;
-`;
-
-const VideoPreview = styled.div`
-  aspect-ratio: 16/9;
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-  border-radius: 12px;
+const VideoTitle = styled.p`
+  font-size: 0.75rem;
+  color: ${props => props.theme.text};
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
   overflow: hidden;
-  position: relative;
-  margin-bottom: 1.5rem;
-  border: 1px solid rgba(102, 126, 234, 0.3);
-  
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at center, 
-      rgba(102, 126, 234, 0.2) 0%, 
-      transparent 70%
-    );
-  }
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 `;
 
-const VideoInfo = styled(motion.div)`
-  padding: 1rem;
-  
-  h4 {
-    font-size: 1.25rem;
-    color: white;
-    margin-bottom: 0.5rem;
-  }
-  
-  .meta {
-    display: flex;
-    gap: 1rem;
-    font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.7);
-  }
+const VideoMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.625rem;
+  color: ${props => props.theme.textSecondary};
 `;
 
-const CommentSection = styled(motion.div)`
-  background: rgba(102, 126, 234, 0.1);
-  border: 1px solid rgba(102, 126, 234, 0.3);
+const HotBadge = styled.div`
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ef4444;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+`;
+
+const CommentDemo = styled.div`
+  background: ${props => props.theme.cardBackground};
+  border: 1px solid ${props => props.theme.border};
   border-radius: 12px;
   padding: 1.5rem;
+  margin-top: 1rem;
+  position: relative;
+  overflow: hidden;
+`;
+
+const CommentHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  
+  img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+`;
+
+const CommentAuthor = styled.div`
+  flex: 1;
+  
+  .name {
+    font-weight: 600;
+    color: ${props => props.theme.text};
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .time {
+    font-size: 0.75rem;
+    color: ${props => props.theme.textSecondary};
+  }
+`;
+
+const CommentText = styled.div`
+  color: ${props => props.theme.text};
+  line-height: 1.6;
+  
+  .timestamp {
+    color: #3b82f6;
+    cursor: pointer;
+    font-weight: 600;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  
+  .typing {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    animation: ${typing} 3s steps(40, end);
+    border-right: 2px solid #667eea;
+  }
+`;
+
+const MetricsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 3rem;
+`;
+
+const MetricCard = styled(motion.div)`
+  background: ${props => props.theme.cardBackground};
+  border: 1px solid ${props => props.theme.border};
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
   position: relative;
   overflow: hidden;
   
@@ -368,83 +365,38 @@ const CommentSection = styled(motion.div)`
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, 
-      transparent 0%, 
-      rgba(102, 126, 234, 0.2) 50%, 
-      transparent 100%
-    );
-    animation: ${dataStream} 4s linear infinite;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
   }
 `;
 
-const CommentText = styled.p`
-  color: white;
-  line-height: 1.6;
-  margin-bottom: 1rem;
-  font-size: 1rem;
-  position: relative;
-  z-index: 1;
+const MetricValue = styled.div`
+  font-size: 2rem;
+  font-weight: 800;
+  color: #667eea;
+  margin-bottom: 0.5rem;
+  animation: ${float} 3s ease-in-out infinite;
 `;
 
-const CommentMeta = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+const MetricLabel = styled.div`
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.7);
-  position: relative;
-  z-index: 1;
+  color: ${props => props.theme.textSecondary};
 `;
 
-const MetricsBar = styled(motion.div)`
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.9);
-  border: 1px solid rgba(102, 126, 234, 0.3);
-  border-radius: 50px;
-  padding: 1rem 2rem;
-  display: flex;
-  gap: 3rem;
-  backdrop-filter: blur(20px);
-  z-index: 30;
-  
-  @media (max-width: 768px) {
-    gap: 1.5rem;
-    padding: 0.75rem 1.5rem;
-  }
-`;
-
-const Metric = styled.div`
+const ImpactSection = styled(motion.div)`
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-top: 3rem;
   text-align: center;
-  
-  .value {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #667eea;
-    animation: ${neonGlow} 2s ease-in-out infinite;
-  }
-  
-  .label {
-    font-size: 0.75rem;
-    color: ${props => props.theme.textSecondary};
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-`;
-
-const CTASection = styled(motion.div)`
-  text-align: center;
-  margin-top: 4rem;
 `;
 
 const CTAButton = styled(motion.button)`
-  padding: 1.25rem 3rem;
-  font-size: 1.25rem;
+  padding: 1rem 2.5rem;
+  font-size: 1.125rem;
   font-weight: 700;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -453,34 +405,13 @@ const CTAButton = styled(motion.button)`
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  position: relative;
-  overflow: hidden;
+  gap: 0.75rem;
+  margin-top: 2rem;
   transition: all 0.3s ease;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, #764ba2 0%, #f093fb 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
-    
-    &::before {
-      opacity: 1;
-    }
-  }
-  
-  span {
-    position: relative;
-    z-index: 1;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
   }
 `;
 
@@ -488,260 +419,327 @@ const LiveIntelligenceEngine: React.FC = () => {
   const { language } = useLanguage();
   const { theme } = useTheme();
   const [activeStep, setActiveStep] = useState(0);
-  const [displayMode, setDisplayMode] = useState<'idle' | 'processing' | 'analyzing' | 'commenting' | 'complete'>('idle');
+  const [showComment, setShowComment] = useState(false);
   const [metrics, setMetrics] = useState({
-    scanned: 0,
-    analyzed: 0,
-    conversion: 0
+    videosScanned: 0,
+    hotVideos: 0,
+    comments: 0,
+    leads: 0
   });
 
   const lang = language as 'pt' | 'en';
 
   const t = {
     pt: {
-      title: 'Motor de Inteligência Liftlio',
+      title: 'Como o Liftlio Transforma Vídeos em Máquina de Vendas',
+      subtitle: 'Veja em tempo real a IA capturando leads quentes no piloto automático',
+      live: 'AO VIVO',
+      currentProcess: 'Processo em Execução',
       steps: [
         {
-          title: 'Descoberta',
-          description: 'IA escaneia YouTube',
-          icon: FaYoutube
+          title: 'Varredura Massiva',
+          content: 'IA escaneia centenas de vídeos por hora, analisando títulos, descrições e engajamento para encontrar oportunidades quentes',
+          icon: FaSearch
         },
         {
-          title: 'Análise',
-          description: 'Processa transcrições',
+          title: 'Análise Profunda',
+          content: 'Lê todos os comentários, identifica padrões de interesse e detecta menções de problemas que seu produto resolve',
           icon: BiAnalyse
         },
         {
-          title: 'Comentário',
-          description: 'Cria resposta contextual',
+          title: 'Comentário Estratégico',
+          content: 'Cria comentário natural mencionando timestamp específico e conectando indiretamente com sua solução',
           icon: FaCommentDots
         },
         {
-          title: 'Conversão',
-          description: 'Captura leads quentes',
-          icon: FaChartLine
+          title: 'Captura no Topo',
+          content: 'Monitora canais hot e comenta entre os primeiros, capturando todo o tráfego do vídeo para seu negócio',
+          icon: FaRocket
         }
       ],
-      demo: {
-        video: 'Como Escalar Negócios com Marketing Digital em 2024',
-        views: '342,567',
-        time: '2 dias atrás',
-        comment: 'Excelente estratégia! Em 5:23 quando você menciona sobre automação de funis, implementamos algo similar e aumentamos conversões em 47%. Adoraria compartilhar os insights que descobrimos!',
-        author: 'Liftlio AI',
-        timestamp: 'Agora'
+      videos: [
+        { title: 'Como escalar vendas B2B em 2024', views: '45K', hot: true },
+        { title: 'Estratégias de marketing digital', views: '12K', hot: false },
+        { title: 'Automatização de processos comerciais', views: '89K', hot: true },
+        { title: 'Ferramentas para gestão de leads', views: '5K', hot: false },
+        { title: 'Como aumentar conversão em 300%', views: '127K', hot: true },
+        { title: 'Gestão de equipe remota', views: '8K', hot: false }
+      ],
+      comment: {
+        author: 'João Silva',
+        text: 'Cara, sensacional! Em 3:47 quando você fala sobre qualificação de leads, isso mudou nosso jogo. Implementamos um processo similar e aumentamos conversão em 85%. A parte de automação que você menciona é crucial - economizamos 30h/semana. Alguém mais teve resultados assim?',
+        timestamp: '3:47'
       },
       metrics: {
-        scanned: 'Vídeos Escaneados',
-        analyzed: 'Leads Identificados',
-        conversion: 'Taxa de Conversão'
+        videosScanned: 'Vídeos Analisados/Hora',
+        hotVideos: 'Vídeos Quentes Identificados',
+        comments: 'Comentários Postados Hoje',
+        leads: 'Leads Capturados'
+      },
+      impact: {
+        title: 'Impacto Real no Seu Negócio',
+        revenue: '+ R$ 47.300/mês',
+        time: '120 horas economizadas',
+        conversion: '12x mais conversão'
       },
       cta: 'Começar Agora'
     },
     en: {
-      title: 'Liftlio Intelligence Engine',
+      title: 'How Liftlio Transforms Videos into Sales Machine',
+      subtitle: 'Watch AI capturing hot leads on autopilot in real-time',
+      live: 'LIVE',
+      currentProcess: 'Process Running',
       steps: [
         {
-          title: 'Discovery',
-          description: 'AI scans YouTube',
-          icon: FaYoutube
+          title: 'Massive Scanning',
+          content: 'AI scans hundreds of videos per hour, analyzing titles, descriptions and engagement to find hot opportunities',
+          icon: FaSearch
         },
         {
-          title: 'Analysis',
-          description: 'Process transcripts',
+          title: 'Deep Analysis',
+          content: 'Reads all comments, identifies interest patterns and detects mentions of problems your product solves',
           icon: BiAnalyse
         },
         {
-          title: 'Comment',
-          description: 'Create contextual response',
+          title: 'Strategic Comment',
+          content: 'Creates natural comment mentioning specific timestamp and indirectly connecting with your solution',
           icon: FaCommentDots
         },
         {
-          title: 'Conversion',
-          description: 'Capture hot leads',
-          icon: FaChartLine
+          title: 'Top Capture',
+          content: 'Monitors hot channels and comments among the first, capturing all video traffic to your business',
+          icon: FaRocket
         }
       ],
-      demo: {
-        video: 'How to Scale Business with Digital Marketing in 2024',
-        views: '342,567',
-        time: '2 days ago',
-        comment: 'Excellent strategy! At 5:23 when you mention funnel automation, we implemented something similar and increased conversions by 47%. Would love to share the insights we discovered!',
-        author: 'Liftlio AI',
-        timestamp: 'Now'
+      videos: [
+        { title: 'How to scale B2B sales in 2024', views: '45K', hot: true },
+        { title: 'Digital marketing strategies', views: '12K', hot: false },
+        { title: 'Sales process automation', views: '89K', hot: true },
+        { title: 'Lead management tools', views: '5K', hot: false },
+        { title: 'How to increase conversion by 300%', views: '127K', hot: true },
+        { title: 'Remote team management', views: '8K', hot: false }
+      ],
+      comment: {
+        author: 'John Smith',
+        text: 'Wow, amazing! At 3:47 when you talk about lead qualification, that changed our game. We implemented a similar process and increased conversion by 85%. The automation part you mention is crucial - we save 30h/week. Anyone else had results like this?',
+        timestamp: '3:47'
       },
       metrics: {
-        scanned: 'Videos Scanned',
-        analyzed: 'Leads Identified',
-        conversion: 'Conversion Rate'
+        videosScanned: 'Videos Analyzed/Hour',
+        hotVideos: 'Hot Videos Identified',
+        comments: 'Comments Posted Today',
+        leads: 'Leads Captured'
+      },
+      impact: {
+        title: 'Real Impact on Your Business',
+        revenue: '+ $12,500/month',
+        time: '120 hours saved',
+        conversion: '12x more conversion'
       },
       cta: 'Start Now'
     }
   }[lang];
 
-  // Auto-cycle through steps
+  // Auto-advance steps
   useEffect(() => {
-    const modes: typeof displayMode[] = ['processing', 'analyzing', 'commenting', 'complete', 'idle'];
-    let modeIndex = 0;
-    
     const interval = setInterval(() => {
-      setDisplayMode(modes[modeIndex]);
-      setActiveStep(modeIndex === 4 ? 0 : modeIndex);
-      modeIndex = (modeIndex + 1) % modes.length;
-    }, 3000);
-    
+      setActiveStep((prev) => (prev + 1) % 4);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
+  // Show comment on step 3
+  useEffect(() => {
+    setShowComment(activeStep === 2);
+  }, [activeStep]);
+
   // Animate metrics
   useEffect(() => {
-    const animateValue = (end: number, key: keyof typeof metrics, suffix = '') => {
-      const duration = 2000;
-      const steps = 60;
-      const stepValue = end / steps;
+    const targets = { videosScanned: 847, hotVideos: 23, comments: 142, leads: 89 };
+    
+    Object.entries(targets).forEach(([key, target]) => {
       let current = 0;
-      
-      const interval = setInterval(() => {
-        current += stepValue;
-        if (current >= end) {
-          current = end;
-          clearInterval(interval);
+      const increment = target / 50;
+      const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+          current = target;
+          clearInterval(timer);
         }
         setMetrics(prev => ({ ...prev, [key]: Math.floor(current) }));
-      }, duration / steps);
-    };
-
-    animateValue(2847, 'scanned');
-    animateValue(342, 'analyzed');
-    animateValue(23, 'conversion');
+      }, 30);
+    });
   }, []);
 
   return (
     <Section>
-      <MatrixBackground />
       <Container>
         <Title
-          initial={{ opacity: 0, y: -50 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, type: "spring" }}
+          transition={{ duration: 0.6 }}
         >
           {t.title}
         </Title>
+        
+        <Subtitle
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          {t.subtitle}
+        </Subtitle>
 
-        <MainVisualization>
-          <HolographicDisplay>
-            <CircuitBoard viewBox="0 0 1000 600">
-              <defs>
-                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#667eea" stopOpacity="0.3" />
-                  <stop offset="50%" stopColor="#764ba2" stopOpacity="0.5" />
-                  <stop offset="100%" stopColor="#f093fb" stopOpacity="0.3" />
-                </linearGradient>
-              </defs>
-              {/* Circuit paths */}
-              <path d="M0,300 Q250,200 500,300 T1000,300" stroke="url(#gradient)" strokeWidth="1" fill="none" opacity="0.3" />
-              <path d="M0,100 L200,100 L200,300 L400,300" stroke="url(#gradient)" strokeWidth="1" fill="none" opacity="0.3" />
-              <path d="M600,300 L800,300 L800,500 L1000,500" stroke="url(#gradient)" strokeWidth="1" fill="none" opacity="0.3" />
-            </CircuitBoard>
+        <MainStage>
+          <StageHeader>
+            <StageTitle>
+              {renderIcon(HiLightningBolt)}
+              {t.currentProcess}
+            </StageTitle>
+            <LiveIndicator>{t.live}</LiveIndicator>
+          </StageHeader>
 
-            <ProcessFlow>
-              {t.steps.map((step, index) => (
-                <ProcessNode
-                  key={index}
-                  isActive={activeStep === index}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.2 }}
-                >
-                  <NodeCore
-                    isActive={activeStep === index}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {renderIcon(step.icon)}
-                  </NodeCore>
-                  <NodeLabel isActive={activeStep === index}>
-                    <h3>{step.title}</h3>
-                    <p>{step.description}</p>
-                  </NodeLabel>
-                  {index < t.steps.length - 1 && (
-                    <ConnectionLine viewBox="0 0 100 2">
-                      <path d="M0,1 L100,1" />
-                    </ConnectionLine>
-                  )}
-                </ProcessNode>
-              ))}
-            </ProcessFlow>
+          <ProcessVisualization>
+            {t.steps.map((step, index) => (
+              <ProcessStep
+                key={index}
+                isActive={activeStep === index}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <StepHeader>
+                  <StepNumber isActive={activeStep === index}>
+                    {index + 1}
+                  </StepNumber>
+                  <StepTitle>{step.title}</StepTitle>
+                  {renderIcon(step.icon)}
+                </StepHeader>
+                <StepContent>{step.content}</StepContent>
 
-            <AnimatePresence>
-              {displayMode !== 'idle' && (
-                <CentralDisplay
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ type: "spring", damping: 20 }}
-                >
-                  <VideoPreview>
-                    <VideoInfo>
-                      <h4>{t.demo.video}</h4>
-                      <div className="meta">
-                        <span>{renderIcon(HiSparkles)} {t.demo.views} views</span>
-                        <span>• {t.demo.time}</span>
-                      </div>
-                    </VideoInfo>
-                  </VideoPreview>
+                {index === 0 && activeStep === 0 && (
+                  <VideoGrid>
+                    <AnimatePresence>
+                      {t.videos.map((video, vIndex) => (
+                        <VideoCard
+                          key={vIndex}
+                          isHot={video.hot}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: vIndex * 0.1 }}
+                        >
+                          {video.hot && (
+                            <HotBadge>
+                              {renderIcon(FaFire)} HOT
+                            </HotBadge>
+                          )}
+                          <VideoTitle>{video.title}</VideoTitle>
+                          <VideoMeta>
+                            {renderIcon(FaEye)} {video.views}
+                          </VideoMeta>
+                        </VideoCard>
+                      ))}
+                    </AnimatePresence>
+                  </VideoGrid>
+                )}
 
-                  {(displayMode === 'commenting' || displayMode === 'complete') && (
-                    <CommentSection
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <CommentText>{t.demo.comment}</CommentText>
-                      <CommentMeta>
-                        <span>{renderIcon(MdAutoAwesome)} {t.demo.author}</span>
-                        <span>• {t.demo.timestamp}</span>
-                      </CommentMeta>
-                    </CommentSection>
-                  )}
-                </CentralDisplay>
-              )}
-            </AnimatePresence>
+                {index === 2 && showComment && (
+                  <CommentDemo>
+                    <CommentHeader>
+                      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23667eea'/%3E%3C/svg%3E" alt="Avatar" />
+                      <CommentAuthor>
+                        <div className="name">
+                          {t.comment.author}
+                          {renderIcon(FaCheckCircle)}
+                        </div>
+                        <div className="time">{renderIcon(FaClock)} 2 min ago</div>
+                      </CommentAuthor>
+                    </CommentHeader>
+                    <CommentText>
+                      <span className="typing">
+                        {t.comment.text.split(t.comment.timestamp)[0]}
+                        <span className="timestamp">{t.comment.timestamp}</span>
+                        {t.comment.text.split(t.comment.timestamp)[1]}
+                      </span>
+                    </CommentText>
+                  </CommentDemo>
+                )}
+              </ProcessStep>
+            ))}
+          </ProcessVisualization>
 
-            <MetricsBar
-              initial={{ opacity: 0, y: 50 }}
+          <MetricsGrid>
+            <MetricCard
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <MetricValue>{metrics.videosScanned}</MetricValue>
+              <MetricLabel>{t.metrics.videosScanned}</MetricLabel>
+            </MetricCard>
+            <MetricCard
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <MetricValue>{metrics.hotVideos}</MetricValue>
+              <MetricLabel>{t.metrics.hotVideos}</MetricLabel>
+            </MetricCard>
+            <MetricCard
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <MetricValue>{metrics.comments}</MetricValue>
+              <MetricLabel>{t.metrics.comments}</MetricLabel>
+            </MetricCard>
+            <MetricCard
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <Metric>
-                <div className="value">{metrics.scanned}</div>
-                <div className="label">{t.metrics.scanned}</div>
-              </Metric>
-              <Metric>
-                <div className="value">{metrics.analyzed}</div>
-                <div className="label">{t.metrics.analyzed}</div>
-              </Metric>
-              <Metric>
-                <div className="value">{metrics.conversion}%</div>
-                <div className="label">{t.metrics.conversion}</div>
-              </Metric>
-            </MetricsBar>
-          </HolographicDisplay>
-        </MainVisualization>
+              <MetricValue>{metrics.leads}</MetricValue>
+              <MetricLabel>{t.metrics.leads}</MetricLabel>
+            </MetricCard>
+          </MetricsGrid>
+        </MainStage>
 
-        <CTASection
-          initial={{ opacity: 0, y: 30 }}
+        <ImpactSection
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1 }}
+          transition={{ delay: 0.6 }}
         >
+          <h3 style={{ fontSize: '1.75rem', marginBottom: '1.5rem' }}>{t.impact.title}</h3>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '3rem', flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>
+                {t.impact.revenue}
+              </div>
+              <div style={{ color: theme.textSecondary }}>Receita</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#3b82f6' }}>
+                {t.impact.time}
+              </div>
+              <div style={{ color: theme.textSecondary }}>Tempo</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' }}>
+                {t.impact.conversion}
+              </div>
+              <div style={{ color: theme.textSecondary }}>Conversão</div>
+            </div>
+          </div>
+          
           <CTAButton
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <span>{renderIcon(FaRocket)}</span>
-            <span>{t.cta}</span>
-            <span>{renderIcon(HiSparkles)}</span>
+            {renderIcon(FaRocket)}
+            {t.cta}
+            {renderIcon(HiSparkles)}
           </CTAButton>
-        </CTASection>
+        </ImpactSection>
       </Container>
     </Section>
   );
