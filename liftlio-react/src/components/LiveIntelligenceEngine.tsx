@@ -151,9 +151,13 @@ const LiveIndicator = styled.div`
 
 const ProcessVisualization = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
   margin-bottom: 3rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const ProcessStep = styled(motion.div)<{ isActive: boolean }>`
@@ -166,6 +170,7 @@ const ProcessStep = styled(motion.div)<{ isActive: boolean }>`
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
+  min-height: ${props => props.isActive ? '350px' : '150px'};
   
   ${props => props.isActive && css`
     animation: ${glow} 2s ease-in-out infinite;
@@ -208,12 +213,12 @@ const StepContent = styled.div`
 
 const VideoGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
   margin-top: 1rem;
-  max-height: 300px;
+  max-height: 200px;
   overflow-y: auto;
-  padding: 1rem;
+  padding: 0.75rem;
   background: rgba(0, 0, 0, 0.05);
   border-radius: 12px;
   
@@ -443,7 +448,7 @@ const LiveIntelligenceEngine: React.FC = () => {
         },
         {
           title: 'Análise Profunda',
-          content: 'Lê todos os comentários, identifica padrões de interesse e detecta menções de problemas que seu produto resolve',
+          content: 'Assiste o vídeo completo, analisa a transcrição, lê TODOS os comentários e identifica menções de problemas que seu produto resolve',
           icon: BiAnalyse
         },
         {
@@ -497,7 +502,7 @@ const LiveIntelligenceEngine: React.FC = () => {
         },
         {
           title: 'Deep Analysis',
-          content: 'Reads all comments, identifies interest patterns and detects mentions of problems your product solves',
+          content: 'Watches full video, analyzes transcript, reads ALL comments and identifies mentions of problems your product solves',
           icon: BiAnalyse
         },
         {
@@ -544,7 +549,7 @@ const LiveIntelligenceEngine: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveStep((prev) => (prev + 1) % 4);
-    }, 4000);
+    }, 5000); // Mais tempo para ler
     return () => clearInterval(interval);
   }, []);
 
@@ -643,6 +648,32 @@ const LiveIntelligenceEngine: React.FC = () => {
                   </VideoGrid>
                 )}
 
+                {index === 1 && activeStep === 1 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    style={{ 
+                      marginTop: '1rem',
+                      padding: '1rem',
+                      background: 'rgba(0, 0, 0, 0.05)',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
+                      {renderIcon(FaYoutube)}
+                      <strong style={{ fontSize: '0.875rem' }}>
+                        {lang === 'pt' ? 'Análise em Tempo Real' : 'Real-Time Analysis'}
+                      </strong>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', lineHeight: '1.5' }}>
+                      🎥 <strong>{lang === 'pt' ? 'Vídeo:' : 'Video:'}</strong> {t.videos[2].title}<br/>
+                      📝 <strong>{lang === 'pt' ? 'Transcrição:' : 'Transcript:'}</strong> "...{lang === 'pt' ? 'no minuto 3:47 falamos sobre qualificação de leads' : 'at 3:47 we talk about lead qualification'}..."<br/>
+                      🔍 <strong>{lang === 'pt' ? 'Palavras-chave detectadas:' : 'Keywords detected:'}</strong> <span style={{ color: '#667eea' }}>{lang === 'pt' ? 'leads, conversão, automação, vendas' : 'leads, conversion, automation, sales'}</span><br/>
+                      💡 <strong>{lang === 'pt' ? 'Oportunidade:' : 'Opportunity:'}</strong> <span style={{ color: '#10b981' }}>{lang === 'pt' ? 'Alto potencial - menciona problemas de qualificação' : 'High potential - mentions qualification problems'}</span>
+                    </div>
+                  </motion.div>
+                )}
+
                 {index === 2 && showComment && (
                   <CommentDemo>
                     <CommentHeader>
@@ -663,6 +694,32 @@ const LiveIntelligenceEngine: React.FC = () => {
                       </span>
                     </CommentText>
                   </CommentDemo>
+                )}
+
+                {index === 3 && activeStep === 3 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    style={{ 
+                      marginTop: '1rem',
+                      padding: '1rem',
+                      background: 'rgba(0, 0, 0, 0.05)',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
+                      {renderIcon(FaBell)}
+                      <strong style={{ fontSize: '0.875rem' }}>
+                        {lang === 'pt' ? 'Monitoramento Ativo' : 'Active Monitoring'}
+                      </strong>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', lineHeight: '1.5' }}>
+                      🔴 <strong>{lang === 'pt' ? 'Canal Hot:' : 'Hot Channel:'}</strong> "Marketing Digital Pro" - 500K {lang === 'pt' ? 'inscritos' : 'subscribers'}<br/>
+                      ⏱️ <strong>{lang === 'pt' ? 'Novo vídeo detectado:' : 'New video detected:'}</strong> {lang === 'pt' ? 'Há 3 minutos' : '3 minutes ago'}<br/>
+                      🎯 <strong>{lang === 'pt' ? 'Ação:' : 'Action:'}</strong> <span style={{ color: '#667eea' }}>{lang === 'pt' ? 'Comentando entre os primeiros...' : 'Commenting among the first...'}</span><br/>
+                      🚀 <strong>Status:</strong> <span style={{ color: '#10b981' }}>{lang === 'pt' ? 'Capturando todo o tráfego inicial!' : 'Capturing all initial traffic!'}</span>
+                    </div>
+                  </motion.div>
                 )}
               </ProcessStep>
             ))}
@@ -715,19 +772,19 @@ const LiveIntelligenceEngine: React.FC = () => {
               <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>
                 {t.impact.revenue}
               </div>
-              <div style={{ color: theme.textSecondary }}>Receita</div>
+              <div style={{ opacity: 0.7 }}>Receita</div>
             </div>
             <div>
               <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#3b82f6' }}>
                 {t.impact.time}
               </div>
-              <div style={{ color: theme.textSecondary }}>Tempo</div>
+              <div style={{ opacity: 0.7 }}>Tempo</div>
             </div>
             <div>
               <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' }}>
                 {t.impact.conversion}
               </div>
-              <div style={{ color: theme.textSecondary }}>Conversão</div>
+              <div style={{ opacity: 0.7 }}>Conversão</div>
             </div>
           </div>
           
