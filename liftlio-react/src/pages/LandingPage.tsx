@@ -5,10 +5,9 @@ import { FaYoutube, FaChartLine, FaBell, FaRocket, FaCheck, FaArrowRight, FaPlay
 import { HiSparkles, HiLightningBolt } from 'react-icons/hi';
 import { BiPulse } from 'react-icons/bi';
 import { MdAutoGraph, MdTrendingUp } from 'react-icons/md';
-import { AiOutlineCalculator } from 'react-icons/ai';
 import { renderIcon } from '../utils/IconHelper';
 import { useTheme } from '../context/ThemeContext';
-import Cookies from 'js-cookie';
+import { useLanguage } from '../context/LanguageContext';
 import Testimonials from '../components/Testimonials';
 import MarketTrends from '../components/MarketTrends';
 
@@ -127,20 +126,6 @@ const translations = {
           description: "One comment can bring leads for years"
         }
       ]
-    },
-    calculator: {
-      title: "See Your",
-      titleHighlight: "Savings",
-      subtitle: "Compare your current ad spend with Liftlio's permanent organic traffic",
-      adSpendLabel: "Monthly Ad Spend",
-      calculateButton: "Calculate Savings",
-      results: {
-        currentCost: "Cost Per Visitor (Ads)",
-        liftlioCost: "Cost Per Visitor (Liftlio)",
-        savings: "You Save Per Visitor",
-        organicValue: "Lifetime Value Per Visitor",
-        roi: "Your ROI"
-      }
     },
     liveDemo: {
       title: "Watch Liftlio",
@@ -396,20 +381,6 @@ const translations = {
           description: "Um comentário pode trazer leads por anos"
         }
       ]
-    },
-    calculator: {
-      title: "Veja Sua",
-      titleHighlight: "Economia",
-      subtitle: "Compare seu gasto atual com anúncios com o tráfego orgânico permanente do Liftlio",
-      adSpendLabel: "Gasto Mensal com Anúncios",
-      calculateButton: "Calcular Economia",
-      results: {
-        currentCost: "Custo Por Visitante (Anúncios)",
-        liftlioCost: "Custo Por Visitante (Liftlio)",
-        savings: "Você Economiza Por Visitante",
-        organicValue: "Valor Vitalício Por Visitante",
-        roi: "Seu ROI"
-      }
     },
     liveDemo: {
       title: "Veja o Liftlio",
@@ -1212,113 +1183,6 @@ const PainPointDescription = styled.p`
   line-height: 1.6;
 `;
 
-const CalculatorSection = styled.section`
-  padding: 100px 64px;
-  background: ${props => props.theme.colors.background};
-  position: relative;
-
-  @media (max-width: 768px) {
-    padding: 60px 32px;
-  }
-`;
-
-const CalculatorContainer = styled.div`
-  max-width: 1000px;
-  margin: 0 auto;
-  background: ${props => props.theme.colors.cardBg};
-  border: 1px solid ${props => props.theme.colors.borderLight};
-  border-radius: 24px;
-  padding: 48px;
-  box-shadow: 0 20px 60px ${props => props.theme.colors.shadowLarge};
-
-  @media (max-width: 768px) {
-    padding: 32px 24px;
-  }
-`;
-
-const CalculatorInput = styled.div`
-  margin-bottom: 40px;
-`;
-
-const CalculatorLabel = styled.label`
-  display: block;
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: ${props => props.theme.colors.text.primary};
-`;
-
-const CalculatorSlider = styled.input`
-  width: 100%;
-  height: 8px;
-  border-radius: 4px;
-  background: ${props => props.theme.colors.borderLight};
-  outline: none;
-  -webkit-appearance: none;
-
-  &::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: ${props => props.theme.colors.gradient.landing};
-    cursor: pointer;
-  }
-
-  &::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: ${props => props.theme.colors.gradient.landing};
-    cursor: pointer;
-  }
-`;
-
-const CalculatorValue = styled.div`
-  text-align: center;
-  font-size: 48px;
-  font-weight: 900;
-  background: ${props => props.theme.colors.gradient.landing};
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin: 20px 0;
-`;
-
-const CalculatorResults = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  margin-top: 40px;
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const ResultCard = styled.div<{ highlight?: boolean }>`
-  padding: 24px;
-  background: ${props => props.highlight 
-    ? props.theme.colors.gradient.landing 
-    : props.theme.colors.metricCardBg};
-  border: 1px solid ${props => props.highlight 
-    ? 'transparent' 
-    : props.theme.colors.borderLight};
-  border-radius: 12px;
-  text-align: center;
-  color: ${props => props.highlight ? 'white' : 'inherit'};
-`;
-
-const ResultLabel = styled.div`
-  font-size: 14px;
-  opacity: 0.8;
-  margin-bottom: 8px;
-`;
-
-const ResultValue = styled.div`
-  font-size: 32px;
-  font-weight: 800;
-`;
 
 const LiveDemoSection = styled.section`
   padding: 100px 64px;
@@ -2254,25 +2118,11 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
-  // Get initial language from cookie or browser preference
-  const getInitialLanguage = (): 'en' | 'pt' => {
-    // First check cookie
-    const savedLang = Cookies.get('language');
-    if (savedLang === 'pt' || savedLang === 'en') {
-      return savedLang;
-    }
-    
-    // Then check browser language
-    const browserLang = navigator.language.toLowerCase();
-    return browserLang.startsWith('pt') ? 'pt' : 'en';
-  };
 
-  const [lang, setLang] = useState<'en' | 'pt'>(getInitialLanguage());
+  const { language, setLanguage } = useLanguage();
+  const lang = language; // Para manter compatibilidade com o código existente
   const t = translations[lang];
   
-  // Calculator state
-  const [adSpend, setAdSpend] = useState(1000);
-  const [showCalculatorResults, setShowCalculatorResults] = useState(false);
   
   // Urgency state
   const [showUrgencyBanner, setShowUrgencyBanner] = useState(false); // Disabled - removing floating elements
@@ -2329,35 +2179,10 @@ const LandingPage: React.FC = () => {
 
   const toggleLanguage = () => {
     const newLang = lang === 'en' ? 'pt' : 'en';
-    setLang(newLang);
-    // Save preference in cookie (expires in 365 days)
-    Cookies.set('language', newLang, { expires: 365 });
+    setLanguage(newLang);
+    // The LanguageContext already handles cookie saving
   };
 
-  // Calculator functions
-  const calculateROI = () => {
-    setShowCalculatorResults(true);
-    // Scroll to results
-    setTimeout(() => {
-      document.getElementById('calculator-results')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
-
-  // Calculate cost per visitor
-  const avgCPC = 5; // Average $5 per click in ads
-  const monthlyVisitorsFromAds = Math.floor(adSpend / avgCPC);
-  const annualVisitorsFromAds = monthlyVisitorsFromAds * 12;
-  
-  const liftlioPlan = adSpend > 5000 ? 200 : adSpend > 2000 ? 100 : 30; // Monthly cost
-  const liftlioMentions = adSpend > 5000 ? 500 : adSpend > 2000 ? 300 : 80; // Mentions per month
-  const visitorsPerMention = 10; // Average visitors per comment over time
-  const monthlyVisitorsFromLiftlio = liftlioMentions * visitorsPerMention;
-  
-  const costPerVisitorAds = avgCPC;
-  const costPerVisitorLiftlio = liftlioPlan / monthlyVisitorsFromLiftlio;
-  const savingsPerVisitor = costPerVisitorAds - costPerVisitorLiftlio;
-  const lifetimeValuePerVisitor = 50; // Each visitor worth $50 over time
-  const roi = Math.round((lifetimeValuePerVisitor / costPerVisitorLiftlio) * 100);
 
   return (
     <LandingContainer>
@@ -2511,7 +2336,7 @@ const LandingPage: React.FC = () => {
       </TrustSection>
 
       {/* Market Trends Section */}
-      <MarketTrends />
+      <MarketTrends key={lang} />
 
       {/* Pain Points Section */}
       <PainPointsSection>
@@ -2616,63 +2441,6 @@ const LandingPage: React.FC = () => {
         </FeaturesContainer>
       </FeaturesSection>
 
-      {/* Calculator Section */}
-      <CalculatorSection>
-        <SectionHeader>
-          <SectionTitle>
-            {t.calculator.title} <Gradient>{t.calculator.titleHighlight}</Gradient>
-          </SectionTitle>
-          <SectionDescription>
-            {t.calculator.subtitle}
-          </SectionDescription>
-        </SectionHeader>
-
-        <CalculatorContainer>
-          <CalculatorInput>
-            <CalculatorLabel>
-              {t.calculator.adSpendLabel}: ${adSpend.toLocaleString()}
-            </CalculatorLabel>
-            <CalculatorSlider
-              type="range"
-              min="100"
-              max="10000"
-              step="100"
-              value={adSpend}
-              onChange={(e) => setAdSpend(Number(e.target.value))}
-            />
-          </CalculatorInput>
-
-          <CalculatorValue>
-            ${adSpend.toLocaleString()}/month
-          </CalculatorValue>
-
-          <PrimaryButton onClick={calculateROI} style={{ margin: '0 auto', display: 'block' }}>
-            {renderIcon(AiOutlineCalculator)}
-            {t.calculator.calculateButton}
-          </PrimaryButton>
-
-          {showCalculatorResults && (
-            <CalculatorResults id="calculator-results">
-              <ResultCard>
-                <ResultLabel>{t.calculator.results.currentCost}</ResultLabel>
-                <ResultValue>${costPerVisitorAds.toFixed(2)}</ResultValue>
-              </ResultCard>
-              <ResultCard>
-                <ResultLabel>{t.calculator.results.liftlioCost}</ResultLabel>
-                <ResultValue>${costPerVisitorLiftlio.toFixed(2)}</ResultValue>
-              </ResultCard>
-              <ResultCard highlight>
-                <ResultLabel>{t.calculator.results.savings}</ResultLabel>
-                <ResultValue>${savingsPerVisitor.toFixed(2)}</ResultValue>
-              </ResultCard>
-              <ResultCard highlight>
-                <ResultLabel>{t.calculator.results.roi}</ResultLabel>
-                <ResultValue>{roi.toLocaleString()}%</ResultValue>
-              </ResultCard>
-            </CalculatorResults>
-          )}
-        </CalculatorContainer>
-      </CalculatorSection>
 
       {/* Visual Demo Section */}
       <VisualDemoSection>
