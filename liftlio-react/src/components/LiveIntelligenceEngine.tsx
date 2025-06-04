@@ -1,370 +1,67 @@
-import React, { useState, useEffect, useRef } from 'react';
-import styled, { keyframes, css } from 'styled-components';
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLanguage } from '../context/LanguageContext';
-import { useTheme } from '../context/ThemeContext';
 import { 
-  FaYoutube, FaSearch, FaCommentDots, FaRocket,
-  FaFire, FaChartLine, FaBell, FaEye, FaClock,
-  FaUsers, FaCheckCircle
+  FaPlay, 
+  FaYoutube, 
+  FaChartLine, 
+  FaCommentDots,
+  FaUsers,
+  FaDollarSign,
+  FaRocket,
+  FaEye,
+  FaCheckCircle,
+  FaBolt,
+  FaClock,
+  FaCheck
 } from 'react-icons/fa';
-import { HiSparkles, HiLightningBolt } from 'react-icons/hi';
-import { BiAnalyse, BiTargetLock } from 'react-icons/bi';
-import { MdAutoAwesome } from 'react-icons/md';
-import { renderIcon } from '../utils/IconHelper';
+import { 
+  BsLightningFill,
+  BsCheckCircleFill,
+  BsGraphUpArrow
+} from 'react-icons/bs';
+import { useLanguage } from '../context/LanguageContext';
 
-// Animations
-const scan = keyframes`
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-`;
+interface TimelineItem {
+  title: string;
+  description: string;
+  iconName: 'youtube' | 'lightning' | 'chart' | 'comment' | 'graph' | 'dollar';
+  demo?: {
+    type: 'video' | 'analysis' | 'comment' | 'results';
+    content?: any;
+  };
+}
 
-const pulse = keyframes`
-  0%, 100% { 
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% { 
-    transform: scale(1.05);
-    opacity: 1;
-  }
-`;
-
-const glow = keyframes`
-  0%, 100% { 
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4),
-                0 0 40px rgba(102, 126, 234, 0.2);
-  }
-  50% { 
-    box-shadow: 0 0 40px rgba(102, 126, 234, 0.8),
-                0 0 80px rgba(102, 126, 234, 0.4);
-  }
-`;
-
-const dataFlow = keyframes`
-  0% { transform: translateY(100%); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(-100%); opacity: 0; }
-`;
-
-const typing = keyframes`
-  from { width: 0; }
-  to { width: 100%; }
-`;
-
-const float = keyframes`
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-`;
-
-// Styled Components
-const Section = styled.section`
-  min-height: 100vh;
-  padding: 40px 20px;
-  background: ${props => props.theme.name === 'dark' ? '#0a0a0a' : '#fafafa'};
-  position: relative;
-  overflow: hidden;
-`;
+// Função para renderizar ícones com segurança
+const renderIcon = (iconName: string) => {
+  const iconMap: { [key: string]: any } = {
+    youtube: FaYoutube,
+    lightning: BsLightningFill,
+    chart: FaChartLine,
+    comment: FaCommentDots,
+    graph: BsGraphUpArrow,
+    dollar: FaDollarSign,
+    play: FaPlay,
+    users: FaUsers,
+    rocket: FaRocket,
+    check: FaCheck,
+    checkCircle: FaCheckCircle,
+    checkFill: BsCheckCircleFill,
+    eye: FaEye,
+    bolt: FaBolt,
+    clock: FaClock
+  };
+  
+  const IconComponent = iconMap[iconName];
+  return IconComponent ? React.createElement(IconComponent) : null;
+};
 
 const Container = styled.div`
-  max-width: 1400px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-`;
-
-const Title = styled(motion.h2)`
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: 900;
-  text-align: center;
-  margin-bottom: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-`;
-
-const Subtitle = styled(motion.p)`
-  font-size: 1.25rem;
-  color: ${props => props.theme.textSecondary};
-  text-align: center;
-  margin-bottom: 3rem;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-`;
-
-const MainStage = styled.div`
-  background: ${props => props.theme.name === 'dark' 
-    ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
-    : 'linear-gradient(135deg, #f5f5f5 0%, #e9ecef 100%)'};
-  border-radius: 24px;
-  padding: 3rem;
-  position: relative;
+  min-height: 100vh;
+  background: ${props => props.theme.background};
+  padding: 4rem 2rem;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-  border: 1px solid ${props => props.theme.border};
-  
-  @media (max-width: 768px) {
-    padding: 1.5rem;
-  }
-`;
-
-const StageHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-`;
-
-const StageTitle = styled.h3`
-  font-size: 1.5rem;
-  color: ${props => props.theme.text};
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  
-  svg {
-    color: #667eea;
-  }
-`;
-
-const LiveIndicator = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #ef4444;
-  font-weight: 600;
-  
-  &::before {
-    content: '';
-    width: 8px;
-    height: 8px;
-    background: #ef4444;
-    border-radius: 50%;
-    animation: ${pulse} 2s ease-in-out infinite;
-  }
-`;
-
-const ProcessVisualization = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 3rem;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const ProcessStep = styled(motion.div)<{ isActive: boolean }>`
-  background: ${props => props.isActive
-    ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)'
-    : props.theme.cardBackground};
-  border: 2px solid ${props => props.isActive ? '#667eea' : props.theme.border};
-  border-radius: 16px;
-  padding: 1.5rem;
   position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  min-height: ${props => props.isActive ? '350px' : '150px'};
-  
-  ${props => props.isActive && css`
-    animation: ${glow} 2s ease-in-out infinite;
-  `}
-`;
-
-const StepHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-`;
-
-const StepNumber = styled.div<{ isActive: boolean }>`
-  width: 40px;
-  height: 40px;
-  background: ${props => props.isActive
-    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-    : props.theme.border};
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 1.125rem;
-`;
-
-const StepTitle = styled.h4`
-  font-size: 1.125rem;
-  color: ${props => props.theme.text};
-  margin: 0;
-`;
-
-const StepContent = styled.div`
-  color: ${props => props.theme.textSecondary};
-  font-size: 0.875rem;
-  line-height: 1.6;
-`;
-
-const VideoGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 0.75rem;
-  margin-top: 1rem;
-  max-height: 200px;
-  overflow-y: auto;
-  padding: 0.75rem;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-  
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #667eea;
-    border-radius: 3px;
-  }
-`;
-
-const VideoCard = styled(motion.div)<{ isHot?: boolean }>`
-  background: ${props => props.theme.cardBackground};
-  border: 1px solid ${props => props.isHot ? '#ef4444' : props.theme.border};
-  border-radius: 8px;
-  padding: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  
-  ${props => props.isHot && css`
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
-  `}
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const VideoTitle = styled.p`
-  font-size: 0.75rem;
-  color: ${props => props.theme.text};
-  margin-bottom: 0.5rem;
-  line-height: 1.4;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-`;
-
-const VideoMeta = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.625rem;
-  color: ${props => props.theme.textSecondary};
-`;
-
-const HotBadge = styled.div`
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #ef4444;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.625rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-`;
-
-const CommentDemo = styled.div`
-  background: ${props => props.theme.cardBackground};
-  border: 1px solid ${props => props.theme.border};
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-top: 1rem;
-  position: relative;
-  overflow: hidden;
-`;
-
-const CommentHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  
-  img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  }
-`;
-
-const CommentAuthor = styled.div`
-  flex: 1;
-  
-  .name {
-    font-weight: 600;
-    color: ${props => props.theme.text};
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .time {
-    font-size: 0.75rem;
-    color: ${props => props.theme.textSecondary};
-  }
-`;
-
-const CommentText = styled.div`
-  color: ${props => props.theme.text};
-  line-height: 1.6;
-  
-  .timestamp {
-    color: #3b82f6;
-    cursor: pointer;
-    font-weight: 600;
-    
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-  
-  .typing {
-    display: inline-block;
-    overflow: hidden;
-    white-space: nowrap;
-    animation: ${typing} 3s steps(40, end);
-    border-right: 2px solid #667eea;
-  }
-`;
-
-const MetricsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-top: 3rem;
-`;
-
-const MetricCard = styled(motion.div)`
-  background: ${props => props.theme.cardBackground};
-  border: 1px solid ${props => props.theme.border};
-  border-radius: 16px;
-  padding: 1.5rem;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
   
   &::before {
     content: '';
@@ -372,433 +69,691 @@ const MetricCard = styled(motion.div)`
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    bottom: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1) 0%, transparent 50%);
+    pointer-events: none;
   }
 `;
 
-const MetricValue = styled.div`
-  font-size: 2rem;
-  font-weight: 800;
-  color: #667eea;
-  margin-bottom: 0.5rem;
-  animation: ${float} 3s ease-in-out infinite;
+const Content = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
 `;
 
-const MetricLabel = styled.div`
-  font-size: 0.875rem;
-  color: ${props => props.theme.textSecondary};
-`;
-
-const ImpactSection = styled(motion.div)`
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-  border: 2px solid rgba(102, 126, 234, 0.2);
-  border-radius: 20px;
-  padding: 2rem;
-  margin-top: 3rem;
+const Header = styled.div`
   text-align: center;
+  margin-bottom: 5rem;
+`;
+
+const Title = styled(motion.h1)`
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+`;
+
+const Subtitle = styled(motion.p)`
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  color: ${props => props.theme.textSecondary};
+  margin-bottom: 3rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  opacity: 0.9;
+`;
+
+const TimelineWrapper = styled.div`
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+`;
+
+const TimelineLine = styled.div`
+  position: absolute;
+  left: 50px;
+  top: 50px;
+  bottom: 50px;
+  width: 4px;
+  background: linear-gradient(180deg, 
+    rgba(102, 126, 234, 0.2) 0%, 
+    rgba(102, 126, 234, 0.5) 50%, 
+    rgba(118, 75, 162, 0.5) 100%
+  );
+  
+  @media (min-width: 768px) {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    transform-origin: top;
+    transform: scaleY(var(--progress, 0));
+    transition: transform 0.5s ease;
+  }
+`;
+
+const TimelineSection = styled(motion.div)`
+  margin-bottom: 3rem;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  
+  @media (min-width: 768px) {
+    &:nth-child(even) {
+      flex-direction: row-reverse;
+      
+      .timeline-content {
+        text-align: right;
+      }
+    }
+  }
+`;
+
+const TimelineMarker = styled(motion.div)<{ isActive: boolean }>`
+  position: relative;
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  background: ${props => props.isActive 
+    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+    : props.theme.cardBackground};
+  border: 4px solid ${props => props.isActive
+    ? 'transparent'
+    : props.theme.cardBorder};
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: all 0.3s ease;
+  box-shadow: ${props => props.isActive 
+    ? '0 0 30px rgba(102, 126, 234, 0.5)' 
+    : '0 2px 10px rgba(0,0,0,0.1)'};
+  
+  svg {
+    color: ${props => props.isActive ? 'white' : '#667eea'};
+    font-size: 24px;
+  }
+  
+  &:hover {
+    transform: scale(1.1);
+    cursor: pointer;
+  }
+`;
+
+const TimelineContent = styled.div`
+  flex: 1;
+  padding: 0 2rem;
+  
+  @media (min-width: 768px) {
+    max-width: calc(50% - 100px);
+  }
+`;
+
+
+const StepTitle = styled.h3`
+  font-size: 1.5rem;
+  color: ${props => props.theme.text};
+  margin-bottom: 1rem;
+  font-weight: 700;
+`;
+
+const StepDescription = styled.p`
+  color: ${props => props.theme.textSecondary};
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+`;
+
+const DemoContainer = styled(motion.div)`
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.03)' 
+    : 'rgba(0, 0, 0, 0.02)'};
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.05)'
+    : 'rgba(0, 0, 0, 0.05)'};
+  border-radius: 16px;
+  padding: 1.5rem;
+  position: relative;
+  z-index: 1;
+  margin-top: 1rem;
+`;
+
+const VideoPreview = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const VideoThumb = styled.div`
+  width: 120px;
+  height: 68px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+`;
+
+const PlayIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  svg {
+    color: white;
+    font-size: 16px;
+    margin-left: 2px;
+  }
+`;
+
+const VideoDetails = styled.div`
+  flex: 1;
+`;
+
+const VideoTitle = styled.h4`
+  color: ${props => props.theme.text};
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+`;
+
+const VideoMeta = styled.p`
+  color: ${props => props.theme.textSecondary};
+  font-size: 0.85rem;
+  opacity: 0.8;
+`;
+
+const AnalysisGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+`;
+
+const AnalysisItem = styled.div`
+  text-align: center;
+  padding: 1rem;
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(102, 126, 234, 0.1)'
+    : 'rgba(102, 126, 234, 0.05)'};
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+`;
+
+const AnalysisIcon = styled.div`
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #667eea;
+`;
+
+const AnalysisValue = styled.div`
+  font-weight: bold;
+  color: ${props => props.theme.text};
+  font-size: 0.95rem;
+`;
+
+const AnalysisLabel = styled.div`
+  font-size: 0.75rem;
+  color: ${props => props.theme.textSecondary};
+  margin-top: 0.25rem;
+  opacity: 0.8;
+`;
+
+const CommentPreview = styled.div`
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(102, 126, 234, 0.05)'
+    : 'rgba(102, 126, 234, 0.03)'};
+  border-radius: 12px;
+  padding: 1rem;
+`;
+
+const CommentAuthor = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: #667eea;
+  font-weight: 600;
+  font-size: 0.9rem;
+  
+  svg {
+    font-size: 0.9rem;
+  }
+`;
+
+const CommentText = styled.p`
+  color: ${props => props.theme.text};
+  line-height: 1.5;
+  font-size: 0.9rem;
+  
+  .highlight {
+    color: #667eea;
+    font-weight: 600;
+  }
+`;
+
+const MetricsRow = styled.div`
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+`;
+
+const MetricItem = styled.div`
+  flex: 1;
+  min-width: 120px;
+  text-align: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, 
+    rgba(102, 126, 234, 0.05) 0%, 
+    rgba(118, 75, 162, 0.05) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+`;
+
+const MetricIcon = styled.div`
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #667eea;
+`;
+
+const MetricValue = styled.h4`
+  font-size: 1.25rem;
+  color: ${props => props.theme.text};
+  margin: 0;
+  font-weight: 700;
+`;
+
+const MetricLabel = styled.p`
+  color: ${props => props.theme.textSecondary};
+  font-size: 0.75rem;
+  margin: 0;
+  opacity: 0.8;
+`;
+
+const CTASection = styled(motion.div)`
+  text-align: center;
+  padding: 4rem 3rem;
+  background: linear-gradient(135deg, 
+    rgba(102, 126, 234, 0.05) 0%, 
+    rgba(118, 75, 162, 0.05) 100%);
+  border-radius: 32px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+    animation: pulse 4s ease-in-out infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 1; }
+  }
+`;
+
+const CTATitle = styled.h2`
+  font-size: clamp(2rem, 3vw, 3rem);
+  color: ${props => props.theme.text};
+  margin-bottom: 1rem;
+  font-weight: 800;
+  position: relative;
+  z-index: 1;
+`;
+
+const CTASubtitle = styled.p`
+  font-size: 1.25rem;
+  color: ${props => props.theme.textSecondary};
+  margin-bottom: 2.5rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  z-index: 1;
 `;
 
 const CTAButton = styled(motion.button)`
-  padding: 1rem 2.5rem;
-  font-size: 1.125rem;
-  font-weight: 700;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 50px;
+  padding: 1.25rem 3.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: 16px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 2rem;
-  transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+  }
+  
+  svg {
+    font-size: 1.2rem;
   }
 `;
 
 const LiveIntelligenceEngine: React.FC = () => {
-  const { language } = useLanguage();
-  const { theme } = useTheme();
+  const { t } = useLanguage();
   const [activeStep, setActiveStep] = useState(0);
-  const [showComment, setShowComment] = useState(false);
-  const [metrics, setMetrics] = useState({
-    videosScanned: 0,
-    hotVideos: 0,
-    comments: 0,
-    leads: 0
-  });
 
-  const lang = language as 'pt' | 'en';
-
-  const t = {
-    pt: {
-      title: 'Como o Liftlio Transforma Vídeos em Máquina de Vendas',
-      subtitle: 'Veja em tempo real a IA capturando leads quentes no piloto automático',
-      live: 'AO VIVO',
-      currentProcess: 'Processo em Execução',
-      steps: [
-        {
-          title: 'Varredura Massiva',
-          content: 'IA escaneia centenas de vídeos por hora, analisando títulos, descrições e engajamento para encontrar oportunidades quentes',
-          icon: FaSearch
-        },
-        {
-          title: 'Análise Profunda',
-          content: 'Assiste o vídeo completo, analisa a transcrição, lê TODOS os comentários e identifica menções de problemas que seu produto resolve',
-          icon: BiAnalyse
-        },
-        {
-          title: 'Comentário Estratégico',
-          content: 'Cria comentário natural mencionando timestamp específico e conectando indiretamente com sua solução',
-          icon: FaCommentDots
-        },
-        {
-          title: 'Captura no Topo',
-          content: 'Monitora canais hot e comenta entre os primeiros, capturando todo o tráfego do vídeo para seu negócio',
-          icon: FaRocket
+  const timeline: TimelineItem[] = [
+    {
+      title: t('engine.steps.published.title'),
+      description: t('engine.steps.published.description'),
+      iconName: 'youtube',
+      demo: {
+        type: 'video',
+        content: {
+          title: "10 Dicas para Crescer seu Negócio",
+          views: "1.2K views • 1h ago",
+          channel: "Business Channel"
         }
-      ],
-      videos: [
-        { title: 'Como escalar vendas B2B em 2024', views: '45K', hot: true },
-        { title: 'Estratégias de marketing digital', views: '12K', hot: false },
-        { title: 'Automatização de processos comerciais', views: '89K', hot: true },
-        { title: 'Ferramentas para gestão de leads', views: '5K', hot: false },
-        { title: 'Como aumentar conversão em 300%', views: '127K', hot: true },
-        { title: 'Gestão de equipe remota', views: '8K', hot: false }
-      ],
-      comment: {
-        author: 'João Silva',
-        text: 'Cara, sensacional! Em 3:47 quando você fala sobre qualificação de leads, isso mudou nosso jogo. Implementamos um processo similar e aumentamos conversão em 85%. A parte de automação que você menciona é crucial - economizamos 30h/semana. Alguém mais teve resultados assim?',
-        timestamp: '3:47'
-      },
-      metrics: {
-        videosScanned: 'Vídeos Analisados/Hora',
-        hotVideos: 'Vídeos Quentes Identificados',
-        comments: 'Comentários Postados Hoje',
-        leads: 'Leads Capturados'
-      },
-      impact: {
-        title: 'Impacto Real no Seu Negócio',
-        revenue: '+ R$ 47.300/mês',
-        time: '120 horas economizadas',
-        conversion: '12x mais conversão'
-      },
-      cta: 'Começar Agora'
+      }
     },
-    en: {
-      title: 'How Liftlio Transforms Videos into Sales Machine',
-      subtitle: 'Watch AI capturing hot leads on autopilot in real-time',
-      live: 'LIVE',
-      currentProcess: 'Process Running',
-      steps: [
-        {
-          title: 'Massive Scanning',
-          content: 'AI scans hundreds of videos per hour, analyzing titles, descriptions and engagement to find hot opportunities',
-          icon: FaSearch
-        },
-        {
-          title: 'Deep Analysis',
-          content: 'Watches full video, analyzes transcript, reads ALL comments and identifies mentions of problems your product solves',
-          icon: BiAnalyse
-        },
-        {
-          title: 'Strategic Comment',
-          content: 'Creates natural comment mentioning specific timestamp and indirectly connecting with your solution',
-          icon: FaCommentDots
-        },
-        {
-          title: 'Top Capture',
-          content: 'Monitors hot channels and comments among the first, capturing all video traffic to your business',
-          icon: FaRocket
+    {
+      title: t('engine.steps.detected.title'),
+      description: t('engine.steps.detected.description'),
+      iconName: 'lightning',
+      demo: {
+        type: 'analysis',
+        content: {
+          relevance: "98%",
+          audience: "Business",
+          potential: "High"
         }
-      ],
-      videos: [
-        { title: 'How to scale B2B sales in 2024', views: '45K', hot: true },
-        { title: 'Digital marketing strategies', views: '12K', hot: false },
-        { title: 'Sales process automation', views: '89K', hot: true },
-        { title: 'Lead management tools', views: '5K', hot: false },
-        { title: 'How to increase conversion by 300%', views: '127K', hot: true },
-        { title: 'Remote team management', views: '8K', hot: false }
-      ],
-      comment: {
-        author: 'John Smith',
-        text: 'Wow, amazing! At 3:47 when you talk about lead qualification, that changed our game. We implemented a similar process and increased conversion by 85%. The automation part you mention is crucial - we save 30h/week. Anyone else had results like this?',
-        timestamp: '3:47'
-      },
-      metrics: {
-        videosScanned: 'Videos Analyzed/Hour',
-        hotVideos: 'Hot Videos Identified',
-        comments: 'Comments Posted Today',
-        leads: 'Leads Captured'
-      },
-      impact: {
-        title: 'Real Impact on Your Business',
-        revenue: '+ $12,500/month',
-        time: '120 hours saved',
-        conversion: '12x more conversion'
-      },
-      cta: 'Start Now'
+      }
+    },
+    {
+      title: t('engine.steps.analyzed.title'),
+      description: t('engine.steps.analyzed.description'),
+      iconName: 'chart',
+      demo: {
+        type: 'analysis',
+        content: {
+          topics: ["Marketing", "Sales", "Automation"],
+          sentiment: "Positive",
+          engagement: "High"
+        }
+      }
+    },
+    {
+      title: t('engine.steps.commented.title'),
+      description: t('engine.steps.commented.description'),
+      iconName: 'comment',
+      demo: {
+        type: 'comment',
+        content: {
+          author: "Liftlio AI",
+          text: "Great content! The automation tip you mentioned is crucial for scaling. I've created a comprehensive guide on this topic that many found helpful."
+        }
+      }
+    },
+    {
+      title: t('engine.steps.results.title'),
+      description: t('engine.steps.results.description'),
+      iconName: 'graph',
+      demo: {
+        type: 'results',
+        content: {
+          views: "8.5K",
+          leads: "142",
+          conversions: "37"
+        }
+      }
+    },
+    {
+      title: t('engine.steps.continuous.title'),
+      description: t('engine.steps.continuous.description'),
+      iconName: 'dollar',
+      demo: {
+        type: 'results',
+        content: {
+          totalViews: "45K+",
+          totalLeads: "890+",
+          revenue: "$47,300"
+        }
+      }
     }
-  }[lang];
+  ];
 
-  // Auto-advance steps
   useEffect(() => {
     const interval = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % 4);
-    }, 5000); // Mais tempo para ler
+      setActiveStep((prev) => (prev + 1) % timeline.length);
+    }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [timeline.length]);
 
-  // Show comment on step 3
+  // Update timeline progress
   useEffect(() => {
-    setShowComment(activeStep === 2);
-  }, [activeStep]);
+    const progress = ((activeStep + 1) / timeline.length) * 100;
+    document.documentElement.style.setProperty('--progress', `${progress / 100}`);
+  }, [activeStep, timeline.length]);
 
-  // Animate metrics
-  useEffect(() => {
-    const targets = { videosScanned: 847, hotVideos: 23, comments: 142, leads: 89 };
-    
-    Object.entries(targets).forEach(([key, target]) => {
-      let current = 0;
-      const increment = target / 50;
-      const timer = setInterval(() => {
-        current += increment;
-        if (current >= target) {
-          current = target;
-          clearInterval(timer);
+  const renderDemo = (demo: TimelineItem['demo']) => {
+    if (!demo) return null;
+
+    switch (demo.type) {
+      case 'video':
+        return (
+          <VideoPreview>
+            <VideoThumb>
+              <PlayIcon>
+                {renderIcon('play')}
+              </PlayIcon>
+            </VideoThumb>
+            <VideoDetails>
+              <VideoTitle>{demo.content.title}</VideoTitle>
+              <VideoMeta>{demo.content.views}</VideoMeta>
+            </VideoDetails>
+          </VideoPreview>
+        );
+
+      case 'analysis':
+        if (demo.content.relevance) {
+          return (
+            <AnalysisGrid>
+              <AnalysisItem>
+                <AnalysisIcon>{renderIcon('chart')}</AnalysisIcon>
+                <AnalysisValue>{demo.content.relevance}</AnalysisValue>
+                <AnalysisLabel>Relevance</AnalysisLabel>
+              </AnalysisItem>
+              <AnalysisItem>
+                <AnalysisIcon>{renderIcon('users')}</AnalysisIcon>
+                <AnalysisValue>{demo.content.audience}</AnalysisValue>
+                <AnalysisLabel>Audience</AnalysisLabel>
+              </AnalysisItem>
+              <AnalysisItem>
+                <AnalysisIcon>{renderIcon('rocket')}</AnalysisIcon>
+                <AnalysisValue>{demo.content.potential}</AnalysisValue>
+                <AnalysisLabel>Potential</AnalysisLabel>
+              </AnalysisItem>
+            </AnalysisGrid>
+          );
+        } else {
+          return (
+            <AnalysisGrid>
+              {demo.content.topics?.map((topic: string, i: number) => (
+                <AnalysisItem key={i}>
+                  <AnalysisIcon>{renderIcon('checkCircle')}</AnalysisIcon>
+                  <AnalysisValue>{topic}</AnalysisValue>
+                </AnalysisItem>
+              ))}
+            </AnalysisGrid>
+          );
         }
-        setMetrics(prev => ({ ...prev, [key]: Math.floor(current) }));
-      }, 30);
-    });
-  }, []);
+
+      case 'comment':
+        return (
+          <CommentPreview>
+            <CommentAuthor>
+              {renderIcon('checkFill')} {demo.content.author}
+            </CommentAuthor>
+            <CommentText>{demo.content.text}</CommentText>
+          </CommentPreview>
+        );
+
+      case 'results':
+        if (demo.content.views) {
+          return (
+            <MetricsRow>
+              <MetricItem>
+                <MetricIcon>{renderIcon('eye')}</MetricIcon>
+                <MetricValue>{demo.content.views}</MetricValue>
+                <MetricLabel>Views</MetricLabel>
+              </MetricItem>
+              <MetricItem>
+                <MetricIcon>{renderIcon('users')}</MetricIcon>
+                <MetricValue>{demo.content.leads}</MetricValue>
+                <MetricLabel>Leads</MetricLabel>
+              </MetricItem>
+              <MetricItem>
+                <MetricIcon>{renderIcon('checkCircle')}</MetricIcon>
+                <MetricValue>{demo.content.conversions}</MetricValue>
+                <MetricLabel>Conversions</MetricLabel>
+              </MetricItem>
+            </MetricsRow>
+          );
+        } else {
+          return (
+            <MetricsRow>
+              <MetricItem>
+                <MetricIcon>{renderIcon('eye')}</MetricIcon>
+                <MetricValue>{demo.content.totalViews}</MetricValue>
+                <MetricLabel>Total Views</MetricLabel>
+              </MetricItem>
+              <MetricItem>
+                <MetricIcon>{renderIcon('users')}</MetricIcon>
+                <MetricValue>{demo.content.totalLeads}</MetricValue>
+                <MetricLabel>Total Leads</MetricLabel>
+              </MetricItem>
+              <MetricItem>
+                <MetricIcon>{renderIcon('dollar')}</MetricIcon>
+                <MetricValue>{demo.content.revenue}</MetricValue>
+                <MetricLabel>Revenue</MetricLabel>
+              </MetricItem>
+            </MetricsRow>
+          );
+        }
+
+      default:
+        return null;
+    }
+  };
 
   return (
-    <Section>
-      <Container>
-        <Title
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          {t.title}
-        </Title>
-        
-        <Subtitle
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
-          {t.subtitle}
-        </Subtitle>
+    <Container>
+      <Content>
+        <Header>
+          <Title
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            {t('engine.title')}
+          </Title>
+          <Subtitle
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            {t('engine.subtitle')}
+          </Subtitle>
+        </Header>
 
-        <MainStage>
-          <StageHeader>
-            <StageTitle>
-              {renderIcon(HiLightningBolt)}
-              {t.currentProcess}
-            </StageTitle>
-            <LiveIndicator>{t.live}</LiveIndicator>
-          </StageHeader>
-
-          <ProcessVisualization>
-            {t.steps.map((step, index) => (
-              <ProcessStep
-                key={index}
-                isActive={activeStep === index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <StepHeader>
-                  <StepNumber isActive={activeStep === index}>
-                    {index + 1}
-                  </StepNumber>
-                  <StepTitle>{step.title}</StepTitle>
-                  {renderIcon(step.icon)}
-                </StepHeader>
-                <StepContent>{step.content}</StepContent>
-
-                {index === 0 && activeStep === 0 && (
-                  <VideoGrid>
-                    <AnimatePresence>
-                      {t.videos.map((video, vIndex) => (
-                        <VideoCard
-                          key={vIndex}
-                          isHot={video.hot}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: vIndex * 0.1 }}
-                        >
-                          {video.hot && (
-                            <HotBadge>
-                              {renderIcon(FaFire)} HOT
-                            </HotBadge>
-                          )}
-                          <VideoTitle>{video.title}</VideoTitle>
-                          <VideoMeta>
-                            {renderIcon(FaEye)} {video.views}
-                          </VideoMeta>
-                        </VideoCard>
-                      ))}
-                    </AnimatePresence>
-                  </VideoGrid>
-                )}
-
-                {index === 1 && activeStep === 1 && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    style={{ 
-                      marginTop: '1rem',
-                      padding: '1rem',
-                      background: 'rgba(0, 0, 0, 0.05)',
-                      borderRadius: '8px'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-                      {renderIcon(FaYoutube)}
-                      <strong style={{ fontSize: '0.875rem' }}>
-                        {lang === 'pt' ? 'Análise em Tempo Real' : 'Real-Time Analysis'}
-                      </strong>
-                    </div>
-                    <div style={{ fontSize: '0.75rem', lineHeight: '1.5' }}>
-                      🎥 <strong>{lang === 'pt' ? 'Vídeo:' : 'Video:'}</strong> {t.videos[2].title}<br/>
-                      📝 <strong>{lang === 'pt' ? 'Transcrição:' : 'Transcript:'}</strong> "...{lang === 'pt' ? 'no minuto 3:47 falamos sobre qualificação de leads' : 'at 3:47 we talk about lead qualification'}..."<br/>
-                      🔍 <strong>{lang === 'pt' ? 'Palavras-chave detectadas:' : 'Keywords detected:'}</strong> <span style={{ color: '#667eea' }}>{lang === 'pt' ? 'leads, conversão, automação, vendas' : 'leads, conversion, automation, sales'}</span><br/>
-                      💡 <strong>{lang === 'pt' ? 'Oportunidade:' : 'Opportunity:'}</strong> <span style={{ color: '#10b981' }}>{lang === 'pt' ? 'Alto potencial - menciona problemas de qualificação' : 'High potential - mentions qualification problems'}</span>
-                    </div>
-                  </motion.div>
-                )}
-
-                {index === 2 && showComment && (
-                  <CommentDemo>
-                    <CommentHeader>
-                      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23667eea'/%3E%3C/svg%3E" alt="Avatar" />
-                      <CommentAuthor>
-                        <div className="name">
-                          {t.comment.author}
-                          {renderIcon(FaCheckCircle)}
-                        </div>
-                        <div className="time">{renderIcon(FaClock)} 2 min ago</div>
-                      </CommentAuthor>
-                    </CommentHeader>
-                    <CommentText>
-                      <span className="typing">
-                        {t.comment.text.split(t.comment.timestamp)[0]}
-                        <span className="timestamp">{t.comment.timestamp}</span>
-                        {t.comment.text.split(t.comment.timestamp)[1]}
-                      </span>
-                    </CommentText>
-                  </CommentDemo>
-                )}
-
-                {index === 3 && activeStep === 3 && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    style={{ 
-                      marginTop: '1rem',
-                      padding: '1rem',
-                      background: 'rgba(0, 0, 0, 0.05)',
-                      borderRadius: '8px'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-                      {renderIcon(FaBell)}
-                      <strong style={{ fontSize: '0.875rem' }}>
-                        {lang === 'pt' ? 'Monitoramento Ativo' : 'Active Monitoring'}
-                      </strong>
-                    </div>
-                    <div style={{ fontSize: '0.75rem', lineHeight: '1.5' }}>
-                      🔴 <strong>{lang === 'pt' ? 'Canal Hot:' : 'Hot Channel:'}</strong> "Marketing Digital Pro" - 500K {lang === 'pt' ? 'inscritos' : 'subscribers'}<br/>
-                      ⏱️ <strong>{lang === 'pt' ? 'Novo vídeo detectado:' : 'New video detected:'}</strong> {lang === 'pt' ? 'Há 3 minutos' : '3 minutes ago'}<br/>
-                      🎯 <strong>{lang === 'pt' ? 'Ação:' : 'Action:'}</strong> <span style={{ color: '#667eea' }}>{lang === 'pt' ? 'Comentando entre os primeiros...' : 'Commenting among the first...'}</span><br/>
-                      🚀 <strong>Status:</strong> <span style={{ color: '#10b981' }}>{lang === 'pt' ? 'Capturando todo o tráfego inicial!' : 'Capturing all initial traffic!'}</span>
-                    </div>
-                  </motion.div>
-                )}
-              </ProcessStep>
-            ))}
-          </ProcessVisualization>
-
-          <MetricsGrid>
-            <MetricCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <MetricValue>{metrics.videosScanned}</MetricValue>
-              <MetricLabel>{t.metrics.videosScanned}</MetricLabel>
-            </MetricCard>
-            <MetricCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <MetricValue>{metrics.hotVideos}</MetricValue>
-              <MetricLabel>{t.metrics.hotVideos}</MetricLabel>
-            </MetricCard>
-            <MetricCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <MetricValue>{metrics.comments}</MetricValue>
-              <MetricLabel>{t.metrics.comments}</MetricLabel>
-            </MetricCard>
-            <MetricCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <MetricValue>{metrics.leads}</MetricValue>
-              <MetricLabel>{t.metrics.leads}</MetricLabel>
-            </MetricCard>
-          </MetricsGrid>
-        </MainStage>
-
-        <ImpactSection
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          <h3 style={{ fontSize: '1.75rem', marginBottom: '1.5rem' }}>{t.impact.title}</h3>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '3rem', flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>
-                {t.impact.revenue}
-              </div>
-              <div style={{ opacity: 0.7 }}>Receita</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#3b82f6' }}>
-                {t.impact.time}
-              </div>
-              <div style={{ opacity: 0.7 }}>Tempo</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' }}>
-                {t.impact.conversion}
-              </div>
-              <div style={{ opacity: 0.7 }}>Conversão</div>
-            </div>
-          </div>
+        <TimelineWrapper>
+          <TimelineLine />
           
+          {timeline.map((item, index) => (
+            <TimelineSection
+              key={index}
+              initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+            >
+              <TimelineMarker
+                isActive={activeStep === index}
+                onClick={() => setActiveStep(index)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {renderIcon(item.iconName)}
+              </TimelineMarker>
+
+              <TimelineContent className="timeline-content">
+                <StepTitle>{item.title}</StepTitle>
+                <StepDescription>{item.description}</StepDescription>
+                
+                {activeStep === index && item.demo && (
+                  <DemoContainer>
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        style={{ width: '100%' }}
+                      >
+                        {renderDemo(item.demo)}
+                      </motion.div>
+                    </AnimatePresence>
+                  </DemoContainer>
+                )}
+              </TimelineContent>
+            </TimelineSection>
+          ))}
+        </TimelineWrapper>
+
+        <CTASection
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+        >
+          <CTATitle>{t('cta.title')}</CTATitle>
+          <CTASubtitle>{t('cta.subtitle')}</CTASubtitle>
           <CTAButton
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => window.location.href = '/login'}
           >
-            {renderIcon(FaRocket)}
-            {t.cta}
-            {renderIcon(HiSparkles)}
+            {renderIcon('rocket')} {t('cta.button')}
           </CTAButton>
-        </ImpactSection>
-      </Container>
-    </Section>
+        </CTASection>
+      </Content>
+    </Container>
   );
 };
 

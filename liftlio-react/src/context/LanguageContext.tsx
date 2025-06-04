@@ -468,6 +468,25 @@ const translations = {
     'common.selectAll': 'Select All',
     'common.deselectAll': 'Deselect All',
     'common.apply': 'Apply',
+    
+    // LiveIntelligenceEngine
+    'engine.title': 'How Liftlio Transforms Views into Sales',
+    'engine.subtitle': 'See exactly what happens from the moment a video is published until you capture a customer',
+    'engine.steps.published.title': 'Video is Published',
+    'engine.steps.published.description': 'A creator publishes a video about a problem your product solves',
+    'engine.steps.detected.title': 'Liftlio Detects Instantly',
+    'engine.steps.detected.description': 'Our AI monitors 24/7 and identifies the video in seconds',
+    'engine.steps.analyzed.title': 'Deep Real-Time Analysis',
+    'engine.steps.analyzed.description': 'AI watches the full video, reads all comments and identifies opportunities',
+    'engine.steps.commented.title': 'Strategic Comment Created',
+    'engine.steps.commented.description': 'Generates humanized comment mentioning specific timestamp and connecting with your solution',
+    'engine.steps.results.title': 'First Results Arrive',
+    'engine.steps.results.description': 'Interested people start interacting with your comment',
+    'engine.steps.continuous.title': 'Continuous Traffic to Your Business',
+    'engine.steps.continuous.description': 'Your comment continues generating qualified leads for days',
+    'cta.title': 'Ready to Multiply Your Sales?',
+    'cta.subtitle': 'Let Liftlio work 24/7 finding and capturing customers for you',
+    'cta.button': 'Start Now',
   },
   pt: {
     // Navigation
@@ -930,6 +949,25 @@ const translations = {
     'common.inherit': 'Herdar',
     'common.initial': 'Inicial',
     'common.unset': 'Desativar',
+    
+    // LiveIntelligenceEngine
+    'engine.title': 'Como o Liftlio Transforma Views em Vendas',
+    'engine.subtitle': 'Veja exatamente o que acontece desde o momento que um vídeo é publicado até você capturar um cliente',
+    'engine.steps.published.title': 'Vídeo é Publicado',
+    'engine.steps.published.description': 'Um criador publica um vídeo sobre um problema que seu produto resolve',
+    'engine.steps.detected.title': 'Liftlio Detecta Instantaneamente',
+    'engine.steps.detected.description': 'Nossa IA monitora 24/7 e identifica o vídeo em segundos',
+    'engine.steps.analyzed.title': 'Análise Profunda em Tempo Real',
+    'engine.steps.analyzed.description': 'IA assiste o vídeo completo, lê todos comentários e identifica oportunidades',
+    'engine.steps.commented.title': 'Comentário Estratégico Criado',
+    'engine.steps.commented.description': 'Gera comentário humanizado mencionando timestamp específico e conectando com sua solução',
+    'engine.steps.results.title': 'Primeiros Resultados Chegam',
+    'engine.steps.results.description': 'Pessoas interessadas começam a interagir com seu comentário',
+    'engine.steps.continuous.title': 'Tráfego Contínuo para Seu Negócio',
+    'engine.steps.continuous.description': 'Seu comentário continua gerando leads qualificados por dias',
+    'cta.title': 'Pronto para Multiplicar suas Vendas?',
+    'cta.subtitle': 'Deixe o Liftlio trabalhar 24/7 encontrando e capturando clientes para você',
+    'cta.button': 'Começar Agora',
   }
 };
 

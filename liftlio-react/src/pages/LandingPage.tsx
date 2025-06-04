@@ -11,6 +11,7 @@ import { useLanguage } from '../context/LanguageContext';
 import Testimonials from '../components/Testimonials';
 import MarketTrends from '../components/MarketTrends';
 import LiveIntelligenceEngine from '../components/LiveIntelligenceEngine';
+import TrendingTopicsCarousel from '../components/TrendingTopicsCarousel';
 
 // Internacionalização
 const translations = {
@@ -2341,6 +2342,9 @@ const LandingPage: React.FC = () => {
 
       {/* Live Intelligence Engine Section */}
       <LiveIntelligenceEngine key={`lie-${lang}`} />
+
+      {/* Trending Topics Carousel */}
+      <TrendingTopicsCarousel />
 
       {/* Pain Points Section */}
       <PainPointsSection>
