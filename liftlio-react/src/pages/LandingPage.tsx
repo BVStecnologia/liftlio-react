@@ -10,6 +10,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import Testimonials from '../components/Testimonials';
 import MarketTrends from '../components/MarketTrends';
+import LiveIntelligenceEngine from '../components/LiveIntelligenceEngine';
 
 // Internacionalização
 const translations = {
@@ -2337,6 +2338,9 @@ const LandingPage: React.FC = () => {
 
       {/* Market Trends Section */}
       <MarketTrends key={lang} />
+
+      {/* Live Intelligence Engine Section */}
+      <LiveIntelligenceEngine key={`lie-${lang}`} />
 
       {/* Pain Points Section */}
       <PainPointsSection>
