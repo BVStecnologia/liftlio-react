@@ -22,37 +22,37 @@ const translations = {
     subtitleEnd: 'everyone else',
     volume: 'Volume',
     growth: 'Growth',
-    discovered: 'Discovered',
+    discovered: 'Exploding',
     trends: [
       {
         id: '1',
-        name: 'Liftlio Analytics',
-        category: 'Marketing Tech',
-        description: 'Video mention analytics platform'
+        name: 'YouTube Brand Mentions',
+        category: 'Video Analytics',
+        description: 'Track brand mentions across YouTube creators'
       },
       {
         id: '2',
-        name: 'Video Intelligence',
-        category: 'AI Technology',
-        description: 'AI for video content analysis'
+        name: 'AI Video Intelligence',
+        category: 'Artificial Intelligence',
+        description: 'AI-powered video content analysis at scale'
       },
       {
         id: '3',
-        name: 'Brand Monitoring AI',
-        category: 'Business Intelligence',
-        description: 'Automatic brand monitoring'
+        name: 'Influencer Lead Gen',
+        category: 'Marketing Automation',
+        description: 'Convert video mentions into qualified leads'
       },
       {
         id: '4',
-        name: 'Sentiment Analysis',
-        category: 'Data Analytics',
-        description: 'Real-time sentiment analysis'
+        name: 'Real-time Sentiment',
+        category: 'Brand Monitoring',
+        description: 'Monitor brand sentiment in video comments'
       },
       {
         id: '5',
-        name: 'Video Marketing ROI',
-        category: 'Marketing Metrics',
-        description: 'ROI metrics for videos'
+        name: 'Creator Analytics API',
+        category: 'Developer Tools',
+        description: 'API for accessing creator performance data'
       }
     ]
   },
@@ -63,37 +63,37 @@ const translations = {
     subtitleEnd: 'de todos',
     volume: 'Volume',
     growth: 'Crescimento',
-    discovered: 'Descoberto',
+    discovered: 'Explodindo',
     trends: [
       {
         id: '1',
-        name: 'Liftlio Analytics',
-        category: 'Marketing Tech',
-        description: 'Plataforma de análise de menções em vídeos'
+        name: 'Menções no YouTube',
+        category: 'Análise de Vídeo',
+        description: 'Rastreie menções da marca em criadores do YouTube'
       },
       {
         id: '2',
-        name: 'Video Intelligence',
-        category: 'Tecnologia IA',
-        description: 'IA para análise de conteúdo em vídeo'
+        name: 'IA Video Intelligence',
+        category: 'Inteligência Artificial',
+        description: 'Análise de conteúdo de vídeo com IA em escala'
       },
       {
         id: '3',
-        name: 'Brand Monitoring AI',
-        category: 'Business Intelligence',
-        description: 'Monitoramento automático de marca'
+        name: 'Lead Gen de Influencers',
+        category: 'Automação de Marketing',
+        description: 'Converta menções em vídeo em leads qualificados'
       },
       {
         id: '4',
-        name: 'Sentiment Analysis',
-        category: 'Análise de Dados',
-        description: 'Análise de sentimento em tempo real'
+        name: 'Sentimento em Tempo Real',
+        category: 'Monitoramento de Marca',
+        description: 'Monitore sentimento da marca em comentários'
       },
       {
         id: '5',
-        name: 'Video Marketing ROI',
-        category: 'Métricas de Marketing',
-        description: 'Métricas de ROI para vídeos'
+        name: 'API Analytics Criadores',
+        category: 'Ferramentas para Devs',
+        description: 'API para dados de performance de criadores'
       }
     ]
   }
@@ -101,43 +101,54 @@ const translations = {
 
 const baseTrendData = [
   {
-    volume: '165K',
+    volume: '1.6M',
     growth: '+9700%',
     growthPercentage: 9700,
-    data: [10, 15, 12, 25, 30, 45, 40, 55, 60, 75, 85, 95, 110, 125, 140, 165]
+    data: [10, 12, 15, 18, 22, 28, 35, 45, 58, 72, 88, 108, 135, 165, 198, 235]
   },
   {
-    volume: '235K',
-    growth: '+8400%',
-    growthPercentage: 8400,
-    data: [20, 22, 25, 30, 28, 35, 45, 60, 75, 90, 110, 130, 155, 180, 210, 235]
+    volume: '2.3M',
+    growth: '+12500%',
+    growthPercentage: 12500,
+    data: [15, 18, 22, 28, 35, 45, 58, 75, 95, 120, 150, 185, 225, 270, 315, 365]
   },
   {
-    volume: '89K',
+    volume: '895K',
     growth: '+5200%',
     growthPercentage: 5200,
-    data: [5, 8, 10, 12, 15, 20, 25, 30, 35, 42, 50, 58, 65, 73, 80, 89]
+    data: [25, 28, 32, 38, 45, 52, 58, 65, 72, 78, 85, 92, 98, 105, 112, 120]
   },
   {
-    volume: '342K',
-    growth: '+12000%',
-    growthPercentage: 12000,
-    data: [15, 20, 25, 35, 45, 60, 80, 100, 125, 150, 180, 220, 260, 290, 315, 342]
+    volume: '3.4M',
+    growth: '+8900%',
+    growthPercentage: 8900,
+    data: [30, 35, 42, 50, 60, 72, 85, 100, 118, 138, 162, 190, 222, 258, 298, 342]
   },
   {
-    volume: '127K',
+    volume: '1.2M',
     growth: '+6800%',
     growthPercentage: 6800,
-    data: [8, 10, 12, 15, 20, 25, 32, 40, 50, 62, 75, 88, 95, 105, 115, 127]
+    data: [20, 23, 27, 32, 38, 45, 54, 64, 75, 88, 102, 118, 135, 154, 175, 198]
   }
 ];
 
 const Container = styled.div`
   width: 100%;
-  padding: 60px 20px;
-  background: ${({ theme }) => theme.background || '#0a0a0a'};
+  padding: 80px 20px;
+  background: ${({ theme }) => theme.colors.bg.primary};
   overflow: hidden;
   position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(129, 140, 248, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+  }
 `;
 
 const Title = styled.h2`
@@ -158,7 +169,7 @@ const Title = styled.h2`
 const Subtitle = styled.p`
   text-align: center;
   font-size: 1.2rem;
-  color: ${({ theme }) => theme.textSecondary || '#666'};
+  color: ${({ theme }) => theme.colors.text.secondary};
   margin-bottom: 60px;
   
   span {
@@ -209,27 +220,36 @@ const pulse = keyframes`
 `;
 
 const TrendCard = styled(motion.div)<{ isActive?: boolean }>`
-  flex: 0 0 320px;
-  height: 380px;
-  background: ${({ theme }) => theme.cardBackground || '#1a1a1a'};
-  border-radius: 20px;
-  padding: 30px;
-  border: 1px solid ${({ theme }) => theme.borderColor || '#2a2a2a'};
+  flex: 0 0 340px;
+  height: 400px;
+  background: ${({ theme }) => 
+    theme.name === 'dark' 
+      ? `linear-gradient(135deg, ${theme.colors.bg.secondary} 0%, ${theme.colors.bg.tertiary} 100%)`
+      : `linear-gradient(135deg, ${theme.colors.bg.secondary} 0%, ${theme.colors.bg.tertiary} 100%)`
+  };
+  border-radius: 24px;
+  padding: 32px;
+  border: 1px solid ${({ theme }) => theme.colors.border.primary};
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
   
   ${({ isActive }) => isActive && css`
-    transform: scale(1.05);
+    transform: scale(1.03) translateY(-8px);
     border-color: #818cf8;
-    box-shadow: 0 0 40px rgba(129, 140, 248, 0.3);
+    box-shadow: 
+      0 20px 40px rgba(129, 140, 248, 0.2),
+      0 0 0 1px rgba(129, 140, 248, 0.3);
   `}
   
   &:hover {
-    transform: translateY(-5px);
+    transform: translateY(-8px) scale(1.02);
     border-color: #818cf8;
-    box-shadow: 0 10px 40px rgba(129, 140, 248, 0.2);
+    box-shadow: 
+      0 20px 40px rgba(129, 140, 248, 0.15),
+      0 0 0 1px rgba(129, 140, 248, 0.2);
   }
   
   &::before {
@@ -257,7 +277,7 @@ const CardHeader = styled.div`
 const TrendName = styled.h3`
   font-size: 1.5rem;
   font-weight: 700;
-  color: ${({ theme }) => theme.text || '#fff'};
+  color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: 8px;
 `;
 
@@ -281,20 +301,38 @@ const Metric = styled.div`
 
 const MetricLabel = styled.p`
   font-size: 0.8rem;
-  color: ${({ theme }) => theme.textSecondary || '#666'};
+  color: ${({ theme }) => theme.colors.text.secondary};
   margin-bottom: 4px;
 `;
 
 const MetricValue = styled.p<{ isGrowth?: boolean }>`
   font-size: 1.8rem;
   font-weight: 700;
-  color: ${({ isGrowth, theme }) => isGrowth ? '#10b981' : theme.text || '#fff'};
+  color: ${({ isGrowth, theme }) => isGrowth ? '#10b981' : theme.colors.text.primary};
+  
+  ${({ isGrowth }) => isGrowth && css`
+    position: relative;
+    
+    &::before {
+      content: '+';
+      position: absolute;
+      left: -12px;
+      font-size: 1.2rem;
+      color: #10b981;
+    }
+  `}
 `;
 
 const ChartContainer = styled.div`
   height: 150px;
   position: relative;
   margin-bottom: 20px;
+`;
+
+const TrendDescription = styled.p`
+  font-size: 0.9rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin-top: 10px;
 `;
 
 const SVGChart = styled.svg`
@@ -310,33 +348,44 @@ const drawLine = keyframes`
 
 const ChartPath = styled.path<{ delay?: number }>`
   fill: none;
-  stroke: #818cf8;
+  stroke: url(#lineGradient);
   stroke-width: 3;
   stroke-dasharray: 1000;
   stroke-dashoffset: 1000;
-  animation: ${drawLine} 2s ease-out forwards;
+  animation: ${drawLine} 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   animation-delay: ${({ delay }) => delay || 0}ms;
-  filter: drop-shadow(0 0 8px rgba(129, 140, 248, 0.5));
+  filter: drop-shadow(0 0 12px rgba(129, 140, 248, 0.6));
+  stroke-linecap: round;
+  stroke-linejoin: round;
 `;
 
 const ChartArea = styled.path`
-  fill: url(#gradient);
   opacity: 0.2;
 `;
 
 const DiscoveredTag = styled.div`
   position: absolute;
-  bottom: 20px;
-  right: 20px;
-  background: rgba(129, 140, 248, 0.2);
+  bottom: 24px;
+  right: 24px;
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.2) 0%, rgba(129, 140, 248, 0.3) 100%);
   color: #818cf8;
-  padding: 6px 12px;
-  border-radius: 20px;
+  padding: 8px 16px;
+  border-radius: 24px;
   font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  backdrop-filter: blur(8px);
   animation: ${pulse} 2s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  
+  &::before {
+    content: '🔥';
+    font-size: 0.9rem;
+  }
 `;
 
 const NavigationButton = styled.button<{ direction: 'left' | 'right' }>`
@@ -390,6 +439,7 @@ const TrendingTopicsCarousel: React.FC = () => {
   const { language } = useLanguage();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -498,6 +548,8 @@ const TrendingTopicsCarousel: React.FC = () => {
               key={trend.id}
               isActive={index === activeIndex}
               onClick={() => handleCardClick(index)}
+              onMouseEnter={() => setHoveredCard(trend.id)}
+              onMouseLeave={() => setHoveredCard(null)}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
@@ -521,19 +573,51 @@ const TrendingTopicsCarousel: React.FC = () => {
               <ChartContainer>
                 <SVGChart viewBox="0 0 260 150">
                   <defs>
-                    <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <linearGradient id={`gradient-${trend.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
                       <stop offset="0%" stopColor="#818cf8" stopOpacity="0.8" />
                       <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
                     </linearGradient>
+                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#6366f1" />
+                      <stop offset="50%" stopColor="#818cf8" />
+                      <stop offset="100%" stopColor="#a78bfa" />
+                    </linearGradient>
                   </defs>
-                  <ChartArea d={createAreaPath(trend.data)} />
+                  <ChartArea d={createAreaPath(trend.data)} style={{ fill: `url(#gradient-${trend.id})` }} />
                   <ChartPath d={createChartPath(trend.data)} delay={index * 100} />
+                  {/* Add dots for data points */}
+                  {trend.data.map((value, i) => {
+                    const width = 260;
+                    const height = 150;
+                    const padding = 10;
+                    const max = Math.max(...trend.data);
+                    const min = Math.min(...trend.data);
+                    const xStep = (width - 2 * padding) / (trend.data.length - 1);
+                    const yScale = (height - 2 * padding) / (max - min);
+                    const x = padding + i * xStep;
+                    const y = height - padding - (value - min) * yScale;
+                    
+                    return i === trend.data.length - 1 ? (
+                      <circle
+                        key={i}
+                        cx={x}
+                        cy={y}
+                        r="4"
+                        fill="#818cf8"
+                        stroke="#fff"
+                        strokeWidth="2"
+                        style={{
+                          filter: 'drop-shadow(0 0 8px rgba(129, 140, 248, 0.8))'
+                        }}
+                      />
+                    ) : null;
+                  })}
                 </SVGChart>
               </ChartContainer>
               
-              <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '10px' }}>
+              <TrendDescription>
                 {trend.description}
-              </p>
+              </TrendDescription>
               
               <DiscoveredTag>{t.discovered}</DiscoveredTag>
             </TrendCard>
