@@ -8,6 +8,17 @@ import { HiTrendingUp, HiLightningBolt } from 'react-icons/hi';
 import { MdAutoGraph, MdTimeline } from 'react-icons/md';
 import { renderIcon } from '../utils/IconHelper';
 
+interface CommentData {
+  comment: {
+    pt: string;
+    en: string;
+  };
+  justification: {
+    pt: string;
+    en: string;
+  };
+}
+
 interface TrendTopic {
   id: string;
   name: string;
@@ -35,8 +46,8 @@ interface TrendTopic {
   competitorActivity: 'low' | 'medium' | 'high';
   monthlyPosts: number;
   sampleComments?: {
-    youtube: string | { pt: string; en: string };
-    reddit: string | { pt: string; en: string };
+    youtube: CommentData;
+    reddit: CommentData;
   };
 }
 
@@ -69,12 +80,24 @@ const mockTopics: TrendTopic[] = [
     monthlyPosts: 150,
     sampleComments: {
       youtube: {
-        pt: "Excelente explicação sobre IA no marketing! No minuto 3:42 você mencionou automação de conteúdo - já testaram ferramentas específicas para isso? Na nossa experiência com clientes, descobrimos que combinar IA com estratégia humana traz resultados incríveis. Adoraria trocar ideias sobre isso!",
-        en: "Excellent explanation about AI in marketing! At 3:42 you mentioned content automation - have you tested specific tools for this? In our experience with clients, we've found that combining AI with human strategy brings incredible results. Would love to exchange ideas on this!"
+        comment: {
+          pt: "3:42 me deu um flashback terrível kkkk ano passado eu tava EXATAMENTE nessa! O que salvou foi descobrir o [PRODUTO/SERVIÇO] - ele cria templates dinâmicos que se adaptam ao contexto automaticamente. Mudou meu workflow completamente, hoje levo 20% do tempo que levava antes. Ainda tô aprendendo muita coisa, mas essa ferramenta foi divisor de águas real.",
+          en: "3:42 gave me terrible flashbacks lol last year I was EXACTLY there! What saved me was discovering [PRODUCT/SERVICE] - it creates dynamic templates that adapt to context automatically. Changed my workflow completely, now I take 20% of the time I used to. Still learning a lot, but this tool was a real game changer."
+        },
+        justification: {
+          pt: "Menção natural do produto no final após construir credibilidade, conecta com momento específico do vídeo (3:42), compartilha transformação pessoal (20% do tempo), produto aparece como solução descoberta, não vendida",
+          en: "Natural product mention at the end after building credibility, connects with specific video moment (3:42), shares personal transformation (20% of time), product appears as discovered solution, not sold"
+        }
       },
       reddit: {
-        pt: "Concordo totalmente com seu ponto sobre eficiência da IA. Trabalhamos com automação de marketing e posso confirmar que a chave está em manter o toque humano. Recentemente ajudamos uma startup a aumentar o engajamento em 300% usando essa abordagem. Alguém mais teve experiências similares?",
-        en: "Totally agree with your point about AI efficiency. We work with marketing automation and I can confirm that the key is maintaining the human touch. We recently helped a startup increase engagement by 300% using this approach. Has anyone else had similar experiences?"
+        comment: {
+          pt: "Isso é real demais! Passei por algo parecido e quase desisti da automação completamente. O pulo do gato foi quando comecei a usar o [PRODUTO/SERVIÇO] - ele automatiza a parte chata mas mantém meu toque pessoal. Tipo, formatação, SEO, estrutura, tudo automático, mas o conteúdo e a voz continuam 100% minhas. Funciona especialmente bem pra conteúdo educacional. Em 3 meses já criei mais de 200 posts mantendo a qualidade. Alguém mais usa ferramentas assim?",
+          en: "This is so real! Went through something similar and almost gave up on automation completely. The game changer was when I started using [PRODUCT/SERVICE] - it automates the boring stuff but keeps my personal touch. Like, formatting, SEO, structure, all automatic, but the content and voice stay 100% mine. Works especially well for educational content. In 3 months I've created over 200 posts maintaining quality. Anyone else use tools like this?"
+        },
+        justification: {
+          pt: "Introduz produto como solução para problema específico do OP, compartilha benefício concreto (200 posts em 3 meses), posiciona como ferramenta que preserva autenticidade, não como substituto",
+          en: "Introduces product as solution to OP's specific problem, shares concrete benefit (200 posts in 3 months), positions as tool that preserves authenticity, not replacement"
+        }
       }
     }
   },
@@ -106,12 +129,24 @@ const mockTopics: TrendTopic[] = [
     monthlyPosts: 120,
     sampleComments: {
       youtube: {
-        pt: "Tutorial incrível! A parte sobre integração com APIs (minuto 7:20) foi muito útil. Desenvolvemos soluções no-code para várias startups e essa abordagem que você mostrou é game-changer. Vocês já consideraram criar um template específico para SaaS? Temos alguns cases interessantes nessa área.",
-        en: "Amazing tutorial! The part about API integration (minute 7:20) was very helpful. We develop no-code solutions for various startups and the approach you showed is a game-changer. Have you considered creating a specific template for SaaS? We have some interesting cases in this area."
+        comment: {
+          pt: "Integração com pagamento sempre foi meu pesadelo até descobrir o [PRODUTO/SERVIÇO]! No 7:20 quando você falou da validação, lembrei que ele já vem com isso integrado - tipo um 'porteiro' pros dados. Reduzi erros em 95% e configurei tudo em 15 minutos. Salvou meu marketplace real! Vocês validam em múltiplas camadas também?",
+          en: "Payment integration was always my nightmare until I discovered [PRODUCT/SERVICE]! At 7:20 when you mentioned validation, reminded me it comes with that built-in - like a 'bouncer' for data. Reduced errors by 95% and set everything up in 15 minutes. Really saved my marketplace! Do you validate in multiple layers too?"
+        },
+        justification: {
+          pt: "Produto apresentado como descoberta após frustração, benefício específico e mensurável (95% menos erros), tempo de implementação (15 min), caso real (salvou marketplace), mantém tom técnico da conversa",
+          en: "Product presented as discovery after frustration, specific measurable benefit (95% fewer errors), implementation time (15 min), real case (saved marketplace), maintains technical conversation tone"
+        }
       },
       reddit: {
-        pt: "Ótima lista de ferramentas no-code! Como consultoria especializada, posso adicionar que o Retool também é excelente para dashboards internos. Implementamos para um cliente recente e economizou 3 meses de desenvolvimento. Alguém aqui já combinou Bubble + Retool?",
-        en: "Great list of no-code tools! As a specialized consultancy, I can add that Retool is also excellent for internal dashboards. We implemented it for a recent client and it saved 3 months of development. Has anyone here combined Bubble + Retool?"
+        comment: {
+          pt: "Retool + Bubble + Supabase numa interface só? [PRODUTO/SERVIÇO] faz exatamente isso! Montei CRM completo com dashboards real-time em 3 dias (normalmente 3 semanas easy). Cliente edita sozinho sem quebrar nada = menos suporte pra mim. 200 horas economizadas só esse ano. Game changer total pra quem trabalha com no-code.",
+          en: "Retool + Bubble + Supabase in one interface? [PRODUCT/SERVICE] does exactly that! Built complete CRM with real-time dashboards in 3 days (normally 3 weeks easy). Client self-edits without breaking = less support for me. 200 hours saved this year alone. Total game changer for no-code work."
+        },
+        justification: {
+          pt: "Produto como evolução natural (não substitui, melhora), caso específico impressionante (3 dias vs 3 semanas), benefício único (cliente edita sozinho), métrica anual (200 horas economizadas), call-to-action entusiasmado",
+          en: "Product as natural evolution (doesn't replace, improves), impressive specific case (3 days vs 3 weeks), unique benefit (client self-edits), annual metric (200 hours saved), enthusiastic call-to-action"
+        }
       }
     }
   },
@@ -143,12 +178,24 @@ const mockTopics: TrendTopic[] = [
     monthlyPosts: 90,
     sampleComments: {
       youtube: {
-        pt: "Estratégia muito boa! No ponto sobre qualificação de leads (5:15), vocês usam alguma ferramenta específica? Na nossa agência de growth, desenvolvemos um framework próprio que tem dado ótimos resultados. Seria legal trocar experiências sobre isso!",
-        en: "Great strategy! On the point about lead qualification (5:15), do you use any specific tools? At our growth agency, we developed our own framework that has been giving great results. Would be cool to exchange experiences on this!"
+        comment: {
+          pt: "Rapaz, no 5:15 você desbloqueou algo na minha mente! Sempre olhei demografia e ficava frustrado com conversões baixas. Mudei pra comportamento e BOOM - conversões triplicaram! Agora uso o [PRODUTO/SERVIÇO] que rastreia micro-ações automaticamente (tipo: baixou eBook + visitou preço 3x + ficou 5min na FAQ = lead QUENTE). Ele me avisa em tempo real quando alguém tá pronto pra comprar. Minha taxa de fechamento foi de 2% pra 18%! Vocês rastreiam quantos pontos de comportamento?",
+          en: "Holy smokes, at 5:15 you unlocked something in my mind! Always looked at demographics and got frustrated with low conversions. Switched to behavior and BOOM - conversions tripled! Now I use [PRODUCT/SERVICE] that tracks micro-actions automatically (like: downloaded eBook + visited pricing 3x + spent 5min on FAQ = HOT lead). It alerts me real-time when someone's ready to buy. My close rate went from 2% to 18%! How many behavior points do you track?"
+        },
+        justification: {
+          pt: "Produto introduzido após validar insight do vídeo, exemplo específico de como funciona (micro-ações), benefício dramático e crível (2% → 18%), funcionalidade única (alertas em tempo real), pergunta técnica mantém conversa",
+          en: "Product introduced after validating video insight, specific example of how it works (micro-actions), dramatic but believable benefit (2% → 18%), unique feature (real-time alerts), technical question maintains conversation"
+        }
       },
       reddit: {
-        pt: "Testei a técnica de cold email que você sugeriu e a taxa de resposta aumentou 3x! Como agência B2B, posso confirmar que personalização em escala é o segredo. Desenvolvemos um sistema que automatiza isso mantendo a autenticidade. Alguém quer saber mais detalhes?",
-        en: "I tested the cold email technique you suggested and the response rate increased 3x! As a B2B agency, I can confirm that personalization at scale is the secret. We developed a system that automates this while maintaining authenticity. Anyone want more details?"
+        comment: {
+          pt: "47% de taxa de resposta vendendo B2B. Como? [PRODUTO/SERVIÇO] monitora sinais de compra em tempo real - mudanças LinkedIn, rodadas de investimento, contratações, tudo. Me avisa no momento EXATO com contexto: 'Empresa X contratou 5 devs + anunciou expansão' = falo sobre escalar processos. Antes era 3% no spray and pray. Agora é quase trapaça 😅",
+          en: "47% response rate selling B2B. How? [PRODUCT/SERVICE] monitors buying signals real-time - LinkedIn changes, funding rounds, hiring, everything. Alerts me at the EXACT moment with context: 'Company X hired 5 devs + announced expansion' = I talk about scaling processes. Used to be 3% with spray and pray. Now it's almost cheating 😅"
+        },
+        justification: {
+          pt: "Produto como solução para problema universal (timing), funcionalidade específica e poderosa (monitora sinais), exemplo real e contextual, métrica impressionante mas realista (3% → 47%), humor sobre eficiência",
+          en: "Product as solution to universal problem (timing), specific powerful feature (monitors signals), real contextual example, impressive but realistic metric (3% → 47%), humor about efficiency"
+        }
       }
     }
   },
@@ -180,12 +227,24 @@ const mockTopics: TrendTopic[] = [
     monthlyPosts: 60,
     sampleComments: {
       youtube: {
-        pt: "Análise perfeita sobre CAC vs LTV! Uma dúvida: como vocês calculam o CAC quando têm múltiplos canais de aquisição? Ajudamos várias SaaS com essa questão e criamos uma metodologia específica para isso. Posso compartilhar alguns insights se houver interesse!",
-        en: "Perfect analysis on CAC vs LTV! A question: how do you calculate CAC when you have multiple acquisition channels? We help several SaaS with this issue and created a specific methodology for it. I can share some insights if there's interest!"
+        comment: {
+          pt: "Nossa, 8:45 foi meu momento eureka também! 🤯 Gastava HORAS em planilhas tentando calcular CAC/LTV até achar o [PRODUTO/SERVIÇO]. Ele separa automaticamente por canal, pondera por volume E ainda projeta LTV baseado em cohorts. O mais louco: descobri que meu canal mais barato (email) tinha o PIOR LTV! Nunca teria visto isso nas minhas planilhas manuais. Agora tomo decisões baseadas em dados reais, não em achismo. CAC geral caiu 40% só realocando budget. Vocês calculam LTV por cohort também?",
+          en: "Seriously, 8:45 was my eureka moment too! 🤯 Spent HOURS on spreadsheets trying to calculate CAC/LTV until I found [PRODUCT/SERVICE]. It automatically separates by channel, weights by volume AND projects LTV based on cohorts. The craziest part: discovered my cheapest channel (email) had the WORST LTV! Would never have seen this in my manual spreadsheets. Now I make decisions based on real data, not guesswork. Overall CAC dropped 40% just by reallocating budget. Do you also calculate LTV by cohort?"
+        },
+        justification: {
+          pt: "Produto resolve problema específico mencionado no vídeo, descoberta contra-intuitiva (canal barato = LTV ruim), resultado tangível (CAC -40%), transição de planilhas manuais para automação, pergunta técnica relevante",
+          en: "Product solves specific problem mentioned in video, counter-intuitive discovery (cheap channel = bad LTV), tangible result (CAC -40%), transition from manual spreadsheets to automation, relevant technical question"
+        }
       },
       reddit: {
-        pt: "Para quem está começando com métricas SaaS, como consultor especializado, recomendo focar primeiro em MRR e Churn. Temos um dashboard template que monitora essas métricas em tempo real - já ajudou mais de 50 startups. DM aberto para quem quiser conversar sobre isso!",
-        en: "For those starting with SaaS metrics, as a specialized consultant, I recommend focusing first on MRR and Churn. We have a dashboard template that monitors these metrics in real-time - it has already helped over 50 startups. DM open for anyone who wants to talk about this!"
+        comment: {
+          pt: "73% dos usuários desistiam na tela de setup e eu nem sabia! [PRODUTO/SERVIÇO] mostrou isso com análise de cohort. Churn de 40% no mês 2 virou 8% depois que refiz o onboarding baseado nos dados. Melhor parte: previsão de churn em tempo real. Semana passada salvei 12 clientes antes de cancelarem. Análise preditiva é basicamente ter bola de cristal 🔮",
+          en: "73% of users quit on setup screen and I had no idea! [PRODUCT/SERVICE] showed this with cohort analysis. 40% month 2 churn became 8% after I rebuilt onboarding based on data. Best part: real-time churn prediction. Last week saved 12 customers before they canceled. Predictive analysis is basically having a crystal ball 🔮"
+        },
+        justification: {
+          pt: "Produto como salvador do negócio, insight específico impossível de ver manualmente (73% travavam em tela específica), ação + resultado (40% → 8%), feature matadora (previsão de churn), caso recente comprovando eficácia",
+          en: "Product as business savior, specific insight impossible to see manually (73% stuck on specific screen), action + result (40% → 8%), killer feature (churn prediction), recent case proving effectiveness"
+        }
       }
     }
   }
@@ -588,15 +647,39 @@ const CommentExample = styled.div<{ platform: 'youtube' | 'reddit' }>`
     line-height: 1.6;
     margin: 0;
     
-    /* Destacar menções naturais da empresa */
+    /* Destacar [PRODUTO/SERVIÇO] */
     strong {
       color: ${props => props.theme.name === 'dark' ? '#667eea' : '#5a67d8'};
-      font-weight: 600;
+      font-weight: 700;
       background: ${props => props.theme.name === 'dark' 
-        ? 'rgba(102, 126, 234, 0.1)' 
-        : 'rgba(102, 126, 234, 0.05)'};
-      padding: 0 0.25rem;
-      border-radius: 4px;
+        ? 'rgba(102, 126, 234, 0.2)' 
+        : 'rgba(102, 126, 234, 0.15)'};
+      padding: 0.125rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid ${props => props.theme.name === 'dark' 
+        ? 'rgba(102, 126, 234, 0.4)' 
+        : 'rgba(102, 126, 234, 0.3)'};
+      position: relative;
+      display: inline-block;
+      animation: ${pulseGlow} 3s ease-in-out infinite;
+      
+      &:hover::after {
+        content: 'Aqui entra o nome do seu produto/serviço';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${props => props.theme.name === 'dark' ? '#1a1a1a' : '#333'};
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
     }
   }
 `;
@@ -1210,28 +1293,13 @@ const MarketTrends: React.FC = () => {
 
   // Função para destacar menções da empresa nos comentários
   const highlightCompanyMentions = (text: string) => {
-    const highlights = [
-      'nossa experiência com clientes',
-      'Na nossa agência',
-      'nossa equipe',
-      'Trabalhamos com',
-      'Desenvolvemos',
-      'consultoria especializada',
-      'Como consultoria',
-      'Como agência',
-      'Ajudamos',
-      'Implementamos',
-      'nosso',
-      'nossa',
-      'consultoria',
-      'agência'
-    ];
-    
+    // Apenas destacar [PRODUTO/SERVIÇO]
     let highlightedText = text;
-    highlights.forEach(term => {
-      const regex = new RegExp(`(${term})`, 'gi');
-      highlightedText = highlightedText.replace(regex, '<strong>$1</strong>');
-    });
+    
+    highlightedText = highlightedText.replace(
+      /\[PRODUTO\/SERVIÇO\]/g,
+      '<strong>[PRODUTO/SERVIÇO]</strong>'
+    );
     
     return highlightedText;
   };
@@ -1423,25 +1491,73 @@ const MarketTrends: React.FC = () => {
                   }}>
                     {renderIcon(FaEye)} {t.commentNote}
                   </div>
+                  <div style={{
+                    fontSize: '0.7rem',
+                    color: theme.name === 'dark' ? '#4ecdc4' : '#2b7a78',
+                    marginBottom: '1rem',
+                    textAlign: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    <div style={{
+                      width: '20px',
+                      height: '3px',
+                      background: theme.name === 'dark' ? '#4ecdc4' : '#2b7a78',
+                      borderRadius: '2px'
+                    }}></div>
+                    {lang === 'pt' 
+                      ? 'Palavras destacadas = oportunidades para menções naturais' 
+                      : 'Highlighted words = opportunities for natural mentions'}
+                    <div style={{
+                      width: '20px',
+                      height: '3px',
+                      background: theme.name === 'dark' ? '#4ecdc4' : '#2b7a78',
+                      borderRadius: '2px'
+                    }}></div>
+                  </div>
                   {selectedTopic.sampleComments && (
                     <>
                       <CommentExample platform="youtube">
                         <p dangerouslySetInnerHTML={{ 
                           __html: highlightCompanyMentions(
-                            typeof selectedTopic.sampleComments.youtube === 'string' 
-                              ? selectedTopic.sampleComments.youtube 
-                              : (selectedTopic.sampleComments.youtube as {pt: string, en: string})[lang]
+                            selectedTopic.sampleComments.youtube.comment[lang]
                           ) 
                         }} />
+                        <div style={{
+                          marginTop: '0.75rem',
+                          padding: '0.75rem',
+                          background: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+                          borderRadius: '8px',
+                          fontSize: '0.75rem',
+                          color: theme.name === 'dark' ? '#888' : '#666',
+                          borderLeft: '3px solid #FF0000'
+                        }}>
+                          <strong style={{color: theme.name === 'dark' ? '#aaa' : '#444'}}>
+                            {lang === 'pt' ? 'Justificativa:' : 'Justification:'}
+                          </strong> {selectedTopic.sampleComments.youtube.justification[lang]}
+                        </div>
                       </CommentExample>
                       <CommentExample platform="reddit">
                         <p dangerouslySetInnerHTML={{ 
                           __html: highlightCompanyMentions(
-                            typeof selectedTopic.sampleComments.reddit === 'string' 
-                              ? selectedTopic.sampleComments.reddit 
-                              : (selectedTopic.sampleComments.reddit as {pt: string, en: string})[lang]
+                            selectedTopic.sampleComments.reddit.comment[lang]
                           ) 
                         }} />
+                        <div style={{
+                          marginTop: '0.75rem',
+                          padding: '0.75rem',
+                          background: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+                          borderRadius: '8px',
+                          fontSize: '0.75rem',
+                          color: theme.name === 'dark' ? '#888' : '#666',
+                          borderLeft: '3px solid #FF4500'
+                        }}>
+                          <strong style={{color: theme.name === 'dark' ? '#aaa' : '#444'}}>
+                            {lang === 'pt' ? 'Justificativa:' : 'Justification:'}
+                          </strong> {selectedTopic.sampleComments.reddit.justification[lang]}
+                        </div>
                       </CommentExample>
                     </>
                   )}
