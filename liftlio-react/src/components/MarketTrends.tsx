@@ -649,36 +649,41 @@ const CommentExample = styled.div<{ platform: 'youtube' | 'reddit' }>`
     
     /* Destacar [PRODUTO/SERVIÇO] */
     strong {
-      color: ${props => props.theme.name === 'dark' ? '#667eea' : '#5a67d8'};
-      font-weight: 700;
+      color: ${props => props.theme.name === 'dark' ? '#8b92f8' : '#6366f1'};
+      font-weight: 600;
       background: ${props => props.theme.name === 'dark' 
-        ? 'rgba(102, 126, 234, 0.2)' 
-        : 'rgba(102, 126, 234, 0.15)'};
-      padding: 0.125rem 0.5rem;
-      border-radius: 6px;
-      border: 1px solid ${props => props.theme.name === 'dark' 
-        ? 'rgba(102, 126, 234, 0.4)' 
-        : 'rgba(102, 126, 234, 0.3)'};
+        ? 'rgba(102, 126, 234, 0.08)' 
+        : 'rgba(99, 102, 241, 0.06)'};
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
       position: relative;
       display: inline-block;
-      animation: ${pulseGlow} 3s ease-in-out infinite;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background: ${props => props.theme.name === 'dark' 
+          ? 'rgba(102, 126, 234, 0.15)' 
+          : 'rgba(99, 102, 241, 0.1)'};
+      }
       
       &:hover::after {
-        content: 'Aqui entra o nome do seu produto/serviço';
+        content: ${props => props.theme.name === 'dark' 
+          ? "'Aqui entra o nome do seu produto/serviço'" 
+          : "'Your product/service name goes here'"};
         position: absolute;
         bottom: 100%;
         left: 50%;
         transform: translateX(-50%);
         background: ${props => props.theme.name === 'dark' ? '#1a1a1a' : '#333'};
         color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
         white-space: nowrap;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
+        margin-bottom: 0.3rem;
+        font-weight: 400;
         z-index: 1000;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       }
     }
   }
@@ -1293,12 +1298,17 @@ const MarketTrends: React.FC = () => {
 
   // Função para destacar menções da empresa nos comentários
   const highlightCompanyMentions = (text: string) => {
-    // Apenas destacar [PRODUTO/SERVIÇO]
+    // Destacar [PRODUTO/SERVIÇO] e [PRODUCT/SERVICE]
     let highlightedText = text;
     
     highlightedText = highlightedText.replace(
       /\[PRODUTO\/SERVIÇO\]/g,
       '<strong>[PRODUTO/SERVIÇO]</strong>'
+    );
+    
+    highlightedText = highlightedText.replace(
+      /\[PRODUCT\/SERVICE\]/g,
+      '<strong>[PRODUCT/SERVICE]</strong>'
     );
     
     return highlightedText;
