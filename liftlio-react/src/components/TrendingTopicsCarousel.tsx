@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
+import { useTrendingTopics } from '../hooks/useTrendingTopics';
+import { TrendingTopicModal } from './TrendingTopicModal';
 
 interface TrendData {
   id: string;
@@ -12,14 +14,19 @@ interface TrendData {
   data: number[];
   category?: string;
   description?: string;
+  keywords?: string[];
+  geographic_distribution?: Record<string, number>;
+  age_demographics?: Record<string, number>;
+  sentiment?: string;
+  status?: string;
 }
 
 const translations = {
   en: {
     title: 'Discover Trending Topics',
-    subtitle: 'Find trends',
-    subtitleHighlight: '12+ months before',
-    subtitleEnd: 'everyone else',
+    subtitle: 'Real-time trends from the',
+    subtitleHighlight: 'last 30 days',
+    subtitleEnd: 'on YouTube',
     volume: 'Volume',
     growth: 'Growth',
     discovered: 'Exploding',
@@ -58,9 +65,9 @@ const translations = {
   },
   pt: {
     title: 'Descubra Tópicos em Tendência',
-    subtitle: 'Encontre tendências',
-    subtitleHighlight: '12+ meses antes',
-    subtitleEnd: 'de todos',
+    subtitle: 'Tendências em tempo real dos',
+    subtitleHighlight: 'últimos 30 dias',
+    subtitleEnd: 'no YouTube',
     volume: 'Volume',
     growth: 'Crescimento',
     discovered: 'Explodindo',
@@ -132,6 +139,15 @@ const baseTrendData = [
   }
 ];
 
+const spin = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
 const Container = styled.div`
   width: 100%;
   padding: 80px 20px;
@@ -148,6 +164,10 @@ const Container = styled.div`
     bottom: 0;
     background: radial-gradient(circle at 50% 0%, rgba(129, 140, 248, 0.08) 0%, transparent 50%);
     pointer-events: none;
+  }
+
+  .spinning {
+    animation: ${spin} 1s linear infinite;
   }
 `;
 
@@ -440,19 +460,60 @@ const TrendingTopicsCarousel: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
+  const { trends, loading, error, lastUpdated, refresh } = useTrendingTopics();
   const t = translations[language as keyof typeof translations];
   
-  // Combine translations with base data
-  const trendingData: TrendData[] = t.trends.map((trend, index) => ({
-    ...trend,
-    ...baseTrendData[index]
+  // Map category names for consistent display
+  const categoryMap: Record<string, string> = {
+    'TECHNOLOGY': language === 'pt' ? 'Tecnologia' : 'Technology',
+    'GAMING': language === 'pt' ? 'Jogos' : 'Gaming',
+    'MUSIC': language === 'pt' ? 'Música' : 'Music',
+    'LIFESTYLE': language === 'pt' ? 'Estilo de Vida' : 'Lifestyle',
+    'ENTERTAINMENT': language === 'pt' ? 'Entretenimento' : 'Entertainment',
+    'EDUCATION': language === 'pt' ? 'Educação' : 'Education',
+    'BUSINESS': language === 'pt' ? 'Negócios' : 'Business',
+    'EMERGING TRENDS': language === 'pt' ? 'Tendências Emergentes' : 'Emerging Trends'
+  };
+  
+  // Map sentiment values for translation
+  const sentimentMap: Record<string, string> = {
+    'Muito Positivo': language === 'pt' ? 'Muito Positivo' : 'Very Positive',
+    'Positivo': language === 'pt' ? 'Positivo' : 'Positive',
+    'Neutro': language === 'pt' ? 'Neutro' : 'Neutral',
+    'Negativo': language === 'pt' ? 'Negativo' : 'Negative',
+    'Muito Negativo': language === 'pt' ? 'Muito Negativo' : 'Very Negative',
+    // English to Portuguese (in case API returns in English)
+    'Very Positive': language === 'pt' ? 'Muito Positivo' : 'Very Positive',
+    'Positive': language === 'pt' ? 'Positivo' : 'Positive',
+    'Neutral': language === 'pt' ? 'Neutro' : 'Neutral',
+    'Negative': language === 'pt' ? 'Negativo' : 'Negative',
+    'Very Negative': language === 'pt' ? 'Muito Negativo' : 'Very Negative'
+  };
+
+  // Transform API data to component format
+  const trendingData: TrendData[] = trends.slice(0, 10).map((trend, index) => ({
+    id: `trend-${index}`,
+    name: trend.topic,
+    volume: trend.volume,
+    growth: trend.growth,
+    growthPercentage: parseInt(trend.growth.replace(/[^0-9]/g, '')),
+    data: baseTrendData[index % baseTrendData.length].data,
+    category: categoryMap[trend.category] || trend.category,
+    description: trend.keywords.slice(0, 3).join(', '),
+    keywords: trend.keywords,
+    geographic_distribution: trend.geographic_distribution,
+    age_demographics: trend.age_demographics,
+    sentiment: sentimentMap[trend.sentiment] || trend.sentiment,
+    status: trend.status
   }));
 
   useEffect(() => {
-    if (isAutoPlaying) {
+    if (isAutoPlaying && !isModalOpen) {
       intervalRef.current = setInterval(() => {
         setActiveIndex((prev) => (prev + 1) % trendingData.length);
       }, 5000);
@@ -463,7 +524,7 @@ const TrendingTopicsCarousel: React.FC = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isAutoPlaying, trendingData.length]);
+  }, [isAutoPlaying, isModalOpen, trendingData.length]);
 
   // Auto-scroll effect when activeIndex changes
   useEffect(() => {
@@ -528,14 +589,71 @@ const TrendingTopicsCarousel: React.FC = () => {
     return `${chartPath} L ${width - padding},${height - padding} L ${padding},${height - padding} Z`;
   };
 
+  if (loading && trendingData.length === 0) {
+    return (
+      <Container>
+        <Title>{t.title}</Title>
+        <Subtitle>
+          {t.subtitle} <span>{t.subtitleHighlight}</span> {t.subtitleEnd}
+        </Subtitle>
+        <CarouselWrapper>
+          <div style={{ textAlign: 'center', color: '#818cf8' }}>
+            <div style={{ fontSize: '32px', marginBottom: '16px' }}>⏳</div>
+            <p>{language === 'pt' ? 'Carregando tendências...' : 'Loading trends...'}</p>
+          </div>
+        </CarouselWrapper>
+      </Container>
+    );
+  }
+
+  if (error && trendingData.length === 0) {
+    return (
+      <Container>
+        <Title>{t.title}</Title>
+        <Subtitle>
+          {t.subtitle} <span>{t.subtitleHighlight}</span> {t.subtitleEnd}
+        </Subtitle>
+        <CarouselWrapper>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ color: '#ef4444', marginBottom: '16px' }}>
+              {language === 'pt' ? 'Erro ao carregar tendências' : 'Error loading trends'}
+            </p>
+            <button
+              onClick={refresh}
+              style={{
+                padding: '8px 16px',
+                background: '#818cf8',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              {language === 'pt' ? 'Tentar novamente' : 'Try again'}
+            </button>
+          </div>
+        </CarouselWrapper>
+      </Container>
+    );
+  }
+
   return (
     <Container>
       <Title>{t.title}</Title>
       <Subtitle>
         {t.subtitle} <span>{t.subtitleHighlight}</span> {t.subtitleEnd}
+        {lastUpdated && (
+          <span style={{ fontSize: '0.8rem', marginLeft: '16px', opacity: 0.7 }}>
+            {language === 'pt' ? 'Atualizado: ' : 'Updated: '}
+            {lastUpdated.toLocaleTimeString()}
+          </span>
+        )}
       </Subtitle>
       
-      <CarouselWrapper>
+      <CarouselWrapper
+        onMouseEnter={() => setIsAutoPlaying(false)}
+        onMouseLeave={() => setIsAutoPlaying(true)}
+      >
         <NavigationButton direction="left" onClick={() => handleNavigation('left')}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -547,7 +665,12 @@ const TrendingTopicsCarousel: React.FC = () => {
             <TrendCard
               key={trend.id}
               isActive={index === activeIndex}
-              onClick={() => handleCardClick(index)}
+              onClick={() => {
+                console.log('Card clicked, trend:', trend);
+                handleCardClick(index);
+                setSelectedTopic(trend);
+                setIsModalOpen(true);
+              }}
               onMouseEnter={() => setHoveredCard(trend.id)}
               onMouseLeave={() => setHoveredCard(null)}
               initial={{ opacity: 0, y: 20 }}
@@ -640,6 +763,17 @@ const TrendingTopicsCarousel: React.FC = () => {
           ))}
         </ProgressIndicator>
       </CarouselWrapper>
+      
+      {selectedTopic && (
+        <TrendingTopicModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedTopic(null);
+          }}
+          topic={selectedTopic}
+        />
+      )}
     </Container>
   );
 };
