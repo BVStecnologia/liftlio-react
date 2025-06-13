@@ -484,19 +484,61 @@ const DecliningTopicsCarousel: React.FC = () => {
     'LIFESTYLE': language === 'pt' ? 'Estilo de Vida' : 'Lifestyle'
   };
   
-  // Generate declining data pattern (opposite of growth)
-  const generateDecliningData = (growthPercentage: number): number[] => {
+  // Memoize chart data to prevent regeneration on every render
+  const chartDataCache = useRef<Map<string, number[]>>(new Map());
+  
+  // Generate declining data pattern with realistic oscillations
+  const generateDecliningData = (trendId: string, growthPercentage: number): number[] => {
+    // Return cached data if it exists
+    if (chartDataCache.current.has(trendId)) {
+      return chartDataCache.current.get(trendId)!;
+    }
+    
     const baseValue = 200;
     const endValue = baseValue * (1 + growthPercentage / 100); // negative growth
     const steps = 16;
     const data: number[] = [];
     
+    // Calculate decline characteristics
+    const declineMagnitude = Math.abs(growthPercentage);
+    const declineRate = declineMagnitude / 100;
+    
+    // Use a seeded random for consistency
+    const seed = trendId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const seededRandom = (i: number) => {
+      const x = Math.sin(seed + i) * 10000;
+      return x - Math.floor(x);
+    };
+    
     for (let i = 0; i < steps; i++) {
       const progress = i / (steps - 1);
-      const value = baseValue + (endValue - baseValue) * progress;
+      
+      // Create more realistic decline curve
+      let value: number;
+      
+      if (declineMagnitude > 80) {
+        // Steep decline - sharp drop at beginning, then stabilizes
+        const curve = Math.pow(progress, 0.4);
+        value = baseValue + (endValue - baseValue) * curve;
+      } else if (declineMagnitude > 50) {
+        // Moderate decline - steady decrease
+        value = baseValue + (endValue - baseValue) * progress;
+      } else {
+        // Gentle decline - slow start, accelerates later
+        const curve = Math.pow(progress, 1.5);
+        value = baseValue + (endValue - baseValue) * curve;
+      }
+      
+      // Add small consistent variations (not random each render)
+      const variation = Math.sin(i * 1.5 + seed * 0.1) * (5 + declineRate * 10);
+      const microVariation = seededRandom(i) * 3;
+      
+      value += variation + microVariation;
       data.push(Math.max(20, value)); // Ensure minimum value
     }
     
+    // Cache the generated data
+    chartDataCache.current.set(trendId, data);
     return data;
   };
   
@@ -507,7 +549,7 @@ const DecliningTopicsCarousel: React.FC = () => {
     volume: formatVolume(trend.volume),
     decline: trend.growth + '%',
     declinePercentage: parseFloat(trend.growth),
-    data: generateDecliningData(parseFloat(trend.growth)),
+    data: generateDecliningData(`trend-${trend.id}`, parseFloat(trend.growth)),
     category: categoryMap[trend.category] || trend.category,
     description: trend.insights.length > 0 
       ? trend.insights[0] 

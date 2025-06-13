@@ -107,28 +107,6 @@ const translations = {
         "Each comment is a permanent salesperson"
       ]
     },
-    painPoints: {
-      title: "Stop Burning Money on",
-      titleHighlight: "Paid Ads",
-      subtitle: "Every day you wait, your competitors are building permanent organic traffic while you're renting temporary clicks",
-      items: [
-        {
-          icon: "fire",
-          title: "Ads Cost $5-20 Per Click",
-          description: "And they disappear the moment you stop paying"
-        },
-        {
-          icon: "warning",
-          title: "Ad Costs Keep Rising",
-          description: "CPCs increased 50% last year alone"
-        },
-        {
-          icon: "infinity",
-          title: "Organic Traffic is Forever",
-          description: "One comment can bring leads for years"
-        }
-      ]
-    },
     liveDemo: {
       title: "Watch Liftlio",
       titleHighlight: "In Action",
@@ -360,28 +338,6 @@ const translations = {
         "Zero custo adicional conforme tráfego cresce",
         "Constrói autoridade no seu nicho ao longo do tempo",
         "Cada comentário é um vendedor permanente"
-      ]
-    },
-    painPoints: {
-      title: "Pare de Queimar Dinheiro com",
-      titleHighlight: "Anúncios Pagos",
-      subtitle: "A cada dia que você espera, seus concorrentes estão construindo tráfego orgânico permanente enquanto você aluga cliques temporários",
-      items: [
-        {
-          icon: "fire",
-          title: "Anúncios Custam R$5-20 Por Clique",
-          description: "E desaparecem no momento que você para de pagar"
-        },
-        {
-          icon: "warning",
-          title: "Custos de Anúncios Só Aumentam",
-          description: "CPCs aumentaram 50% só no ano passado"
-        },
-        {
-          icon: "infinity",
-          title: "Tráfego Orgânico é Para Sempre",
-          description: "Um comentário pode trazer leads por anos"
-        }
       ]
     },
     liveDemo: {
@@ -1111,79 +1067,6 @@ const TrustLabel = styled.div`
   color: ${props => props.theme.colors.textSecondary};
 `;
 
-const PainPointsSection = styled.section`
-  padding: 100px 64px;
-  background: linear-gradient(135deg, 
-    ${props => props.theme.name === 'dark' 
-      ? 'rgba(255, 0, 0, 0.05)' 
-      : 'rgba(255, 0, 0, 0.02)'} 0%, 
-    ${props => props.theme.colors.background} 100%
-  );
-  position: relative;
-
-  @media (max-width: 768px) {
-    padding: 60px 32px;
-  }
-`;
-
-const PainPointsGrid = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
-  margin-top: 60px;
-
-  @media (max-width: 968px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const PainPointCard = styled.div`
-  text-align: center;
-  padding: 40px;
-  background: ${props => props.theme.colors.cardBg};
-  border: 1px solid ${props => props.theme.colors.borderLight};
-  border-radius: 16px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px ${props => props.theme.colors.shadowLarge};
-    border-color: rgba(255, 0, 0, 0.3);
-  }
-`;
-
-const PainPointIcon = styled.div<{ icon: string }>`
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 24px;
-  background: ${props => props.icon === 'fire' 
-    ? 'linear-gradient(135deg, #FF6B6B 0%, #FF0000 100%)'
-    : props.icon === 'warning'
-    ? 'linear-gradient(135deg, #FFD93D 0%, #FF9800 100%)'
-    : 'linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%)'
-  };
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 36px;
-  color: white;
-`;
-
-const PainPointTitle = styled.h3`
-  font-size: 24px;
-  font-weight: 800;
-  margin-bottom: 16px;
-  color: ${props => props.theme.colors.text.primary};
-`;
-
-const PainPointDescription = styled.p`
-  font-size: 16px;
-  color: ${props => props.theme.colors.textSecondary};
-  line-height: 1.6;
-`;
 
 
 const LiveDemoSection = styled.section`
@@ -2345,34 +2228,6 @@ const LandingPage: React.FC = () => {
 
       {/* Market Trends Section */}
       <MarketTrends key={lang} />
-
-      {/* Pain Points Section */}
-      <PainPointsSection>
-        <SectionHeader>
-          <SectionTitle>
-            {t.painPoints.title} <Gradient>{t.painPoints.titleHighlight}</Gradient>
-          </SectionTitle>
-          <SectionDescription>
-            {t.painPoints.subtitle}
-          </SectionDescription>
-        </SectionHeader>
-
-        <PainPointsGrid>
-          {t.painPoints.items.map((item, index) => (
-            <PainPointCard key={index}>
-              <PainPointIcon icon={item.icon}>
-                {renderIcon(
-                  item.icon === 'fire' ? FaFire :
-                  item.icon === 'warning' ? FaExclamationTriangle :
-                  FaInfinity
-                )}
-              </PainPointIcon>
-              <PainPointTitle>{item.title}</PainPointTitle>
-              <PainPointDescription>{item.description}</PainPointDescription>
-            </PainPointCard>
-          ))}
-        </PainPointsGrid>
-      </PainPointsSection>
 
       <FeaturesSection id="features">
         <FeaturesContainer>

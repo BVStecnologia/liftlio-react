@@ -932,52 +932,6 @@ const GrowthIndicator = styled(motion.div)`
   box-shadow: 0 4px 15px rgba(78, 205, 196, 0.4);
 `;
 
-const ComparisonVisual = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3rem;
-  max-width: 1000px;
-  margin: 4rem auto;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-`;
-
-const VisualCard = styled(motion.div)<{ type: 'organic' | 'ads' }>`
-  background: ${props => props.theme.name === 'dark' ? '#1a1a2e' : '#ffffff'};
-  border: 2px solid ${props => props.type === 'organic' 
-    ? props.theme.name === 'dark' ? 'rgba(102, 126, 234, 0.3)' : 'rgba(102, 126, 234, 0.2)'
-    : props.theme.name === 'dark' ? 'rgba(255, 107, 107, 0.3)' : 'rgba(255, 107, 107, 0.2)'};
-  border-radius: 24px;
-  padding: 2rem;
-  position: relative;
-  overflow: hidden;
-`;
-
-const VisualHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  
-  .icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-  }
-  
-  h4 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: ${props => props.theme.name === 'dark' ? '#fff' : '#333'};
-  }
-`;
 
 
 const InsightBox = styled(motion.div)`
@@ -1080,20 +1034,6 @@ const MarketTrends: React.FC = () => {
       subtitle: 'Monitore tendências em tempo real no YouTube e Reddit. Transforme conversas em leads qualificados.',
       snowballTitle: 'O Poder do Conteúdo Perpétuo',
       snowballSubtitle: 'Cada comentário é um investimento que nunca para de gerar retorno',
-      googleAds: 'Google Ads',
-      contentMarketing: 'Marketing de Conteúdo',
-      adsFeatures: [
-        'Custo por clique (desaparece após o clique)',
-        'Resultados apenas durante a campanha',
-        'Custo crescente com a concorrência',
-        'ROI limitado ao orçamento'
-      ],
-      contentFeatures: [
-        'Posts vivem para sempre na internet',
-        'Tráfego orgânico contínuo 24/7',
-        'Autoridade cresce com o tempo',
-        'Custo fixo, retorno infinito'
-      ],
       totalValue: 'Valor Total Gerado',
       monthLabels: ['Mês 1', 'Mês 2', 'Mês 3', 'Mês 4', 'Mês 5', 'Mês 6'],
       yourBusiness: ['SEU', 'NEGÓCIO'],
@@ -1133,28 +1073,12 @@ const MarketTrends: React.FC = () => {
       hotAudienceText: function(topic: string) {
         return `Pessoas assistindo vídeos sobre ${topic} estão ativamente procurando soluções. Elas já estão interessadas no tema - seus comentários aparecem exatamente quando elas mais precisam de ajuda!`;
       },
-      payPerClick: 'Paga por clique',
-      userClicks: 'Usuário clica',
-      disappears: 'Desaparece',
-      costPerClickDisappears: 'Custo por clique (desaparece após o clique)',
-      resultsOnlyDuringCampaign: 'Resultados apenas durante a campanha',
-      increasingCostWithCompetition: 'Custo crescente com a concorrência',
-      roiLimitedToBudget: 'ROI limitado ao orçamento',
-      postCreated: 'Post criado',
-      generatesTraffic: 'Gera tráfego',
-      forever: 'Para sempre',
-      postsLiveForever: 'Posts vivem para sempre na internet',
-      continuousOrganicTraffic: 'Tráfego orgânico contínuo 24/7',
-      authorityGrowsOverTime: 'Autoridade cresce com o tempo',
-      fixedCostInfiniteReturn: 'Custo fixo, retorno infinito',
       perpetualContent: 'O Poder do Conteúdo Perpétuo',
       perpetualSubtitle: 'Veja como cada post continua gerando valor ao longo do tempo',
       monthsLabel: ['Mês 1', 'Mês 2', 'Mês 3', 'Mês 4', 'Mês 5', 'Mês 6'],
       postsPerMonth: 'posts/mês',
       accumulatedTraffic: 'Tráfego Acumulado',
       infiniteValue: 'Valor Infinito',
-      adsDisappear: 'Ads param após o clique',
-      contentGrows: 'Conteúdo cresce para sempre',
       platforms: {
         youtube: 'Monitoramento YouTube',
         reddit: 'Monitoramento Reddit'
@@ -1186,20 +1110,6 @@ const MarketTrends: React.FC = () => {
       subtitle: 'Monitor real-time trends on YouTube and Reddit. Transform conversations into qualified leads.',
       snowballTitle: 'The Power of Perpetual Content',
       snowballSubtitle: 'Every comment is an investment that never stops generating returns',
-      googleAds: 'Google Ads',
-      contentMarketing: 'Content Marketing',
-      adsFeatures: [
-        'Cost per click (disappears after click)',
-        'Results only during campaign',
-        'Increasing cost with competition',
-        'ROI limited to budget'
-      ],
-      contentFeatures: [
-        'Posts live forever on the internet',
-        'Continuous organic traffic 24/7',
-        'Authority grows over time',
-        'Fixed cost, infinite return'
-      ],
       totalValue: 'Total Value Generated',
       monthLabels: ['Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5', 'Month 6'],
       yourBusiness: ['YOUR', 'BUSINESS'],
@@ -1239,28 +1149,12 @@ const MarketTrends: React.FC = () => {
       hotAudienceText: function(topic: string) {
         return `People watching videos about ${topic} are actively looking for solutions. They're already interested in the topic - your comments appear exactly when they need help the most!`;
       },
-      payPerClick: 'Pay per click',
-      userClicks: 'User clicks',
-      disappears: 'Disappears',
-      costPerClickDisappears: 'Cost per click (disappears after click)',
-      resultsOnlyDuringCampaign: 'Results only during campaign',
-      increasingCostWithCompetition: 'Increasing cost with competition',
-      roiLimitedToBudget: 'ROI limited to budget',
-      postCreated: 'Post created',
-      generatesTraffic: 'Generates traffic',
-      forever: 'Forever',
-      postsLiveForever: 'Posts live forever on the internet',
-      continuousOrganicTraffic: 'Continuous organic traffic 24/7',
-      authorityGrowsOverTime: 'Authority grows over time',
-      fixedCostInfiniteReturn: 'Fixed cost, infinite return',
       perpetualContent: 'The Power of Perpetual Content',
       perpetualSubtitle: 'See how each post continues to generate value over time',
       monthsLabel: ['Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5', 'Month 6'],
       postsPerMonth: 'posts/month',
       accumulatedTraffic: 'Accumulated Traffic',
       infiniteValue: 'Infinite Value',
-      adsDisappear: 'Ads stop after click',
-      contentGrows: 'Content grows forever',
       platforms: {
         youtube: 'YouTube Monitoring',
         reddit: 'Reddit Monitoring'
@@ -1928,263 +1822,6 @@ const MarketTrends: React.FC = () => {
           </InsightBox>
 
 
-          {/* Original Visual Comparison - Ads vs Content */}
-          <ComparisonVisual>
-            {/* Ads Visualization */}
-            <VisualCard
-              type="ads"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.7 }}
-            >
-              <VisualHeader>
-                <div className="icon" style={{ 
-                  background: 'rgba(255, 107, 107, 0.1)', 
-                  color: '#ff6b6b' 
-                }}>
-                  {renderIcon(FaBullhorn)}
-                </div>
-                <h4>{t.googleAds}</h4>
-              </VisualHeader>
-
-              <div style={{ padding: '2rem 0' }}>
-                {/* Ad Click Lifecycle */}
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between',
-                  marginBottom: '2rem'
-                }}>
-                  <div style={{ textAlign: 'center', flex: 1 }}>
-                    <div style={{
-                      width: '80px',
-                      height: '80px',
-                      borderRadius: '50%',
-                      background: 'rgba(255, 107, 107, 0.2)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 0.5rem',
-                      fontSize: '2rem',
-                      color: '#ff6b6b'
-                    }}>
-                      {renderIcon(FaDollarSign)}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', fontWeight: '600' }}>
-                      {t.payPerClick}
-                    </div>
-                  </div>
-                  
-                  <div style={{ color: '#ff6b6b', fontSize: '1.5rem' }}>
-                    {renderIcon(FaArrowRight)}
-                  </div>
-                  
-                  <div style={{ textAlign: 'center', flex: 1 }}>
-                    <div style={{
-                      width: '80px',
-                      height: '80px',
-                      borderRadius: '50%',
-                      background: 'rgba(255, 107, 107, 0.1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 0.5rem',
-                      fontSize: '2rem',
-                      color: '#ff6b6b',
-                      opacity: 0.5
-                    }}>
-                      {renderIcon(FaEye)}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', fontWeight: '600', opacity: 0.7 }}>
-                      {t.userClicks}
-                    </div>
-                  </div>
-                  
-                  <div style={{ color: '#ff6b6b', fontSize: '1.5rem' }}>
-                    {renderIcon(FaArrowRight)}
-                  </div>
-                  
-                  <div style={{ textAlign: 'center', flex: 1 }}>
-                    <motion.div
-                      animate={{ scale: [1, 0.8, 0] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      style={{
-                        width: '80px',
-                        height: '80px',
-                        borderRadius: '50%',
-                        background: 'rgba(255, 107, 107, 0.05)',
-                        border: '2px dashed rgba(255, 107, 107, 0.3)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 0.5rem',
-                        fontSize: '2rem',
-                        color: '#ff6b6b'
-                      }}
-                    >
-                      ❌
-                    </motion.div>
-                    <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#ff6b6b' }}>
-                      {t.disappears}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Features List */}
-                <div style={{ 
-                  background: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
-                  borderRadius: '12px',
-                  padding: '1rem'
-                }}>
-                  {t.adsFeatures.map((feature, index) => (
-                    <div key={index} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      marginBottom: index < t.adsFeatures.length - 1 ? '0.75rem' : 0,
-                      fontSize: '0.875rem',
-                      color: theme.name === 'dark' ? '#ccc' : '#666'
-                    }}>
-                      <span style={{ color: '#ff6b6b', fontSize: '1rem' }}>✗</span>
-                      {feature}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </VisualCard>
-
-            {/* Organic Content Visualization */}
-            <VisualCard
-              type="organic"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
-            >
-              <VisualHeader>
-                <div className="icon" style={{ 
-                  background: 'rgba(102, 126, 234, 0.1)', 
-                  color: '#667eea' 
-                }}>
-                  {renderIcon(FaCommentDots)}
-                </div>
-                <h4>{t.contentMarketing}</h4>
-              </VisualHeader>
-
-              <div style={{ padding: '2rem 0' }}>
-                {/* Content Lifecycle */}
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between',
-                  marginBottom: '2rem'
-                }}>
-                  <div style={{ textAlign: 'center', flex: 1 }}>
-                    <div style={{
-                      width: '80px',
-                      height: '80px',
-                      borderRadius: '50%',
-                      background: 'rgba(102, 126, 234, 0.2)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 0.5rem',
-                      fontSize: '2rem',
-                      color: '#667eea'
-                    }}>
-                      {renderIcon(FaCommentDots)}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', fontWeight: '600' }}>
-                      {t.postCreated}
-                    </div>
-                  </div>
-                  
-                  <div style={{ color: '#4ecdc4', fontSize: '1.5rem' }}>
-                    {renderIcon(FaArrowRight)}
-                  </div>
-                  
-                  <div style={{ textAlign: 'center', flex: 1 }}>
-                    <motion.div
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      style={{
-                        width: '80px',
-                        height: '80px',
-                        borderRadius: '50%',
-                        background: 'rgba(78, 205, 196, 0.2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 0.5rem',
-                        fontSize: '2rem',
-                        color: '#4ecdc4'
-                      }}
-                    >
-                      {renderIcon(FaUsers)}
-                    </motion.div>
-                    <div style={{ fontSize: '0.875rem', fontWeight: '600' }}>
-                      {t.generatesTraffic}
-                    </div>
-                  </div>
-                  
-                  <div style={{ color: '#4ecdc4', fontSize: '1.5rem' }}>
-                    {renderIcon(FaArrowRight)}
-                  </div>
-                  
-                  <div style={{ textAlign: 'center', flex: 1 }}>
-                    <motion.div
-                      animate={{ 
-                        scale: [1, 1.2, 1],
-                        rotate: [0, 360]
-                      }}
-                      transition={{ 
-                        duration: 3, 
-                        repeat: Infinity,
-                        ease: "linear"
-                      }}
-                      style={{
-                        width: '80px',
-                        height: '80px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(78, 205, 196, 0.3) 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 0.5rem',
-                        fontSize: '2rem',
-                        color: '#667eea'
-                      }}
-                    >
-                      {renderIcon(FaInfinity)}
-                    </motion.div>
-                    <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#4ecdc4' }}>
-                      {t.forever}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Features List */}
-                <div style={{ 
-                  background: theme.name === 'dark' ? 'rgba(102, 126, 234, 0.05)' : 'rgba(102, 126, 234, 0.02)',
-                  borderRadius: '12px',
-                  padding: '1rem'
-                }}>
-                  {t.contentFeatures.map((feature, index) => (
-                    <div key={index} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      marginBottom: index < t.contentFeatures.length - 1 ? '0.75rem' : 0,
-                      fontSize: '0.875rem',
-                      color: theme.name === 'dark' ? '#ccc' : '#666'
-                    }}>
-                      <span style={{ color: '#4ecdc4', fontSize: '1rem' }}>✓</span>
-                      {feature}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </VisualCard>
-          </ComparisonVisual>
 
           {/* Key Insight Box */}
           <InsightBox
@@ -2198,8 +1835,8 @@ const MarketTrends: React.FC = () => {
             </InsightTitle>
             <InsightText>
               {lang === 'pt' 
-                ? <>Com <strong>{postsPerMonth} posts por mês em vídeos quentes sobre {getTranslatedTopicName(selectedTopic.name)}</strong>, após 6 meses você terá <strong>{postsPerMonth * 6} comentários estratégicos em vídeos com milhares de views ativas</strong>. Cada comentário fica visível em vídeos que <strong>pessoas assistem todos os dias procurando soluções</strong>, gerando tráfego qualificado 24/7. Enquanto anúncios desaparecem após o clique, seus comentários continuam sendo lidos por um <strong>público já engajado e interessado no tema</strong> - para sempre!</>
-                : <>With <strong>{postsPerMonth} posts per month on hot videos about {getTranslatedTopicName(selectedTopic.name)}</strong>, after 6 months you'll have <strong>{postsPerMonth * 6} strategic comments on videos with thousands of active views</strong>. Each comment remains visible on videos that <strong>people watch daily looking for solutions</strong>, generating qualified traffic 24/7. While ads disappear after the click, your comments keep being read by an <strong>already engaged audience interested in the topic</strong> - forever!</>
+                ? <>Com <strong>{postsPerMonth} posts por mês em vídeos quentes sobre {getTranslatedTopicName(selectedTopic.name)}</strong>, após 6 meses você terá <strong>{postsPerMonth * 6} comentários estratégicos em vídeos com milhares de views ativas</strong>. Cada comentário fica visível em vídeos que <strong>pessoas assistem todos os dias procurando soluções</strong>, gerando tráfego qualificado 24/7. Seus comentários continuam sendo lidos por um <strong>público já engajado e interessado no tema</strong> - para sempre!</>
+                : <>With <strong>{postsPerMonth} posts per month on hot videos about {getTranslatedTopicName(selectedTopic.name)}</strong>, after 6 months you'll have <strong>{postsPerMonth * 6} strategic comments on videos with thousands of active views</strong>. Each comment remains visible on videos that <strong>people watch daily looking for solutions</strong>, generating qualified traffic 24/7. Your comments keep being read by an <strong>already engaged audience interested in the topic</strong> - forever!</>
               }
             </InsightText>
           </InsightBox>
