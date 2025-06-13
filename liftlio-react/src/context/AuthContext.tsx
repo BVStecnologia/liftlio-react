@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { Session, User, AuthChangeEvent } from '@supabase/supabase-js'
-import { handleNetworkError, isNetworkError } from '../utils/networkErrorHandler'
+import { handleNetworkError, isNetworkError, retryNetworkRequest } from '../utils/networkErrorHandler'
 
 type AuthContextType = {
   session: Session | null
@@ -34,28 +34,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     )
 
     // Carrega a sessão atual na inicialização
-    supabase.auth.getSession()
-      .then(({ data }: { data: { session: Session | null } }) => {
-        const { session } = data
+    const loadSession = async () => {
+      try {
+        const { data } = await retryNetworkRequest(
+          () => supabase.auth.getSession(),
+          3,
+          1000
+        );
+        
+        const { session } = data;
         console.log('Initial session check:', session ? 'Found' : 'Not found', 'Environment:', window.location.hostname);
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-      })
-      .catch((error) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      } catch (error) {
         const errorMessage = handleNetworkError(error);
         console.error('Error fetching initial session:', errorMessage, error);
         
         // If it's a network error, we might still have a cached session
         if (isNetworkError(error)) {
           // Try to get cached session from localStorage
-          const cachedAuth = localStorage.getItem('liftlio-auth');
+          const cachedAuth = localStorage.getItem('sb-suqjifkhmekcdflwowiw-auth-token');
           if (cachedAuth) {
             try {
               const parsed = JSON.parse(cachedAuth);
-              if (parsed?.currentSession) {
-                setSession(parsed.currentSession);
-                setUser(parsed.currentSession.user);
+              if (parsed?.currentSession || parsed?.access_token) {
+                const cachedSession = parsed.currentSession || parsed;
+                setSession(cachedSession);
+                setUser(cachedSession.user);
                 console.log('Using cached session due to network error');
               }
             } catch (e) {
@@ -66,7 +72,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Always set loading to false
         setLoading(false);
-      })
+      }
+    };
+    
+    loadSession();
 
     return () => {
       subscription.unsubscribe()

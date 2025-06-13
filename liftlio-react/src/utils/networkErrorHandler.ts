@@ -39,8 +39,15 @@ export function handleNetworkError(error: any): string {
   }
   
   // Check for extension-related errors
-  if (error?.message?.includes('chrome-extension://')) {
-    return 'A browser extension might be interfering with the connection. Try disabling extensions or using incognito mode.';
+  if (error?.message?.includes('chrome-extension://') || 
+      error?.message?.includes('moz-extension://') ||
+      error?.message?.includes('extension://')) {
+    return 'A browser extension is interfering with the connection. Please try:\n' +
+           '• Disabling browser extensions temporarily\n' +
+           '• Using incognito/private browsing mode\n' +
+           '• Using a different browser\n' +
+           'The extension causing issues appears to be: ' + 
+           (error.message.match(/[a-z]+-extension:\/\/[a-zA-Z0-9]+/)?.[0] || 'unknown');
   }
   
   // Default error message

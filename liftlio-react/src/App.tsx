@@ -28,6 +28,7 @@ import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ProjectProvider, useProject } from './context/ProjectContext';
+import { ExtensionWarning } from './components/ExtensionWarning';
 
 const AppContainer = styled.div`
   display: flex;
@@ -248,12 +249,15 @@ const OAuthHandler = () => {
           
           // Fazer a requisição de token
           console.log('Fazendo solicitação de token para o YouTube...');
-          const tokenResponse = await fetch(tokenEndpoint, {
+          // Importar safeFetch dinamicamente
+          const { safeFetch } = await import('./utils/fetchWrapper');
+          const tokenResponse = await safeFetch(tokenEndpoint, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: formData.toString()
+            body: formData.toString(),
+            timeout: 30000
           });
           
           // Processar a resposta
@@ -511,6 +515,8 @@ function App() {
         <AuthProvider>
           <ProjectProvider>
             <Router>
+            {/* Adicionar aviso de extensão para todos os usuários */}
+            <ExtensionWarning />
             {/* Adicionar OAuthHandler para processar códigos do YouTube em qualquer rota */}
             <OAuthHandler />
             <Routes>
