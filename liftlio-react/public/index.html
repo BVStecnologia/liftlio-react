@@ -13,6 +13,15 @@
     />
     <!-- Add support for Supabase authentication redirects -->
     <script>
+      // Check for problematic extensions
+      window.addEventListener('error', function(event) {
+        if (event.error && event.error.message && event.error.message.includes('chrome-extension://')) {
+          console.warn('Browser extension error detected:', event.error.message);
+          // Don't let extension errors break the app
+          event.preventDefault();
+        }
+      });
+      
       // Special handling for OAuth redirects
       if (window.location.hash && window.location.hash.includes('access_token')) {
         console.log('Auth redirect detected:', window.location.href);
