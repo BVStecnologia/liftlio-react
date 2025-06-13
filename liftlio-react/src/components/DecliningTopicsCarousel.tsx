@@ -2,15 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
-import { useTrendingTopics } from '../hooks/useTrendingTopics';
-import { RisingTopicModal } from './RisingTopicModal';
+import { useDecliningTopics } from '../hooks/useDecliningTopics';
+import { DecliningTopicModal } from './DecliningTopicModal';
 
 interface TrendData {
   id: string;
   name: string;
   volume: string;
-  growth: string;
-  growthPercentage: number;
+  decline: string;
+  declinePercentage: number;
   data: number[];
   category?: string;
   description?: string;
@@ -25,84 +25,84 @@ interface TrendData {
 
 const translations = {
   en: {
-    title: 'Discover Trending Topics',
-    subtitle: 'Real-time trends from the',
+    title: 'Declining Topics',
+    subtitle: 'Topics losing momentum in the',
     subtitleHighlight: 'last 30 days',
     subtitleEnd: 'on YouTube',
     volume: 'Volume',
-    growth: 'Growth',
-    discovered: 'Exploding',
+    decline: 'Decline',
+    declining: 'Declining',
     trends: [
       {
         id: '1',
-        name: 'YouTube Brand Mentions',
-        category: 'Video Analytics',
-        description: 'Track brand mentions across YouTube creators'
+        name: 'Fidget Spinners',
+        category: 'Toys & Games',
+        description: 'Stress relief toys that spin'
       },
       {
         id: '2',
-        name: 'AI Video Intelligence',
-        category: 'Artificial Intelligence',
-        description: 'AI-powered video content analysis at scale'
+        name: 'NFT Gaming',
+        category: 'Blockchain Gaming',
+        description: 'Play-to-earn blockchain games'
       },
       {
         id: '3',
-        name: 'Influencer Lead Gen',
-        category: 'Marketing Automation',
-        description: 'Convert video mentions into qualified leads'
+        name: 'Metaverse Real Estate',
+        category: 'Virtual Reality',
+        description: 'Virtual land investments'
       },
       {
         id: '4',
-        name: 'Real-time Sentiment',
-        category: 'Brand Monitoring',
-        description: 'Monitor brand sentiment in video comments'
+        name: 'Ice Bucket Challenge',
+        category: 'Social Media Trends',
+        description: 'Viral charity challenge'
       },
       {
         id: '5',
-        name: 'Creator Analytics API',
-        category: 'Developer Tools',
-        description: 'API for accessing creator performance data'
+        name: 'Wordle Clones',
+        category: 'Mobile Games',
+        description: 'Word puzzle game variations'
       }
     ]
   },
   pt: {
-    title: 'Descubra Tópicos em Tendência',
-    subtitle: 'Tendências em tempo real dos',
+    title: 'Tópicos em Declínio',
+    subtitle: 'Tópicos perdendo força nos',
     subtitleHighlight: 'últimos 30 dias',
     subtitleEnd: 'no YouTube',
     volume: 'Volume',
-    growth: 'Crescimento',
-    discovered: 'Explodindo',
+    decline: 'Declínio',
+    declining: 'Em Declínio',
     trends: [
       {
         id: '1',
-        name: 'Menções no YouTube',
-        category: 'Análise de Vídeo',
-        description: 'Rastreie menções da marca em criadores do YouTube'
+        name: 'Fidget Spinners',
+        category: 'Brinquedos e Jogos',
+        description: 'Brinquedos anti-stress giratórios'
       },
       {
         id: '2',
-        name: 'IA Video Intelligence',
-        category: 'Inteligência Artificial',
-        description: 'Análise de conteúdo de vídeo com IA em escala'
+        name: 'Jogos NFT',
+        category: 'Jogos Blockchain',
+        description: 'Jogos play-to-earn blockchain'
       },
       {
         id: '3',
-        name: 'Lead Gen de Influencers',
-        category: 'Automação de Marketing',
-        description: 'Converta menções em vídeo em leads qualificados'
+        name: 'Imóveis no Metaverso',
+        category: 'Realidade Virtual',
+        description: 'Investimentos em terrenos virtuais'
       },
       {
         id: '4',
-        name: 'Sentimento em Tempo Real',
-        category: 'Monitoramento de Marca',
-        description: 'Monitore sentimento da marca em comentários'
+        name: 'Desafio do Balde de Gelo',
+        category: 'Tendências de Mídia Social',
+        description: 'Desafio viral de caridade'
       },
       {
         id: '5',
-        name: 'API Analytics Criadores',
-        category: 'Ferramentas para Devs',
-        description: 'API para dados de performance de criadores'
+        name: 'Clones do Wordle',
+        category: 'Jogos Mobile',
+        description: 'Variações de jogos de palavras'
       }
     ]
   }
@@ -110,34 +110,34 @@ const translations = {
 
 const baseTrendData = [
   {
-    volume: '1.6M',
-    growth: '+9700%',
-    growthPercentage: 9700,
-    data: [10, 12, 15, 18, 22, 28, 35, 45, 58, 72, 88, 108, 135, 165, 198, 235]
+    volume: '245K',
+    decline: '-72%',
+    declinePercentage: -72,
+    data: [198, 185, 172, 158, 145, 135, 122, 108, 95, 85, 75, 65, 58, 52, 48, 45]
   },
   {
-    volume: '2.3M',
-    growth: '+12500%',
-    growthPercentage: 12500,
-    data: [15, 18, 22, 28, 35, 45, 58, 75, 95, 120, 150, 185, 225, 270, 315, 365]
+    volume: '189K',
+    decline: '-85%',
+    declinePercentage: -85,
+    data: [365, 342, 315, 285, 258, 225, 190, 162, 138, 118, 100, 85, 72, 60, 50, 42]
   },
   {
-    volume: '895K',
-    growth: '+5200%',
-    growthPercentage: 5200,
-    data: [25, 28, 32, 38, 45, 52, 58, 65, 72, 78, 85, 92, 98, 105, 112, 120]
+    volume: '312K',
+    decline: '-68%',
+    declinePercentage: -68,
+    data: [120, 112, 105, 98, 92, 85, 78, 72, 65, 58, 52, 45, 38, 32, 28, 25]
   },
   {
-    volume: '3.4M',
-    growth: '+8900%',
-    growthPercentage: 8900,
-    data: [30, 35, 42, 50, 60, 72, 85, 100, 118, 138, 162, 190, 222, 258, 298, 342]
+    volume: '156K',
+    decline: '-91%',
+    declinePercentage: -91,
+    data: [342, 315, 285, 258, 222, 190, 162, 138, 118, 100, 85, 72, 60, 50, 42, 35]
   },
   {
-    volume: '1.2M',
-    growth: '+6800%',
-    growthPercentage: 6800,
-    data: [20, 23, 27, 32, 38, 45, 54, 64, 75, 88, 102, 118, 135, 154, 175, 198]
+    volume: '421K',
+    decline: '-63%',
+    declinePercentage: -63,
+    data: [198, 185, 175, 164, 154, 144, 135, 125, 115, 105, 95, 88, 82, 75, 70, 64]
   }
 ];
 
@@ -164,7 +164,7 @@ const Container = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(circle at 50% 0%, rgba(129, 140, 248, 0.08) 0%, transparent 50%);
+    background: radial-gradient(circle at 50% 0%, rgba(239, 68, 68, 0.08) 0%, transparent 50%);
     pointer-events: none;
   }
 
@@ -178,7 +178,7 @@ const Title = styled.h2`
   font-size: 3rem;
   font-weight: 800;
   margin-bottom: 20px;
-  background: linear-gradient(135deg, #fff 0%, #818cf8 100%);
+  background: linear-gradient(135deg, #fff 0%, #ef4444 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -195,7 +195,7 @@ const Subtitle = styled.p`
   margin-bottom: 60px;
   
   span {
-    color: #818cf8;
+    color: #ef4444;
     font-weight: 600;
   }
 `;
@@ -260,18 +260,18 @@ const TrendCard = styled(motion.div)<{ isActive?: boolean }>`
   
   ${({ isActive }) => isActive && css`
     transform: scale(1.03) translateY(-8px);
-    border-color: #818cf8;
+    border-color: #ef4444;
     box-shadow: 
-      0 20px 40px rgba(129, 140, 248, 0.2),
-      0 0 0 1px rgba(129, 140, 248, 0.3);
+      0 20px 40px rgba(239, 68, 68, 0.2),
+      0 0 0 1px rgba(239, 68, 68, 0.3);
   `}
   
   &:hover {
     transform: translateY(-8px) scale(1.02);
-    border-color: #818cf8;
+    border-color: #ef4444;
     box-shadow: 
-      0 20px 40px rgba(129, 140, 248, 0.15),
-      0 0 0 1px rgba(129, 140, 248, 0.2);
+      0 20px 40px rgba(239, 68, 68, 0.15),
+      0 0 0 1px rgba(239, 68, 68, 0.2);
   }
   
   &::before {
@@ -281,7 +281,7 @@ const TrendCard = styled(motion.div)<{ isActive?: boolean }>`
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(129, 140, 248, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.1) 0%, transparent 70%);
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: none;
@@ -305,7 +305,7 @@ const TrendName = styled.h3`
 
 const TrendCategory = styled.p`
   font-size: 0.9rem;
-  color: #818cf8;
+  color: #ef4444;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -327,21 +327,13 @@ const MetricLabel = styled.p`
   margin-bottom: 4px;
 `;
 
-const MetricValue = styled.p<{ isGrowth?: boolean }>`
+const MetricValue = styled.p<{ isDecline?: boolean }>`
   font-size: 1.8rem;
   font-weight: 700;
-  color: ${({ isGrowth, theme }) => isGrowth ? '#10b981' : theme.colors.text.primary};
+  color: ${({ isDecline, theme }) => isDecline ? '#ef4444' : theme.colors.text.primary};
   
-  ${({ isGrowth }) => isGrowth && css`
+  ${({ isDecline }) => isDecline && css`
     position: relative;
-    
-    &::before {
-      content: '+';
-      position: absolute;
-      left: -12px;
-      font-size: 1.2rem;
-      color: #10b981;
-    }
   `}
 `;
 
@@ -370,13 +362,13 @@ const drawLine = keyframes`
 
 const ChartPath = styled.path<{ delay?: number }>`
   fill: none;
-  stroke: url(#lineGradient);
+  stroke: url(#declineGradient);
   stroke-width: 3;
   stroke-dasharray: 1000;
   stroke-dashoffset: 1000;
   animation: ${drawLine} 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   animation-delay: ${({ delay }) => delay || 0}ms;
-  filter: drop-shadow(0 0 12px rgba(129, 140, 248, 0.6));
+  filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.6));
   stroke-linecap: round;
   stroke-linejoin: round;
 `;
@@ -385,19 +377,19 @@ const ChartArea = styled.path`
   opacity: 0.2;
 `;
 
-const DiscoveredTag = styled.div`
+const DecliningTag = styled.div`
   position: absolute;
   bottom: 24px;
   right: 24px;
-  background: linear-gradient(135deg, rgba(129, 140, 248, 0.2) 0%, rgba(129, 140, 248, 0.3) 100%);
-  color: #818cf8;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.3) 100%);
+  color: #ef4444;
   padding: 8px 16px;
   border-radius: 24px;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 1.2px;
   text-transform: uppercase;
-  border: 1px solid rgba(129, 140, 248, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   backdrop-filter: blur(8px);
   animation: ${pulse} 2s ease-in-out infinite;
   display: flex;
@@ -405,7 +397,7 @@ const DiscoveredTag = styled.div`
   gap: 6px;
   
   &::before {
-    content: '🔥';
+    content: '📉';
     font-size: 0.9rem;
   }
 `;
@@ -415,9 +407,9 @@ const NavigationButton = styled.button<{ direction: 'left' | 'right' }>`
   top: 50%;
   transform: translateY(-50%);
   ${({ direction }) => direction === 'left' ? 'left: 10px;' : 'right: 10px;'}
-  background: rgba(129, 140, 248, 0.2);
-  border: 1px solid rgba(129, 140, 248, 0.3);
-  color: #818cf8;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -429,7 +421,7 @@ const NavigationButton = styled.button<{ direction: 'left' | 'right' }>`
   z-index: 10;
   
   &:hover {
-    background: rgba(129, 140, 248, 0.3);
+    background: rgba(239, 68, 68, 0.3);
     transform: translateY(-50%) scale(1.1);
   }
   
@@ -452,12 +444,12 @@ const ProgressDot = styled.div<{ isActive: boolean }>`
   width: ${({ isActive }) => isActive ? '24px' : '8px'};
   height: 8px;
   border-radius: 4px;
-  background: ${({ isActive }) => isActive ? '#818cf8' : 'rgba(255, 255, 255, 0.2)'};
+  background: ${({ isActive }) => isActive ? '#ef4444' : 'rgba(255, 255, 255, 0.2)'};
   transition: all 0.3s ease;
   cursor: pointer;
 `;
 
-const TrendingTopicsCarousel: React.FC = () => {
+const DecliningTopicsCarousel: React.FC = () => {
   const { language } = useLanguage();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
@@ -467,36 +459,9 @@ const TrendingTopicsCarousel: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
-  const { trends, loading, error, lastUpdated, refresh } = useTrendingTopics();
+  const { trends, loading, error, lastUpdated, refresh } = useDecliningTopics();
   const t = translations[language as keyof typeof translations];
   
-  // Map category names for consistent display
-  const categoryMap: Record<string, string> = {
-    'TECHNOLOGY': language === 'pt' ? 'Tecnologia' : 'Technology',
-    'GAMING': language === 'pt' ? 'Jogos' : 'Gaming',
-    'MUSIC': language === 'pt' ? 'Música' : 'Music',
-    'LIFESTYLE': language === 'pt' ? 'Estilo de Vida' : 'Lifestyle',
-    'ENTERTAINMENT': language === 'pt' ? 'Entretenimento' : 'Entertainment',
-    'EDUCATION': language === 'pt' ? 'Educação' : 'Education',
-    'BUSINESS': language === 'pt' ? 'Negócios' : 'Business',
-    'EMERGING TRENDS': language === 'pt' ? 'Tendências Emergentes' : 'Emerging Trends'
-  };
-  
-  // Map sentiment values for translation
-  const sentimentMap: Record<string, string> = {
-    'Muito Positivo': language === 'pt' ? 'Muito Positivo' : 'Very Positive',
-    'Positivo': language === 'pt' ? 'Positivo' : 'Positive',
-    'Neutro': language === 'pt' ? 'Neutro' : 'Neutral',
-    'Negativo': language === 'pt' ? 'Negativo' : 'Negative',
-    'Muito Negativo': language === 'pt' ? 'Muito Negativo' : 'Very Negative',
-    // English to Portuguese (in case API returns in English)
-    'Very Positive': language === 'pt' ? 'Muito Positivo' : 'Very Positive',
-    'Positive': language === 'pt' ? 'Positivo' : 'Positive',
-    'Neutral': language === 'pt' ? 'Neutro' : 'Neutral',
-    'Negative': language === 'pt' ? 'Negativo' : 'Negative',
-    'Very Negative': language === 'pt' ? 'Muito Negativo' : 'Very Negative'
-  };
-
   // Format volume number to K/M format
   const formatVolume = (volume: number): string => {
     if (volume >= 1000000) {
@@ -506,23 +471,49 @@ const TrendingTopicsCarousel: React.FC = () => {
     }
     return volume.toString();
   };
-
+  
+  // Map category names for consistent display
+  const categoryMap: Record<string, string> = {
+    'GAMING': language === 'pt' ? 'Jogos' : 'Gaming',
+    'MUSIC': language === 'pt' ? 'Música' : 'Music',
+    'NEWS': language === 'pt' ? 'Notícias' : 'News',
+    'OTHER': language === 'pt' ? 'Outros' : 'Other',
+    'TECHNOLOGY': language === 'pt' ? 'Tecnologia' : 'Technology',
+    'ENTERTAINMENT': language === 'pt' ? 'Entretenimento' : 'Entertainment',
+    'EDUCATION': language === 'pt' ? 'Educação' : 'Education',
+    'LIFESTYLE': language === 'pt' ? 'Estilo de Vida' : 'Lifestyle'
+  };
+  
+  // Generate declining data pattern (opposite of growth)
+  const generateDecliningData = (growthPercentage: number): number[] => {
+    const baseValue = 200;
+    const endValue = baseValue * (1 + growthPercentage / 100); // negative growth
+    const steps = 16;
+    const data: number[] = [];
+    
+    for (let i = 0; i < steps; i++) {
+      const progress = i / (steps - 1);
+      const value = baseValue + (endValue - baseValue) * progress;
+      data.push(Math.max(20, value)); // Ensure minimum value
+    }
+    
+    return data;
+  };
+  
   // Transform API data to component format
-  const trendingData: TrendData[] = trends.map((trend, index) => ({
+  const decliningData: TrendData[] = trends.map((trend, index) => ({
     id: `trend-${trend.id}`,
     name: trend.topic,
     volume: formatVolume(trend.volume),
-    growth: trend.growth + '%',
-    growthPercentage: parseFloat(trend.growth),
-    data: baseTrendData[index % baseTrendData.length].data,
+    decline: trend.growth + '%',
+    declinePercentage: parseFloat(trend.growth),
+    data: generateDecliningData(parseFloat(trend.growth)),
     category: categoryMap[trend.category] || trend.category,
     description: trend.insights.length > 0 
       ? trend.insights[0] 
       : `${trend.video_count} videos, ${trend.channel_count} channels`,
     keywords: trend.insights,
-    geographic_distribution: {},
-    age_demographics: {},
-    sentiment: sentimentMap[trend.sentiment_label] || trend.sentiment_label,
+    sentiment: trend.sentiment_label,
     status: trend.status,
     // Store all raw data for the modal
     _rawData: trend
@@ -531,7 +522,7 @@ const TrendingTopicsCarousel: React.FC = () => {
   useEffect(() => {
     if (isAutoPlaying && !isModalOpen) {
       intervalRef.current = setInterval(() => {
-        setActiveIndex((prev) => (prev + 1) % trendingData.length);
+        setActiveIndex((prev) => (prev + 1) % decliningData.length);
       }, 5000);
     }
     
@@ -540,7 +531,7 @@ const TrendingTopicsCarousel: React.FC = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isAutoPlaying, isModalOpen, trendingData.length]);
+  }, [isAutoPlaying, isModalOpen, decliningData.length]);
 
   // Auto-scroll effect when activeIndex changes
   useEffect(() => {
@@ -556,7 +547,6 @@ const TrendingTopicsCarousel: React.FC = () => {
 
   const handleCardClick = (index: number) => {
     setActiveIndex(index);
-    // Mantém auto-playing ativo
     
     if (containerRef.current) {
       const cardWidth = 350;
@@ -569,10 +559,9 @@ const TrendingTopicsCarousel: React.FC = () => {
   };
 
   const handleNavigation = (direction: 'left' | 'right') => {
-    // Mantém auto-playing ativo
     const newIndex = direction === 'left' 
-      ? (activeIndex - 1 + trendingData.length) % trendingData.length
-      : (activeIndex + 1) % trendingData.length;
+      ? (activeIndex - 1 + decliningData.length) % decliningData.length
+      : (activeIndex + 1) % decliningData.length;
     setActiveIndex(newIndex);
     handleCardClick(newIndex);
   };
@@ -605,7 +594,7 @@ const TrendingTopicsCarousel: React.FC = () => {
     return `${chartPath} L ${width - padding},${height - padding} L ${padding},${height - padding} Z`;
   };
 
-  if (loading && trendingData.length === 0) {
+  if (loading && decliningData.length === 0) {
     return (
       <Container>
         <Title>{t.title}</Title>
@@ -613,16 +602,16 @@ const TrendingTopicsCarousel: React.FC = () => {
           {t.subtitle} <span>{t.subtitleHighlight}</span> {t.subtitleEnd}
         </Subtitle>
         <CarouselWrapper>
-          <div style={{ textAlign: 'center', color: '#818cf8' }}>
+          <div style={{ textAlign: 'center', color: '#ef4444' }}>
             <div style={{ fontSize: '32px', marginBottom: '16px' }}>⏳</div>
-            <p>{language === 'pt' ? 'Carregando tendências...' : 'Loading trends...'}</p>
+            <p>{language === 'pt' ? 'Carregando tendências em declínio...' : 'Loading declining trends...'}</p>
           </div>
         </CarouselWrapper>
       </Container>
     );
   }
 
-  if (error && trendingData.length === 0) {
+  if (error && decliningData.length === 0) {
     return (
       <Container>
         <Title>{t.title}</Title>
@@ -638,7 +627,7 @@ const TrendingTopicsCarousel: React.FC = () => {
               onClick={refresh}
               style={{
                 padding: '8px 16px',
-                background: '#818cf8',
+                background: '#ef4444',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -651,6 +640,10 @@ const TrendingTopicsCarousel: React.FC = () => {
         </CarouselWrapper>
       </Container>
     );
+  }
+
+  if (decliningData.length === 0) {
+    return null; // Don't show the section if there are no declining trends
   }
 
   return (
@@ -677,12 +670,11 @@ const TrendingTopicsCarousel: React.FC = () => {
         </NavigationButton>
         
         <CardsContainer ref={containerRef}>
-          {trendingData.map((trend, index) => (
+          {decliningData.map((trend, index) => (
             <TrendCard
               key={trend.id}
               isActive={index === activeIndex}
               onClick={() => {
-                console.log('Card clicked, trend:', trend);
                 handleCardClick(index);
                 setSelectedTopic(trend);
                 setIsModalOpen(true);
@@ -704,25 +696,25 @@ const TrendingTopicsCarousel: React.FC = () => {
                   <MetricValue>{trend.volume}</MetricValue>
                 </Metric>
                 <Metric>
-                  <MetricLabel>{t.growth}</MetricLabel>
-                  <MetricValue isGrowth>{trend.growth}</MetricValue>
+                  <MetricLabel>{t.decline}</MetricLabel>
+                  <MetricValue isDecline>{trend.decline}</MetricValue>
                 </Metric>
               </MetricsContainer>
               
               <ChartContainer>
                 <SVGChart viewBox="0 0 260 150">
                   <defs>
-                    <linearGradient id={`gradient-${trend.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#818cf8" stopOpacity="0.8" />
-                      <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
+                    <linearGradient id={`gradient-decline-${trend.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#ef4444" stopOpacity="0.8" />
+                      <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
                     </linearGradient>
-                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#6366f1" />
-                      <stop offset="50%" stopColor="#818cf8" />
-                      <stop offset="100%" stopColor="#a78bfa" />
+                    <linearGradient id="declineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#dc2626" />
+                      <stop offset="50%" stopColor="#ef4444" />
+                      <stop offset="100%" stopColor="#f87171" />
                     </linearGradient>
                   </defs>
-                  <ChartArea d={createAreaPath(trend.data)} style={{ fill: `url(#gradient-${trend.id})` }} />
+                  <ChartArea d={createAreaPath(trend.data)} style={{ fill: `url(#gradient-decline-${trend.id})` }} />
                   <ChartPath d={createChartPath(trend.data)} delay={index * 100} />
                   {/* Add dots for data points */}
                   {trend.data.map((value, i) => {
@@ -742,11 +734,11 @@ const TrendingTopicsCarousel: React.FC = () => {
                         cx={x}
                         cy={y}
                         r="4"
-                        fill="#818cf8"
+                        fill="#ef4444"
                         stroke="#fff"
                         strokeWidth="2"
                         style={{
-                          filter: 'drop-shadow(0 0 8px rgba(129, 140, 248, 0.8))'
+                          filter: 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.8))'
                         }}
                       />
                     ) : null;
@@ -758,7 +750,7 @@ const TrendingTopicsCarousel: React.FC = () => {
                 {trend.description}
               </TrendDescription>
               
-              <DiscoveredTag>{t.discovered}</DiscoveredTag>
+              <DecliningTag>{t.declining}</DecliningTag>
             </TrendCard>
           ))}
         </CardsContainer>
@@ -770,7 +762,7 @@ const TrendingTopicsCarousel: React.FC = () => {
         </NavigationButton>
         
         <ProgressIndicator>
-          {trendingData.map((_, index) => (
+          {decliningData.map((_, index) => (
             <ProgressDot
               key={index}
               isActive={index === activeIndex}
@@ -781,7 +773,7 @@ const TrendingTopicsCarousel: React.FC = () => {
       </CarouselWrapper>
       
       {selectedTopic && (
-        <RisingTopicModal
+        <DecliningTopicModal
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);
@@ -794,4 +786,4 @@ const TrendingTopicsCarousel: React.FC = () => {
   );
 };
 
-export default TrendingTopicsCarousel;
+export default DecliningTopicsCarousel;

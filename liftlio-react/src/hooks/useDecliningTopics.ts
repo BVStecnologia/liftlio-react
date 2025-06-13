@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { callRPC } from '../lib/supabaseClient';
 import { useLanguage } from '../context/LanguageContext';
 
-interface TrendingTopic {
+interface DecliningTopic {
   id: number;
   topic: string;
   category: string;
@@ -49,13 +49,11 @@ interface TrendingTopic {
   updated_at: string;
 }
 
-// Remove old interface as we're using RPC directly
-
-const CACHE_KEY = 'trending_topics_cache';
+const CACHE_KEY = 'declining_topics_cache';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-export const useTrendingTopics = () => {
-  const [trends, setTrends] = useState<TrendingTopic[]>([]);
+export const useDecliningTopics = () => {
+  const [trends, setTrends] = useState<DecliningTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -84,34 +82,33 @@ export const useTrendingTopics = () => {
 
       const data = await callRPC('get_youtube_trends', {
         p_order_by: 'growth',
-        p_order_dir: 'desc',
+        p_order_dir: 'asc',
         p_limit: 20
       });
 
-      // Filter only topics with positive growth and proper status
-      const risingTrends = (data || [])
-        .filter((trend: TrendingTopic) => {
+      // Filter only topics with negative growth and proper status
+      const decliningTrends = (data || [])
+        .filter((trend: DecliningTopic) => {
           const growthValue = parseFloat(trend.growth);
-          return growthValue > 0 && (
-            trend.status === 'RISING' || 
-            trend.status === 'EXPLODING' ||
-            trend.status === 'EMERGING'
+          return growthValue < 0 && (
+            trend.status === 'DECLINING' || 
+            trend.status === 'COOLING'
           );
         })
-        .slice(0, 10); // Get top 10 rising trends
+        .slice(0, 10); // Get top 10 declining trends
 
       // Cache the results
       localStorage.setItem(CACHE_KEY, JSON.stringify({
-        data: risingTrends,
+        data: decliningTrends,
         timestamp: Date.now(),
         lang: language
       }));
 
-      setTrends(risingTrends);
+      setTrends(decliningTrends);
       setLastUpdated(new Date());
     } catch (err) {
-      console.error('Error fetching trends:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch trends');
+      console.error('Error fetching declining trends:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch declining trends');
       
       // Try to use cached data even if expired
       const cached = localStorage.getItem(CACHE_KEY);

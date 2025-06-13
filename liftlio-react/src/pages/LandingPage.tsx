@@ -11,6 +11,7 @@ import { useLanguage } from '../context/LanguageContext';
 import Testimonials from '../components/Testimonials';
 import MarketTrends from '../components/MarketTrends';
 import TrendingTopicsCarousel from '../components/TrendingTopicsCarousel';
+import DecliningTopicsCarousel from '../components/DecliningTopicsCarousel';
 
 // Internacionalização
 const translations = {
@@ -2338,6 +2339,9 @@ const LandingPage: React.FC = () => {
 
       {/* Trending Topics Carousel */}
       <TrendingTopicsCarousel />
+
+      {/* Declining Topics Carousel */}
+      <DecliningTopicsCarousel />
 
       {/* Market Trends Section */}
       <MarketTrends key={lang} />
