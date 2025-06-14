@@ -1,0 +1,77 @@
+Cópia da página inicial do Liftlio
+
+
+Cópia da página de destino para Liftlio
+Seção de Heróis
+Título:Finalmente, uma maneira de aumentar as recomendações boca a boca sem pagar por anúncios
+Subtítulo:A Liftlio utiliza IA para fazer com que sua marca seja mencionada em conversas genuínas na web, permitindo que seu produto seja descoberto organicamente em grande escala.
+Botão CTA:→ Veja o que Liftlio diria sobreseuproduto (rolagem suave para a seção de prova interativa)
+Texto de suporte:"Abandone seu site. Mostraremos um comentário real que ele publicaria — sem necessidade de cadastro." (Talvez)
+O Problema
+Título:Os anúncios param de funcionar quando você para de pagar. O alcance orgânico fica comprometido.
+Cópia:Seus clientes confiam mais em recomendações de estranhos no Reddit do que em seus anúncios no Facebook. Suas postagens nas redes sociais desaparecem em horas, enquanto concorrentes são mencionados em discussões que duram para sempre.
+Enquanto isso, você fica preso na rotina de conteúdo escrevendo, postando, esperando que algo dê certo, enquanto seus anúncios pagos drenam o orçamento e geram retornos decrescentes.
+Ideia visual:Lado a lado: "Old Way" (gasto com anúncios, rotina de conteúdo, esgotamento) vs. "Liftlio Way" (menções orgânicas, confiança, automação)
+
+Por que isso é mais importante do que nunca (pode remover esta seção)
+Título:A IA está reescrevendo a maneira como seus clientes descobrem soluções.
+Cópia:O jogo mudou. O ChatGPT recomenda soluções com base em discussões e conversas, não em conteúdo promocional. Os recursos de IA do Google extraem respostas de tópicos do Reddit e postagens de fóruns. A Perplexity apresenta recomendações baseadas em experiências reais de usuários.
+Seus clientes ideais pedem recomendações constantemente online. A IA responde com marcas que são mencionadas em conversas autênticas, não aquelas com os maiores orçamentos de publicidade.
+O SEO tradicional é otimizado para mecanismos de busca. Mas a descoberta de IA otimiza para conversas humanas autênticas. As marcas que triunfam neste novo cenário são aquelas que aparecem em discussões onde pessoas reais compartilham experiências genuínas.
+
+O avanço
+Título:E se a IA pudesse inserir seu nome em conversas nas quais seus clientes já confiam?
+Cópia:Neste momento, seus clientes ideais estão fazendo perguntas em tópicos do Reddit, discussões no Twitter e seções de comentários. Eles descrevem problemas que seu produto resolve e pedem recomendações.
+A Liftlio considera essas conversas de alto engajamento e publica respostas naturais e úteis que mencionam sua marca, posicionando seu produto como uma indicação pessoal de alguém que realmente quer ajudar.
+O resultado? Visibilidade orgânica que se acumula ao longo do tempo, em vez de desaparecer quando você para de gastar.
+Como funciona
+1. Treine uma vez O Liftlio extrai automaticamente informações sobre você, seu produto ou serviço.
+2. Liftlio escaneia a webNossa IA encontra continuamente postagens e conversas de alto engajamento, nas quais seu público-alvo está buscando ativamente soluções como as suas.
+3. Menções autênticas são publicadas Comentários humanizados são publicados onde naturalmente se encaixam com contexto total
+4. Escalas de Confiança Essas menções são mantidas em conteúdo real, vistas por futuros clientes em potencial por meses ou até anos. Uma boa menção continua funcionando, enquanto seus concorrentes continuam pagando por anúncios.
+Prova Interativa
+Título:Veja o Liftlio em ação com seu produto.
+Cópia:Insira seu site abaixo. O Liftlio gerará um comentário real que será publicado em seu nome, além de mostrar o tipo de conteúdo de alto engajamento onde a menção será inserida.
+CTA:→ Mostre-me meu comentário
+(Observação: será necessário determinar cenários de custos com base nos usuários em potencial que podem fazer isso por dia. Será necessário implementar salvaguardas para que um endereço IP possa fazer solicitações uma vez por dia, ou algo assim, para que alguém não precise fazer 20 solicitações consecutivas usando a ferramenta. Dê sua opinião aqui.)
+
+Mostre a qualidade dos nossos dados
+Título: Descubra os tópicos de tendência
+Cópia:Enquanto seus concorrentes se esforçam para criar conteúdo sobre tendências que já atingiram o pico, o recurso Trending Topics do Liftlio usa fórmulas proprietárias que analisam conteúdo UGC na web para identificar o que está prestes a explodir em seu setor.
+Receba sinais antecipados sobre quais tópicos estão ganhando força antes que se tornem populares.
+Quando as tendências finalmente se tornam populares, seu conteúdo já está ranqueado e pronto para capturar a onda de interesse.
+O complemento perfeito para menções de marca com tecnologia de IA!
+
+
+Para quem é
+Título:Para qualquer pessoa que vende on-line e quer ser encontrado sem precisar perseguir tráfego.
+Isso funciona especialmente bem para:
+Fundadores de SaaSCansado de custos de aquisição pagos que só aumentam. Seja mencionado nas discussões de desenvolvedores e comunidades de startups onde seus compradores realmente se encontram.
+Criadores do cursoque precisam de visibilidade além dos algoritmos das redes sociais. Apareça em conversas onde as pessoas pedem exatamente o que você ensina.
+Consultoresbuscando construir autoridade em larga escala. Seja recomendado em discussões do setor sem precisar monitorar manualmente todos os fóruns e comunidades.
+Treinadoresque buscam leads orgânicos de pessoas que já buscam transformação. Seja mencionado quando clientes em potencial solicitarem ajuda em conversas relevantes.
+Lidando com objeções (talvez adicionar essas perguntas como uma seção de perguntas frequentes recolhível na parte inferior da página)
+Título:Não é spam. Não são bots. Não é arriscado.
+Cópia:Entendemos a preocupação. A internet está cheia de lixo promocional que não ajuda ninguém.
+O Liftlio é diferente porque cada comentário ajuda genuinamente a pessoa que faz a pergunta. Mencionamos o seu produto apenas quando ele realmente resolve o problema específico da pessoa. Cada resposta inclui contexto e alternativas úteis — não apenas uma apresentação do produto.
+Veja a conversa, veja nossa resposta e ajuste conforme voce quiser, alem de curtir as melhores para ensinar o Liftilio que padrao seguir.
+Mais importante: amplificamos conversas reais, não as interrompemos. Se não ajuda a comunidade, não ajuda a sua marca.
+Ideia visual:"Comentário Genérico de Bot" vs. "Menção Liftlio" lado a lado mostrando a diferença de qualidade
+(Observação: na seção de perguntas frequentes, talvez precisemos mencionar que os comentários não duram para sempre se a assinatura for cancelada e não podem ser adicionados novamente após a reativação. Também acho que isso seria melhor nos Termos de Serviço, pois precisamos fazer com que eles selecionem isso ao se inscreverem. Ninguém lê isso, mas não quero que isso desvie o foco de clientes em potencial.)
+Prova Social (precisarei descobrir isso o mais rápido possível)
+Título:As pessoas notam. As pessoas clicam. As pessoas compram.
+"Vi o comentário e pensei que fosse apenas alguém recomendando uma ótima ferramenta. Acontece que era o Liftlio. Foi aí que percebi que realmente funciona." Sarah Chen, Fluxo de Dados
+"Paramos de veicular anúncios no Facebook depois do Liftlio. Nossas menções duram mais e convertem mais do que qualquer coisa que já testamos." Marcus Rodriguez, TeamSync
+"Seis meses depois, um terço dos nossos novos clientes mencionam que nos encontraram por meio de 'um comentário útil'. O ROI é melhor do que em qualquer outro canal." Lisa Park, WorkflowAI
+Preços
+Inicial - $ 49/mês75 menções à marca mensalmente em discussões de alto engajamento. 10 perguntas sobre IA da Liftlio por mês. Monitoramento de tópicos em alta?
+Crescimento - US$ 99/mês⭐ 200 menções de marca mais populares por mês com segmentação avançada. Inclui análises detalhadas e fluxos de trabalho de aprovação. 30 perguntas sobre a Liftlio AI por mês. Monitoramento de tópicos em alta?
+Escala - US$ 199/mês450 menções à marca por mês com personalização completa. 100 perguntas sobre a Liftlio AI por mês. Monitoramento de tópicos em alta?
+Cancelar a qualquer momento:Não há contratos ou compromissos de longo prazo.
+(Nota: Eu criei esse preço olhando para o Reply Guy. Estou pensando que este é um bom começo enquanto estiver em Beta e tiver apenas recursos de postagem no YT. Assim que tivermos pelo menos a postagem no Reddit adicionada e sairmos do Beta, então poderemos aumentar os preços. Acho que antes de termos uma prova social real que possamos adicionar à página em vez de apenas as que o Liftlio recebe do YT, menos atrito teremos e podemos aumentar nossas margens naquele ponto, uma vez que ganhemos impulso. Cada centavo conta agora.)
+Final CTA
+Título:A confiança vence. Deixe a IA conquistar isso para você.
+Cópia:Todos os dias acontecem conversas em que seus clientes ideais pedem recomendações.
+Amanhã, mais discussões começarão. Mais perguntas serão feitas. Mais decisões de compra serão influenciadas pelas recomendações dos colegas.
+A questão é: sua marca fará parte dessas conversas?
+Botão CTA:→ Experimente o Liftlio
