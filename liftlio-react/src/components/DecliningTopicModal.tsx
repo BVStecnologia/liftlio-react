@@ -273,7 +273,9 @@ const TemporalItem = styled.div`
 `;
 
 const formatDate = (dateString: string): string => {
+  if (!dateString) return 'N/A';
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'N/A';
   return date.toLocaleDateString();
 };
 
@@ -438,58 +440,70 @@ export const DecliningTopicModal: React.FC<DecliningTopicModalProps> = ({ isOpen
                       {channel.videos} {labels.videos} • {formatNumber(channel.total_views)} {labels.views}
                     </ChannelStats>
                   </ChannelInfo>
-                  <ChannelMetrics>
-                    <MetricValue>{(channel.avg_engagement * 100).toFixed(1)}%</MetricValue>
-                    <MetricLabel>{labels.avgEngagement}</MetricLabel>
-                  </ChannelMetrics>
+                  {channel.avg_engagement !== undefined && (
+                    <ChannelMetrics>
+                      <MetricValue>{(channel.avg_engagement * 100).toFixed(1)}%</MetricValue>
+                      <MetricLabel>{labels.avgEngagement}</MetricLabel>
+                    </ChannelMetrics>
+                  )}
                 </ChannelCard>
               ))}
             </ChannelsList>
           </Section>
         )}
 
-        {rawData.scores && (
+        {rawData.scores && Object.keys(rawData.scores).length > 0 && (
           <Section>
             <SectionTitle>
               <BarChart3 size={16} />
               {labels.scores}
             </SectionTitle>
             <div>
-              <ScoreBar>
-                <ScoreLabel>{labels.risk}</ScoreLabel>
-                <ScoreProgress>
-                  <ScoreFill width={rawData.scores.risk * 100} color="#ef4444" />
-                </ScoreProgress>
-                <ScoreValue>{(rawData.scores.risk * 100).toFixed(0)}%</ScoreValue>
-              </ScoreBar>
-              <ScoreBar>
-                <ScoreLabel>{labels.confidence}</ScoreLabel>
-                <ScoreProgress>
-                  <ScoreFill width={rawData.scores.confidence * 100} color="#3b82f6" />
-                </ScoreProgress>
-                <ScoreValue>{(rawData.scores.confidence * 100).toFixed(0)}%</ScoreValue>
-              </ScoreBar>
-              <ScoreBar>
-                <ScoreLabel>{labels.saturation}</ScoreLabel>
-                <ScoreProgress>
-                  <ScoreFill width={rawData.scores.saturation * 100} color="#f59e0b" />
-                </ScoreProgress>
-                <ScoreValue>{(rawData.scores.saturation * 100).toFixed(0)}%</ScoreValue>
-              </ScoreBar>
-              <ScoreBar>
-                <ScoreLabel>{labels.opportunity}</ScoreLabel>
-                <ScoreProgress>
-                  <ScoreFill width={rawData.scores.opportunity * 100} color="#10b981" />
-                </ScoreProgress>
-                <ScoreValue>{(rawData.scores.opportunity * 100).toFixed(0)}%</ScoreValue>
-              </ScoreBar>
-              <ScoreBar>
-                <ScoreLabel>{labels.sustainability}</ScoreLabel>
-                <ScoreProgress>
-                  <ScoreFill width={rawData.scores.sustainability * 100} color="#8b5cf6" />
-                </ScoreProgress>
-                <ScoreValue>{(rawData.scores.sustainability * 100).toFixed(0)}%</ScoreValue>
-              </ScoreBar>
+              {rawData.scores.risk !== undefined && (
+                <ScoreBar>
+                  <ScoreLabel>{labels.risk}</ScoreLabel>
+                  <ScoreProgress>
+                    <ScoreFill width={rawData.scores.risk * 100} color="#ef4444" />
+                  </ScoreProgress>
+                  <ScoreValue>{(rawData.scores.risk * 100).toFixed(0)}%</ScoreValue>
+                </ScoreBar>
+              )}
+              {rawData.scores.confidence !== undefined && (
+                <ScoreBar>
+                  <ScoreLabel>{labels.confidence}</ScoreLabel>
+                  <ScoreProgress>
+                    <ScoreFill width={rawData.scores.confidence * 100} color="#3b82f6" />
+                  </ScoreProgress>
+                  <ScoreValue>{(rawData.scores.confidence * 100).toFixed(0)}%</ScoreValue>
+                </ScoreBar>
+              )}
+              {rawData.scores.saturation !== undefined && (
+                <ScoreBar>
+                  <ScoreLabel>{labels.saturation}</ScoreLabel>
+                  <ScoreProgress>
+                    <ScoreFill width={rawData.scores.saturation * 100} color="#f59e0b" />
+                  </ScoreProgress>
+                  <ScoreValue>{(rawData.scores.saturation * 100).toFixed(0)}%</ScoreValue>
+                </ScoreBar>
+              )}
+              {rawData.scores.opportunity !== undefined && (
+                <ScoreBar>
+                  <ScoreLabel>{labels.opportunity}</ScoreLabel>
+                  <ScoreProgress>
+                    <ScoreFill width={rawData.scores.opportunity * 100} color="#10b981" />
+                  </ScoreProgress>
+                  <ScoreValue>{(rawData.scores.opportunity * 100).toFixed(0)}%</ScoreValue>
+                </ScoreBar>
+              )}
+              {rawData.scores.sustainability !== undefined && (
+                <ScoreBar>
+                  <ScoreLabel>{labels.sustainability}</ScoreLabel>
+                  <ScoreProgress>
+                    <ScoreFill width={rawData.scores.sustainability * 100} color="#8b5cf6" />
+                  </ScoreProgress>
+                  <ScoreValue>{(rawData.scores.sustainability * 100).toFixed(0)}%</ScoreValue>
+                </ScoreBar>
+              )}
             </div>
           </Section>
         )}
@@ -509,10 +523,12 @@ export const DecliningTopicModal: React.FC<DecliningTopicModalProps> = ({ isOpen
                 <Calendar size={14} />
                 {labels.lastSeen}: {formatDate(rawData.temporal_data.last_seen)}
               </TemporalItem>
-              <TemporalItem>
-                <TrendingDown size={14} />
-                {labels.peakDate}: {formatDate(rawData.temporal_data.peak_date)}
-              </TemporalItem>
+              {rawData.temporal_data.peak_date && (
+                <TemporalItem>
+                  <TrendingDown size={14} />
+                  {labels.peakDate}: {formatDate(rawData.temporal_data.peak_date)}
+                </TemporalItem>
+              )}
               <TemporalItem>
                 <BarChart3 size={14} />
                 {labels.daysTrending}: {rawData.temporal_data.days_trending}

@@ -80,22 +80,20 @@ export const useDecliningTopics = () => {
       setLoading(true);
       setError(null);
 
-      const data = await callRPC('get_youtube_trends', {
-        p_order_by: 'growth',
-        p_order_dir: 'asc',
-        p_limit: 20
-      });
+      const data = await callRPC('get_youtube_trends', {});
 
-      // Filter only topics with negative growth and proper status
+      // Filter only topics with negative growth
       const decliningTrends = (data || [])
         .filter((trend: DecliningTopic) => {
           const growthValue = parseFloat(trend.growth);
-          return growthValue < 0 && (
-            trend.status === 'DECLINING' || 
-            trend.status === 'COOLING'
-          );
+          return growthValue < 0;
         })
         .slice(0, 10); // Get top 10 declining trends
+        
+      console.log('Total data received:', data?.length);
+      console.log('Data received:', data);
+      console.log('Filtered declining trends:', decliningTrends.length);
+      console.log('Declining trends:', decliningTrends);
 
       // Cache the results
       localStorage.setItem(CACHE_KEY, JSON.stringify({

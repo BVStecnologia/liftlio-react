@@ -213,7 +213,6 @@ const CardsContainer = styled.div`
   display: flex;
   gap: 30px;
   width: 100%;
-  max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
   overflow-x: auto;
@@ -682,7 +681,6 @@ const TrendingTopicsCarousel: React.FC = () => {
               key={trend.id}
               isActive={index === activeIndex}
               onClick={() => {
-                console.log('Card clicked, trend:', trend);
                 handleCardClick(index);
                 setSelectedTopic(trend);
                 setIsModalOpen(true);

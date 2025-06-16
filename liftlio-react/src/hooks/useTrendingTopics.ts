@@ -82,23 +82,27 @@ export const useTrendingTopics = () => {
       setLoading(true);
       setError(null);
 
-      const data = await callRPC('get_youtube_trends', {
-        p_order_by: 'growth',
-        p_order_dir: 'desc',
-        p_limit: 20
-      });
+      const data = await callRPC('get_youtube_trends', {});
 
-      // Filter only topics with positive growth and proper status
+      // Filter only topics with positive growth
       const risingTrends = (data || [])
         .filter((trend: TrendingTopic) => {
           const growthValue = parseFloat(trend.growth);
-          return growthValue > 0 && (
-            trend.status === 'RISING' || 
-            trend.status === 'EXPLODING' ||
-            trend.status === 'EMERGING'
-          );
+          if (trend.topic === 'ClickUp') {
+            console.log('ClickUp found:', trend);
+            console.log('ClickUp growth value:', growthValue);
+            console.log('ClickUp passes filter:', growthValue > 0);
+          }
+          return growthValue > 0;
         })
-        .slice(0, 10); // Get top 10 rising trends
+        .sort((a: TrendingTopic, b: TrendingTopic) => parseFloat(b.growth) - parseFloat(a.growth))
+        .slice(0, 10); // Get top 10 rising trends by growth
+      
+      console.log('Total data received:', data?.length);
+      console.log('Data received:', data);
+      console.log('Filtered rising trends:', risingTrends.length);
+      console.log('Rising trends:', risingTrends);
+      console.log('ClickUp in final results?', risingTrends.some((t: TrendingTopic) => t.topic === 'ClickUp'));
 
       // Cache the results
       localStorage.setItem(CACHE_KEY, JSON.stringify({
