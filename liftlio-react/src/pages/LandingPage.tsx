@@ -2147,24 +2147,13 @@ const LandingPage: React.FC = () => {
 
           <HeroVisual>
             <DashboardPreview>
-              <h3 style={{ marginBottom: '24px', fontSize: '20px', fontWeight: '700' }}>
-                Dashboard {lang === 'pt' ? 'em Tempo Real' : 'Real-Time'}
-              </h3>
-              
-              <MetricsGrid>
-                <MetricCard>
-                  <MetricValue>2.8K</MetricValue>
-                  <MetricLabel>{t.hero.metrics.mentions}</MetricLabel>
-                </MetricCard>
-                <MetricCard>
-                  <MetricValue>89%</MetricValue>
-                  <MetricLabel>{t.hero.metrics.positive}</MetricLabel>
-                </MetricCard>
-                <MetricCard>
-                  <MetricValue>147</MetricValue>
-                  <MetricLabel>{t.hero.metrics.leads}</MetricLabel>
-                </MetricCard>
-              </MetricsGrid>
+              <DashboardImage 
+                src={theme.name === 'dark' 
+                  ? "/imagens/dashboard-hero-dark.png" 
+                  : "/imagens/dashboard-hero-light.png"
+                }
+                alt="Liftlio Dashboard"
+              />
             </DashboardPreview>
             
             {/* Elementos flutuantes */}
