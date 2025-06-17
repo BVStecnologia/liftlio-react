@@ -108,39 +108,6 @@ const translations = {
   }
 };
 
-const baseTrendData = [
-  {
-    volume: '1.6M',
-    growth: '+9700%',
-    growthPercentage: 9700,
-    data: [10, 12, 15, 18, 22, 28, 35, 45, 58, 72, 88, 108, 135, 165, 198, 235]
-  },
-  {
-    volume: '2.3M',
-    growth: '+12500%',
-    growthPercentage: 12500,
-    data: [15, 18, 22, 28, 35, 45, 58, 75, 95, 120, 150, 185, 225, 270, 315, 365]
-  },
-  {
-    volume: '895K',
-    growth: '+5200%',
-    growthPercentage: 5200,
-    data: [25, 28, 32, 38, 45, 52, 58, 65, 72, 78, 85, 92, 98, 105, 112, 120]
-  },
-  {
-    volume: '3.4M',
-    growth: '+8900%',
-    growthPercentage: 8900,
-    data: [30, 35, 42, 50, 60, 72, 85, 100, 118, 138, 162, 190, 222, 258, 298, 342]
-  },
-  {
-    volume: '1.2M',
-    growth: '+6800%',
-    growthPercentage: 6800,
-    data: [20, 23, 27, 32, 38, 45, 54, 64, 75, 88, 102, 118, 135, 154, 175, 198]
-  }
-];
-
 const spin = keyframes`
   from {
     transform: rotate(0deg);
@@ -469,6 +436,9 @@ const TrendingTopicsCarousel: React.FC = () => {
   const { trends, loading, error, lastUpdated, refresh } = useTrendingTopics();
   const t = translations[language as keyof typeof translations];
   
+  // Memoize chart data to prevent regeneration on every render
+  const chartDataCache = useRef<Map<string, number[]>>(new Map());
+  
   // Map category names for consistent display
   const categoryMap: Record<string, string> = {
     'TECHNOLOGY': language === 'pt' ? 'Tecnologia' : 'Technology',
@@ -505,6 +475,81 @@ const TrendingTopicsCarousel: React.FC = () => {
     }
     return volume.toString();
   };
+  
+  // Generate rising data pattern based on growth percentage and temporal data
+  const generateRisingData = (trendId: string, growthPercentage: number, temporalData: any): number[] => {
+    // Return cached data if it exists
+    if (chartDataCache.current.has(trendId)) {
+      return chartDataCache.current.get(trendId)!;
+    }
+    
+    const steps = 16;
+    const data: number[] = [];
+    
+    // Base value starts low and grows based on the growth percentage
+    const startValue = 50;
+    const endValue = startValue * (1 + growthPercentage / 100);
+    
+    // Calculate growth characteristics
+    const growthMagnitude = Math.abs(growthPercentage);
+    const growthRate = growthMagnitude / 100;
+    
+    // Use temporal data to influence the curve shape
+    const daysTrending = temporalData?.days_trending || 7;
+    const accelerationPoint = Math.max(0.3, Math.min(0.7, daysTrending / 30));
+    
+    // Use a seeded random for consistency
+    const seed = trendId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const seededRandom = (i: number) => {
+      const x = Math.sin(seed + i) * 10000;
+      return x - Math.floor(x);
+    };
+    
+    for (let i = 0; i < steps; i++) {
+      const progress = i / (steps - 1);
+      
+      // Create realistic growth curve based on growth percentage
+      let value: number;
+      
+      if (growthPercentage > 5000) {
+        // Explosive growth - exponential curve
+        const curve = Math.pow(progress, 2.5);
+        value = startValue + (endValue - startValue) * curve;
+      } else if (growthPercentage > 1000) {
+        // Strong growth - steep S-curve
+        const t = progress * 2 - 1;
+        const curve = (Math.tanh(t * 2) + 1) / 2;
+        value = startValue + (endValue - startValue) * curve;
+      } else if (growthPercentage > 500) {
+        // Moderate growth - standard S-curve
+        const t = progress * 2 - 1;
+        const curve = (Math.tanh(t * 1.5) + 1) / 2;
+        value = startValue + (endValue - startValue) * curve;
+      } else {
+        // Steady growth - gradual curve
+        const curve = Math.pow(progress, 1.2);
+        value = startValue + (endValue - startValue) * curve;
+      }
+      
+      // Add realistic variations based on temporal distribution
+      const variation = Math.sin(i * 0.8 + seed * 0.1) * (3 + growthRate * 5);
+      const microVariation = seededRandom(i) * 2;
+      
+      // Ensure the trend is always rising with small fluctuations
+      value += variation + microVariation;
+      
+      // Add momentum effect for recent data points
+      if (progress > 0.7) {
+        value += (progress - 0.7) * growthRate * 50;
+      }
+      
+      data.push(Math.max(10, value));
+    }
+    
+    // Cache the generated data
+    chartDataCache.current.set(trendId, data);
+    return data;
+  };
 
   // Transform API data to component format
   const trendingData: TrendData[] = trends.map((trend, index) => ({
@@ -513,7 +558,7 @@ const TrendingTopicsCarousel: React.FC = () => {
     volume: formatVolume(trend.volume),
     growth: trend.growth + '%',
     growthPercentage: parseFloat(trend.growth),
-    data: baseTrendData[index % baseTrendData.length].data,
+    data: generateRisingData(`trend-${trend.id}`, parseFloat(trend.growth), trend.temporal_data),
     category: categoryMap[trend.category] || trend.category,
     description: trend.insights.length > 0 
       ? trend.insights[0] 
@@ -657,12 +702,6 @@ const TrendingTopicsCarousel: React.FC = () => {
       <Title>{t.title}</Title>
       <Subtitle>
         {t.subtitle} <span>{t.subtitleHighlight}</span> {t.subtitleEnd}
-        {lastUpdated && (
-          <span style={{ fontSize: '0.8rem', marginLeft: '16px', opacity: 0.7 }}>
-            {language === 'pt' ? 'Atualizado: ' : 'Updated: '}
-            {lastUpdated.toLocaleTimeString()}
-          </span>
-        )}
       </Subtitle>
       
       <CarouselWrapper
