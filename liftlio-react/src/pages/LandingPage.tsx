@@ -2057,7 +2057,10 @@ const LandingPage: React.FC = () => {
   };
 
   const handleGetStarted = () => {
-    navigate('/login');
+    const pricingSection = document.getElementById('pricing');
+    if (pricingSection) {
+      pricingSection.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const handleDemo = () => {
@@ -2084,7 +2087,7 @@ const LandingPage: React.FC = () => {
             LIFTLIO
           </Logo>
           <Nav>
-            <NavLink href="#features">{t.nav.features}</NavLink>
+            <NavLink href="#process">{t.nav.features}</NavLink>
             <NavLink href="#pricing">{t.nav.pricing}</NavLink>
             <NavLink href="#testimonials">{t.nav.testimonials}</NavLink>
             <NavButtons>
@@ -2139,10 +2142,6 @@ const LandingPage: React.FC = () => {
                 {renderIcon(FaRocket)}
                 {t.hero.cta.primary}
               </PrimaryButton>
-              <SecondaryButton onClick={handleDemo}>
-                {renderIcon(FaPlay)}
-                {t.hero.cta.secondary}
-              </SecondaryButton>
             </CTAButtons>
           </HeroText>
 
@@ -2219,7 +2218,7 @@ const LandingPage: React.FC = () => {
       <BreakthroughSection />
 
       {/* Process Section - Como Funciona */}
-      <ProcessSection>
+      <ProcessSection id="process">
         <SectionHeader>
           <SectionTitle>
             {t.process.title} <Gradient>{t.process.titleHighlight}</Gradient>

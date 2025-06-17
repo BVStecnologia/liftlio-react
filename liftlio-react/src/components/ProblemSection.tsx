@@ -8,13 +8,13 @@ const translations = {
   en: {
     title: "Ads stop working when you stop paying. Organic reach is buried.",
     subtitle: "87% of consumers trust peer recommendations more than any form of advertising.",
-    content: "Your customers trust recommendations from strangers on Reddit more than your Facebook ads. Your social posts disappear in hours while competitors get mentioned in discussions that live forever.",
+    content: "Your customers trust recommendations from strangers on Reddit and YouTube more than your Facebook ads. Your social posts disappear in hours while competitors get mentioned in discussions that live forever.",
     pain: "Meanwhile, you're stuck on the content treadmill writing, posting, hoping something sticks, while your paid ads drain budget for decreasing returns."
   },
   pt: {
     title: "Os anúncios param de funcionar quando você para de pagar. O alcance orgânico fica comprometido.",
     subtitle: "87% dos consumidores confiam mais em recomendações do que em qualquer forma de publicidade.",
-    content: "Seus clientes confiam mais em recomendações de estranhos no Reddit do que em seus anúncios no Facebook. Suas postagens nas redes sociais desaparecem em horas, enquanto concorrentes são mencionados em discussões que duram para sempre.",
+    content: "Seus clientes confiam mais em recomendações de estranhos no Reddit e YouTube do que em seus anúncios no Facebook. Suas postagens nas redes sociais desaparecem em horas, enquanto concorrentes são mencionados em discussões que duram para sempre.",
     pain: "Enquanto isso, você fica preso na rotina de conteúdo escrevendo, postando, esperando que algo dê certo, enquanto seus anúncios pagos drenam o orçamento e geram retornos decrescentes."
   }
 };
