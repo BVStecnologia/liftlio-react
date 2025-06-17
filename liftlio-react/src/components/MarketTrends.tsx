@@ -1010,7 +1010,7 @@ const CompetitorAlert = styled(motion.div)`
 const MarketTrends: React.FC = () => {
   const [selectedTopic, setSelectedTopic] = useState<TrendTopic>(mockTopics[0]);
   const [activeMonth, setActiveMonth] = useState<number | null>(null);
-  const [monthlyInvestmentValue, setMonthlyInvestmentValue] = useState<number>(100);
+  const [monthlyInvestmentValue, setMonthlyInvestmentValue] = useState<number>(30);
   const { language } = useLanguage();
   const { theme } = useTheme();
   
@@ -1031,7 +1031,7 @@ const MarketTrends: React.FC = () => {
   const translations = {
     pt: {
       title: 'Descubra Oportunidades de Mercado',
-      subtitle: 'Monitore tendências em tempo real no YouTube e Reddit. Transforme conversas em leads qualificados.',
+      subtitle: 'O complemento perfeito para menções de marca com IA! Identifique tendências antes que se tornem mainstream.',
       snowballTitle: 'O Poder do Conteúdo Perpétuo',
       snowballSubtitle: 'Cada comentário é um investimento que nunca para de gerar retorno',
       totalValue: 'Valor Total Gerado',
@@ -1107,7 +1107,7 @@ const MarketTrends: React.FC = () => {
     },
     en: {
       title: 'Discover Market Opportunities',
-      subtitle: 'Monitor real-time trends on YouTube and Reddit. Transform conversations into qualified leads.',
+      subtitle: 'The perfect complement to AI-powered brand mentions! Spot trends before they hit mainstream.',
       snowballTitle: 'The Power of Perpetual Content',
       snowballSubtitle: 'Every comment is an investment that never stops generating returns',
       totalValue: 'Total Value Generated',
@@ -1538,7 +1538,7 @@ const MarketTrends: React.FC = () => {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setMonthlyInvestmentValue(Math.max(100, monthlyInvestmentValue - 100))}
+                  onClick={() => setMonthlyInvestmentValue(Math.max(30, monthlyInvestmentValue - 10))}
                   style={{
                     background: 'rgba(255, 107, 107, 0.1)',
                     border: '2px solid rgba(255, 107, 107, 0.3)',
@@ -1577,7 +1577,7 @@ const MarketTrends: React.FC = () => {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setMonthlyInvestmentValue(monthlyInvestmentValue + 100)}
+                  onClick={() => setMonthlyInvestmentValue(monthlyInvestmentValue + 10)}
                   style={{
                     background: 'rgba(78, 205, 196, 0.1)',
                     border: '2px solid rgba(78, 205, 196, 0.3)',

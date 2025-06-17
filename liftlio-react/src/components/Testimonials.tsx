@@ -18,17 +18,24 @@ interface TestimonialsProps {
 }
 
 const Container = styled.section`
-  padding: 80px 20px;
-  background: ${props => props.theme.name === 'dark' 
-    ? 'linear-gradient(180deg, rgba(20, 20, 25, 0.9) 0%, rgba(30, 30, 35, 0.9) 100%)'
-    : 'linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%)'};
+  width: 100%;
+  padding: 100px 64px;
+  background: ${props => props.theme.colors.background};
   position: relative;
-  overflow: hidden;
+  
+  @media (max-width: 768px) {
+    padding: 60px 32px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 40px 16px;
+  }
 `;
 
 const Wrapper = styled.div`
-  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
+  position: relative;
 `;
 
 const Header = styled.div`
@@ -37,32 +44,40 @@ const Header = styled.div`
 `;
 
 const Title = styled.h2`
-  font-size: 3rem;
+  font-size: 42px;
   font-weight: 800;
-  margin-bottom: 20px;
-  background: linear-gradient(135deg, #2d3e50 0%, #00a9db 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  margin-bottom: 16px;
+  color: ${props => props.theme.colors.text.primary};
+  
+  span {
+    background: ${props => props.theme.colors.gradient.landing};
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
   
   @media (max-width: 768px) {
-    font-size: 2.5rem;
+    font-size: 32px;
   }
 `;
 
 const Subtitle = styled.p`
-  font-size: 1.25rem;
-  color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.7)' : '#6c757d'};
-  max-width: 600px;
+  font-size: 18px;
+  color: ${props => props.theme.colors.textSecondary};
+  line-height: 1.6;
   margin: 0 auto;
 `;
 
 const CarouselContainer = styled.div`
   position: relative;
-  padding: 0 60px;
+  overflow: hidden;
+  padding: 0 80px;
+  
+  @media (max-width: 1280px) {
+    padding: 0 60px;
+  }
   
   @media (max-width: 768px) {
-    padding: 0 40px;
+    padding: 0 50px;
   }
 `;
 
@@ -75,25 +90,27 @@ const CarouselTrack = styled.div<{ translateX: number }>`
 
 const TestimonialCard = styled.div`
   min-width: calc(33.333% - 20px);
-  background: ${props => props.theme.name === 'dark'
-    ? 'rgba(30, 30, 35, 0.8)'
-    : 'white'};
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: ${props => props.theme.name === 'dark'
-    ? '0 10px 30px rgba(0, 0, 0, 0.5)'
-    : '0 10px 30px rgba(0, 0, 0, 0.1)'};
-  border: 1px solid ${props => props.theme.name === 'dark'
-    ? 'rgba(255, 255, 255, 0.1)'
-    : 'rgba(0, 0, 0, 0.05)'};
+  background: ${props => props.theme.colors.cardBg};
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 10px 30px ${props => props.theme.name === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.1)'};
+  border: 1px solid ${props => props.theme.colors.borderLight};
   position: relative;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px ${props => props.theme.name === 'dark' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.15)'};
+  }
   
   @media (max-width: 1024px) {
     min-width: calc(50% - 15px);
+    padding: 30px;
   }
   
   @media (max-width: 768px) {
     min-width: 100%;
+    padding: 24px;
   }
 `;
 
@@ -101,15 +118,16 @@ const QuoteIcon = styled.div`
   position: absolute;
   top: 20px;
   right: 20px;
-  font-size: 2rem;
-  color: ${props => props.theme.name === 'dark' ? 'rgba(0, 169, 219, 0.2)' : 'rgba(0, 169, 219, 0.1)'};
+  font-size: 32px;
+  color: ${props => props.theme.colors.primaryAlpha};
+  opacity: 0.2;
 `;
 
 const TestimonialContent = styled.p`
-  font-size: 1.1rem;
+  font-size: 16px;
   line-height: 1.8;
-  color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#495057'};
-  margin-bottom: 20px;
+  color: ${props => props.theme.colors.textSecondary};
+  margin-bottom: 24px;
   font-style: italic;
 `;
 
@@ -121,16 +139,17 @@ const AuthorInfo = styled.div`
 `;
 
 const Avatar = styled.div`
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #00a9db, #0066cc);
+  background: ${props => props.theme.colors.gradient.landing};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 20px;
   color: white;
   font-weight: bold;
+  flex-shrink: 0;
 `;
 
 const AuthorDetails = styled.div`
@@ -138,16 +157,17 @@ const AuthorDetails = styled.div`
 `;
 
 const AuthorName = styled.h4`
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin: 0;
-  color: ${props => props.theme.name === 'dark' ? 'white' : '#2d3e50'};
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const AuthorRole = styled.p`
-  font-size: 0.9rem;
-  color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.6)' : '#6c757d'};
+  font-size: 14px;
+  color: ${props => props.theme.colors.textSecondary};
   margin: 0;
+  opacity: 0.8;
 `;
 
 const Rating = styled.div`
@@ -158,7 +178,7 @@ const Rating = styled.div`
 
 const StarIcon = styled.div`
   color: #ffc107;
-  font-size: 1.2rem;
+  font-size: 18px;
   display: inline-block;
 `;
 
@@ -166,12 +186,10 @@ const NavButton = styled.button<{ direction: 'left' | 'right' }>`
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  ${props => props.direction === 'left' ? 'left: 0' : 'right: 0'};
-  background: ${props => props.theme.name === 'dark'
-    ? 'rgba(0, 169, 219, 0.8)'
-    : '#00a9db'};
-  color: white;
-  border: none;
+  ${props => props.direction === 'left' ? 'left: -60px' : 'right: -60px'};
+  background: ${props => props.theme.colors.cardBg};
+  color: ${props => props.theme.colors.primary};
+  border: 2px solid ${props => props.theme.colors.borderLight};
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -180,12 +198,12 @@ const NavButton = styled.button<{ direction: 'left' | 'right' }>`
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 15px ${props => props.theme.name === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.1)'};
+  z-index: 2;
   
   &:hover {
-    background: ${props => props.theme.name === 'dark'
-      ? '#00a9db'
-      : '#0088cc'};
+    background: ${props => props.theme.colors.primary};
+    color: white;
     transform: translateY(-50%) scale(1.1);
   }
   
@@ -193,9 +211,14 @@ const NavButton = styled.button<{ direction: 'left' | 'right' }>`
     transform: translateY(-50%) scale(0.95);
   }
   
+  @media (max-width: 1280px) {
+    ${props => props.direction === 'left' ? 'left: 10px' : 'right: 10px'};
+  }
+  
   @media (max-width: 768px) {
     width: 40px;
     height: 40px;
+    ${props => props.direction === 'left' ? 'left: 5px' : 'right: 5px'};
   }
 `;
 
@@ -207,20 +230,21 @@ const Indicators = styled.div`
 `;
 
 const Indicator = styled.button<{ active: boolean }>`
-  width: ${props => props.active ? '30px' : '10px'};
-  height: 10px;
-  border-radius: 5px;
+  width: ${props => props.active ? '32px' : '8px'};
+  height: 8px;
+  border-radius: 4px;
   border: none;
   background: ${props => props.active
-    ? '#00a9db'
-    : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)'};
+    ? props.theme.colors.primary
+    : props.theme.colors.borderLight};
   cursor: pointer;
   transition: all 0.3s ease;
   
   &:hover {
     background: ${props => props.active
-      ? '#0088cc'
-      : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.3)'};
+      ? props.theme.colors.primary
+      : props.theme.colors.textSecondary};
+    opacity: ${props => props.active ? 1 : 0.5};
   }
 `;
 
@@ -504,6 +528,7 @@ const testimonialsData = {
 const Testimonials: React.FC<TestimonialsProps> = ({ language = 'pt' }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(3);
+  const [isPaused, setIsPaused] = useState(false);
   const testimonials = testimonialsData[language];
 
   useEffect(() => {
@@ -521,6 +546,20 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language = 'pt' }) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Auto-play carousel
+  useEffect(() => {
+    if (!isPaused) {
+      const interval = setInterval(() => {
+        setCurrentIndex(prev => {
+          const maxIndex = Math.ceil(testimonials.length / itemsPerView) - 1;
+          return prev < maxIndex ? prev + 1 : 0;
+        });
+      }, 4000); // Change every 4 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [isPaused, testimonials.length, itemsPerView]);
 
   const maxIndex = Math.ceil(testimonials.length / itemsPerView) - 1;
 
@@ -542,8 +581,8 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language = 'pt' }) => {
         <Header>
           <Title>
             {language === 'pt' 
-              ? 'O Que Nossos Clientes Dizem' 
-              : 'What Our Clients Say'}
+              ? <>O Que Nossos <span>Clientes Dizem</span></> 
+              : <>What Our <span>Clients Say</span></>}
           </Title>
           <Subtitle>
             {language === 'pt'
@@ -552,7 +591,10 @@ const Testimonials: React.FC<TestimonialsProps> = ({ language = 'pt' }) => {
           </Subtitle>
         </Header>
 
-        <CarouselContainer>
+        <CarouselContainer
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
           <NavButton direction="left" onClick={handlePrev}>
             <IconComponent icon={FaChevronLeft} />
           </NavButton>

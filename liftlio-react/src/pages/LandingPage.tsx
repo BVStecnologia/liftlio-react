@@ -9,9 +9,16 @@ import { renderIcon } from '../utils/IconHelper';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import Testimonials from '../components/Testimonials';
-import MarketTrends from '../components/MarketTrends';
 import TrendingTopicsCarousel from '../components/TrendingTopicsCarousel';
 import DecliningTopicsCarousel from '../components/DecliningTopicsCarousel';
+import InteractiveProof from '../components/InteractiveProof';
+import NumbersThatMatter from '../components/NumbersThatMatter';
+import CompareResults from '../components/CompareResults';
+import GuaranteeSection from '../components/GuaranteeSection';
+import ProblemSection from '../components/ProblemSection';
+import ObjectionHandling from '../components/ObjectionHandling';
+import BreakthroughSection from '../components/BreakthroughSection';
+import ForWhoSection from '../components/ForWhoSection';
 
 // Internacionalização
 const translations = {
@@ -23,10 +30,10 @@ const translations = {
       login: "Sign In",
     },
     hero: {
-      badge: "Organic Traffic Snowball Effect",
-      title: "Multiply Your Organic Traffic",
-      titleHighlight: "Exponentially",
-      subtitle: "Liftlio finds videos about your niche and responds to comments from qualified leads. Monitor relevant channels to comment as soon as videos are posted, creating a snowball effect of organic traffic that grows forever.",
+      badge: "Organic Word-of-Mouth at Scale",
+      title: "At Last, A Way to Scale Word-of-Mouth Recommendations",
+      titleHighlight: "Without Paying for Ads",
+      subtitle: "Liftlio utilizes AI to get your brand mentioned in genuine conversations across the web, allowing your product to be discovered organically at scale.",
       cta: {
         primary: "Start Growing Today",
         secondary: "See How It Works"
@@ -51,20 +58,20 @@ const translations = {
           description: "Advanced AI analyzes context and sentiment, helping you prioritize responses and identify crises quickly."
         },
         {
-          title: "Human-Like Comments",
-          description: "AI creates genuine, helpful comments that cite specific timestamps and provide real value - just like a real user would."
+          title: "Value-Adding Comments",
+          description: "AI creates helpful comments with specific content references, always prioritizing community help."
         },
         {
-          title: "Snowball Traffic Effect",
-          description: "Comments stay forever on videos, continuously bringing qualified leads to your business month after month."
+          title: "Self-Growing Traffic",
+          description: "Each comment continues generating qualified traffic month after month, at no additional cost."
         },
         {
-          title: "Intelligent Scheduling",
-          description: "Posts are scheduled at different times daily, mixing promotional and non-promotional content to appear genuinely human."
+          title: "Smart Automation",
+          description: "Automated system that maintains variety and naturalness in interactions."
         },
         {
-          title: "No Blocks, No Bans",
-          description: "Our AI behaves exactly like a helpful YouTube user, not a salesperson. Zero risk of channel penalties."
+          title: "Platform Approved",
+          description: "Fully compliant with platform guidelines. No risk of penalties or blocks."
         }
       ]
     },
@@ -77,7 +84,7 @@ const translations = {
     exponential: {
       title: "The Organic Traffic",
       titleHighlight: "Snowball Effect",
-      subtitle: "Unlike paid ads that stop when you stop paying, Liftlio creates permanent assets that grow exponentially",
+      subtitle: "See how each comment multiplies in value over time, creating unique compound growth",
       items: [
         {
           month: "Month 1",
@@ -101,10 +108,10 @@ const translations = {
         }
       ],
       benefits: [
-        "Comments never expire - they work 24/7 forever",
+        "Build growing authority in your niche",
         "Zero additional cost as traffic grows",
-        "Builds authority in your niche over time",
-        "Each comment is a permanent salesperson"
+        "Compound ROI month after month",
+        "Each comment generates continuous value"
       ]
     },
     liveDemo: {
@@ -125,8 +132,8 @@ const translations = {
       subtitle: "Our intelligent 6-step process creates an organic traffic snowball that grows forever",
       steps: [
         {
-          title: "Channel Monitoring",
-          description: "Monitor relevant channels 24/7. Get alerts the moment new videos are posted"
+          title: "Train It Once",
+          description: "Liftlio learns about your product in seconds"
         },
         {
           title: "Video Analysis",
@@ -137,16 +144,16 @@ const translations = {
           description: "Identifies comments from potential customers asking questions or seeking solutions"
         },
         {
-          title: "Human-Like Response",
-          description: "Creates helpful comments citing specific timestamps (e.g., 'at 3:42 they mention...')"
+          title: "Value Creation",
+          description: "Generates specific, contextualized comments that genuinely help other users"
         },
         {
-          title: "Natural Behavior",
-          description: "Mixes promotional and non-promotional comments to appear genuinely helpful"
+          title: "Smart Diversification",
+          description: "Varies interaction types to maintain authenticity and avoid repetitive patterns"
         },
         {
-          title: "Snowball Effect",
-          description: "Comments stay forever, continuously bringing qualified traffic as videos grow"
+          title: "Compound Growth",
+          description: "The more videos commented, the greater your brand's authority and visibility in the niche"
         }
       ]
     },
@@ -158,41 +165,38 @@ const translations = {
       plans: {
         starter: {
           name: "Starter",
-          description: "Perfect for small businesses",
+          description: "Perfect to get started",
           mentions: "mentions/month",
           features: [
-            "Up to 80 mentions/month",
-            "3 monitored channels",
-            "Sentiment analysis",
-            "Basic dashboard",
-            "Email support"
+            "75 brand mentions monthly",
+            "in high-engagement discussions",
+            "10 Liftlio AI questions per month",
+            "Trending topics monitoring"
           ]
         },
         professional: {
-          name: "Professional",
-          description: "Ideal for growing companies",
+          name: "Growth",
+          description: "Most popular",
           mentions: "mentions/month",
-          badge: "Most Popular",
+          badge: "⭐ Most Popular",
           features: [
-            "Up to 300 mentions/month",
-            "Unlimited channels",
-            "Advanced AI leads",
-            "Custom reports",
-            "API access",
-            "Priority support"
+            "200 brand mentions per month",
+            "with advanced targeting",
+            "Detailed analytics",
+            "Approval workflows",
+            "30 Liftlio AI questions per month",
+            "Trending topics monitoring"
           ]
         },
         enterprise: {
-          name: "Enterprise",
-          description: "For large organizations",
+          name: "Scale",
+          description: "For large teams",
           mentions: "mentions/month",
           features: [
-            "Up to 500 mentions/month",
-            "All Professional features",
-            "Custom AI training",
-            "Dedicated account manager",
-            "SLA guaranteed",
-            "White-label options"
+            "450 brand mentions per month",
+            "with full customization",
+            "100 Liftlio AI questions per month",
+            "Trending topics monitoring"
           ]
         }
       },
@@ -221,11 +225,11 @@ const translations = {
       ]
     },
     cta: {
-      title: "Ready to",
-      titleHighlight: "Transform",
-      titleEnd: "Your Mentions?",
-      subtitle: "Join thousands of companies already converting mentions into real business opportunities",
-      button: "Start Growing Your Traffic Today"
+      title: "Trust wins.",
+      titleHighlight: "Let AI",
+      titleEnd: "earn it for you.",
+      subtitle: "Every day, conversations happen where your ideal customers ask for recommendations. Tomorrow, more discussions will start. More questions will be asked. More buying decisions will be influenced by peer recommendations. The question is: will your brand be part of those conversations?",
+      button: "→ Try Liftlio"
     },
     footer: {
       description: "Transforming mentions into business opportunities through intelligent monitoring and real-time analysis.",
@@ -256,10 +260,10 @@ const translations = {
       login: "Entrar",
     },
     hero: {
-      badge: "Efeito Bola de Neve de Tráfego Orgânico",
-      title: "Multiplique Seu Tráfego Orgânico",
-      titleHighlight: "Exponencialmente",
-      subtitle: "O Liftlio encontra vídeos sobre seu nicho e responde comentários de leads qualificados. Monitora canais relevantes para comentar assim que vídeos são postados, criando uma bola de neve de tráfego orgânico que cresce para sempre.",
+      badge: "Boca a Boca Orgânico em Escala",
+      title: "Finalmente, uma maneira de aumentar as recomendações boca a boca",
+      titleHighlight: "sem pagar por anúncios",
+      subtitle: "A Liftlio utiliza IA para fazer com que sua marca seja mencionada em conversas genuínas na web, permitindo que seu produto seja descoberto organicamente em grande escala.",
       cta: {
         primary: "Comece a Crescer Hoje",
         secondary: "Veja Como Funciona"
@@ -284,20 +288,20 @@ const translations = {
           description: "IA avançada analisa contexto e sentimento, ajudando você a priorizar respostas rapidamente."
         },
         {
-          title: "Comentários Humanizados",
-          description: "IA cria comentários genuínos e úteis que citam timestamps específicos e fornecem valor real - como um usuário real faria."
+          title: "Comentários que Agregam Valor",
+          description: "IA cria comentários úteis com referências específicas do conteúdo, sempre priorizando ajudar a comunidade."
         },
         {
-          title: "Efeito Bola de Neve de Tráfego",
-          description: "Comentários ficam para sempre nos vídeos, trazendo leads qualificados continuamente para seu negócio mês após mês."
+          title: "Tráfego que Cresce Sozinho",
+          description: "Cada comentário continua gerando tráfego qualificado mês após mês, sem custo adicional."
         },
         {
-          title: "Agendamento Inteligente",
-          description: "Posts agendados em horários diferentes diariamente, misturando conteúdo promocional e não-promocional para parecer genuinamente humano."
+          title: "Automação Inteligente",
+          description: "Sistema automatizado que mantém variedade e naturalidade nas interações."
         },
         {
-          title: "Sem Bloqueios, Sem Banimentos",
-          description: "Nossa IA se comporta exatamente como um usuário útil do YouTube, não como um vendedor. Zero risco de penalidades."
+          title: "Aprovado pelas Plataformas",
+          description: "Totalmente compatível com as diretrizes das plataformas. Sem riscos de penalidades ou bloqueios."
         }
       ]
     },
@@ -310,7 +314,7 @@ const translations = {
     exponential: {
       title: "O Efeito",
       titleHighlight: "Bola de Neve",
-      subtitle: "Diferente de anúncios pagos que param quando você para de pagar, o Liftlio cria ativos permanentes que crescem exponencialmente",
+      subtitle: "Veja como cada comentário se multiplica em valor ao longo do tempo, criando um crescimento composto único",
       items: [
         {
           month: "Mês 1",
@@ -334,10 +338,10 @@ const translations = {
         }
       ],
       benefits: [
-        "Comentários nunca expiram - trabalham 24/7 para sempre",
+        "Constrói autoridade crescente no seu nicho",
         "Zero custo adicional conforme tráfego cresce",
-        "Constrói autoridade no seu nicho ao longo do tempo",
-        "Cada comentário é um vendedor permanente"
+        "ROI composto mês após mês",
+        "Cada comentário gera valor contínuo"
       ]
     },
     liveDemo: {
@@ -358,8 +362,8 @@ const translations = {
       subtitle: "Nosso processo inteligente de 6 etapas cria uma bola de neve de tráfego orgânico que cresce para sempre",
       steps: [
         {
-          title: "Monitoramento de Canais",
-          description: "Monitora canais relevantes 24/7. Recebe alertas no momento que novos vídeos são postados"
+          title: "Treine uma vez",
+          description: "O Liftlio aprende sobre seu produto em segundos"
         },
         {
           title: "Análise de Vídeos",
@@ -370,16 +374,16 @@ const translations = {
           description: "Identifica comentários de potenciais clientes fazendo perguntas ou buscando soluções"
         },
         {
-          title: "Resposta Humanizada",
-          description: "Cria comentários úteis citando timestamps específicos (ex: 'aos 3:42 eles mencionam...')"
+          title: "Criação de Valor",
+          description: "Gera comentários específicos e contextualizados que realmente ajudam outros usuários"
         },
         {
-          title: "Comportamento Natural",
-          description: "Mistura comentários promocionais e não-promocionais para parecer genuinamente útil"
+          title: "Diversificação Inteligente",
+          description: "Varia tipos de interação para manter autenticidade e evitar padrões repetitivos"
         },
         {
-          title: "Efeito Bola de Neve",
-          description: "Comentários ficam para sempre, trazendo tráfego qualificado continuamente conforme vídeos crescem"
+          title: "Crescimento Composto",
+          description: "Quanto mais vídeos comentados, maior a autoridade e visibilidade da sua marca no nicho"
         }
       ]
     },
@@ -390,42 +394,39 @@ const translations = {
       monthly: "por mês",
       plans: {
         starter: {
-          name: "Iniciante",
-          description: "Perfeito para pequenas empresas",
+          name: "Inicial",
+          description: "Perfeito para começar",
           mentions: "menções/mês",
           features: [
-            "Até 80 menções/mês",
-            "3 canais monitorados",
-            "Análise de sentimentos",
-            "Dashboard básico",
-            "Suporte por email"
+            "75 menções à marca mensalmente",
+            "em discussões de alto engajamento",
+            "10 perguntas sobre IA da Liftlio por mês",
+            "Monitoramento de tópicos em alta"
           ]
         },
         professional: {
-          name: "Profissional",
-          description: "Ideal para empresas em crescimento",
+          name: "Crescimento",
+          description: "Mais popular",
           mentions: "menções/mês",
-          badge: "Mais Popular",
+          badge: "⭐ Mais Popular",
           features: [
-            "Até 300 menções/mês",
-            "Canais ilimitados",
-            "IA avançada de leads",
-            "Relatórios personalizados",
-            "Acesso à API",
-            "Suporte prioritário"
+            "200 menções de marca por mês",
+            "com segmentação avançada",
+            "Análises detalhadas",
+            "Fluxos de trabalho de aprovação",
+            "30 perguntas sobre a Liftlio AI por mês",
+            "Monitoramento de tópicos em alta"
           ]
         },
         enterprise: {
-          name: "Empresarial",
-          description: "Para grandes organizações",
+          name: "Escala",
+          description: "Para grandes equipes",
           mentions: "menções/mês",
           features: [
-            "Até 500 menções/mês",
-            "Todos recursos Professional",
-            "IA personalizada",
-            "Gerente de conta dedicado",
-            "SLA garantido",
-            "Opções white-label"
+            "450 menções à marca por mês",
+            "com personalização completa",
+            "100 perguntas sobre a Liftlio AI por mês",
+            "Monitoramento de tópicos em alta"
           ]
         }
       },
@@ -454,11 +455,11 @@ const translations = {
       ]
     },
     cta: {
-      title: "Pronto para",
-      titleHighlight: "Transformar",
-      titleEnd: "suas Menções?",
-      subtitle: "Junte-se a milhares de empresas que já estão convertendo menções em oportunidades reais",
-      button: "Comece a Crescer seu Tráfego Hoje"
+      title: "A confiança vence.",
+      titleHighlight: "Deixe a IA",
+      titleEnd: "conquistar isso para você.",
+      subtitle: "Todos os dias acontecem conversas em que seus clientes ideais pedem recomendações. Amanhã, mais discussões começarão. Mais perguntas serão feitas. Mais decisões de compra serão influenciadas pelas recomendações dos colegas. A questão é: sua marca fará parte dessas conversas?",
+      button: "→ Experimente o Liftlio"
     },
     footer: {
       description: "Transformando menções em oportunidades de negócio através de monitoramento inteligente e análise em tempo real.",
@@ -723,18 +724,20 @@ const Badge = styled.div`
 `;
 
 const Title = styled.h1`
-  font-size: 72px;
+  font-size: 56px;
   font-weight: 900;
-  line-height: 1.1;
+  line-height: 1.05;
   margin-bottom: 24px;
-  letter-spacing: -2px;
+  letter-spacing: -1.5px;
 
   @media (max-width: 768px) {
-    font-size: 48px;
+    font-size: 42px;
+    line-height: 1.1;
   }
 
   @media (max-width: 480px) {
-    font-size: 36px;
+    font-size: 32px;
+    line-height: 1.15;
   }
 `;
 
@@ -2149,19 +2152,6 @@ const LandingPage: React.FC = () => {
                 Dashboard {lang === 'pt' ? 'em Tempo Real' : 'Real-Time'}
               </h3>
               
-              {/* Imagem do Dashboard */}
-              <DashboardImage 
-                src={theme.name === 'dark' 
-                  ? "/imagens/dashboard-hero-dark.png" 
-                  : "/imagens/dashboard-hero-light.png"
-                }
-                alt="Liftlio Dashboard"
-                onError={(e) => {
-                  // Fallback se a imagem não existir
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-              
               <MetricsGrid>
                 <MetricCard>
                   <MetricValue>2.8K</MetricValue>
@@ -2219,92 +2209,16 @@ const LandingPage: React.FC = () => {
           </TrustItem>
         </TrustContainer>
       </TrustSection>
+      
+      {/* As seções removidas: Features, Stats, Declining Topics, NumbersThatMatter, CompareResults, GuaranteeSection */}
 
-      {/* Trending Topics Carousel */}
-      <TrendingTopicsCarousel />
+      {/* Problem Section */}
+      <ProblemSection />
+      
+      {/* Breakthrough Section - O Avanço */}
+      <BreakthroughSection />
 
-      {/* Declining Topics Carousel */}
-      <DecliningTopicsCarousel />
-
-      {/* Market Trends Section */}
-      <MarketTrends key={lang} />
-
-      <FeaturesSection id="features">
-        <FeaturesContainer>
-          <SectionHeader>
-            <SectionTitle>
-              {t.features.title} <Gradient>{t.features.titleHighlight}</Gradient>
-            </SectionTitle>
-            <SectionDescription>
-              {t.features.subtitle}
-            </SectionDescription>
-          </SectionHeader>
-          
-          <FeaturesGrid>
-            <FeatureCard>
-              <FeatureIcon>
-                {renderIcon(FaBell)}
-              </FeatureIcon>
-              <FeatureTitle>{t.features.items[0].title}</FeatureTitle>
-              <FeatureDescription>
-                {t.features.items[0].description}
-              </FeatureDescription>
-            </FeatureCard>
-
-            <FeatureCard>
-              <FeatureIcon>
-                {renderIcon(FaChartLine)}
-              </FeatureIcon>
-              <FeatureTitle>{t.features.items[1].title}</FeatureTitle>
-              <FeatureDescription>
-                {t.features.items[1].description}
-              </FeatureDescription>
-            </FeatureCard>
-
-            <FeatureCard>
-              <FeatureIcon>
-                {renderIcon(FaRocket)}
-              </FeatureIcon>
-              <FeatureTitle>{t.features.items[2].title}</FeatureTitle>
-              <FeatureDescription>
-                {t.features.items[2].description}
-              </FeatureDescription>
-            </FeatureCard>
-
-            <FeatureCard>
-              <FeatureIcon>
-                {renderIcon(FaYoutube)}
-              </FeatureIcon>
-              <FeatureTitle>{t.features.items[3].title}</FeatureTitle>
-              <FeatureDescription>
-                {t.features.items[3].description}
-              </FeatureDescription>
-            </FeatureCard>
-
-            <FeatureCard>
-              <FeatureIcon>
-                {renderIcon(MdAutoGraph)}
-              </FeatureIcon>
-              <FeatureTitle>{t.features.items[4].title}</FeatureTitle>
-              <FeatureDescription>
-                {t.features.items[4].description}
-              </FeatureDescription>
-            </FeatureCard>
-
-            <FeatureCard>
-              <FeatureIcon>
-                {renderIcon(HiLightningBolt)}
-              </FeatureIcon>
-              <FeatureTitle>{t.features.items[5].title}</FeatureTitle>
-              <FeatureDescription>
-                {t.features.items[5].description}
-              </FeatureDescription>
-            </FeatureCard>
-          </FeaturesGrid>
-        </FeaturesContainer>
-      </FeaturesSection>
-
-      {/* Process Section */}
+      {/* Process Section - Como Funciona */}
       <ProcessSection>
         <SectionHeader>
           <SectionTitle>
@@ -2329,61 +2243,25 @@ const LandingPage: React.FC = () => {
         </ProcessGrid>
       </ProcessSection>
 
-      <StatsSection>
-        <StatsGrid>
-          <StatItem>
-            <StatNumber>10M+</StatNumber>
-            <StatLabel>{t.stats.monitored}</StatLabel>
-          </StatItem>
-          <StatItem>
-            <StatNumber>50K+</StatNumber>
-            <StatLabel>{t.stats.leads}</StatLabel>
-          </StatItem>
-          <StatItem>
-            <StatNumber>95%</StatNumber>
-            <StatLabel>{t.stats.accuracy}</StatLabel>
-          </StatItem>
-          <StatItem>
-            <StatNumber>24/7</StatNumber>
-            <StatLabel>{t.stats.monitoring}</StatLabel>
-          </StatItem>
-        </StatsGrid>
-      </StatsSection>
+      {/* Interactive Proof Section */}
+      <InteractiveProof />
 
-      {/* Exponential Growth Section */}
-      <ExponentialSection>
-        <ExponentialContent>
-          <SectionHeader>
-            <SectionTitle>
-              {t.exponential.title} <Gradient>{t.exponential.titleHighlight}</Gradient>
-            </SectionTitle>
-            <SectionDescription>
-              {t.exponential.subtitle}
-            </SectionDescription>
-          </SectionHeader>
+      {/* Trending Topics */}
+      <TrendingTopicsCarousel />
+      
+      {/* Declining Topics Carousel */}
+      <DecliningTopicsCarousel />
+      
+      {/* For Who Section - Para Quem É */}
+      <ForWhoSection />
 
-          <ExponentialGrid>
-            {t.exponential.items.map((item, index) => (
-              <ExponentialItem key={index}>
-                <ExponentialMonth>{item.month}</ExponentialMonth>
-                <ExponentialValue>{item.value}</ExponentialValue>
-                <ExponentialDescription>{item.description}</ExponentialDescription>
-              </ExponentialItem>
-            ))}
-          </ExponentialGrid>
+      {/* Objection Handling Section */}
+      <ObjectionHandling />
 
-          <BenefitsList>
-            {t.exponential.benefits.map((benefit, index) => (
-              <BenefitItem key={index}>
-                <BenefitIcon>
-                  {renderIcon(FaCheck)}
-                </BenefitIcon>
-                <BenefitText>{benefit}</BenefitText>
-              </BenefitItem>
-            ))}
-          </BenefitsList>
-        </ExponentialContent>
-      </ExponentialSection>
+      {/* Testimonials Section - Prova Social */}
+      <div id="testimonials">
+        <Testimonials language={lang} />
+      </div>
 
       <PricingSection id="pricing">
         <SectionHeader>
@@ -2399,7 +2277,7 @@ const LandingPage: React.FC = () => {
           <PricingCard>
             <PricingPlan>{t.pricing.plans.starter.name}</PricingPlan>
             <PricingPrice>
-              $30<span>/{t.pricing.monthly}</span>
+              $49<span>/{t.pricing.monthly}</span>
             </PricingPrice>
             <PricingDescription>
               {t.pricing.plans.starter.description}
@@ -2420,7 +2298,7 @@ const LandingPage: React.FC = () => {
             <PricingBadge>{t.pricing.plans.professional.badge}</PricingBadge>
             <PricingPlan>{t.pricing.plans.professional.name}</PricingPlan>
             <PricingPrice>
-              $100<span>/{t.pricing.monthly}</span>
+              $99<span>/{t.pricing.monthly}</span>
             </PricingPrice>
             <PricingDescription>
               {t.pricing.plans.professional.description}
@@ -2440,7 +2318,7 @@ const LandingPage: React.FC = () => {
           <PricingCard>
             <PricingPlan>{t.pricing.plans.enterprise.name}</PricingPlan>
             <PricingPrice>
-              $200<span>/{t.pricing.monthly}</span>
+              $199<span>/{t.pricing.monthly}</span>
             </PricingPrice>
             <PricingDescription>
               {t.pricing.plans.enterprise.description}
@@ -2457,11 +2335,11 @@ const LandingPage: React.FC = () => {
             </PrimaryButton>
           </PricingCard>
         </PricingGrid>
+        
+        <div style={{ textAlign: 'center', marginTop: '32px', fontSize: '16px', color: theme.colors.textSecondary }}>
+          {lang === 'pt' ? 'Cancelar a qualquer momento. Sem contratos ou compromissos de longo prazo.' : 'Cancel anytime. No contracts or long-term commitments.'}
+        </div>
       </PricingSection>
-
-      <div id="testimonials">
-        <Testimonials language={lang} />
-      </div>
 
       <CTASection style={{ background: theme.name === 'dark' ? '#1a1a1a' : '#f5f5f5' }}>
         <CTAContent>
