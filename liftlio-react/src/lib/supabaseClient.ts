@@ -15,8 +15,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Função auxiliar para chamar RPCs enquanto o TypeScript é atualizado
 export async function callRPC(functionName: string, params: Record<string, any>) {
-  console.log(`Chamando RPC: ${functionName} com parâmetros:`, params);
-  
   return retryNetworkRequest(async () => {
     const response = await safeFetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
       method: 'POST',
@@ -32,12 +30,10 @@ export async function callRPC(functionName: string, params: Record<string, any>)
     // Verificar se a resposta HTTP foi bem-sucedida
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Erro na chamada RPC (${functionName}):`, response.status, errorText);
       throw new Error(`Error ${response.status}: ${errorText}`);
     }
     
     const data = await response.json();
-    console.log(`Resposta da RPC (${functionName}):`, data);
     return data;
   }, 3, 1000);
 }
@@ -56,9 +52,11 @@ export async function callEdgeFunction(functionName: string, params: Record<stri
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
       throw new Error(`Error calling edge function ${functionName}: ${response.statusText}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    return data;
   }, 3, 1000);
 }
