@@ -596,16 +596,42 @@ const InteractiveProof: React.FC = () => {
       // Call edge function
       const startTime = Date.now();
       
-      // Detectar IP do cliente (será obtido no backend, mas enviamos para compatibilidade)
+      // Detectar IP do cliente
+      let clientIP = '127.0.0.1'; // Default para desenvolvimento
+      
+      try {
+        // Em produção, tentar obter o IP público
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+          try {
+            // Opção 1: api.ipify.org
+            const ipResponse = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipResponse.json();
+            clientIP = ipData.ip;
+          } catch {
+            // Opção 2: Fallback para ipapi.co
+            const ipResponse = await fetch('https://ipapi.co/json/');
+            const ipData = await ipResponse.json();
+            clientIP = ipData.ip;
+          }
+        }
+      } catch (error) {
+        console.error('Error getting IP:', error);
+        // Se ambos falharem, mostrar erro ao usuário
+        setError('Unable to detect your IP address. Please try again later.');
+        setLoading(false);
+        return;
+      }
+      
       const requestBody: any = {
         url: normalizedUrl,
         language: language
       };
       
-      // Em desenvolvimento, enviar IP local
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        requestBody.ip = '127.0.0.1';
+      // Só adicionar IP se conseguimos obter
+      if (clientIP) {
+        requestBody.ip = clientIP;
       }
+      
       
       const response = await callEdgeFunction('analyze-url', requestBody);
       
@@ -648,9 +674,15 @@ const InteractiveProof: React.FC = () => {
           setError(t.errors.generic);
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error calling edge function:', err);
-      setError(t.errors.generic);
+      
+      // Tratamento específico para erro 500
+      if (err.status === 500 || err.message?.includes('500')) {
+        setError('Server error: The server encountered an error processing your request. Please try again later.');
+      } else {
+        setError(t.errors.generic);
+      }
     } finally {
       setLoading(false);
     }
