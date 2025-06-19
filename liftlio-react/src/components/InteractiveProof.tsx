@@ -27,7 +27,8 @@ const translations = {
     errors: {
       invalidUrl: "Please enter a valid URL (e.g., https://example.com)",
       unreachable: "Unable to access this website. Please check the URL and try again.",
-      generic: "Error generating simulation. Please try again."
+      generic: "Error generating simulation. Please try again.",
+      rateLimit: "You've reached the limit of 3 analyses per day. Try again tomorrow!"
     },
     videoFound: "Video Found",
     leadComment: "Potential Customer Comment",
@@ -59,7 +60,8 @@ const translations = {
     errors: {
       invalidUrl: "Por favor, insira uma URL válida (ex: https://exemplo.com)",
       unreachable: "Não foi possível acessar este site. Verifique a URL e tente novamente.",
-      generic: "Erro ao gerar simulação. Por favor, tente novamente."
+      generic: "Erro ao gerar simulação. Por favor, tente novamente.",
+      rateLimit: "Você atingiu o limite de 3 análises por dia. Tente novamente amanhã!"
     },
     videoFound: "Vídeo Encontrado",
     leadComment: "Comentário de Cliente Potencial",
@@ -535,6 +537,7 @@ const InteractiveProof: React.FC = () => {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [rateLimitInfo, setRateLimitInfo] = useState<{remaining?: number; reset?: string} | null>(null);
   const t = translations[language as keyof typeof translations];
 
   const normalizeUrl = (inputUrl: string): string => {
@@ -592,10 +595,19 @@ const InteractiveProof: React.FC = () => {
 
       // Call edge function
       const startTime = Date.now();
-      const response = await callEdgeFunction('analyze-url', {
+      
+      // Detectar IP do cliente (será obtido no backend, mas enviamos para compatibilidade)
+      const requestBody: any = {
         url: normalizedUrl,
         language: language
-      });
+      };
+      
+      // Em desenvolvimento, enviar IP local
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        requestBody.ip = '127.0.0.1';
+      }
+      
+      const response = await callEdgeFunction('analyze-url', requestBody);
       
       // Ensure minimum loading time for better UX
       const elapsedTime = Date.now() - startTime;
@@ -618,7 +630,19 @@ const InteractiveProof: React.FC = () => {
       } else {
         // Handle specific error types
         const errorMessage = response.error || '';
-        if (errorMessage.includes('Jina AI error') || errorMessage.includes('fetch')) {
+        
+        // Verificar se é erro de rate limit
+        if (response.status === 429 || errorMessage.includes('limite de 3 análises') || errorMessage.includes('limit of 3 analyses')) {
+          setError(t.errors.rateLimit);
+          
+          // Salvar informações de rate limit se disponíveis
+          if (response.headers) {
+            setRateLimitInfo({
+              remaining: parseInt(response.headers['X-RateLimit-Remaining'] || '0'),
+              reset: response.headers['X-RateLimit-Reset']
+            });
+          }
+        } else if (errorMessage.includes('Jina AI error') || errorMessage.includes('fetch')) {
           setError(t.errors.unreachable);
         } else {
           setError(t.errors.generic);
