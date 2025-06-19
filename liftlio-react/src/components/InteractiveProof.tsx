@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { FaArrowRight, FaSpinner, FaYoutube, FaUser, FaRobot, FaChartLine, FaSearch, FaComments, FaBrain, FaGlobe } from 'react-icons/fa';
+import { FaArrowRight, FaSpinner, FaYoutube, FaUser, FaRobot, FaChartLine, FaSearch, FaComments, FaBrain, FaGlobe, FaInfoCircle } from 'react-icons/fa';
 import { renderIcon } from '../utils/IconHelper';
 import { useLanguage } from '../context/LanguageContext';
 import { callEdgeFunction } from '../lib/supabaseClient';
@@ -10,6 +10,7 @@ const translations = {
     title: "See Liftlio in action with your product",
     subtitle: "Free trial. No signup. See a real simulation now.",
     placeholder: "Enter your website URL...",
+    tooltip: "For best results, use a page with detailed content about your product or service. Landing pages with clear value propositions work best!",
     button: "Show Me How Liftlio Works",
     loading: "Analyzing your market...",
     loadingSteps: [
@@ -41,6 +42,7 @@ const translations = {
     title: "Veja o Liftlio em ação com seu produto",
     subtitle: "Teste grátis. Sem cadastro. Veja uma simulação real agora.",
     placeholder: "Digite a URL do seu site...",
+    tooltip: "Para melhores resultados, use uma página com conteúdo detalhado sobre seu produto ou serviço. Landing pages com propostas de valor claras funcionam melhor!",
     button: "Mostre Como o Liftlio Funciona",
     loading: "Analisando seu mercado...",
     loadingSteps: [
@@ -160,15 +162,76 @@ const InputContainer = styled.div`
   display: flex;
   gap: 16px;
   margin-bottom: 40px;
+  position: relative;
   
   @media (max-width: 640px) {
     flex-direction: column;
   }
 `;
 
-const Input = styled.input<{ hasError?: boolean }>`
+const InputWrapper = styled.div`
   flex: 1;
-  padding: 16px 24px;
+  position: relative;
+`;
+
+const TooltipIcon = styled.div`
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: ${props => props.theme.colors.textSecondary};
+  cursor: help;
+  transition: color 0.3s ease;
+  font-size: 18px;
+  z-index: 1;
+  
+  &:hover {
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const Tooltip = styled.div<{ show: boolean }>`
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  background: ${props => props.theme.colors.cardBg};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  border-radius: 8px;
+  padding: 12px 16px;
+  max-width: 300px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: ${props => props.theme.colors.text.primary};
+  box-shadow: 0 4px 20px ${props => props.theme.colors.shadowMedium};
+  opacity: ${props => props.show ? 1 : 0};
+  visibility: ${props => props.show ? 'visible' : 'hidden'};
+  transform: translateY(${props => props.show ? '0' : '10px'});
+  transition: all 0.3s ease;
+  z-index: 10;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    right: 20px;
+    border: 8px solid transparent;
+    border-top-color: ${props => props.theme.colors.cardBg};
+  }
+  
+  @media (max-width: 640px) {
+    right: auto;
+    left: 0;
+    
+    &::after {
+      right: auto;
+      left: 20px;
+    }
+  }
+`;
+
+const Input = styled.input<{ hasError?: boolean }>`
+  width: 100%;
+  padding: 16px 48px 16px 24px;
   font-size: 16px;
   border: 2px solid ${props => props.hasError ? '#ff4444' : props.theme.colors.borderLight};
   border-radius: 8px;
@@ -471,6 +534,7 @@ const InteractiveProof: React.FC = () => {
   const [loadingStep, setLoadingStep] = useState(0);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
   const t = translations[language as keyof typeof translations];
 
   const normalizeUrl = (inputUrl: string): string => {
@@ -580,18 +644,30 @@ const InteractiveProof: React.FC = () => {
         
         <form onSubmit={handleSubmit}>
           <InputContainer>
-            <Input
-              type="text"
-              placeholder={t.placeholder}
-              value={url}
-              onChange={(e) => {
-                setUrl(e.target.value);
-                if (error) setError(null); // Clear error when user types
-              }}
-              required
-              disabled={loading}
-              hasError={!!error}
-            />
+            <InputWrapper>
+              <Input
+                type="text"
+                placeholder={t.placeholder}
+                value={url}
+                onChange={(e) => {
+                  setUrl(e.target.value);
+                  if (error) setError(null); // Clear error when user types
+                }}
+                required
+                disabled={loading}
+                hasError={!!error}
+              />
+              <TooltipIcon 
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+                onClick={() => setShowTooltip(!showTooltip)}
+              >
+                {renderIcon(FaInfoCircle)}
+              </TooltipIcon>
+              <Tooltip show={showTooltip}>
+                {t.tooltip}
+              </Tooltip>
+            </InputWrapper>
             <Button type="submit" disabled={loading}>
               {loading ? (
                 <>
