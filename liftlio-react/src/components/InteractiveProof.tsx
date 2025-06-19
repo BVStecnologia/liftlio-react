@@ -658,7 +658,11 @@ const InteractiveProof: React.FC = () => {
         const errorMessage = response.error || '';
         
         // Verificar se é erro de rate limit
-        if (response.status === 429 || errorMessage.includes('limite de 3 análises') || errorMessage.includes('limit of 3 analyses')) {
+        if (response.status === 429 || 
+            errorMessage.includes('limite de 3 análises') || 
+            errorMessage.includes('limit of 3 analyses') ||
+            errorMessage.includes('Rate limit exceeded') ||
+            errorMessage.includes('limite excedido')) {
           setError(t.errors.rateLimit);
           
           // Salvar informações de rate limit se disponíveis
@@ -677,8 +681,14 @@ const InteractiveProof: React.FC = () => {
     } catch (err: any) {
       console.error('Error calling edge function:', err);
       
-      // Tratamento específico para erro 500
-      if (err.status === 500 || err.message?.includes('500')) {
+      // Verificar se é erro de rate limit no catch
+      if (err.status === 429 || 
+          err.message?.includes('limite de 3 análises') || 
+          err.message?.includes('limit of 3 analyses') ||
+          err.message?.includes('Rate limit exceeded') ||
+          err.message?.includes('limite excedido')) {
+        setError(t.errors.rateLimit);
+      } else if (err.status === 500 || err.message?.includes('500')) {
         setError('Server error: The server encountered an error processing your request. Please try again later.');
       } else {
         setError(t.errors.generic);
