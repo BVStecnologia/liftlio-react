@@ -51,6 +51,16 @@ export async function callEdgeFunction(functionName: string, params: Record<stri
       timeout: 60000
     });
     
+    // Para erro 429, retornar a resposta em vez de lançar erro
+    if (response.status === 429) {
+      const errorData = await response.json();
+      return {
+        success: false,
+        status: 429,
+        error: errorData.error || errorData.message || 'Rate limit exceeded'
+      };
+    }
+    
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Error calling edge function ${functionName}: ${response.statusText}`);
