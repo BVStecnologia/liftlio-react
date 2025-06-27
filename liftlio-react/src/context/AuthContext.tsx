@@ -1,18 +1,38 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import { supabase, callRPC } from '../lib/supabaseClient'
 import { Session, User, AuthChangeEvent } from '@supabase/supabase-js'
 import { handleNetworkError, isNetworkError, retryNetworkRequest } from '../utils/networkErrorHandler'
+
+type SubscriptionInfo = {
+  subscription: {
+    id: number
+    status: string
+    plan_name: string
+    cancelled_at: string | null
+    is_production: boolean
+    mentions_limit: number
+    next_billing_date: string
+    days_until_billing: number
+    is_in_grace_period: boolean
+  }
+  mentions_available: number
+  has_active_subscription: boolean
+}
 
 type AuthContextType = {
   session: Session | null
   user: User | null
   loading: boolean
+  subscription: SubscriptionInfo | null
+  checkingSubscription: boolean
   signIn: (
     provider: 'google' | 'email', 
     credentials?: { email: string; password: string }
   ) => Promise<void>
   signUp: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  checkSubscription: (forceCheck?: boolean) => Promise<void>
+  clearSubscriptionCache: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -21,6 +41,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null)
+  const [checkingSubscription, setCheckingSubscription] = useState(false)
+  const [lastSubscriptionCheck, setLastSubscriptionCheck] = useState<number>(0)
+  
+  // Função para limpar cache da assinatura
+  const clearSubscriptionCache = () => {
+    console.log('Limpando cache da assinatura...');
+    setLastSubscriptionCheck(0);
+  }
 
   useEffect(() => {
     // Configura o listener para mudanças de autenticação
@@ -147,13 +176,75 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const checkSubscription = async (forceCheck = false) => {
+    if (!user) {
+      setSubscription(null);
+      return;
+    }
+    
+    // Cache de 30 segundos para evitar verificações excessivas
+    const now = Date.now();
+    const cacheTime = 30000; // 30 segundos
+    
+    if (!forceCheck && lastSubscriptionCheck && (now - lastSubscriptionCheck < cacheTime)) {
+      console.log('Usando cache da assinatura');
+      return;
+    }
+    
+    setCheckingSubscription(true);
+    try {
+      const data = await callRPC('check_user_subscription', {});
+      
+      console.log('Resposta da RPC check_user_subscription:', data);
+      
+      // Verificar se é um objeto direto com as propriedades esperadas
+      if (data && data.has_active_subscription !== undefined) {
+        // A RPC está retornando diretamente o objeto
+        setSubscription(data);
+        setLastSubscriptionCheck(now);
+        console.log('Assinatura verificada com sucesso:', data);
+        console.log('has_active_subscription:', data.has_active_subscription);
+      } 
+      // Verificar formato de array (caso anterior)
+      else if (data && Array.isArray(data) && data.length > 0 && data[0].check_user_subscription) {
+        // A RPC retorna um array com um objeto que contém check_user_subscription
+        const subscriptionData = data[0].check_user_subscription;
+        setSubscription(subscriptionData);
+        setLastSubscriptionCheck(now);
+        console.log('Assinatura verificada com sucesso (formato array):', subscriptionData);
+        console.log('has_active_subscription:', subscriptionData.has_active_subscription);
+      } else {
+        console.log('Nenhuma assinatura encontrada - formato de dados não reconhecido');
+        setSubscription(null);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar assinatura:', error);
+      setSubscription(null);
+    } finally {
+      setCheckingSubscription(false);
+    }
+  };
+  
+  // Verificar assinatura quando o usuário mudar
+  useEffect(() => {
+    if (user) {
+      checkSubscription();
+    } else {
+      setSubscription(null);
+    }
+  }, [user]);
+
   const value = {
     session,
     user,
     loading,
+    subscription,
+    checkingSubscription,
     signIn,
     signUp,
     signOut,
+    checkSubscription,
+    clearSubscriptionCache,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

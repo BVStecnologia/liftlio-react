@@ -2056,11 +2056,8 @@ const LandingPage: React.FC = () => {
     navigate('/login');
   };
 
-  const handleGetStarted = () => {
-    const pricingSection = document.getElementById('pricing');
-    if (pricingSection) {
-      pricingSection.scrollIntoView({ behavior: 'smooth' });
-    }
+  const handleGetStarted = (plan?: 'starter' | 'growth' | 'scale') => {
+    navigate('/checkout', { state: { plan } });
   };
 
   const handleDemo = () => {
@@ -2138,7 +2135,7 @@ const LandingPage: React.FC = () => {
               {t.hero.subtitle}
             </Description>
             <CTAButtons>
-              <PrimaryButton onClick={handleGetStarted}>
+              <PrimaryButton onClick={() => handleGetStarted()}>
                 {renderIcon(FaRocket)}
                 {t.hero.cta.primary}
               </PrimaryButton>
@@ -2277,7 +2274,7 @@ const LandingPage: React.FC = () => {
                 </PricingFeature>
               ))}
             </PricingFeatures>
-            <PrimaryButton onClick={handleGetStarted} style={{ width: '100%' }}>
+            <PrimaryButton onClick={() => handleGetStarted('starter')} style={{ width: '100%' }}>
               {t.pricing.cta}
             </PrimaryButton>
           </PricingCard>
@@ -2298,7 +2295,7 @@ const LandingPage: React.FC = () => {
                 </PricingFeature>
               ))}
             </PricingFeatures>
-            <PrimaryButton onClick={handleGetStarted} style={{ width: '100%' }}>
+            <PrimaryButton onClick={() => handleGetStarted('growth')} style={{ width: '100%' }}>
               {t.pricing.cta}
             </PrimaryButton>
           </PricingCard>
@@ -2318,7 +2315,7 @@ const LandingPage: React.FC = () => {
                 </PricingFeature>
               ))}
             </PricingFeatures>
-            <PrimaryButton onClick={handleGetStarted} style={{ width: '100%' }}>
+            <PrimaryButton onClick={() => handleGetStarted('scale')} style={{ width: '100%' }}>
               {t.pricing.cta}
             </PrimaryButton>
           </PricingCard>
@@ -2337,7 +2334,7 @@ const LandingPage: React.FC = () => {
           <CTADescription>
             {t.cta.subtitle}
           </CTADescription>
-          <PrimaryButton onClick={handleGetStarted} style={{ fontSize: '18px', padding: '20px 40px', margin: '0 auto' }}>
+          <PrimaryButton onClick={() => handleGetStarted()} style={{ fontSize: '18px', padding: '20px 40px', margin: '0 auto' }}>
             {renderIcon(FaRocket)}
             {t.cta.button}
           </PrimaryButton>

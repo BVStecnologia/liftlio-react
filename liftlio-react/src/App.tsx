@@ -15,6 +15,7 @@ import Integrations from './pages/Integrations';
 import LoginPage from './pages/LoginPage';
 import ProjectCreationPage from './pages/ProjectCreationPage';
 import LandingPage from './pages/LandingPage';
+import CheckoutPage from './pages/CheckoutPage';
 import About from './pages/About';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
@@ -29,6 +30,7 @@ import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ProjectProvider, useProject } from './context/ProjectContext';
 import { ExtensionWarning } from './components/ExtensionWarning';
+import SubscriptionGate from './components/SubscriptionGate';
 
 const AppContainer = styled.div`
   display: flex;
@@ -524,6 +526,7 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
               
               {/* Páginas institucionais */}
               <Route path="/about" element={<About />} />
@@ -705,13 +708,13 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
             <Header toggleSidebar={toggleSidebar} />
             <ContentWrapper>
               <Routes>
-                <Route path="/" element={<ProcessingWrapper><Overview /></ProcessingWrapper>} />
-                <Route path="/dashboard" element={<ProcessingWrapper><Overview /></ProcessingWrapper>} />
-                <Route path="/monitoring" element={<ProcessingWrapper><Monitoring /></ProcessingWrapper>} />
-                <Route path="/mentions" element={<ProcessingWrapper><Mentions /></ProcessingWrapper>} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/integrations" element={<ProcessingWrapper><Integrations /></ProcessingWrapper>} />
-                <Route path="/url-test" element={<UrlDataTest />} />
+                <Route path="/" element={<SubscriptionGate><ProcessingWrapper><Overview /></ProcessingWrapper></SubscriptionGate>} />
+                <Route path="/dashboard" element={<SubscriptionGate><ProcessingWrapper><Overview /></ProcessingWrapper></SubscriptionGate>} />
+                <Route path="/monitoring" element={<SubscriptionGate><ProcessingWrapper><Monitoring /></ProcessingWrapper></SubscriptionGate>} />
+                <Route path="/mentions" element={<SubscriptionGate><ProcessingWrapper><Mentions /></ProcessingWrapper></SubscriptionGate>} />
+                <Route path="/settings" element={<SubscriptionGate><Settings /></SubscriptionGate>} />
+                <Route path="/integrations" element={<SubscriptionGate><ProcessingWrapper><Integrations /></ProcessingWrapper></SubscriptionGate>} />
+                <Route path="/url-test" element={<SubscriptionGate><UrlDataTest /></SubscriptionGate>} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </ContentWrapper>

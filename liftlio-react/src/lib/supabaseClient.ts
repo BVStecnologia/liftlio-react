@@ -16,12 +16,18 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 // Função auxiliar para chamar RPCs enquanto o TypeScript é atualizado
 export async function callRPC(functionName: string, params: Record<string, any>) {
   return retryNetworkRequest(async () => {
+    // Obter o token do usuário atual se disponível
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || supabaseAnonKey;
+    
+    console.log(`Chamando RPC ${functionName} com token:`, session ? 'Token do usuário' : 'Token anônimo');
+    
     const response = await safeFetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(params),
       timeout: 30000
@@ -41,11 +47,18 @@ export async function callRPC(functionName: string, params: Record<string, any>)
 // Função auxiliar para chamar Edge Functions sem depender do suporte TypeScript
 export async function callEdgeFunction(functionName: string, params: Record<string, any>) {
   return retryNetworkRequest(async () => {
+    // Obter o token do usuário atual se disponível
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || supabaseAnonKey;
+    
+    console.log(`Chamando Edge Function ${functionName} com:`, params);
+    console.log('Token usado:', token ? 'Token do usuário' : 'Token anônimo');
+    
     const response = await safeFetch(`${supabaseUrl}/functions/v1/${functionName}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(params),
       timeout: 60000
@@ -63,7 +76,15 @@ export async function callEdgeFunction(functionName: string, params: Record<stri
     
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Error calling edge function ${functionName}: ${response.statusText}`);
+      console.error(`Edge Function ${functionName} erro ${response.status}:`, errorText);
+      
+      // Tentar parsear erro JSON se possível
+      try {
+        const errorJson = JSON.parse(errorText);
+        throw new Error(errorJson.error || errorJson.message || errorText);
+      } catch {
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
     }
     
     const data = await response.json();

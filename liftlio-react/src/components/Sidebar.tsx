@@ -1191,7 +1191,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
         
         try {
           // Extract JSON array from response
-          const jsonMatch = responseText.match(/\[\s*\{.*\}\s*\]/s);
+          const jsonMatch = responseText.match(/\[\s*\{[\s\S]*\}\s*\]/);
           if (jsonMatch) {
             const insightsData = JSON.parse(jsonMatch[0]);
             if (Array.isArray(insightsData) && insightsData.length > 0) {
