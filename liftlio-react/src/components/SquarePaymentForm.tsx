@@ -192,6 +192,7 @@ interface SquarePaymentFormProps {
   locationId?: string;
   showSubmitButton?: boolean;
   isLoading?: boolean;
+  processingText?: string;
 }
 
 const SquarePaymentFormComponent: React.FC<SquarePaymentFormProps> = ({
@@ -200,6 +201,7 @@ const SquarePaymentFormComponent: React.FC<SquarePaymentFormProps> = ({
   locationId,
   showSubmitButton = false,
   isLoading = false,
+  processingText,
 }) => {
   const { language } = useLanguage();
   const { theme, isDarkMode } = useTheme();
@@ -289,7 +291,7 @@ const SquarePaymentFormComponent: React.FC<SquarePaymentFormProps> = ({
         <LoadingSpinner theme={theme}>
           <div className="spinner" />
           <div className="text">
-            {language === 'pt' ? 'Processando pagamento...' : 'Processing payment...'}
+            {processingText || (language === 'pt' ? 'Processando pagamento...' : 'Processing payment...')}
           </div>
         </LoadingSpinner>
       </LoadingOverlay>

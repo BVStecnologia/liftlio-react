@@ -1407,7 +1407,7 @@ const PaymentCardsList = styled.div`
   margin-top: 16px;
 `;
 
-const PaymentCard = styled.div<{ isDefault?: boolean; isSubscriptionCard?: boolean }>`
+const PaymentCard = styled.div<{ isDefault?: boolean; isSubscriptionCard?: boolean; isClickable?: boolean }>`
   background: ${props => props.theme.name === 'dark' 
     ? 'rgba(255, 255, 255, 0.05)' 
     : 'rgba(0, 0, 0, 0.02)'};
@@ -1426,6 +1426,23 @@ const PaymentCard = styled.div<{ isDefault?: boolean; isSubscriptionCard?: boole
   align-items: center;
   justify-content: space-between;
   position: relative;
+  cursor: ${props => props.isClickable ? 'pointer' : 'default'};
+  transition: all 0.2s ease;
+  
+  ${props => props.isClickable && css`
+    &:hover {
+      background: ${props.theme.name === 'dark' 
+        ? 'rgba(255, 255, 255, 0.08)' 
+        : 'rgba(0, 0, 0, 0.04)'};
+      border-color: ${props.theme.colors.primary};
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  `}
   ${props => props.isSubscriptionCard && css`
     &::before {
       content: 'Used for subscription';
@@ -1533,7 +1550,7 @@ const NegativeKeywordRemove = styled.button`
 const Settings: React.FC<{}> = () => {
   // Get current project from context
   const { currentProject } = useProject();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { theme } = useTheme();
   const { user, subscription, checkSubscription } = useAuth();
   const navigate = useNavigate();
@@ -2505,6 +2522,12 @@ const Settings: React.FC<{}> = () => {
                           key={card.id}
                           isDefault={card.is_default}
                           isSubscriptionCard={card.is_subscription_card}
+                          isClickable={!card.is_default && card.is_active}
+                          onClick={() => {
+                            if (!card.is_default && card.is_active && !isSettingDefault) {
+                              handleSetDefaultCard(card.id);
+                            }
+                          }}
                         >
                           <CardInfo>
                             <CardBrand>
@@ -2537,7 +2560,10 @@ const Settings: React.FC<{}> = () => {
                                   fontSize: '12px',
                                   minWidth: 'auto'
                                 }}
-                                onClick={() => handleSetDefaultCard(card.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent card click
+                                  handleSetDefaultCard(card.id);
+                                }}
                                 disabled={isSettingDefault === card.id}
                               >
                                 {isSettingDefault === card.id ? 'Setting...' : 'Set as Default'}
@@ -2804,6 +2830,7 @@ const Settings: React.FC<{}> = () => {
                   <SquarePaymentFormWrapper
                     onCardTokenized={handleCardTokenized}
                     isLoading={isAddingCard}
+                    processingText={language === 'pt' ? 'Salvando cartão...' : 'Saving card...'}
                   />
                 </React.Suspense>
               </div>
@@ -2820,7 +2847,8 @@ const Settings: React.FC<{}> = () => {
 const SquarePaymentFormWrapper: React.FC<{
   onCardTokenized: (token: string) => void;
   isLoading: boolean;
-}> = ({ onCardTokenized, isLoading }) => {
+  processingText?: string;
+}> = ({ onCardTokenized, isLoading, processingText }) => {
   const [SquarePaymentForm, setSquarePaymentForm] = useState<any>(null);
   
   useEffect(() => {
@@ -2837,6 +2865,7 @@ const SquarePaymentFormWrapper: React.FC<{
     <SquarePaymentForm
       onCardTokenized={onCardTokenized}
       isLoading={isLoading}
+      processingText={processingText}
     />
   );
 };
