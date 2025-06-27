@@ -16,7 +16,7 @@ import { useProject } from '../context/ProjectContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { supabase, callRPC } from '../lib/supabaseClient';
+import { supabase, callRPC, callEdgeFunction } from '../lib/supabaseClient';
 
 // Helper function to render icons safely (to avoid the import conflict)
 const renderIcon = (Icon: IconType | undefined): ReactElement | null => {
@@ -1634,6 +1634,8 @@ const Settings: React.FC<{}> = () => {
   const [userCards, setUserCards] = useState<any[]>([]);
   const [isLoadingCards, setIsLoadingCards] = useState(false);
   const [isSettingDefault, setIsSettingDefault] = useState<number | null>(null);
+  const [showAddCardModal, setShowAddCardModal] = useState(false);
+  const [isAddingCard, setIsAddingCard] = useState(false);
   
   // Load project data from Supabase
   useEffect(() => {
@@ -2005,6 +2007,38 @@ const Settings: React.FC<{}> = () => {
       alert('Error updating default card. Please try again.');
     } finally {
       setIsSettingDefault(null);
+    }
+  };
+  
+  // Function to handle card tokenization from Square
+  const handleCardTokenized = async (token: string) => {
+    console.log('Card tokenized:', token);
+    setIsAddingCard(true);
+    
+    try {
+      // Check if we're in development
+      const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      
+      // Call edge function to save card
+      const data = await callEdgeFunction('save-card', {
+        paymentToken: token,
+        isDev
+      });
+      
+      if (data.success) {
+        alert('Card added successfully!');
+        // Reload cards list
+        await fetchUserCards();
+        // Close modal
+        setShowAddCardModal(false);
+      } else {
+        alert(data.message || 'Error adding card. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error saving card:', error);
+      alert('Error adding card. Please try again.');
+    } finally {
+      setIsAddingCard(false);
     }
   };
   
@@ -2513,7 +2547,7 @@ const Settings: React.FC<{}> = () => {
                   <div style={{ marginTop: '16px' }}>
                     <ActionButton 
                       variant="secondary"
-                      onClick={() => navigate('/checkout')}
+                      onClick={() => setShowAddCardModal(true)}
                     >
                       {renderIcon(FaPlus)}
                       Add Payment Method
@@ -2708,8 +2742,63 @@ const Settings: React.FC<{}> = () => {
             </ModalContent>
           </Modal>
         )}
+        
+      {/* Add Card Modal */}
+      {showAddCardModal && (
+        <Modal onClick={() => !isAddingCard && setShowAddCardModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <ModalHeader>
+              <ModalTitle>Add Payment Method</ModalTitle>
+              {!isAddingCard && (
+                <CloseButton onClick={() => setShowAddCardModal(false)}>
+                  {renderIcon(FaTimes)}
+                </CloseButton>
+              )}
+            </ModalHeader>
+            
+            <div style={{ padding: '20px 0' }}>
+              <p style={{ marginBottom: '20px', color: theme.colors.text.secondary }}>
+                Add a new payment method to your account. This card can be used for future payments.
+              </p>
+              
+              {/* Dynamically import and render SquarePaymentForm */}
+              <React.Suspense fallback={<div>Loading payment form...</div>}>
+                <SquarePaymentFormWrapper
+                  onCardTokenized={handleCardTokenized}
+                  isLoading={isAddingCard}
+                />
+              </React.Suspense>
+            </div>
+          </ModalContent>
+        </Modal>
+      )}
       </PageContainer>
     </IconContext.Provider>
+  );
+};
+
+// Wrapper component to handle dynamic import of SquarePaymentForm
+const SquarePaymentFormWrapper: React.FC<{
+  onCardTokenized: (token: string) => void;
+  isLoading: boolean;
+}> = ({ onCardTokenized, isLoading }) => {
+  const [SquarePaymentForm, setSquarePaymentForm] = useState<any>(null);
+  
+  useEffect(() => {
+    import('../components/SquarePaymentForm').then(module => {
+      setSquarePaymentForm(() => module.default);
+    });
+  }, []);
+  
+  if (!SquarePaymentForm) {
+    return <div>Loading payment form...</div>;
+  }
+  
+  return (
+    <SquarePaymentForm
+      onCardTokenized={onCardTokenized}
+      isLoading={isLoading}
+    />
   );
 };
 
