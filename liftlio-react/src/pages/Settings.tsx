@@ -16,7 +16,7 @@ import { useProject } from '../context/ProjectContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, callRPC } from '../lib/supabaseClient';
 
 // Helper function to render icons safely (to avoid the import conflict)
 const renderIcon = (Icon: IconType | undefined): ReactElement | null => {
@@ -1417,7 +1417,7 @@ const Settings: React.FC<{}> = () => {
   const { currentProject } = useProject();
   const { t } = useLanguage();
   const { theme } = useTheme();
-  const { user, subscription } = useAuth();
+  const { user, subscription, checkSubscription } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -1506,6 +1506,7 @@ const Settings: React.FC<{}> = () => {
   const [keywordError, setKeywordError] = useState('');
   const [showTooltip, setShowTooltip] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isTogglingSubscription, setIsTogglingSubscription] = useState(false);
   
   // Load project data from Supabase
   useEffect(() => {
@@ -1823,6 +1824,32 @@ const Settings: React.FC<{}> = () => {
   
   const renderIcon = (Icon: any) => {
     return <IconComponent icon={Icon} />;
+  };
+  
+  // Function to toggle subscription (cancel/reactivate)
+  const handleToggleSubscription = async () => {
+    setIsTogglingSubscription(true);
+    
+    try {
+      const data = await callRPC('toggle_user_subscription', {});
+      
+      if (data.success) {
+        if (data.action === 'cancelled') {
+          alert(`Subscription cancelled. You have access until ${new Date(data.active_until).toLocaleDateString()}`);
+        } else {
+          alert('Subscription reactivated! It will renew automatically.');
+        }
+        // Reload subscription data
+        await checkSubscription(true);
+      } else {
+        alert(data.message || 'Error processing your request');
+      }
+    } catch (error) {
+      console.error('Error toggling subscription:', error);
+      alert('Error processing your request. Please try again.');
+    } finally {
+      setIsTogglingSubscription(false);
+    }
   };
   
   // Function to render debug info (disabled)
@@ -2204,7 +2231,7 @@ const Settings: React.FC<{}> = () => {
                           <SubscriptionValue>
                             {renderIcon(FaCalendarAlt)}
                             {new Date(subscription.subscription.next_billing_date).toLocaleDateString()}
-                            {subscription.is_cancelled_with_access && subscription.days_until_billing === 0 && 
+                            {subscription.is_cancelled_with_access && subscription.subscription.days_until_billing === 0 && 
                               ' (No future charges)'}
                           </SubscriptionValue>
                         </SubscriptionItem>
@@ -2226,17 +2253,17 @@ const Settings: React.FC<{}> = () => {
                           Upgrade Plan
                         </ActionButton>
                         
-                        {!subscription.is_cancelled_with_access && (
-                          <ActionButton variant="secondary">
-                            Cancel Subscription
-                          </ActionButton>
-                        )}
-                        
-                        {subscription.is_cancelled_with_access && (
-                          <ActionButton variant="secondary">
-                            Reactivate Subscription
-                          </ActionButton>
-                        )}
+                        <ActionButton 
+                          variant="secondary"
+                          onClick={handleToggleSubscription}
+                          disabled={isTogglingSubscription}
+                        >
+                          {isTogglingSubscription ? (
+                            'Processing...'
+                          ) : (
+                            subscription.is_cancelled_with_access ? 'Reactivate Subscription' : 'Cancel Subscription'
+                          )}
+                        </ActionButton>
                       </SubscriptionActions>
                     </>
                   ) : (
