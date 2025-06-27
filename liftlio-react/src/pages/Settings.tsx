@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, ReactElement } from 'react';
 import styled, { keyframes, css } from 'styled-components';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Card from '../components/Card';
 import { IconContext } from 'react-icons';
 import { IconType } from 'react-icons';
@@ -8,12 +9,13 @@ import {
   FaCheck, FaFont, FaSlidersH, FaMoon, FaSun, FaSave, FaRedo, 
   FaCloudUploadAlt, FaSearch, FaChevronDown, FaSort, FaDatabase, 
   FaTrashAlt, FaExternalLinkAlt, FaInfoCircle, FaToggleOn, FaToggleOff,
-  FaYoutube
+  FaYoutube, FaCreditCard, FaCrown, FaCalendarAlt
 } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 
 // Helper function to render icons safely (to avoid the import conflict)
@@ -1235,6 +1237,125 @@ const ScannerToggle = styled.button<{ active: boolean }>`
   }
 `;
 
+// Styled components for subscription info
+const SubscriptionSection = styled.div`
+  background: ${props => props.theme.name === 'dark' 
+    ? `linear-gradient(135deg, rgba(94, 53, 177, 0.1) 0%, rgba(94, 53, 177, 0.05) 100%)`
+    : `linear-gradient(135deg, rgba(94, 53, 177, 0.05) 0%, rgba(94, 53, 177, 0.02) 100%)`};
+  border-radius: ${props => props.theme.radius.lg};
+  padding: 20px;
+  margin-bottom: 30px;
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(94, 53, 177, 0.3)' 
+    : 'rgba(94, 53, 177, 0.1)'};
+`;
+
+const SubscriptionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+`;
+
+const SubscriptionTitle = styled.h3`
+  font-size: ${props => props.theme.fontSizes.lg};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  color: ${props => props.theme.colors.text.primary};
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  
+  svg {
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const SubscriptionBadge = styled.div<{ status: 'active' | 'inactive' | 'trial' | 'cancelled' }>`
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: ${props => props.theme.fontSizes.sm};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  
+  ${props => {
+    switch (props.status) {
+      case 'active':
+        return css`
+          background: ${props.theme.name === 'dark' 
+            ? 'rgba(76, 175, 80, 0.2)' 
+            : 'rgba(76, 175, 80, 0.1)'};
+          color: #4CAF50;
+          border: 1px solid rgba(76, 175, 80, 0.3);
+        `;
+      case 'trial':
+        return css`
+          background: ${props.theme.name === 'dark' 
+            ? 'rgba(33, 150, 243, 0.2)' 
+            : 'rgba(33, 150, 243, 0.1)'};
+          color: #2196F3;
+          border: 1px solid rgba(33, 150, 243, 0.3);
+        `;
+      case 'cancelled':
+        return css`
+          background: ${props.theme.name === 'dark' 
+            ? 'rgba(255, 152, 0, 0.2)' 
+            : 'rgba(255, 152, 0, 0.1)'};
+          color: #FF9800;
+          border: 1px solid rgba(255, 152, 0, 0.3);
+        `;
+      default:
+        return css`
+          background: ${props.theme.name === 'dark' 
+            ? 'rgba(158, 158, 158, 0.2)' 
+            : 'rgba(158, 158, 158, 0.1)'};
+          color: #9E9E9E;
+          border: 1px solid rgba(158, 158, 158, 0.3);
+        `;
+    }
+  }}
+`;
+
+const SubscriptionDetails = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+`;
+
+const SubscriptionItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const SubscriptionLabel = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.secondary};
+  font-weight: ${props => props.theme.fontWeights.medium};
+`;
+
+const SubscriptionValue = styled.div`
+  font-size: ${props => props.theme.fontSizes.md};
+  color: ${props => props.theme.colors.text.primary};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const SubscriptionActions = styled.div`
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'rgba(0, 0, 0, 0.1)'};
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+`;
+
 // Styled components for negative keywords
 const NegativeKeywordsContainer = styled.div`
   display: flex;
@@ -1275,6 +1396,9 @@ const Settings: React.FC<{}> = () => {
   const { currentProject } = useProject();
   const { t } = useLanguage();
   const { theme } = useTheme();
+  const { user, subscription } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   
   // State for negative keywords
   const [newNegativeKeyword, setNewNegativeKeyword] = useState('');
@@ -1343,6 +1467,13 @@ const Settings: React.FC<{}> = () => {
   
   // UI state
   const [activeTab, setActiveTab] = useState('project');
+  
+  // Check if there's a state from navigation indicating which tab to show
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
   const [selectedColor, setSelectedColor] = useState(colors[0].value);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [borderRadius, setBorderRadius] = useState(8);
@@ -1974,7 +2105,7 @@ const Settings: React.FC<{}> = () => {
                     id="fullName" 
                     type="text" 
                     placeholder="Your full name"
-                    defaultValue="Current User" 
+                    defaultValue={user?.user_metadata?.name || user?.email?.split('@')[0] || 'Current User'} 
                     disabled
                   />
                   <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
@@ -1988,10 +2119,107 @@ const Settings: React.FC<{}> = () => {
                     id="email" 
                     type="email" 
                     placeholder="your.email@example.com"
-                    defaultValue="user@current.com" 
+                    defaultValue={user?.email || 'user@current.com'} 
                     disabled
                   />
                 </FormGroup>
+              </FormSection>
+              
+              {/* Subscription Information */}
+              <FormSection>
+                <SubscriptionSection>
+                  <SubscriptionHeader>
+                    <SubscriptionTitle>
+                      {renderIcon(FaCrown)}
+                      Subscription Plan
+                    </SubscriptionTitle>
+                    {subscription?.has_active_subscription && (
+                      <SubscriptionBadge status={
+                        subscription.subscription.cancelled_at ? 'cancelled' : 
+                        subscription.subscription.is_in_grace_period ? 'trial' : 
+                        'active'
+                      }>
+                        {renderIcon(FaCheck)}
+                        {subscription.subscription.cancelled_at ? 'Cancelled' : 
+                         subscription.subscription.is_in_grace_period ? 'Trial' : 
+                         'Active'}
+                      </SubscriptionBadge>
+                    )}
+                  </SubscriptionHeader>
+                  
+                  {subscription?.has_active_subscription ? (
+                    <>
+                      <SubscriptionDetails>
+                        <SubscriptionItem>
+                          <SubscriptionLabel>Plan</SubscriptionLabel>
+                          <SubscriptionValue>
+                            {subscription.subscription.plan_name}
+                            {subscription.subscription.plan_name === 'Starter' && ' - $49/mo'}
+                            {subscription.subscription.plan_name === 'Growth' && ' - $99/mo'}
+                            {subscription.subscription.plan_name === 'Scale' && ' - $199/mo'}
+                          </SubscriptionValue>
+                        </SubscriptionItem>
+                        
+                        <SubscriptionItem>
+                          <SubscriptionLabel>Mentions Available</SubscriptionLabel>
+                          <SubscriptionValue>
+                            {subscription.mentions_available} / {subscription.subscription.mentions_limit}
+                          </SubscriptionValue>
+                        </SubscriptionItem>
+                        
+                        <SubscriptionItem>
+                          <SubscriptionLabel>Next Billing Date</SubscriptionLabel>
+                          <SubscriptionValue>
+                            {renderIcon(FaCalendarAlt)}
+                            {new Date(subscription.subscription.next_billing_date).toLocaleDateString()}
+                          </SubscriptionValue>
+                        </SubscriptionItem>
+                        
+                        <SubscriptionItem>
+                          <SubscriptionLabel>Environment</SubscriptionLabel>
+                          <SubscriptionValue>
+                            {subscription.subscription.is_production ? 'Production' : 'Development'}
+                          </SubscriptionValue>
+                        </SubscriptionItem>
+                      </SubscriptionDetails>
+                      
+                      <SubscriptionActions>
+                        <ActionButton 
+                          variant="primary"
+                          onClick={() => navigate('/checkout')}
+                        >
+                          {renderIcon(FaCreditCard)}
+                          Upgrade Plan
+                        </ActionButton>
+                        
+                        {!subscription.subscription.cancelled_at && (
+                          <ActionButton variant="secondary">
+                            Cancel Subscription
+                          </ActionButton>
+                        )}
+                        
+                        {subscription.subscription.cancelled_at && (
+                          <ActionButton variant="secondary">
+                            Reactivate Subscription
+                          </ActionButton>
+                        )}
+                      </SubscriptionActions>
+                    </>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                      <div style={{ marginBottom: '20px', color: theme.colors.text.secondary }}>
+                        You don't have an active subscription
+                      </div>
+                      <ActionButton 
+                        variant="primary"
+                        onClick={() => navigate('/checkout')}
+                      >
+                        {renderIcon(FaCreditCard)}
+                        Subscribe Now
+                      </ActionButton>
+                    </div>
+                  )}
+                </SubscriptionSection>
               </FormSection>
             </Card>
           )}

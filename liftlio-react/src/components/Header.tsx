@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 import { COLORS, withOpacity } from '../styles/colors';
 import * as FaIcons from 'react-icons/fa';
 import ProjectModal from './ProjectModal';
@@ -1161,6 +1162,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const { currentProject, setCurrentProject, projects } = useProject();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
+  const navigate = useNavigate();
   const [currentLanguage, setCurrentLanguage] = useState(language.toUpperCase());
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showProjectsDropdown, setShowProjectsDropdown] = useState(false);
@@ -2006,11 +2008,17 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                   <h4>{user?.user_metadata?.full_name || user?.email || 'Usuário'}</h4>
                   <p>{user?.email || ''}</p>
                 </UserInfo>
-                <PopupMenuItem>
+                <PopupMenuItem onClick={() => {
+                  navigate('/settings', { state: { activeTab: 'account' } });
+                  setShowUserMenu(false);
+                }}>
                   <IconComponent icon={FaIcons.FaUser} />
                   Profile
                 </PopupMenuItem>
-                <PopupMenuItem>
+                <PopupMenuItem onClick={() => {
+                  navigate('/settings', { state: { activeTab: 'project' } });
+                  setShowUserMenu(false);
+                }}>
                   <IconComponent icon={FaIcons.FaCog} />
                   Settings
                 </PopupMenuItem>
