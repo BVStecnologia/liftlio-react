@@ -839,7 +839,10 @@ const Modal = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: ${props => props.theme.name === 'dark' 
+    ? 'rgba(0, 0, 0, 0.8)' 
+    : 'rgba(0, 0, 0, 0.6)'};
+  backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -848,13 +851,24 @@ const Modal = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background-color: white;
+  background-color: ${props => props.theme.colors.cardBg};
   border-radius: ${props => props.theme.radius.lg};
   padding: 25px;
   width: 100%;
   max-width: 500px;
-  box-shadow: ${props => props.theme.shadows.lg};
+  box-shadow: ${props => props.theme.name === 'dark'
+    ? '0 20px 60px rgba(0, 0, 0, 0.6)'
+    : props.theme.shadows.lg};
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.1)'
+    : 'rgba(0, 0, 0, 0.05)'};
   animation: ${fadeIn} 0.4s ease;
+  transform: translateY(0);
+  
+  @media (max-width: 576px) {
+    margin: 20px;
+    max-width: calc(100vw - 40px);
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -867,7 +881,8 @@ const ModalHeader = styled.div`
 const ModalTitle = styled.h3`
   font-size: ${props => props.theme.fontSizes.xl};
   font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.text.primary};
+  margin: 0;
 `;
 
 const CloseButton = styled.button`
@@ -2757,17 +2772,41 @@ const Settings: React.FC<{}> = () => {
             </ModalHeader>
             
             <div style={{ padding: '20px 0' }}>
-              <p style={{ marginBottom: '20px', color: theme.colors.text.secondary }}>
+              <p style={{ 
+                marginBottom: '20px', 
+                color: theme.colors.text.secondary,
+                fontSize: theme.fontSizes.sm,
+                lineHeight: '1.5'
+              }}>
                 Add a new payment method to your account. This card can be used for future payments.
               </p>
               
               {/* Dynamically import and render SquarePaymentForm */}
-              <React.Suspense fallback={<div>Loading payment form...</div>}>
-                <SquarePaymentFormWrapper
-                  onCardTokenized={handleCardTokenized}
-                  isLoading={isAddingCard}
-                />
-              </React.Suspense>
+              <div style={{
+                background: theme.name === 'dark' 
+                  ? 'rgba(255, 255, 255, 0.05)' 
+                  : 'rgba(0, 0, 0, 0.02)',
+                borderRadius: theme.radius.md,
+                padding: '20px',
+                border: `1px solid ${theme.name === 'dark' 
+                  ? 'rgba(255, 255, 255, 0.1)' 
+                  : 'rgba(0, 0, 0, 0.05)'}`
+              }}>
+                <React.Suspense fallback={
+                  <div style={{ 
+                    textAlign: 'center', 
+                    padding: '40px',
+                    color: theme.colors.text.secondary 
+                  }}>
+                    Loading payment form...
+                  </div>
+                }>
+                  <SquarePaymentFormWrapper
+                    onCardTokenized={handleCardTokenized}
+                    isLoading={isAddingCard}
+                  />
+                </React.Suspense>
+              </div>
             </div>
           </ModalContent>
         </Modal>
