@@ -1459,6 +1459,7 @@ const CardExpiry = styled.div`
 const CardBadges = styled.div`
   display: flex;
   gap: 8px;
+  align-items: center;
 `;
 
 const CardBadge = styled.div<{ variant: 'default' | 'primary' }>`
@@ -1632,6 +1633,7 @@ const Settings: React.FC<{}> = () => {
   const [isTogglingSubscription, setIsTogglingSubscription] = useState(false);
   const [userCards, setUserCards] = useState<any[]>([]);
   const [isLoadingCards, setIsLoadingCards] = useState(false);
+  const [isSettingDefault, setIsSettingDefault] = useState<number | null>(null);
   
   // Load project data from Supabase
   useEffect(() => {
@@ -1974,6 +1976,35 @@ const Settings: React.FC<{}> = () => {
       alert('Error processing your request. Please try again.');
     } finally {
       setIsTogglingSubscription(false);
+    }
+  };
+  
+  // Function to set a card as default
+  const handleSetDefaultCard = async (cardId: number) => {
+    setIsSettingDefault(cardId);
+    
+    try {
+      const data = await callRPC('set_default_card', { p_card_id: cardId });
+      
+      if (data.success) {
+        alert('Default card updated successfully!');
+        if (data.subscription_updated) {
+          alert('Your subscription will now use this card for future payments.');
+        }
+        // Reload cards to reflect the change
+        await fetchUserCards();
+        // Also reload subscription info if it was updated
+        if (data.subscription_updated) {
+          await checkSubscription(true);
+        }
+      } else {
+        alert(data.message || 'Error updating default card');
+      }
+    } catch (error) {
+      console.error('Error setting default card:', error);
+      alert('Error updating default card. Please try again.');
+    } finally {
+      setIsSettingDefault(null);
     }
   };
   
@@ -2448,6 +2479,20 @@ const Settings: React.FC<{}> = () => {
                             )}
                             {!card.is_active && (
                               <CardBadge variant="primary">Inactive</CardBadge>
+                            )}
+                            {!card.is_default && card.is_active && (
+                              <ActionButton
+                                variant="secondary"
+                                style={{ 
+                                  padding: '6px 12px', 
+                                  fontSize: '12px',
+                                  minWidth: 'auto'
+                                }}
+                                onClick={() => handleSetDefaultCard(card.id)}
+                                disabled={isSettingDefault === card.id}
+                              >
+                                {isSettingDefault === card.id ? 'Setting...' : 'Set as Default'}
+                              </ActionButton>
                             )}
                           </CardBadges>
                         </PaymentCard>
