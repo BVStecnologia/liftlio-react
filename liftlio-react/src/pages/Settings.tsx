@@ -1356,6 +1356,27 @@ const SubscriptionActions = styled.div`
   flex-wrap: wrap;
 `;
 
+// Styled component for cancelled subscription warning
+const CancelledWarning = styled.div`
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 152, 0, 0.15)' 
+    : 'rgba(255, 152, 0, 0.1)'};
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  border-radius: ${props => props.theme.radius.md};
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: ${props => props.theme.name === 'dark' ? '#FFB74D' : '#F57C00'};
+  font-size: ${props => props.theme.fontSizes.sm};
+  
+  svg {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+`;
+
 // Styled components for negative keywords
 const NegativeKeywordsContainer = styled.div`
   display: flex;
@@ -2135,12 +2156,12 @@ const Settings: React.FC<{}> = () => {
                     </SubscriptionTitle>
                     {subscription?.has_active_subscription && (
                       <SubscriptionBadge status={
-                        subscription.subscription.cancelled_at ? 'cancelled' : 
+                        subscription.is_cancelled_with_access ? 'cancelled' : 
                         subscription.subscription.is_in_grace_period ? 'trial' : 
                         'active'
                       }>
                         {renderIcon(FaCheck)}
-                        {subscription.subscription.cancelled_at ? 'Cancelled' : 
+                        {subscription.is_cancelled_with_access ? 'Cancelled' : 
                          subscription.subscription.is_in_grace_period ? 'Trial' : 
                          'Active'}
                       </SubscriptionBadge>
@@ -2149,6 +2170,15 @@ const Settings: React.FC<{}> = () => {
                   
                   {subscription?.has_active_subscription ? (
                     <>
+                      {subscription.is_cancelled_with_access && (
+                        <CancelledWarning>
+                          {renderIcon(FaInfoCircle)}
+                          <div>
+                            Your subscription has been cancelled. You have access until{' '}
+                            <strong>{new Date(subscription.subscription.next_billing_date).toLocaleDateString()}</strong>
+                          </div>
+                        </CancelledWarning>
+                      )}
                       <SubscriptionDetails>
                         <SubscriptionItem>
                           <SubscriptionLabel>Plan</SubscriptionLabel>
@@ -2168,10 +2198,14 @@ const Settings: React.FC<{}> = () => {
                         </SubscriptionItem>
                         
                         <SubscriptionItem>
-                          <SubscriptionLabel>Next Billing Date</SubscriptionLabel>
+                          <SubscriptionLabel>
+                            {subscription.is_cancelled_with_access ? 'Access Until' : 'Next Billing Date'}
+                          </SubscriptionLabel>
                           <SubscriptionValue>
                             {renderIcon(FaCalendarAlt)}
                             {new Date(subscription.subscription.next_billing_date).toLocaleDateString()}
+                            {subscription.is_cancelled_with_access && subscription.days_until_billing === 0 && 
+                              ' (No future charges)'}
                           </SubscriptionValue>
                         </SubscriptionItem>
                         
@@ -2192,13 +2226,13 @@ const Settings: React.FC<{}> = () => {
                           Upgrade Plan
                         </ActionButton>
                         
-                        {!subscription.subscription.cancelled_at && (
+                        {!subscription.is_cancelled_with_access && (
                           <ActionButton variant="secondary">
                             Cancel Subscription
                           </ActionButton>
                         )}
                         
-                        {subscription.subscription.cancelled_at && (
+                        {subscription.is_cancelled_with_access && (
                           <ActionButton variant="secondary">
                             Reactivate Subscription
                           </ActionButton>

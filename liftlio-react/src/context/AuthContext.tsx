@@ -17,6 +17,7 @@ type SubscriptionInfo = {
   }
   mentions_available: number
   has_active_subscription: boolean
+  is_cancelled_with_access: boolean
 }
 
 type AuthContextType = {

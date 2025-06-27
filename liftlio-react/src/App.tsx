@@ -28,6 +28,7 @@ import { IconComponent } from './utils/IconHelper';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import SubscriptionWarningBanner from './components/SubscriptionWarningBanner';
 import { ProjectProvider, useProject } from './context/ProjectContext';
 import { ExtensionWarning } from './components/ExtensionWarning';
 import SubscriptionGate from './components/SubscriptionGate';
@@ -706,6 +707,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
           />
           <MainContent>
             <Header toggleSidebar={toggleSidebar} />
+            <SubscriptionWarningBanner />
             <ContentWrapper>
               <Routes>
                 <Route path="/" element={<SubscriptionGate><ProcessingWrapper><Overview /></ProcessingWrapper></SubscriptionGate>} />
