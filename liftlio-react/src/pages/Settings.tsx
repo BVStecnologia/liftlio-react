@@ -1377,6 +1377,108 @@ const CancelledWarning = styled.div`
   }
 `;
 
+// Styled components for payment cards
+const PaymentCardsSection = styled.div`
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'rgba(0, 0, 0, 0.1)'};
+`;
+
+const PaymentCardsList = styled.div`
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+`;
+
+const PaymentCard = styled.div<{ isDefault?: boolean; isSubscriptionCard?: boolean }>`
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.05)' 
+    : 'rgba(0, 0, 0, 0.02)'};
+  border: 1px solid ${props => {
+    if (props.isSubscriptionCard) {
+      return props.theme.colors.primary;
+    }
+    if (props.isDefault) {
+      return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.15)';
+    }
+    return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+  }};
+  border-radius: ${props => props.theme.radius.md};
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  ${props => props.isSubscriptionCard && css`
+    &::before {
+      content: 'Used for subscription';
+      position: absolute;
+      top: -10px;
+      left: 20px;
+      background: ${props.theme.colors.primary};
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+  `}
+`;
+
+const CardInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+const CardBrand = styled.div`
+  font-size: 24px;
+  font-weight: bold;
+  color: ${props => props.theme.colors.primary};
+`;
+
+const CardDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const CardNumber = styled.div`
+  font-size: ${props => props.theme.fontSizes.md};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const CardExpiry = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.secondary};
+`;
+
+const CardBadges = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const CardBadge = styled.div<{ variant: 'default' | 'primary' }>`
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  ${props => props.variant === 'default' ? css`
+    background: ${props.theme.name === 'dark' 
+      ? 'rgba(76, 175, 80, 0.2)' 
+      : 'rgba(76, 175, 80, 0.1)'};
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+  ` : css`
+    background: ${props.theme.colors.primaryAlpha};
+    color: ${props.theme.colors.primary};
+    border: 1px solid ${props.theme.colors.primary};
+  `}
+`;
+
 // Styled components for negative keywords
 const NegativeKeywordsContainer = styled.div`
   display: flex;
@@ -1495,6 +1597,27 @@ const Settings: React.FC<{}> = () => {
       setActiveTab(location.state.activeTab);
     }
   }, [location.state]);
+  
+  // Function to fetch user cards
+  const fetchUserCards = async () => {
+    setIsLoadingCards(true);
+    try {
+      const data = await callRPC('get_user_cards', {});
+      setUserCards(data || []);
+    } catch (error) {
+      console.error('Error fetching user cards:', error);
+      setUserCards([]);
+    } finally {
+      setIsLoadingCards(false);
+    }
+  };
+  
+  // Fetch user cards when account tab is active
+  useEffect(() => {
+    if (activeTab === 'account' && user) {
+      fetchUserCards();
+    }
+  }, [activeTab, user]);
   const [selectedColor, setSelectedColor] = useState(colors[0].value);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [borderRadius, setBorderRadius] = useState(8);
@@ -1507,6 +1630,8 @@ const Settings: React.FC<{}> = () => {
   const [showTooltip, setShowTooltip] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isTogglingSubscription, setIsTogglingSubscription] = useState(false);
+  const [userCards, setUserCards] = useState<any[]>([]);
+  const [isLoadingCards, setIsLoadingCards] = useState(false);
   
   // Load project data from Supabase
   useEffect(() => {
@@ -2281,6 +2406,75 @@ const Settings: React.FC<{}> = () => {
                     </div>
                   )}
                 </SubscriptionSection>
+                
+                {/* Payment Methods Section */}
+                <PaymentCardsSection>
+                  <SubscriptionTitle>
+                    {renderIcon(FaCreditCard)}
+                    Payment Methods
+                  </SubscriptionTitle>
+                  
+                  {isLoadingCards ? (
+                    <div style={{ padding: '20px', textAlign: 'center' }}>
+                      Loading payment methods...
+                    </div>
+                  ) : userCards.length > 0 ? (
+                    <PaymentCardsList>
+                      {userCards.map((card) => (
+                        <PaymentCard 
+                          key={card.id}
+                          isDefault={card.is_default}
+                          isSubscriptionCard={card.is_subscription_card}
+                        >
+                          <CardInfo>
+                            <CardBrand>
+                              {card.brand === 'VISA' && '💳'}
+                              {card.brand === 'MASTERCARD' && '💳'}
+                              {card.brand === 'AMEX' && '💳'}
+                              {card.brand === 'DISCOVER' && '💳'}
+                            </CardBrand>
+                            <CardDetails>
+                              <CardNumber>
+                                {card.brand} •••• {card.last_4}
+                              </CardNumber>
+                              <CardExpiry>
+                                Expires {String(card.exp_month).padStart(2, '0')}/{card.exp_year}
+                              </CardExpiry>
+                            </CardDetails>
+                          </CardInfo>
+                          <CardBadges>
+                            {card.is_default && (
+                              <CardBadge variant="default">Default</CardBadge>
+                            )}
+                            {!card.is_active && (
+                              <CardBadge variant="primary">Inactive</CardBadge>
+                            )}
+                          </CardBadges>
+                        </PaymentCard>
+                      ))}
+                    </PaymentCardsList>
+                  ) : (
+                    <div style={{ 
+                      padding: '20px', 
+                      textAlign: 'center',
+                      background: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                      borderRadius: theme.radius.md,
+                      color: theme.colors.text.secondary
+                    }}>
+                      No payment methods found
+                    </div>
+                  )}
+                  
+                  <div style={{ marginTop: '16px' }}>
+                    <ActionButton 
+                      variant="secondary"
+                      onClick={() => navigate('/checkout')}
+                    >
+                      {renderIcon(FaPlus)}
+                      Add Payment Method
+                    </ActionButton>
+                  </div>
+                </PaymentCardsSection>
               </FormSection>
             </Card>
           )}
