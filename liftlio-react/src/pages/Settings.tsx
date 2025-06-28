@@ -1508,27 +1508,36 @@ const SetDefaultIcon = styled.div<{ isHovered?: boolean }>`
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: ${props => props.isHovered 
-    ? props.theme.colors.primary 
-    : props.theme.name === 'dark' 
-      ? 'rgba(255, 255, 255, 0.1)' 
-      : 'rgba(0, 0, 0, 0.05)'};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'rgba(0, 0, 0, 0.05)'};
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
   position: relative;
+  cursor: pointer;
+  
+  &:hover {
+    background: ${props => props.theme.colors.primary};
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    
+    svg {
+      color: white;
+    }
+  }
   
   svg {
     font-size: 16px;
-    color: ${props => props.isHovered 
-      ? 'white' 
+    color: ${props => props.theme.name === 'dark' 
+      ? props.theme.colors.text.primary 
       : props.theme.colors.text.secondary};
     transition: all 0.2s ease;
   }
   
   &::after {
-    content: 'Set as default card';
+    content: 'Definir como cartão padrão';
     position: absolute;
     bottom: 100%;
     left: 50%;
@@ -2666,13 +2675,16 @@ const Settings: React.FC<{}> = () => {
                               )}
                             </CardBadges>
                             {!card.is_default && card.is_active && (
-                              <SetDefaultIcon isHovered={hoveredCard === card.id}>
+                              <SetDefaultIcon 
+                                isHovered={hoveredCard === card.id}
+                                title="Clique para definir como cartão padrão"
+                              >
                                 {isSettingDefault === card.id ? (
                                   <div className="spinner" style={{
                                     width: '16px',
                                     height: '16px',
                                     border: '2px solid rgba(255, 255, 255, 0.3)',
-                                    borderTopColor: 'white',
+                                    borderTopColor: theme.colors.primary,
                                     borderRadius: '50%',
                                     animation: 'spin 1s linear infinite'
                                   }} />
