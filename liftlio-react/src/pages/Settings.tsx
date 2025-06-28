@@ -2616,7 +2616,10 @@ const Settings: React.FC<{}> = () => {
                     Payment Methods
                   </SubscriptionTitle>
                   
-                  {console.log('Rendering cards section - isLoadingCards:', isLoadingCards, 'userCards:', userCards)}
+                  {(() => {
+                    console.log('Rendering cards section - isLoadingCards:', isLoadingCards, 'userCards:', userCards);
+                    return null;
+                  })()}
                   {isLoadingCards ? (
                     <div style={{ padding: '20px', textAlign: 'center' }}>
                       Loading payment methods...
