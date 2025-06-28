@@ -9,7 +9,7 @@ import {
   FaCheck, FaFont, FaSlidersH, FaMoon, FaSun, FaSave, FaRedo, 
   FaCloudUploadAlt, FaSearch, FaChevronDown, FaSort, FaDatabase, 
   FaTrashAlt, FaExternalLinkAlt, FaInfoCircle, FaToggleOn, FaToggleOff,
-  FaYoutube, FaCreditCard, FaCrown, FaCalendarAlt
+  FaYoutube, FaCreditCard, FaCrown, FaCalendarAlt, FaCheckCircle
 } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
@@ -51,6 +51,10 @@ const floatAnimation = keyframes`
   0% { transform: translateY(0px); }
   50% { transform: translateY(-5px); }
   100% { transform: translateY(0px); }
+`;
+
+const spin = keyframes`
+  to { transform: rotate(360deg); }
 `;
 
 // Styled Components
@@ -1494,6 +1498,80 @@ const CardBadges = styled.div`
   align-items: center;
 `;
 
+const CardActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const SetDefaultIcon = styled.div<{ isHovered?: boolean }>`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: ${props => props.isHovered 
+    ? props.theme.colors.primary 
+    : props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.1)' 
+      : 'rgba(0, 0, 0, 0.05)'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: relative;
+  
+  svg {
+    font-size: 16px;
+    color: ${props => props.isHovered 
+      ? 'white' 
+      : props.theme.colors.text.secondary};
+    transition: all 0.2s ease;
+  }
+  
+  &::after {
+    content: 'Set as default card';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    padding: 6px 12px;
+    background: ${props => props.theme.name === 'dark' ? '#333' : '#222'};
+    color: white;
+    font-size: 12px;
+    white-space: nowrap;
+    border-radius: 4px;
+    opacity: ${props => props.isHovered ? 1 : 0};
+    visibility: ${props => props.isHovered ? 'visible' : 'hidden'};
+    transition: all 0.2s ease;
+    pointer-events: none;
+    z-index: 10;
+    
+    @media (max-width: 768px) {
+      display: none;
+    }
+  }
+  
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 4px;
+    border: 6px solid transparent;
+    border-top-color: ${props => props.theme.name === 'dark' ? '#333' : '#222'};
+    opacity: ${props => props.isHovered ? 1 : 0};
+    visibility: ${props => props.isHovered ? 'visible' : 'hidden'};
+    transition: all 0.2s ease;
+    pointer-events: none;
+    z-index: 10;
+    
+    @media (max-width: 768px) {
+      display: none;
+    }
+  }
+`;
+
 const CardBadge = styled.div<{ variant: 'default' | 'primary' }>`
   padding: 4px 10px;
   border-radius: 16px;
@@ -1668,6 +1746,7 @@ const Settings: React.FC<{}> = () => {
   const [isSettingDefault, setIsSettingDefault] = useState<number | null>(null);
   const [showAddCardModal, setShowAddCardModal] = useState(false);
   const [isAddingCard, setIsAddingCard] = useState(false);
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   
   // Load project data from Supabase
   useEffect(() => {
@@ -2528,6 +2607,8 @@ const Settings: React.FC<{}> = () => {
                               handleSetDefaultCard(card.id);
                             }
                           }}
+                          onMouseEnter={() => setHoveredCard(card.id)}
+                          onMouseLeave={() => setHoveredCard(null)}
                         >
                           <CardInfo>
                             <CardBrand>
@@ -2545,31 +2626,32 @@ const Settings: React.FC<{}> = () => {
                               </CardExpiry>
                             </CardDetails>
                           </CardInfo>
-                          <CardBadges>
-                            {card.is_default && (
-                              <CardBadge variant="default">Default</CardBadge>
-                            )}
-                            {!card.is_active && (
-                              <CardBadge variant="primary">Inactive</CardBadge>
-                            )}
+                          <CardActions>
+                            <CardBadges>
+                              {card.is_default && (
+                                <CardBadge variant="default">Default</CardBadge>
+                              )}
+                              {!card.is_active && (
+                                <CardBadge variant="primary">Inactive</CardBadge>
+                              )}
+                            </CardBadges>
                             {!card.is_default && card.is_active && (
-                              <ActionButton
-                                variant="secondary"
-                                style={{ 
-                                  padding: '6px 12px', 
-                                  fontSize: '12px',
-                                  minWidth: 'auto'
-                                }}
-                                onClick={(e) => {
-                                  e.stopPropagation(); // Prevent card click
-                                  handleSetDefaultCard(card.id);
-                                }}
-                                disabled={isSettingDefault === card.id}
-                              >
-                                {isSettingDefault === card.id ? 'Setting...' : 'Set as Default'}
-                              </ActionButton>
+                              <SetDefaultIcon isHovered={hoveredCard === card.id}>
+                                {isSettingDefault === card.id ? (
+                                  <div className="spinner" style={{
+                                    width: '16px',
+                                    height: '16px',
+                                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                                    borderTopColor: 'white',
+                                    borderRadius: '50%',
+                                    animation: 'spin 1s linear infinite'
+                                  }} />
+                                ) : (
+                                  renderIcon(FaCheckCircle)
+                                )}
+                              </SetDefaultIcon>
                             )}
-                          </CardBadges>
+                          </CardActions>
                         </PaymentCard>
                       ))}
                     </PaymentCardsList>
