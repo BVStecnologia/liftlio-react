@@ -1711,21 +1711,47 @@ const Settings: React.FC<{}> = () => {
   
   // Function to fetch user cards
   const fetchUserCards = async () => {
+    console.log('=== FETCHING USER CARDS ===');
     setIsLoadingCards(true);
     try {
+      console.log('Calling RPC get_user_cards...');
       const data = await callRPC('get_user_cards', {});
-      setUserCards(data || []);
+      console.log('User cards response:', data);
+      console.log('Type of data:', typeof data);
+      console.log('Is array?', Array.isArray(data));
+      
+      // Handle different response formats
+      let cards = [];
+      if (Array.isArray(data)) {
+        cards = data;
+      } else if (data && typeof data === 'object') {
+        // Check if data is wrapped in an object
+        if (data.cards) {
+          cards = data.cards;
+        } else if (data.data) {
+          cards = data.data;
+        } else if (data.result) {
+          cards = data.result;
+        }
+      }
+      
+      console.log('Final cards array:', cards);
+      console.log('Number of cards:', cards.length);
+      setUserCards(cards);
     } catch (error) {
       console.error('Error fetching user cards:', error);
       setUserCards([]);
     } finally {
       setIsLoadingCards(false);
+      console.log('=== FETCH COMPLETE ===');
     }
   };
   
   // Fetch user cards when account tab is active
   useEffect(() => {
+    console.log('useEffect for cards - activeTab:', activeTab, 'user:', !!user);
     if (activeTab === 'account' && user) {
+      console.log('Conditions met, fetching user cards...');
       fetchUserCards();
     }
   }, [activeTab, user]);
@@ -2590,6 +2616,7 @@ const Settings: React.FC<{}> = () => {
                     Payment Methods
                   </SubscriptionTitle>
                   
+                  {console.log('Rendering cards section - isLoadingCards:', isLoadingCards, 'userCards:', userCards)}
                   {isLoadingCards ? (
                     <div style={{ padding: '20px', textAlign: 'center' }}>
                       Loading payment methods...
