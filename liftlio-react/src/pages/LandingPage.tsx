@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
-import { FaYoutube, FaChartLine, FaBell, FaRocket, FaCheck, FaArrowRight, FaPlay, FaQuoteLeft, FaGlobe, FaSun, FaMoon, FaShieldAlt, FaClock, FaUsers, FaTrophy, FaFire, FaDollarSign, FaExclamationTriangle, FaLock, FaInfinity } from 'react-icons/fa';
+import { FaYoutube, FaChartLine, FaBell, FaRocket, FaCheck, FaArrowRight, FaPlay, FaQuoteLeft, FaGlobe, FaSun, FaMoon, FaShieldAlt, FaClock, FaUsers, FaTrophy, FaFire, FaDollarSign, FaExclamationTriangle, FaLock, FaInfinity, FaBars, FaTimes } from 'react-icons/fa';
 import { HiSparkles, HiLightningBolt } from 'react-icons/hi';
 import { BiPulse } from 'react-icons/bi';
 import { MdAutoGraph, MdTrendingUp } from 'react-icons/md';
@@ -572,6 +572,10 @@ const Logo = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+
+  @media (max-width: 480px) {
+    font-size: 24px;
+  }
 `;
 
 const Nav = styled.nav`
@@ -648,6 +652,115 @@ const LoginButton = styled.button`
     border-color: ${props => props.theme.colors.primary};
     color: ${props => props.theme.colors.primary};
   }
+`;
+
+const MobileMenuButton = styled.button`
+  display: none;
+  background: transparent;
+  border: none;
+  color: ${props => props.theme.colors.text.primary};
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px;
+  margin-left: 16px;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: ${props => props.theme.colors.primary};
+  }
+
+  @media (max-width: 768px) {
+    display: block;
+  }
+`;
+
+const MobileMenu = styled.div<{ isOpen: boolean }>`
+  display: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 280px;
+  height: 100vh;
+  background: ${props => props.theme.colors.cardBg};
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  transform: translateX(${props => props.isOpen ? '0' : '100%'});
+  transition: transform 0.3s ease;
+  z-index: 1000;
+  padding: 20px;
+
+  @media (max-width: 768px) {
+    display: block;
+  }
+`;
+
+const MobileMenuOverlay = styled.div<{ isOpen: boolean }>`
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: ${props => props.isOpen ? 1 : 0};
+  visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  z-index: 999;
+
+  @media (max-width: 768px) {
+    display: block;
+  }
+`;
+
+const MobileMenuHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid ${props => props.theme.colors.borderLight};
+`;
+
+const MobileMenuClose = styled.button`
+  background: transparent;
+  border: none;
+  color: ${props => props.theme.colors.text.primary};
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const MobileMenuNav = styled.nav`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const MobileNavLink = styled.a`
+  color: ${props => props.theme.colors.text.primary};
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 18px;
+  transition: color 0.3s ease;
+  padding: 8px 0;
+
+  &:hover {
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const MobileMenuFooter = styled.div`
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 `;
 
 const floatAnimation = keyframes`
@@ -755,6 +868,16 @@ const Description = styled.p`
 
   @media (max-width: 768px) {
     font-size: 18px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+    line-height: 1.7;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 15px;
   }
 `;
 
@@ -1186,6 +1309,14 @@ const FeaturesContainer = styled.div`
 const SectionHeader = styled.div`
   text-align: center;
   margin-bottom: 60px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 40px;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 32px;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -1197,6 +1328,14 @@ const SectionTitle = styled.h2`
   @media (max-width: 768px) {
     font-size: 36px;
   }
+
+  @media (max-width: 480px) {
+    font-size: 28px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 24px;
+  }
 `;
 
 const SectionDescription = styled.p`
@@ -1204,6 +1343,14 @@ const SectionDescription = styled.p`
   color: ${props => props.theme.colors.textSecondary};
   max-width: 600px;
   margin: 0 auto;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 15px;
+  }
 `;
 
 const FeaturesGrid = styled.div`
@@ -1214,6 +1361,17 @@ const FeaturesGrid = styled.div`
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  @media (max-width: 380px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 `;
 
@@ -1225,6 +1383,15 @@ const FeatureCard = styled.div`
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+
+  @media (max-width: 480px) {
+    padding: 24px;
+    border-radius: 12px;
+  }
+
+  @media (max-width: 380px) {
+    padding: 20px;
+  }
 
   &:hover {
     transform: translateY(-5px);
@@ -2006,6 +2173,7 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { language, setLanguage } = useLanguage();
   const lang = language; // Para manter compatibilidade com o código existente
@@ -2097,8 +2265,49 @@ const LandingPage: React.FC = () => {
               <LoginButton onClick={handleLogin}>{t.nav.login}</LoginButton>
             </NavButtons>
           </Nav>
+          <MobileMenuButton onClick={() => setMobileMenuOpen(true)}>
+            {renderIcon(FaBars)}
+          </MobileMenuButton>
         </HeaderContent>
       </Header>
+
+      {/* Mobile Menu */}
+      <MobileMenuOverlay isOpen={mobileMenuOpen} onClick={() => setMobileMenuOpen(false)} />
+      <MobileMenu isOpen={mobileMenuOpen}>
+        <MobileMenuHeader>
+          <Logo>
+            {renderIcon(BiPulse)}
+            LIFTLIO
+          </Logo>
+          <MobileMenuClose onClick={() => setMobileMenuOpen(false)}>
+            {renderIcon(FaTimes)}
+          </MobileMenuClose>
+        </MobileMenuHeader>
+        <MobileMenuNav>
+          <MobileNavLink href="#process" onClick={() => setMobileMenuOpen(false)}>
+            {t.nav.features}
+          </MobileNavLink>
+          <MobileNavLink href="#pricing" onClick={() => setMobileMenuOpen(false)}>
+            {t.nav.pricing}
+          </MobileNavLink>
+          <MobileNavLink href="#testimonials" onClick={() => setMobileMenuOpen(false)}>
+            {t.nav.testimonials}
+          </MobileNavLink>
+        </MobileMenuNav>
+        <MobileMenuFooter>
+          <NavButtons style={{ justifyContent: 'center' }}>
+            <LangButton onClick={toggleLanguage}>
+              {renderIcon(FaGlobe)} {lang.toUpperCase()}
+            </LangButton>
+            <ThemeToggle onClick={toggleTheme}>
+              {renderIcon(theme.name === 'dark' ? FaSun : FaMoon)}
+            </ThemeToggle>
+          </NavButtons>
+          <LoginButton onClick={handleLogin} style={{ width: '100%' }}>
+            {t.nav.login}
+          </LoginButton>
+        </MobileMenuFooter>
+      </MobileMenu>
 
       {/* Live Counter */}
       {/* LiveCounter removido 
