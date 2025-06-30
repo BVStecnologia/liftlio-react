@@ -1821,12 +1821,14 @@ const Overview: React.FC = () => {
 
   const LoadingAnimation = styled.div`
     width: 100%;
-    height: 70vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
     background: ${props => props.theme.components.card.bg};
     overflow: hidden;
     
@@ -2475,7 +2477,6 @@ const Overview: React.FC = () => {
         backgroundColor: theme.colors.bg.primary,
         zIndex: 9999 
       }}>
-        <PageContainer style={{ height: '100%' }}>
         <LoadingAnimation style={{ 
           background: theme.name === 'dark' 
             ? `linear-gradient(180deg, ${theme.colors.bg.primary} 0%, ${theme.colors.bg.secondary} 100%)`
@@ -2640,7 +2641,6 @@ const Overview: React.FC = () => {
             />
           ))}
         </LoadingAnimation>
-      </PageContainer>
       </div>
     );
   }
