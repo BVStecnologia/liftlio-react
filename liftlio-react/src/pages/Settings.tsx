@@ -1537,7 +1537,7 @@ const SetDefaultIcon = styled.div<{ isHovered?: boolean }>`
   }
   
   &::after {
-    content: 'Definir como cartão padrão';
+    content: 'Set as default card';
     position: absolute;
     bottom: 100%;
     left: 50%;
@@ -2635,7 +2635,9 @@ const Settings: React.FC<{}> = () => {
                     </div>
                   ) : userCards.length > 0 ? (
                     <PaymentCardsList>
-                      {userCards.map((card) => (
+                      {userCards.map((card) => {
+                        console.log(`Card ${card.id} - Brand: ${card.brand}, Default: ${card.is_default}, Active: ${card.is_active}`);
+                        return (
                         <PaymentCard 
                           key={card.id}
                           isDefault={card.is_default}
@@ -2677,7 +2679,7 @@ const Settings: React.FC<{}> = () => {
                             {!card.is_default && card.is_active && (
                               <SetDefaultIcon 
                                 isHovered={hoveredCard === card.id}
-                                title="Clique para definir como cartão padrão"
+                                title="Click to set as default payment method"
                               >
                                 {isSettingDefault === card.id ? (
                                   <div className="spinner" style={{
@@ -2695,7 +2697,8 @@ const Settings: React.FC<{}> = () => {
                             )}
                           </CardActions>
                         </PaymentCard>
-                      ))}
+                        );
+                      })}
                     </PaymentCardsList>
                   ) : (
                     <div style={{ 
