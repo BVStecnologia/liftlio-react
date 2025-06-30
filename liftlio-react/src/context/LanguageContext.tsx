@@ -979,8 +979,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (savedLang === 'pt' || savedLang === 'en') {
       return savedLang;
     }
-    const browserLang = navigator.language.toLowerCase();
-    return browserLang.startsWith('pt') ? 'pt' : 'en';
+    // Always default to English
+    return 'en';
   };
 
   const [language, setLanguageState] = useState<'en' | 'pt'>(getInitialLanguage());

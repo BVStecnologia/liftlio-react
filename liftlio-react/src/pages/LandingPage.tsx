@@ -616,9 +616,17 @@ const LangButton = styled.button`
   gap: 4px;
   font-size: 14px;
   transition: color 0.3s ease;
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
 
   &:hover {
     color: ${props => props.theme.colors.primary};
+  }
+
+  @media (max-width: 768px) {
+    padding: 10px;
+    font-size: 16px;
   }
 `;
 
@@ -631,9 +639,17 @@ const ThemeToggle = styled.button`
   display: flex;
   align-items: center;
   transition: color 0.3s ease;
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
 
   &:hover {
     color: ${props => props.theme.colors.primary};
+  }
+
+  @media (max-width: 768px) {
+    padding: 10px;
+    font-size: 16px;
   }
 `;
 
@@ -2295,11 +2311,19 @@ const LandingPage: React.FC = () => {
           </MobileNavLink>
         </MobileMenuNav>
         <MobileMenuFooter>
-          <NavButtons style={{ justifyContent: 'center' }}>
-            <LangButton onClick={toggleLanguage}>
+          <NavButtons style={{ justifyContent: 'space-around', marginBottom: '16px' }}>
+            <LangButton onClick={toggleLanguage} style={{ 
+              border: '1px solid rgba(0,0,0,0.1)', 
+              borderRadius: '8px',
+              backgroundColor: theme.name === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+            }}>
               {renderIcon(FaGlobe)} {lang.toUpperCase()}
             </LangButton>
-            <ThemeToggle onClick={toggleTheme}>
+            <ThemeToggle onClick={toggleTheme} style={{ 
+              border: '1px solid rgba(0,0,0,0.1)', 
+              borderRadius: '8px',
+              backgroundColor: theme.name === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+            }}>
               {renderIcon(theme.name === 'dark' ? FaSun : FaMoon)}
             </ThemeToggle>
           </NavButtons>
