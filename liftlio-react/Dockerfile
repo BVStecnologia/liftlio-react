@@ -7,6 +7,8 @@ RUN npm run build
 
 FROM nginx:alpine
 COPY --from=build /app/build /usr/share/nginx/html
+# Copiar a landing page HTML como index.html para melhor SEO
+COPY --from=build /app/src/pages/landing-page.html /usr/share/nginx/html/index.html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
