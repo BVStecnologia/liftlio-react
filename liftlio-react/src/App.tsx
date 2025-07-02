@@ -11,6 +11,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { ProjectProvider, useProject } from './context/ProjectContext';
 import { ExtensionWarning } from './components/ExtensionWarning';
 import LoadingDataIndicator from './components/LoadingDataIndicator';
+import { IconComponent } from './utils/IconHelper';
+import { FaBars } from 'react-icons/fa';
 
 // Lazy load all pages
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -34,10 +36,6 @@ const SubscriptionWarningBanner = lazy(() => import('./components/SubscriptionWa
 const ProcessingWrapper = lazy(() => import('./components/ProcessingWrapper'));
 const UrlDataTest = lazy(() => import('./components/UrlDataTest'));
 const SubscriptionGate = lazy(() => import('./components/SubscriptionGate'));
-
-// Import only what's needed
-import { IconComponent } from './utils/IconHelper';
-import { FaBars } from 'react-icons/fa';
 
 const AppContainer = styled.div`
   display: flex;
