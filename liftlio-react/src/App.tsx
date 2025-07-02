@@ -1,37 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import styled, { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import GlobalStyle from './styles/GlobalStyle';
 import { GlobalThemeStyles, useGlobalTheme } from './styles/GlobalThemeSystem';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import Overview from './pages/Overview';
-import Monitoring from './pages/Monitoring';
-import Mentions from './pages/Mentions';
-import Settings from './pages/Settings';
-import Integrations from './pages/Integrations';
-import LoginPage from './pages/LoginPage';
-import ProjectCreationPage from './pages/ProjectCreationPage';
-import LandingPage from './pages/LandingPage';
-import CheckoutPage from './pages/CheckoutPage';
-import About from './pages/About';
-import Privacy from './pages/Privacy';
-import Terms from './pages/Terms';
-import Security from './pages/Security';
-import LoadingDataIndicator from './components/LoadingDataIndicator';
-import ProcessingWrapper from './components/ProcessingWrapper';
-import UrlDataTest from './components/UrlDataTest';
-import * as FaIcons from 'react-icons/fa';
-import { IconComponent } from './utils/IconHelper';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import SubscriptionWarningBanner from './components/SubscriptionWarningBanner';
 import { ProjectProvider, useProject } from './context/ProjectContext';
 import { ExtensionWarning } from './components/ExtensionWarning';
-import SubscriptionGate from './components/SubscriptionGate';
+import LoadingDataIndicator from './components/LoadingDataIndicator';
+
+// Lazy load all pages
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const Overview = lazy(() => import('./pages/Overview'));
+const Monitoring = lazy(() => import('./pages/Monitoring'));
+const Mentions = lazy(() => import('./pages/Mentions'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Integrations = lazy(() => import('./pages/Integrations'));
+const ProjectCreationPage = lazy(() => import('./pages/ProjectCreationPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const About = lazy(() => import('./pages/About'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const Terms = lazy(() => import('./pages/Terms'));
+const Security = lazy(() => import('./pages/Security'));
+
+// Lazy load heavy components
+const Sidebar = lazy(() => import('./components/Sidebar'));
+const Header = lazy(() => import('./components/Header'));
+const SubscriptionWarningBanner = lazy(() => import('./components/SubscriptionWarningBanner'));
+const ProcessingWrapper = lazy(() => import('./components/ProcessingWrapper'));
+const UrlDataTest = lazy(() => import('./components/UrlDataTest'));
+const SubscriptionGate = lazy(() => import('./components/SubscriptionGate'));
+
+// Import only what's needed
+import { IconComponent } from './utils/IconHelper';
+import { FaBars } from 'react-icons/fa';
 
 const AppContainer = styled.div`
   display: flex;
@@ -724,7 +730,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
           
           {/* Floating hamburger menu button for mobile */}
           <FloatingMenuButton onClick={toggleSidebar}>
-            <IconComponent icon={FaIcons.FaBars} />
+            <IconComponent icon={FaBars} />
           </FloatingMenuButton>
         </AppContainer>
       } />
