@@ -1,24 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
-import { FaYoutube, FaChartLine, FaBell, FaRocket, FaCheck, FaArrowRight, FaPlay, FaQuoteLeft, FaGlobe, FaSun, FaMoon, FaShieldAlt, FaClock, FaUsers, FaTrophy, FaFire, FaDollarSign, FaExclamationTriangle, FaLock, FaInfinity, FaBars, FaTimes } from 'react-icons/fa';
-import { HiSparkles, HiLightningBolt } from 'react-icons/hi';
-import { BiPulse } from 'react-icons/bi';
-import { MdAutoGraph, MdTrendingUp } from 'react-icons/md';
+// Importar ícones otimizados
+import { 
+  FaGlobe, FaSun, FaMoon, FaBars, FaTimes, FaRocket, FaCheck,
+  HiSparkles, BiPulse,
+  FaChartLine, FaShieldAlt, FaClock, FaUsers, FaTrophy 
+} from '../utils/icons';
 import { renderIcon } from '../utils/IconHelper';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
-import Testimonials from '../components/Testimonials';
-import TrendingTopicsCarousel from '../components/TrendingTopicsCarousel';
-import DecliningTopicsCarousel from '../components/DecliningTopicsCarousel';
-import InteractiveProof from '../components/InteractiveProof';
-import NumbersThatMatter from '../components/NumbersThatMatter';
-import CompareResults from '../components/CompareResults';
-import GuaranteeSection from '../components/GuaranteeSection';
-import ProblemSection from '../components/ProblemSection';
-import ObjectionHandling from '../components/ObjectionHandling';
-import BreakthroughSection from '../components/BreakthroughSection';
-import ForWhoSection from '../components/ForWhoSection';
+import LoadingSpinner from '../components/LoadingSpinner';
+import LazySection from '../components/LazySection';
+
+// Lazy load heavy components
+const Testimonials = lazy(() => import('../components/Testimonials'));
+const TrendingTopicsCarousel = lazy(() => import('../components/TrendingTopicsCarousel'));
+const DecliningTopicsCarousel = lazy(() => import('../components/DecliningTopicsCarousel'));
+const InteractiveProof = lazy(() => import('../components/InteractiveProof'));
+const NumbersThatMatter = lazy(() => import('../components/NumbersThatMatter'));
+const CompareResults = lazy(() => import('../components/CompareResults'));
+const GuaranteeSection = lazy(() => import('../components/GuaranteeSection'));
+const ProblemSection = lazy(() => import('../components/ProblemSection'));
+const ObjectionHandling = lazy(() => import('../components/ObjectionHandling'));
+const BreakthroughSection = lazy(() => import('../components/BreakthroughSection'));
+const ForWhoSection = lazy(() => import('../components/ForWhoSection'));
 
 // Internacionalização
 const translations = {
@@ -2431,10 +2437,14 @@ const LandingPage: React.FC = () => {
       {/* As seções removidas: Features, Stats, Declining Topics, NumbersThatMatter, CompareResults, GuaranteeSection */}
 
       {/* Problem Section */}
-      <ProblemSection />
+      <LazySection>
+        <ProblemSection />
+      </LazySection>
       
       {/* Breakthrough Section - O Avanço */}
-      <BreakthroughSection />
+      <LazySection>
+        <BreakthroughSection />
+      </LazySection>
 
       {/* Process Section - Como Funciona */}
       <ProcessSection id="process">
@@ -2462,23 +2472,35 @@ const LandingPage: React.FC = () => {
       </ProcessSection>
 
       {/* Interactive Proof Section */}
-      <InteractiveProof />
+      <LazySection>
+        <InteractiveProof />
+      </LazySection>
 
       {/* Trending Topics */}
-      <TrendingTopicsCarousel />
+      <LazySection>
+        <TrendingTopicsCarousel />
+      </LazySection>
       
       {/* Declining Topics Carousel */}
-      <DecliningTopicsCarousel />
+      <LazySection>
+        <DecliningTopicsCarousel />
+      </LazySection>
       
       {/* For Who Section - Para Quem É */}
-      <ForWhoSection />
+      <LazySection>
+        <ForWhoSection />
+      </LazySection>
 
       {/* Objection Handling Section */}
-      <ObjectionHandling />
+      <LazySection>
+        <ObjectionHandling />
+      </LazySection>
 
       {/* Testimonials Section - Prova Social */}
       <div id="testimonials">
-        <Testimonials language={lang} />
+        <LazySection>
+          <Testimonials language={lang} />
+        </LazySection>
       </div>
 
       <PricingSection id="pricing">
