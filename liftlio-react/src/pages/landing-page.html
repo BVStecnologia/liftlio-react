@@ -208,6 +208,14 @@
         .proof-form{background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:40px;margin-top:40px}
         .url-input{width:100%;padding:16px 20px;border:1px solid var(--color-border-light);border-radius:8px;font-size:16px;margin-bottom:20px;background:var(--color-background);color:var(--color-text-primary)}
         .url-input:focus{outline:none;border-color:var(--color-primary)}
+        .url-input.error{border-color:#ef4444}
+        .url-tooltip-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--color-text-secondary);cursor:help;transition:color 0.3s}
+        .url-tooltip-icon:hover{color:var(--color-primary)}
+        .url-tooltip{position:absolute;bottom:calc(100% + 10px);right:0;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:8px;padding:12px 16px;max-width:300px;font-size:14px;line-height:1.5;color:var(--color-text-primary);box-shadow:0 4px 20px var(--color-shadow-medium);opacity:0;visibility:hidden;transform:translateY(10px);transition:all 0.3s;z-index:10}
+        .url-tooltip.show{opacity:1;visibility:visible;transform:translateY(0)}
+        .url-tooltip::after{content:'';position:absolute;top:100%;right:20px;border:8px solid transparent;border-top-color:var(--color-card-bg)}
+        @keyframes wave{0%,60%,100%{transform:scale(1);opacity:0.3}30%{transform:scale(1.3);opacity:1}}
+        .loading-dot{width:20px;height:20px;background:var(--gradient-landing);border-radius:50%;animation:wave 1.5s infinite}
         
         /* Testimonials */
         .testimonials-section{background:var(--color-testimonials-bg)}
@@ -710,21 +718,58 @@
             <div class="proof-container">
                 <div class="section-header">
                     <h2 class="section-title">
-                        <span class="lang-pt">Veja o Poder das <span class="gradient-text">Menções Orgânicas</span></span>
-                        <span class="lang-en">See the Power of <span class="gradient-text">Organic Mentions</span></span>
+                        <span class="lang-pt">Veja o Liftlio em ação com seu produto</span>
+                        <span class="lang-en">See Liftlio in action with your product</span>
                     </h2>
                     <p class="section-description">
-                        <span class="lang-pt">Teste com qualquer URL do YouTube e veja quantas oportunidades você está perdendo</span>
-                        <span class="lang-en">Test with any YouTube URL and see how many opportunities you're missing</span>
+                        <span class="lang-pt">Teste grátis. Sem cadastro. Veja uma simulação real agora.</span>
+                        <span class="lang-en">Free trial. No signup. See a real simulation now.</span>
                     </p>
                 </div>
                 
-                <div class="proof-form">
-                    <input type="url" class="url-input" placeholder="Cole aqui a URL de um vídeo do YouTube...">
-                    <button class="btn-primary" style="width:100%">
-                        <span class="lang-pt">Analisar Oportunidades</span>
-                        <span class="lang-en">Analyze Opportunities</span>
+                <div class="proof-form" id="proof-form">
+                    <div style="position:relative;width:100%">
+                        <input type="url" id="website-url" class="url-input" style="padding-right:48px" placeholder="Digite a URL do seu site...">
+                        <div class="url-tooltip-icon" onclick="toggleTooltip()" onmouseenter="showTooltip()" onmouseleave="hideTooltip()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                        <div class="url-tooltip" id="url-tooltip">
+                            <span class="lang-pt">Para melhores resultados, use uma página com conteúdo detalhado sobre seu produto ou serviço. Landing pages com propostas de valor claras funcionam melhor!</span>
+                            <span class="lang-en">For best results, use a page with detailed content about your product or service. Landing pages with clear value propositions work best!</span>
+                        </div>
+                    </div>
+                    <button class="btn-primary" style="width:100%" onclick="analyzeWebsite()" id="analyze-btn">
+                        <span class="lang-pt">Mostre Como o Liftlio Funciona</span>
+                        <span class="lang-en">Show Me How Liftlio Works</span>
                     </button>
+                    
+                    <div id="error-message" style="display:none;color:#ef4444;margin-top:16px;padding:16px;background:rgba(239,68,68,0.1);border-radius:8px"></div>
+                    
+                    <!-- Loading State -->
+                    <div id="loading-container" style="display:none;margin-top:40px">
+                        <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:48px;text-align:center;position:relative">
+                            <div style="display:flex;justify-content:center;gap:16px;margin-bottom:32px">
+                                <div class="loading-dot" style="animation-delay:0s"></div>
+                                <div class="loading-dot" style="animation-delay:0.2s"></div>
+                                <div class="loading-dot" style="animation-delay:0.4s"></div>
+                            </div>
+                            <div id="loading-icon" style="font-size:48px;color:var(--color-primary);margin-bottom:24px">🔍</div>
+                            <div style="width:100%;max-width:400px;height:6px;background:var(--color-border-light);border-radius:3px;margin:0 auto 20px;overflow:hidden">
+                                <div id="loading-progress" style="height:100%;background:var(--gradient-landing);width:0%;transition:width 0.8s ease-out"></div>
+                            </div>
+                            <p id="loading-text" style="font-size:18px;color:var(--color-text-primary)">
+                                <span class="lang-pt">Lendo o conteúdo do seu site...</span>
+                                <span class="lang-en">Reading your website content...</span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Container -->
+                    <div id="results-container" style="display:none;margin-top:40px"></div>
                 </div>
             </div>
         </div>
@@ -1790,6 +1835,310 @@
             });
         }
         
+        // Tooltip functions
+        let tooltipTimeout;
+        function showTooltip() {
+            clearTimeout(tooltipTimeout);
+            document.getElementById('url-tooltip').classList.add('show');
+        }
+        
+        function hideTooltip() {
+            tooltipTimeout = setTimeout(() => {
+                document.getElementById('url-tooltip').classList.remove('show');
+            }, 200);
+        }
+        
+        function toggleTooltip() {
+            const tooltip = document.getElementById('url-tooltip');
+            tooltip.classList.toggle('show');
+        }
+        
+        // Loading steps for analyze function
+        const loadingSteps = {
+            pt: [
+                { text: "Lendo o conteúdo do seu site...", icon: "🔍" },
+                { text: "Entendendo seu produto...", icon: "🧠" },
+                { text: "Analisando seu nicho de mercado...", icon: "📊" },
+                { text: "Buscando discussões no YouTube...", icon: "🎬" },
+                { text: "Encontrando clientes potenciais...", icon: "👥" },
+                { text: "Identificando pontos de dor...", icon: "💬" },
+                { text: "Gerando resposta personalizada...", icon: "🤖" },
+                { text: "Finalizando simulação...", icon: "✨" }
+            ],
+            en: [
+                { text: "Reading your website content...", icon: "🔍" },
+                { text: "Understanding your product...", icon: "🧠" },
+                { text: "Analyzing your market niche...", icon: "📊" },
+                { text: "Searching YouTube discussions...", icon: "🎬" },
+                { text: "Finding potential customers...", icon: "👥" },
+                { text: "Identifying pain points...", icon: "💬" },
+                { text: "Generating personalized response...", icon: "🤖" },
+                { text: "Finalizing simulation...", icon: "✨" }
+            ]
+        };
+        
+        // Normalize URL function
+        function normalizeUrl(inputUrl) {
+            let normalizedUrl = inputUrl.trim();
+            if (!normalizedUrl.match(/^https?:\/\//i)) {
+                normalizedUrl = 'https://' + normalizedUrl;
+            }
+            return normalizedUrl;
+        }
+        
+        // Validate URL function
+        function validateUrl(inputUrl) {
+            try {
+                const urlObj = new URL(inputUrl);
+                return urlObj.hostname.includes('.');
+            } catch {
+                return false;
+            }
+        }
+        
+        // Analyze website function
+        async function analyzeWebsite() {
+            const lang = document.documentElement.getAttribute('data-lang');
+            const urlInput = document.getElementById('website-url');
+            const url = urlInput.value.trim();
+            const errorDiv = document.getElementById('error-message');
+            const loadingContainer = document.getElementById('loading-container');
+            const resultsContainer = document.getElementById('results-container');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            
+            // Reset states
+            errorDiv.style.display = 'none';
+            resultsContainer.style.display = 'none';
+            resultsContainer.innerHTML = '';
+            urlInput.classList.remove('error');
+            
+            if (!url) {
+                errorDiv.textContent = lang === 'pt' ? 
+                    'Por favor, insira uma URL' : 
+                    'Please enter a URL';
+                errorDiv.style.display = 'block';
+                urlInput.classList.add('error');
+                return;
+            }
+            
+            // Normalize and validate URL
+            const normalizedUrl = normalizeUrl(url);
+            if (!validateUrl(normalizedUrl)) {
+                errorDiv.textContent = lang === 'pt' ? 
+                    'Por favor, insira uma URL válida (ex: https://exemplo.com)' : 
+                    'Please enter a valid URL (e.g., https://example.com)';
+                errorDiv.style.display = 'block';
+                urlInput.classList.add('error');
+                return;
+            }
+            
+            // Start loading
+            analyzeBtn.disabled = true;
+            urlInput.disabled = true;
+            loadingContainer.style.display = 'block';
+            
+            // Animate loading steps
+            let currentStep = 0;
+            const steps = loadingSteps[lang];
+            const totalSteps = steps.length;
+            const minStepTime = 800;
+            const maxStepTime = 1500;
+            
+            const updateLoadingStep = () => {
+                const step = steps[currentStep];
+                document.getElementById('loading-icon').textContent = step.icon;
+                document.getElementById('loading-text').innerHTML = `
+                    <span style="margin-right:8px">${step.icon}</span>${step.text}
+                `;
+                document.getElementById('loading-progress').style.width = 
+                    `${((currentStep + 1) / totalSteps) * 100}%`;
+            };
+            
+            updateLoadingStep();
+            
+            const stepInterval = setInterval(() => {
+                if (currentStep < totalSteps - 1) {
+                    currentStep++;
+                    updateLoadingStep();
+                }
+            }, Math.floor(Math.random() * (maxStepTime - minStepTime) + minStepTime));
+            
+            try {
+                // Call the edge function
+                const startTime = Date.now();
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-url`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({
+                        url: normalizedUrl,
+                        language: lang
+                    })
+                });
+                
+                // Ensure minimum loading time
+                const elapsedTime = Date.now() - startTime;
+                const minimumLoadingTime = totalSteps * minStepTime;
+                
+                if (elapsedTime < minimumLoadingTime) {
+                    await new Promise(resolve => 
+                        setTimeout(resolve, minimumLoadingTime - elapsedTime)
+                    );
+                }
+                
+                // Complete remaining steps
+                for (let i = currentStep; i < totalSteps; i++) {
+                    currentStep = i;
+                    updateLoadingStep();
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+                
+                clearInterval(stepInterval);
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success && data.simulation) {
+                    // Display results
+                    displayResults(data.simulation, lang);
+                } else {
+                    // Handle errors
+                    let errorMessage = lang === 'pt' ? 
+                        'Erro ao gerar simulação. Por favor, tente novamente.' : 
+                        'Error generating simulation. Please try again.';
+                    
+                    if (response.status === 429 || data.error?.includes('limit')) {
+                        errorMessage = lang === 'pt' ? 
+                            'Você atingiu o limite de 3 análises por dia. Tente novamente amanhã!' : 
+                            "You've reached the limit of 3 analyses per day. Try again tomorrow!";
+                    } else if (data.error?.includes('fetch') || data.error?.includes('Jina')) {
+                        errorMessage = lang === 'pt' ? 
+                            'Não foi possível acessar este site. Verifique a URL e tente novamente.' : 
+                            'Unable to access this website. Please check the URL and try again.';
+                    }
+                    
+                    errorDiv.textContent = errorMessage;
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorDiv.textContent = lang === 'pt' ? 
+                    'Erro ao conectar com o servidor. Por favor, tente novamente.' : 
+                    'Error connecting to server. Please try again.';
+                errorDiv.style.display = 'block';
+                clearInterval(stepInterval);
+            } finally {
+                loadingContainer.style.display = 'none';
+                analyzeBtn.disabled = false;
+                urlInput.disabled = false;
+            }
+        }
+        
+        // Display results function
+        function displayResults(simulation, lang) {
+            const resultsContainer = document.getElementById('results-container');
+            resultsContainer.style.display = 'block';
+            
+            const formatNumber = (num) => {
+                return new Intl.NumberFormat(lang === 'pt' ? 'pt-BR' : 'en-US').format(num);
+            };
+            
+            resultsContainer.innerHTML = `
+                <!-- Video Found Card -->
+                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;margin-bottom:24px;text-align:left">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                        <div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">🎬</div>
+                        <h3 style="font-size:18px;font-weight:700;margin:0">
+                            <span class="lang-pt">Vídeo Encontrado</span>
+                            <span class="lang-en">Video Found</span>
+                        </h3>
+                    </div>
+                    <div style="font-size:16px;font-weight:600;margin-bottom:12px">${simulation.video.title}</div>
+                    <div style="display:flex;gap:16px;font-size:14px;color:var(--color-text-secondary)">
+                        <span>${formatNumber(simulation.video.views)} views</span>
+                        <span>${formatNumber(simulation.video.comments)} comments</span>
+                        <span>${simulation.video.category}</span>
+                    </div>
+                </div>
+                
+                <!-- Lead Comment Card -->
+                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;margin-bottom:24px;text-align:left">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                        <div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">👤</div>
+                        <h3 style="font-size:18px;font-weight:700;margin:0">
+                            <span class="lang-pt">Comentário de Cliente Potencial</span>
+                            <span class="lang-en">Potential Customer Comment</span>
+                        </h3>
+                    </div>
+                    <div style="font-size:16px;line-height:1.6;padding:16px;background:var(--color-background);border-radius:8px;margin-bottom:12px">
+                        "${simulation.lead_comment.text}"
+                    </div>
+                    <div style="display:flex;gap:24px;margin-top:12px">
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
+                                <span class="lang-pt">Pontuação de Lead:</span>
+                                <span class="lang-en">Lead Score:</span>
+                            </span>
+                            <span style="font-size:14px;font-weight:600;color:var(--color-primary)">${simulation.lead_comment.lead_score}/10</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
+                                <span class="lang-pt">Sentimento:</span>
+                                <span class="lang-en">Sentiment:</span>
+                            </span>
+                            <span style="font-size:14px;font-weight:600;color:var(--color-primary)">
+                                ${lang === 'pt' && simulation.lead_comment.sentiment === 'seeking_solution' ? 
+                                    'buscando_solução' : simulation.lead_comment.sentiment}
+                            </span>
+                        </div>
+                    </div>
+                    ${simulation.lead_comment.justification ? 
+                        `<div style="font-size:13px;color:var(--color-text-secondary);font-style:italic;margin-top:8px">
+                            ${simulation.lead_comment.justification}
+                        </div>` : ''}
+                </div>
+                
+                <!-- Liftlio Response Card -->
+                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;text-align:left">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                        <div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">🤖</div>
+                        <h3 style="font-size:18px;font-weight:700;margin:0">
+                            <span class="lang-pt">Resposta do Liftlio</span>
+                            <span class="lang-en">Liftlio's Response</span>
+                        </h3>
+                    </div>
+                    <div style="font-size:16px;line-height:1.6;padding:16px;background:var(--color-background);border-radius:8px;margin-bottom:12px;border-left:4px solid var(--color-primary)">
+                        ${simulation.liftlio_response.message}
+                    </div>
+                    <div style="display:flex;gap:24px;margin-top:12px">
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
+                                <span class="lang-pt">Sentimento:</span>
+                                <span class="lang-en">Sentiment:</span>
+                            </span>
+                            <span style="font-size:14px;font-weight:600;color:var(--color-primary)">
+                                ${Math.round(simulation.liftlio_response.sentiment_score * 100)}%
+                            </span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
+                                <span class="lang-pt">Relevância:</span>
+                                <span class="lang-en">Relevance:</span>
+                            </span>
+                            <span style="font-size:14px;font-weight:600;color:var(--color-primary)">
+                                ${Math.round(simulation.liftlio_response.relevance_score * 100)}%
+                            </span>
+                        </div>
+                    </div>
+                    ${simulation.liftlio_response.justification ? 
+                        `<div style="font-size:13px;color:var(--color-text-secondary);font-style:italic;margin-top:8px">
+                            ${simulation.liftlio_response.justification}
+                        </div>` : ''}
+                </div>
+            `;
+        }
+        
         // Initialize on page load
         window.addEventListener('load', function() {
             console.log('Página carregada, iniciando busca de tendências...');
@@ -1800,6 +2149,14 @@
             
             console.log('Container trending:', trendingContainer);
             console.log('Container declining:', decliningContainer);
+            
+            // Add enter key support for URL input
+            document.getElementById('website-url').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    analyzeWebsite();
+                }
+            });
             
             // Fetch real data after a short delay
             setTimeout(() => {
