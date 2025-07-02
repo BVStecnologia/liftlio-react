@@ -17,7 +17,7 @@ import LazySection from '../components/LazySection';
 const isMobile = window.innerWidth <= 768;
 
 // Componentes que só carregam após scroll ou em desktop
-const Testimonials = lazy(() => import(/* webpackChunkName: "testimonials", webpackPrefetch: true */ '../components/Testimonials'));
+const Testimonials = lazy(() => import(/* webpackChunkName: "testimonials" */ '../components/Testimonials'));
 const TrendingTopicsCarousel = lazy(() => import(/* webpackChunkName: "trending" */ '../components/TrendingTopicsCarousel'));
 const DecliningTopicsCarousel = lazy(() => import(/* webpackChunkName: "declining" */ '../components/DecliningTopicsCarousel'));
 const InteractiveProof = lazy(() => import(/* webpackChunkName: "proof" */ '../components/InteractiveProof'));
@@ -2162,6 +2162,7 @@ const LandingPage: React.FC = () => {
   };
 
 
+
   return (
     <LandingContainer>
       <Header style={{ 
@@ -2283,44 +2284,20 @@ const LandingPage: React.FC = () => {
 
           <HeroVisual>
             <DashboardPreview>
-              <picture>
-                <source 
-                  media="(max-width: 768px)"
-                  type="image/webp"
-                  srcSet={theme.name === 'dark' 
-                    ? "/imagens/dashboard-hero-dark-mobile.webp" 
-                    : "/imagens/dashboard-hero-light-mobile.webp"
-                  }
-                />
-                <source 
-                  media="(max-width: 768px)"
-                  type="image/jpeg"
-                  srcSet={theme.name === 'dark' 
-                    ? "/imagens/dashboard-hero-dark-mobile.jpg" 
-                    : "/imagens/dashboard-hero-light-mobile.jpg"
-                  }
-                />
-                <source 
-                  type="image/webp"
-                  srcSet={theme.name === 'dark' 
-                    ? "/imagens/dashboard-hero-dark.webp" 
-                    : "/imagens/dashboard-hero-light.webp"
-                  }
-                />
-                <img 
-                  src={theme.name === 'dark' 
-                    ? "/imagens/dashboard-hero-dark.jpg" 
-                    : "/imagens/dashboard-hero-light.jpg"
-                  }
-                  alt="Liftlio Dashboard"
-                  width={1536}
-                  height={1024}
-                  loading="eager"
-                  decoding="sync"
-                  className="dashboard-hero-image"
-                  style={{ aspectRatio: '1536 / 1024', width: '100%', height: 'auto' }}
-                />
-              </picture>
+              <img 
+                src={theme.name === 'dark' 
+                  ? "/imagens/dashboard-hero-dark.jpg" 
+                  : "/imagens/dashboard-hero-light.jpg"
+                }
+                alt="Liftlio Dashboard"
+                width={1536}
+                height={1024}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                className="dashboard-hero-image"
+                style={{ aspectRatio: '1536 / 1024', width: '100%', height: 'auto' }}
+              />
             </DashboardPreview>
             
             {/* Elementos flutuantes */}
@@ -2368,10 +2345,18 @@ const LandingPage: React.FC = () => {
       {/* As seções removidas: Features, Stats, Declining Topics, NumbersThatMatter, CompareResults, GuaranteeSection */}
 
       {/* Problem Section */}
-      <ProblemSection />
+      <LazySection>
+        <Suspense fallback={<LoadingPlaceholder />}>
+          <ProblemSection />
+        </Suspense>
+      </LazySection>
       
       {/* Breakthrough Section - O Avanço */}
-      <BreakthroughSection />
+      <LazySection>
+        <Suspense fallback={<LoadingPlaceholder />}>
+          <BreakthroughSection />
+        </Suspense>
+      </LazySection>
 
       {/* Process Section - Como Funciona */}
       <ProcessSection id="process">

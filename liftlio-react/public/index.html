@@ -12,14 +12,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://suqjifkhmekcdflwowiw.supabase.co">
     
-    <!-- Preload critical fonts -->
-    <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7SUc.woff2">
-    <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa2JL7SUc.woff2">
+    <!-- Preload critical fonts with high priority -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7SUc.woff2" fetchpriority="high">
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa2JL7SUc.woff2" fetchpriority="high">
     
-    <!-- Preload hero images for LCP - Mobile First -->
-    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark-mobile.webp" type="image/webp" media="(max-width: 768px) and (prefers-color-scheme: dark)">
-    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-light-mobile.webp" type="image/webp" media="(max-width: 768px) and (prefers-color-scheme: light)">
-    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark-mobile.jpg" type="image/jpeg" media="(max-width: 768px)" importance="high">
+    <!-- Preload hero images for LCP with high priority - Mobile First -->
+    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark-mobile.jpg" type="image/jpeg" media="(max-width: 768px)" fetchpriority="high">
+    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark.jpg" type="image/jpeg" media="(min-width: 769px)" fetchpriority="high">
     
     <!-- Prefetch desktop images -->
     <link rel="prefetch" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark.webp" type="image/webp">
@@ -126,13 +125,251 @@
       }
     }
     </script>
-    <!-- Critical CSS for faster initial paint -->
-    <link rel="preload" href="%PUBLIC_URL%/critical.css" as="style">
-    <link rel="stylesheet" href="%PUBLIC_URL%/critical.css">
+    <!-- Critical CSS inlined for instant loading -->
+    <style>
+/* Critical CSS for Landing Page - Mobile Optimized */
+/* Base Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Typography */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #0a0a0a;
+  color: #fff;
+  overflow-x: hidden;
+}
+
+/* Hero Section - Above the fold */
+.hero-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px 40px;
+}
+
+.hero-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  color: #ffffff;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #00b4ff 0%, #80ffdb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Header */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 16px 20px;
+  background: rgba(10, 10, 10, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-content {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Logo */
+.logo {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, #00b4ff 0%, #80ffdb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Buttons */
+.primary-button {
+  background: linear-gradient(135deg, #00b4ff 0%, #80ffdb 100%);
+  color: #000;
+  border: none;
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 50px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s;
+}
+
+.primary-button:active {
+  transform: scale(0.95);
+}
+
+/* Hero Image Container */
+.dashboard-hero-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin-top: 40px;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  /* Disable expensive effects on mobile */
+  * {
+    backdrop-filter: none !important;
+    filter: none !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .hero-section {
+    min-height: auto;
+    padding: 80px 20px 40px;
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  .primary-button {
+    padding: 14px 28px;
+    font-size: 15px;
+  }
+  
+  header {
+    padding: 12px 16px;
+  }
+  
+  .logo {
+    font-size: 20px;
+  }
+}
+
+/* Loading States */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Lazy Section Placeholder */
+.lazy-placeholder {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ensure images are visible immediately */
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Hide mobile menu by default */
+.mobile-menu {
+  display: none;
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 180, 255, 0.1);
+  border: 1px solid rgba(0, 180, 255, 0.3);
+  border-radius: 50px;
+  padding: 8px 20px;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+/* Description */
+.description {
+  font-size: 18px;
+  line-height: 1.6;
+  color: #a1a1a1;
+  margin-bottom: 32px;
+}
+
+/* Navigation */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.nav-link {
+  color: #a1a1a1;
+  text-decoration: none;
+  font-size: 16px;
+  transition: color 0.2s;
+}
+
+.nav-link:hover {
+  color: #fff;
+}
+
+/* Mobile menu button */
+.mobile-menu-button {
+  display: none;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .nav {
+    display: none;
+  }
+  
+  .mobile-menu-button {
+    display: block;
+  }
+}
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    
+    
     <div id="root"></div>
+    
     <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.
