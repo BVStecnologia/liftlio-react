@@ -16,6 +16,9 @@
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7SUc.woff2">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa2JL7SUc.woff2">
     
+    <!-- Preload hero image for LCP -->
+    <link rel="preload" as="image" href="%PUBLIC_URL%/hero-bg.webp" type="image/webp">
+    
     <!-- DNS Prefetch for performance -->
     <link rel="dns-prefetch" href="https://suqjifkhmekcdflwowiw.supabase.co">
     <meta name="theme-color" content="#282c34" />
@@ -166,6 +169,26 @@
           background: linear-gradient(-45deg, #282c34, #21232a, #1a1c20, #61dafb);
           background-size: 400% 400%;
           animation: gradientAnimation 15s ease infinite;
+        }
+      }
+      
+      /* Reduce animations on mobile for better performance */
+      @media (max-width: 768px) {
+        * {
+          animation-duration: 0s !important;
+          animation-delay: 0s !important;
+          transition-duration: 0s !important;
+          transition-delay: 0s !important;
+        }
+      }
+      
+      /* Respect user preference for reduced motion */
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.01ms !important;
+          animation-play-state: paused !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
         }
       }
     </style>

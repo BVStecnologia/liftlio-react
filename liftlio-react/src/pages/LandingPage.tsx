@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
 // Importar ícones otimizados
@@ -10,21 +10,16 @@ import {
 import { renderIcon } from '../utils/IconHelper';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
-import LoadingSpinner from '../components/LoadingSpinner';
-import LazySection from '../components/LazySection';
 
-// Lazy load heavy components
-const Testimonials = lazy(() => import('../components/Testimonials'));
-const TrendingTopicsCarousel = lazy(() => import('../components/TrendingTopicsCarousel'));
-const DecliningTopicsCarousel = lazy(() => import('../components/DecliningTopicsCarousel'));
-const InteractiveProof = lazy(() => import('../components/InteractiveProof'));
-const NumbersThatMatter = lazy(() => import('../components/NumbersThatMatter'));
-const CompareResults = lazy(() => import('../components/CompareResults'));
-const GuaranteeSection = lazy(() => import('../components/GuaranteeSection'));
-const ProblemSection = lazy(() => import('../components/ProblemSection'));
-const ObjectionHandling = lazy(() => import('../components/ObjectionHandling'));
-const BreakthroughSection = lazy(() => import('../components/BreakthroughSection'));
-const ForWhoSection = lazy(() => import('../components/ForWhoSection'));
+// Import componentes diretamente - sem lazy loading interno
+import Testimonials from '../components/Testimonials';
+import TrendingTopicsCarousel from '../components/TrendingTopicsCarousel';
+import DecliningTopicsCarousel from '../components/DecliningTopicsCarousel';
+import InteractiveProof from '../components/InteractiveProof';
+import ProblemSection from '../components/ProblemSection';
+import ObjectionHandling from '../components/ObjectionHandling';
+import BreakthroughSection from '../components/BreakthroughSection';
+import ForWhoSection from '../components/ForWhoSection';
 
 // Internacionalização
 const translations = {
@@ -2437,14 +2432,10 @@ const LandingPage: React.FC = () => {
       {/* As seções removidas: Features, Stats, Declining Topics, NumbersThatMatter, CompareResults, GuaranteeSection */}
 
       {/* Problem Section */}
-      <LazySection>
-        <ProblemSection />
-      </LazySection>
+      <ProblemSection />
       
       {/* Breakthrough Section - O Avanço */}
-      <LazySection>
-        <BreakthroughSection />
-      </LazySection>
+      <BreakthroughSection />
 
       {/* Process Section - Como Funciona */}
       <ProcessSection id="process">
@@ -2472,35 +2463,23 @@ const LandingPage: React.FC = () => {
       </ProcessSection>
 
       {/* Interactive Proof Section */}
-      <LazySection>
-        <InteractiveProof />
-      </LazySection>
+      <InteractiveProof />
 
       {/* Trending Topics */}
-      <LazySection>
-        <TrendingTopicsCarousel />
-      </LazySection>
+      <TrendingTopicsCarousel />
       
       {/* Declining Topics Carousel */}
-      <LazySection>
-        <DecliningTopicsCarousel />
-      </LazySection>
+      <DecliningTopicsCarousel />
       
       {/* For Who Section - Para Quem É */}
-      <LazySection>
-        <ForWhoSection />
-      </LazySection>
+      <ForWhoSection />
 
       {/* Objection Handling Section */}
-      <LazySection>
-        <ObjectionHandling />
-      </LazySection>
+      <ObjectionHandling />
 
       {/* Testimonials Section - Prova Social */}
       <div id="testimonials">
-        <LazySection>
-          <Testimonials language={lang} />
-        </LazySection>
+        <Testimonials language={lang} />
       </div>
 
       <PricingSection id="pricing">
