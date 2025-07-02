@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
 // Importar ícones otimizados
@@ -10,17 +10,28 @@ import {
 import { renderIcon } from '../utils/IconHelper';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
-
-// Import componentes diretamente - sem lazy loading interno
-import Testimonials from '../components/Testimonials';
-import TrendingTopicsCarousel from '../components/TrendingTopicsCarousel';
-import DecliningTopicsCarousel from '../components/DecliningTopicsCarousel';
-import InteractiveProof from '../components/InteractiveProof';
-import ProblemSection from '../components/ProblemSection';
-import ObjectionHandling from '../components/ObjectionHandling';
-import BreakthroughSection from '../components/BreakthroughSection';
-import ForWhoSection from '../components/ForWhoSection';
 import Image from '../components/Image';
+import LazySection from '../components/LazySection';
+
+// Lazy load componentes pesados apenas se não for mobile
+const isMobile = window.innerWidth <= 768;
+
+// Componentes que só carregam após scroll ou em desktop
+const Testimonials = lazy(() => import('../components/Testimonials'));
+const TrendingTopicsCarousel = lazy(() => import('../components/TrendingTopicsCarousel'));
+const DecliningTopicsCarousel = lazy(() => import('../components/DecliningTopicsCarousel'));
+const InteractiveProof = lazy(() => import('../components/InteractiveProof'));
+const ProblemSection = lazy(() => import('../components/ProblemSection'));
+const ObjectionHandling = lazy(() => import('../components/ObjectionHandling'));
+const BreakthroughSection = lazy(() => import('../components/BreakthroughSection'));
+const ForWhoSection = lazy(() => import('../components/ForWhoSection'));
+
+// Loading placeholder minimalista
+const LoadingPlaceholder = () => (
+  <div style={{ minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="spinner" />
+  </div>
+);
 
 // Internacionalização
 const translations = {
@@ -2388,17 +2399,28 @@ const LandingPage: React.FC = () => {
 
           <HeroVisual>
             <DashboardPreview>
-              <Image 
-                src={theme.name === 'dark' 
-                  ? "/imagens/dashboard-hero-dark.jpg" 
-                  : "/imagens/dashboard-hero-light.jpg"
-                }
-                alt="Liftlio Dashboard"
-                width={1536}
-                height={1024}
-                priority={true}
-                className="dashboard-hero-image"
-              />
+              <picture>
+                <source 
+                  media="(max-width: 768px)"
+                  srcSet={theme.name === 'dark' 
+                    ? "/imagens/dashboard-hero-dark-mobile.jpg" 
+                    : "/imagens/dashboard-hero-light-mobile.jpg"
+                  }
+                />
+                <img 
+                  src={theme.name === 'dark' 
+                    ? "/imagens/dashboard-hero-dark.jpg" 
+                    : "/imagens/dashboard-hero-light.jpg"
+                  }
+                  alt="Liftlio Dashboard"
+                  width={1536}
+                  height={1024}
+                  loading="eager"
+                  decoding="sync"
+                  className="dashboard-hero-image"
+                  style={{ aspectRatio: '1536 / 1024', width: '100%', height: 'auto' }}
+                />
+              </picture>
             </DashboardPreview>
             
             {/* Elementos flutuantes */}
@@ -2477,23 +2499,35 @@ const LandingPage: React.FC = () => {
       </ProcessSection>
 
       {/* Interactive Proof Section */}
-      <InteractiveProof />
+      <LazySection>
+        <InteractiveProof />
+      </LazySection>
 
       {/* Trending Topics */}
-      <TrendingTopicsCarousel />
+      <LazySection>
+        <TrendingTopicsCarousel />
+      </LazySection>
       
       {/* Declining Topics Carousel */}
-      <DecliningTopicsCarousel />
+      <LazySection>
+        <DecliningTopicsCarousel />
+      </LazySection>
       
       {/* For Who Section - Para Quem É */}
-      <ForWhoSection />
+      <LazySection>
+        <ForWhoSection />
+      </LazySection>
 
       {/* Objection Handling Section */}
-      <ObjectionHandling />
+      <LazySection>
+        <ObjectionHandling />
+      </LazySection>
 
       {/* Testimonials Section - Prova Social */}
       <div id="testimonials">
-        <Testimonials language={lang} />
+        <LazySection>
+          <Testimonials language={lang} />
+        </LazySection>
       </div>
 
       <PricingSection id="pricing">

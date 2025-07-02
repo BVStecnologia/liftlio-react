@@ -19,9 +19,40 @@ const Image: React.FC<ImageProps> = ({
   className,
   priority = false
 }) => {
-  // For priority images, use eager loading
+  // Extract filename without extension
+  const filename = src.substring(0, src.lastIndexOf('.'));
+  const extension = src.substring(src.lastIndexOf('.'));
+  
+  // Generate WebP source if it's a JPEG or PNG
+  const supportsWebP = extension === '.jpg' || extension === '.jpeg' || extension === '.png';
+  const webpSrc = supportsWebP ? `${filename}.webp` : null;
+  
+  // Use eager loading for priority images
   const loadingStrategy = priority ? 'eager' : loading;
   
+  // If WebP is supported, use picture element
+  if (webpSrc) {
+    return (
+      <picture>
+        <source 
+          srcSet={webpSrc} 
+          type="image/webp"
+        />
+        <img
+          src={src}
+          alt={alt}
+          width={width}
+          height={height}
+          loading={loadingStrategy}
+          decoding={priority ? 'sync' : 'async'}
+          className={className}
+          style={width && height ? { aspectRatio: `${width}/${height}` } : undefined}
+        />
+      </picture>
+    );
+  }
+  
+  // Fallback to regular img
   return (
     <img
       src={src}
@@ -31,7 +62,6 @@ const Image: React.FC<ImageProps> = ({
       loading={loadingStrategy}
       decoding={priority ? 'sync' : 'async'}
       className={className}
-      // Prevent layout shift
       style={width && height ? { aspectRatio: `${width}/${height}` } : undefined}
     />
   );

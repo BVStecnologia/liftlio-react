@@ -17,8 +17,10 @@
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa2JL7SUc.woff2">
     
     <!-- Preload hero images for LCP -->
-    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark.jpg" type="image/jpeg">
-    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-light.jpg" type="image/jpeg">
+    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark.jpg" type="image/jpeg" media="(min-width: 769px)">
+    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-light.jpg" type="image/jpeg" media="(min-width: 769px)">
+    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark-mobile.jpg" type="image/jpeg" media="(max-width: 768px)">
+    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-light-mobile.jpg" type="image/jpeg" media="(max-width: 768px)">
     
     <!-- DNS Prefetch for performance -->
     <link rel="dns-prefetch" href="https://suqjifkhmekcdflwowiw.supabase.co">
@@ -180,6 +182,41 @@
           animation-delay: 0s !important;
           transition-duration: 0s !important;
           transition-delay: 0s !important;
+        }
+      }
+      
+      /* Critical styles for header */
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background: rgba(10, 10, 10, 0.8);
+        backdrop-filter: blur(10px);
+      }
+      
+      /* Critical styles for hero content */
+      h1 {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+      }
+      
+      /* Optimize for mobile rendering */
+      @media (max-width: 768px) {
+        .hero-section {
+          min-height: auto;
+          padding: 80px 20px 40px;
+        }
+        
+        /* Disable complex styles on mobile */
+        * {
+          backdrop-filter: none !important;
+          filter: none !important;
+          text-shadow: none !important;
+          box-shadow: none !important;
         }
       }
       
