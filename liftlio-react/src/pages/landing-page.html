@@ -1964,6 +1964,49 @@
             }, Math.floor(Math.random() * (maxStepTime - minStepTime) + minStepTime));
             
             try {
+                // Detect client IP
+                let clientIP = '127.0.0.1'; // Default for development
+                
+                try {
+                    // In production, try to get public IP
+                    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                        try {
+                            // Option 1: api.ipify.org
+                            const ipResponse = await fetch('https://api.ipify.org?format=json');
+                            const ipData = await ipResponse.json();
+                            clientIP = ipData.ip;
+                        } catch {
+                            // Option 2: Fallback to ipapi.co
+                            const ipResponse = await fetch('https://ipapi.co/json/');
+                            const ipData = await ipResponse.json();
+                            clientIP = ipData.ip;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error getting IP:', error);
+                    // If both fail, show error to user
+                    errorDiv.textContent = lang === 'pt' ? 
+                        'Não foi possível detectar seu endereço IP. Por favor, tente novamente mais tarde.' : 
+                        'Unable to detect your IP address. Please try again later.';
+                    errorDiv.style.display = 'block';
+                    loadingContainer.style.display = 'none';
+                    analyzeBtn.disabled = false;
+                    urlInput.disabled = false;
+                    clearInterval(stepInterval);
+                    return;
+                }
+                
+                // Build request body
+                const requestBody = {
+                    url: normalizedUrl,
+                    language: lang
+                };
+                
+                // Only add IP if we got it
+                if (clientIP) {
+                    requestBody.ip = clientIP;
+                }
+                
                 // Call the edge function
                 const startTime = Date.now();
                 const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-url`, {
@@ -1972,10 +2015,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                     },
-                    body: JSON.stringify({
-                        url: normalizedUrl,
-                        language: lang
-                    })
+                    body: JSON.stringify(requestBody)
                 });
                 
                 // Ensure minimum loading time
