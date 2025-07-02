@@ -98,6 +98,13 @@
         @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
         @keyframes pulse{0%{transform:scale(1);opacity:.5}50%{transform:scale(1.5);opacity:.3}100%{transform:scale(1);opacity:.5}}
         @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
+        
+        /* Hide scrollbars for carousels */
+        #trending-topics-container::-webkit-scrollbar,
+        #declining-topics-container::-webkit-scrollbar {
+            display: none;
+        }
+        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
         
         /* Header */
@@ -204,10 +211,12 @@
         
         /* Testimonials */
         .testimonials-section{background:var(--color-testimonials-bg)}
-        .testimonials-carousel{position:relative;max-width:1200px;margin:0 auto}
-        .testimonials-track{display:flex;gap:32px;overflow:hidden}
-        .testimonial-card{background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:32px;min-width:350px;flex-shrink:0}
-        .stars{color:#fbbf24;margin-bottom:16px}
+        .testimonials-carousel{position:relative;max-width:100%;margin:0 auto;overflow:hidden}
+        .testimonials-track{display:flex;gap:32px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:20px}
+        .testimonials-track::-webkit-scrollbar{display:none}
+        .testimonial-card{background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:32px;flex:0 0 380px;transition:all 0.3s;cursor:pointer}
+        .testimonial-card:hover{transform:translateY(-8px);border-color:var(--color-primary);box-shadow:0 20px 40px var(--color-shadow-medium)}
+        .stars{color:#fbbf24;margin-bottom:16px;font-size:18px}
         .testimonial-text{font-size:16px;line-height:1.6;color:var(--color-text-primary);margin-bottom:24px}
         .testimonial-author{display:flex;align-items:center;gap:16px}
         .author-avatar{width:48px;height:48px;border-radius:50%;background:var(--gradient-landing)}
@@ -274,6 +283,13 @@
         @media(max-width:640px){
             .process-grid{grid-template-columns:1fr}
         }
+        
+        /* Spinner */
+        .spinner{width:40px;height:40px;border:4px solid var(--color-border-light);border-top-color:var(--color-primary);border-radius:50%;animation:spin 1s linear infinite}
+        
+        /* Hide scrollbar for carousels */
+        #trending-topics-container::-webkit-scrollbar,
+        #declining-topics-container::-webkit-scrollbar {display:none}
         
         @media(max-width:480px){
             .logo{font-size:24px}
@@ -728,9 +744,19 @@
                 </p>
             </div>
             
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:48px">
+            <div id="trending-topics-container" style="display:flex;gap:24px;margin-top:48px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:20px">
+                <!-- Loading state -->
+                <div id="trending-loading" style="width:100%;text-align:center;padding:40px">
+                    <div class="spinner" style="margin:0 auto 20px"></div>
+                    <p style="color:var(--color-text-secondary)">
+                        <span class="lang-pt">Carregando tendências em tempo real...</span>
+                        <span class="lang-en">Loading real-time trends...</span>
+                    </p>
+                </div>
+                
+                <!-- Static cards will be replaced by dynamic content -->
                 <!-- Trending Card 1 -->
-                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
                             <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">
@@ -767,7 +793,7 @@
                 </div>
                 
                 <!-- Trending Card 2 -->
-                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
                             <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">
@@ -804,7 +830,7 @@
                 </div>
                 
                 <!-- Trending Card 3 -->
-                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
                             <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">
@@ -857,9 +883,19 @@
                 </p>
             </div>
             
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:48px">
+            <div id="declining-topics-container" style="display:flex;gap:24px;margin-top:48px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:20px">
+                <!-- Loading state -->
+                <div id="declining-loading" style="width:100%;text-align:center;padding:40px">
+                    <div class="spinner" style="margin:0 auto 20px"></div>
+                    <p style="color:var(--color-text-secondary)">
+                        <span class="lang-pt">Carregando tendências em declínio...</span>
+                        <span class="lang-en">Loading declining trends...</span>
+                    </p>
+                </div>
+                
+                <!-- Static cards will be replaced by dynamic content -->
                 <!-- Declining Card 1 -->
-                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
                             <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">
@@ -890,7 +926,7 @@
                 </div>
                 
                 <!-- Declining Card 2 -->
-                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
                             <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">
@@ -921,7 +957,7 @@
                 </div>
                 
                 <!-- Declining Card 3 -->
-                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
                             <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">
@@ -969,7 +1005,7 @@
             </div>
             
             <div class="testimonials-carousel">
-                <div class="testimonials-track">
+                <div class="testimonials-track" id="testimonials-track">
                     <div class="testimonial-card">
                         <div class="stars">★★★★★</div>
                         <p class="testimonial-text">
@@ -1024,6 +1060,60 @@
                                     <span class="lang-en">Sales Director</span>
                                     , SaaS Co
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            <span class="lang-pt">"Conseguimos reduzir nosso CAC em 70% após implementar o Liftlio. As recomendações orgânicas são muito mais efetivas."</span>
+                            <span class="lang-en">"We reduced our CAC by 70% after implementing Liftlio. Organic recommendations are much more effective."</span>
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    <span class="lang-pt">Ricardo Oliveira</span>
+                                    <span class="lang-en">David Williams</span>
+                                </div>
+                                <div class="author-role">Head of Growth, FinTech Pro</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            <span class="lang-pt">"A plataforma é intuitiva e os resultados são impressionantes. Nossa equipe adora trabalhar com o Liftlio."</span>
+                            <span class="lang-en">"The platform is intuitive and the results are impressive. Our team loves working with Liftlio."</span>
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    <span class="lang-pt">Marina Santos</span>
+                                    <span class="lang-en">Emily Anderson</span>
+                                </div>
+                                <div class="author-role">Marketing Manager, EdTech Solutions</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            <span class="lang-pt">"O suporte é excepcional e a tecnologia é de ponta. Recomendo para qualquer empresa que busca crescimento orgânico."</span>
+                            <span class="lang-en">"The support is exceptional and the technology is cutting-edge. I recommend it to any company seeking organic growth."</span>
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    <span class="lang-pt">Pedro Almeida</span>
+                                    <span class="lang-en">Robert Taylor</span>
+                                </div>
+                                <div class="author-role">VP Marketing, CloudTech</div>
                             </div>
                         </div>
                     </div>
@@ -1415,6 +1505,313 @@
                     });
                 }
             });
+        });
+        
+        // Supabase configuration
+        const SUPABASE_URL = 'https://suqjifkhmekcdflwowiw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I';
+        
+        // Category translations
+        const categoryMap = {
+            'TECHNOLOGY': { pt: 'Tecnologia', en: 'Technology' },
+            'GAMING': { pt: 'Jogos', en: 'Gaming' },
+            'MUSIC': { pt: 'Música', en: 'Music' },
+            'LIFESTYLE': { pt: 'Estilo de Vida', en: 'Lifestyle' },
+            'ENTERTAINMENT': { pt: 'Entretenimento', en: 'Entertainment' },
+            'EDUCATION': { pt: 'Educação', en: 'Education' },
+            'BUSINESS': { pt: 'Negócios', en: 'Business' },
+            'EMERGING TRENDS': { pt: 'Tendências Emergentes', en: 'Emerging Trends' }
+        };
+        
+        // Format volume to K/M
+        function formatVolume(volume) {
+            if (volume >= 1000000) {
+                return (volume / 1000000).toFixed(1) + 'M';
+            } else if (volume >= 1000) {
+                return (volume / 1000).toFixed(0) + 'K';
+            }
+            return volume.toString();
+        }
+        
+        // Generate chart points for SVG
+        function generateChartPoints(growthPercentage) {
+            const growth = parseFloat(growthPercentage);
+            if (growth > 1000) {
+                // Exponential growth
+                return "0,55 40,50 80,40 120,25 160,15 200,5";
+            } else if (growth > 500) {
+                // Strong growth
+                return "0,50 40,45 80,35 120,20 160,10 200,5";
+            } else {
+                // Moderate growth
+                return "0,45 40,40 80,30 120,20 160,15 200,10";
+            }
+        }
+        
+        // Create trending topic card
+        function createTrendingCard(trend, index) {
+            const lang = document.documentElement.getAttribute('data-lang');
+            const category = categoryMap[trend.category] || { pt: trend.category, en: trend.category };
+            
+            return `
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s;animation:fadeIn 0.5s ease-in-out ${index * 0.1}s both">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h4>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">${category[lang]}</p>
+                        </div>
+                        <div style="background:rgba(34,197,94,0.1);color:#22c55e;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            +${trend.growth}%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="url(#trend-gradient-${index})" stroke-width="2" points="${generateChartPoints(trend.growth)}" />
+                            <defs>
+                                <linearGradient id="trend-gradient-${index}" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.5" />
+                                    <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>${formatVolume(trend.volume)}</strong></span>
+                        <span style="color:#22c55e;font-weight:600">
+                            <span class="lang-pt">Explodindo</span>
+                            <span class="lang-en">Exploding</span>
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Fetch trending topics from Supabase
+        async function fetchTrendingTopics() {
+            const container = document.getElementById('trending-topics-container');
+            const loadingEl = document.getElementById('trending-loading');
+            
+            console.log('Iniciando busca de tendências...');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_youtube_trends`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Dados recebidos:', data);
+                
+                // Filter and sort trends (only positive growth)
+                const risingTrends = (data || [])
+                    .filter(trend => parseFloat(trend.growth) > 0)
+                    .sort((a, b) => parseFloat(b.growth) - parseFloat(a.growth))
+                    .slice(0, 10); // Show top 10 trends
+                
+                console.log('Tendências filtradas:', risingTrends);
+                
+                // Clear container and remove loading
+                container.innerHTML = '';
+                
+                if (risingTrends.length > 0) {
+                    // Add trend cards
+                    risingTrends.forEach((trend, index) => {
+                        const cardHTML = createTrendingCard(trend, index);
+                        console.log(`Card ${index} HTML:`, cardHTML);
+                        container.innerHTML += cardHTML;
+                    });
+                    console.log('Container após adicionar cards:', container.innerHTML);
+                } else {
+                    // Show fallback content if no data
+                    container.innerHTML = `
+                        <div style="width:100%;text-align:center;padding:40px">
+                            <p style="color:var(--color-text-secondary)">
+                                <span class="lang-pt">Nenhuma tendência disponível no momento</span>
+                                <span class="lang-en">No trends available at the moment</span>
+                            </p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error fetching trends:', error);
+                // Remove loading and keep static content
+                if (loadingEl) loadingEl.remove();
+            }
+        }
+        
+        // Create declining topic card
+        function createDecliningCard(trend, index) {
+            const lang = document.documentElement.getAttribute('data-lang');
+            const category = categoryMap[trend.category] || { pt: trend.category, en: trend.category };
+            const declinePercentage = Math.abs(parseFloat(trend.growth));
+            
+            return `
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s;animation:fadeIn 0.5s ease-in-out ${index * 0.1}s both">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h4>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">${category[lang]}</p>
+                        </div>
+                        <div style="background:rgba(239,68,68,0.1);color:#ef4444;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            -${declinePercentage}%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="#ef4444" stroke-width="2" points="${generateDecliningChartPoints(declinePercentage)}" />
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>${formatVolume(trend.volume)}</strong></span>
+                        <span style="color:#ef4444;font-weight:600">
+                            <span class="lang-pt">Caindo</span>
+                            <span class="lang-en">Declining</span>
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Generate declining chart points
+        function generateDecliningChartPoints(declinePercentage) {
+            if (declinePercentage > 70) {
+                // Steep decline
+                return "0,10 40,15 80,25 120,35 160,45 200,55";
+            } else if (declinePercentage > 40) {
+                // Moderate decline
+                return "0,15 40,20 80,30 120,40 160,45 200,50";
+            } else {
+                // Gradual decline
+                return "0,20 40,25 80,30 120,35 160,40 200,45";
+            }
+        }
+        
+        // Fetch declining topics from Supabase
+        async function fetchDecliningTopics() {
+            const container = document.getElementById('declining-topics-container');
+            const loadingEl = document.getElementById('declining-loading');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_youtube_trends`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Filter and sort declining trends (negative growth)
+                const decliningTrends = (data || [])
+                    .filter(trend => parseFloat(trend.growth) < 0)
+                    .sort((a, b) => parseFloat(a.growth) - parseFloat(b.growth))
+                    .slice(0, 6); // Show top 6 declining trends
+                
+                // Clear container and remove loading
+                container.innerHTML = '';
+                
+                if (decliningTrends.length > 0) {
+                    // Add trend cards
+                    decliningTrends.forEach((trend, index) => {
+                        container.innerHTML += createDecliningCard(trend, index);
+                    });
+                } else {
+                    // Show fallback content if no data
+                    container.innerHTML = `
+                        <div style="width:100%;text-align:center;padding:40px">
+                            <p style="color:var(--color-text-secondary)">
+                                <span class="lang-pt">Nenhuma tendência em declínio no momento</span>
+                                <span class="lang-en">No declining trends at the moment</span>
+                            </p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error fetching declining trends:', error);
+                // Remove loading and keep static content
+                if (loadingEl) loadingEl.remove();
+            }
+        }
+        
+        // Auto-scroll carousel
+        function startAutoScroll(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            let scrollAmount = 0;
+            let scrollDirection = 1;
+            let intervalId = null;
+            
+            const scroll = () => {
+                if (container.scrollWidth <= container.clientWidth) return;
+                
+                scrollAmount += scrollDirection * 1;
+                container.scrollLeft = scrollAmount;
+                
+                // Reverse direction at ends
+                if (scrollAmount >= container.scrollWidth - container.clientWidth) {
+                    scrollDirection = -1;
+                } else if (scrollAmount <= 0) {
+                    scrollDirection = 1;
+                }
+            };
+            
+            // Start scrolling
+            intervalId = setInterval(scroll, 30);
+            
+            // Pause on hover
+            container.addEventListener('mouseenter', () => {
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                }
+            });
+            
+            container.addEventListener('mouseleave', () => {
+                if (!intervalId) {
+                    intervalId = setInterval(scroll, 30);
+                }
+            });
+        }
+        
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            console.log('Página carregada, iniciando busca de tendências...');
+            
+            // Verificar se os containers existem
+            const trendingContainer = document.getElementById('trending-topics-container');
+            const decliningContainer = document.getElementById('declining-topics-container');
+            
+            console.log('Container trending:', trendingContainer);
+            console.log('Container declining:', decliningContainer);
+            
+            // Fetch real data after a short delay
+            setTimeout(() => {
+                fetchTrendingTopics().then(() => {
+                    startAutoScroll('trending-topics-container');
+                });
+                fetchDecliningTopics().then(() => {
+                    startAutoScroll('declining-topics-container');
+                });
+                // Start auto-scroll for testimonials
+                startAutoScroll('testimonials-track');
+            }, 1000);
         });
     </script>
 </body>
