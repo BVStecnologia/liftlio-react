@@ -20,6 +20,7 @@ import ProblemSection from '../components/ProblemSection';
 import ObjectionHandling from '../components/ObjectionHandling';
 import BreakthroughSection from '../components/BreakthroughSection';
 import ForWhoSection from '../components/ForWhoSection';
+import Image from '../components/Image';
 
 // Internacionalização
 const translations = {
@@ -1017,6 +1018,15 @@ const DashboardPreview = styled.div`
     height: 200%;
     background: radial-gradient(circle, ${props => props.theme.colors.primaryAlpha} 0%, transparent 70%);
     animation: ${pulseAnimation} 4s ease-in-out infinite;
+  }
+
+  /* Estilo para imagens dentro do preview */
+  img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    position: relative;
+    z-index: 1;
   }
 `;
 
@@ -2378,12 +2388,16 @@ const LandingPage: React.FC = () => {
 
           <HeroVisual>
             <DashboardPreview>
-              <DashboardImage 
+              <Image 
                 src={theme.name === 'dark' 
-                  ? "/imagens/dashboard-hero-dark.png" 
-                  : "/imagens/dashboard-hero-light.png"
+                  ? "/imagens/dashboard-hero-dark.jpg" 
+                  : "/imagens/dashboard-hero-light.jpg"
                 }
                 alt="Liftlio Dashboard"
+                width={1536}
+                height={1024}
+                priority={true}
+                className="dashboard-hero-image"
               />
             </DashboardPreview>
             
