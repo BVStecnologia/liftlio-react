@@ -17,14 +17,19 @@ import LazySection from '../components/LazySection';
 const isMobile = window.innerWidth <= 768;
 
 // Componentes que só carregam após scroll ou em desktop
-const Testimonials = lazy(() => import('../components/Testimonials'));
-const TrendingTopicsCarousel = lazy(() => import('../components/TrendingTopicsCarousel'));
-const DecliningTopicsCarousel = lazy(() => import('../components/DecliningTopicsCarousel'));
-const InteractiveProof = lazy(() => import('../components/InteractiveProof'));
-const ProblemSection = lazy(() => import('../components/ProblemSection'));
-const ObjectionHandling = lazy(() => import('../components/ObjectionHandling'));
-const BreakthroughSection = lazy(() => import('../components/BreakthroughSection'));
-const ForWhoSection = lazy(() => import('../components/ForWhoSection'));
+const Testimonials = lazy(() => import(/* webpackChunkName: "testimonials", webpackPrefetch: true */ '../components/Testimonials'));
+const TrendingTopicsCarousel = lazy(() => import(/* webpackChunkName: "trending" */ '../components/TrendingTopicsCarousel'));
+const DecliningTopicsCarousel = lazy(() => import(/* webpackChunkName: "declining" */ '../components/DecliningTopicsCarousel'));
+const InteractiveProof = lazy(() => import(/* webpackChunkName: "proof" */ '../components/InteractiveProof'));
+const ProblemSection = lazy(() => import(/* webpackChunkName: "problem" */ '../components/ProblemSection'));
+const ObjectionHandling = lazy(() => import(/* webpackChunkName: "objection" */ '../components/ObjectionHandling'));
+const BreakthroughSection = lazy(() => import(/* webpackChunkName: "breakthrough" */ '../components/BreakthroughSection'));
+const ForWhoSection = lazy(() => import(/* webpackChunkName: "for-who" */ '../components/ForWhoSection'));
+
+// Lazy load seções menos críticas
+const ExponentialSection = lazy(() => import(/* webpackChunkName: "exponential" */ '../components/ExponentialSection'));
+const PricingSection = lazy(() => import(/* webpackChunkName: "pricing" */ '../components/PricingSection'));
+const Footer = lazy(() => import(/* webpackChunkName: "footer" */ '../components/Footer'));
 
 // Loading placeholder minimalista
 const LoadingPlaceholder = () => (
@@ -1739,24 +1744,6 @@ const LaptopWrapper = styled.div<{ rotate?: number; scale?: number }>`
 `;
 
 
-const ExponentialSection = styled.section`
-  padding: 100px 64px;
-  background: linear-gradient(135deg, 
-    ${props => props.theme.colors.primaryAlpha} 0%, 
-    ${props => props.theme.colors.secondaryAlpha} 100%
-  );
-  position: relative;
-  overflow: hidden;
-
-  @media (max-width: 768px) {
-    padding: 60px 32px;
-  }
-`;
-
-const ExponentialContent = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-`;
 
 const ExponentialGrid = styled.div`
   display: grid;
@@ -1894,33 +1881,6 @@ const StatNumber = styled.div`
 const StatLabel = styled.div`
   font-size: 18px;
   color: ${props => props.theme.colors.textSecondary};
-`;
-
-const PricingSection = styled.section`
-  padding: 100px 64px;
-  background: ${props => props.theme.colors.pricingBg};
-
-  @media (max-width: 768px) {
-    padding: 60px 32px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 40px 16px;
-  }
-`;
-
-const PricingGrid = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
-  margin-top: 60px;
-
-  @media (max-width: 968px) {
-    grid-template-columns: 1fr;
-    max-width: 400px;
-  }
 `;
 
 const PricingCard = styled.div<{ featured?: boolean }>`
@@ -2131,82 +2091,6 @@ const CTADescription = styled.p`
   margin-bottom: 40px;
 `;
 
-const Footer = styled.footer`
-  padding: 60px 64px 40px;
-  background: ${props => props.theme.colors.footerBg};
-  border-top: 1px solid ${props => props.theme.colors.borderLight};
-
-  @media (max-width: 768px) {
-    padding: 40px 32px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 32px 16px;
-  }
-`;
-
-const FooterContent = styled.div`
-  max-width: 1440px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 60px;
-
-  @media (max-width: 968px) {
-    grid-template-columns: 1fr 1fr;
-    gap: 40px;
-  }
-
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const FooterColumn = styled.div``;
-
-const FooterTitle = styled.h4`
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: ${props => props.theme.name === 'light' ? '#ffffff' : props.theme.colors.text.primary};
-`;
-
-const FooterDescription = styled.p`
-  font-size: 14px;
-  color: ${props => props.theme.name === 'light' ? 'rgba(255, 255, 255, 0.8)' : props.theme.colors.textSecondary};
-  line-height: 1.6;
-  margin-bottom: 20px;
-`;
-
-const FooterLinks = styled.ul`
-  list-style: none;
-  padding: 0;
-`;
-
-const FooterLink = styled.li`
-  margin-bottom: 12px;
-  
-  a {
-    color: ${props => props.theme.name === 'light' ? 'rgba(255, 255, 255, 0.7)' : props.theme.colors.textSecondary};
-    text-decoration: none;
-    font-size: 14px;
-    transition: color 0.3s ease;
-    
-    &:hover {
-      color: ${props => props.theme.name === 'light' ? '#ffffff' : props.theme.colors.primary};
-    }
-  }
-`;
-
-const FooterBottom = styled.div`
-  margin-top: 60px;
-  padding-top: 32px;
-  border-top: 1px solid ${props => props.theme.name === 'light' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.borderLight};
-  text-align: center;
-  font-size: 14px;
-  color: ${props => props.theme.name === 'light' ? 'rgba(255, 255, 255, 0.6)' : props.theme.colors.textSecondary};
-`;
-
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
@@ -2402,9 +2286,25 @@ const LandingPage: React.FC = () => {
               <picture>
                 <source 
                   media="(max-width: 768px)"
+                  type="image/webp"
+                  srcSet={theme.name === 'dark' 
+                    ? "/imagens/dashboard-hero-dark-mobile.webp" 
+                    : "/imagens/dashboard-hero-light-mobile.webp"
+                  }
+                />
+                <source 
+                  media="(max-width: 768px)"
+                  type="image/jpeg"
                   srcSet={theme.name === 'dark' 
                     ? "/imagens/dashboard-hero-dark-mobile.jpg" 
                     : "/imagens/dashboard-hero-light-mobile.jpg"
+                  }
+                />
+                <source 
+                  type="image/webp"
+                  srcSet={theme.name === 'dark' 
+                    ? "/imagens/dashboard-hero-dark.webp" 
+                    : "/imagens/dashboard-hero-light.webp"
                   }
                 />
                 <img 
@@ -2530,83 +2430,12 @@ const LandingPage: React.FC = () => {
         </LazySection>
       </div>
 
-      <PricingSection id="pricing">
-        <SectionHeader>
-          <SectionTitle>
-            {t.pricing.title} <Gradient>{t.pricing.titleHighlight}</Gradient>
-          </SectionTitle>
-          <SectionDescription>
-            {t.pricing.subtitle}
-          </SectionDescription>
-        </SectionHeader>
-
-        <PricingGrid>
-          <PricingCard>
-            <PricingPlan>{t.pricing.plans.starter.name}</PricingPlan>
-            <PricingPrice>
-              $49<span>/{t.pricing.monthly}</span>
-            </PricingPrice>
-            <PricingDescription>
-              {t.pricing.plans.starter.description}
-            </PricingDescription>
-            <PricingFeatures>
-              {t.pricing.plans.starter.features.map((feature, index) => (
-                <PricingFeature key={index}>
-                  {renderIcon(FaCheck)} {feature}
-                </PricingFeature>
-              ))}
-            </PricingFeatures>
-            <PrimaryButton onClick={() => handleGetStarted('starter')} style={{ width: '100%' }}>
-              {t.pricing.cta}
-            </PrimaryButton>
-          </PricingCard>
-
-          <PricingCard featured>
-            <PricingBadge>{t.pricing.plans.professional.badge}</PricingBadge>
-            <PricingPlan>{t.pricing.plans.professional.name}</PricingPlan>
-            <PricingPrice>
-              $99<span>/{t.pricing.monthly}</span>
-            </PricingPrice>
-            <PricingDescription>
-              {t.pricing.plans.professional.description}
-            </PricingDescription>
-            <PricingFeatures>
-              {t.pricing.plans.professional.features.map((feature, index) => (
-                <PricingFeature key={index}>
-                  {renderIcon(FaCheck)} {feature}
-                </PricingFeature>
-              ))}
-            </PricingFeatures>
-            <PrimaryButton onClick={() => handleGetStarted('growth')} style={{ width: '100%' }}>
-              {t.pricing.cta}
-            </PrimaryButton>
-          </PricingCard>
-
-          <PricingCard>
-            <PricingPlan>{t.pricing.plans.enterprise.name}</PricingPlan>
-            <PricingPrice>
-              $199<span>/{t.pricing.monthly}</span>
-            </PricingPrice>
-            <PricingDescription>
-              {t.pricing.plans.enterprise.description}
-            </PricingDescription>
-            <PricingFeatures>
-              {t.pricing.plans.enterprise.features.map((feature, index) => (
-                <PricingFeature key={index}>
-                  {renderIcon(FaCheck)} {feature}
-                </PricingFeature>
-              ))}
-            </PricingFeatures>
-            <PrimaryButton onClick={() => handleGetStarted('scale')} style={{ width: '100%' }}>
-              {t.pricing.cta}
-            </PrimaryButton>
-          </PricingCard>
-        </PricingGrid>
-        
-        <div style={{ textAlign: 'center', marginTop: '32px', fontSize: '16px', color: theme.colors.textSecondary }}>
-          {lang === 'pt' ? 'Cancelar a qualquer momento. Sem contratos ou compromissos de longo prazo.' : 'Cancel anytime. No contracts or long-term commitments.'}
-        </div>
-      </PricingSection>
+      {/* Pricing Section */}
+      <LazySection>
+        <Suspense fallback={<LoadingPlaceholder />}>
+          <PricingSection />
+        </Suspense>
+      </LazySection>
 
       <CTASection style={{ background: theme.name === 'dark' ? '#1a1a1a' : '#f5f5f5' }}>
         <CTAContent>
@@ -2623,56 +2452,12 @@ const LandingPage: React.FC = () => {
         </CTAContent>
       </CTASection>
 
-      <Footer>
-        <FooterContent>
-          <FooterColumn>
-            <FooterTitle>
-              <Logo style={{ 
-                fontSize: '24px', 
-                color: theme.name === 'light' ? '#ffffff' : theme.colors.primary,
-                fontWeight: 900,
-                opacity: 1
-              }}>
-                {renderIcon(BiPulse)}
-                LIFTLIO
-              </Logo>
-            </FooterTitle>
-            <FooterDescription>
-              {t.footer.description}
-            </FooterDescription>
-          </FooterColumn>
-
-          <FooterColumn>
-            <FooterTitle>{t.footer.product}</FooterTitle>
-            <FooterLinks>
-              <FooterLink><a href="#features">{t.footer.links.features}</a></FooterLink>
-              <FooterLink><a href="#pricing">{t.footer.links.pricing}</a></FooterLink>
-              <FooterLink><a href="#">{t.footer.links.integrations}</a></FooterLink>
-              <FooterLink><a href="#">{t.footer.links.api}</a></FooterLink>
-            </FooterLinks>
-          </FooterColumn>
-
-          <FooterColumn>
-            <FooterTitle>{t.footer.company}</FooterTitle>
-            <FooterLinks>
-              <FooterLink><a href="/about">{t.footer.links.about}</a></FooterLink>
-            </FooterLinks>
-          </FooterColumn>
-
-          <FooterColumn>
-            <FooterTitle>{t.footer.legal}</FooterTitle>
-            <FooterLinks>
-              <FooterLink><a href="/privacy">{t.footer.links.privacy}</a></FooterLink>
-              <FooterLink><a href="/terms">{t.footer.links.terms}</a></FooterLink>
-              <FooterLink><a href="/security">{t.footer.links.security}</a></FooterLink>
-            </FooterLinks>
-          </FooterColumn>
-        </FooterContent>
-
-        <FooterBottom>
-          {t.footer.copyright}
-        </FooterBottom>
-      </Footer>
+      {/* Footer */}
+      <LazySection>
+        <Suspense fallback={<LoadingPlaceholder />}>
+          <Footer />
+        </Suspense>
+      </LazySection>
 
       {/* Urgency Banner - DISABLED */}
       {/* {showUrgencyBanner && (

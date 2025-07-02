@@ -16,11 +16,14 @@
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7SUc.woff2">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa2JL7SUc.woff2">
     
-    <!-- Preload hero images for LCP -->
-    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark.jpg" type="image/jpeg" media="(min-width: 769px)">
-    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-light.jpg" type="image/jpeg" media="(min-width: 769px)">
-    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark-mobile.jpg" type="image/jpeg" media="(max-width: 768px)">
-    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-light-mobile.jpg" type="image/jpeg" media="(max-width: 768px)">
+    <!-- Preload hero images for LCP - Mobile First -->
+    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark-mobile.webp" type="image/webp" media="(max-width: 768px) and (prefers-color-scheme: dark)">
+    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-light-mobile.webp" type="image/webp" media="(max-width: 768px) and (prefers-color-scheme: light)">
+    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark-mobile.jpg" type="image/jpeg" media="(max-width: 768px)" importance="high">
+    
+    <!-- Prefetch desktop images -->
+    <link rel="prefetch" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark.webp" type="image/webp">
+    <link rel="prefetch" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-light.webp" type="image/webp">
     
     <!-- DNS Prefetch for performance -->
     <link rel="dns-prefetch" href="https://suqjifkhmekcdflwowiw.supabase.co">
@@ -43,6 +46,13 @@
     <link rel="canonical" href="https://liftlio.com/" />
     <!-- Add support for Supabase authentication redirects -->
     <script>
+      // Register Service Worker for mobile performance
+      if ('serviceWorker' in navigator && window.innerWidth <= 768) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed'));
+        });
+      }
+      
       // Check for problematic extensions
       window.addEventListener('error', function(event) {
         if (event.error && event.error.message && event.error.message.includes('chrome-extension://')) {
@@ -117,119 +127,8 @@
     }
     </script>
     <!-- Critical CSS for faster initial paint -->
-    <style>
-      /* Critical CSS for initial render */
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        background: #0a0a0a;
-        color: #fff;
-        overflow-x: hidden;
-      }
-      
-      #root {
-        min-height: 100vh;
-      }
-      
-      /* Preload hero section styles */
-      .hero-section {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      
-      /* Loading spinner for lazy components */
-      .spinner {
-        width: 40px;
-        height: 40px;
-        border: 3px solid rgba(255,255,255,0.1);
-        border-top: 3px solid #fff;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-      }
-      
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-      
-      @keyframes gradientAnimation {
-        0% { background-position: 0% 50% }
-        50% { background-position: 100% 50% }
-        100% { background-position: 0% 50% }
-      }
-      
-      @media (prefers-color-scheme: dark) {
-        html {
-          background: linear-gradient(-45deg, #282c34, #21232a, #1a1c20, #61dafb);
-          background-size: 400% 400%;
-          animation: gradientAnimation 15s ease infinite;
-        }
-      }
-      
-      /* Reduce animations on mobile for better performance */
-      @media (max-width: 768px) {
-        * {
-          animation-duration: 0s !important;
-          animation-delay: 0s !important;
-          transition-duration: 0s !important;
-          transition-delay: 0s !important;
-        }
-      }
-      
-      /* Critical styles for header */
-      header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 100;
-        background: rgba(10, 10, 10, 0.8);
-        backdrop-filter: blur(10px);
-      }
-      
-      /* Critical styles for hero content */
-      h1 {
-        font-size: clamp(2rem, 5vw, 3.5rem);
-        font-weight: 700;
-        line-height: 1.2;
-        margin-bottom: 1rem;
-      }
-      
-      /* Optimize for mobile rendering */
-      @media (max-width: 768px) {
-        .hero-section {
-          min-height: auto;
-          padding: 80px 20px 40px;
-        }
-        
-        /* Disable complex styles on mobile */
-        * {
-          backdrop-filter: none !important;
-          filter: none !important;
-          text-shadow: none !important;
-          box-shadow: none !important;
-        }
-      }
-      
-      /* Respect user preference for reduced motion */
-      @media (prefers-reduced-motion: reduce) {
-        * {
-          animation-duration: 0.01ms !important;
-          animation-play-state: paused !important;
-          transition-duration: 0.01ms !important;
-          scroll-behavior: auto !important;
-        }
-      }
-    </style>
+    <link rel="preload" href="%PUBLIC_URL%/critical.css" as="style">
+    <link rel="stylesheet" href="%PUBLIC_URL%/critical.css">
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
