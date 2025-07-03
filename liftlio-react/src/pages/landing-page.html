@@ -25,9 +25,11 @@
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="../../public/favicon.ico">
     
-    <!-- Preload hero image for better LCP -->
-    <link rel="preload" as="image" href="/imagens/dashboard-hero-dark.jpg" fetchpriority="high">
+    <!-- Preload hero image for better LCP - Mobile First -->
+    <link rel="preload" as="image" href="/imagens/dashboard-hero-dark-mobile-optimized.jpg" media="(max-width: 768px)" fetchpriority="high">
+    <link rel="preload" as="image" href="/imagens/dashboard-hero-dark.jpg" media="(min-width: 769px)" fetchpriority="high">
     
     <!-- Fonts - Async loading to eliminate render-blocking -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -303,6 +305,18 @@
         #trending-topics-container::-webkit-scrollbar,
         #declining-topics-container::-webkit-scrollbar {display:none}
         
+        /* Mobile optimizations for PageSpeed 100 */
+        @media(max-width:768px){
+            /* Disable expensive animations on mobile */
+            *{animation:none !important;transition:none !important}
+            .floating-element{display:none}
+            /* Optimize shadows for performance */
+            .dashboard-preview{box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+            .feature-card:hover{transform:none}
+            .testimonial-card:hover{transform:none}
+            .pricing-card:hover{transform:none}
+        }
+        
         @media(max-width:480px){
             .logo{font-size:24px}
             .hero-section{padding:80px 0 40px}
@@ -462,14 +476,22 @@
                 
                 <div class="hero-visual">
                     <div class="dashboard-preview">
-                        <img id="dashboard-image" 
-                             src="../../public/imagens/dashboard-hero-dark.jpg" 
-                             alt="Liftlio Dashboard"
-                             width="1536"
-                             height="1024"
-                             loading="eager"
-                             fetchpriority="high"
-                             style="width:100%;height:auto;display:block;border-radius:8px;position:relative;z-index:1">
+                        <picture>
+                            <source media="(max-width: 768px)" 
+                                    srcset="/imagens/dashboard-hero-dark-mobile-optimized.jpg 768w,
+                                            ../../public/imagens/dashboard-hero-dark-mobile-optimized.jpg 768w">
+                            <source media="(min-width: 769px)" 
+                                    srcset="/imagens/dashboard-hero-dark.jpg 1536w,
+                                            ../../public/imagens/dashboard-hero-dark.jpg 1536w">
+                            <img id="dashboard-image" 
+                                 src="../../public/imagens/dashboard-hero-dark.jpg" 
+                                 alt="Liftlio Dashboard"
+                                 width="1536"
+                                 height="1024"
+                                 loading="eager"
+                                 fetchpriority="high"
+                                 style="width:100%;height:auto;display:block;border-radius:8px;position:relative;z-index:1">
+                        </picture>
                     </div>
                     
                     <div class="floating-element" style="bottom:40px;left:-30px;animation-delay:2s">
@@ -960,18 +982,18 @@
                                 <span class="lang-en">Digital Advertising</span>
                             </p>
                         </div>
-                        <div style="background:rgba(239,68,68,0.2);color:#dc2626;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                        <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
                             -67%
                         </div>
                     </div>
                     <div style="height:60px;margin:16px 0">
                         <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
-                            <polyline fill="none" stroke="#ef4444" stroke-width="2" points="0,10 40,15 80,25 120,35 160,45 200,55" />
+                            <polyline fill="none" stroke="#dc2626" stroke-width="2" points="0,10 40,15 80,25 120,35 160,45 200,55" />
                         </svg>
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>432K</strong></span>
-                        <span style="color:#dc2626;font-weight:600">
+                        <span style="color:#b91c1c;font-weight:700">
                             <span class="lang-pt">Caindo</span>
                             <span class="lang-en">Declining</span>
                         </span>
@@ -991,18 +1013,18 @@
                                 <span class="lang-en">Old Strategies</span>
                             </p>
                         </div>
-                        <div style="background:rgba(239,68,68,0.2);color:#dc2626;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                        <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
                             -45%
                         </div>
                     </div>
                     <div style="height:60px;margin:16px 0">
                         <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
-                            <polyline fill="none" stroke="#ef4444" stroke-width="2" points="0,5 40,10 80,20 120,30 160,40 200,50" />
+                            <polyline fill="none" stroke="#dc2626" stroke-width="2" points="0,5 40,10 80,20 120,30 160,40 200,50" />
                         </svg>
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>189K</strong></span>
-                        <span style="color:#dc2626;font-weight:600">
+                        <span style="color:#b91c1c;font-weight:700">
                             <span class="lang-pt">Caindo</span>
                             <span class="lang-en">Declining</span>
                         </span>
@@ -1022,18 +1044,18 @@
                                 <span class="lang-en">Obsolete Tactics</span>
                             </p>
                         </div>
-                        <div style="background:rgba(239,68,68,0.2);color:#dc2626;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                        <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
                             -89%
                         </div>
                     </div>
                     <div style="height:60px;margin:16px 0">
                         <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
-                            <polyline fill="none" stroke="#ef4444" stroke-width="2" points="0,15 40,20 80,30 120,40 160,50 200,58" />
+                            <polyline fill="none" stroke="#dc2626" stroke-width="2" points="0,15 40,20 80,30 120,40 160,50 200,58" />
                         </svg>
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>67K</strong></span>
-                        <span style="color:#dc2626;font-weight:600">
+                        <span style="color:#b91c1c;font-weight:700">
                             <span class="lang-pt">Caindo</span>
                             <span class="lang-en">Declining</span>
                         </span>
@@ -1407,7 +1429,7 @@
                         <span class="lang-en">Company</span>
                     </h3>
                     <ul class="footer-links">
-                        <li><a href="javascript:void(0)" onclick="navigateToPage('/about')">
+                        <li><a href="/about" onclick="navigateToPage('/about'); return false;">
                             <span class="lang-pt">Sobre</span>
                             <span class="lang-en">About</span>
                         </a></li>
@@ -1417,15 +1439,15 @@
                 <div class="footer-column">
                     <h3>Legal</h3>
                     <ul class="footer-links">
-                        <li><a href="javascript:void(0)" onclick="navigateToPage('/privacy')">
+                        <li><a href="/privacy" onclick="navigateToPage('/privacy'); return false;">
                             <span class="lang-pt">Política de Privacidade</span>
                             <span class="lang-en">Privacy Policy</span>
                         </a></li>
-                        <li><a href="javascript:void(0)" onclick="navigateToPage('/terms')">
+                        <li><a href="/terms" onclick="navigateToPage('/terms'); return false;">
                             <span class="lang-pt">Termos de Serviço</span>
                             <span class="lang-en">Terms of Service</span>
                         </a></li>
-                        <li><a href="javascript:void(0)" onclick="navigateToPage('/security')">
+                        <li><a href="/security" onclick="navigateToPage('/security'); return false;">
                             <span class="lang-pt">Segurança</span>
                             <span class="lang-en">Security</span>
                         </a></li>
@@ -1472,10 +1494,7 @@
             // Update dashboard image
             const dashboardImg = document.getElementById('dashboard-image');
             if (dashboardImg) {
-                const isLocal = window.location.protocol === 'file:';
-                dashboardImg.src = isLocal
-                    ? '../../public/imagens/dashboard-hero-' + (newTheme === 'dark' ? 'dark' : 'light') + '.jpg'
-                    : '/imagens/dashboard-hero-' + (newTheme === 'dark' ? 'dark' : 'light') + '.jpg';
+                updateDashboardImage(newTheme);
             }
         }
         
@@ -1500,6 +1519,37 @@
                 document.title = 'Liftlio - Scale Word-of-Mouth Recommendations Without Paying for Ads';
                 document.querySelector('meta[name="description"]').content = 'Liftlio utilizes AI to get your brand mentioned in genuine conversations across the web, allowing your product to be discovered organically at scale.';
             }
+        }
+        
+        // Update dashboard image for theme changes
+        function updateDashboardImage(theme) {
+            const dashboardImg = document.getElementById('dashboard-image');
+            const picture = dashboardImg?.closest('picture');
+            if (!dashboardImg || !picture) return;
+            
+            const isLocal = window.location.protocol === 'file:';
+            const isMobile = window.innerWidth <= 768;
+            
+            // Update all source elements
+            const sources = picture.querySelectorAll('source');
+            sources.forEach(source => {
+                const media = source.getAttribute('media');
+                const isDesktop = media && media.includes('min-width: 769px');
+                const basePath = isLocal ? '../../public/imagens/' : '/imagens/';
+                
+                if (isDesktop) {
+                    const srcset = `${basePath}dashboard-hero-${theme}.jpg 1536w`;
+                    source.setAttribute('srcset', isLocal ? srcset + ', ' + srcset : srcset);
+                } else {
+                    const srcset = `${basePath}dashboard-hero-${theme}-mobile-optimized.jpg 768w`;
+                    source.setAttribute('srcset', isLocal ? srcset + ', ' + srcset : srcset);
+                }
+            });
+            
+            // Update img fallback
+            dashboardImg.src = isLocal 
+                ? `../../public/imagens/dashboard-hero-${theme}.jpg`
+                : `/imagens/dashboard-hero-${theme}.jpg`;
         }
         
         // Navigate to React app pages
@@ -1545,15 +1595,7 @@
         });
         
         // Initialize dashboard image based on current theme and environment
-        const dashboardImg = document.getElementById('dashboard-image');
-        if (dashboardImg) {
-            // Check if running locally (file:// protocol)
-            const isLocal = window.location.protocol === 'file:';
-            const imagePath = isLocal 
-                ? '../../public/imagens/dashboard-hero-' + (currentTheme === 'dark' ? 'dark' : 'light') + '.jpg'
-                : '/imagens/dashboard-hero-' + (currentTheme === 'dark' ? 'dark' : 'light') + '.jpg';
-            dashboardImg.src = imagePath;
-        }
+        updateDashboardImage(currentTheme);
         
         // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -1725,7 +1767,7 @@
                             <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">${category[lang]}</p>
                         </div>
-                        <div style="background:rgba(239,68,68,0.2);color:#dc2626;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                        <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
                             -${declinePercentage}%
                         </div>
                     </div>
@@ -1736,7 +1778,7 @@
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>${formatVolume(trend.volume)}</strong></span>
-                        <span style="color:#dc2626;font-weight:600">
+                        <span style="color:#b91c1c;font-weight:700">
                             <span class="lang-pt">Caindo</span>
                             <span class="lang-en">Declining</span>
                         </span>
