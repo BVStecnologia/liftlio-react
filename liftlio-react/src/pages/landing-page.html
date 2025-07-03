@@ -462,17 +462,14 @@
                 
                 <div class="hero-visual">
                     <div class="dashboard-preview">
-                        <picture>
-                            <source srcset="/imagens/dashboard-hero-dark.webp" type="image/webp">
-                            <img id="dashboard-image" 
-                                 src="/imagens/dashboard-hero-dark.jpg" 
-                                 alt="Liftlio Dashboard"
-                                 width="1536"
-                                 height="1024"
-                                 loading="eager"
-                                 fetchpriority="high"
-                                 style="width:100%;height:auto;display:block;border-radius:8px;position:relative;z-index:1">
-                        </picture>
+                        <img id="dashboard-image" 
+                             src="../../public/imagens/dashboard-hero-dark.jpg" 
+                             alt="Liftlio Dashboard"
+                             width="1536"
+                             height="1024"
+                             loading="eager"
+                             fetchpriority="high"
+                             style="width:100%;height:auto;display:block;border-radius:8px;position:relative;z-index:1">
                     </div>
                     
                     <div class="floating-element" style="bottom:40px;left:-30px;animation-delay:2s">
@@ -1475,9 +1472,10 @@
             // Update dashboard image
             const dashboardImg = document.getElementById('dashboard-image');
             if (dashboardImg) {
-                dashboardImg.src = newTheme === 'dark' 
-                    ? '/imagens/dashboard-hero-dark.jpg'
-                    : '/imagens/dashboard-hero-light.jpg';
+                const isLocal = window.location.protocol === 'file:';
+                dashboardImg.src = isLocal
+                    ? '../../public/imagens/dashboard-hero-' + (newTheme === 'dark' ? 'dark' : 'light') + '.jpg'
+                    : '/imagens/dashboard-hero-' + (newTheme === 'dark' ? 'dark' : 'light') + '.jpg';
             }
         }
         
@@ -1546,10 +1544,15 @@
             el.textContent = currentLang.toUpperCase();
         });
         
-        // Initialize dashboard image based on current theme
+        // Initialize dashboard image based on current theme and environment
         const dashboardImg = document.getElementById('dashboard-image');
-        if (dashboardImg && currentTheme === 'dark') {
-            dashboardImg.src = '/imagens/dashboard-hero-dark.jpg';
+        if (dashboardImg) {
+            // Check if running locally (file:// protocol)
+            const isLocal = window.location.protocol === 'file:';
+            const imagePath = isLocal 
+                ? '../../public/imagens/dashboard-hero-' + (currentTheme === 'dark' ? 'dark' : 'light') + '.jpg'
+                : '/imagens/dashboard-hero-' + (currentTheme === 'dark' ? 'dark' : 'light') + '.jpg';
+            dashboardImg.src = imagePath;
         }
         
         // Smooth scroll for anchor links
