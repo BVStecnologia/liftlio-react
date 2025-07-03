@@ -1374,8 +1374,8 @@
                         LIFTLIO
                     </div>
                     <p class="footer-description">
-                        <span class="lang-pt">Transformando menções em oportunidades de negócio através de monitoramento inteligente e análise em tempo real.</span>
-                        <span class="lang-en">Transforming mentions into business opportunities through intelligent monitoring and real-time analysis.</span>
+                        <span class="lang-pt">Plataforma com IA para escalar recomendações boca a boca sem pagar por anúncios.</span>
+                        <span class="lang-en">AI-powered platform to scale word-of-mouth recommendations without paying for ads.</span>
                     </p>
                 </div>
                 
@@ -1397,7 +1397,10 @@
                             <span class="lang-pt">Integrações</span>
                             <span class="lang-en">Integrations</span>
                         </a></li>
-                        <li><a href="#api">API</a></li>
+                        <li><a href="#api">
+                            <span class="lang-pt">Documentação API</span>
+                            <span class="lang-en">API Documentation</span>
+                        </a></li>
                     </ul>
                 </div>
                 
@@ -1407,18 +1410,9 @@
                         <span class="lang-en">Company</span>
                     </h3>
                     <ul class="footer-links">
-                        <li><a href="#about">
+                        <li><a href="javascript:void(0)" onclick="navigateToPage('/about')">
                             <span class="lang-pt">Sobre</span>
                             <span class="lang-en">About</span>
-                        </a></li>
-                        <li><a href="#blog">Blog</a></li>
-                        <li><a href="#careers">
-                            <span class="lang-pt">Carreiras</span>
-                            <span class="lang-en">Careers</span>
-                        </a></li>
-                        <li><a href="#contact">
-                            <span class="lang-pt">Contato</span>
-                            <span class="lang-en">Contact</span>
                         </a></li>
                     </ul>
                 </div>
@@ -1426,15 +1420,15 @@
                 <div class="footer-column">
                     <h3>Legal</h3>
                     <ul class="footer-links">
-                        <li><a href="#privacy">
-                            <span class="lang-pt">Privacidade</span>
-                            <span class="lang-en">Privacy</span>
+                        <li><a href="javascript:void(0)" onclick="navigateToPage('/privacy')">
+                            <span class="lang-pt">Política de Privacidade</span>
+                            <span class="lang-en">Privacy Policy</span>
                         </a></li>
-                        <li><a href="#terms">
-                            <span class="lang-pt">Termos</span>
-                            <span class="lang-en">Terms</span>
+                        <li><a href="javascript:void(0)" onclick="navigateToPage('/terms')">
+                            <span class="lang-pt">Termos de Serviço</span>
+                            <span class="lang-en">Terms of Service</span>
                         </a></li>
-                        <li><a href="#security">
+                        <li><a href="javascript:void(0)" onclick="navigateToPage('/security')">
                             <span class="lang-pt">Segurança</span>
                             <span class="lang-en">Security</span>
                         </a></li>
@@ -1508,6 +1502,17 @@
                 document.title = 'Liftlio - Scale Word-of-Mouth Recommendations Without Paying for Ads';
                 document.querySelector('meta[name="description"]').content = 'Liftlio utilizes AI to get your brand mentioned in genuine conversations across the web, allowing your product to be discovered organically at scale.';
             }
+        }
+        
+        // Navigate to React app pages
+        function navigateToPage(path) {
+            // Determinar a URL base baseada no ambiente
+            const hostname = window.location.hostname;
+            const isProduction = hostname === 'liftlio.fly.dev' || hostname === 'liftlio.com' || hostname === 'www.liftlio.com';
+            const appBaseUrl = isProduction ? `https://${hostname}` : 'http://localhost:3000';
+            
+            // Navegar para a página do React app
+            window.location.href = appBaseUrl + path;
         }
         
         // Mobile menu toggle
