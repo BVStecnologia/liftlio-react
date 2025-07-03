@@ -29,8 +29,9 @@
     <!-- Preload hero image for better LCP -->
     <link rel="preload" as="image" href="/imagens/dashboard-hero-dark.jpg" fetchpriority="high">
     
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Fonts - Async loading to eliminate render-blocking -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"></noscript>
     
     <!-- Inline CSS - Todo o estilo da página -->
     <style>
@@ -89,7 +90,7 @@
         }
         
         /* Base */
-        html{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+        html{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;scroll-behavior:smooth;font-display:swap}
         body{background-color:var(--color-background);color:var(--color-text-primary);overflow-x:hidden;transition:background-color .3s,color .3s}
         
         /* Container */
@@ -590,10 +591,10 @@
                         <div class="breakthrough-icon">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                         </div>
-                        <h4 style="font-size:20px;font-weight:700;margin-bottom:8px">
+                        <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">
                             <span class="lang-pt">Conversas Genuínas</span>
                             <span class="lang-en">Genuine Conversations</span>
-                        </h4>
+                        </h3>
                         <p style="color:var(--color-text-secondary)">
                             <span class="lang-pt">Participamos onde as pessoas já estão discutindo problemas que você resolve</span>
                             <span class="lang-en">We participate where people are already discussing problems you solve</span>
@@ -604,10 +605,10 @@
                         <div class="breakthrough-icon">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="12" r="10"></circle><path d="M12 2v7"></path><path d="M12 15v7"></path><path d="M4.93 4.93l4.95 4.95"></path><path d="M14.12 14.12l4.95 4.95"></path><path d="M2 12h7"></path><path d="M15 12h7"></path><path d="M4.93 19.07l4.95-4.95"></path><path d="M14.12 9.88l4.95-4.95"></path></svg>
                         </div>
-                        <h4 style="font-size:20px;font-weight:700;margin-bottom:8px">
+                        <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">
                             <span class="lang-pt">Momento Perfeito</span>
                             <span class="lang-en">Perfect Timing</span>
-                        </h4>
+                        </h3>
                         <p style="color:var(--color-text-secondary)">
                             <span class="lang-pt">Aparecemos exatamente quando alguém está procurando uma solução como a sua</span>
                             <span class="lang-en">We appear exactly when someone is looking for a solution like yours</span>
@@ -618,10 +619,10 @@
                         <div class="breakthrough-icon">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                         </div>
-                        <h4 style="font-size:20px;font-weight:700;margin-bottom:8px">
+                        <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">
                             <span class="lang-pt">Confiança Natural</span>
                             <span class="lang-en">Natural Trust</span>
-                        </h4>
+                        </h3>
                         <p style="color:var(--color-text-secondary)">
                             <span class="lang-pt">Recomendações em contexto geram 10x mais confiança que anúncios pagos</span>
                             <span class="lang-en">Contextual recommendations generate 10x more trust than paid ads</span>
@@ -814,16 +815,16 @@
                 <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
-                            <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
                                 <span class="lang-pt">Menções de Marca no YouTube</span>
                                 <span class="lang-en">YouTube Brand Mentions</span>
-                            </h4>
+                            </h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">
                                 <span class="lang-pt">Análise de Vídeo</span>
                                 <span class="lang-en">Video Analytics</span>
                             </p>
                         </div>
-                        <div style="background:rgba(34,197,94,0.1);color:#22c55e;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                        <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
                             +892%
                         </div>
                     </div>
@@ -833,14 +834,14 @@
                             <defs>
                                 <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
                                     <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.5" />
-                                    <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
                                 </linearGradient>
                             </defs>
                         </svg>
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>147K</strong></span>
-                        <span style="color:#22c55e;font-weight:600">
+                        <span style="color:#16a34a;font-weight:600">
                             <span class="lang-pt">Explodindo</span>
                             <span class="lang-en">Exploding</span>
                         </span>
@@ -851,16 +852,16 @@
                 <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
-                            <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
                                 <span class="lang-pt">IA para Análise de Vídeo</span>
                                 <span class="lang-en">AI Video Intelligence</span>
-                            </h4>
+                            </h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">
                                 <span class="lang-pt">Inteligência Artificial</span>
                                 <span class="lang-en">Artificial Intelligence</span>
                             </p>
                         </div>
-                        <div style="background:rgba(34,197,94,0.1);color:#22c55e;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                        <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
                             +1,245%
                         </div>
                     </div>
@@ -870,14 +871,14 @@
                             <defs>
                                 <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
                                     <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.5" />
-                                    <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
                                 </linearGradient>
                             </defs>
                         </svg>
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>289K</strong></span>
-                        <span style="color:#22c55e;font-weight:600">
+                        <span style="color:#16a34a;font-weight:600">
                             <span class="lang-pt">Explodindo</span>
                             <span class="lang-en">Exploding</span>
                         </span>
@@ -888,16 +889,16 @@
                 <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
-                            <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
                                 <span class="lang-pt">Geração de Leads por Influencer</span>
                                 <span class="lang-en">Influencer Lead Gen</span>
-                            </h4>
+                            </h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">
                                 <span class="lang-pt">Marketing de Influência</span>
                                 <span class="lang-en">Influencer Marketing</span>
                             </p>
                         </div>
-                        <div style="background:rgba(34,197,94,0.1);color:#22c55e;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                        <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
                             +567%
                         </div>
                     </div>
@@ -907,14 +908,14 @@
                             <defs>
                                 <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="0%">
                                     <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.5" />
-                                    <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
                                 </linearGradient>
                             </defs>
                         </svg>
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>92K</strong></span>
-                        <span style="color:#22c55e;font-weight:600">
+                        <span style="color:#16a34a;font-weight:600">
                             <span class="lang-pt">Explodindo</span>
                             <span class="lang-en">Exploding</span>
                         </span>
@@ -953,16 +954,16 @@
                 <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
-                            <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
                                 <span class="lang-pt">Anúncios Pagos Tradicionais</span>
                                 <span class="lang-en">Traditional Paid Ads</span>
-                            </h4>
+                            </h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">
                                 <span class="lang-pt">Publicidade Digital</span>
                                 <span class="lang-en">Digital Advertising</span>
                             </p>
                         </div>
-                        <div style="background:rgba(239,68,68,0.1);color:#ef4444;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                        <div style="background:rgba(239,68,68,0.2);color:#dc2626;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
                             -67%
                         </div>
                     </div>
@@ -973,7 +974,7 @@
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>432K</strong></span>
-                        <span style="color:#ef4444;font-weight:600">
+                        <span style="color:#dc2626;font-weight:600">
                             <span class="lang-pt">Caindo</span>
                             <span class="lang-en">Declining</span>
                         </span>
@@ -984,16 +985,16 @@
                 <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
-                            <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
                                 <span class="lang-pt">Marketing de Interrupção</span>
                                 <span class="lang-en">Interruption Marketing</span>
-                            </h4>
+                            </h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">
                                 <span class="lang-pt">Estratégias Antigas</span>
                                 <span class="lang-en">Old Strategies</span>
                             </p>
                         </div>
-                        <div style="background:rgba(239,68,68,0.1);color:#ef4444;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                        <div style="background:rgba(239,68,68,0.2);color:#dc2626;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
                             -45%
                         </div>
                     </div>
@@ -1004,7 +1005,7 @@
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>189K</strong></span>
-                        <span style="color:#ef4444;font-weight:600">
+                        <span style="color:#dc2626;font-weight:600">
                             <span class="lang-pt">Caindo</span>
                             <span class="lang-en">Declining</span>
                         </span>
@@ -1015,16 +1016,16 @@
                 <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
-                            <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
                                 <span class="lang-pt">Spam de Comentários</span>
                                 <span class="lang-en">Comment Spam</span>
-                            </h4>
+                            </h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">
                                 <span class="lang-pt">Táticas Obsoletas</span>
                                 <span class="lang-en">Obsolete Tactics</span>
                             </p>
                         </div>
-                        <div style="background:rgba(239,68,68,0.1);color:#ef4444;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                        <div style="background:rgba(239,68,68,0.2);color:#dc2626;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
                             -89%
                         </div>
                     </div>
@@ -1035,7 +1036,7 @@
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>67K</strong></span>
-                        <span style="color:#ef4444;font-weight:600">
+                        <span style="color:#dc2626;font-weight:600">
                             <span class="lang-pt">Caindo</span>
                             <span class="lang-en">Declining</span>
                         </span>
@@ -1379,10 +1380,10 @@
                 </div>
                 
                 <div class="footer-column">
-                    <h4>
+                    <h3>
                         <span class="lang-pt">Produto</span>
                         <span class="lang-en">Product</span>
-                    </h4>
+                    </h3>
                     <ul class="footer-links">
                         <li><a href="#features">
                             <span class="lang-pt">Recursos</span>
@@ -1401,10 +1402,10 @@
                 </div>
                 
                 <div class="footer-column">
-                    <h4>
+                    <h3>
                         <span class="lang-pt">Empresa</span>
                         <span class="lang-en">Company</span>
-                    </h4>
+                    </h3>
                     <ul class="footer-links">
                         <li><a href="#about">
                             <span class="lang-pt">Sobre</span>
@@ -1423,7 +1424,7 @@
                 </div>
                 
                 <div class="footer-column">
-                    <h4>Legal</h4>
+                    <h3>Legal</h3>
                     <ul class="footer-links">
                         <li><a href="#privacy">
                             <span class="lang-pt">Privacidade</span>
@@ -1612,10 +1613,10 @@
                 <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s;animation:fadeIn 0.5s ease-in-out ${index * 0.1}s both">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
-                            <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h4>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">${category[lang]}</p>
                         </div>
-                        <div style="background:rgba(34,197,94,0.1);color:#22c55e;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                        <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
                             +${trend.growth}%
                         </div>
                     </div>
@@ -1625,14 +1626,14 @@
                             <defs>
                                 <linearGradient id="trend-gradient-${index}" x1="0%" y1="0%" x2="100%" y2="0%">
                                     <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.5" />
-                                    <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
                                 </linearGradient>
                             </defs>
                         </svg>
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>${formatVolume(trend.volume)}</strong></span>
-                        <span style="color:#22c55e;font-weight:600">
+                        <span style="color:#16a34a;font-weight:600">
                             <span class="lang-pt">Explodindo</span>
                             <span class="lang-en">Exploding</span>
                         </span>
@@ -1713,21 +1714,21 @@
                 <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s;animation:fadeIn 0.5s ease-in-out ${index * 0.1}s both">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
-                            <h4 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h4>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">${category[lang]}</p>
                         </div>
-                        <div style="background:rgba(239,68,68,0.1);color:#ef4444;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                        <div style="background:rgba(239,68,68,0.2);color:#dc2626;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
                             -${declinePercentage}%
                         </div>
                     </div>
                     <div style="height:60px;margin:16px 0">
                         <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
-                            <polyline fill="none" stroke="#ef4444" stroke-width="2" points="${generateDecliningChartPoints(declinePercentage)}" />
+                            <polyline fill="none" stroke="#dc2626" stroke-width="2" points="${generateDecliningChartPoints(declinePercentage)}" />
                         </svg>
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>${formatVolume(trend.volume)}</strong></span>
-                        <span style="color:#ef4444;font-weight:600">
+                        <span style="color:#dc2626;font-weight:600">
                             <span class="lang-pt">Caindo</span>
                             <span class="lang-en">Declining</span>
                         </span>
