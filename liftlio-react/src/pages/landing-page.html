@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light" data-lang="pt">
+<html lang="en" data-theme="dark" data-lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     
     <!-- SEO Meta Tags -->
-    <title>Liftlio - Scale Recomendações Boca a Boca sem Pagar por Anúncios</title>
-    <meta name="description" content="A Liftlio utiliza IA para fazer com que sua marca seja mencionada em conversas genuínas na web, permitindo que seu produto seja descoberto organicamente em grande escala.">
+    <title>Liftlio - Scale Word-of-Mouth Recommendations Without Paying for Ads</title>
+    <meta name="description" content="Liftlio uses AI to get your brand mentioned in genuine conversations across the web, allowing your product to be discovered organically at scale.">
     <meta name="keywords" content="marketing boca a boca,recomendações orgânicas,IA marketing,crescimento orgânico">
     <meta name="author" content="Liftlio">
     <meta name="robots" content="index,follow">
@@ -15,8 +15,8 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://liftlio.com/">
-    <meta property="og:title" content="Liftlio - Scale Recomendações Boca a Boca sem Pagar por Anúncios">
-    <meta property="og:description" content="A Liftlio utiliza IA para fazer com que sua marca seja mencionada em conversas genuínas na web.">
+    <meta property="og:title" content="Liftlio - Scale Word-of-Mouth Recommendations Without Paying for Ads">
+    <meta property="og:description" content="Liftlio uses AI to get your brand mentioned in genuine conversations across the web.">
     <meta property="og:image" content="https://liftlio.com/og-image.jpg">
     
     <!-- Preconnect -->
@@ -25,6 +25,9 @@
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- Preload hero image for better LCP -->
+    <link rel="preload" as="image" href="/imagens/dashboard-hero-dark.jpg" fetchpriority="high">
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -172,8 +175,8 @@
         .problem-section{background:var(--color-features-bg)}
         .problem-content{max-width:800px;margin:0 auto;text-align:center}
         .problem-stat{font-size:72px;font-weight:900;background:var(--gradient-landing);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:24px}
-        .problem-text{font-size:24px;color:var(--color-text-primary);margin-bottom:32px;line-height:1.4}
-        .warning-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:12px;padding:24px;display:inline-flex;align-items:center;gap:16px;color:#ef4444}
+        .problem-text{font-size:24px;color:var(--color-text-primary);margin-bottom:32px;line-height:1.4;font-weight:500}
+        .warning-box{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:24px;display:inline-flex;align-items:center;gap:16px;color:#dc2626}
         
         /* Breakthrough Section */
         .breakthrough-section{background:var(--color-background)}
@@ -359,7 +362,7 @@
                             <span class="lang-indicator">PT</span>
                         </button>
                         
-                        <button class="btn-icon" onclick="toggleTheme()">
+                        <button class="btn-icon" onclick="toggleTheme()" aria-label="Toggle theme">
                             <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                             <svg class="theme-icon-dark" style="display:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                         </button>
@@ -371,7 +374,7 @@
                     </div>
                 </nav>
                 
-                <button class="mobile-menu-button btn-icon" onclick="toggleMobileMenu(true)">
+                <button class="mobile-menu-button btn-icon" onclick="toggleMobileMenu(true)" aria-label="Open menu">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </button>
             </div>
@@ -386,7 +389,7 @@
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
                 LIFTLIO
             </div>
-            <button class="btn-icon" onclick="toggleMobileMenu(false)">
+            <button class="btn-icon" onclick="toggleMobileMenu(false)" aria-label="Close menu">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
@@ -413,7 +416,7 @@
                     <span class="lang-indicator">PT</span>
                 </button>
                 
-                <button class="btn-icon" onclick="toggleTheme()" style="border:1px solid var(--color-border-light);border-radius:8px">
+                <button class="btn-icon" onclick="toggleTheme()" style="border:1px solid var(--color-border-light);border-radius:8px" aria-label="Toggle theme">
                     <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                     <svg class="theme-icon-dark" style="display:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                 </button>
@@ -458,10 +461,17 @@
                 
                 <div class="hero-visual">
                     <div class="dashboard-preview">
-                        <img id="dashboard-image" 
-                             src="/imagens/dashboard-hero-light.jpg" 
-                             alt="Liftlio Dashboard" 
-                             style="width:100%;height:auto;display:block;border-radius:8px;position:relative;z-index:1">
+                        <picture>
+                            <source srcset="/imagens/dashboard-hero-dark.webp" type="image/webp">
+                            <img id="dashboard-image" 
+                                 src="/imagens/dashboard-hero-dark.jpg" 
+                                 alt="Liftlio Dashboard"
+                                 width="1536"
+                                 height="1024"
+                                 loading="eager"
+                                 fetchpriority="high"
+                                 style="width:100%;height:auto;display:block;border-radius:8px;position:relative;z-index:1">
+                        </picture>
                     </div>
                     
                     <div class="floating-element" style="bottom:40px;left:-30px;animation-delay:2s">
