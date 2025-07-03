@@ -1629,6 +1629,17 @@
         // Update language visibility without CLS
         updateLanguageVisibility();
         
+        // Define updateLanguageVisibility function
+        function updateLanguageVisibility() {
+            const lang = document.documentElement.getAttribute('data-lang') || 'pt';
+            document.querySelectorAll('.lang-pt').forEach(el => {
+                el.style.display = lang === 'pt' ? '' : 'none';
+            });
+            document.querySelectorAll('.lang-en').forEach(el => {
+                el.style.display = lang === 'en' ? '' : 'none';
+            });
+        }
+        
         // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
@@ -1756,8 +1767,12 @@
                 
                 console.log('Tendências filtradas:', risingTrends);
                 
-                // Clear container and remove loading
-                container.innerHTML = '';
+                // Hide loading first
+                if (loadingEl) loadingEl.style.display = 'none';
+                
+                // Clear only the cards, not the loading element
+                const existingCards = container.querySelectorAll('div[style*="flex:0 0 340px"]');
+                existingCards.forEach(card => card.remove());
                 
                 if (risingTrends.length > 0) {
                     // Add trend cards
@@ -1780,8 +1795,15 @@
                 }
             } catch (error) {
                 console.error('Error fetching trends:', error);
-                // Remove loading and keep static content
-                if (loadingEl) loadingEl.remove();
+                // Remove loading only, don't clear container
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
+                // Show static cards that are already in HTML
+                const staticCards = container.querySelectorAll('div[style*="flex:0 0 340px"]');
+                staticCards.forEach(card => {
+                    card.style.display = '';
+                });
             }
         }
         
@@ -1859,8 +1881,12 @@
                     .sort((a, b) => parseFloat(a.growth) - parseFloat(b.growth))
                     .slice(0, 6); // Show top 6 declining trends
                 
-                // Clear container and remove loading
-                container.innerHTML = '';
+                // Hide loading first
+                if (loadingEl) loadingEl.style.display = 'none';
+                
+                // Clear only the cards, not the loading element
+                const existingCards = container.querySelectorAll('div[style*="flex:0 0 340px"]');
+                existingCards.forEach(card => card.remove());
                 
                 if (decliningTrends.length > 0) {
                     // Add trend cards
