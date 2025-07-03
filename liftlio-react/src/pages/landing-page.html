@@ -144,6 +144,9 @@
         .hero-background{position:absolute;top:0;left:0;right:0;bottom:0;opacity:.1;background:radial-gradient(circle at 20% 50%,var(--color-primary-alpha) 0%,transparent 50%),radial-gradient(circle at 80% 80%,var(--color-secondary-alpha) 0%,transparent 50%)}
         [data-theme="dark"] .hero-background{opacity:.3}
         .hero-content{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;z-index:10;position:relative}
+        /* Fix CLS - Reserve space for image */
+        .dashboard-preview{position:relative;width:100%;aspect-ratio:3/2;overflow:hidden;border-radius:8px}
+        .dashboard-preview img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
         .badge{display:inline-flex;align-items:center;gap:8px;background:var(--color-badge-bg);border:1px solid var(--color-badge-border);padding:8px 16px;border-radius:100px;margin-bottom:24px;color:var(--color-primary);font-size:14px;font-weight:600;animation:pulse 3s infinite}
         .hero-title{font-size:56px;font-weight:900;line-height:1.05;margin-bottom:24px;letter-spacing:-1.5px}
         .gradient-text{background:var(--gradient-landing);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -278,6 +281,8 @@
             .pricing-grid{grid-template-columns:1fr;gap:24px}
             .pricing-card.featured{transform:scale(1)}
             .footer-content{grid-template-columns:1fr 1fr;gap:32px}
+            /* Mobile image optimization */
+            .dashboard-preview{aspect-ratio:16/9}
         }
         
         @media(max-width:768px){
@@ -494,11 +499,11 @@
                             <img id="dashboard-image" 
                                  src="../../public/imagens/dashboard-hero-dark.jpg" 
                                  alt="Liftlio Dashboard"
-                                 width="1536"
-                                 height="1024"
+                                 width="768"
+                                 height="512"
                                  loading="eager"
                                  fetchpriority="high"
-                                 style="width:100%;height:auto;display:block;border-radius:8px;position:relative;z-index:1">
+                                 style="width:100%;height:100%;object-fit:cover;display:block">
                         </picture>
                     </div>
                     
@@ -1474,6 +1479,14 @@
     
     <!-- JavaScript -->
     <script>
+        // Prevent CLS - Set initial styles immediately
+        (function() {
+            // Hide language elements that don't match current language
+            const lang = document.documentElement.getAttribute('data-lang') || 'pt';
+            const style = document.createElement('style');
+            style.textContent = lang === 'pt' ? '.lang-en{display:none!important}' : '.lang-pt{display:none!important}';
+            document.head.appendChild(style);
+        })();
         // Scroll handler
         window.addEventListener('scroll', function() {
             const header = document.getElementById('header');
@@ -1612,6 +1625,9 @@
         
         // Initialize dashboard image based on current theme and environment
         updateDashboardImage(currentTheme);
+        
+        // Update language visibility without CLS
+        updateLanguageVisibility();
         
         // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
