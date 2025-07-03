@@ -1732,12 +1732,11 @@
             console.log('Iniciando busca de tendências...');
             
             try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_youtube_trends`, {
+                // Use proxy endpoint to avoid CORS issues
+                const response = await fetch('/api/trends', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({})
                 });
@@ -1839,12 +1838,11 @@
             const loadingEl = document.getElementById('declining-loading');
             
             try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_youtube_trends`, {
+                // Use proxy endpoint to avoid CORS issues
+                const response = await fetch('/api/trends', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({})
                 });
