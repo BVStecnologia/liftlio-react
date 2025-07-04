@@ -792,16 +792,9 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                 <strong><IconComponent icon={FaTag} /> Keywords: </strong>
                 {keywordsArray.length > 0 ? (
                   keywordsArray.map((keyword, i) => (
-                    <span key={i} style={{ 
-                      display: 'inline-block', 
-                      background: '#f0f0f0', 
-                      padding: '2px 6px', 
-                      borderRadius: '4px', 
-                      margin: '0 4px 4px 0',
-                      fontSize: '0.85em' 
-                    }}>
+                    <PreviewKeywordTag key={i}>
                       {keyword}
-                    </span>
+                    </PreviewKeywordTag>
                   ))
                 ) : (
                   <PreviewPlaceholder>Enter or generate keywords</PreviewPlaceholder>
@@ -821,7 +814,9 @@ const LoadingOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(255, 255, 255, 0.7);
+  background-color: ${props => props.theme.name === 'dark' 
+    ? 'rgba(0, 0, 0, 0.7)' 
+    : 'rgba(255, 255, 255, 0.7)'};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -882,7 +877,9 @@ const PreviewContainer = styled.div`
   padding: 20px;
   border: 1px dashed ${props => props.theme.colors.grey};
   border-radius: ${props => props.theme.radius.md};
-  background-color: ${props => `${props.theme.colors.background}80`};
+  background-color: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.05)' 
+    : 'rgba(0, 0, 0, 0.02)'};
   transition: all 0.3s ease;
 `;
 
@@ -909,6 +906,18 @@ const PreviewItem = styled.div`
 const PreviewPlaceholder = styled.span`
   color: ${props => props.theme.colors.grey};
   font-style: italic;
+`;
+
+const PreviewKeywordTag = styled.span`
+  display: inline-block;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'rgba(0, 0, 0, 0.05)'};
+  color: ${props => props.theme.colors.text.primary};
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin: 0 4px 4px 0;
+  font-size: 0.85em;
 `;
 
 export default ProjectModal;
