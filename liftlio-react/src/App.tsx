@@ -621,10 +621,15 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     );
   }
   
-  // Nova condição: se o usuário tem apenas 1 projeto e não há integrações configuradas
-  // também redirecionar para a página de criação de projeto
-  if (projects.length === 1 && projectIntegrations.length === 0) {
-    console.log('Usuário tem apenas 1 projeto sem integrações, redirecionando para criação de projeto');
+  // Nova condição: se o projeto atual não tem integrações configuradas
+  // redirecionar para a página de criação de projeto
+  const { currentProject } = useProject();
+  const currentProjectHasIntegrations = currentProject && projectIntegrations.some(
+    integration => integration['PROJETO id'] === currentProject.id
+  );
+  
+  if (currentProject && !currentProjectHasIntegrations) {
+    console.log('Projeto atual não tem integrações, redirecionando para criação de projeto');
     return (
       <AppContainer>
         <MainContent>
