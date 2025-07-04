@@ -2,6 +2,26 @@
 <html lang="en" data-theme="dark" data-lang="en">
 <head>
     <meta charset="UTF-8">
+    <script>
+        // Ajustar caminhos para desenvolvimento local
+        if (window.location.protocol === 'file:') {
+            window.addEventListener('DOMContentLoaded', function() {
+                // Ajustar todas as imagens
+                document.querySelectorAll('img[src^="/"], source[srcset*="/imagens"]').forEach(function(el) {
+                    if (el.src) {
+                        el.src = el.src.replace(/^\//, './');
+                    }
+                    if (el.srcset) {
+                        el.srcset = el.srcset.replace(/\/imagens\//g, './imagens/');
+                    }
+                });
+                // Ajustar links de preload
+                document.querySelectorAll('link[href^="/"]').forEach(function(el) {
+                    el.href = el.href.replace(/^\//, './');
+                });
+            });
+        }
+    </script>
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     
@@ -24,12 +44,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="icon" type="image/x-icon" href="../../public/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     
     <!-- Preload hero image for better LCP - Mobile First -->
-    <link rel="preload" as="image" type="image/webp" href="/imagens/dashboard-hero-dark-mobile-optimized.webp" media="(max-width: 768px)" fetchpriority="high">
-    <link rel="preload" as="image" href="/imagens/dashboard-hero-dark.jpg" media="(min-width: 769px)" fetchpriority="high">
+    <link rel="preload" as="image" type="image/webp" href="imagens/dashboard-hero-dark-mobile-optimized.webp" media="(max-width: 768px)" fetchpriority="high">
+    <link rel="preload" as="image" href="imagens/dashboard-hero-dark.jpg" media="(min-width: 769px)" fetchpriority="high">
     
     <!-- Fonts - Async loading to eliminate render-blocking -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -484,20 +504,16 @@
                         <picture>
                             <!-- WebP para navegadores modernos -->
                             <source type="image/webp" media="(max-width: 768px)" 
-                                    srcset="/imagens/dashboard-hero-dark-mobile-optimized.webp 768w,
-                                            ../../public/imagens/dashboard-hero-dark-mobile-optimized.webp 768w">
+                                    srcset="imagens/dashboard-hero-dark-mobile-optimized.webp 768w">
                             <source type="image/webp" media="(min-width: 769px)" 
-                                    srcset="/imagens/dashboard-hero-dark.jpg 1536w,
-                                            ../../public/imagens/dashboard-hero-dark.jpg 1536w">
+                                    srcset="imagens/dashboard-hero-dark.jpg 1536w">
                             <!-- JPG fallback -->
                             <source media="(max-width: 768px)" 
-                                    srcset="/imagens/dashboard-hero-dark-mobile-optimized.jpg 768w,
-                                            ../../public/imagens/dashboard-hero-dark-mobile-optimized.jpg 768w">
+                                    srcset="imagens/dashboard-hero-dark-mobile-optimized.jpg 768w">
                             <source media="(min-width: 769px)" 
-                                    srcset="/imagens/dashboard-hero-dark.jpg 1536w,
-                                            ../../public/imagens/dashboard-hero-dark.jpg 1536w">
+                                    srcset="imagens/dashboard-hero-dark.jpg 1536w">
                             <img id="dashboard-image" 
-                                 src="../../public/imagens/dashboard-hero-dark.jpg" 
+                                 src="imagens/dashboard-hero-dark.jpg" 
                                  alt="Liftlio Dashboard"
                                  width="768"
                                  height="512"
@@ -1558,7 +1574,7 @@
                 const type = source.getAttribute('type');
                 const isDesktop = media && media.includes('min-width: 769px');
                 const isWebP = type === 'image/webp';
-                const basePath = isLocal ? '../../public/imagens/' : '/imagens/';
+                const basePath = 'imagens/';
                 
                 if (isDesktop) {
                     const srcset = `${basePath}dashboard-hero-${theme}.jpg 1536w`;
@@ -1574,7 +1590,7 @@
             
             // Update img fallback
             dashboardImg.src = isLocal 
-                ? `../../public/imagens/dashboard-hero-${theme}.jpg`
+                ? `imagens/dashboard-hero-${theme}.jpg`
                 : `/imagens/dashboard-hero-${theme}.jpg`;
         }
         
