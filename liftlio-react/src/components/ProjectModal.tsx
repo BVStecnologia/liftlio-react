@@ -250,6 +250,34 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     setActiveTab('create');
   }, []);
   
+  // Pausar o auto-refresh do Supabase quando o modal estiver aberto
+  useEffect(() => {
+    if (isOpen) {
+      // Capturar e sobrescrever temporariamente o evento visibilitychange
+      const handleVisibilityChange = (e: Event) => {
+        // Prevenir propagação para outros listeners
+        e.stopImmediatePropagation();
+        // Não fazer nada - isso previne o comportamento do Supabase
+      };
+      
+      // Adicionar nosso listener com prioridade máxima (capture phase)
+      window.addEventListener('visibilitychange', handleVisibilityChange, true);
+      
+      // Também prevenir o comportamento padrão de focus/blur que pode causar refresh
+      const handleWindowFocus = (e: Event) => {
+        e.stopImmediatePropagation();
+      };
+      
+      window.addEventListener('focus', handleWindowFocus, true);
+      
+      // Cleanup: remover nossos listeners quando o modal fechar
+      return () => {
+        window.removeEventListener('visibilitychange', handleVisibilityChange, true);
+        window.removeEventListener('focus', handleWindowFocus, true);
+      };
+    }
+  }, [isOpen]);
+  
   // Atualizar o array de keywords quando o texto muda
   useEffect(() => {
     if (projectForm.keywords) {
