@@ -15,7 +15,6 @@ import { IconComponent } from './utils/IconHelper';
 import { FaBars } from 'react-icons/fa';
 
 // Lazy load all pages
-const LandingPage = lazy(() => import('./pages/LandingPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const Overview = lazy(() => import('./pages/Overview'));
 const Monitoring = lazy(() => import('./pages/Monitoring'));
@@ -528,7 +527,7 @@ function App() {
             <OAuthHandler />
             <Routes>
               {/* Landing page como ponto de entrada principal */}
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/checkout" element={<CheckoutPage />} />

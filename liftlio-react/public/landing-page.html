@@ -1,0 +1,2334 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <!-- SEO Meta Tags -->
+    <title>Liftlio - Scale Word-of-Mouth Recommendations Without Paying for Ads</title>
+    <meta name="description" content="Liftlio uses AI to get your brand mentioned in genuine conversations across the web, allowing your product to be discovered organically at scale.">
+    <meta name="keywords" content="marketing boca a boca,recomendações orgânicas,IA marketing,crescimento orgânico">
+    <meta name="author" content="Liftlio">
+    <meta name="robots" content="index,follow">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://liftlio.com/">
+    <meta property="og:title" content="Liftlio - Scale Word-of-Mouth Recommendations Without Paying for Ads">
+    <meta property="og:description" content="Liftlio uses AI to get your brand mentioned in genuine conversations across the web.">
+    <meta property="og:image" content="https://liftlio.com/og-image.jpg">
+    
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="../../public/favicon.ico">
+    
+    <!-- Preload hero image for better LCP - Mobile First -->
+    <link rel="preload" as="image" type="image/webp" href="/imagens/dashboard-hero-dark-mobile-optimized.webp" media="(max-width: 768px)" fetchpriority="high">
+    <link rel="preload" as="image" href="/imagens/dashboard-hero-dark.jpg" media="(min-width: 769px)" fetchpriority="high">
+    
+    <!-- Fonts - Async loading to eliminate render-blocking -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"></noscript>
+    
+    <!-- Inline CSS - Todo o estilo da página -->
+    <style>
+        /* Reset CSS */
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        
+        /* Variáveis CSS para temas */
+        :root{
+            --color-background:#fff;
+            --color-text-primary:#1a1a1a;
+            --color-text-secondary:#666;
+            --color-primary:#6366f1;
+            --color-primary-hover:#5558e3;
+            --color-primary-alpha:rgba(99,102,241,.1);
+            --color-secondary:#ec4899;
+            --color-secondary-alpha:rgba(236,72,153,.1);
+            --color-border-light:#e5e7eb;
+            --color-card-bg:#f9fafb;
+            --color-card-hover-bg:#f3f4f6;
+            --color-header-bg:rgba(255,255,255,.8);
+            --color-header-bg-solid:rgba(255,255,255,.95);
+            --color-badge-bg:rgba(99,102,241,.1);
+            --color-badge-border:rgba(99,102,241,.2);
+            --gradient-landing:linear-gradient(135deg,#6366f1 0%,#ec4899 100%);
+            --color-trust-bg:#f9fafb;
+            --color-features-bg:#fff;
+            --color-stats-bg:#f3f4f6;
+            --color-testimonials-bg:#fff;
+            --color-cta-bg:#f5f5f5;
+            --color-shadow-small:rgba(0,0,0,.05);
+            --color-shadow-medium:rgba(0,0,0,.1);
+            --color-shadow-large:rgba(0,0,0,.15);
+        }
+        
+        [data-theme="dark"]{
+            --color-background:#0a0a0a;
+            --color-text-primary:#fff;
+            --color-text-secondary:#a1a1aa;
+            --color-primary:#818cf8;
+            --color-primary-hover:#6366f1;
+            --color-primary-alpha:rgba(129,140,248,.1);
+            --color-secondary:#f472b6;
+            --color-secondary-alpha:rgba(244,114,182,.1);
+            --color-border-light:#27272a;
+            --color-card-bg:#18181b;
+            --color-card-hover-bg:#27272a;
+            --color-header-bg:rgba(10,10,10,.8);
+            --color-header-bg-solid:rgba(10,10,10,.95);
+            --color-badge-bg:rgba(129,140,248,.1);
+            --color-badge-border:rgba(129,140,248,.2);
+            --color-trust-bg:#18181b;
+            --color-features-bg:#0a0a0a;
+            --color-stats-bg:#18181b;
+            --color-testimonials-bg:#0a0a0a;
+            --color-cta-bg:#1a1a1a;
+        }
+        
+        /* Base */
+        html{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;scroll-behavior:smooth;font-display:swap}
+        body{background-color:var(--color-background);color:var(--color-text-primary);overflow-x:hidden;transition:background-color .3s,color .3s}
+        
+        /* Container */
+        .container{max-width:1440px;margin:0 auto;padding:0 64px}
+        @media(max-width:768px){.container{padding:0 32px}}
+        @media(max-width:480px){.container{padding:0 16px}}
+        
+        /* Animations */
+        @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes pulse{0%{transform:scale(1);opacity:.5}50%{transform:scale(1.5);opacity:.3}100%{transform:scale(1);opacity:.5}}
+        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
+        
+        /* Hide scrollbars for carousels */
+        #trending-topics-container::-webkit-scrollbar,
+        #declining-topics-container::-webkit-scrollbar {
+            display: none;
+        }
+        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        
+        /* Header */
+        .header{position:fixed;top:0;left:0;right:0;z-index:1000;padding:20px 0;background:var(--color-header-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--color-border-light);transition:all .3s}
+        .header.scrolled{background:var(--color-header-bg-solid);backdrop-filter:blur(20px)}
+        .header-content{display:flex;justify-content:space-between;align-items:center}
+        .logo{font-size:28px;font-weight:900;letter-spacing:-1px;background:var(--gradient-landing);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer;display:flex;align-items:center;gap:8px;text-decoration:none}
+        .nav{display:flex;gap:40px;align-items:center}
+        .nav-link{color:var(--color-text-secondary);text-decoration:none;font-weight:500;transition:color .3s}
+        .nav-link:hover{color:var(--color-primary)}
+        .nav-buttons{display:flex;align-items:center;gap:16px}
+        .btn-icon{background:transparent;color:var(--color-text-primary);border:none;padding:8px;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:14px;transition:color .3s;min-width:44px;min-height:44px;justify-content:center;border-radius:8px}
+        .btn-icon:hover{color:var(--color-primary)}
+        .btn-login{background:transparent;color:var(--color-text-primary);border:1px solid var(--color-border-light);padding:10px 24px;border-radius:8px;font-weight:600;cursor:pointer;transition:all .3s;text-decoration:none;display:inline-block}
+        .btn-login:hover{background:var(--color-card-bg);border-color:var(--color-primary);color:var(--color-primary)}
+        
+        /* Mobile Menu */
+        .mobile-menu-button{display:none;background:transparent;border:none;color:var(--color-text-primary);font-size:24px;cursor:pointer;padding:8px;margin-left:16px}
+        .mobile-menu-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;z-index:999}
+        .mobile-menu-overlay.open{opacity:1;visibility:visible}
+        .mobile-menu{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--color-card-bg);box-shadow:-2px 0 8px rgba(0,0,0,.1);transform:translateX(100%);transition:transform .3s;z-index:1000;padding:20px}
+        .mobile-menu.open{transform:translateX(0)}
+        .mobile-menu-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;padding-bottom:16px;border-bottom:1px solid var(--color-border-light)}
+        .mobile-menu-nav{display:flex;flex-direction:column;gap:24px}
+        .mobile-nav-link{color:var(--color-text-primary);text-decoration:none;font-weight:500;font-size:18px;padding:8px 0}
+        .mobile-nav-link:hover{color:var(--color-primary)}
+        .mobile-menu-footer{position:absolute;bottom:20px;left:20px;right:20px;display:flex;flex-direction:column;gap:16px}
+        
+        /* Hero Section */
+        .hero-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:120px 0 80px;position:relative;overflow:hidden}
+        .hero-background{position:absolute;top:0;left:0;right:0;bottom:0;opacity:.1;background:radial-gradient(circle at 20% 50%,var(--color-primary-alpha) 0%,transparent 50%),radial-gradient(circle at 80% 80%,var(--color-secondary-alpha) 0%,transparent 50%)}
+        [data-theme="dark"] .hero-background{opacity:.3}
+        .hero-content{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;z-index:10;position:relative}
+        /* Fix CLS - Reserve space for image */
+        .dashboard-preview{position:relative;width:100%;aspect-ratio:3/2;overflow:hidden;border-radius:8px}
+        .dashboard-preview img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+        .badge{display:inline-flex;align-items:center;gap:8px;background:var(--color-badge-bg);border:1px solid var(--color-badge-border);padding:8px 16px;border-radius:100px;margin-bottom:24px;color:var(--color-primary);font-size:14px;font-weight:600;animation:pulse 3s infinite}
+        .hero-title{font-size:56px;font-weight:900;line-height:1.05;margin-bottom:24px;letter-spacing:-1.5px}
+        .gradient-text{background:var(--gradient-landing);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .hero-description{font-size:20px;color:var(--color-text-secondary);line-height:1.6;margin-bottom:40px}
+        .cta-buttons{display:flex;gap:16px}
+        .btn-primary{background:var(--gradient-landing);color:#fff;border:none;padding:16px 32px;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+        .btn-primary::before{content:'';position:absolute;top:50%;left:50%;width:0;height:0;border-radius:50%;background:rgba(255,255,255,.3);transform:translate(-50%,-50%);transition:width .6s,height .6s}
+        .btn-primary:hover::before{width:300px;height:300px}
+        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px var(--color-primary-alpha)}
+        .hero-visual{position:relative;display:flex;justify-content:center;align-items:center}
+        .dashboard-preview{width:100%;max-width:600px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:32px;position:relative;overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 20px 60px var(--color-shadow-large)}
+        [data-theme="light"] .dashboard-preview{background:rgba(255,255,255,.95)}
+        .dashboard-preview::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,var(--color-primary-alpha) 0%,transparent 70%);animation:pulse 4s ease-in-out infinite}
+        .dashboard-preview img{width:100%;height:auto;border-radius:8px;position:relative;z-index:1}
+        .floating-element{position:absolute;animation:float 6s ease-in-out infinite;z-index:5}
+        
+        /* Trust Section */
+        .trust-section{padding:60px 0;background:var(--color-trust-bg);border-top:1px solid var(--color-border-light);border-bottom:1px solid var(--color-border-light)}
+        .trust-container{display:flex;justify-content:space-around;align-items:center;flex-wrap:wrap;gap:40px}
+        .trust-item{display:flex;align-items:center;gap:12px}
+        .trust-icon{font-size:24px;color:var(--color-primary)}
+        .trust-value{font-size:24px;font-weight:700;color:var(--color-text-primary)}
+        .trust-label{font-size:14px;color:var(--color-text-secondary)}
+        
+        /* Sections */
+        .section{padding:100px 0;position:relative}
+        .section-header{text-align:center;margin-bottom:60px}
+        .section-title{font-size:48px;font-weight:900;margin-bottom:16px;letter-spacing:-1px}
+        .section-description{font-size:18px;color:var(--color-text-secondary);max-width:600px;margin:0 auto}
+        
+        /* Problem Section */
+        .problem-section{background:var(--color-features-bg)}
+        .problem-content{max-width:800px;margin:0 auto;text-align:center}
+        .problem-stat{font-size:72px;font-weight:900;background:var(--gradient-landing);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:24px}
+        .problem-text{font-size:24px;color:var(--color-text-primary);margin-bottom:32px;line-height:1.4;font-weight:500}
+        .warning-box{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:24px;display:inline-flex;align-items:center;gap:16px;color:#dc2626}
+        
+        /* Breakthrough Section */
+        .breakthrough-section{background:var(--color-background)}
+        .breakthrough-content{max-width:1000px;margin:0 auto}
+        .breakthrough-highlight{text-align:center;margin-bottom:60px}
+        .breakthrough-features{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:60px}
+        .breakthrough-card{background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:32px;text-align:center;transition:all .3s}
+        .breakthrough-card:hover{transform:translateY(-5px);box-shadow:0 10px 30px var(--color-shadow-medium)}
+        .breakthrough-icon{width:60px;height:60px;background:var(--gradient-landing);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:#fff;font-size:24px}
+        
+        /* Process Section */
+        .process-section{background:linear-gradient(180deg,var(--color-background) 0%,var(--color-stats-bg) 100%)}
+        .process-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;position:relative}
+        .process-step{text-align:center;position:relative}
+        .process-number{width:60px;height:60px;background:var(--gradient-landing);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;margin:0 auto 20px}
+        .process-title{font-size:20px;font-weight:700;margin-bottom:12px;color:var(--color-text-primary)}
+        .process-description{font-size:14px;color:var(--color-text-secondary);line-height:1.6}
+        
+        /* Features Grid */
+        .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:32px}
+        .feature-card{background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:32px;transition:all .3s;position:relative;overflow:hidden}
+        .feature-card:hover{transform:translateY(-5px);border-color:var(--color-primary);background:var(--color-card-hover-bg)}
+        .feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gradient-landing);opacity:0;transition:opacity .3s}
+        .feature-card:hover::before{opacity:1}
+        .feature-icon{width:60px;height:60px;background:var(--gradient-landing);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:20px;color:#fff}
+        .feature-title{font-size:24px;font-weight:700;margin-bottom:12px;color:var(--color-text-primary)}
+        .feature-description{font-size:16px;color:var(--color-text-secondary);line-height:1.6}
+        
+        /* Interactive Proof */
+        .interactive-proof{background:var(--color-features-bg);padding:80px 0}
+        .proof-container{max-width:800px;margin:0 auto;text-align:center}
+        .proof-form{background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:40px;margin-top:40px}
+        .url-input{width:100%;padding:16px 20px;border:1px solid var(--color-border-light);border-radius:8px;font-size:16px;margin-bottom:20px;background:var(--color-background);color:var(--color-text-primary)}
+        .url-input:focus{outline:none;border-color:var(--color-primary)}
+        .url-input.error{border-color:#ef4444}
+        .url-tooltip-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--color-text-secondary);cursor:help;transition:color 0.3s}
+        .url-tooltip-icon:hover{color:var(--color-primary)}
+        .url-tooltip{position:absolute;bottom:calc(100% + 10px);right:0;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:8px;padding:12px 16px;max-width:300px;font-size:14px;line-height:1.5;color:var(--color-text-primary);box-shadow:0 4px 20px var(--color-shadow-medium);opacity:0;visibility:hidden;transform:translateY(10px);transition:all 0.3s;z-index:10}
+        .url-tooltip.show{opacity:1;visibility:visible;transform:translateY(0)}
+        .url-tooltip::after{content:'';position:absolute;top:100%;right:20px;border:8px solid transparent;border-top-color:var(--color-card-bg)}
+        @keyframes wave{0%,60%,100%{transform:scale(1);opacity:0.3}30%{transform:scale(1.3);opacity:1}}
+        .loading-dot{width:20px;height:20px;background:var(--gradient-landing);border-radius:50%;animation:wave 1.5s infinite}
+        
+        /* Testimonials */
+        .testimonials-section{background:var(--color-testimonials-bg)}
+        .testimonials-carousel{position:relative;max-width:100%;margin:0 auto;overflow:hidden}
+        .testimonials-track{display:flex;gap:32px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:20px}
+        .testimonials-track::-webkit-scrollbar{display:none}
+        .testimonial-card{background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:32px;flex:0 0 380px;transition:all 0.3s;cursor:pointer}
+        .testimonial-card:hover{transform:translateY(-8px);border-color:var(--color-primary);box-shadow:0 20px 40px var(--color-shadow-medium)}
+        .stars{color:#fbbf24;margin-bottom:16px;font-size:18px}
+        .testimonial-text{font-size:16px;line-height:1.6;color:var(--color-text-primary);margin-bottom:24px}
+        .testimonial-author{display:flex;align-items:center;gap:16px}
+        .author-avatar{width:48px;height:48px;border-radius:50%;background:var(--gradient-landing)}
+        .author-name{font-weight:600;margin-bottom:4px;color:var(--color-text-primary)}
+        .author-role{font-size:14px;color:var(--color-text-secondary)}
+        
+        /* Pricing */
+        .pricing-section{background:var(--color-background)}
+        .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;max-width:1200px;margin:0 auto}
+        .pricing-card{background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:40px 32px;position:relative;transition:all .3s}
+        .pricing-card.featured{border-color:var(--color-primary);transform:scale(1.05)}
+        .pricing-card:hover{transform:translateY(-5px)}
+        .pricing-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--gradient-landing);color:#fff;padding:4px 16px;border-radius:100px;font-size:12px;font-weight:600}
+        .pricing-plan{font-size:24px;font-weight:700;margin-bottom:16px;color:var(--color-text-primary)}
+        .pricing-price{font-size:48px;font-weight:900;margin-bottom:8px;color:var(--color-text-primary)}
+        .pricing-price span{font-size:20px;font-weight:400;color:var(--color-text-secondary)}
+        .pricing-description{font-size:16px;color:var(--color-text-secondary);margin-bottom:32px}
+        .pricing-features{list-style:none;padding:0;margin-bottom:32px}
+        .pricing-feature{display:flex;align-items:center;gap:12px;margin-bottom:16px;color:var(--color-text-primary)}
+        
+        /* CTA Section */
+        .cta-section{padding:120px 0;text-align:center;background:var(--color-cta-bg);position:relative;overflow:hidden}
+        .cta-section::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,var(--color-primary-alpha) 0%,transparent 70%);animation:pulse 6s ease-in-out infinite}
+        .cta-content{max-width:800px;margin:0 auto;position:relative;z-index:1}
+        .cta-title{font-size:48px;font-weight:900;margin-bottom:24px;letter-spacing:-1px}
+        .cta-description{font-size:20px;color:var(--color-text-secondary);margin-bottom:40px}
+        
+        /* Footer */
+        .footer{background:var(--color-background);border-top:1px solid var(--color-border-light);padding:60px 0 40px}
+        .footer-content{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+        .footer-brand{max-width:300px}
+        .footer-logo{font-size:24px;font-weight:900;background:var(--gradient-landing);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px}
+        .footer-description{color:var(--color-text-secondary);line-height:1.6}
+        .footer-column h4{font-weight:600;margin-bottom:16px;color:var(--color-text-primary)}
+        .footer-links{list-style:none;padding:0}
+        .footer-links a{color:var(--color-text-secondary);text-decoration:none;display:block;padding:4px 0;transition:color .3s}
+        .footer-links a:hover{color:var(--color-primary)}
+        .footer-bottom{text-align:center;padding-top:40px;border-top:1px solid var(--color-border-light);color:var(--color-text-secondary)}
+        
+        /* Responsive */
+        @media(max-width:968px){
+            .hero-content{grid-template-columns:1fr;gap:60px;text-align:center}
+            .cta-buttons{justify-content:center}
+            .process-grid{grid-template-columns:repeat(2,1fr)}
+            .pricing-grid{grid-template-columns:1fr;gap:24px}
+            .pricing-card.featured{transform:scale(1)}
+            .footer-content{grid-template-columns:1fr 1fr;gap:32px}
+            /* Mobile image optimization */
+            .dashboard-preview{aspect-ratio:16/9}
+        }
+        
+        @media(max-width:768px){
+            .nav{display:none}
+            .mobile-menu-button{display:block}
+            .mobile-menu-overlay,.mobile-menu{display:block}
+            .hero-section{padding:100px 0 60px}
+            .hero-title{font-size:42px;line-height:1.1}
+            .hero-description{font-size:18px}
+            .section{padding:60px 0}
+            .section-title{font-size:36px}
+            .features-grid{grid-template-columns:1fr}
+            .breakthrough-features{grid-template-columns:1fr}
+            .testimonials-track{overflow-x:auto;-webkit-overflow-scrolling:touch}
+        }
+        
+        @media(max-width:640px){
+            .process-grid{grid-template-columns:1fr}
+        }
+        
+        /* Spinner */
+        .spinner{width:40px;height:40px;border:4px solid var(--color-border-light);border-top-color:var(--color-primary);border-radius:50%;animation:spin 1s linear infinite}
+        
+        /* Hide scrollbar for carousels */
+        #trending-topics-container::-webkit-scrollbar,
+        #declining-topics-container::-webkit-scrollbar {display:none}
+        
+        /* Mobile optimizations for PageSpeed 100 */
+        @media(max-width:768px){
+            /* Disable expensive animations on mobile */
+            *{animation:none !important;transition:none !important}
+            .floating-element{display:none}
+            /* Optimize shadows for performance */
+            .dashboard-preview{box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+            .feature-card:hover{transform:none}
+            .testimonial-card:hover{transform:none}
+            .pricing-card:hover{transform:none}
+        }
+        
+        @media(max-width:480px){
+            .logo{font-size:24px}
+            .hero-section{padding:80px 0 40px}
+            .hero-title{font-size:32px}
+            .hero-description{font-size:16px;margin-bottom:32px}
+            .cta-buttons{flex-direction:column;width:100%}
+            .btn-primary{width:100%;justify-content:center}
+            .section-title{font-size:28px}
+            .problem-stat{font-size:56px}
+            .footer-content{grid-template-columns:1fr}
+        }
+        
+        /* Utility */
+        [data-lang="pt"] .lang-en{display:none}
+        [data-lang="en"] .lang-pt{display:none}
+        .icon{display:inline-flex;align-items:center;justify-content:center;width:1em;height:1em}
+        .floating-element{position:absolute;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:12px;padding:16px;animation:float 6s ease-in-out infinite}
+    </style>
+    
+    <!-- Detectar tema/idioma -->
+    <script>
+        (function(){
+            const t=localStorage.getItem('theme')||'light';
+            const l=localStorage.getItem('language')||'pt';
+            document.documentElement.setAttribute('data-theme',t);
+            document.documentElement.setAttribute('data-lang',l);
+            document.documentElement.lang=l==='pt'?'pt-BR':'en-US';
+        })();
+    </script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    LIFTLIO
+                </a>
+                
+                <nav class="nav">
+                    <a href="#process" class="nav-link">
+                        <span class="lang-pt">Recursos</span>
+                        <span class="lang-en">Features</span>
+                    </a>
+                    <a href="#pricing" class="nav-link">
+                        <span class="lang-pt">Preços</span>
+                        <span class="lang-en">Pricing</span>
+                    </a>
+                    <a href="#testimonials" class="nav-link">
+                        <span class="lang-pt">Depoimentos</span>
+                        <span class="lang-en">Testimonials</span>
+                    </a>
+                    
+                    <div class="nav-buttons">
+                        <button class="btn-icon" onclick="toggleLanguage()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                            <span class="lang-indicator">PT</span>
+                        </button>
+                        
+                        <button class="btn-icon" onclick="toggleTheme()" aria-label="Toggle theme">
+                            <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                            <svg class="theme-icon-dark" style="display:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        </button>
+                        
+                        <a href="#" onclick="navigateToPage('/login'); return false;" class="btn-login">
+                            <span class="lang-pt">Entrar</span>
+                            <span class="lang-en">Sign In</span>
+                        </a>
+                    </div>
+                </nav>
+                
+                <button class="mobile-menu-button btn-icon" onclick="toggleMobileMenu(true)" aria-label="Open menu">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Mobile Menu -->
+    <div class="mobile-menu-overlay" onclick="toggleMobileMenu(false)"></div>
+    <div class="mobile-menu">
+        <div class="mobile-menu-header">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                LIFTLIO
+            </div>
+            <button class="btn-icon" onclick="toggleMobileMenu(false)" aria-label="Close menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        
+        <nav class="mobile-menu-nav">
+            <a href="#process" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
+                <span class="lang-pt">Recursos</span>
+                <span class="lang-en">Features</span>
+            </a>
+            <a href="#pricing" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
+                <span class="lang-pt">Preços</span>
+                <span class="lang-en">Pricing</span>
+            </a>
+            <a href="#testimonials" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
+                <span class="lang-pt">Depoimentos</span>
+                <span class="lang-en">Testimonials</span>
+            </a>
+        </nav>
+        
+        <div class="mobile-menu-footer">
+            <div class="nav-buttons" style="justify-content:space-around;margin-bottom:16px">
+                <button class="btn-icon" onclick="toggleLanguage()" style="border:1px solid var(--color-border-light);border-radius:8px">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    <span class="lang-indicator">PT</span>
+                </button>
+                
+                <button class="btn-icon" onclick="toggleTheme()" style="border:1px solid var(--color-border-light);border-radius:8px" aria-label="Toggle theme">
+                    <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    <svg class="theme-icon-dark" style="display:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                </button>
+            </div>
+            <a href="#" onclick="navigateToPage('/login'); return false;" class="btn-login" style="width:100%">
+                <span class="lang-pt">Entrar</span>
+                <span class="lang-en">Sign In</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-background"></div>
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <div class="badge">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.912 5.813a2 2 0 0 0 1.275 1.275l5.813 1.912l-5.813 1.912a2 2 0 0 0 -1.275 1.275l-1.912 5.813l-1.912 -5.813a2 2 0 0 0 -1.275 -1.275l-5.813 -1.912l5.813 -1.912a2 2 0 0 0 1.275 -1.275l1.912 -5.813z"></path></svg>
+                        <span class="lang-pt">Boca a Boca Orgânico em Escala</span>
+                        <span class="lang-en">Organic Word-of-Mouth at Scale</span>
+                    </div>
+                    
+                    <h1 class="hero-title">
+                        <span class="lang-pt">Finalmente, uma maneira de aumentar as recomendações boca a boca<br><span class="gradient-text">sem pagar por anúncios</span></span>
+                        <span class="lang-en">At Last, A Way to Scale Word-of-Mouth Recommendations<br><span class="gradient-text">Without Paying for Ads</span></span>
+                    </h1>
+                    
+                    <p class="hero-description">
+                        <span class="lang-pt">A Liftlio utiliza IA para fazer com que sua marca seja mencionada em conversas genuínas na web, permitindo que seu produto seja descoberto organicamente em grande escala.</span>
+                        <span class="lang-en">Liftlio utilizes AI to get your brand mentioned in genuine conversations across the web, allowing your product to be discovered organically at scale.</span>
+                    </p>
+                    
+                    <div class="cta-buttons">
+                        <a href="#" onclick="navigateToPage('/checkout'); return false;" class="btn-primary">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path><path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z"></path></svg>
+                            <span class="lang-pt">Comece a Crescer Hoje</span>
+                            <span class="lang-en">Start Growing Today</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="hero-visual">
+                    <div class="dashboard-preview">
+                        <picture>
+                            <!-- WebP para navegadores modernos -->
+                            <source type="image/webp" media="(max-width: 768px)" 
+                                    srcset="/imagens/dashboard-hero-dark-mobile-optimized.webp 768w,
+                                            ../../public/imagens/dashboard-hero-dark-mobile-optimized.webp 768w">
+                            <source type="image/webp" media="(min-width: 769px)" 
+                                    srcset="/imagens/dashboard-hero-dark.jpg 1536w,
+                                            ../../public/imagens/dashboard-hero-dark.jpg 1536w">
+                            <!-- JPG fallback -->
+                            <source media="(max-width: 768px)" 
+                                    srcset="/imagens/dashboard-hero-dark-mobile-optimized.jpg 768w,
+                                            ../../public/imagens/dashboard-hero-dark-mobile-optimized.jpg 768w">
+                            <source media="(min-width: 769px)" 
+                                    srcset="/imagens/dashboard-hero-dark.jpg 1536w,
+                                            ../../public/imagens/dashboard-hero-dark.jpg 1536w">
+                            <img id="dashboard-image" 
+                                 src="../../public/imagens/dashboard-hero-dark.jpg" 
+                                 alt="Liftlio Dashboard"
+                                 width="768"
+                                 height="512"
+                                 loading="eager"
+                                 fetchpriority="high"
+                                 style="width:100%;height:100%;object-fit:cover;display:block">
+                        </picture>
+                    </div>
+                    
+                    <div class="floating-element" style="bottom:40px;left:-30px;animation-delay:2s">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Trust Section -->
+    <section class="trust-section">
+        <div class="container">
+            <div class="trust-container">
+                <div class="trust-item">
+                    <div class="trust-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                    <div class="trust-text">
+                        <div class="trust-value">100%</div>
+                        <div class="trust-label">
+                            <span class="lang-pt">Seguro</span>
+                            <span class="lang-en">Secure</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="trust-item">
+                    <div class="trust-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </div>
+                    <div class="trust-text">
+                        <div class="trust-value">24/7</div>
+                        <div class="trust-label">
+                            <span class="lang-pt">Monitoramento</span>
+                            <span class="lang-en">Monitoring</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="trust-item">
+                    <div class="trust-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    </div>
+                    <div class="trust-text">
+                        <div class="trust-value">2,000+</div>
+                        <div class="trust-label">
+                            <span class="lang-pt">Clientes Ativos</span>
+                            <span class="lang-en">Active Clients</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="trust-item">
+                    <div class="trust-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8"></path><path d="M12 21v-4"></path><path d="M7 4h10"></path><path d="M17 4v8a5 5 0 0 1-10 0V4"></path><path d="M5 9a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"></path><path d="M19 9a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"></path></svg>
+                    </div>
+                    <div class="trust-text">
+                        <div class="trust-value">95%</div>
+                        <div class="trust-label">
+                            <span class="lang-pt">Satisfação</span>
+                            <span class="lang-en">Satisfaction</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Problem Section -->
+    <section class="section problem-section">
+        <div class="container">
+            <div class="problem-content">
+                <div class="problem-stat">87%</div>
+                <p class="problem-text">
+                    <span class="lang-pt">dos consumidores confiam mais em recomendações de amigos do que em qualquer forma de publicidade</span>
+                    <span class="lang-en">of consumers trust recommendations from friends more than any form of advertising</span>
+                </p>
+                <div class="warning-box">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <span class="lang-pt"><strong>Mas você ainda está pagando</strong> para interromper pessoas com anúncios que elas ignoram</span>
+                    <span class="lang-en"><strong>But you're still paying</strong> to interrupt people with ads they ignore</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Breakthrough Section -->
+    <section class="section breakthrough-section">
+        <div class="container">
+            <div class="breakthrough-content">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="lang-pt">O <span class="gradient-text">Avanço</span></span>
+                        <span class="lang-en">The <span class="gradient-text">Breakthrough</span></span>
+                    </h2>
+                    <p class="section-description">
+                        <span class="lang-pt">Em vez de pagar por anúncios, faça sua marca ser naturalmente recomendada em conversas reais</span>
+                        <span class="lang-en">Instead of paying for ads, get your brand naturally recommended in real conversations</span>
+                    </p>
+                </div>
+                
+                <div class="breakthrough-highlight">
+                    <h3 style="font-size:36px;font-weight:800;margin-bottom:16px">
+                        <span class="lang-pt">Imagine ter <span class="gradient-text">milhares de embaixadores</span> falando sobre sua marca</span>
+                        <span class="lang-en">Imagine having <span class="gradient-text">thousands of ambassadors</span> talking about your brand</span>
+                    </h3>
+                    <p style="font-size:20px;color:var(--color-text-secondary)">
+                        <span class="lang-pt">...em discussões onde pessoas estão ativamente procurando soluções</span>
+                        <span class="lang-en">...in discussions where people are actively looking for solutions</span>
+                    </p>
+                </div>
+                
+                <div class="breakthrough-features">
+                    <div class="breakthrough-card">
+                        <div class="breakthrough-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        </div>
+                        <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">
+                            <span class="lang-pt">Conversas Genuínas</span>
+                            <span class="lang-en">Genuine Conversations</span>
+                        </h3>
+                        <p style="color:var(--color-text-secondary)">
+                            <span class="lang-pt">Participamos onde as pessoas já estão discutindo problemas que você resolve</span>
+                            <span class="lang-en">We participate where people are already discussing problems you solve</span>
+                        </p>
+                    </div>
+                    
+                    <div class="breakthrough-card">
+                        <div class="breakthrough-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="12" r="10"></circle><path d="M12 2v7"></path><path d="M12 15v7"></path><path d="M4.93 4.93l4.95 4.95"></path><path d="M14.12 14.12l4.95 4.95"></path><path d="M2 12h7"></path><path d="M15 12h7"></path><path d="M4.93 19.07l4.95-4.95"></path><path d="M14.12 9.88l4.95-4.95"></path></svg>
+                        </div>
+                        <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">
+                            <span class="lang-pt">Momento Perfeito</span>
+                            <span class="lang-en">Perfect Timing</span>
+                        </h3>
+                        <p style="color:var(--color-text-secondary)">
+                            <span class="lang-pt">Aparecemos exatamente quando alguém está procurando uma solução como a sua</span>
+                            <span class="lang-en">We appear exactly when someone is looking for a solution like yours</span>
+                        </p>
+                    </div>
+                    
+                    <div class="breakthrough-card">
+                        <div class="breakthrough-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        </div>
+                        <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">
+                            <span class="lang-pt">Confiança Natural</span>
+                            <span class="lang-en">Natural Trust</span>
+                        </h3>
+                        <p style="color:var(--color-text-secondary)">
+                            <span class="lang-pt">Recomendações em contexto geram 10x mais confiança que anúncios pagos</span>
+                            <span class="lang-en">Contextual recommendations generate 10x more trust than paid ads</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Process Section -->
+    <section class="section process-section" id="process">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <span class="lang-pt">Como o Liftlio <span class="gradient-text">Funciona</span></span>
+                    <span class="lang-en">How Liftlio <span class="gradient-text">Works</span></span>
+                </h2>
+                <p class="section-description">
+                    <span class="lang-pt">Nosso processo inteligente de 6 etapas cria uma bola de neve de tráfego orgânico que cresce para sempre</span>
+                    <span class="lang-en">Our intelligent 6-step process creates an organic traffic snowball that grows forever</span>
+                </p>
+            </div>
+            
+            <div class="process-grid">
+                <div class="process-step">
+                    <div class="process-number">1</div>
+                    <h3 class="process-title">
+                        <span class="lang-pt">Treine uma vez</span>
+                        <span class="lang-en">Train It Once</span>
+                    </h3>
+                    <p class="process-description">
+                        <span class="lang-pt">O Liftlio aprende sobre seu produto em segundos</span>
+                        <span class="lang-en">Liftlio learns about your product in seconds</span>
+                    </p>
+                </div>
+                
+                <div class="process-step">
+                    <div class="process-number">2</div>
+                    <h3 class="process-title">
+                        <span class="lang-pt">Análise de Vídeos</span>
+                        <span class="lang-en">Video Analysis</span>
+                    </h3>
+                    <p class="process-description">
+                        <span class="lang-pt">IA assiste vídeos e identifica tópicos-chave, encontrando momentos perfeitos para referenciar</span>
+                        <span class="lang-en">AI watches videos and identifies key topics, finding perfect moments to reference</span>
+                    </p>
+                </div>
+                
+                <div class="process-step">
+                    <div class="process-number">3</div>
+                    <h3 class="process-title">
+                        <span class="lang-pt">Detecção de Leads</span>
+                        <span class="lang-en">Lead Detection</span>
+                    </h3>
+                    <p class="process-description">
+                        <span class="lang-pt">Identifica comentários de potenciais clientes fazendo perguntas ou buscando soluções</span>
+                        <span class="lang-en">Identifies comments from potential customers asking questions or seeking solutions</span>
+                    </p>
+                </div>
+                
+                <div class="process-step">
+                    <div class="process-number">4</div>
+                    <h3 class="process-title">
+                        <span class="lang-pt">Criação de Valor</span>
+                        <span class="lang-en">Value Creation</span>
+                    </h3>
+                    <p class="process-description">
+                        <span class="lang-pt">Gera comentários específicos e contextualizados que realmente ajudam outros usuários</span>
+                        <span class="lang-en">Generates specific, contextualized comments that genuinely help other users</span>
+                    </p>
+                </div>
+                
+                <div class="process-step">
+                    <div class="process-number">5</div>
+                    <h3 class="process-title">
+                        <span class="lang-pt">Diversificação Inteligente</span>
+                        <span class="lang-en">Smart Diversification</span>
+                    </h3>
+                    <p class="process-description">
+                        <span class="lang-pt">Varia tipos de interação para manter autenticidade e evitar padrões repetitivos</span>
+                        <span class="lang-en">Varies interaction types to maintain authenticity and avoid repetitive patterns</span>
+                    </p>
+                </div>
+                
+                <div class="process-step">
+                    <div class="process-number">6</div>
+                    <h3 class="process-title">
+                        <span class="lang-pt">Crescimento Composto</span>
+                        <span class="lang-en">Compound Growth</span>
+                    </h3>
+                    <p class="process-description">
+                        <span class="lang-pt">Quanto mais vídeos comentados, maior a autoridade e visibilidade da sua marca no nicho</span>
+                        <span class="lang-en">The more videos commented, the greater your brand's authority and visibility in the niche</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Interactive Proof Section -->
+    <section class="interactive-proof">
+        <div class="container">
+            <div class="proof-container">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="lang-pt">Veja o Liftlio em ação com seu produto</span>
+                        <span class="lang-en">See Liftlio in action with your product</span>
+                    </h2>
+                    <p class="section-description">
+                        <span class="lang-pt">Teste grátis. Sem cadastro. Veja uma simulação real agora.</span>
+                        <span class="lang-en">Free trial. No signup. See a real simulation now.</span>
+                    </p>
+                </div>
+                
+                <div class="proof-form" id="proof-form">
+                    <div style="position:relative;width:100%">
+                        <input type="url" id="website-url" class="url-input" style="padding-right:48px" placeholder="Digite a URL do seu site...">
+                        <div class="url-tooltip-icon" onclick="toggleTooltip()" onmouseenter="showTooltip()" onmouseleave="hideTooltip()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                        <div class="url-tooltip" id="url-tooltip">
+                            <span class="lang-pt">Para melhores resultados, use uma página com conteúdo detalhado sobre seu produto ou serviço. Landing pages com propostas de valor claras funcionam melhor!</span>
+                            <span class="lang-en">For best results, use a page with detailed content about your product or service. Landing pages with clear value propositions work best!</span>
+                        </div>
+                    </div>
+                    <button class="btn-primary" style="width:100%" onclick="analyzeWebsite()" id="analyze-btn">
+                        <span class="lang-pt">Mostre Como o Liftlio Funciona</span>
+                        <span class="lang-en">Show Me How Liftlio Works</span>
+                    </button>
+                    
+                    <div id="error-message" style="display:none;color:#ef4444;margin-top:16px;padding:16px;background:rgba(239,68,68,0.1);border-radius:8px"></div>
+                    
+                    <!-- Loading State -->
+                    <div id="loading-container" style="display:none;margin-top:40px">
+                        <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:48px;text-align:center;position:relative">
+                            <div style="display:flex;justify-content:center;gap:16px;margin-bottom:32px">
+                                <div class="loading-dot" style="animation-delay:0s"></div>
+                                <div class="loading-dot" style="animation-delay:0.2s"></div>
+                                <div class="loading-dot" style="animation-delay:0.4s"></div>
+                            </div>
+                            <div id="loading-icon" style="font-size:48px;color:var(--color-primary);margin-bottom:24px">🔍</div>
+                            <div style="width:100%;max-width:400px;height:6px;background:var(--color-border-light);border-radius:3px;margin:0 auto 20px;overflow:hidden">
+                                <div id="loading-progress" style="height:100%;background:var(--gradient-landing);width:0%;transition:width 0.8s ease-out"></div>
+                            </div>
+                            <p id="loading-text" style="font-size:18px;color:var(--color-text-primary)">
+                                <span class="lang-pt">Lendo o conteúdo do seu site...</span>
+                                <span class="lang-en">Reading your website content...</span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Container -->
+                    <div id="results-container" style="display:none;margin-top:40px"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Trending Topics Section -->
+    <section class="section" style="background:var(--color-features-bg)">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <span class="lang-pt">Descubra Tópicos <span class="gradient-text">em Alta</span></span>
+                    <span class="lang-en">Discover <span class="gradient-text">Trending Topics</span></span>
+                </h2>
+                <p class="section-description">
+                    <span class="lang-pt">Tendências em tempo real dos <strong>últimos 30 dias</strong> no YouTube</span>
+                    <span class="lang-en">Real-time trends from the <strong>last 30 days</strong> on YouTube</span>
+                </p>
+            </div>
+            
+            <div id="trending-topics-container" style="display:flex;gap:24px;margin-top:48px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:20px">
+                <!-- Loading state -->
+                <div id="trending-loading" style="width:100%;text-align:center;padding:40px">
+                    <div class="spinner" style="margin:0 auto 20px"></div>
+                    <p style="color:var(--color-text-secondary)">
+                        <span class="lang-pt">Carregando tendências em tempo real...</span>
+                        <span class="lang-en">Loading real-time trends...</span>
+                    </p>
+                </div>
+                
+                <!-- Static cards will be replaced by dynamic content -->
+                <!-- Trending Card 1 -->
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                                <span class="lang-pt">Menções de Marca no YouTube</span>
+                                <span class="lang-en">YouTube Brand Mentions</span>
+                            </h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">
+                                <span class="lang-pt">Análise de Vídeo</span>
+                                <span class="lang-en">Video Analytics</span>
+                            </p>
+                        </div>
+                        <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            +892%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="url(#gradient1)" stroke-width="2" points="0,50 40,45 80,35 120,20 160,10 200,5" />
+                            <defs>
+                                <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.5" />
+                                    <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>147K</strong></span>
+                        <span style="color:#16a34a;font-weight:600">
+                            <span class="lang-pt">Explodindo</span>
+                            <span class="lang-en">Exploding</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Trending Card 2 -->
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                                <span class="lang-pt">IA para Análise de Vídeo</span>
+                                <span class="lang-en">AI Video Intelligence</span>
+                            </h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">
+                                <span class="lang-pt">Inteligência Artificial</span>
+                                <span class="lang-en">Artificial Intelligence</span>
+                            </p>
+                        </div>
+                        <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            +1,245%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="url(#gradient2)" stroke-width="2" points="0,55 40,50 80,40 120,25 160,15 200,5" />
+                            <defs>
+                                <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.5" />
+                                    <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>289K</strong></span>
+                        <span style="color:#16a34a;font-weight:600">
+                            <span class="lang-pt">Explodindo</span>
+                            <span class="lang-en">Exploding</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Trending Card 3 -->
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                                <span class="lang-pt">Geração de Leads por Influencer</span>
+                                <span class="lang-en">Influencer Lead Gen</span>
+                            </h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">
+                                <span class="lang-pt">Marketing de Influência</span>
+                                <span class="lang-en">Influencer Marketing</span>
+                            </p>
+                        </div>
+                        <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            +567%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="url(#gradient3)" stroke-width="2" points="0,45 40,40 80,30 120,15 160,8 200,3" />
+                            <defs>
+                                <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.5" />
+                                    <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>92K</strong></span>
+                        <span style="color:#16a34a;font-weight:600">
+                            <span class="lang-pt">Explodindo</span>
+                            <span class="lang-en">Exploding</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Declining Topics Section -->
+    <section class="section" style="background:var(--color-background)">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <span class="lang-pt">Tópicos em <span style="color:#ef4444">Declínio</span></span>
+                    <span class="lang-en">Topics in <span style="color:#ef4444">Decline</span></span>
+                </h2>
+                <p class="section-description">
+                    <span class="lang-pt">Evite investir em tendências que estão perdendo força</span>
+                    <span class="lang-en">Avoid investing in trends that are losing momentum</span>
+                </p>
+            </div>
+            
+            <div id="declining-topics-container" style="display:flex;gap:24px;margin-top:48px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:20px">
+                <!-- Loading state -->
+                <div id="declining-loading" style="width:100%;text-align:center;padding:40px">
+                    <div class="spinner" style="margin:0 auto 20px"></div>
+                    <p style="color:var(--color-text-secondary)">
+                        <span class="lang-pt">Carregando tendências em declínio...</span>
+                        <span class="lang-en">Loading declining trends...</span>
+                    </p>
+                </div>
+                
+                <!-- Static cards will be replaced by dynamic content -->
+                <!-- Declining Card 1 -->
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                                <span class="lang-pt">Anúncios Pagos Tradicionais</span>
+                                <span class="lang-en">Traditional Paid Ads</span>
+                            </h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">
+                                <span class="lang-pt">Publicidade Digital</span>
+                                <span class="lang-en">Digital Advertising</span>
+                            </p>
+                        </div>
+                        <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            -67%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="#dc2626" stroke-width="2" points="0,10 40,15 80,25 120,35 160,45 200,55" />
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>432K</strong></span>
+                        <span style="color:#b91c1c;font-weight:700">
+                            <span class="lang-pt">Caindo</span>
+                            <span class="lang-en">Declining</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Declining Card 2 -->
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                                <span class="lang-pt">Marketing de Interrupção</span>
+                                <span class="lang-en">Interruption Marketing</span>
+                            </h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">
+                                <span class="lang-pt">Estratégias Antigas</span>
+                                <span class="lang-en">Old Strategies</span>
+                            </p>
+                        </div>
+                        <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            -45%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="#dc2626" stroke-width="2" points="0,5 40,10 80,20 120,30 160,40 200,50" />
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>189K</strong></span>
+                        <span style="color:#b91c1c;font-weight:700">
+                            <span class="lang-pt">Caindo</span>
+                            <span class="lang-en">Declining</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Declining Card 3 -->
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                                <span class="lang-pt">Spam de Comentários</span>
+                                <span class="lang-en">Comment Spam</span>
+                            </h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">
+                                <span class="lang-pt">Táticas Obsoletas</span>
+                                <span class="lang-en">Obsolete Tactics</span>
+                            </p>
+                        </div>
+                        <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            -89%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="#dc2626" stroke-width="2" points="0,15 40,20 80,30 120,40 160,50 200,58" />
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>67K</strong></span>
+                        <span style="color:#b91c1c;font-weight:700">
+                            <span class="lang-pt">Caindo</span>
+                            <span class="lang-en">Declining</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Testimonials Section -->
+    <section class="section testimonials-section" id="testimonials">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <span class="lang-pt">O Que Nossos <span class="gradient-text">Clientes Dizem</span></span>
+                    <span class="lang-en">What Our <span class="gradient-text">Customers Say</span></span>
+                </h2>
+                <p class="section-description">
+                    <span class="lang-pt">Veja como empresas estão transformando menções em crescimento</span>
+                    <span class="lang-en">See how companies are transforming mentions into growth</span>
+                </p>
+            </div>
+            
+            <div class="testimonials-carousel">
+                <div class="testimonials-track" id="testimonials-track">
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            <span class="lang-pt">"O Liftlio revolucionou nossa estratégia de marketing. Conseguimos identificar e converter leads que antes passavam despercebidos."</span>
+                            <span class="lang-en">"Liftlio revolutionized our marketing strategy. We can identify and convert leads that previously went unnoticed."</span>
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    <span class="lang-pt">Ana Silva</span>
+                                    <span class="lang-en">Sarah Johnson</span>
+                                </div>
+                                <div class="author-role">CMO, TechStart</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            <span class="lang-pt">"A análise de sentimentos em tempo real nos ajudou a prevenir várias crises e melhorar nosso atendimento."</span>
+                            <span class="lang-en">"Real-time sentiment analysis helped us prevent several crises and improve our customer service."</span>
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    <span class="lang-pt">Carlos Mendes</span>
+                                    <span class="lang-en">Michael Chen</span>
+                                </div>
+                                <div class="author-role">CEO, E-commerce Plus</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            <span class="lang-pt">"ROI incrível! Em apenas 3 meses, o Liftlio se pagou com os novos clientes que conseguimos."</span>
+                            <span class="lang-en">"Incredible ROI! In just 3 months, Liftlio paid for itself with the new customers we gained."</span>
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    <span class="lang-pt">Juliana Costa</span>
+                                    <span class="lang-en">Jessica Miller</span>
+                                </div>
+                                <div class="author-role">
+                                    <span class="lang-pt">Diretora de Vendas</span>
+                                    <span class="lang-en">Sales Director</span>
+                                    , SaaS Co
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            <span class="lang-pt">"Conseguimos reduzir nosso CAC em 70% após implementar o Liftlio. As recomendações orgânicas são muito mais efetivas."</span>
+                            <span class="lang-en">"We reduced our CAC by 70% after implementing Liftlio. Organic recommendations are much more effective."</span>
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    <span class="lang-pt">Ricardo Oliveira</span>
+                                    <span class="lang-en">David Williams</span>
+                                </div>
+                                <div class="author-role">Head of Growth, FinTech Pro</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            <span class="lang-pt">"A plataforma é intuitiva e os resultados são impressionantes. Nossa equipe adora trabalhar com o Liftlio."</span>
+                            <span class="lang-en">"The platform is intuitive and the results are impressive. Our team loves working with Liftlio."</span>
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    <span class="lang-pt">Marina Santos</span>
+                                    <span class="lang-en">Emily Anderson</span>
+                                </div>
+                                <div class="author-role">Marketing Manager, EdTech Solutions</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            <span class="lang-pt">"O suporte é excepcional e a tecnologia é de ponta. Recomendo para qualquer empresa que busca crescimento orgânico."</span>
+                            <span class="lang-en">"The support is exceptional and the technology is cutting-edge. I recommend it to any company seeking organic growth."</span>
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    <span class="lang-pt">Pedro Almeida</span>
+                                    <span class="lang-en">Robert Taylor</span>
+                                </div>
+                                <div class="author-role">VP Marketing, CloudTech</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Pricing Section -->
+    <section class="section pricing-section" id="pricing">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <span class="lang-pt">Preços Simples, <span class="gradient-text">Resultados Poderosos</span></span>
+                    <span class="lang-en">Simple Pricing, <span class="gradient-text">Powerful Results</span></span>
+                </h2>
+                <p class="section-description">
+                    <span class="lang-pt">Escolha o plano perfeito para suas necessidades</span>
+                    <span class="lang-en">Choose the perfect plan for your monitoring needs</span>
+                </p>
+            </div>
+            
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3 class="pricing-plan">
+                        <span class="lang-pt">Inicial</span>
+                        <span class="lang-en">Starter</span>
+                    </h3>
+                    <div class="pricing-price">
+                        <span class="lang-pt">R$</span>
+                        <span class="lang-en">$</span>49
+                        <span>
+                            <span class="lang-pt">/mês</span>
+                            <span class="lang-en">/month</span>
+                        </span>
+                    </div>
+                    <p class="pricing-description">
+                        <span class="lang-pt">Perfeito para começar</span>
+                        <span class="lang-en">Perfect to get started</span>
+                    </p>
+                    <ul class="pricing-features">
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="lang-pt">75 menções à marca mensalmente</span>
+                            <span class="lang-en">75 brand mentions monthly</span>
+                        </li>
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="lang-pt">em discussões de alto engajamento</span>
+                            <span class="lang-en">in high-engagement discussions</span>
+                        </li>
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="lang-pt">10 perguntas sobre IA da Liftlio por mês</span>
+                            <span class="lang-en">10 Liftlio AI questions per month</span>
+                        </li>
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="lang-pt">Monitoramento de tópicos em alta</span>
+                            <span class="lang-en">Trending topics monitoring</span>
+                        </li>
+                    </ul>
+                    <button class="btn-primary" style="width:100%" onclick="navigateToPage('/checkout'); return false;">
+                        <span class="lang-pt">Começar Agora</span>
+                        <span class="lang-en">Get Started Now</span>
+                    </button>
+                </div>
+                
+                <div class="pricing-card featured">
+                    <div class="pricing-badge">⭐ 
+                        <span class="lang-pt">Mais Popular</span>
+                        <span class="lang-en">Most Popular</span>
+                    </div>
+                    <h3 class="pricing-plan">
+                        <span class="lang-pt">Crescimento</span>
+                        <span class="lang-en">Growth</span>
+                    </h3>
+                    <div class="pricing-price">
+                        <span class="lang-pt">R$</span>
+                        <span class="lang-en">$</span>99
+                        <span>
+                            <span class="lang-pt">/mês</span>
+                            <span class="lang-en">/month</span>
+                        </span>
+                    </div>
+                    <p class="pricing-description">
+                        <span class="lang-pt">Mais popular</span>
+                        <span class="lang-en">Most popular</span>
+                    </p>
+                    <ul class="pricing-features">
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="lang-pt">200 menções de marca por mês</span>
+                            <span class="lang-en">200 brand mentions per month</span>
+                        </li>
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="lang-pt">com segmentação avançada</span>
+                            <span class="lang-en">with advanced targeting</span>
+                        </li>
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="lang-pt">Análises detalhadas</span>
+                            <span class="lang-en">Detailed analytics</span>
+                        </li>
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="lang-pt">Fluxos de trabalho de aprovação</span>
+                            <span class="lang-en">Approval workflows</span>
+                        </li>
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="lang-pt">30 perguntas sobre a Liftlio AI por mês</span>
+                            <span class="lang-en">30 Liftlio AI questions per month</span>
+                        </li>
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="lang-pt">Monitoramento de tópicos em alta</span>
+                            <span class="lang-en">Trending topics monitoring</span>
+                        </li>
+                    </ul>
+                    <button class="btn-primary" style="width:100%" onclick="navigateToPage('/checkout'); return false;">
+                        <span class="lang-pt">Começar Agora</span>
+                        <span class="lang-en">Get Started Now</span>
+                    </button>
+                </div>
+                
+                <div class="pricing-card">
+                    <h3 class="pricing-plan">
+                        <span class="lang-pt">Escala</span>
+                        <span class="lang-en">Scale</span>
+                    </h3>
+                    <div class="pricing-price">
+                        <span class="lang-pt">R$</span>
+                        <span class="lang-en">$</span>199
+                        <span>
+                            <span class="lang-pt">/mês</span>
+                            <span class="lang-en">/month</span>
+                        </span>
+                    </div>
+                    <p class="pricing-description">
+                        <span class="lang-pt">Para grandes equipes</span>
+                        <span class="lang-en">For large teams</span>
+                    </p>
+                    <ul class="pricing-features">
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="lang-pt">450 menções à marca por mês</span>
+                            <span class="lang-en">450 brand mentions per month</span>
+                        </li>
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="lang-pt">com personalização completa</span>
+                            <span class="lang-en">with full customization</span>
+                        </li>
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="lang-pt">100 perguntas sobre a Liftlio AI por mês</span>
+                            <span class="lang-en">100 Liftlio AI questions per month</span>
+                        </li>
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="lang-pt">Monitoramento de tópicos em alta</span>
+                            <span class="lang-en">Trending topics monitoring</span>
+                        </li>
+                    </ul>
+                    <button class="btn-primary" style="width:100%" onclick="navigateToPage('/checkout'); return false;">
+                        <span class="lang-pt">Começar Agora</span>
+                        <span class="lang-en">Get Started Now</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2 class="cta-title">
+                <span class="lang-pt">A confiança vence. <span class="gradient-text">Deixe a IA</span> conquistar isso para você.</span>
+                <span class="lang-en">Trust wins. <span class="gradient-text">Let AI</span> earn it for you.</span>
+            </h2>
+            <p class="cta-description">
+                <span class="lang-pt">Todos os dias acontecem conversas em que seus clientes ideais pedem recomendações. Amanhã, mais discussões começarão. Mais perguntas serão feitas. Mais decisões de compra serão influenciadas pelas recomendações dos colegas. A questão é: sua marca fará parte dessas conversas?</span>
+                <span class="lang-en">Every day, conversations happen where your ideal customers ask for recommendations. Tomorrow, more discussions will start. More questions will be asked. More buying decisions will be influenced by peer recommendations. The question is: will your brand be part of those conversations?</span>
+            </p>
+            <a href="#" onclick="navigateToPage('/checkout'); return false;" class="btn-primary" style="font-size:18px;padding:20px 40px;margin:0 auto">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                <span class="lang-pt">Experimente o Liftlio</span>
+                <span class="lang-en">Try Liftlio</span>
+            </a>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:8px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                        LIFTLIO
+                    </div>
+                    <p class="footer-description">
+                        <span class="lang-pt">Plataforma com IA para escalar recomendações boca a boca sem pagar por anúncios.</span>
+                        <span class="lang-en">AI-powered platform to scale word-of-mouth recommendations without paying for ads.</span>
+                    </p>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>
+                        <span class="lang-pt">Produto</span>
+                        <span class="lang-en">Product</span>
+                    </h3>
+                    <ul class="footer-links">
+                        <li><a href="#features">
+                            <span class="lang-pt">Recursos</span>
+                            <span class="lang-en">Features</span>
+                        </a></li>
+                        <li><a href="#pricing">
+                            <span class="lang-pt">Preços</span>
+                            <span class="lang-en">Pricing</span>
+                        </a></li>
+                        <li><a href="#integrations">
+                            <span class="lang-pt">Integrações</span>
+                            <span class="lang-en">Integrations</span>
+                        </a></li>
+                        <li><a href="#api">
+                            <span class="lang-pt">Documentação API</span>
+                            <span class="lang-en">API Documentation</span>
+                        </a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>
+                        <span class="lang-pt">Empresa</span>
+                        <span class="lang-en">Company</span>
+                    </h3>
+                    <ul class="footer-links">
+                        <li><a href="/about" onclick="navigateToPage('/about'); return false;">
+                            <span class="lang-pt">Sobre</span>
+                            <span class="lang-en">About</span>
+                        </a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Legal</h3>
+                    <ul class="footer-links">
+                        <li><a href="/privacy" onclick="navigateToPage('/privacy'); return false;">
+                            <span class="lang-pt">Política de Privacidade</span>
+                            <span class="lang-en">Privacy Policy</span>
+                        </a></li>
+                        <li><a href="/terms" onclick="navigateToPage('/terms'); return false;">
+                            <span class="lang-pt">Termos de Serviço</span>
+                            <span class="lang-en">Terms of Service</span>
+                        </a></li>
+                        <li><a href="/security" onclick="navigateToPage('/security'); return false;">
+                            <span class="lang-pt">Segurança</span>
+                            <span class="lang-en">Security</span>
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>
+                    <span class="lang-pt">© 2024 Liftlio. Todos os direitos reservados.</span>
+                    <span class="lang-en">© 2024 Liftlio. All rights reserved.</span>
+                </p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- JavaScript -->
+    <script>
+        // Prevent CLS - Set initial styles immediately
+        (function() {
+            // Hide language elements that don't match current language
+            const lang = document.documentElement.getAttribute('data-lang') || 'pt';
+            const style = document.createElement('style');
+            style.textContent = lang === 'pt' ? '.lang-en{display:none!important}' : '.lang-pt{display:none!important}';
+            document.head.appendChild(style);
+        })();
+        // Scroll handler
+        window.addEventListener('scroll', function() {
+            const header = document.getElementById('header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+        
+        // Theme toggle
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Update theme icons
+            document.querySelectorAll('.theme-icon-light').forEach(el => {
+                el.style.display = newTheme === 'light' ? 'block' : 'none';
+            });
+            document.querySelectorAll('.theme-icon-dark').forEach(el => {
+                el.style.display = newTheme === 'dark' ? 'block' : 'none';
+            });
+            
+            // Update dashboard image
+            const dashboardImg = document.getElementById('dashboard-image');
+            if (dashboardImg) {
+                updateDashboardImage(newTheme);
+            }
+        }
+        
+        // Language toggle
+        function toggleLanguage() {
+            const currentLang = document.documentElement.getAttribute('data-lang');
+            const newLang = currentLang === 'pt' ? 'en' : 'pt';
+            document.documentElement.setAttribute('data-lang', newLang);
+            document.documentElement.lang = newLang === 'pt' ? 'pt-BR' : 'en-US';
+            localStorage.setItem('language', newLang);
+            
+            // Update language indicators
+            document.querySelectorAll('.lang-indicator').forEach(el => {
+                el.textContent = newLang.toUpperCase();
+            });
+            
+            // Update page title and meta description
+            if (newLang === 'pt') {
+                document.title = 'Liftlio - Scale Recomendações Boca a Boca sem Pagar por Anúncios';
+                document.querySelector('meta[name="description"]').content = 'A Liftlio utiliza IA para fazer com que sua marca seja mencionada em conversas genuínas na web, permitindo que seu produto seja descoberto organicamente em grande escala.';
+            } else {
+                document.title = 'Liftlio - Scale Word-of-Mouth Recommendations Without Paying for Ads';
+                document.querySelector('meta[name="description"]').content = 'Liftlio utilizes AI to get your brand mentioned in genuine conversations across the web, allowing your product to be discovered organically at scale.';
+            }
+        }
+        
+        // Update dashboard image for theme changes
+        function updateDashboardImage(theme) {
+            const dashboardImg = document.getElementById('dashboard-image');
+            const picture = dashboardImg?.closest('picture');
+            if (!dashboardImg || !picture) return;
+            
+            const isLocal = window.location.protocol === 'file:';
+            const isMobile = window.innerWidth <= 768;
+            
+            // Update all source elements
+            const sources = picture.querySelectorAll('source');
+            sources.forEach(source => {
+                const media = source.getAttribute('media');
+                const type = source.getAttribute('type');
+                const isDesktop = media && media.includes('min-width: 769px');
+                const isWebP = type === 'image/webp';
+                const basePath = isLocal ? '../../public/imagens/' : '/imagens/';
+                
+                if (isDesktop) {
+                    const srcset = `${basePath}dashboard-hero-${theme}.jpg 1536w`;
+                    source.setAttribute('srcset', isLocal ? srcset + ', ' + srcset : srcset);
+                } else {
+                    const filename = isWebP 
+                        ? `dashboard-hero-${theme}-mobile-optimized.webp`
+                        : `dashboard-hero-${theme}-mobile-optimized.jpg`;
+                    const srcset = `${basePath}${filename} 768w`;
+                    source.setAttribute('srcset', isLocal ? srcset + ', ' + srcset : srcset);
+                }
+            });
+            
+            // Update img fallback
+            dashboardImg.src = isLocal 
+                ? `../../public/imagens/dashboard-hero-${theme}.jpg`
+                : `/imagens/dashboard-hero-${theme}.jpg`;
+        }
+        
+        // Navigate to React app pages
+        function navigateToPage(path) {
+            const isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost';
+            
+            if (isLocal) {
+                // Local: redirecionar para localhost:3000
+                window.location.href = 'http://localhost:3000' + path;
+            } else {
+                // Produção: tentar navegar diretamente
+                // O nginx deve lidar com a rota e servir o React app
+                window.location.href = path;
+            }
+        }
+        
+        // Mobile menu toggle
+        function toggleMobileMenu(open) {
+            const menu = document.querySelector('.mobile-menu');
+            const overlay = document.querySelector('.mobile-menu-overlay');
+            
+            if (open) {
+                menu.classList.add('open');
+                overlay.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            } else {
+                menu.classList.remove('open');
+                overlay.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        }
+        
+        // Initialize theme icons
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        document.querySelectorAll('.theme-icon-light').forEach(el => {
+            el.style.display = currentTheme === 'light' ? 'block' : 'none';
+        });
+        document.querySelectorAll('.theme-icon-dark').forEach(el => {
+            el.style.display = currentTheme === 'dark' ? 'block' : 'none';
+        });
+        
+        // Initialize language indicators
+        const currentLang = document.documentElement.getAttribute('data-lang');
+        document.querySelectorAll('.lang-indicator').forEach(el => {
+            el.textContent = currentLang.toUpperCase();
+        });
+        
+        // Initialize dashboard image based on current theme and environment
+        updateDashboardImage(currentTheme);
+        
+        // Update language visibility without CLS
+        updateLanguageVisibility();
+        
+        // Define updateLanguageVisibility function
+        function updateLanguageVisibility() {
+            const lang = document.documentElement.getAttribute('data-lang') || 'pt';
+            document.querySelectorAll('.lang-pt').forEach(el => {
+                el.style.display = lang === 'pt' ? '' : 'none';
+            });
+            document.querySelectorAll('.lang-en').forEach(el => {
+                el.style.display = lang === 'en' ? '' : 'none';
+            });
+        }
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    const headerHeight = document.querySelector('.header').offsetHeight;
+                    const targetPosition = target.offsetTop - headerHeight - 20;
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // Supabase configuration
+        const SUPABASE_URL = 'https://suqjifkhmekcdflwowiw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I';
+        
+        // Category translations
+        const categoryMap = {
+            'TECHNOLOGY': { pt: 'Tecnologia', en: 'Technology' },
+            'GAMING': { pt: 'Jogos', en: 'Gaming' },
+            'MUSIC': { pt: 'Música', en: 'Music' },
+            'LIFESTYLE': { pt: 'Estilo de Vida', en: 'Lifestyle' },
+            'ENTERTAINMENT': { pt: 'Entretenimento', en: 'Entertainment' },
+            'EDUCATION': { pt: 'Educação', en: 'Education' },
+            'BUSINESS': { pt: 'Negócios', en: 'Business' },
+            'EMERGING TRENDS': { pt: 'Tendências Emergentes', en: 'Emerging Trends' }
+        };
+        
+        // Format volume to K/M
+        function formatVolume(volume) {
+            if (volume >= 1000000) {
+                return (volume / 1000000).toFixed(1) + 'M';
+            } else if (volume >= 1000) {
+                return (volume / 1000).toFixed(0) + 'K';
+            }
+            return volume.toString();
+        }
+        
+        // Generate chart points for SVG
+        function generateChartPoints(growthPercentage) {
+            const growth = parseFloat(growthPercentage);
+            if (growth > 1000) {
+                // Exponential growth
+                return "0,55 40,50 80,40 120,25 160,15 200,5";
+            } else if (growth > 500) {
+                // Strong growth
+                return "0,50 40,45 80,35 120,20 160,10 200,5";
+            } else {
+                // Moderate growth
+                return "0,45 40,40 80,30 120,20 160,15 200,10";
+            }
+        }
+        
+        // Create trending topic card
+        function createTrendingCard(trend, index) {
+            const lang = document.documentElement.getAttribute('data-lang');
+            const category = categoryMap[trend.category] || { pt: trend.category, en: trend.category };
+            
+            return `
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s;animation:fadeIn 0.5s ease-in-out ${index * 0.1}s both">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">${category[lang]}</p>
+                        </div>
+                        <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            +${trend.growth}%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="url(#trend-gradient-${index})" stroke-width="2" points="${generateChartPoints(trend.growth)}" />
+                            <defs>
+                                <linearGradient id="trend-gradient-${index}" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.5" />
+                                    <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>${formatVolume(trend.volume)}</strong></span>
+                        <span style="color:#16a34a;font-weight:600">
+                            <span class="lang-pt">Explodindo</span>
+                            <span class="lang-en">Exploding</span>
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Fetch trending topics from Supabase
+        async function fetchTrendingTopics() {
+            const container = document.getElementById('trending-topics-container');
+            const loadingEl = document.getElementById('trending-loading');
+            
+            console.log('Iniciando busca de tendências...');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_youtube_trends`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Dados recebidos:', data);
+                
+                // Filter and sort trends (only positive growth)
+                const risingTrends = (data || [])
+                    .filter(trend => parseFloat(trend.growth) > 0)
+                    .sort((a, b) => parseFloat(b.growth) - parseFloat(a.growth))
+                    .slice(0, 10); // Show top 10 trends
+                
+                console.log('Tendências filtradas:', risingTrends);
+                
+                // Hide loading first
+                if (loadingEl) loadingEl.style.display = 'none';
+                
+                // Clear only the cards, not the loading element
+                const existingCards = container.querySelectorAll('div[style*="flex:0 0 340px"]');
+                existingCards.forEach(card => card.remove());
+                
+                if (risingTrends.length > 0) {
+                    // Add trend cards
+                    risingTrends.forEach((trend, index) => {
+                        const cardHTML = createTrendingCard(trend, index);
+                        console.log(`Card ${index} HTML:`, cardHTML);
+                        container.innerHTML += cardHTML;
+                    });
+                    console.log('Container após adicionar cards:', container.innerHTML);
+                } else {
+                    // Show fallback content if no data
+                    container.innerHTML = `
+                        <div style="width:100%;text-align:center;padding:40px">
+                            <p style="color:var(--color-text-secondary)">
+                                <span class="lang-pt">Nenhuma tendência disponível no momento</span>
+                                <span class="lang-en">No trends available at the moment</span>
+                            </p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error fetching trends:', error);
+                // Remove loading only, don't clear container
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
+                // Show static cards that are already in HTML
+                const staticCards = container.querySelectorAll('div[style*="flex:0 0 340px"]');
+                staticCards.forEach(card => {
+                    card.style.display = '';
+                });
+            }
+        }
+        
+        // Create declining topic card
+        function createDecliningCard(trend, index) {
+            const lang = document.documentElement.getAttribute('data-lang');
+            const category = categoryMap[trend.category] || { pt: trend.category, en: trend.category };
+            const declinePercentage = Math.abs(parseFloat(trend.growth));
+            
+            return `
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s;animation:fadeIn 0.5s ease-in-out ${index * 0.1}s both">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">${category[lang]}</p>
+                        </div>
+                        <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            -${declinePercentage}%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="#dc2626" stroke-width="2" points="${generateDecliningChartPoints(declinePercentage)}" />
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>${formatVolume(trend.volume)}</strong></span>
+                        <span style="color:#b91c1c;font-weight:700">
+                            <span class="lang-pt">Caindo</span>
+                            <span class="lang-en">Declining</span>
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Generate declining chart points
+        function generateDecliningChartPoints(declinePercentage) {
+            if (declinePercentage > 70) {
+                // Steep decline
+                return "0,10 40,15 80,25 120,35 160,45 200,55";
+            } else if (declinePercentage > 40) {
+                // Moderate decline
+                return "0,15 40,20 80,30 120,40 160,45 200,50";
+            } else {
+                // Gradual decline
+                return "0,20 40,25 80,30 120,35 160,40 200,45";
+            }
+        }
+        
+        // Fetch declining topics from Supabase
+        async function fetchDecliningTopics() {
+            const container = document.getElementById('declining-topics-container');
+            const loadingEl = document.getElementById('declining-loading');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_youtube_trends`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Filter and sort declining trends (negative growth)
+                const decliningTrends = (data || [])
+                    .filter(trend => parseFloat(trend.growth) < 0)
+                    .sort((a, b) => parseFloat(a.growth) - parseFloat(b.growth))
+                    .slice(0, 6); // Show top 6 declining trends
+                
+                // Hide loading first
+                if (loadingEl) loadingEl.style.display = 'none';
+                
+                // Clear only the cards, not the loading element
+                const existingCards = container.querySelectorAll('div[style*="flex:0 0 340px"]');
+                existingCards.forEach(card => card.remove());
+                
+                if (decliningTrends.length > 0) {
+                    // Add trend cards
+                    decliningTrends.forEach((trend, index) => {
+                        container.innerHTML += createDecliningCard(trend, index);
+                    });
+                } else {
+                    // Show fallback content if no data
+                    container.innerHTML = `
+                        <div style="width:100%;text-align:center;padding:40px">
+                            <p style="color:var(--color-text-secondary)">
+                                <span class="lang-pt">Nenhuma tendência em declínio no momento</span>
+                                <span class="lang-en">No declining trends at the moment</span>
+                            </p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error fetching declining trends:', error);
+                // Remove loading and keep static content
+                if (loadingEl) loadingEl.remove();
+            }
+        }
+        
+        // Auto-scroll carousel
+        function startAutoScroll(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            let scrollAmount = 0;
+            let scrollDirection = 1;
+            let intervalId = null;
+            
+            const scroll = () => {
+                if (container.scrollWidth <= container.clientWidth) return;
+                
+                scrollAmount += scrollDirection * 1;
+                container.scrollLeft = scrollAmount;
+                
+                // Reverse direction at ends
+                if (scrollAmount >= container.scrollWidth - container.clientWidth) {
+                    scrollDirection = -1;
+                } else if (scrollAmount <= 0) {
+                    scrollDirection = 1;
+                }
+            };
+            
+            // Start scrolling
+            intervalId = setInterval(scroll, 30);
+            
+            // Pause on hover
+            container.addEventListener('mouseenter', () => {
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                }
+            });
+            
+            container.addEventListener('mouseleave', () => {
+                if (!intervalId) {
+                    intervalId = setInterval(scroll, 30);
+                }
+            });
+        }
+        
+        // Tooltip functions
+        let tooltipTimeout;
+        function showTooltip() {
+            clearTimeout(tooltipTimeout);
+            document.getElementById('url-tooltip').classList.add('show');
+        }
+        
+        function hideTooltip() {
+            tooltipTimeout = setTimeout(() => {
+                document.getElementById('url-tooltip').classList.remove('show');
+            }, 200);
+        }
+        
+        function toggleTooltip() {
+            const tooltip = document.getElementById('url-tooltip');
+            tooltip.classList.toggle('show');
+        }
+        
+        // Loading steps for analyze function
+        const loadingSteps = {
+            pt: [
+                { text: "Lendo o conteúdo do seu site...", icon: "🔍" },
+                { text: "Entendendo seu produto...", icon: "🧠" },
+                { text: "Analisando seu nicho de mercado...", icon: "📊" },
+                { text: "Buscando discussões no YouTube...", icon: "🎬" },
+                { text: "Encontrando clientes potenciais...", icon: "👥" },
+                { text: "Identificando pontos de dor...", icon: "💬" },
+                { text: "Gerando resposta personalizada...", icon: "🤖" },
+                { text: "Finalizando simulação...", icon: "✨" }
+            ],
+            en: [
+                { text: "Reading your website content...", icon: "🔍" },
+                { text: "Understanding your product...", icon: "🧠" },
+                { text: "Analyzing your market niche...", icon: "📊" },
+                { text: "Searching YouTube discussions...", icon: "🎬" },
+                { text: "Finding potential customers...", icon: "👥" },
+                { text: "Identifying pain points...", icon: "💬" },
+                { text: "Generating personalized response...", icon: "🤖" },
+                { text: "Finalizing simulation...", icon: "✨" }
+            ]
+        };
+        
+        // Normalize URL function
+        function normalizeUrl(inputUrl) {
+            let normalizedUrl = inputUrl.trim();
+            if (!normalizedUrl.match(/^https?:\/\//i)) {
+                normalizedUrl = 'https://' + normalizedUrl;
+            }
+            return normalizedUrl;
+        }
+        
+        // Validate URL function
+        function validateUrl(inputUrl) {
+            try {
+                const urlObj = new URL(inputUrl);
+                return urlObj.hostname.includes('.');
+            } catch {
+                return false;
+            }
+        }
+        
+        // Analyze website function
+        async function analyzeWebsite() {
+            const lang = document.documentElement.getAttribute('data-lang');
+            const urlInput = document.getElementById('website-url');
+            const url = urlInput.value.trim();
+            const errorDiv = document.getElementById('error-message');
+            const loadingContainer = document.getElementById('loading-container');
+            const resultsContainer = document.getElementById('results-container');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            
+            // Reset states
+            errorDiv.style.display = 'none';
+            resultsContainer.style.display = 'none';
+            resultsContainer.innerHTML = '';
+            urlInput.classList.remove('error');
+            
+            if (!url) {
+                errorDiv.textContent = lang === 'pt' ? 
+                    'Por favor, insira uma URL' : 
+                    'Please enter a URL';
+                errorDiv.style.display = 'block';
+                urlInput.classList.add('error');
+                return;
+            }
+            
+            // Normalize and validate URL
+            const normalizedUrl = normalizeUrl(url);
+            if (!validateUrl(normalizedUrl)) {
+                errorDiv.textContent = lang === 'pt' ? 
+                    'Por favor, insira uma URL válida (ex: https://exemplo.com)' : 
+                    'Please enter a valid URL (e.g., https://example.com)';
+                errorDiv.style.display = 'block';
+                urlInput.classList.add('error');
+                return;
+            }
+            
+            // Start loading
+            analyzeBtn.disabled = true;
+            urlInput.disabled = true;
+            loadingContainer.style.display = 'block';
+            
+            // Animate loading steps
+            let currentStep = 0;
+            const steps = loadingSteps[lang];
+            const totalSteps = steps.length;
+            const minStepTime = 800;
+            const maxStepTime = 1500;
+            
+            const updateLoadingStep = () => {
+                const step = steps[currentStep];
+                document.getElementById('loading-icon').textContent = step.icon;
+                document.getElementById('loading-text').innerHTML = `
+                    <span style="margin-right:8px">${step.icon}</span>${step.text}
+                `;
+                document.getElementById('loading-progress').style.width = 
+                    `${((currentStep + 1) / totalSteps) * 100}%`;
+            };
+            
+            updateLoadingStep();
+            
+            const stepInterval = setInterval(() => {
+                if (currentStep < totalSteps - 1) {
+                    currentStep++;
+                    updateLoadingStep();
+                }
+            }, Math.floor(Math.random() * (maxStepTime - minStepTime) + minStepTime));
+            
+            try {
+                // Detect client IP
+                let clientIP = '127.0.0.1'; // Default for development
+                
+                try {
+                    // In production, try to get public IP
+                    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                        try {
+                            // Option 1: api.ipify.org
+                            const ipResponse = await fetch('https://api.ipify.org?format=json');
+                            const ipData = await ipResponse.json();
+                            clientIP = ipData.ip;
+                        } catch {
+                            // Option 2: Fallback to ipapi.co
+                            const ipResponse = await fetch('https://ipapi.co/json/');
+                            const ipData = await ipResponse.json();
+                            clientIP = ipData.ip;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error getting IP:', error);
+                    // If both fail, show error to user
+                    errorDiv.textContent = lang === 'pt' ? 
+                        'Não foi possível detectar seu endereço IP. Por favor, tente novamente mais tarde.' : 
+                        'Unable to detect your IP address. Please try again later.';
+                    errorDiv.style.display = 'block';
+                    loadingContainer.style.display = 'none';
+                    analyzeBtn.disabled = false;
+                    urlInput.disabled = false;
+                    clearInterval(stepInterval);
+                    return;
+                }
+                
+                // Build request body
+                const requestBody = {
+                    url: normalizedUrl,
+                    language: lang
+                };
+                
+                // Only add IP if we got it
+                if (clientIP) {
+                    requestBody.ip = clientIP;
+                }
+                
+                // Call the edge function
+                const startTime = Date.now();
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-url`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                // Ensure minimum loading time
+                const elapsedTime = Date.now() - startTime;
+                const minimumLoadingTime = totalSteps * minStepTime;
+                
+                if (elapsedTime < minimumLoadingTime) {
+                    await new Promise(resolve => 
+                        setTimeout(resolve, minimumLoadingTime - elapsedTime)
+                    );
+                }
+                
+                // Complete remaining steps
+                for (let i = currentStep; i < totalSteps; i++) {
+                    currentStep = i;
+                    updateLoadingStep();
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+                
+                clearInterval(stepInterval);
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success && data.simulation) {
+                    // Display results
+                    displayResults(data.simulation, lang);
+                } else {
+                    // Handle errors
+                    let errorMessage = lang === 'pt' ? 
+                        'Erro ao gerar simulação. Por favor, tente novamente.' : 
+                        'Error generating simulation. Please try again.';
+                    
+                    if (response.status === 429 || data.error?.includes('limit')) {
+                        errorMessage = lang === 'pt' ? 
+                            'Você atingiu o limite de 3 análises por dia. Tente novamente amanhã!' : 
+                            "You've reached the limit of 3 analyses per day. Try again tomorrow!";
+                    } else if (data.error?.includes('fetch') || data.error?.includes('Jina')) {
+                        errorMessage = lang === 'pt' ? 
+                            'Não foi possível acessar este site. Verifique a URL e tente novamente.' : 
+                            'Unable to access this website. Please check the URL and try again.';
+                    }
+                    
+                    errorDiv.textContent = errorMessage;
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorDiv.textContent = lang === 'pt' ? 
+                    'Erro ao conectar com o servidor. Por favor, tente novamente.' : 
+                    'Error connecting to server. Please try again.';
+                errorDiv.style.display = 'block';
+                clearInterval(stepInterval);
+            } finally {
+                loadingContainer.style.display = 'none';
+                analyzeBtn.disabled = false;
+                urlInput.disabled = false;
+            }
+        }
+        
+        // Display results function
+        function displayResults(simulation, lang) {
+            const resultsContainer = document.getElementById('results-container');
+            resultsContainer.style.display = 'block';
+            
+            const formatNumber = (num) => {
+                return new Intl.NumberFormat(lang === 'pt' ? 'pt-BR' : 'en-US').format(num);
+            };
+            
+            resultsContainer.innerHTML = `
+                <!-- Video Found Card -->
+                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;margin-bottom:24px;text-align:left">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                        <div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">🎬</div>
+                        <h3 style="font-size:18px;font-weight:700;margin:0">
+                            <span class="lang-pt">Vídeo Encontrado</span>
+                            <span class="lang-en">Video Found</span>
+                        </h3>
+                    </div>
+                    <div style="font-size:16px;font-weight:600;margin-bottom:12px">${simulation.video.title}</div>
+                    <div style="display:flex;gap:16px;font-size:14px;color:var(--color-text-secondary)">
+                        <span>${formatNumber(simulation.video.views)} views</span>
+                        <span>${formatNumber(simulation.video.comments)} comments</span>
+                        <span>${simulation.video.category}</span>
+                    </div>
+                </div>
+                
+                <!-- Lead Comment Card -->
+                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;margin-bottom:24px;text-align:left">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                        <div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">👤</div>
+                        <h3 style="font-size:18px;font-weight:700;margin:0">
+                            <span class="lang-pt">Comentário de Cliente Potencial</span>
+                            <span class="lang-en">Potential Customer Comment</span>
+                        </h3>
+                    </div>
+                    <div style="font-size:16px;line-height:1.6;padding:16px;background:var(--color-background);border-radius:8px;margin-bottom:12px">
+                        "${simulation.lead_comment.text}"
+                    </div>
+                    <div style="display:flex;gap:24px;margin-top:12px">
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
+                                <span class="lang-pt">Pontuação de Lead:</span>
+                                <span class="lang-en">Lead Score:</span>
+                            </span>
+                            <span style="font-size:14px;font-weight:600;color:var(--color-primary)">${simulation.lead_comment.lead_score}/10</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
+                                <span class="lang-pt">Sentimento:</span>
+                                <span class="lang-en">Sentiment:</span>
+                            </span>
+                            <span style="font-size:14px;font-weight:600;color:var(--color-primary)">
+                                ${lang === 'pt' && simulation.lead_comment.sentiment === 'seeking_solution' ? 
+                                    'buscando_solução' : simulation.lead_comment.sentiment}
+                            </span>
+                        </div>
+                    </div>
+                    ${simulation.lead_comment.justification ? 
+                        `<div style="font-size:13px;color:var(--color-text-secondary);font-style:italic;margin-top:8px">
+                            ${simulation.lead_comment.justification}
+                        </div>` : ''}
+                </div>
+                
+                <!-- Liftlio Response Card -->
+                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;text-align:left">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                        <div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">🤖</div>
+                        <h3 style="font-size:18px;font-weight:700;margin:0">
+                            <span class="lang-pt">Resposta do Liftlio</span>
+                            <span class="lang-en">Liftlio's Response</span>
+                        </h3>
+                    </div>
+                    <div style="font-size:16px;line-height:1.6;padding:16px;background:var(--color-background);border-radius:8px;margin-bottom:12px;border-left:4px solid var(--color-primary)">
+                        ${simulation.liftlio_response.message}
+                    </div>
+                    <div style="display:flex;gap:24px;margin-top:12px">
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
+                                <span class="lang-pt">Sentimento:</span>
+                                <span class="lang-en">Sentiment:</span>
+                            </span>
+                            <span style="font-size:14px;font-weight:600;color:var(--color-primary)">
+                                ${Math.round(simulation.liftlio_response.sentiment_score * 100)}%
+                            </span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
+                                <span class="lang-pt">Relevância:</span>
+                                <span class="lang-en">Relevance:</span>
+                            </span>
+                            <span style="font-size:14px;font-weight:600;color:var(--color-primary)">
+                                ${Math.round(simulation.liftlio_response.relevance_score * 100)}%
+                            </span>
+                        </div>
+                    </div>
+                    ${simulation.liftlio_response.justification ? 
+                        `<div style="font-size:13px;color:var(--color-text-secondary);font-style:italic;margin-top:8px">
+                            ${simulation.liftlio_response.justification}
+                        </div>` : ''}
+                </div>
+            `;
+        }
+        
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            console.log('Página carregada, iniciando busca de tendências...');
+            
+            // Verificar se os containers existem
+            const trendingContainer = document.getElementById('trending-topics-container');
+            const decliningContainer = document.getElementById('declining-topics-container');
+            
+            console.log('Container trending:', trendingContainer);
+            console.log('Container declining:', decliningContainer);
+            
+            // Add enter key support for URL input
+            document.getElementById('website-url').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    analyzeWebsite();
+                }
+            });
+            
+            // Fetch real data after a short delay
+            setTimeout(() => {
+                fetchTrendingTopics().then(() => {
+                    startAutoScroll('trending-topics-container');
+                });
+                fetchDecliningTopics().then(() => {
+                    startAutoScroll('declining-topics-container');
+                });
+                // Start auto-scroll for testimonials
+                startAutoScroll('testimonials-track');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
