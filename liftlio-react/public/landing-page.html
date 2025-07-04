@@ -1556,6 +1556,9 @@
                 document.title = 'Liftlio - Scale Word-of-Mouth Recommendations Without Paying for Ads';
                 document.querySelector('meta[name="description"]').content = 'Liftlio utilizes AI to get your brand mentioned in genuine conversations across the web, allowing your product to be discovered organically at scale.';
             }
+            
+            // Update language visibility
+            updateLanguageVisibility();
         }
         
         // Update dashboard image for theme changes
@@ -1642,9 +1645,6 @@
         // Initialize dashboard image based on current theme and environment
         updateDashboardImage(currentTheme);
         
-        // Update language visibility without CLS
-        updateLanguageVisibility();
-        
         // Define updateLanguageVisibility function
         function updateLanguageVisibility() {
             const lang = document.documentElement.getAttribute('data-lang') || 'pt';
@@ -1655,6 +1655,9 @@
                 el.style.display = lang === 'en' ? '' : 'none';
             });
         }
+        
+        // Update language visibility without CLS
+        updateLanguageVisibility();
         
         // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
