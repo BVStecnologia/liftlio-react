@@ -384,7 +384,7 @@ const OAuthHandler = () => {
               // Precisamos do ID da integração que acabamos de criar ou atualizar
               // Se já existia uma integração anterior, usamos esse ID
               let integracaoId = null;
-              if (existingData?.length > 0) {
+              if (existingData && existingData.length > 0) {
                 integracaoId = existingData[0].id;
               }
               // Se não existia e acabamos de criar uma, precisamos buscar o ID dela
@@ -397,7 +397,7 @@ const OAuthHandler = () => {
                   .eq('Tipo de integração', 'youtube')
                   .limit(1);
                   
-                if (newIntegrationData?.length > 0) {
+                if (newIntegrationData && newIntegrationData.length > 0) {
                   integracaoId = newIntegrationData[0].id;
                 }
               }

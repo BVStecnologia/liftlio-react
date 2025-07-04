@@ -354,7 +354,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
             // Resetar contador após atingir o máximo
             setRetryCount(0);
           }
-        } else if (data?.length > 0) {
+        } else if (data && data.length > 0) {
           // Se temos dados, resetar contador de tentativas
           setRetryCount(0);
         }

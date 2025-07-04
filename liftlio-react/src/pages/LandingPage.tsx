@@ -10,7 +10,7 @@ import {
 import { renderIcon } from '../utils/IconHelper';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
-import Image from '../components/Image';
+// import Image from '../components/Image'; // Removido - componente não utilizado
 import LazySection from '../components/LazySection';
 
 // Lazy load componentes pesados apenas se não for mobile

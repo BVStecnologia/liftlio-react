@@ -512,7 +512,7 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       // Armazenar as integrações para uso posterior
       setProjectIntegrations(anyIntegrations || []);
       
-      setHasIntegrations(projectHasActiveIntegrations);
+      setHasIntegrations(projectHasActiveIntegrations || false);
       
       // IMPORTANTE: Se o projeto já teve alguma integração, consideramos que o usuário 
       // já passou pelo onboarding, mesmo que as integrações estejam desativadas agora
@@ -633,18 +633,18 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
               
               // Handle different types of changes
               if (payload.eventType === 'INSERT') {
-                setProjects(prevProjects => [...prevProjects, payload.new]);
+                setProjects(prevProjects => [...prevProjects, payload.new as Project]);
               } 
               else if (payload.eventType === 'UPDATE') {
                 setProjects(prevProjects => 
                   prevProjects.map(project => 
-                    project.id === payload.new.id ? payload.new : project
+                    project.id === payload.new.id ? payload.new as Project : project
                   )
                 );
                 
                 // If current project was updated, update it
                 if (currentProject && currentProject.id === payload.new.id) {
-                  setCurrentProject(payload.new);
+                  setCurrentProject(payload.new as Project);
                   
                   // Verificar estado de processamento quando o status muda
                   if (payload.old.status !== payload.new.status) {
