@@ -1377,6 +1377,17 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       // Chamar a função para atualizar o projeto no Supabase PRIMEIRO
       await setCurrentProject(project);
       console.log("Projeto atualizado na interface");
+      
+      // Verificar se o projeto selecionado tem integrações
+      const projectHasIntegrations = projectIntegrations.some(
+        integration => integration['PROJETO id'] === project.id
+      );
+      
+      // Se o projeto tem integrações e estamos na página de criação, redirecionar para o dashboard
+      if (projectHasIntegrations && window.location.pathname === '/create-project') {
+        console.log("Projeto tem integrações, redirecionando para o dashboard");
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error("Erro ao selecionar projeto:", error);
       alert("Ocorreu um erro ao selecionar o projeto. Por favor, tente novamente.");
