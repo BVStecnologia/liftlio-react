@@ -1379,9 +1379,13 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       console.log("Projeto atualizado na interface");
       
       // Verificar se o projeto selecionado tem integrações
-      const projectHasIntegrations = projectIntegrations.some(
-        integration => integration['PROJETO id'] === project.id
-      );
+      // Buscar integrações do projeto no Supabase
+      const { data: integrations } = await supabase
+        .from('Integrações')
+        .select('*')
+        .eq('PROJETO id', project.id);
+      
+      const projectHasIntegrations = integrations && integrations.length > 0;
       
       // Se o projeto tem integrações e estamos na página de criação, redirecionar para o dashboard
       if (projectHasIntegrations && window.location.pathname === '/create-project') {
