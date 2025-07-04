@@ -614,7 +614,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
           {/* Header escondido na primeira etapa de criação de projeto */}
           <Routes>
             <Route path="*" element={<Navigate to="/create-project" replace />} />
-            <Route path="/create-project" element={<ProjectCreationPage />} />
+            <Route path="/create-project" element={<SubscriptionGate><ProjectCreationPage /></SubscriptionGate>} />
           </Routes>
         </MainContent>
       </AppContainer>
@@ -632,7 +632,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
           <ContentWrapper>
             <Routes>
               <Route path="*" element={<Navigate to="/create-project" replace />} />
-              <Route path="/create-project" element={<ProjectCreationPage />} />
+              <Route path="/create-project" element={<SubscriptionGate><ProjectCreationPage /></SubscriptionGate>} />
             </Routes>
           </ContentWrapper>
         </MainContent>
@@ -691,14 +691,16 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     <Routes>
       {/* Rota para criação de projeto - sem Sidebar e sem Header */}
       <Route path="/create-project" element={
-        <AppContainer>
-          <MainContent style={{ width: '100%' }}>
-            {/* Header removido da página de criação de projeto */}
-            <ContentWrapper>
-              <ProjectCreationPage />
-            </ContentWrapper>
-          </MainContent>
-        </AppContainer>
+        <SubscriptionGate>
+          <AppContainer>
+            <MainContent style={{ width: '100%' }}>
+              {/* Header removido da página de criação de projeto */}
+              <ContentWrapper>
+                <ProjectCreationPage />
+              </ContentWrapper>
+            </MainContent>
+          </AppContainer>
+        </SubscriptionGate>
       } />
       
       {/* Todas as outras rotas - com Sidebar */}
