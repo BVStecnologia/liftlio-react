@@ -212,15 +212,21 @@ const getThemeBackground = (): string => {
 // Componente OAuthHandler para processar códigos de autorização do YouTube em qualquer rota
 const OAuthHandler = () => {
   useEffect(() => {
+    // Log imediato para debug
+    console.log('[OAuthHandler] Iniciando verificação OAuth');
+    console.log('[OAuthHandler] URL atual:', window.location.href);
+    
     // Verificar se há um código de autorização do YouTube na URL
     const checkForYouTubeOAuth = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       const state = urlParams.get('state');
-      const hasYouTubeScopes = urlParams.get('scope')?.includes('youtube');
       
-      // Se temos um código de autorização e escopos do YouTube
-      if (code && hasYouTubeScopes) {
+      console.log('[OAuthHandler] Parâmetros detectados:', { code: !!code, state });
+      
+      // Se temos um código de autorização e um state (ID do projeto)
+      // O state indica que veio do nosso fluxo de OAuth do YouTube
+      if (code && state) {
         console.log('Código de autorização do YouTube detectado na URL:', code);
         console.log('ID do projeto no parâmetro state:', state);
         
