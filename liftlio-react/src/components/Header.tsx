@@ -1794,12 +1794,16 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                background: 'linear-gradient(135deg, rgba(255, 0, 0, 0.08) 0%, rgba(255, 0, 0, 0.12) 100%)',
+                background: theme.name === 'dark' 
+                  ? 'linear-gradient(135deg, rgba(255, 80, 80, 0.15) 0%, rgba(255, 80, 80, 0.25) 100%)' 
+                  : 'linear-gradient(135deg, rgba(255, 0, 0, 0.08) 0%, rgba(255, 0, 0, 0.12) 100%)',
                 padding: '6px 14px',
                 borderRadius: '8px',
                 marginRight: '15px',
                 cursor: 'pointer',
-                border: '1px solid rgba(255, 0, 0, 0.2)',
+                border: theme.name === 'dark' 
+                  ? '1px solid rgba(255, 80, 80, 0.4)' 
+                  : '1px solid rgba(255, 0, 0, 0.2)',
                 transition: 'all 0.2s ease',
                 boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)',
                 position: 'relative',
@@ -1808,12 +1812,16 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
               }}
               onClick={initiateYouTubeOAuth}
               onMouseOver={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 0, 0, 0.12) 0%, rgba(255, 0, 0, 0.18) 100%)';
+                e.currentTarget.style.background = theme.name === 'dark'
+                  ? 'linear-gradient(135deg, rgba(255, 80, 80, 0.25) 0%, rgba(255, 80, 80, 0.35) 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 0, 0, 0.12) 0%, rgba(255, 0, 0, 0.18) 100%)';
                 e.currentTarget.style.transform = 'translateY(-1px)';
                 e.currentTarget.style.boxShadow = '0 3px 8px rgba(0, 0, 0, 0.08)';
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 0, 0, 0.08) 0%, rgba(255, 0, 0, 0.12) 100%)';
+                e.currentTarget.style.background = theme.name === 'dark'
+                  ? 'linear-gradient(135deg, rgba(255, 80, 80, 0.15) 0%, rgba(255, 80, 80, 0.25) 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 0, 0, 0.08) 0%, rgba(255, 0, 0, 0.12) 100%)';
                 e.currentTarget.style.transform = 'translateY(0)';
                 e.currentTarget.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.05)';
               }}
@@ -1860,10 +1868,11 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
               />
               <span style={{ 
                 fontSize: '0.85rem', 
-                color: '#333',
+                color: theme.name === 'dark' ? '#fff' : '#333',
                 fontWeight: 500,
                 position: 'relative',
-                zIndex: 2
+                zIndex: 2,
+                textShadow: theme.name === 'dark' ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'
               }}>
                 YouTube Disconnected - Click to Connect
               </span>
