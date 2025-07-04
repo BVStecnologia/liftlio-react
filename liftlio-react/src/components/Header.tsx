@@ -1387,10 +1387,16 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       
       const projectHasIntegrations = integrations && integrations.length > 0;
       
-      // Se o projeto tem integrações e estamos na página de criação, redirecionar para o dashboard
+      // Sempre recarregar a página para garantir que todos os dados sejam atualizados
+      console.log("Recarregando página para atualizar dados do projeto");
+      
+      // Se o projeto tem integrações e estamos na página de criação, ir para o dashboard
       if (projectHasIntegrations && window.location.pathname === '/create-project') {
         console.log("Projeto tem integrações, redirecionando para o dashboard");
-        navigate('/dashboard');
+        window.location.href = '/dashboard';
+      } else {
+        // Caso contrário, apenas recarregar a página atual
+        window.location.reload();
       }
     } catch (error) {
       console.error("Erro ao selecionar projeto:", error);

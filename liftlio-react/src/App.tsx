@@ -557,7 +557,7 @@ function App() {
 // Componente de layout protegido
 const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean, toggleSidebar: () => void }) => {
   const { user, loading } = useAuth();
-  const { isOnboarding, onboardingReady, hasProjects, isLoading, projects, projectIntegrations } = useProject();
+  const { isOnboarding, onboardingReady, hasProjects, isLoading, projects, projectIntegrations, currentProject } = useProject();
   const [isInitializing, setIsInitializing] = useState(true);
   const navigate = useNavigate();
   
@@ -623,9 +623,11 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   
   // Nova condição: se o projeto atual não tem integrações configuradas
   // redirecionar para a página de criação de projeto
-  const currentProjectHasIntegrations = projectIntegrations.length > 0;
+  const currentProjectHasIntegrations = currentProject && projectIntegrations.some(
+    integration => integration['PROJETO id'] === currentProject.id
+  );
   
-  if (hasProjects && !currentProjectHasIntegrations) {
+  if (currentProject && !currentProjectHasIntegrations) {
     console.log('Projeto atual não tem integrações, redirecionando para criação de projeto');
     return (
       <AppContainer>
