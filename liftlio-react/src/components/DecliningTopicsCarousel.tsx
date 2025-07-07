@@ -554,7 +554,7 @@ const DecliningTopicsCarousel: React.FC = () => {
 
   // Auto-scroll effect when activeIndex changes
   useEffect(() => {
-    if (containerRef.current) {
+    if (containerRef.current && isAutoPlaying) {
       const cardWidth = 350;
       const scrollPosition = activeIndex * cardWidth;
       containerRef.current.scrollTo({
@@ -562,19 +562,11 @@ const DecliningTopicsCarousel: React.FC = () => {
         behavior: 'smooth'
       });
     }
-  }, [activeIndex]);
+  }, [activeIndex, isAutoPlaying]);
 
   const handleCardClick = (index: number) => {
     setActiveIndex(index);
-    
-    if (containerRef.current) {
-      const cardWidth = 350;
-      const scrollPosition = index * cardWidth;
-      containerRef.current.scrollTo({
-        left: scrollPosition,
-        behavior: 'smooth'
-      });
-    }
+    // Scroll manual não interfere com auto-playing
   };
 
   const handleNavigation = (direction: 'left' | 'right') => {
@@ -582,7 +574,6 @@ const DecliningTopicsCarousel: React.FC = () => {
       ? (activeIndex - 1 + decliningData.length) % decliningData.length
       : (activeIndex + 1) % decliningData.length;
     setActiveIndex(newIndex);
-    handleCardClick(newIndex);
   };
 
   const createChartPath = (data: number[]) => {

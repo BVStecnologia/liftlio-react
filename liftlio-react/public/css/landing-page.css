@@ -261,7 +261,6 @@
     color: var(--color-primary);
     font-size: 14px;
     font-weight: 600;
-    animation: pulseAnimation 3s infinite;
 }
 
 .hero-title {

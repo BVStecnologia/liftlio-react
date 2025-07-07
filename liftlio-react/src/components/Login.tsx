@@ -132,7 +132,7 @@ const PowerPhrase = styled.div`
   }
 `
 
-const Title = styled.h2`
+const Title = styled.h1`
   margin-bottom: 1.5rem;
   font-size: ${props => props.theme.fontSizes['2xl']};
   color: ${props => props.theme.colors.text};

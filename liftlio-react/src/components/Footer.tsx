@@ -95,7 +95,7 @@ const translations = {
       terms: "Terms of Service",
       security: "Security"
     },
-    copyright: "© 2024 Liftlio. All rights reserved."
+    copyright: "© 2025 Liftlio. All rights reserved."
   },
   pt: {
     description: "Plataforma com IA para escalar recomendações boca a boca sem pagar por anúncios.",
@@ -112,7 +112,7 @@ const translations = {
       terms: "Termos de Serviço",
       security: "Segurança"
     },
-    copyright: "© 2024 Liftlio. Todos os direitos reservados."
+    copyright: "© 2025 Liftlio. Todos os direitos reservados."
   }
 };
 

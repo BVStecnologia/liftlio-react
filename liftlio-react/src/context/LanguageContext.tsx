@@ -987,7 +987,11 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const setLanguage = (lang: 'en' | 'pt') => {
     setLanguageState(lang);
-    Cookies.set('language', lang, { expires: 365 });
+    Cookies.set('language', lang, { 
+      expires: 365,
+      sameSite: 'Lax',
+      secure: window.location.protocol === 'https:'
+    });
   };
 
   const t = (key: string): string => {
