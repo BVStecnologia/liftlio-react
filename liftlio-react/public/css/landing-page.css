@@ -350,7 +350,7 @@
     width: 200%;
     height: 200%;
     background: radial-gradient(circle, var(--color-primary-alpha) 0%, transparent 70%);
-    animation: pulseAnimation 4s ease-in-out infinite;
+    /* animation: pulseAnimation 4s ease-in-out infinite; - Removida para parar o piscar */
 }
 
 .dashboard-preview img {
