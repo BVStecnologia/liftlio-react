@@ -440,12 +440,13 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   animation: ${fadeIn} 0.3s ease;
+  backdrop-filter: blur(4px);
 `;
 
 const ModalContent = styled.div`
@@ -1234,7 +1235,7 @@ const Integrations: React.FC = () => {
                     onChange={() => setConfirmCheckbox(!confirmCheckbox)}
                   />
                   <CheckboxLabel>
-                    I confirm that my YouTube account has made at least two comments
+                    I confirm that my YouTube account has made at least two comments and I authorize Liftlio to post, like, share, and comment on my behalf
                   </CheckboxLabel>
                 </Checkbox>
               )}
