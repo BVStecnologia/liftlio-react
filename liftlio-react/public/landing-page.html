@@ -364,8 +364,8 @@
     <!-- Detectar tema/idioma -->
     <script>
         (function(){
-            const t=localStorage.getItem('theme')||'light';
-            const l=localStorage.getItem('language')||'pt';
+            const t=localStorage.getItem('theme')||'dark';
+            const l=localStorage.getItem('language')||'en';
             document.documentElement.setAttribute('data-theme',t);
             document.documentElement.setAttribute('data-lang',l);
             document.documentElement.lang=l==='pt'?'pt-BR':'en-US';
