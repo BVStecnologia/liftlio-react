@@ -4,7 +4,7 @@ import Card from '../components/Card';
 import { IconContext } from 'react-icons';
 import { FaYoutube, FaReddit, FaLinkedin, FaFacebook, FaTwitter, FaInstagram, 
          FaPlug, FaCheck, FaExclamationTriangle, FaLock, FaShieldAlt, 
-         FaArrowRight, FaTimes, FaClock } from 'react-icons/fa';
+         FaArrowRight, FaTimes, FaClock, FaInfoCircle } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -561,6 +561,29 @@ const CheckboxLabel = styled.label`
   cursor: pointer;
 `;
 
+const ExplanationBox = styled.div`
+  background: rgba(255, 243, 224, 0.1);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.secondary};
+  line-height: 1.5;
+`;
+
+const InfoIcon = styled.span`
+  color: #ff9800;
+  cursor: pointer;
+  margin-left: 8px;
+  font-size: 14px;
+  transition: color 0.2s;
+  
+  &:hover {
+    color: #ffb74d;
+  }
+`;
+
 const ModalFooter = styled.div`
   display: flex;
   justify-content: space-between;
@@ -674,6 +697,8 @@ const Integrations: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState<any>(null);
   const [confirmCheckbox, setConfirmCheckbox] = useState(false);
+  const [commentCheckbox, setCommentCheckbox] = useState(false);
+  const [showCommentExplanation, setShowCommentExplanation] = useState(false);
   const [userIntegrations, setUserIntegrations] = useState<Integration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   // Removemos o estado authWindow pois não vamos mais usar popup
@@ -986,6 +1011,8 @@ const Integrations: React.FC = () => {
   const handleCloseModal = () => {
     setModalOpen(false);
     setConfirmCheckbox(false);
+    setCommentCheckbox(false);
+    setShowCommentExplanation(false);
   };
 
   const handleClickOutside = (event: MouseEvent) => {
@@ -1228,16 +1255,44 @@ const Integrations: React.FC = () => {
               </ModalInfo>
               
               {selectedIntegration.id === 'youtube' && (
-                <Checkbox onClick={() => setConfirmCheckbox(!confirmCheckbox)}>
-                  <CheckboxInput 
-                    type="checkbox" 
-                    checked={confirmCheckbox}
-                    onChange={() => setConfirmCheckbox(!confirmCheckbox)}
-                  />
-                  <CheckboxLabel>
-                    I confirm that my YouTube account has made at least two comments and I authorize Liftlio to post, like, share, and comment on my behalf
-                  </CheckboxLabel>
-                </Checkbox>
+                <>
+                  <Checkbox onClick={() => setCommentCheckbox(!commentCheckbox)}>
+                    <CheckboxInput 
+                      type="checkbox" 
+                      checked={commentCheckbox}
+                      onChange={() => setCommentCheckbox(!commentCheckbox)}
+                    />
+                    <CheckboxLabel>
+                      I have posted at least one comment on YouTube
+                      <InfoIcon onClick={(e) => {
+                        e.stopPropagation();
+                        setShowCommentExplanation(!showCommentExplanation);
+                      }}>
+                        {renderIcon(FaInfoCircle)}
+                      </InfoIcon>
+                    </CheckboxLabel>
+                  </Checkbox>
+                  
+                  {showCommentExplanation && (
+                    <ExplanationBox>
+                      <strong>Why is this required?</strong><br/>
+                      YouTube's API requires accounts to have interaction history before allowing comment posting. 
+                      This is a platform requirement to prevent spam and ensure authentic engagement. 
+                      Without this, the integration may not be able to post comments on your behalf.
+                    </ExplanationBox>
+                  )}
+                  
+                  <Checkbox onClick={() => setConfirmCheckbox(!confirmCheckbox)}>
+                    <CheckboxInput 
+                      type="checkbox" 
+                      checked={confirmCheckbox}
+                      onChange={() => setConfirmCheckbox(!confirmCheckbox)}
+                    />
+                    <CheckboxLabel>
+                      I authorize Liftlio to post, like, share, and comment on my behalf
+                    </CheckboxLabel>
+                  </Checkbox>
+                </>
               )}
             </ModalBody>
             
@@ -1248,7 +1303,7 @@ const Integrations: React.FC = () => {
               
               <ModalButton 
                 variant="primary"
-                disabled={selectedIntegration.id === 'youtube' && !confirmCheckbox}
+                disabled={selectedIntegration.id === 'youtube' && (!confirmCheckbox || !commentCheckbox)}
                 onClick={handleAuthorize}
               >
                 Authorize {renderIcon(FaLock)}

@@ -1269,41 +1269,15 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     }
   };
   
-  // Função para iniciar o fluxo de autorização do YouTube
-  const initiateYouTubeOAuth = () => {
+  // Função para redirecionar para a página de integrações
+  const handleYouTubeConnect = () => {
     if (!currentProject?.id) {
-      alert("Selecione um projeto primeiro");
+      alert("Please select a project first");
       return;
     }
     
-    // Marcar como não verificado durante a autenticação
-    setYoutubeStatus({ checked: false, connected: false });
-    
-    // Determinar o URI de redirecionamento baseado no ambiente
-    const hostname = window.location.hostname;
-    const isProduction = hostname === 'liftlio.fly.dev' || hostname === 'liftlio.com';
-    const redirectUri = isProduction 
-      ? `https://${hostname}` 
-      : 'http://localhost:3000';
-      
-    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
-    const scopes = [
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/userinfo.profile",
-      "https://www.googleapis.com/auth/youtube.force-ssl"
-    ].join(' ');
-    
-    const oauthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-    oauthUrl.searchParams.append('client_id', clientId);
-    oauthUrl.searchParams.append('redirect_uri', redirectUri);
-    oauthUrl.searchParams.append('response_type', 'code');
-    oauthUrl.searchParams.append('scope', scopes);
-    oauthUrl.searchParams.append('access_type', 'offline');
-    oauthUrl.searchParams.append('prompt', 'consent');
-    oauthUrl.searchParams.append('state', currentProject.id.toString());
-    
-    // Redirecionar na mesma página em vez de abrir um popup
-    window.location.href = oauthUrl.toString();
+    // Redirecionar para a página de integrações para que o usuário veja o modal
+    navigate('/integrations');
   };
   
   // Estado para armazenar as notificações do Supabase
@@ -1831,7 +1805,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                 overflow: 'hidden',
                 animation: 'fadeIn 0.5s ease'
               }}
-              onClick={initiateYouTubeOAuth}
+              onClick={handleYouTubeConnect}
               onMouseOver={(e) => {
                 e.currentTarget.style.background = theme.name === 'dark'
                   ? 'linear-gradient(135deg, rgba(255, 80, 80, 0.25) 0%, rgba(255, 80, 80, 0.35) 100%)'
