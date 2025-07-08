@@ -465,7 +465,15 @@ const OAuthHandler = () => {
             console.log('Redirecionando para o dashboard para mostrar o processamento...');
             
             // Aguardar um momento para garantir que o token foi salvo
-            setTimeout(() => {
+            setTimeout(async () => {
+              // Verificar se temos uma sessão válida antes de redirecionar
+              const { data: { session } } = await supabase.auth.getSession();
+              if (!session) {
+                console.error('Nenhuma sessão encontrada após OAuth. Redirecionando para login...');
+                window.location.replace('/');
+                return;
+              }
+              
               // Usar replace para garantir que não volte para a página com o código OAuth
               window.location.replace('/dashboard');
             }, 1000);
