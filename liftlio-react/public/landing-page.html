@@ -32,6 +32,12 @@
     <meta name="author" content="Liftlio">
     <meta name="robots" content="index,follow">
     
+    <!-- Canonical and language alternates -->
+    <link rel="canonical" href="https://liftlio.com/">
+    <link rel="alternate" href="https://liftlio.com/" hreflang="en">
+    <link rel="alternate" href="https://liftlio.com/?lang=pt" hreflang="pt">
+    <link rel="alternate" href="https://liftlio.com/" hreflang="x-default">
+    
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://liftlio.com/">
@@ -53,7 +59,9 @@
     
     <!-- Fonts - Async loading to eliminate render-blocking -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"></noscript>
+    <noscript>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+    </noscript>
     
     <!-- Inline CSS - Todo o estilo da página -->
     <style>
@@ -355,25 +363,20 @@
         }
         
         /* Utility */
-        [data-lang="pt"] .lang-en{display:none}
-        [data-lang="en"] .lang-pt{display:none}
         .icon{display:inline-flex;align-items:center;justify-content:center;width:1em;height:1em}
         .floating-element{position:absolute;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:12px;padding:16px;animation:float 6s ease-in-out infinite}
     </style>
     
-    <!-- Detectar tema/idioma -->
+    <!-- Set theme only -->
     <script>
         (function(){
             const t=localStorage.getItem('theme')||'dark';
-            const l=localStorage.getItem('language')||'en';
             document.documentElement.setAttribute('data-theme',t);
-            document.documentElement.setAttribute('data-lang',l);
-            document.documentElement.lang=l==='pt'?'pt-BR':'en-US';
+            document.documentElement.setAttribute('data-lang','en');
+            document.documentElement.lang='en-US';
         })();
     </script>
     
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://liftlio.com" />
     
     <!-- JSON-LD Schema.org -->
     <script type="application/ld+json">
@@ -407,32 +410,23 @@
                 
                 <nav class="nav">
                     <a href="#process" class="nav-link">
-                        <span class="lang-pt">Recursos</span>
-                        <span class="lang-en">Features</span>
+                        Features
                     </a>
                     <a href="#pricing" class="nav-link">
-                        <span class="lang-pt">Preços</span>
-                        <span class="lang-en">Pricing</span>
+                        Pricing
                     </a>
                     <a href="#testimonials" class="nav-link">
-                        <span class="lang-pt">Depoimentos</span>
-                        <span class="lang-en">Testimonials</span>
+                        Testimonials
                     </a>
                     
                     <div class="nav-buttons">
-                        <button class="btn-icon" onclick="toggleLanguage()">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                            <span class="lang-indicator">PT</span>
-                        </button>
-                        
                         <button class="btn-icon" onclick="toggleTheme()" aria-label="Toggle theme">
                             <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                             <svg class="theme-icon-dark" style="display:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                         </button>
                         
                         <a href="#" onclick="navigateToPage('/login'); return false;" class="btn-login">
-                            <span class="lang-pt">Entrar</span>
-                            <span class="lang-en">Sign In</span>
+                            Sign In
                         </a>
                     </div>
                 </nav>
@@ -459,34 +453,25 @@
         
         <nav class="mobile-menu-nav">
             <a href="#process" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
-                <span class="lang-pt">Recursos</span>
-                <span class="lang-en">Features</span>
+                Features
             </a>
             <a href="#pricing" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
-                <span class="lang-pt">Preços</span>
-                <span class="lang-en">Pricing</span>
+                Pricing
             </a>
             <a href="#testimonials" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
-                <span class="lang-pt">Depoimentos</span>
-                <span class="lang-en">Testimonials</span>
+                Testimonials
             </a>
         </nav>
         
         <div class="mobile-menu-footer">
-            <div class="nav-buttons" style="justify-content:space-around;margin-bottom:16px">
-                <button class="btn-icon" onclick="toggleLanguage()" style="border:1px solid var(--color-border-light);border-radius:8px">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                    <span class="lang-indicator">PT</span>
-                </button>
-                
+            <div class="nav-buttons" style="justify-content:center;margin-bottom:16px">
                 <button class="btn-icon" onclick="toggleTheme()" style="border:1px solid var(--color-border-light);border-radius:8px" aria-label="Toggle theme">
                     <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                     <svg class="theme-icon-dark" style="display:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                 </button>
             </div>
             <a href="#" onclick="navigateToPage('/login'); return false;" class="btn-login" style="width:100%">
-                <span class="lang-pt">Entrar</span>
-                <span class="lang-en">Sign In</span>
+                Sign In
             </a>
         </div>
     </div>
@@ -499,25 +484,22 @@
                 <div class="hero-text">
                     <div class="badge">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.912 5.813a2 2 0 0 0 1.275 1.275l5.813 1.912l-5.813 1.912a2 2 0 0 0 -1.275 1.275l-1.912 5.813l-1.912 -5.813a2 2 0 0 0 -1.275 -1.275l-5.813 -1.912l5.813 -1.912a2 2 0 0 0 1.275 -1.275l1.912 -5.813z"></path></svg>
-                        <span class="lang-pt">Boca a Boca Orgânico em Escala</span>
-                        <span class="lang-en">Organic Word-of-Mouth at Scale</span>
+                        Organic Word-of-Mouth at Scale
                     </div>
                     
                     <h1 class="hero-title">
-                        <span class="lang-pt">Finalmente, uma maneira de aumentar as recomendações boca a boca<br><span class="gradient-text">sem pagar por anúncios</span></span>
-                        <span class="lang-en">At Last, A Way to Scale Word-of-Mouth Recommendations<br><span class="gradient-text">Without Paying for Ads</span></span>
+                        </span>
+                        At Last, A Way to Scale Word-of-Mouth Recommendations<br><span class="gradient-text">Without Paying for Ads</span>
                     </h1>
                     
                     <p class="hero-description">
-                        <span class="lang-pt">A Liftlio utiliza IA para fazer com que sua marca seja mencionada em conversas genuínas na web, permitindo que seu produto seja descoberto organicamente em grande escala.</span>
-                        <span class="lang-en">Liftlio utilizes AI to get your brand mentioned in genuine conversations across the web, allowing your product to be discovered organically at scale.</span>
+                        Liftlio utilizes AI to get your brand mentioned in genuine conversations across the web, allowing your product to be discovered organically at scale.
                     </p>
                     
                     <div class="cta-buttons">
                         <a href="#" onclick="navigateToPage('/checkout'); return false;" class="btn-primary">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path><path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z"></path></svg>
-                            <span class="lang-pt">Comece a Crescer Hoje</span>
-                            <span class="lang-en">Start Growing Today</span>
+                            Start Growing Today
                         </a>
                     </div>
                 </div>
@@ -565,8 +547,7 @@
                     <div class="trust-text">
                         <div class="trust-value">100%</div>
                         <div class="trust-label">
-                            <span class="lang-pt">Seguro</span>
-                            <span class="lang-en">Secure</span>
+                            Secure
                         </div>
                     </div>
                 </div>
@@ -578,8 +559,7 @@
                     <div class="trust-text">
                         <div class="trust-value">24/7</div>
                         <div class="trust-label">
-                            <span class="lang-pt">Monitoramento</span>
-                            <span class="lang-en">Monitoring</span>
+                            Monitoring
                         </div>
                     </div>
                 </div>
@@ -591,8 +571,7 @@
                     <div class="trust-text">
                         <div class="trust-value">95%</div>
                         <div class="trust-label">
-                            <span class="lang-pt">Satisfação</span>
-                            <span class="lang-en">Satisfaction</span>
+                            Satisfaction
                         </div>
                     </div>
                 </div>
@@ -606,13 +585,11 @@
             <div class="problem-content">
                 <div class="problem-stat">87%</div>
                 <p class="problem-text">
-                    <span class="lang-pt">dos consumidores confiam mais em recomendações de amigos do que em qualquer forma de publicidade</span>
-                    <span class="lang-en">of consumers trust recommendations from friends more than any form of advertising</span>
+                    of consumers trust recommendations from friends more than any form of advertising
                 </p>
                 <div class="warning-box">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                    <span class="lang-pt"><strong>Mas você ainda está pagando</strong> para interromper pessoas com anúncios que elas ignoram</span>
-                    <span class="lang-en"><strong>But you're still paying</strong> to interrupt people with ads they ignore</span>
+                    <strong>But you're still paying</strong> to interrupt people with ads they ignore
                 </div>
             </div>
         </div>
@@ -624,23 +601,21 @@
             <div class="breakthrough-content">
                 <div class="section-header">
                     <h2 class="section-title">
-                        <span class="lang-pt">O <span class="gradient-text">Avanço</span></span>
-                        <span class="lang-en">The <span class="gradient-text">Breakthrough</span></span>
+                        </span>
+                        The <span class="gradient-text">Breakthrough</span>
                     </h2>
                     <p class="section-description">
-                        <span class="lang-pt">Em vez de pagar por anúncios, faça sua marca ser naturalmente recomendada em conversas reais</span>
-                        <span class="lang-en">Instead of paying for ads, get your brand naturally recommended in real conversations</span>
+                        Instead of paying for ads, get your brand naturally recommended in real conversations
                     </p>
                 </div>
                 
                 <div class="breakthrough-highlight">
                     <h3 style="font-size:36px;font-weight:800;margin-bottom:16px">
-                        <span class="lang-pt">Imagine ter <span class="gradient-text">milhares de embaixadores</span> falando sobre sua marca</span>
-                        <span class="lang-en">Imagine having <span class="gradient-text">thousands of ambassadors</span> talking about your brand</span>
+                        falando sobre sua marca</span>
+                        Imagine having <span class="gradient-text">thousands of ambassadors talking about your brand</span>
                     </h3>
                     <p style="font-size:20px;color:var(--color-text-secondary)">
-                        <span class="lang-pt">...em discussões onde pessoas estão ativamente procurando soluções</span>
-                        <span class="lang-en">...in discussions where people are actively looking for solutions</span>
+                        ...in discussions where people are actively looking for solutions
                     </p>
                 </div>
                 
@@ -650,12 +625,10 @@
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                         </div>
                         <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">
-                            <span class="lang-pt">Conversas Genuínas</span>
-                            <span class="lang-en">Genuine Conversations</span>
+                            Genuine Conversations
                         </h3>
                         <p style="color:var(--color-text-secondary)">
-                            <span class="lang-pt">Participamos onde as pessoas já estão discutindo problemas que você resolve</span>
-                            <span class="lang-en">We participate where people are already discussing problems you solve</span>
+                            We participate where people are already discussing problems you solve
                         </p>
                     </div>
                     
@@ -664,12 +637,10 @@
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="12" r="10"></circle><path d="M12 2v7"></path><path d="M12 15v7"></path><path d="M4.93 4.93l4.95 4.95"></path><path d="M14.12 14.12l4.95 4.95"></path><path d="M2 12h7"></path><path d="M15 12h7"></path><path d="M4.93 19.07l4.95-4.95"></path><path d="M14.12 9.88l4.95-4.95"></path></svg>
                         </div>
                         <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">
-                            <span class="lang-pt">Momento Perfeito</span>
-                            <span class="lang-en">Perfect Timing</span>
+                            Perfect Timing
                         </h3>
                         <p style="color:var(--color-text-secondary)">
-                            <span class="lang-pt">Aparecemos exatamente quando alguém está procurando uma solução como a sua</span>
-                            <span class="lang-en">We appear exactly when someone is looking for a solution like yours</span>
+                            We appear exactly when someone is looking for a solution like yours
                         </p>
                     </div>
                     
@@ -678,12 +649,10 @@
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                         </div>
                         <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">
-                            <span class="lang-pt">Confiança Natural</span>
-                            <span class="lang-en">Natural Trust</span>
+                            Natural Trust
                         </h3>
                         <p style="color:var(--color-text-secondary)">
-                            <span class="lang-pt">Recomendações em contexto geram 10x mais confiança que anúncios pagos</span>
-                            <span class="lang-en">Contextual recommendations generate 10x more trust than paid ads</span>
+                            Contextual recommendations generate 10x more trust than paid ads
                         </p>
                     </div>
                 </div>
@@ -696,12 +665,11 @@
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">
-                    <span class="lang-pt">Como o Liftlio <span class="gradient-text">Funciona</span></span>
-                    <span class="lang-en">How Liftlio <span class="gradient-text">Works</span></span>
+                    </span>
+                    How Liftlio <span class="gradient-text">Works</span>
                 </h2>
                 <p class="section-description">
-                    <span class="lang-pt">Nosso processo inteligente de 6 etapas cria uma bola de neve de tráfego orgânico que cresce para sempre</span>
-                    <span class="lang-en">Our intelligent 6-step process creates an organic traffic snowball that grows forever</span>
+                    Our intelligent 6-step process creates an organic traffic snowball that grows forever. Works with YouTube and soon Reddit and LinkedIn.
                 </p>
             </div>
             
@@ -709,72 +677,60 @@
                 <div class="process-step">
                     <div class="process-number">1</div>
                     <h3 class="process-title">
-                        <span class="lang-pt">Treine uma vez</span>
-                        <span class="lang-en">Train It Once</span>
+                        Train It Once
                     </h3>
                     <p class="process-description">
-                        <span class="lang-pt">O Liftlio aprende sobre seu produto em segundos</span>
-                        <span class="lang-en">Liftlio learns about your product in seconds</span>
+                        Liftlio learns about your product in seconds
                     </p>
                 </div>
                 
                 <div class="process-step">
                     <div class="process-number">2</div>
                     <h3 class="process-title">
-                        <span class="lang-pt">Análise de Vídeos</span>
-                        <span class="lang-en">Video Analysis</span>
+                        Video Analysis
                     </h3>
                     <p class="process-description">
-                        <span class="lang-pt">IA assiste vídeos e identifica tópicos-chave, encontrando momentos perfeitos para referenciar</span>
-                        <span class="lang-en">AI watches videos and identifies key topics, finding perfect moments to reference</span>
+                        AI watches videos and identifies key topics, finding perfect moments to reference
                     </p>
                 </div>
                 
                 <div class="process-step">
                     <div class="process-number">3</div>
                     <h3 class="process-title">
-                        <span class="lang-pt">Detecção de Leads</span>
-                        <span class="lang-en">Lead Detection</span>
+                        Lead Detection
                     </h3>
                     <p class="process-description">
-                        <span class="lang-pt">Identifica comentários de potenciais clientes fazendo perguntas ou buscando soluções</span>
-                        <span class="lang-en">Identifies comments from potential customers asking questions or seeking solutions</span>
+                        Identifies comments from potential customers asking questions or seeking solutions
                     </p>
                 </div>
                 
                 <div class="process-step">
                     <div class="process-number">4</div>
                     <h3 class="process-title">
-                        <span class="lang-pt">Criação de Valor</span>
-                        <span class="lang-en">Value Creation</span>
+                        Value Creation
                     </h3>
                     <p class="process-description">
-                        <span class="lang-pt">Gera comentários específicos e contextualizados que realmente ajudam outros usuários</span>
-                        <span class="lang-en">Generates specific, contextualized comments that genuinely help other users</span>
+                        Generates specific, contextualized comments that genuinely help other users
                     </p>
                 </div>
                 
                 <div class="process-step">
                     <div class="process-number">5</div>
                     <h3 class="process-title">
-                        <span class="lang-pt">Diversificação Inteligente</span>
-                        <span class="lang-en">Smart Diversification</span>
+                        Smart Diversification
                     </h3>
                     <p class="process-description">
-                        <span class="lang-pt">Varia tipos de interação para manter autenticidade e evitar padrões repetitivos</span>
-                        <span class="lang-en">Varies interaction types to maintain authenticity and avoid repetitive patterns</span>
+                        Varies interaction types to maintain authenticity and avoid repetitive patterns
                     </p>
                 </div>
                 
                 <div class="process-step">
                     <div class="process-number">6</div>
                     <h3 class="process-title">
-                        <span class="lang-pt">Crescimento Composto</span>
-                        <span class="lang-en">Compound Growth</span>
+                        Compound Growth
                     </h3>
                     <p class="process-description">
-                        <span class="lang-pt">Quanto mais vídeos comentados, maior a autoridade e visibilidade da sua marca no nicho</span>
-                        <span class="lang-en">The more videos commented, the greater your brand's authority and visibility in the niche</span>
+                        The more videos commented, the greater your brand's authority and visibility in the niche
                     </p>
                 </div>
             </div>
@@ -787,18 +743,16 @@
             <div class="proof-container">
                 <div class="section-header">
                     <h2 class="section-title">
-                        <span class="lang-pt">Veja o Liftlio em ação com seu produto</span>
-                        <span class="lang-en">See Liftlio in action with your product</span>
+                        See Liftlio in action with your product
                     </h2>
                     <p class="section-description">
-                        <span class="lang-pt">Teste grátis. Sem cadastro. Veja uma simulação real agora.</span>
-                        <span class="lang-en">Free trial. No signup. See a real simulation now.</span>
+                        Free trial. No signup. See a real simulation now.
                     </p>
                 </div>
                 
                 <div class="proof-form" id="proof-form">
                     <div style="position:relative;width:100%">
-                        <input type="url" id="website-url" class="url-input" style="padding-right:48px" placeholder="Digite a URL do seu site...">
+                        <input type="url" id="website-url" class="url-input" style="padding-right:48px" placeholder="Enter your website URL...">
                         <div class="url-tooltip-icon" onclick="toggleTooltip()" onmouseenter="showTooltip()" onmouseleave="hideTooltip()">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10"></circle>
@@ -807,13 +761,11 @@
                             </svg>
                         </div>
                         <div class="url-tooltip" id="url-tooltip">
-                            <span class="lang-pt">Para melhores resultados, use uma página com conteúdo detalhado sobre seu produto ou serviço. Landing pages com propostas de valor claras funcionam melhor!</span>
-                            <span class="lang-en">For best results, use a page with detailed content about your product or service. Landing pages with clear value propositions work best!</span>
+                            For best results, use a page with detailed content about your product or service. Landing pages with clear value propositions work best!
                         </div>
                     </div>
                     <button class="btn-primary" style="width:100%" onclick="analyzeWebsite()" id="analyze-btn">
-                        <span class="lang-pt">Mostre Como o Liftlio Funciona</span>
-                        <span class="lang-en">Show Me How Liftlio Works</span>
+                        Show Me How Liftlio Works
                     </button>
                     
                     <div id="error-message" style="display:none;color:#ef4444;margin-top:16px;padding:16px;background:rgba(239,68,68,0.1);border-radius:8px"></div>
@@ -831,8 +783,7 @@
                                 <div id="loading-progress" style="height:100%;background:var(--gradient-landing);width:0%;transition:width 0.8s ease-out"></div>
                             </div>
                             <p id="loading-text" style="font-size:18px;color:var(--color-text-primary)">
-                                <span class="lang-pt">Lendo o conteúdo do seu site...</span>
-                                <span class="lang-en">Reading your website content...</span>
+                                Reading your website content...
                             </p>
                         </div>
                     </div>
@@ -849,12 +800,11 @@
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">
-                    <span class="lang-pt">Descubra Tópicos <span class="gradient-text">em Alta</span></span>
-                    <span class="lang-en">Discover <span class="gradient-text">Trending Topics</span></span>
+                    </span>
+                    Discover <span class="gradient-text">Trending Topics</span>
                 </h2>
                 <p class="section-description">
-                    <span class="lang-pt">Tendências em tempo real dos <strong>últimos 30 dias</strong> no YouTube</span>
-                    <span class="lang-en">Real-time trends from the <strong>last 30 days</strong> on YouTube</span>
+                    Real-time trends from the <strong>last 30 days</strong> on YouTube
                 </p>
             </div>
             
@@ -863,8 +813,7 @@
                 <div id="trending-loading" style="width:100%;text-align:center;padding:40px">
                     <div class="spinner" style="margin:0 auto 20px"></div>
                     <p style="color:var(--color-text-secondary)">
-                        <span class="lang-pt">Carregando tendências em tempo real...</span>
-                        <span class="lang-en">Loading real-time trends...</span>
+                        Loading real-time trends...
                     </p>
                 </div>
                 
@@ -874,12 +823,10 @@
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
                             <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
-                                <span class="lang-pt">Menções de Marca no YouTube</span>
-                                <span class="lang-en">YouTube Brand Mentions</span>
+                                YouTube Brand Mentions
                             </h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">
-                                <span class="lang-pt">Análise de Vídeo</span>
-                                <span class="lang-en">Video Analytics</span>
+                                Video Analytics
                             </p>
                         </div>
                         <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
@@ -900,8 +847,7 @@
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>147K</strong></span>
                         <span style="color:#16a34a;font-weight:600">
-                            <span class="lang-pt">Explodindo</span>
-                            <span class="lang-en">Exploding</span>
+                            Exploding
                         </span>
                     </div>
                 </div>
@@ -911,12 +857,10 @@
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
                             <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
-                                <span class="lang-pt">IA para Análise de Vídeo</span>
-                                <span class="lang-en">AI Video Intelligence</span>
+                                AI Video Intelligence
                             </h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">
-                                <span class="lang-pt">Inteligência Artificial</span>
-                                <span class="lang-en">Artificial Intelligence</span>
+                                Artificial Intelligence
                             </p>
                         </div>
                         <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
@@ -937,8 +881,7 @@
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>289K</strong></span>
                         <span style="color:#16a34a;font-weight:600">
-                            <span class="lang-pt">Explodindo</span>
-                            <span class="lang-en">Exploding</span>
+                            Exploding
                         </span>
                     </div>
                 </div>
@@ -948,12 +891,10 @@
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
                             <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
-                                <span class="lang-pt">Geração de Leads por Influencer</span>
-                                <span class="lang-en">Influencer Lead Gen</span>
+                                Influencer Lead Gen
                             </h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">
-                                <span class="lang-pt">Marketing de Influência</span>
-                                <span class="lang-en">Influencer Marketing</span>
+                                Influencer Marketing
                             </p>
                         </div>
                         <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
@@ -974,8 +915,7 @@
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>92K</strong></span>
                         <span style="color:#16a34a;font-weight:600">
-                            <span class="lang-pt">Explodindo</span>
-                            <span class="lang-en">Exploding</span>
+                            Exploding
                         </span>
                     </div>
                 </div>
@@ -988,12 +928,11 @@
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">
-                    <span class="lang-pt">Tópicos em <span style="color:#ef4444">Declínio</span></span>
-                    <span class="lang-en">Topics in <span style="color:#ef4444">Decline</span></span>
+                    </span>
+                    Topics in <span style="color:#ef4444">Decline</span>
                 </h2>
                 <p class="section-description">
-                    <span class="lang-pt">Evite investir em tendências que estão perdendo força</span>
-                    <span class="lang-en">Avoid investing in trends that are losing momentum</span>
+                    Avoid investing in trends that are losing momentum
                 </p>
             </div>
             
@@ -1002,8 +941,7 @@
                 <div id="declining-loading" style="width:100%;text-align:center;padding:40px">
                     <div class="spinner" style="margin:0 auto 20px"></div>
                     <p style="color:var(--color-text-secondary)">
-                        <span class="lang-pt">Carregando tendências em declínio...</span>
-                        <span class="lang-en">Loading declining trends...</span>
+                        Loading declining trends...
                     </p>
                 </div>
                 
@@ -1013,12 +951,10 @@
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
                             <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
-                                <span class="lang-pt">Anúncios Pagos Tradicionais</span>
-                                <span class="lang-en">Traditional Paid Ads</span>
+                                Traditional Paid Ads
                             </h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">
-                                <span class="lang-pt">Publicidade Digital</span>
-                                <span class="lang-en">Digital Advertising</span>
+                                Digital Advertising
                             </p>
                         </div>
                         <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
@@ -1033,8 +969,7 @@
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>432K</strong></span>
                         <span style="color:#b91c1c;font-weight:700">
-                            <span class="lang-pt">Caindo</span>
-                            <span class="lang-en">Declining</span>
+                            Declining
                         </span>
                     </div>
                 </div>
@@ -1044,12 +979,10 @@
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
                             <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
-                                <span class="lang-pt">Marketing de Interrupção</span>
-                                <span class="lang-en">Interruption Marketing</span>
+                                Interruption Marketing
                             </h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">
-                                <span class="lang-pt">Estratégias Antigas</span>
-                                <span class="lang-en">Old Strategies</span>
+                                Old Strategies
                             </p>
                         </div>
                         <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
@@ -1064,8 +997,7 @@
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>189K</strong></span>
                         <span style="color:#b91c1c;font-weight:700">
-                            <span class="lang-pt">Caindo</span>
-                            <span class="lang-en">Declining</span>
+                            Declining
                         </span>
                     </div>
                 </div>
@@ -1075,12 +1007,10 @@
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
                             <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
-                                <span class="lang-pt">Spam de Comentários</span>
-                                <span class="lang-en">Comment Spam</span>
+                                Comment Spam
                             </h3>
                             <p style="font-size:14px;color:var(--color-text-secondary)">
-                                <span class="lang-pt">Táticas Obsoletas</span>
-                                <span class="lang-en">Obsolete Tactics</span>
+                                Obsolete Tactics
                             </p>
                         </div>
                         <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
@@ -1095,8 +1025,7 @@
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>67K</strong></span>
                         <span style="color:#b91c1c;font-weight:700">
-                            <span class="lang-pt">Caindo</span>
-                            <span class="lang-en">Declining</span>
+                            Declining
                         </span>
                     </div>
                 </div>
@@ -1109,12 +1038,11 @@
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">
-                    <span class="lang-pt">O Que Nossos <span class="gradient-text">Clientes Dizem</span></span>
-                    <span class="lang-en">What Our <span class="gradient-text">Customers Say</span></span>
+                    </span>
+                    What Our <span class="gradient-text">Customers Say</span>
                 </h2>
                 <p class="section-description">
-                    <span class="lang-pt">Veja como empresas estão transformando menções em crescimento</span>
-                    <span class="lang-en">See how companies are transforming mentions into growth</span>
+                    See how companies are transforming mentions into growth
                 </p>
             </div>
             
@@ -1123,15 +1051,13 @@
                     <div class="testimonial-card">
                         <div class="stars">★★★★★</div>
                         <p class="testimonial-text">
-                            <span class="lang-pt">"O Liftlio revolucionou nossa estratégia de marketing. Conseguimos identificar e converter leads que antes passavam despercebidos."</span>
-                            <span class="lang-en">"Liftlio revolutionized our marketing strategy. We can identify and convert leads that previously went unnoticed."</span>
+                            "Liftlio revolutionized our marketing strategy. We can identify and convert leads that previously went unnoticed."
                         </p>
                         <div class="testimonial-author">
                             <div class="author-avatar"></div>
                             <div>
                                 <div class="author-name">
-                                    <span class="lang-pt">Ana Silva</span>
-                                    <span class="lang-en">Sarah Johnson</span>
+                                    Sarah Johnson
                                 </div>
                                 <div class="author-role">CMO, TechStart</div>
                             </div>
@@ -1141,15 +1067,13 @@
                     <div class="testimonial-card">
                         <div class="stars">★★★★★</div>
                         <p class="testimonial-text">
-                            <span class="lang-pt">"A análise de sentimentos em tempo real nos ajudou a prevenir várias crises e melhorar nosso atendimento."</span>
-                            <span class="lang-en">"Real-time sentiment analysis helped us prevent several crises and improve our customer service."</span>
+                            "Real-time sentiment analysis helped us prevent several crises and improve our customer service."
                         </p>
                         <div class="testimonial-author">
                             <div class="author-avatar"></div>
                             <div>
                                 <div class="author-name">
-                                    <span class="lang-pt">Carlos Mendes</span>
-                                    <span class="lang-en">Michael Chen</span>
+                                    Michael Chen
                                 </div>
                                 <div class="author-role">CEO, E-commerce Plus</div>
                             </div>
@@ -1159,19 +1083,16 @@
                     <div class="testimonial-card">
                         <div class="stars">★★★★★</div>
                         <p class="testimonial-text">
-                            <span class="lang-pt">"ROI incrível! Em apenas 3 meses, o Liftlio se pagou com os novos clientes que conseguimos."</span>
-                            <span class="lang-en">"Incredible ROI! In just 3 months, Liftlio paid for itself with the new customers we gained."</span>
+                            "Incredible ROI! In just 3 months, Liftlio paid for itself with the new customers we gained."
                         </p>
                         <div class="testimonial-author">
                             <div class="author-avatar"></div>
                             <div>
                                 <div class="author-name">
-                                    <span class="lang-pt">Juliana Costa</span>
-                                    <span class="lang-en">Jessica Miller</span>
+                                    Jessica Miller
                                 </div>
                                 <div class="author-role">
-                                    <span class="lang-pt">Diretora de Vendas</span>
-                                    <span class="lang-en">Sales Director</span>
+                                    Sales Director
                                     , SaaS Co
                                 </div>
                             </div>
@@ -1181,15 +1102,13 @@
                     <div class="testimonial-card">
                         <div class="stars">★★★★★</div>
                         <p class="testimonial-text">
-                            <span class="lang-pt">"Conseguimos reduzir nosso CAC em 70% após implementar o Liftlio. As recomendações orgânicas são muito mais efetivas."</span>
-                            <span class="lang-en">"We reduced our CAC by 70% after implementing Liftlio. Organic recommendations are much more effective."</span>
+                            "We reduced our CAC by 70% after implementing Liftlio. Organic recommendations are much more effective."
                         </p>
                         <div class="testimonial-author">
                             <div class="author-avatar"></div>
                             <div>
                                 <div class="author-name">
-                                    <span class="lang-pt">Ricardo Oliveira</span>
-                                    <span class="lang-en">David Williams</span>
+                                    David Williams
                                 </div>
                                 <div class="author-role">Head of Growth, FinTech Pro</div>
                             </div>
@@ -1199,15 +1118,13 @@
                     <div class="testimonial-card">
                         <div class="stars">★★★★★</div>
                         <p class="testimonial-text">
-                            <span class="lang-pt">"A plataforma é intuitiva e os resultados são impressionantes. Nossa equipe adora trabalhar com o Liftlio."</span>
-                            <span class="lang-en">"The platform is intuitive and the results are impressive. Our team loves working with Liftlio."</span>
+                            "The platform is intuitive and the results are impressive. Our team loves working with Liftlio."
                         </p>
                         <div class="testimonial-author">
                             <div class="author-avatar"></div>
                             <div>
                                 <div class="author-name">
-                                    <span class="lang-pt">Marina Santos</span>
-                                    <span class="lang-en">Emily Anderson</span>
+                                    Emily Anderson
                                 </div>
                                 <div class="author-role">Marketing Manager, EdTech Solutions</div>
                             </div>
@@ -1217,15 +1134,13 @@
                     <div class="testimonial-card">
                         <div class="stars">★★★★★</div>
                         <p class="testimonial-text">
-                            <span class="lang-pt">"O suporte é excepcional e a tecnologia é de ponta. Recomendo para qualquer empresa que busca crescimento orgânico."</span>
-                            <span class="lang-en">"The support is exceptional and the technology is cutting-edge. I recommend it to any company seeking organic growth."</span>
+                            "The support is exceptional and the technology is cutting-edge. I recommend it to any company seeking organic growth."
                         </p>
                         <div class="testimonial-author">
                             <div class="author-avatar"></div>
                             <div>
                                 <div class="author-name">
-                                    <span class="lang-pt">Pedro Almeida</span>
-                                    <span class="lang-en">Robert Taylor</span>
+                                    Robert Taylor
                                 </div>
                                 <div class="author-role">VP Marketing, CloudTech</div>
                             </div>
@@ -1241,162 +1156,139 @@
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">
-                    <span class="lang-pt">Preços Simples, <span class="gradient-text">Resultados Poderosos</span></span>
-                    <span class="lang-en">Simple Pricing, <span class="gradient-text">Powerful Results</span></span>
+                    </span>
+                    Simple Pricing, <span class="gradient-text">Powerful Results</span>
                 </h2>
                 <p class="section-description">
-                    <span class="lang-pt">Escolha o plano perfeito para suas necessidades</span>
-                    <span class="lang-en">Choose the perfect plan for your monitoring needs</span>
+                    Choose the perfect plan for your monitoring needs
                 </p>
             </div>
             
             <div class="pricing-grid">
                 <div class="pricing-card">
                     <h3 class="pricing-plan">
-                        <span class="lang-pt">Inicial</span>
-                        <span class="lang-en">Starter</span>
+                        Starter
                     </h3>
                     <div class="pricing-price">
-                        <span class="lang-pt">R$</span>
-                        <span class="lang-en">$</span>49
+                        $49
                         <span>
-                            <span class="lang-pt">/mês</span>
-                            <span class="lang-en">/month</span>
+                            /month
                         </span>
                     </div>
                     <p class="pricing-description">
-                        <span class="lang-pt">Perfeito para começar</span>
-                        <span class="lang-en">Perfect to get started</span>
+                        Perfect for getting started
                     </p>
                     <ul class="pricing-features">
                         <li class="pricing-feature">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="lang-pt">75 menções à marca mensalmente</span>
-                            <span class="lang-en">75 brand mentions monthly</span>
+                            75 brand mentions monthly
                         </li>
                         <li class="pricing-feature">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="lang-pt">em discussões de alto engajamento</span>
-                            <span class="lang-en">in high-engagement discussions</span>
+                            in high-engagement discussions
                         </li>
                         <li class="pricing-feature">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="lang-pt">10 perguntas sobre IA da Liftlio por mês</span>
-                            <span class="lang-en">10 Liftlio AI questions per month</span>
+                            10 Liftlio AI questions per month
                         </li>
                         <li class="pricing-feature">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="lang-pt">Monitoramento de tópicos em alta</span>
-                            <span class="lang-en">Trending topics monitoring</span>
+                            Trending topics monitoring
                         </li>
                     </ul>
                     <button class="btn-primary" style="width:100%" onclick="navigateToPage('/checkout'); return false;">
-                        <span class="lang-pt">Começar Agora</span>
-                        <span class="lang-en">Get Started Now</span>
+                        Get Started Now
                     </button>
                 </div>
                 
                 <div class="pricing-card featured">
                     <div class="pricing-badge">⭐ 
-                        <span class="lang-pt">Mais Popular</span>
-                        <span class="lang-en">Most Popular</span>
+                        Most Popular
                     </div>
                     <h3 class="pricing-plan">
-                        <span class="lang-pt">Crescimento</span>
-                        <span class="lang-en">Growth</span>
+                        Growth
                     </h3>
                     <div class="pricing-price">
-                        <span class="lang-pt">R$</span>
-                        <span class="lang-en">$</span>99
+                        $99
                         <span>
-                            <span class="lang-pt">/mês</span>
-                            <span class="lang-en">/month</span>
+                            /month
                         </span>
                     </div>
                     <p class="pricing-description">
-                        <span class="lang-pt">Mais popular</span>
-                        <span class="lang-en">Most popular</span>
+                        Most popular
                     </p>
                     <ul class="pricing-features">
                         <li class="pricing-feature">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="lang-pt">200 menções de marca por mês</span>
-                            <span class="lang-en">200 brand mentions per month</span>
+                            200 brand mentions per month
                         </li>
                         <li class="pricing-feature">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="lang-pt">com segmentação avançada</span>
-                            <span class="lang-en">with advanced targeting</span>
+                            with advanced targeting
                         </li>
                         <li class="pricing-feature">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="lang-pt">Análises detalhadas</span>
-                            <span class="lang-en">Detailed analytics</span>
+                            Detailed analytics
                         </li>
                         <li class="pricing-feature">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="lang-pt">Fluxos de trabalho de aprovação</span>
-                            <span class="lang-en">Approval workflows</span>
+                            Approval workflows
                         </li>
                         <li class="pricing-feature">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="lang-pt">30 perguntas sobre a Liftlio AI por mês</span>
-                            <span class="lang-en">30 Liftlio AI questions per month</span>
+                            30 Liftlio AI questions per month
                         </li>
                         <li class="pricing-feature">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="lang-pt">Monitoramento de tópicos em alta</span>
-                            <span class="lang-en">Trending topics monitoring</span>
+                            Trending topics monitoring
                         </li>
                     </ul>
                     <button class="btn-primary" style="width:100%" onclick="navigateToPage('/checkout'); return false;">
-                        <span class="lang-pt">Começar Agora</span>
-                        <span class="lang-en">Get Started Now</span>
+                        Get Started Now
                     </button>
                 </div>
                 
                 <div class="pricing-card">
                     <h3 class="pricing-plan">
-                        <span class="lang-pt">Escala</span>
-                        <span class="lang-en">Scale</span>
+                        Scale
                     </h3>
                     <div class="pricing-price">
-                        <span class="lang-pt">R$</span>
-                        <span class="lang-en">$</span>199
+                        $199
                         <span>
-                            <span class="lang-pt">/mês</span>
-                            <span class="lang-en">/month</span>
+                            /month
                         </span>
                     </div>
                     <p class="pricing-description">
-                        <span class="lang-pt">Para grandes equipes</span>
-                        <span class="lang-en">For large teams</span>
+                        For large teams
                     </p>
                     <ul class="pricing-features">
                         <li class="pricing-feature">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="lang-pt">450 menções à marca por mês</span>
-                            <span class="lang-en">450 brand mentions per month</span>
+                            450 brand mentions per month
                         </li>
                         <li class="pricing-feature">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="lang-pt">com personalização completa</span>
-                            <span class="lang-en">with full customization</span>
+                            with full customization
                         </li>
                         <li class="pricing-feature">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="lang-pt">100 perguntas sobre a Liftlio AI por mês</span>
-                            <span class="lang-en">100 Liftlio AI questions per month</span>
+                            100 Liftlio AI questions per month
                         </li>
                         <li class="pricing-feature">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="lang-pt">Monitoramento de tópicos em alta</span>
-                            <span class="lang-en">Trending topics monitoring</span>
+                            Detailed analytics
+                        </li>
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Approval workflows
+                        </li>
+                        <li class="pricing-feature">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Trending topics monitoring
                         </li>
                     </ul>
                     <button class="btn-primary" style="width:100%" onclick="navigateToPage('/checkout'); return false;">
-                        <span class="lang-pt">Começar Agora</span>
-                        <span class="lang-en">Get Started Now</span>
+                        Get Started Now
                     </button>
                 </div>
             </div>
@@ -1407,17 +1299,15 @@
     <section class="cta-section">
         <div class="cta-content">
             <h2 class="cta-title">
-                <span class="lang-pt">A confiança vence. <span class="gradient-text">Deixe a IA</span> conquistar isso para você.</span>
-                <span class="lang-en">Trust wins. <span class="gradient-text">Let AI</span> earn it for you.</span>
+                conquistar isso para você.</span>
+                Trust wins. <span class="gradient-text">Let AI earn it for you.</span>
             </h2>
             <p class="cta-description">
-                <span class="lang-pt">Todos os dias acontecem conversas em que seus clientes ideais pedem recomendações. Amanhã, mais discussões começarão. Mais perguntas serão feitas. Mais decisões de compra serão influenciadas pelas recomendações dos colegas. A questão é: sua marca fará parte dessas conversas?</span>
-                <span class="lang-en">Every day, conversations happen where your ideal customers ask for recommendations. Tomorrow, more discussions will start. More questions will be asked. More buying decisions will be influenced by peer recommendations. The question is: will your brand be part of those conversations?</span>
+                Every day, conversations happen where your ideal customers ask for recommendations. Tomorrow, more discussions will start. More questions will be asked. More buying decisions will be influenced by peer recommendations. The question is: will your brand be part of those conversations?
             </p>
             <a href="#" onclick="navigateToPage('/checkout'); return false;" class="btn-primary" style="font-size:18px;padding:20px 40px;margin:0 auto">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                <span class="lang-pt">Experimente o Liftlio</span>
-                <span class="lang-en">Try Liftlio</span>
+                Try Liftlio
             </a>
         </div>
     </section>
@@ -1432,45 +1322,34 @@
                         LIFTLIO
                     </div>
                     <p class="footer-description">
-                        <span class="lang-pt">Plataforma com IA para escalar recomendações boca a boca sem pagar por anúncios.</span>
-                        <span class="lang-en">AI-powered platform to scale word-of-mouth recommendations without paying for ads.</span>
+                        AI-powered platform to scale word-of-mouth recommendations without paying for ads.
                     </p>
                 </div>
                 
                 <div class="footer-column">
                     <h3>
-                        <span class="lang-pt">Produto</span>
-                        <span class="lang-en">Product</span>
+                        Product
                     </h3>
                     <ul class="footer-links">
                         <li><a href="#features">
-                            <span class="lang-pt">Recursos</span>
-                            <span class="lang-en">Features</span>
+                            Features
                         </a></li>
                         <li><a href="#pricing">
-                            <span class="lang-pt">Preços</span>
-                            <span class="lang-en">Pricing</span>
-                        </a></li>
-                        <li><a href="#integrations">
-                            <span class="lang-pt">Integrações</span>
-                            <span class="lang-en">Integrations</span>
+                            Pricing
                         </a></li>
                         <li><a href="#api">
-                            <span class="lang-pt">Documentação API</span>
-                            <span class="lang-en">API Documentation</span>
+                            API Documentation
                         </a></li>
                     </ul>
                 </div>
                 
                 <div class="footer-column">
                     <h3>
-                        <span class="lang-pt">Empresa</span>
-                        <span class="lang-en">Company</span>
+                        Company
                     </h3>
                     <ul class="footer-links">
                         <li><a href="/about" onclick="navigateToPage('/about'); return false;">
-                            <span class="lang-pt">Sobre</span>
-                            <span class="lang-en">About</span>
+                            About
                         </a></li>
                     </ul>
                 </div>
@@ -1479,16 +1358,13 @@
                     <h3>Legal</h3>
                     <ul class="footer-links">
                         <li><a href="/privacy" onclick="navigateToPage('/privacy'); return false;">
-                            <span class="lang-pt">Política de Privacidade</span>
-                            <span class="lang-en">Privacy Policy</span>
+                            Privacy Policy
                         </a></li>
                         <li><a href="/terms" onclick="navigateToPage('/terms'); return false;">
-                            <span class="lang-pt">Termos de Serviço</span>
-                            <span class="lang-en">Terms of Service</span>
+                            Terms of Service
                         </a></li>
                         <li><a href="/security" onclick="navigateToPage('/security'); return false;">
-                            <span class="lang-pt">Segurança</span>
-                            <span class="lang-en">Security</span>
+                            Security
                         </a></li>
                     </ul>
                 </div>
@@ -1496,8 +1372,7 @@
             
             <div class="footer-bottom">
                 <p>
-                    <span class="lang-pt">© 2025 Liftlio. Todos os direitos reservados.</span>
-                    <span class="lang-en">© 2025 Liftlio. All rights reserved.</span>
+                    © 2025 Liftlio. All rights reserved.
                 </p>
             </div>
         </div>
@@ -1505,14 +1380,6 @@
     
     <!-- JavaScript -->
     <script>
-        // Prevent CLS - Set initial styles immediately
-        (function() {
-            // Hide language elements that don't match current language
-            const lang = document.documentElement.getAttribute('data-lang') || 'pt';
-            const style = document.createElement('style');
-            style.textContent = lang === 'pt' ? '.lang-en{display:none!important}' : '.lang-pt{display:none!important}';
-            document.head.appendChild(style);
-        })();
         // Scroll handler
         window.addEventListener('scroll', function() {
             const header = document.getElementById('header');
@@ -1543,32 +1410,6 @@
             if (dashboardImg) {
                 updateDashboardImage(newTheme);
             }
-        }
-        
-        // Language toggle
-        function toggleLanguage() {
-            const currentLang = document.documentElement.getAttribute('data-lang');
-            const newLang = currentLang === 'pt' ? 'en' : 'pt';
-            document.documentElement.setAttribute('data-lang', newLang);
-            document.documentElement.lang = newLang === 'pt' ? 'pt-BR' : 'en-US';
-            localStorage.setItem('language', newLang);
-            
-            // Update language indicators
-            document.querySelectorAll('.lang-indicator').forEach(el => {
-                el.textContent = newLang.toUpperCase();
-            });
-            
-            // Update page title and meta description
-            if (newLang === 'pt') {
-                document.title = 'Liftlio - Scale Recomendações Boca a Boca sem Pagar por Anúncios';
-                document.querySelector('meta[name="description"]').content = 'A Liftlio utiliza IA para fazer com que sua marca seja mencionada em conversas genuínas na web, permitindo que seu produto seja descoberto organicamente em grande escala.';
-            } else {
-                document.title = 'Liftlio - Scale Word-of-Mouth Recommendations Without Paying for Ads';
-                document.querySelector('meta[name="description"]').content = 'Liftlio utilizes AI to get your brand mentioned in genuine conversations across the web, allowing your product to be discovered organically at scale.';
-            }
-            
-            // Update language visibility
-            updateLanguageVisibility();
         }
         
         // Update dashboard image for theme changes
@@ -1646,28 +1487,8 @@
             el.style.display = currentTheme === 'dark' ? 'block' : 'none';
         });
         
-        // Initialize language indicators
-        const currentLang = document.documentElement.getAttribute('data-lang');
-        document.querySelectorAll('.lang-indicator').forEach(el => {
-            el.textContent = currentLang.toUpperCase();
-        });
-        
         // Initialize dashboard image based on current theme and environment
         updateDashboardImage(currentTheme);
-        
-        // Define updateLanguageVisibility function
-        function updateLanguageVisibility() {
-            const lang = document.documentElement.getAttribute('data-lang') || 'pt';
-            document.querySelectorAll('.lang-pt').forEach(el => {
-                el.style.display = lang === 'pt' ? '' : 'none';
-            });
-            document.querySelectorAll('.lang-en').forEach(el => {
-                el.style.display = lang === 'en' ? '' : 'none';
-            });
-        }
-        
-        // Update language visibility without CLS
-        updateLanguageVisibility();
         
         // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -1728,7 +1549,6 @@
         
         // Create trending topic card
         function createTrendingCard(trend, index) {
-            const lang = document.documentElement.getAttribute('data-lang');
             const category = categoryMap[trend.category] || { pt: trend.category, en: trend.category };
             
             return `
@@ -1736,7 +1556,7 @@
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
                             <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h3>
-                            <p style="font-size:14px;color:var(--color-text-secondary)">${category[lang]}</p>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">${category.en}</p>
                         </div>
                         <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
                             +${trend.growth}%
@@ -1756,8 +1576,7 @@
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>${formatVolume(trend.volume)}</strong></span>
                         <span style="color:#16a34a;font-weight:600">
-                            <span class="lang-pt">Explodindo</span>
-                            <span class="lang-en">Exploding</span>
+                            Exploding
                         </span>
                     </div>
                 </div>
@@ -1817,8 +1636,7 @@
                     container.innerHTML = `
                         <div style="width:100%;text-align:center;padding:40px">
                             <p style="color:var(--color-text-secondary)">
-                                <span class="lang-pt">Nenhuma tendência disponível no momento</span>
-                                <span class="lang-en">No trends available at the moment</span>
+                                No trends available at the moment
                             </p>
                         </div>
                     `;
@@ -1848,7 +1666,7 @@
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
                         <div>
                             <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h3>
-                            <p style="font-size:14px;color:var(--color-text-secondary)">${category[lang]}</p>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">${category.en}</p>
                         </div>
                         <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
                             -${declinePercentage}%
@@ -1862,8 +1680,7 @@
                     <div style="display:flex;justify-content:space-between;font-size:14px">
                         <span style="color:var(--color-text-secondary)">Volume: <strong>${formatVolume(trend.volume)}</strong></span>
                         <span style="color:#b91c1c;font-weight:700">
-                            <span class="lang-pt">Caindo</span>
-                            <span class="lang-en">Declining</span>
+                            Declining
                         </span>
                     </div>
                 </div>
@@ -1929,8 +1746,7 @@
                     container.innerHTML = `
                         <div style="width:100%;text-align:center;padding:40px">
                             <p style="color:var(--color-text-secondary)">
-                                <span class="lang-pt">Nenhuma tendência em declínio no momento</span>
-                                <span class="lang-en">No declining trends at the moment</span>
+                                No declining trends at the moment
                             </p>
                         </div>
                     `;
@@ -2238,8 +2054,7 @@
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
                         <div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">🎬</div>
                         <h3 style="font-size:18px;font-weight:700;margin:0">
-                            <span class="lang-pt">Vídeo Encontrado</span>
-                            <span class="lang-en">Video Found</span>
+                            Video Found
                         </h3>
                     </div>
                     <div style="font-size:16px;font-weight:600;margin-bottom:12px">${simulation.video.title}</div>
@@ -2255,8 +2070,7 @@
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
                         <div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">👤</div>
                         <h3 style="font-size:18px;font-weight:700;margin:0">
-                            <span class="lang-pt">Comentário de Cliente Potencial</span>
-                            <span class="lang-en">Potential Customer Comment</span>
+                            Potential Customer Comment
                         </h3>
                     </div>
                     <div style="font-size:16px;line-height:1.6;padding:16px;background:var(--color-background);border-radius:8px;margin-bottom:12px">
@@ -2265,15 +2079,13 @@
                     <div style="display:flex;gap:24px;margin-top:12px">
                         <div style="display:flex;align-items:center;gap:8px">
                             <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
-                                <span class="lang-pt">Pontuação de Lead:</span>
-                                <span class="lang-en">Lead Score:</span>
+                                Lead Score:
                             </span>
                             <span style="font-size:14px;font-weight:600;color:var(--color-primary)">${simulation.lead_comment.lead_score}/10</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:8px">
                             <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
-                                <span class="lang-pt">Sentimento:</span>
-                                <span class="lang-en">Sentiment:</span>
+                                Sentiment:
                             </span>
                             <span style="font-size:14px;font-weight:600;color:var(--color-primary)">
                                 ${lang === 'pt' && simulation.lead_comment.sentiment === 'seeking_solution' ? 
@@ -2292,8 +2104,7 @@
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
                         <div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">🤖</div>
                         <h3 style="font-size:18px;font-weight:700;margin:0">
-                            <span class="lang-pt">Resposta do Liftlio</span>
-                            <span class="lang-en">Liftlio's Response</span>
+                            Liftlio's Response
                         </h3>
                     </div>
                     <div style="font-size:16px;line-height:1.6;padding:16px;background:var(--color-background);border-radius:8px;margin-bottom:12px;border-left:4px solid var(--color-primary)">
@@ -2302,8 +2113,7 @@
                     <div style="display:flex;gap:24px;margin-top:12px">
                         <div style="display:flex;align-items:center;gap:8px">
                             <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
-                                <span class="lang-pt">Sentimento:</span>
-                                <span class="lang-en">Sentiment:</span>
+                                Sentiment:
                             </span>
                             <span style="font-size:14px;font-weight:600;color:var(--color-primary)">
                                 ${Math.round(simulation.liftlio_response.sentiment_score * 100)}%
@@ -2311,8 +2121,7 @@
                         </div>
                         <div style="display:flex;align-items:center;gap:8px">
                             <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
-                                <span class="lang-pt">Relevância:</span>
-                                <span class="lang-en">Relevance:</span>
+                                Relevance:
                             </span>
                             <span style="font-size:14px;font-weight:600;color:var(--color-primary)">
                                 ${Math.round(simulation.liftlio_response.relevance_score * 100)}%

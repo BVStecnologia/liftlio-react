@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { renderIcon } from '../utils/IconHelper';
 import * as FaIcons from 'react-icons/fa';
@@ -94,7 +93,7 @@ const translations = {
       starter: {
         name: 'Inicial',
         description: 'Perfeito para começar',
-        price: 'R$249',
+        price: '$49',
         period: '/mês',
         features: [
           '75 menções à marca mensalmente',
@@ -106,7 +105,7 @@ const translations = {
       growth: {
         name: 'Crescimento',
         description: 'Mais popular',
-        price: 'R$499',
+        price: '$99',
         period: '/mês',
         badge: '⭐ Mais Popular',
         features: [
@@ -114,19 +113,21 @@ const translations = {
           'com segmentação avançada',
           'Análises detalhadas',
           'Fluxos de trabalho de aprovação',
-          '30 perguntas sobre a Liftlio AI por mês',
+          '30 perguntas sobre IA da Liftlio por mês',
           'Monitoramento de tópicos em alta'
         ]
       },
       scale: {
         name: 'Escala',
         description: 'Para grandes equipes',
-        price: 'R$999',
+        price: '$199',
         period: '/mês',
         features: [
           '450 menções à marca por mês',
           'com personalização completa',
-          '100 perguntas sobre a Liftlio AI por mês',
+          '100 perguntas sobre IA da Liftlio por mês',
+          'Análises detalhadas',
+          'Fluxos de trabalho de aprovação',
           'Monitoramento de tópicos em alta'
         ]
       }
@@ -435,9 +436,8 @@ const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, checkSubscription, subscription, checkingSubscription } = useAuth();
-  const { language } = useLanguage();
   const { theme } = useTheme();
-  const t = translations[language as keyof typeof translations];
+  const t = translations.en; // Always use English
   
   // Verificar se está em desenvolvimento
   const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -556,9 +556,7 @@ const CheckoutPage: React.FC = () => {
         
         // Mensagem de erro mais específica
         const errorMessage = data.error || data.message || 'Erro desconhecido';
-        alert(language === 'pt' 
-          ? `Erro ao processar pagamento:\n${errorMessage}\n\nPor favor, verifique os dados e tente novamente.` 
-          : `Error processing payment:\n${errorMessage}\n\nPlease check your information and try again.`);
+        alert(`Error processing payment:\n${errorMessage}\n\nPlease check your information and try again.`);
         setLoading(false);
         return;
       }
@@ -589,18 +587,16 @@ const CheckoutPage: React.FC = () => {
       
     } catch (err) {
       console.error('Erro no checkout:', err);
-      alert(language === 'pt' 
-        ? 'Erro ao criar assinatura. Por favor, tente novamente.' 
-        : 'Error creating subscription. Please try again.');
+      alert('Error creating subscription. Please try again.');
       setLoading(false);
     }
   };
   
   const getPriceValue = (plan: 'starter' | 'growth' | 'scale') => {
     const prices = {
-      starter: language === 'pt' ? 249 : 49,
-      growth: language === 'pt' ? 499 : 99,
-      scale: language === 'pt' ? 999 : 199
+      starter: 49,
+      growth: 99,
+      scale: 199
     };
     return prices[plan];
   };
@@ -709,10 +705,8 @@ const CheckoutPage: React.FC = () => {
                       fontSize: '14px',
                       color: theme.colors.text.secondary
                     }}>
-                      <strong>{language === 'pt' ? 'Modo de teste:' : 'Test mode:'}</strong><br/>
-                      {language === 'pt' 
-                        ? 'Use o cartão: 4111 1111 1111 1111, Data: qualquer futura, CVV: 111'
-                        : 'Use card: 4111 1111 1111 1111, Date: any future, CVV: 111'}
+                      <strong>Test mode:</strong><br/>
+                      Use card: 4111 1111 1111 1111, Date: any future, CVV: 111
                     </div>
                   )}
                 </>
@@ -775,8 +769,8 @@ const CheckoutPage: React.FC = () => {
               <TotalSection>
                 <TotalLabel>{t.total}</TotalLabel>
                 <TotalPrice>
-                  {language === 'pt' ? 'R$' : '$'}{getPriceValue(selectedPlan)}
-                  <span>/{language === 'pt' ? 'mês' : 'month'}</span>
+                  ${getPriceValue(selectedPlan)}
+                  <span>/month</span>
                 </TotalPrice>
               </TotalSection>
               

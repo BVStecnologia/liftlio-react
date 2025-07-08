@@ -2013,8 +2013,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
           {/* Tema Toggle */}
           <ThemeToggle />
           
-          {/* Seletor de idioma */}
-          <LanguageSelector />
+          {/* Seletor de idioma - oculto temporariamente */}
+          <div style={{ display: 'none' }}>
+            <LanguageSelector />
+          </div>
           
           <div ref={userMenuRef} style={{ position: 'relative' }}>
             <UserProfile onClick={() => setShowUserMenu(!showUserMenu)}>
