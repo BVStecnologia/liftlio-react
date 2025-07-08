@@ -464,19 +464,13 @@ const OAuthHandler = () => {
             // Uma vez que o dashboard está envolvido pelo ProcessingWrapper, ele mostrará a tela de carregamento
             console.log('Redirecionando para o dashboard para mostrar o processamento...');
             
-            // Aguardar um momento para garantir que o token foi salvo
-            setTimeout(async () => {
-              // Verificar se temos uma sessão válida antes de redirecionar
-              const { data: { session } } = await supabase.auth.getSession();
-              if (!session) {
-                console.error('Nenhuma sessão encontrada após OAuth. Redirecionando para login...');
-                window.location.replace('/');
-                return;
-              }
-              
-              // Usar replace para garantir que não volte para a página com o código OAuth
-              window.location.replace('/dashboard');
-            }, 1000);
+            // Aguardar um momento para garantir que o token foi salvo e a sessão esteja disponível
+            // Em produção, pode haver mais latência, então aumentamos o delay
+            setTimeout(() => {
+              // Adicionar um parâmetro especial na URL para indicar que acabamos de processar OAuth
+              // Isso ajudará o ProtectedLayout a saber que deve aguardar a sessão carregar
+              window.location.replace('/dashboard?oauth_completed=true');
+            }, 2500);
           } else {
             alert('Erro: Nenhum ID de projeto encontrado para associar a esta integração.');
           }
@@ -577,12 +571,22 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   
   // Effect para garantir que mostramos loading até tudo estar pronto
   useEffect(() => {
+    // Verificar se acabamos de completar OAuth
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthCompleted = urlParams.get('oauth_completed') === 'true';
+    
     // Só remover o loading quando TODAS as condições estiverem resolvidas
     if (!loading && onboardingReady && !isLoading) {
       // Delay maior para garantir que tudo está carregado, especialmente após OAuth
+      // Se acabamos de completar OAuth, aguardar mais tempo para garantir que a sessão carregue
+      const delay = oauthCompleted ? 3000 : 1500;
       const timer = setTimeout(() => {
         setIsInitializing(false);
-      }, 1500);
+        // Limpar o parâmetro oauth_completed da URL
+        if (oauthCompleted) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }, delay);
       return () => clearTimeout(timer);
     }
   }, [loading, onboardingReady, isLoading]);
