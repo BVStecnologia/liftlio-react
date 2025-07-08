@@ -617,6 +617,27 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     );
   }
   
+  // Verificar se há parâmetros OAuth na URL antes de redirecionar
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasOAuthCode = urlParams.get('code') !== null;
+  const hasOAuthState = urlParams.get('state') !== null;
+  
+  // Se temos código OAuth na URL, NÃO redirecionar - deixar o OAuthHandler processar
+  if (hasOAuthCode && hasOAuthState) {
+    console.log('[ProtectedLayout] OAuth em andamento, aguardando processamento...');
+    return (
+      <div style={{
+        height: '100vh',
+        backgroundColor: getThemeBackground(),
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <LoadingDataIndicator />
+      </div>
+    );
+  }
+  
   // Redirecionar para a página inicial (login) se não estiver autenticado
   if (!user) {
     return <Navigate to="/" replace />;
