@@ -5,6 +5,7 @@ import * as FaIcons from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
 import { useLanguage } from '../context/LanguageContext';
+import { supabase } from '../lib/supabaseClient';
 
 // Animações
 const fadeIn = keyframes`
@@ -414,73 +415,73 @@ const FloatingAgent: React.FC = () => {
     }, 1000 + Math.random() * 1000);
   }, [isOpen]);
 
-  // Processar comando do usuário
-  const processUserInput = useCallback((input: string) => {
-    const lowerInput = input.toLowerCase();
+  // Processar comando do usuário usando Claude
+  const processUserInput = useCallback(async (input: string) => {
+    setIsTyping(true);
+    
+    try {
+      // Prepare context
+      const context = {
+        currentPage: location.pathname,
+        currentProject: currentProject ? {
+          name: currentProject.name,
+          status: currentProject.status
+        } : null,
+        availablePages: ['/dashboard', '/monitoring', '/mentions', '/settings', '/integrations']
+      };
 
-    // Comandos de navegação
-    if (lowerInput.includes('dashboard') || lowerInput.includes('painel')) {
-      addAgentMessage('Taking you to the Dashboard...');
-      setTimeout(() => navigate('/dashboard'), 1500);
-      return;
+      // Call edge function
+      const { data, error } = await supabase.functions.invoke('agente-liftlio', {
+        body: {
+          prompt: input,
+          context: JSON.stringify(context)
+        }
+      });
+
+      if (error) throw error;
+
+      // Get response text
+      const responseText = data.responseText || data.content?.[0]?.text || 'I apologize, but I couldn\'t process your request.';
+      
+      // Add agent message
+      addAgentMessage(responseText);
+
+      // Handle navigation if detected
+      if (data.navigationIntent) {
+        setTimeout(() => {
+          navigate(data.navigationIntent);
+        }, 1500);
+      }
+
+    } catch (error) {
+      console.error('Error calling Claude:', error);
+      
+      // Fallback to basic responses for common queries
+      const lowerInput = input.toLowerCase();
+      
+      // Basic navigation fallback
+      if (lowerInput.includes('dashboard')) {
+        addAgentMessage('Taking you to the Dashboard...');
+        setTimeout(() => navigate('/dashboard'), 1500);
+      } else if (lowerInput.includes('monitoring')) {
+        addAgentMessage('Opening the Monitoring page...');
+        setTimeout(() => navigate('/monitoring'), 1500);
+      } else if (lowerInput.includes('mentions')) {
+        addAgentMessage('Showing your Mentions...');
+        setTimeout(() => navigate('/mentions'), 1500);
+      } else if (lowerInput.includes('settings')) {
+        addAgentMessage('Accessing Settings...');
+        setTimeout(() => navigate('/settings'), 1500);
+      } else if (lowerInput.includes('integrations')) {
+        addAgentMessage('Opening Integrations...');
+        setTimeout(() => navigate('/integrations'), 1500);
+      } else {
+        addAgentMessage('I\'m having trouble connecting to my AI service. Please try again later.');
+      }
+    } finally {
+      setIsTyping(false);
     }
-
-    if (lowerInput.includes('monitoramento') || lowerInput.includes('monitor')) {
-      addAgentMessage('Opening the Monitoring page...');
-      setTimeout(() => navigate('/monitoring'), 1500);
-      return;
-    }
-
-    if (lowerInput.includes('menç')) {
-      addAgentMessage('Showing your Mentions...');
-      setTimeout(() => navigate('/mentions'), 1500);
-      return;
-    }
-
-    if (lowerInput.includes('configur') || lowerInput.includes('settings')) {
-      addAgentMessage('Accessing Settings...');
-      setTimeout(() => navigate('/settings'), 1500);
-      return;
-    }
-
-    if (lowerInput.includes('integr')) {
-      addAgentMessage('Opening Integrations...');
-      setTimeout(() => navigate('/integrations'), 1500);
-      return;
-    }
-
-    // Perguntas sobre o Liftlio
-    if (lowerInput.includes('o que') && lowerInput.includes('liftlio')) {
-      addAgentMessage('Liftlio is a video monitoring and sentiment analysis platform. We help you track your video performance and understand your audience sentiment!');
-      return;
-    }
-
-    if (lowerInput.includes('como') && (lowerInput.includes('funciona') || lowerInput.includes('usar'))) {
-      addAgentMessage('Liftlio monitors your YouTube videos, analyzes comments, and provides valuable insights about audience sentiment. You can see detailed metrics on the Dashboard and track mentions in real-time!');
-      return;
-    }
-
-    if (lowerInput.includes('projeto') && currentProject) {
-      addAgentMessage(`You're working on the "${currentProject.name}" project. This project is ${currentProject.status === '6' ? 'active and processing data' : 'being configured'}.`);
-      return;
-    }
-
-    if (lowerInput.includes('ajuda') || lowerInput.includes('help')) {
-      addAgentMessage('I can help you with:\n• Navigate between pages\n• Explain features\n• Show project information\n• Answer questions about Liftlio\n\nWhat would you like to know?');
-      return;
-    }
-
-    // Respostas gerais
-    const generalResponses = [
-      'Interesting! Tell me more about that.',
-      'I see. How can I help with that?',
-      'Great question! Let me think about how I can help.',
-      'Hmm, I\'m not sure I understood. Could you rephrase that?',
-      'I\'m here to help! What else do you need?'
-    ];
-
-    addAgentMessage(generalResponses[Math.floor(Math.random() * generalResponses.length)]);
-  }, [addAgentMessage, navigate, currentProject]);
+  }, [addAgentMessage, navigate, currentProject, location.pathname]);
 
   // Enviar mensagem
   const handleSendMessage = useCallback(() => {
