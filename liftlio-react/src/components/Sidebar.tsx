@@ -225,9 +225,7 @@ const NavContainer = styled.nav`
 const UserSection = styled.div`
   padding: 16px;
   border-top: 1px solid ${props => props.theme.components.sidebar.border};
-  background: ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.02)' 
-    : 'rgba(0, 0, 0, 0.02)'};
+  background: transparent;
   margin-top: auto;
 `;
 
@@ -250,6 +248,17 @@ const UserAvatar = styled.div`
   font-size: 18px;
   font-weight: 600;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  
+  span {
+    text-transform: uppercase;
+  }
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
 `;
 
 const UserDetails = styled.div`
@@ -260,7 +269,7 @@ const UserDetails = styled.div`
 const UserName = styled.div`
   font-size: 14px;
   font-weight: 600;
-  color: ${props => props.theme.colors.text.primary};
+  color: rgba(255, 255, 255, 0.95);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -268,7 +277,7 @@ const UserName = styled.div`
 
 const UserEmail = styled.div`
   font-size: 12px;
-  color: ${props => props.theme.colors.text.secondary};
+  color: rgba(255, 255, 255, 0.7);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -283,11 +292,9 @@ const UserButton = styled.button`
   flex: 1;
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid ${props => props.theme.components.sidebar.border};
-  background: ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.05)' 
-    : 'rgba(0, 0, 0, 0.05)'};
-  color: ${props => props.theme.colors.text.secondary};
+  border: 1px solid transparent;
+  background: transparent;
+  color: ${props => props.theme.components.sidebar.text};
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -297,10 +304,8 @@ const UserButton = styled.button`
   gap: 6px;
 
   &:hover {
-    background: ${props => props.theme.name === 'dark' 
-      ? 'rgba(255, 255, 255, 0.1)' 
-      : 'rgba(0, 0, 0, 0.1)'};
-    color: ${props => props.theme.colors.text.primary};
+    background: ${props => props.theme.components.sidebar.itemHover};
+    color: ${props => props.theme.components.sidebar.textActive};
   }
 
   svg {
@@ -1399,7 +1404,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
           <UserSection>
             <UserInfo>
               <UserAvatar>
-                {user?.email?.charAt(0).toUpperCase() || 'U'}
+                <span>
+                  {(user?.user_metadata?.full_name || user?.email || 'U').charAt(0)}
+                </span>
               </UserAvatar>
               <UserDetails>
                 <UserName>{user?.user_metadata?.full_name || 'User'}</UserName>
