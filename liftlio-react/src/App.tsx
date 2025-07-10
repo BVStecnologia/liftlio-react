@@ -641,7 +641,9 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   
   // Redirecionar para a página inicial (login) se não estiver autenticado
   if (!user) {
-    return <Navigate to="/" replace />;
+    // Redirecionar diretamente para a landing page HTML
+    window.location.href = '/landing-page.html';
+    return null;
   }
   
   // Se chegou aqui, o usuário está autenticado e o carregamento foi concluído
