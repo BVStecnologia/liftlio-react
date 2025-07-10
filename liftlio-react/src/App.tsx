@@ -37,6 +37,7 @@ const SubscriptionWarningBanner = lazy(() => import('./components/SubscriptionWa
 const ProcessingWrapper = lazy(() => import('./components/ProcessingWrapper'));
 const UrlDataTest = lazy(() => import('./components/UrlDataTest'));
 const SubscriptionGate = lazy(() => import('./components/SubscriptionGate'));
+const FloatingAgent = lazy(() => import('./components/FloatingAgent'));
 
 const AppContainer = styled.div`
   display: flex;
@@ -779,6 +780,9 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
           <FloatingMenuButton onClick={toggleSidebar}>
             <IconComponent icon={FaBars} />
           </FloatingMenuButton>
+          
+          {/* Floating Agent Widget */}
+          <FloatingAgent />
         </AppContainer>
       } />
     </Routes>

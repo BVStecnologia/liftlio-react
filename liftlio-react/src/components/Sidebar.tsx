@@ -8,6 +8,7 @@ import { useProject } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -20,7 +21,7 @@ const slideIn = keyframes`
 `;
 
 const SidebarContainer = styled.aside<{ isOpen: boolean }>`
-  width: 240px;
+  width: 249px;
   height: 100%;
   background: ${props => props.theme.components.sidebar.bg};
   color: ${props => props.theme.components.sidebar.text};
@@ -219,6 +220,92 @@ const NavContainer = styled.nav`
   flex: 1;
   padding: 0;
   margin-top: 10px;
+`;
+
+const UserSection = styled.div`
+  padding: 16px;
+  border-top: 1px solid ${props => props.theme.components.sidebar.border};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.02)' 
+    : 'rgba(0, 0, 0, 0.02)'};
+  margin-top: auto;
+`;
+
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+`;
+
+const UserAvatar = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, ${props => props.theme.colors.accent.primary}, ${props => props.theme.colors.accent.secondary});
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  flex-shrink: 0;
+`;
+
+const UserDetails = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const UserName = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const UserEmail = styled.div`
+  font-size: 12px;
+  color: ${props => props.theme.colors.text.secondary};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const UserActions = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const UserButton = styled.button`
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid ${props => props.theme.components.sidebar.border};
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(255, 255, 255, 0.05)' 
+    : 'rgba(0, 0, 0, 0.05)'};
+  color: ${props => props.theme.colors.text.secondary};
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  &:hover {
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(255, 255, 255, 0.1)' 
+      : 'rgba(0, 0, 0, 0.1)'};
+    color: ${props => props.theme.colors.text.primary};
+  }
+
+  svg {
+    font-size: 14px;
+  }
 `;
 
 // Removed ProjectSelector from Sidebar as it's now in Header
@@ -1095,6 +1182,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
   const { currentProject } = useProject();
   const { theme } = useTheme();
   const { t, language } = useLanguage();
+  const { user, signOut } = useAuth();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   
   // Navigation items with translations
@@ -1305,39 +1393,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
               </NavItem>
             ))}
             
-            <PremiumSection>
-              <PremiumBadge onClick={handleRefreshInsights}>
-                <div className="rocket-path"></div>
-                <PremiumTitle>
-                  <IconComponent icon={FaIcons.FaCrown} />
-                  Liftlio Premium
-                  {isLoading && <LoadingIndicator />}
-                </PremiumTitle>
-                
-                <InsightContent>
-                  {insights.map((insight, index) => (
-                    <InsightText 
-                      key={index} 
-                      active={index === currentInsight} 
-                      typing={false}
-                      dangerouslySetInnerHTML={{ 
-                        __html: getInsightText(index)
-                          .replace(/<MetricValue>(.*?)<\/MetricValue>/g, '<span class="metric-value">$1</span>')
-                          .replace(/<Highlight>(.*?)<\/Highlight>/g, '<span class="highlight">$1</span>')
-                          // No typewriter effect - just show the text
-                      }}
-                    />
-                  ))}
-                </InsightContent>
-                
-                <InsightDots>
-                  {insights.map((_, index) => (
-                    <Dot key={index} active={index === currentInsight} />
-                  ))}
-                </InsightDots>
-              </PremiumBadge>
-            </PremiumSection>
           </NavContainer>
+          
+          {/* User Section */}
+          <UserSection>
+            <UserInfo>
+              <UserAvatar>
+                {user?.email?.charAt(0).toUpperCase() || 'U'}
+              </UserAvatar>
+              <UserDetails>
+                <UserName>{user?.user_metadata?.full_name || 'User'}</UserName>
+                <UserEmail>{user?.email || ''}</UserEmail>
+              </UserDetails>
+            </UserInfo>
+            
+            <UserActions>
+              <UserButton onClick={signOut} style={{ width: '100%' }}>
+                <IconComponent icon={FaIcons.FaSignOutAlt} />
+                Sign Out
+              </UserButton>
+            </UserActions>
+          </UserSection>
         </SidebarContainer>
       </IconContext.Provider>
     </>
