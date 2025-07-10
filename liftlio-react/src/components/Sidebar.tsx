@@ -1103,6 +1103,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
     { path: '/mentions', label: t('nav.mentions'), icon: 'FaComments' },
     { path: '/monitoring', label: t('nav.monitoring'), icon: 'FaYoutube' },
     { path: '/settings', label: t('nav.settings'), icon: 'FaCog' },
+    { path: '/billing', label: 'Billing', icon: 'FaCreditCard' },
     { path: '/integrations', label: t('nav.integrations'), icon: 'FaPlug' }
   ];
   

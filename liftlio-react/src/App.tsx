@@ -21,6 +21,7 @@ const Overview = lazy(() => import('./pages/Overview'));
 const Monitoring = lazy(() => import('./pages/Monitoring'));
 const Mentions = lazy(() => import('./pages/Mentions'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Billing = lazy(() => import('./pages/Billing'));
 const Integrations = lazy(() => import('./pages/Integrations'));
 const ProjectCreationPage = lazy(() => import('./pages/ProjectCreationPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
@@ -764,6 +765,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
                 <Route path="/monitoring" element={<SubscriptionGate><ProcessingWrapper><Monitoring /></ProcessingWrapper></SubscriptionGate>} />
                 <Route path="/mentions" element={<SubscriptionGate><ProcessingWrapper><Mentions /></ProcessingWrapper></SubscriptionGate>} />
                 <Route path="/settings" element={<SubscriptionGate><Settings /></SubscriptionGate>} />
+                <Route path="/billing" element={<SubscriptionGate><Billing /></SubscriptionGate>} />
                 <Route path="/integrations" element={<SubscriptionGate><ProcessingWrapper><Integrations /></ProcessingWrapper></SubscriptionGate>} />
                 <Route path="/url-test" element={<SubscriptionGate><UrlDataTest /></SubscriptionGate>} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
