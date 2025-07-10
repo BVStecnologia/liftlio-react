@@ -55,7 +55,7 @@ const FloatingButton = styled.button<{ hasNotification: boolean }>`
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, ${props => props.theme.colors.accent.primary}, ${props => props.theme.colors.accent.secondary});
+  background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
   border: none;
   color: white;
   font-size: 28px;
@@ -63,14 +63,14 @@ const FloatingButton = styled.button<{ hasNotification: boolean }>`
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
   transition: all 0.3s ease;
   z-index: 1000;
   animation: ${fadeIn} 0.5s ease, ${props => props.hasNotification ? bounce : 'none'} 2s infinite;
 
   &:hover {
     transform: scale(1.1);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 6px 30px rgba(99, 102, 241, 0.4);
   }
 
   &:active {
@@ -147,13 +147,14 @@ const ChatHeader = styled.div`
 const AgentAvatar = styled.div`
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, ${props => props.theme.colors.accent.primary}, ${props => props.theme.colors.accent.secondary});
+  background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-size: 20px;
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
 `;
 
 const AgentInfo = styled.div`
@@ -233,7 +234,7 @@ const MessageBubble = styled.div<{ isUser: boolean }>`
   border-radius: ${props => props.isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};
   background: ${props => {
     if (props.isUser) {
-      return `linear-gradient(135deg, ${props.theme.colors.accent.primary}, ${props.theme.colors.accent.secondary})`;
+      return 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)';
     }
     return props.theme.name === 'dark' ? '#2d2d2d' : '#f3f4f6';
   }};
@@ -241,6 +242,7 @@ const MessageBubble = styled.div<{ isUser: boolean }>`
   font-size: 14px;
   line-height: 1.5;
   word-wrap: break-word;
+  box-shadow: ${props => props.isUser ? '0 2px 8px rgba(99, 102, 241, 0.2)' : 'none'};
 `;
 
 const ChatFooter = styled.div`
@@ -282,17 +284,18 @@ const SendButton = styled.button`
   height: 40px;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, ${props => props.theme.colors.accent.primary}, ${props => props.theme.colors.accent.secondary});
+  background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 
   &:hover:not(:disabled) {
     transform: scale(1.05);
-    box-shadow: 0 4px 12px ${props => props.theme.colors.accent.primary}40;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
   }
 
   &:disabled {
@@ -347,7 +350,7 @@ const FloatingAgent: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
-      text: 'Olá! Sou o assistente Liftlio. Como posso ajudar você hoje?',
+      text: 'Hello! I\'m the Liftlio assistant. How can I help you today?',
       isUser: false,
       timestamp: new Date()
     }
@@ -417,63 +420,63 @@ const FloatingAgent: React.FC = () => {
 
     // Comandos de navegação
     if (lowerInput.includes('dashboard') || lowerInput.includes('painel')) {
-      addAgentMessage('Levando você ao Dashboard...');
+      addAgentMessage('Taking you to the Dashboard...');
       setTimeout(() => navigate('/dashboard'), 1500);
       return;
     }
 
     if (lowerInput.includes('monitoramento') || lowerInput.includes('monitor')) {
-      addAgentMessage('Abrindo a página de Monitoramento...');
+      addAgentMessage('Opening the Monitoring page...');
       setTimeout(() => navigate('/monitoring'), 1500);
       return;
     }
 
     if (lowerInput.includes('menç')) {
-      addAgentMessage('Mostrando suas Menções...');
+      addAgentMessage('Showing your Mentions...');
       setTimeout(() => navigate('/mentions'), 1500);
       return;
     }
 
     if (lowerInput.includes('configur') || lowerInput.includes('settings')) {
-      addAgentMessage('Acessando Configurações...');
+      addAgentMessage('Accessing Settings...');
       setTimeout(() => navigate('/settings'), 1500);
       return;
     }
 
     if (lowerInput.includes('integr')) {
-      addAgentMessage('Abrindo Integrações...');
+      addAgentMessage('Opening Integrations...');
       setTimeout(() => navigate('/integrations'), 1500);
       return;
     }
 
     // Perguntas sobre o Liftlio
     if (lowerInput.includes('o que') && lowerInput.includes('liftlio')) {
-      addAgentMessage('O Liftlio é uma plataforma de monitoramento de vídeos e análise de sentimentos. Ajudamos você a acompanhar o desempenho dos seus vídeos e entender o sentimento do seu público!');
+      addAgentMessage('Liftlio is a video monitoring and sentiment analysis platform. We help you track your video performance and understand your audience sentiment!');
       return;
     }
 
     if (lowerInput.includes('como') && (lowerInput.includes('funciona') || lowerInput.includes('usar'))) {
-      addAgentMessage('O Liftlio monitora seus vídeos no YouTube, analisa comentários e fornece insights valiosos sobre o sentimento do público. Você pode ver métricas detalhadas no Dashboard e acompanhar menções em tempo real!');
+      addAgentMessage('Liftlio monitors your YouTube videos, analyzes comments, and provides valuable insights about audience sentiment. You can see detailed metrics on the Dashboard and track mentions in real-time!');
       return;
     }
 
     if (lowerInput.includes('projeto') && currentProject) {
-      addAgentMessage(`Você está trabalhando no projeto "${currentProject.name}". Este projeto está ${currentProject.status === '6' ? 'ativo e processando dados' : 'em configuração'}.`);
+      addAgentMessage(`You're working on the "${currentProject.name}" project. This project is ${currentProject.status === '6' ? 'active and processing data' : 'being configured'}.`);
       return;
     }
 
     if (lowerInput.includes('ajuda') || lowerInput.includes('help')) {
-      addAgentMessage('Posso ajudar você com:\n• Navegar entre as páginas\n• Explicar funcionalidades\n• Mostrar informações do projeto\n• Responder dúvidas sobre o Liftlio\n\nO que você gostaria de saber?');
+      addAgentMessage('I can help you with:\n• Navigate between pages\n• Explain features\n• Show project information\n• Answer questions about Liftlio\n\nWhat would you like to know?');
       return;
     }
 
     // Respostas gerais
     const generalResponses = [
-      'Interessante! Me conte mais sobre isso.',
-      'Entendi. Como posso ajudar com isso?',
-      'Ótima pergunta! Vou pensar em como posso ajudar.',
-      'Hmm, não tenho certeza se entendi. Pode reformular?',
-      'Estou aqui para ajudar! O que mais você precisa?'
+      'Interesting! Tell me more about that.',
+      'I see. How can I help with that?',
+      'Great question! Let me think about how I can help.',
+      'Hmm, I\'m not sure I understood. Could you rephrase that?',
+      'I\'m here to help! What else do you need?'
     ];
 
     addAgentMessage(generalResponses[Math.floor(Math.random() * generalResponses.length)]);
@@ -500,9 +503,9 @@ const FloatingAgent: React.FC = () => {
 
   // Quick actions
   const quickActions = [
-    { label: 'Dashboard', action: () => processUserInput('ir para dashboard') },
-    { label: 'Como funciona?', action: () => processUserInput('como funciona o liftlio') },
-    { label: 'Ajuda', action: () => processUserInput('ajuda') }
+    { label: 'Dashboard', action: () => processUserInput('go to dashboard') },
+    { label: 'How it works?', action: () => processUserInput('how does liftlio work') },
+    { label: 'Help', action: () => processUserInput('help') }
   ];
 
   return (
@@ -523,10 +526,10 @@ const FloatingAgent: React.FC = () => {
             <IconComponent icon={FaIcons.FaHeadset} />
           </AgentAvatar>
           <AgentInfo>
-            <AgentName>Assistente Liftlio</AgentName>
+            <AgentName>Liftlio Assistant</AgentName>
             <AgentStatus>
               <StatusDot isOnline={true} />
-              Sempre aqui para ajudar
+              Always here to help
             </AgentStatus>
           </AgentInfo>
           <CloseButton onClick={() => setIsOpen(false)}>
@@ -545,7 +548,7 @@ const FloatingAgent: React.FC = () => {
           {isTyping && (
             <Message isUser={false}>
               <MessageBubble isUser={false}>
-                <span style={{ opacity: 0.7 }}>Digitando...</span>
+                <span style={{ opacity: 0.7 }}>Typing...</span>
               </MessageBubble>
             </Message>
           )}
@@ -556,7 +559,7 @@ const FloatingAgent: React.FC = () => {
           <ChatInput>
             <Input
               type="text"
-              placeholder="Digite sua mensagem..."
+              placeholder="Type your message..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}

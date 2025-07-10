@@ -82,17 +82,24 @@ const Logo = styled.div`
   padding: 32px 24px;
   margin-top: 12px;
   font-size: 1.8rem;
-  font-weight: 600;
+  font-weight: 900;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  letter-spacing: 1px;
+  letter-spacing: -1px;
   position: relative;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
-  color: ${props => props.theme.components.sidebar.textActive};
   text-transform: uppercase;
+  
+  span {
+    background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+  }
   
   @media (max-width: 768px) {
     padding: 30px 20px;
@@ -125,12 +132,6 @@ const Logo = styled.div`
     transition: width 0.5s ease;
   }
   
-  /* Text sem efeitos especiais */
-  span {
-    position: relative;
-    z-index: 2;
-    color: ${props => props.theme.components.sidebar.textActive};
-  }
   
   /* Thin glowing line underneath */
   &::after {
@@ -240,7 +241,7 @@ const UserAvatar = styled.div`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, ${props => props.theme.colors.accent.primary}, ${props => props.theme.colors.accent.secondary});
+  background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -248,7 +249,7 @@ const UserAvatar = styled.div`
   font-size: 18px;
   font-weight: 600;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
   transition: all 0.3s ease;
   
   span {
@@ -257,7 +258,7 @@ const UserAvatar = styled.div`
   
   &:hover {
     transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
   }
 `;
 
