@@ -88,9 +88,34 @@
 - **05/06/2025 15:10**: Teste de persistência após reinicialização - MCP funcionando
 - **09/01/2025**: Implementação do agente AI com Claude
 - **10/01/2025**: Sistema RAG completo com embeddings e busca semântica
+- **11/01/2025**: Configuração do Trello MCP e organização de tarefas
 
 ## Última Sessão
-- **Data**: 10/01/2025
-- **Contexto**: Organização de funções em pastas estruturadas
-- **Status**: Sistema RAG funcionando, funções organizadas em pastas
+- **Data**: 11/01/2025
+- **Contexto**: Configuração do Trello MCP e documentação de fluxo de trabalho
+- **Status**: Sistema RAG funcionando, Trello MCP configurado (aguardando reinicialização)
 - **Próximos passos**: Implementar triggers para processamento automático de embeddings
+
+## Integração Trello - Gestão de Tarefas
+
+### IMPORTANTE: Quando o usuário pedir para listar tarefas
+1. **Primeiro**: Consultar `/Users/valdair/Documents/Projetos/Liftlio/TRELLO.md`
+2. **Verificar** se o MCP Trello está disponível (ferramentas `mcp__trello__*`)
+3. **Se MCP disponível**: Usar ferramentas MCP para dados em tempo real
+4. **Se MCP não disponível**: Informar baseado no TRELLO.md
+
+### Listas de Tarefas do Valdair
+- **"Valdair"**: Tarefas pendentes (to-do)
+- **"Valdair Is Working On it"**: Tarefas em andamento
+- **"Completed"**: Tarefas completadas
+
+### Comandos de Tarefas
+- **"listar tarefas pendentes"** → Mostrar cards da lista "Valdair"
+- **"o que estou fazendo"** → Mostrar cards da lista "Valdair Is Working On it"
+- **"tarefas completadas"** → Mostrar cards da lista "Completed"
+- **"trabalhando em [tarefa]"** → Mover card para "Valdair Is Working On it"
+- **"completei [tarefa]"** → Mover card para "Completed"
+
+### Regras de Idioma
+- **Comunicação no VS Code**: Sempre em português
+- **Cards no Trello**: Sempre em inglês (título, descrição, comentários)
