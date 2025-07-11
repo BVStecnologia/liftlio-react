@@ -420,16 +420,21 @@ const FloatingAgent: React.FC = () => {
     setIsTyping(true);
     
     try {
+      // Debug: verificar projeto atual
+      console.log('Projeto atual:', currentProject);
+      
       // Prepare context
       const context = {
         currentPage: location.pathname,
         currentProject: currentProject ? {
-          id: currentProject.id,
-          name: currentProject.name,
-          status: currentProject.status
+          id: String(currentProject.id), // Garantir que é string
+          name: currentProject["Project name"] || currentProject.name,
+          status: currentProject.status || "active"
         } : null,
         availablePages: ['/dashboard', '/monitoring', '/mentions', '/settings', '/integrations']
       };
+
+      console.log('Contexto enviado para o agente:', context);
 
       // MELHOR PRÁTICA: Usar SDK do Supabase para chamar Edge Functions
       // Isso é mais seguro, mantível e segue os padrões recomendados
