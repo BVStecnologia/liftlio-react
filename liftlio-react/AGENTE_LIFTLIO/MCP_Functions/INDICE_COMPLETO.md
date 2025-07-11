@@ -3,20 +3,18 @@
 ## 📂 Estrutura da Pasta
 
 ```
-Funcoes criadas MCP/
+AGENTE_LIFTLIO/MCP_Functions/
 ├── README.md                    # Este arquivo
 ├── MELHORES_PRATICAS_MCP.md    # Guia de boas práticas
 ├── INDICE_COMPLETO.md          # Índice de tudo (você está aqui)
-├── Edge Functions/             
-│   ├── README.md               # Sobre Edge Functions
+├── Edge_Functions/             
 │   ├── agente-liftlio_assistente_ai_claude.ts.bak
-│   ├── process-rag-embeddings_processar_embeddings_em_batch.ts.bak
-│   └── search-rag_busca_semantica_embeddings.ts.bak
-└── SQL Functions/
-    ├── 00_script_completo_todas_funcoes_rag.sql
+│   └── generate-embedding_gerar_embeddings_openai.ts.bak
+└── SQL_Functions/
+    ├── process_rag_embeddings_consolidada.sql
+    ├── generate_openai_embedding_via_http.sql
     ├── search_rag_embeddings_busca_semantica_basica.sql
-    ├── search_rag_embeddings_filtered_busca_com_filtros.sql
-    └── idx_rag_embeddings_vector_indice_performance.sql
+    └── [outras funções SQL mantidas]
 ```
 
 ## 🚀 Edge Functions Disponíveis
@@ -27,41 +25,47 @@ Funcoes criadas MCP/
 - **Descrição**: Assistente AI com Claude
 - **Status**: ✅ Deployado e funcionando
 
-### 2. process-rag-embeddings
-- **Arquivo**: `process-rag-embeddings_processar_embeddings_em_batch.ts.bak`
-- **Endpoint**: `/process-rag-embeddings`
-- **Descrição**: Processa embeddings em batch
-- **Status**: ✅ Deployado e funcionando
+### 2. generate-embedding ⭐ NOVA
+- **Arquivo**: `generate-embedding_gerar_embeddings_openai.ts.bak`
+- **Endpoint**: `/generate-embedding`
+- **Descrição**: Função minimalista para gerar embeddings
+- **Status**: ✅ Deployado - Substitui todas as funções duplicadas
+- **Nota**: Esta é a ÚNICA Edge Function necessária para embeddings
 
-### 3. search-rag
-- **Arquivo**: `search-rag_busca_semantica_embeddings.ts.bak`
-- **Endpoint**: `/search-rag`
-- **Descrição**: Busca semântica nos embeddings
-- **Status**: ✅ Deployado (usando busca por keywords temporária)
+### ✅ Edge Functions Limpas (11/01/2025)
+Removemos 11 Edge Functions duplicadas do RAG, mantendo apenas as 2 essenciais.
 
 ## 🗄️ SQL Functions Disponíveis
 
-### 1. search_rag_embeddings
-- **Arquivo**: `search_rag_embeddings_busca_semantica_basica.sql`
+### 1. process_rag_embeddings ⭐ NOVA CONSOLIDADA
+- **Arquivo**: `process_rag_embeddings_consolidada.sql`
 - **Tipo**: Function
-- **Parâmetros**: `(vector(1536), float, int)`
-- **Descrição**: Busca semântica básica
+- **Parâmetros**: `(table_name TEXT, project_id BIGINT, limit INT, force_update BOOL)`
+- **Descrição**: Função ÚNICA para processar embeddings de qualquer tabela
+- **Status**: ✅ Substitui todas as funções de processamento
 
-### 2. search_rag_embeddings_filtered
-- **Arquivo**: `search_rag_embeddings_filtered_busca_com_filtros.sql`
+### 2. search_rag_unified ⭐ NOVA
+- **Arquivo**: Incluída na migration
 - **Tipo**: Function
-- **Parâmetros**: `(vector(1536), float, int, text[])`
-- **Descrição**: Busca com filtro de tabelas
+- **Parâmetros**: `(query_embedding vector, project_id BIGINT, limit INT, threshold FLOAT)`
+- **Descrição**: Busca unificada com isolamento por projeto
 
-### 3. idx_rag_embeddings_vector
+### 3. generate_openai_embedding
+- **Arquivo**: `generate_openai_embedding_via_http.sql`
+- **Tipo**: Function
+- **Parâmetros**: `(text TEXT, api_key TEXT)`
+- **Descrição**: Gera embeddings via HTTP direto do SQL
+
+### 4. search_project_rag
+- **Arquivo**: Já existe no banco
+- **Tipo**: Function
+- **Descrição**: Busca com isolamento por projeto (funcional)
+
+### 5. idx_rag_embeddings_vector
 - **Arquivo**: `idx_rag_embeddings_vector_indice_performance.sql`
 - **Tipo**: Index
 - **Tabela**: `rag_embeddings`
 - **Descrição**: Índice HNSW para performance
-
-### 4. Script Completo
-- **Arquivo**: `00_script_completo_todas_funcoes_rag.sql`
-- **Descrição**: Executa todas as funções SQL de uma vez
 
 ## 📊 Tabelas com RAG Habilitado
 
@@ -104,6 +108,24 @@ Funcoes criadas MCP/
 2. **Para SQL Functions**: Execute o conteúdo do arquivo `.sql` no SQL Editor
 3. **Para tudo RAG**: Use o script `00_script_completo_todas_funcoes_rag.sql`
 
+## 🔄 Consolidação Realizada (11/01/2025)
+
+### Antes (Múltiplas funções duplicadas):
+- 5 Edge Functions para processar RAG
+- 3 Edge Functions para buscar
+- Funções SQL separadas por tabela
+
+### Depois (Minimalista e eficiente):
+- **1 Edge Function**: `generate-embedding` (apenas gera embeddings)
+- **1 SQL Function**: `process_rag_embeddings` (processa qualquer tabela)
+- **1 SQL Function**: `search_rag_unified` (busca unificada)
+
+### Benefícios:
+- 🚀 **Performance**: SQL é mais rápido que Edge Functions
+- 💰 **Custo**: Menos funções = menos manutenção
+- 🎯 **Simplicidade**: Uma função faz tudo
+- 🔧 **Manutenibilidade**: Código centralizado
+
 ---
 
-*Última atualização: 10/01/2025*
+*Última atualização: 11/01/2025*

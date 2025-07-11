@@ -1,5 +1,113 @@
 # 🚀 Melhores Práticas - Supabase MCP
 
+## 🚨 REGRA OBRIGATÓRIA - SEMPRE SEGUIR
+
+### 📁 Espelhamento de Funções MCP
+
+**TODA** função criada, editada ou deletada via MCP **DEVE** ser salva em:
+```
+/Users/valdair/Documents/Projetos/Liftlio/liftlio-react/AGENTE_LIFTLIO/MCP_Functions/
+```
+
+#### Workflow Obrigatório:
+1. **Criar/Editar via MCP** → Edge Function ou SQL Function
+2. **Salvar cópia IMEDIATAMENTE** → Na pasta correspondente
+3. **Atualizar INDICE_COMPLETO.md** → Com a nova função
+4. **Se for sistema completo** → Criar `00_script_completo_nome.sql`
+
+#### Nomenclatura:
+- **SQL Functions**: `nome_funcao_descricao.sql`
+- **Edge Functions**: `nome-funcao_descricao.ts.bak`
+- **Scripts Completos**: `00_script_completo_sistema.sql`
+
+#### Se deletar no Supabase:
+- Remover arquivo correspondente da pasta
+- Atualizar INDICE_COMPLETO.md
+- Adicionar nota de "DEPRECATED" se necessário
+
+---
+
+## 🎯 PRINCÍPIOS DE DESIGN - MENOS É MAIS
+
+### 📊 Quando usar SQL Functions vs Edge Functions
+
+#### Prefira SQL Functions quando:
+- ✅ Operações no banco de dados
+- ✅ Transformações de dados simples
+- ✅ Joins e queries complexas
+- ✅ Não precisa de bibliotecas externas
+- ✅ Performance é crítica (SQL é MAIS RÁPIDO)
+
+#### Use Edge Functions APENAS quando:
+- ⚠️ Precisa chamar APIs externas complexas
+- ⚠️ Precisa de bibliotecas npm/deno específicas
+- ⚠️ Processamento de arquivos/imagens
+- ⚠️ Lógica que SQL não consegue fazer
+
+### 🔥 SQL Functions TAMBÉM podem:
+
+#### Exemplo 1: Chamar API HTTP
+```sql
+-- Primeiro habilitar extensão HTTP
+CREATE EXTENSION IF NOT EXISTS http;
+
+-- Chamar APIs HTTP direto do SQL!
+CREATE OR REPLACE FUNCTION get_openai_embedding(text_input TEXT)
+RETURNS vector(1536)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    api_response json;
+    embedding vector(1536);
+BEGIN
+    -- Chamar OpenAI API
+    SELECT content::json INTO api_response
+    FROM http((
+        'POST',
+        'https://api.openai.com/v1/embeddings',
+        ARRAY[http_header('Authorization', 'Bearer ' || current_setting('app.openai_key'))],
+        'application/json',
+        json_build_object(
+            'input', text_input,
+            'model', 'text-embedding-3-small'
+        )::text
+    )::http_request);
+    
+    -- Extrair embedding
+    embedding := (api_response->'data'->0->>'embedding')::vector(1536);
+    RETURN embedding;
+END;
+$$;
+```
+
+#### Exemplo 2: Performance Comparison
+```
+SQL Function: ~50-100ms para query complexa
+Edge Function: ~200-500ms (overhead de cold start + network)
+```
+
+### 📏 Regras de Ouro:
+1. **NUNCA** criar funções duplicadas ou similares
+2. **SEMPRE** verificar se já existe algo parecido
+3. **CONSOLIDAR** funções similares em uma só
+4. **REUTILIZAR** código existente
+5. **SQL primeiro**, Edge Function só se necessário
+
+### ❌ EVITAR:
+```
+❌ process-rag-embeddings
+❌ process-rag-embeddings-v2  
+❌ process-rag-batch
+❌ process-rag-minimal
+```
+
+### ✅ FAZER:
+```
+✅ process_rag_embeddings (SQL com parâmetros opcionais)
+```
+
+---
+
 ## 📋 Checklist Antes de Criar
 
 ### 1. Sempre Verificar se Já Existe
@@ -251,15 +359,15 @@ WHERE tablename = 'sua_tabela';
 
 ### ✅ Estrutura Recomendada:
 ```
-supabase/Funcoes criadas MCP/
-├── SQL Functions/
+AGENTE_LIFTLIO/MCP_Functions/
+├── SQL_Functions/
 │   ├── 00_script_completo_sistema.sql  # Executar tudo
 │   ├── 01_tables_criar_tabelas.sql     # Tabelas
 │   ├── 02_functions_logica_negocio.sql # Funções
 │   ├── 03_triggers_automacao.sql       # Triggers
 │   ├── 04_rls_seguranca.sql           # Policies
 │   └── 05_indexes_performance.sql      # Índices
-└── Edge Functions/
+└── Edge_Functions/
     └── nome-funcao_descricao.ts.bak
 ```
 

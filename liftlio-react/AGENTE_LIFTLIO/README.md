@@ -58,12 +58,23 @@ POST https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/agente-liftlio
 
 ## 🛠️ Desenvolvimento
 
-Para contribuir ou modificar o agente:
+### ⚠️ REGRA CRÍTICA - OBRIGATÓRIO
+
+**TODA função criada/editada/deletada via MCP DEVE ser salva em:**
+```
+AGENTE_LIFTLIO/MCP_Functions/
+├── SQL_Functions/     → Funções SQL (.sql)
+├── Edge_Functions/    → Edge Functions (.ts.bak)
+└── INDICE_COMPLETO.md → Atualizar sempre!
+```
+
+### Para contribuir ou modificar o agente:
 
 1. Consulte a documentação da camada específica
-2. Siga as convenções em cada pasta
-3. Atualize o status neste README
-4. Mantenha sincronizado com `/supabase/Funcoes criadas MCP/`
+2. **SEMPRE salve cópia das funções MCP na pasta**
+3. Atualize o INDICE_COMPLETO.md
+4. Atualize o status neste README
+5. Se criar sistema completo, crie `00_script_completo_nome.sql`
 
 ---
 
