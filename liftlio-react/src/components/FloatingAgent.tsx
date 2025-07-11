@@ -424,6 +424,7 @@ const FloatingAgent: React.FC = () => {
       const context = {
         currentPage: location.pathname,
         currentProject: currentProject ? {
+          id: currentProject.id,
           name: currentProject.name,
           status: currentProject.status
         } : null,
@@ -434,14 +435,14 @@ const FloatingAgent: React.FC = () => {
       const { data, error } = await supabase.functions.invoke('agente-liftlio', {
         body: {
           prompt: input,
-          context: JSON.stringify(context)
+          context: context
         }
       });
 
       if (error) throw error;
 
       // Get response text
-      const responseText = data.responseText || data.content?.[0]?.text || 'I apologize, but I couldn\'t process your request.';
+      const responseText = data.content || data.responseText || 'I apologize, but I couldn\'t process your request.';
       
       // Add agent message
       addAgentMessage(responseText);

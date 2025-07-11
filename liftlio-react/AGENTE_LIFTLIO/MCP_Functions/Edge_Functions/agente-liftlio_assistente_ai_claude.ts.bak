@@ -1,10 +1,10 @@
 // @ts-nocheck
 /**
- * Edge Function: agente-liftlio
+ * Edge Function: agente-liftlio (v2)
  * 
  * Descrição:
- * Assistente AI integrado com Claude que responde perguntas sobre o Liftlio,
- * navega entre páginas e oferece suporte contextualizado aos usuários.
+ * Assistente AI do Liftlio com personalidade aprimorada e system prompt melhorado.
+ * Agora se apresenta como "modelo criado pelo Liftlio" com memória infinita.
  * 
  * Endpoints:
  * POST /agente-liftlio
