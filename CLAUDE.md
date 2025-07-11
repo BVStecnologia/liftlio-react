@@ -13,31 +13,50 @@
 - **Status**: Funcionando corretamente
 - **Supabase MCP**: Configurado e funcionando
 
-## 🗂️ PADRÃO DE ORGANIZAÇÃO DE FUNÇÕES (IMPORTANTE)
+## 🗂️ PADRÃO DE ORGANIZAÇÃO DE FUNÇÕES MCP (OBRIGATÓRIO)
 
-### Estrutura de Pastas
-Todas as funções criadas via MCP devem ser organizadas em:
-```
-/Users/valdair/Documents/Projetos/Liftlio/liftlio-react/supabase/Funcoes criadas MCP/
-├── Edge Functions/
-│   └── nome-funcao_descricao_curta.ts
-└── SQL Functions/
-    └── nome_funcao_descricao_curta.sql
-```
+### REGRAS ABSOLUTAS - SEMPRE SEGUIR:
 
-### Regras de Nomenclatura
-1. **Edge Functions**: `nome-da-funcao_descricao_em_portugues.ts`
-   - Exemplo: `process-rag-embeddings_processar_embeddings_em_batch.ts`
-   
-2. **SQL Functions**: `nome_da_funcao_descricao_em_portugues.sql`
-   - Exemplo: `search_rag_embeddings_busca_semantica_basica.sql`
+1. **ANTES de criar qualquer função via MCP**:
+   - Consultar `/supabase/Funcoes criadas MCP/MELHORES_PRATICAS_MCP.md`
+   - Verificar se já existe função similar
+   - Usar DROP IF EXISTS ou CREATE OR REPLACE
 
-3. **Script Completo**: Sempre criar `00_script_completo_*.sql` para executar todas as funções relacionadas
+2. **DURANTE a criação**:
+   - Seguir as melhores práticas documentadas
+   - Adicionar comentários e documentação no código
+   - Testar antes de confirmar como finalizado
 
-### Manutenção
-- Sempre que modificar uma função no Supabase, atualizar o arquivo correspondente
-- Manter documentação completa em cada arquivo
-- Incluir exemplos de uso comentados
+3. **DEPOIS de criar/modificar/deletar**:
+   - Salvar IMEDIATAMENTE cópia na pasta correspondente:
+     ```
+     /Users/valdair/Documents/Projetos/Liftlio/liftlio-react/supabase/Funcoes criadas MCP/
+     ├── Edge Functions/
+     │   └── nome-funcao_descricao_curta.ts.bak
+     └── SQL Functions/
+         └── nome_funcao_descricao_curta.sql
+     ```
+   - Atualizar `/supabase/Funcoes criadas MCP/INDICE_COMPLETO.md`
+   - Se for um sistema novo, criar `00_script_completo_sistema.sql`
+
+### Nomenclatura Obrigatória:
+- **Edge Functions**: `nome-da-funcao_descricao_em_portugues.ts.bak`
+- **SQL Functions**: `nome_da_funcao_descricao_em_portugues.sql`
+- **Scripts Completos**: `00_script_completo_nome_sistema.sql`
+
+### Fluxo de Trabalho MCP:
+1. Usuário pede para criar/modificar algo no Supabase
+2. Claude consulta melhores práticas
+3. Claude cria/modifica via MCP
+4. Claude salva cópia na pasta organizada
+5. Claude atualiza índice e documentação
+6. Claude confirma sucesso ao usuário
+
+### Espelhamento:
+- A pasta MCP deve ser um ESPELHO EXATO do que está no Supabase
+- Se deletar no Supabase → remover arquivo da pasta
+- Se modificar no Supabase → atualizar arquivo na pasta
+- Se criar no Supabase → criar arquivo na pasta
 
 ## Sistema RAG - Embeddings
 - **Status**: Implementado e funcionando
@@ -60,7 +79,10 @@ Todas as funções criadas via MCP devem ser organizadas em:
 
 ## Arquivos Importantes do Projeto
 - `/liftlio-react/AGENTE.md`: Documentação completa do sistema de agente AI
-- `/liftlio-react/supabase/Funcoes criadas MCP/`: Todas as funções organizadas
+- `/liftlio-react/supabase/Funcoes criadas MCP/`: Todas as funções e documentação MCP
+  - `MELHORES_PRATICAS_MCP.md`: Guia de boas práticas
+  - `INDICE_COMPLETO.md`: Índice de todas as funções
+  - `README.md`: Visão geral da estrutura
 
 ## Histórico de Sessões
 - **05/06/2025 15:10**: Teste de persistência após reinicialização - MCP funcionando

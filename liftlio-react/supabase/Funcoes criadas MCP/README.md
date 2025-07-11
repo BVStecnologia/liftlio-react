@@ -2,6 +2,12 @@
 
 Esta pasta contém todas as funções criadas através do Claude MCP (Model Context Protocol) para o projeto Liftlio.
 
+## 📚 Documentação
+
+- **[MELHORES_PRATICAS_MCP.md](./MELHORES_PRATICAS_MCP.md)** - Guia completo de boas práticas
+- **[Edge Functions/README.md](./Edge%20Functions/README.md)** - Sobre as Edge Functions
+- **[SQL Functions/](./SQL%20Functions/)** - Funções SQL organizadas
+
 ## 📁 Estrutura
 
 ```
