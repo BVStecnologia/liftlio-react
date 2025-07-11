@@ -2,6 +2,7 @@
 
 # Claude settings
 **/.claude/settings.local.json
+.claude/
 
 # Ignore liftlio_2 folder (separate git repository)
 liftlio_2/
