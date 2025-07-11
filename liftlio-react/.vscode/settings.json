@@ -1,0 +1,14 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/supabase/Funcoes criadas MCP/Edge Functions/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/supabase/Funcoes criadas MCP/Edge Functions/**": true
+  },
+  "files.exclude": {
+    "**/supabase/Funcoes criadas MCP/Edge Functions/tsconfig.json": true
+  }
+}

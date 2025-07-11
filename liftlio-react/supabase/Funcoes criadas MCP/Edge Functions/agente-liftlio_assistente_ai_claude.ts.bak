@@ -1,0 +1,174 @@
+// @ts-nocheck
+/**
+ * Edge Function: agente-liftlio
+ * 
+ * Descrição:
+ * Assistente AI integrado com Claude que responde perguntas sobre o Liftlio,
+ * navega entre páginas e oferece suporte contextualizado aos usuários.
+ * 
+ * Endpoints:
+ * POST /agente-liftlio
+ * 
+ * Parâmetros:
+ * - prompt (obrigatório): Pergunta ou comando do usuário
+ * - context (opcional): Contexto da aplicação
+ *   - currentPage: Página atual do usuário
+ *   - currentProject: Projeto selecionado
+ *   - userInfo: Informações do usuário
+ * 
+ * Exemplos de uso:
+ * 
+ * 1. Pergunta simples:
+ * ```json
+ * {
+ *   "prompt": "O que é o Liftlio?"
+ * }
+ * ```
+ * 
+ * 2. Com contexto:
+ * ```json
+ * {
+ *   "prompt": "Me leve para o dashboard",
+ *   "context": {
+ *     "currentPage": "/monitoring",
+ *     "currentProject": {
+ *       "id": "123",
+ *       "name": "Meu Canal YouTube"
+ *     }
+ *   }
+ * }
+ * ```
+ * 
+ * Retorno:
+ * - content: Resposta do assistente
+ * - action (opcional): Ação a ser executada (ex: navigate)
+ * - data (opcional): Dados adicionais para a ação
+ * 
+ * @author Valdair & Claude
+ * @date 09/01/2025
+ */
+
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+
+const systemPrompt = `Você é o assistente AI do Liftlio, uma plataforma de monitoramento de vídeos e análise de sentimentos.
+
+Suas capacidades:
+1. Responder perguntas sobre o Liftlio e suas funcionalidades
+2. Ajudar na navegação entre páginas
+3. Explicar recursos e como usá-los
+4. Fornecer suporte técnico básico
+
+Páginas disponíveis para navegação:
+- /dashboard - Visão geral e métricas
+- /monitoring - Monitoramento de vídeos
+- /mentions - Menções e comentários
+- /scanner - Scanner de vídeos do YouTube
+- /projects - Gerenciamento de projetos
+- /integrations - Integrações disponíveis
+- /settings - Configurações da conta
+
+Quando o usuário pedir para navegar, responda com:
+{
+  "content": "Levando você para [nome da página]...",
+  "action": "navigate",
+  "data": { "path": "/caminho-da-pagina" }
+}
+
+Seja conciso, amigável e profissional. Use português brasileiro.`;
+
+Deno.serve(async (req) => {
+  try {
+    // Parse do body da requisição
+    const { prompt, context = {} } = await req.json();
+
+    if (!prompt) {
+      return new Response(
+        JSON.stringify({ error: 'Prompt é obrigatório' }),
+        { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Adicionar contexto ao prompt
+    let contextualPrompt = prompt;
+    if (context.currentPage) {
+      contextualPrompt += `\n\nContexto: Usuário está na página ${context.currentPage}`;
+    }
+    if (context.currentProject) {
+      contextualPrompt += `\nProjeto selecionado: ${context.currentProject.name || context.currentProject.id}`;
+    }
+
+    // Chamar API da Anthropic
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-sonnet-20240229',
+        messages: [
+          {
+            role: 'user',
+            content: contextualPrompt
+          }
+        ],
+        system: systemPrompt,
+        max_tokens: 1000,
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Erro da API Anthropic:', error);
+      throw new Error(`API Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Extrair resposta
+    const assistantMessage = data.content[0].text;
+    
+    // Tentar parsear como JSON para detectar ações
+    let responseData;
+    try {
+      responseData = JSON.parse(assistantMessage);
+    } catch {
+      // Se não for JSON, é apenas uma mensagem de texto
+      responseData = { content: assistantMessage };
+    }
+
+    return new Response(
+      JSON.stringify(responseData),
+      { 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      }
+    );
+
+  } catch (error) {
+    console.error('Erro no agente:', error);
+    
+    return new Response(
+      JSON.stringify({ 
+        content: 'Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.',
+        error: error.message 
+      }),
+      { 
+        status: 500,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      }
+    );
+  }
+});
