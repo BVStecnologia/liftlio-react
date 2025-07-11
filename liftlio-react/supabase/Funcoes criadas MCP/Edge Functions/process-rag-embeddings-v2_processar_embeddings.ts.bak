@@ -1,0 +1,181 @@
+/**
+ * process-rag-embeddings-v2
+ * 
+ * Edge Function para processar embeddings do sistema RAG
+ * Processa registros pendentes e gera embeddings usando OpenAI
+ * 
+ * Criado via MCP em: 11/01/2025
+ * 
+ * @param {Object} req.body
+ * @param {string} [req.body.table_name] - Nome da tabela específica (opcional)
+ * @param {number} [req.body.limit=10] - Limite de registros por processamento
+ * @param {number[]} [req.body.project_ids=[58,71]] - IDs dos projetos permitidos
+ * 
+ * @returns {Object} Resultado do processamento
+ * 
+ * Funcionalidades:
+ * - Processa múltiplas tabelas se não especificar uma
+ * - Filtra apenas projetos 58 e 71
+ * - Gera embeddings com text-embedding-3-small
+ * - Marca registros como processados
+ * - Mantém isolamento por projeto
+ */
+
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
+import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.1.0'
+
+const openai = new OpenAIApi(
+  new Configuration({
+    apiKey: Deno.env.get('OPENAI_API_KEY'),
+  })
+)
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+serve(async (req) => {
+  try {
+    const { table_name, limit = 10, project_ids = [58, 71] } = await req.json()
+    
+    // Validar projetos permitidos
+    const allowedProjects = [58, 71]
+    const validProjectIds = project_ids.filter((id: number) => allowedProjects.includes(id))
+    
+    if (validProjectIds.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Nenhum projeto válido fornecido' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Buscar registros pendentes
+    const pendingQuery = table_name
+      ? supabase
+          .from(table_name)
+          .select('id')
+          .or('rag_processed.is.null,rag_processed.is.false')
+          .limit(limit)
+      : null
+
+    // Se não especificou tabela, processar todas as principais
+    const tables = table_name ? [table_name] : ['Mensagens', 'Videos', 'Projeto', 'Comentarios_Principais', 'Videos_trancricao']
+    
+    let totalProcessed = 0
+    const errors: any[] = []
+
+    for (const currentTable of tables) {
+      console.log(`Processando tabela: ${currentTable}`)
+      
+      // Buscar registros pendentes da tabela
+      const { data: records, error: fetchError } = await supabase
+        .from(currentTable)
+        .select('id')
+        .or('rag_processed.is.null,rag_processed.is.false')
+        .limit(limit)
+
+      if (fetchError) {
+        console.error(`Erro ao buscar registros de ${currentTable}:`, fetchError)
+        errors.push({ table: currentTable, error: fetchError.message })
+        continue
+      }
+
+      if (!records || records.length === 0) {
+        console.log(`Nenhum registro pendente em ${currentTable}`)
+        continue
+      }
+
+      // Processar cada registro
+      for (const record of records) {
+        try {
+          // Preparar conteúdo usando a função SQL
+          const { data: preparedData, error: prepareError } = await supabase
+            .rpc('prepare_rag_content_v2', {
+              table_name: currentTable,
+              record_id: record.id.toString()
+            })
+            .single()
+
+          if (prepareError || !preparedData) {
+            console.error(`Erro ao preparar conteúdo:`, prepareError)
+            continue
+          }
+
+          // Verificar se o project_id está na lista permitida
+          if (!validProjectIds.includes(preparedData.project_id)) {
+            console.log(`Pulando registro - projeto ${preparedData.project_id} não está na lista`)
+            continue
+          }
+
+          // Gerar embedding
+          const embeddingResponse = await openai.createEmbedding({
+            model: 'text-embedding-3-small',
+            input: preparedData.content,
+          })
+
+          const embedding = embeddingResponse.data.data[0].embedding
+
+          // Salvar embedding
+          const { error: insertError } = await supabase
+            .from('rag_embeddings')
+            .upsert({
+              source_table: currentTable,
+              source_id: record.id.toString(),
+              content: preparedData.content,
+              embedding,
+              metadata: preparedData.metadata,
+              project_id: preparedData.project_id,
+              embedding_model: 'text-embedding-3-small',
+              token_count: embeddingResponse.data.usage?.total_tokens
+            }, {
+              onConflict: 'source_table,source_id'
+            })
+
+          if (insertError) {
+            console.error('Erro ao salvar embedding:', insertError)
+            errors.push({ table: currentTable, record_id: record.id, error: insertError.message })
+            continue
+          }
+
+          // Marcar como processado
+          const { error: updateError } = await supabase
+            .from(currentTable)
+            .update({
+              rag_processed: true,
+              rag_processed_at: new Date().toISOString()
+            })
+            .eq('id', record.id)
+
+          if (updateError) {
+            console.error('Erro ao atualizar status:', updateError)
+          }
+
+          totalProcessed++
+          console.log(`Processado: ${currentTable} - ID: ${record.id}`)
+        } catch (error) {
+          console.error(`Erro ao processar registro ${record.id}:`, error)
+          errors.push({ table: currentTable, record_id: record.id, error: error.message })
+        }
+      }
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        totalProcessed,
+        tables: tables,
+        errors: errors.length > 0 ? errors : undefined,
+        message: `Processados ${totalProcessed} registros com sucesso`
+      }),
+      { headers: { 'Content-Type': 'application/json' } }
+    )
+  } catch (error) {
+    console.error('Erro geral:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+})

@@ -26,6 +26,7 @@
     "react-square-web-payments-sdk": "^3.2.4-beta.1",
     "recharts": "^2.15.1",
     "styled-components": "^6.1.15",
+    "trello-node-api": "^0.0.9",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
