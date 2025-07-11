@@ -431,7 +431,8 @@ const FloatingAgent: React.FC = () => {
         availablePages: ['/dashboard', '/monitoring', '/mentions', '/settings', '/integrations']
       };
 
-      // Call edge function
+      // MELHOR PRÁTICA: Usar SDK do Supabase para chamar Edge Functions
+      // Isso é mais seguro, mantível e segue os padrões recomendados
       const { data, error } = await supabase.functions.invoke('agente-liftlio', {
         body: {
           prompt: input,

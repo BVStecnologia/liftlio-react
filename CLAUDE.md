@@ -61,21 +61,26 @@
 ## Sistema RAG - Embeddings
 - **Status**: Implementado e funcionando
 - **Edge Functions**:
-  - `agente-liftlio`: Assistente AI com Claude
-  - `process-rag-embeddings`: Processamento de embeddings
-  - `search-rag`: Busca semântica
+  - `agente-liftlio`: Assistente AI com Claude (v5 - usa SDK Supabase)
+  - `generate-embedding`: Gera embeddings com OpenAI
 - **SQL Functions**:
-  - `search_rag_embeddings`: Busca básica
-  - `search_rag_embeddings_filtered`: Busca com filtros
+  - `search_project_rag`: Busca com isolamento por projeto
+  - `process_rag_embeddings`: Processa embeddings de qualquer tabela
   - Índice HNSW para performance
 - **Tabelas com RAG**: 14 tabelas configuradas com campos `rag_processed`
+
+## 🚨 REGRA OBRIGATÓRIA - SDK SUPABASE
+**SEMPRE** usar o SDK do Supabase (`supabase.functions.invoke()`) para chamar Edge Functions:
+- No frontend: `await supabase.functions.invoke('nome-funcao', { body: { params } })`
+- Nas Edge Functions: `await supabase.functions.invoke('outra-funcao', { body: { params } })`
+- **NUNCA** usar HTTP direto ou fetch manual - SDK é a melhor prática!
 
 ## Notas Importantes
 - O projeto usa Supabase como backend
 - Autenticação via OAuth (Google)
 - Deploy configurado via Fly.io
 - OpenAI API key configurada no Supabase Vault como `OPENAI_API_KEY`
-- Claude API key configurada como `ANTHROPIC_API_KEY`
+- Claude API key configurada como `CLAUDE_API_KEY` (NÃO usar ANTHROPIC_API_KEY)
 
 ## Arquivos Importantes do Projeto
 - `/liftlio-react/AGENTE.md`: Documentação completa do sistema de agente AI
@@ -88,13 +93,17 @@
 - **05/06/2025 15:10**: Teste de persistência após reinicialização - MCP funcionando
 - **09/01/2025**: Implementação do agente AI com Claude
 - **10/01/2025**: Sistema RAG completo com embeddings e busca semântica
-- **11/01/2025**: Configuração do Trello MCP e organização de tarefas
+- **11/01/2025**: Migração para SDK Supabase, integração RAG no agente, reorganização MCP
 
 ## Última Sessão
 - **Data**: 11/01/2025
-- **Contexto**: Configuração do Trello MCP e documentação de fluxo de trabalho
-- **Status**: Sistema RAG funcionando, Trello MCP configurado (aguardando reinicialização)
-- **Próximos passos**: Implementar triggers para processamento automático de embeddings
+- **Contexto**: Reimplementação usando SDK Supabase e integração RAG no agente
+- **Status**: 
+  - ✅ Edge Function agente-liftlio v5 com SDK
+  - ✅ RAG integrado mas ainda sem retornar dados
+  - ✅ Funções MCP reorganizadas em AGENTE_LIFTLIO
+  - ✅ Regra SDK obrigatória documentada
+- **Próximos passos**: Debug busca RAG que não está retornando resultados
 
 ## Integração Trello - Gestão de Tarefas
 
