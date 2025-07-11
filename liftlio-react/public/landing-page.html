@@ -611,7 +611,6 @@
                 
                 <div class="breakthrough-highlight">
                     <h3 style="font-size:36px;font-weight:800;margin-bottom:16px">
-                        falando sobre sua marca</span>
                         Imagine having <span class="gradient-text">thousands of ambassadors talking about your brand</span>
                     </h3>
                     <p style="font-size:20px;color:var(--color-text-secondary)">
@@ -1452,11 +1451,11 @@
             const isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost';
             
             if (isLocal) {
-                // Local: redirecionar para localhost:3000
+                // Local: redirect to localhost:3000
                 window.location.href = 'http://localhost:3000' + path;
             } else {
-                // Produção: tentar navegar diretamente
-                // O nginx deve lidar com a rota e servir o React app
+                // Production: try to navigate directly
+                // Nginx should handle the route and serve the React app
                 window.location.href = path;
             }
         }
