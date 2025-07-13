@@ -4,8 +4,10 @@
 
 ### 1. **agente-liftlio**
 - **Descrição**: Assistente AI principal com Claude
-- **Versão**: v6
+- **Versão**: v12 (com correção CORS)
 - **Função**: Responde perguntas sobre projetos com dados reais
+- **Última atualização**: 13/01/2025
+- **Melhorias**: Headers CORS, memória persistente, integração RAG melhorada
 
 ### 2. **generate-embedding**
 - **Descrição**: Gera embeddings via OpenAI

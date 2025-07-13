@@ -48,6 +48,33 @@ const bounce = keyframes`
   }
 `;
 
+const spin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
+
+// Componente de indicador de processamento
+const ProcessingIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #666;
+  
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: ${spin} 1s linear infinite;
+  }
+  
+  .stage-text {
+    font-weight: 500;
+  }
+`;
+
 // Styled Components
 const FloatingButton = styled.button<{ hasNotification: boolean }>`
   position: fixed;
@@ -357,8 +384,10 @@ const FloatingAgent: React.FC = () => {
     }
   ]);
   const [isTyping, setIsTyping] = useState(false);
+  const [processingStage, setProcessingStage] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const sessionIdRef = useRef<string | null>(null);
 
   // Auto-scroll para última mensagem
   const scrollToBottom = () => {
@@ -418,6 +447,7 @@ const FloatingAgent: React.FC = () => {
   // Processar comando do usuário usando Claude
   const processUserInput = useCallback(async (input: string) => {
     setIsTyping(true);
+    setProcessingStage('🔍 Analisando sua pergunta...');
     
     try {
       // Debug: verificar projeto atual
@@ -436,17 +466,53 @@ const FloatingAgent: React.FC = () => {
 
       console.log('Contexto enviado para o agente:', context);
 
+      // Obter usuário autenticado
+      setProcessingStage('🔐 Autenticando usuário...');
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Gerar session ID único para esta conversa se não existir
+      if (!sessionIdRef.current) {
+        sessionIdRef.current = crypto.randomUUID();
+      }
+
+      setProcessingStage('📊 Buscando dados do projeto...');
+      
+      // Simular delay para mostrar o estágio
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      // Mostrar estágio dinâmico baseado no projeto atual
+      if (currentProject) {
+        setProcessingStage(`🔍 Analisando dados do projeto ${currentProject.name || 'HW'}...`);
+      } else {
+        setProcessingStage('🔍 Analisando dados disponíveis...');
+      }
+      await new Promise(resolve => setTimeout(resolve, 700));
+      
+      // Mensagens aleatórias divertidas para o processamento IA
+      const aiMessages = [
+        '🧠 Processando com IA + RAG...',
+        '🤖 Claude está pensando...',
+        '⚡ Conectando neurônios artificiais...',
+        '🔮 Consultando a base de conhecimento...',
+        '🚀 Turbinando resposta com RAG...'
+      ];
+      setProcessingStage(aiMessages[Math.floor(Math.random() * aiMessages.length)]);
+
       // MELHOR PRÁTICA: Usar SDK do Supabase para chamar Edge Functions
       // Isso é mais seguro, mantível e segue os padrões recomendados
       const { data, error } = await supabase.functions.invoke('agente-liftlio', {
         body: {
           prompt: input,
-          context: context
+          context: context,
+          userId: user?.id || null,
+          sessionId: sessionIdRef.current
         }
       });
 
       if (error) throw error;
 
+      setProcessingStage('✨ Finalizando resposta...');
+      
       // Get response text
       const responseText = data.content || data.responseText || 'I apologize, but I couldn\'t process your request.';
       
@@ -493,6 +559,7 @@ const FloatingAgent: React.FC = () => {
       }
     } finally {
       setIsTyping(false);
+      setProcessingStage(null);
     }
   }, [addAgentMessage, navigate, currentProject, location.pathname]);
 
@@ -562,7 +629,14 @@ const FloatingAgent: React.FC = () => {
           {isTyping && (
             <Message isUser={false}>
               <MessageBubble isUser={false}>
-                <span style={{ opacity: 0.7 }}>Typing...</span>
+                {processingStage ? (
+                  <ProcessingIndicator>
+                    <div className="spinner" />
+                    <span className="stage-text">{processingStage}</span>
+                  </ProcessingIndicator>
+                ) : (
+                  <span style={{ opacity: 0.7 }}>Typing...</span>
+                )}
               </MessageBubble>
             </Message>
           )}
