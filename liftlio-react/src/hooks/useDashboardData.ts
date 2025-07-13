@@ -615,13 +615,15 @@ export const useDashboardData = () => {
     fetchDashboardData();
     
     // Configurar listeners para atualizações em tempo real
+    // NOTA: Removido filtro complexo que causava erro "malformed array literal"
+    // O Supabase Realtime não suporta subqueries no filtro
     const subscription = supabase
       .channel('dashboard-changes')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'Videos',
-        filter: `scanner_id=in.(select id from "Scanner de videos do youtube" where "Projeto_id"=${projectId})`
+        table: 'Videos'
+        // Filtro removido - fetchDashboardData já filtra por projeto
       }, () => {
         // Recarregar dados quando houver mudanças nos vídeos
         fetchDashboardData();

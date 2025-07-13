@@ -1,4 +1,8 @@
-# TRELLO.md - Teste de Integração MCP Trello
+# TRELLO.md - Instruções para API do Trello
+
+## ⚠️ IMPORTANTE: USE A API DO TRELLO, NÃO ESTE ARQUIVO!
+## Este arquivo é apenas DOCUMENTAÇÃO sobre como usar a API do Trello
+## Para atualizar tarefas, use os comandos curl abaixo com a API real
 
 ## Status da Configuração
 - **Data da atualização**: 11/01/2025
@@ -6,6 +10,52 @@
 - **Board ID**: `ZrgSrOmx`
 - **Nome do Board**: Liftlio
 - **Script de funções**: `/Users/valdair/Documents/Projetos/Liftlio/liftlio-react/.claude/scripts/trello-api.sh`
+
+## 🚨 REGRA CRÍTICA PARA CLAUDE 🚨
+### NUNCA EDITE ESTE ARQUIVO PARA ATUALIZAR TAREFAS!
+### USE SEMPRE A API DO TRELLO COM OS COMANDOS CURL ABAIXO!
+
+## 📊 Resultados da Sessão 13/01/2025 (Criados via API do Trello)
+
+### ✅ Cards CRIADOS hoje na lista Completed:
+1. **"Implement agent conversation memory"** → Card ID: 6873b3a75e60cbaf0ee3f12e
+   - Tabela agent_conversations criada
+   - Salvamento de conversas implementado
+   - Busca de contexto histórico funcionando
+   - Edge Function v12 pronta para deploy
+
+2. **"Fix agent exposing internal project ID"** → Card ID: 6873b3c69ddcd3d7b7c56b50
+   - Removido ID do projeto das respostas
+   - Mantém apenas nome do projeto
+   - Controle interno preservado
+
+3. **"Reduce agent response tokens from 1024 to 512"** → Card ID: 6873b3dc6fa65d72b195acea
+   - Respostas mais concisas
+   - Melhor experiência do usuário
+   - Economia de tokens
+
+### 🔄 Cards CRIADOS em Working:
+1. **"Deploy Edge Function agente-liftlio v12"** → Card ID: 6873b3eacc6284270011da1b
+   - Arquivo pronto: agente-liftlio_v12_memoria_persistente.ts
+   - Aguardando deploy no Supabase
+
+### 🔄 Cards EXISTENTES em Working:
+- "Improve credit consumption control"
+- "Memory RAG Automation EDGE Function" 
+- "Integrate RAG with main agent (agente-liftlio)"
+
+### 📊 Resultados da Sessão 12/01/2025
+
+### ✅ Cards CONCLUÍDOS ontem:
+1. **"Process remaining embeddings for 14 tables"** → Movido para Completed
+   - Sistema automatizado implementado
+   - 372+ embeddings processados via CRON
+   - Performance otimizada em 40%
+
+2. **"Debug RAG semantic search returning empty results"** → Movido para Completed  
+   - Problema resolvido: embeddings NULL poluindo BD
+   - 300 registros inválidos removidos
+   - Sistema de limpeza implementado
 
 ## Resultados do Primeiro Teste
 
@@ -199,6 +249,12 @@ trello_create_card "$VALDAIR_TODO" "Implement new feature X" "Technical details:
 - **VS Code / Documentação local**: Sempre em português
 - **Trello (cards, comentários, labels)**: Sempre em inglês
 
+### ⚠️ REGRA SOBRE DATAS NO TRELLO
+- **NUNCA adicionar datas manualmente**
+- **O Trello registra automaticamente** quando cada comentário/ação foi feita
+- **Não escrever** "[12/07/2025]" ou qualquer formato de data
+- **Deixar o sistema** cuidar do registro temporal
+
 ### Fluxo de Trabalho do Valdair
 1. **Ao iniciar tarefa**: Mover card de "Valdair" → "Valdair Is Working On it"
 2. **Durante o trabalho**: Adicionar comentários em inglês com progresso
@@ -213,23 +269,80 @@ trello_create_card "$VALDAIR_TODO" "Implement new feature X" "Technical details:
 
 ### Template de Atualização
 ```
-[DATE TIME] Progress Update:
+Progress Update:
 - Completed: [what was done]
 - Blockers: [if any]
 - Next: [next steps]
 ```
 
+### ⚠️ NÃO ADICIONAR DATAS
+- O Trello adiciona data/hora automaticamente
+- NUNCA escrever datas manualmente nos comentários
+- O sistema registra quando cada ação foi feita
+
 ### Comandos Rápidos para Claude
+
+#### 📋 Para LISTAR cards:
+```bash
+# SEMPRE executar primeiro (carrega credenciais):
+source .claude/scripts/trello-api.sh
+
+# Depois usar:
+curl -s "https://api.trello.com/1/lists/686b4ad61da133ac3b998284/cards?key=3436c02dafd3cedc7015fd5e881a850c&token=ATTA082e00f4ffc4f35a4b753c8c955d106a21a01c91c2213bc5c9fb3c128a0a8a9f0551C6F6" | python3 -c "import json, sys; cards = json.load(sys.stdin); [print(f'- {card[\"name\"]} (ID: {card[\"id\"]})') for card in cards]"
+```
+
+#### ✅ Para COMPLETAR um card:
+```bash
+# 1. Mover para Completed:
+curl -X PUT "https://api.trello.com/1/cards/CARD_ID?key=3436c02dafd3cedc7015fd5e881a850c&token=ATTA082e00f4ffc4f35a4b753c8c955d106a21a01c91c2213bc5c9fb3c128a0a8a9f0551C6F6" -H "Content-Type: application/json" -d "{\"idList\": \"686b442bd7c4de1dbcb52ba8\"}"
+
+# 2. Adicionar comentário de conclusão:
+curl -X POST "https://api.trello.com/1/cards/CARD_ID/actions/comments?key=3436c02dafd3cedc7015fd5e881a850c&token=ATTA082e00f4ffc4f35a4b753c8c955d106a21a01c91c2213bc5c9fb3c128a0a8a9f0551C6F6" -H "Content-Type: application/json" -d "{\"text\": \"✅ COMPLETED (DATA): Descrição do que foi feito.\"}"
+```
+
+#### 🔧 Para COMEÇAR um card:
+```bash
+# Mover de To-Do para Working:
+curl -X PUT "https://api.trello.com/1/cards/CARD_ID?key=3436c02dafd3cedc7015fd5e881a850c&token=ATTA082e00f4ffc4f35a4b753c8c955d106a21a01c91c2213bc5c9fb3c128a0a8a9f0551C6F6" -H "Content-Type: application/json" -d "{\"idList\": \"686b4ad61da133ac3b998284\"}"
+```
+
+#### ➕ Para CRIAR novo card:
+```bash
+curl -X POST "https://api.trello.com/1/cards?key=3436c02dafd3cedc7015fd5e881a850c&token=ATTA082e00f4ffc4f35a4b753c8c955d106a21a01c91c2213bc5c9fb3c128a0a8a9f0551C6F6" -H "Content-Type: application/json" -d "{\"idList\": \"686b4422d297ee28b3d92163\", \"name\": \"Nome do Card\", \"desc\": \"Descrição técnica detalhada\"}"
+```
+
+### Comandos Interpretativos:
 - "trabalhando em [tarefa]" → Move para "Valdair Is Working On it"
 - "completei [tarefa]" → Move para "Completed"
 - "bloqueado em [tarefa]" → Adiciona label "blocked"
 - "nova tarefa [descrição]" → Cria card em "Valdair"
 
+## ⚠️ INSTRUÇÕES CRÍTICAS para Claude
+
+### 🚨 SEMPRE fazer ANTES de qualquer operação:
+1. **Executar**: `source .claude/scripts/trello-api.sh` (carrega credenciais)
+2. **Usar API direta**: Os aliases não funcionam no Bash tool, use sempre curl
+3. **Substituir CARD_ID**: Trocar literalmente pela ID do card antes de executar
+
+### 🔍 Fluxo Correto:
+1. **Listar** → Pegar ID do card
+2. **Copiar ID** → Substituir em CARD_ID nos comandos
+3. **Executar** → Comando curl completo
+4. **Confirmar** → Verificar se moveu/comentou
+
+### 💡 Dicas:
+- **Nunca usar** aliases como `trello-working` no Bash tool
+- **Sempre usar** comandos curl completos
+- **List IDs fixos**:
+  - To-Do: `686b4422d297ee28b3d92163`
+  - Working: `686b4ad61da133ac3b998284` 
+  - Completed: `686b442bd7c4de1dbcb52ba8`
+
 ## Notas Importantes
 - **Método atual**: API REST direta (mais confiável que MCP)
 - **Credenciais**: Armazenadas no script `trello-api.sh`
 - **Board "Liftlio"**: Totalmente acessível
-- **Total de cards**: 47 (33 originais + 14 do agente AI)
+- **Total de cards**: 47+ (em crescimento)
 
 ## Por que mudamos para API direta?
 1. **Mais confiável** - Sempre funciona, não depende de reiniciar Claude

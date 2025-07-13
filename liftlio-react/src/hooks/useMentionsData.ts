@@ -487,13 +487,15 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
     fetchMentionsData();
     
     // Configure listener for real-time updates
+    // NOTA: Removido filtro complexo que causava erro "malformed array literal"
+    // O Supabase Realtime não suporta subqueries no filtro
     const subscription = supabase
       .channel('mentions-changes')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'Comentarios_Principais',
-        filter: `video_id=in.(select id from "Videos" where scanner_id in (select id from "Scanner de videos do youtube" where "Projeto_id"=${projectId}))`
+        table: 'Comentarios_Principais'
+        // Filtro removido - fetchMentionsData já filtra por projeto
       }, () => {
         fetchMentionsData();
       })

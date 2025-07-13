@@ -2189,18 +2189,18 @@ const Mentions: React.FC = () => {
         .from('mentions_overview')
         .select('comment_id')
         .eq('scanner_project_id', currentProject.id)
-        .eq('comment_is_lead', true);
+        .gt('comment_lead_score', 0);
         
       if (leadMentionsError) {
         console.error('Erro ao buscar menções lead:', leadMentionsError);
       }
       
-      // 3. High Priority Mentions (priority_score > 10)
+      // 3. High Priority Mentions (comment_lead_score > 10)
       const { data: highPriorityData, error: highPriorityError } = await supabase
         .from('mentions_overview')
         .select('comment_id')
         .eq('scanner_project_id', currentProject.id)
-        .gt('priority_score', 10);
+        .gt('comment_lead_score', 10);
         
       if (highPriorityError) {
         console.error('Erro ao buscar menções de alta prioridade:', highPriorityError);

@@ -460,8 +460,14 @@ const FloatingAgent: React.FC = () => {
         }, 1500);
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error calling Claude:', error);
+      
+      // Verificar se é erro de extensão do Chrome
+      if (error.message && error.message.includes('Failed to fetch')) {
+        addAgentMessage('Ops! Parece que uma extensão do navegador está bloqueando a conexão. Tente desabilitar extensões de ad-block ou privacidade, ou use uma aba anônima.');
+        return;
+      }
       
       // Fallback to basic responses for common queries
       const lowerInput = input.toLowerCase();

@@ -19,11 +19,16 @@ AGENTE_LIFTLIO/MCP_Functions/
 
 ## 🚀 Edge Functions Disponíveis
 
-### 1. agente-liftlio
-- **Arquivo**: `agente-liftlio_assistente_ai_claude.ts.bak`
+### 1. agente-liftlio (v12 - ATUALIZADO 13/01/2025)
+- **Arquivo**: `agente-liftlio_v12_memoria_persistente.ts`
 - **Endpoint**: `/agente-liftlio`
-- **Descrição**: Assistente AI com Claude
-- **Status**: ✅ Deployado e funcionando
+- **Descrição**: Assistente AI com Claude - Agora com memória persistente!
+- **Status**: ✅ Deployado e funcionando (versão 14 no Supabase)
+- **Melhorias v12**:
+  - Memória persistente com tabela `agent_conversations`
+  - Não expõe mais ID do projeto (apenas nome)
+  - Respostas reduzidas para 512 tokens (mais concisas)
+  - Histórico de conversas por sessão e projeto
 
 ### 2. generate-embedding ⭐ NOVA
 - **Arquivo**: `generate-embedding_gerar_embeddings_openai.ts.bak`
@@ -34,6 +39,15 @@ AGENTE_LIFTLIO/MCP_Functions/
 
 ### ✅ Edge Functions Limpas (11/01/2025)
 Removemos 11 Edge Functions duplicadas do RAG, mantendo apenas as 2 essenciais.
+
+## 📊 Novas Tabelas (13/01/2025)
+
+### agent_conversations
+- **Arquivo**: `agent_conversations_table_memoria_persistente.sql`
+- **Descrição**: Armazena histórico de conversas do agente AI
+- **Campos**: user_id, project_id, session_id, message_type, message, embedding, rag_processed
+- **Status**: ✅ Criada e funcionando
+- **RLS**: Habilitado com políticas de segurança
 
 ## 🗄️ SQL Functions Disponíveis
 
@@ -128,4 +142,13 @@ Removemos 11 Edge Functions duplicadas do RAG, mantendo apenas as 2 essenciais.
 
 ---
 
-*Última atualização: 11/01/2025*
+*Última atualização: 13/01/2025*
+
+## 📋 Changelog
+
+### 13/01/2025
+- ✅ Implementada memória persistente no agente (v12)
+- ✅ Criada tabela `agent_conversations`
+- ✅ Removida exposição de ID do projeto
+- ✅ Reduzidos tokens de 1024 para 512
+- ✅ Deploy realizado com sucesso
