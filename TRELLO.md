@@ -1,408 +1,112 @@
-# TRELLO.md - Instruções para API do Trello
+# TRELLO.md - Integração MCP Trello com Claude
 
-## ⚠️ IMPORTANTE: USE A API DO TRELLO, NÃO ESTE ARQUIVO!
-## Este arquivo é apenas DOCUMENTAÇÃO sobre como usar a API do Trello
-## Para atualizar tarefas, use os comandos curl abaixo com a API real
+## 🚨 IMPORTANTE: USE SEMPRE O MCP DO TRELLO
+**Este arquivo documenta como usar o MCP do Trello no Claude**
+- **NUNCA use APIs diretas ou curl** - sempre use as ferramentas MCP
+- **Este arquivo é DOCUMENTAÇÃO** - não é banco de dados
+- **Para dados em tempo real**: use as ferramentas MCP listadas abaixo
 
-## Status da Configuração
-- **Data da atualização**: 11/01/2025
-- **Método de integração**: API REST direta (mais confiável que MCP)
-- **Board ID**: `ZrgSrOmx`
-- **Nome do Board**: Liftlio
-- **Script de funções**: `/Users/valdair/Documents/Projetos/Liftlio/liftlio-react/.claude/scripts/trello-api.sh`
+## Status da Configuração MCP
+- **MCP Trello**: ✅ Configurado e funcionando
+- **Board Principal**: Liftlio (ID: `686b43ced8d30f8eb12b9d12`)
+- **Servidor MCP**: `@delorenj/mcp-server-trello`
+- **Data última verificação**: 16/01/2025
 
-## 🚨 REGRA CRÍTICA PARA CLAUDE 🚨
-### NUNCA EDITE ESTE ARQUIVO PARA ATUALIZAR TAREFAS!
-### USE SEMPRE A API DO TRELLO COM OS COMANDOS CURL ABAIXO!
 
-## 📊 ATUALIZAÇÃO SESSÃO 13/01/2025 - 16:30 (TODAS AS TAREFAS COMPLETADAS!)
 
-### ✅ Cards COMPLETADOS hoje (7 NOVAS TAREFAS):
+## Ferramentas MCP Disponíveis
 
-4. **"Deploy Edge Function agente-liftlio v12"** → COMPLETADO
-   - Edge Function v12 deployada com CORS corrigido
-   - v13 deployada com memória persistente funcional
-   - v14 final com usuário autenticado real
+### 📋 Gerenciamento de Boards
+- `mcp__trello__list_boards` - Lista todos os boards
+- `mcp__trello__set_active_board` - Define o board ativo
+- `mcp__trello__get_active_board_info` - Informações do board ativo
+- `mcp__trello__list_workspaces` - Lista workspaces
+- `mcp__trello__set_active_workspace` - Define workspace ativo
+- `mcp__trello__list_boards_in_workspace` - Lista boards em um workspace
 
-5. **"Fix agent CORS errors preventing frontend calls"** → COMPLETADO
-   - Headers CORS adicionados em todas as respostas
-   - Suporte para requisições OPTIONS (preflight)
-   - Erro "Access-Control-Allow-Origin" resolvido
+### 📝 Gerenciamento de Listas
+- `mcp__trello__get_lists` - Lista todas as listas do board
+- `mcp__trello__add_list_to_board` - Adiciona nova lista
+- `mcp__trello__archive_list` - Arquiva uma lista
 
-6. **"Implement agent persistent memory with real user authentication"** → COMPLETADO
-   - Tabela agent_conversations com UUID válido para users
-   - Sistema salva conversas com usuário autenticado real
-   - 4+ conversas já salvas e funcionando
-   - Session ID único por conversa
+### 🎯 Gerenciamento de Cards
+- `mcp__trello__get_cards_by_list_id` - Lista cards de uma lista específica
+- `mcp__trello__add_card_to_list` - Cria novo card
+- `mcp__trello__update_card_details` - Atualiza detalhes do card
+- `mcp__trello__move_card` - Move card entre listas
+- `mcp__trello__archive_card` - Arquiva um card
+- `mcp__trello__get_my_cards` - Lista cards atribuídos ao usuário
+- `mcp__trello__attach_image_to_card` - Anexa imagem a um card
 
-7. **"Fix agent exposing technical IDs in responses"** → COMPLETADO
-   - Removidos VideoID e IDs técnicos das respostas
-   - System prompt instrui para nunca mencionar IDs
-   - Agente fala apenas nomes de projetos, canais e conteúdos
+### 📊 Outras Ferramentas
+- `mcp__trello__get_recent_activity` - Atividades recentes do board
 
-8. **"Prepare agent_conversations for RAG processing"** → COMPLETADO
-   - Função prepare_rag_content_agent_conversations() criada
-   - Sistema de processamento RAG v5 implementado
-   - Estrutura pronta para embeddings futuros
+## Como Usar o MCP do Trello
 
-9. **"Add interactive visual feedback during RAG processing"** → COMPLETADO
-   - 6 estágios visuais: Análise → Autenticação → Dados → IA → Finalização
-   - Spinner animado com CSS keyframes
-   - Mensagens dinâmicas e easter eggs divertidos
-   - UX completamente transformada
+### 1. Listar Tarefas Pendentes do Valdair
+```typescript
+// Primeiro, definir o board ativo
+await mcp__trello__set_active_board({ boardId: "686b43ced8d30f8eb12b9d12" });
 
-10. **"Update project query functions to use correct field names"** → COMPLETADO
-    - Corrigidos campos: comment_is_lead → comment_lead_score > 0
-    - Corrigidos campos: priority_score → comment_lead_score
-    - Queries alinhadas com estrutura real da mentions_overview
-
-### 📊 RESUMO TÉCNICO DA SESSÃO:
-- **Edge Functions**: v12 → v13 → v14 (3 versões deployadas)
-- **Memória persistente**: ✅ FUNCIONANDO (4 conversas salvas)
-- **CORS**: ✅ RESOLVIDO (sem mais erros no browser)
-- **UX**: ✅ TRANSFORMADA (feedback visual interativo)
-- **RAG**: ✅ PREPARADO (sistema pronto para embeddings)
-- **Autenticação**: ✅ REAL (usando IDs de usuários logados)
-
-### 🚀 STATUS ATUAL:
-**AGENTE LIFTLIO 100% FUNCIONAL!**
-- Memória persistente entre sessões ✅
-- Dados reais do Supabase em tempo real ✅  
-- Feedback visual durante processamento ✅
-- CORS resolvido ✅
-- IDs técnicos removidos das respostas ✅
-
-## 📊 Resultados da Sessão 13/01/2025 MANHÃ (Criados via API do Trello)
-
-### ✅ Cards CRIADOS hoje na lista Completed:
-1. **"Implement agent conversation memory"** → Card ID: 6873b3a75e60cbaf0ee3f12e
-   - Tabela agent_conversations criada
-   - Salvamento de conversas implementado
-   - Busca de contexto histórico funcionando
-   - Edge Function v12 pronta para deploy
-
-2. **"Fix agent exposing internal project ID"** → Card ID: 6873b3c69ddcd3d7b7c56b50
-   - Removido ID do projeto das respostas
-   - Mantém apenas nome do projeto
-   - Controle interno preservado
-
-3. **"Reduce agent response tokens from 1024 to 512"** → Card ID: 6873b3dc6fa65d72b195acea
-   - Respostas mais concisas
-   - Melhor experiência do usuário
-   - Economia de tokens
-
-### 🔄 Cards EXISTENTES em Working:
-- "Improve credit consumption control"
-- "Memory RAG Automation EDGE Function" 
-- "Integrate RAG with main agent (agente-liftlio)"
-
-### 📊 Resultados da Sessão 12/01/2025
-
-### ✅ Cards CONCLUÍDOS ontem:
-1. **"Process remaining embeddings for 14 tables"** → Movido para Completed
-   - Sistema automatizado implementado
-   - 372+ embeddings processados via CRON
-   - Performance otimizada em 40%
-
-2. **"Debug RAG semantic search returning empty results"** → Movido para Completed  
-   - Problema resolvido: embeddings NULL poluindo BD
-   - 300 registros inválidos removidos
-   - Sistema de limpeza implementado
-
-## Resultados do Primeiro Teste
-
-## Como Usar a API do Trello
-
-### 1. Carregar as funções (sempre fazer primeiro)
-```bash
-source /Users/valdair/Documents/Projetos/Liftlio/liftlio-react/.claude/scripts/trello-api.sh
+// Listar cards da lista "Valdair"
+await mcp__trello__get_cards_by_list_id({ listId: "686b4422d297ee28b3d92163" });
 ```
 
-### 2. Comandos Disponíveis
-
-#### Listar cards
-```bash
-trello-pending    # Lista cards em "Valdair" (to-do)
-trello-working    # Lista cards em "Valdair Is Working On it"
-trello-completed  # Lista cards em "Completed"
+### 2. Ver o que Valdair está Trabalhando
+```typescript
+// Listar cards da lista "Valdair Is Working On it"
+await mcp__trello__get_cards_by_list_id({ listId: "686b4ad61da133ac3b998284" });
 ```
 
-#### Criar novo card
-```bash
-trello_create_card "$VALDAIR_TODO" "Nome do Card" "Descrição do card"
+### 3. Criar Nova Tarefa
+```typescript
+await mcp__trello__add_card_to_list({
+  listId: "686b4422d297ee28b3d92163", // Lista "Valdair"
+  name: "Task name in English",
+  description: "Detailed description in English",
+  dueDate: "2025-01-20T12:00:00Z" // Opcional
+});
 ```
 
-#### Mover cards
-```bash
-trello_start_card "ID_DO_CARD"     # Move para "Working on it"
-trello_complete_card "ID_DO_CARD"  # Move para "Completed"
+### 4. Mover Card para "Working On It"
+```typescript
+await mcp__trello__move_card({
+  cardId: "ID_DO_CARD",
+  listId: "686b4ad61da133ac3b998284" // "Valdair Is Working On it"
+});
 ```
 
-#### Adicionar comentário
-```bash
-trello_add_comment "ID_DO_CARD" "Progress update: Completed X, working on Y"
+### 5. Marcar Tarefa como Completada
+```typescript
+await mcp__trello__move_card({
+  cardId: "ID_DO_CARD",
+  listId: "686b442bd7c4de1dbcb52ba8" // "Completed"
+});
 ```
 
-### 3. IDs das Listas (já configurados no script)
-- **VALDAIR_TODO**: 686b4422d297ee28b3d92163
-- **VALDAIR_WORKING**: 686b4ad61da133ac3b998284
-- **COMPLETED**: 686b442bd7c4de1dbcb52ba8
-- **STEVE_TODO**: 686b440c1850daf5c7b67d47
-- **STEVE_WORKING**: 686b4abbc2844bbd01e4770a
-- **RESEARCH**: 686ba6823ff02e290d3652e1
+## IDs das Listas do Board Liftlio
 
-## Estrutura do Board Liftlio
+| Lista | ID |
+|-------|-----|
+| Steve To Do Items | `686b440c1850daf5c7b67d47` |
+| Steve is Working On it | `686b4abbc2844bbd01e4770a` |
+| **Valdair** | `686b4422d297ee28b3d92163` |
+| **Valdair Is Working On it** | `686b4ad61da133ac3b998284` |
+| **Completed** | `686b442bd7c4de1dbcb52ba8` |
+| Research laboratory items | `686ba6823ff02e290d3652e1` |
 
-### Listas e Cards (Total: 33 cards)
-1. **Steve To Do Items** (3 cards)
-   - Tasks pendentes para Steve
+## Comandos Rápidos para o Usuário
 
-2. **Steve is Working On it** (1 card)
-   - Tasks em progresso por Steve
+Quando o usuário disser:
+- **"listar tarefas pendentes"** → Use `mcp__trello__get_cards_by_list_id` na lista "Valdair"
+- **"o que estou fazendo"** → Use `mcp__trello__get_cards_by_list_id` na lista "Valdair Is Working On it"
+- **"tarefas completadas"** → Use `mcp__trello__get_cards_by_list_id` na lista "Completed"
+- **"trabalhando em [tarefa]"** → Use `mcp__trello__move_card` para mover para "Valdair Is Working On it"
+- **"completei [tarefa]"** → Use `mcp__trello__move_card` para mover para "Completed"
+- **"criar tarefa [nome]"** → Use `mcp__trello__add_card_to_list` na lista "Valdair"
 
-3. **Valdair** (2 cards)
-   - Tasks pendentes para Valdair
-
-4. **Valdair Is Working On it** (2 cards)
-   - Tasks em progresso por Valdair
-
-5. **Completed** (21 cards)
-   - Tasks concluídas
-
-6. **Research laboratory items** (4 cards)
-   - Items de pesquisa e desenvolvimento
-   - Incluindo o card de teste criado
-
-## Exemplos de Uso Prático
-
-### Quando você pedir "listar minhas tarefas"
-```bash
-source /Users/valdair/Documents/Projetos/Liftlio/liftlio-react/.claude/scripts/trello-api.sh
-trello-pending
-```
-
-### Quando você disser "trabalhando em [tarefa]"
-```bash
-# Primeiro listar para pegar o ID
-trello-pending
-# Depois mover o card
-trello_start_card "ID_DO_CARD"
-```
-
-### Quando você disser "completei [tarefa]"
-```bash
-# Primeiro listar working para pegar o ID
-trello-working
-# Depois mover para completed
-trello_complete_card "ID_DO_CARD"
-```
-
-### Criar nova tarefa
-```bash
-trello_create_card "$VALDAIR_TODO" "Implement new feature X" "Technical details: Need to create component Y and integrate with Z"
-```
-
-## 📝 Cards do Agente AI - Criados em 11/01/2025
-
-### ✅ Cards já criados via API
-
-### 🟢 Completed (6 novos cards)
-1. **Implement Claude AI Agent Layer**
-   - Edge function agente-liftlio deployed and working
-   - Integration with FloatingAgent.tsx component
-   - Claude API configured in Supabase Vault
-
-2. **Create RAG embeddings infrastructure**
-   - Table rag_embeddings with vector column
-   - HNSW index for performance
-   - 14 tables configured with rag_processed field
-
-3. **Setup project isolation for RAG**
-   - Added project_id field with foreign key
-   - RLS policies implemented
-   - Composite index for performance
-
-4. **Process embeddings for projects 58 and 71**
-   - 144 total embeddings created
-   - Project 58: 101 embeddings
-   - Project 71: 32 embeddings
-
-5. **Create search functions for RAG**
-   - SQL function: search_project_rag
-   - Edge functions: search-rag-project, process-rag-batch
-   - Prepare content functions for each table
-
-6. **Organize MCP functions documentation**
-   - Complete folder structure created
-   - Best practices documented
-   - Index of all functions maintained
-
-### 🔄 Valdair Is Working On It (3 novos cards)
-1. **Debug RAG semantic search returning empty results**
-   - Edge function not returning expected results
-   - Possible causes: embedding similarity, threshold, query processing
-   - Last test with threshold 0.3 still returning empty
-
-2. **Process remaining embeddings for 14 tables**
-   - Videos_transcricao: 211 records pending
-   - Comentarios_Principais: 690 records pending
-   - Mensagens: 688 records pending
-   - Other 11 tables pending
-
-3. **Integrate RAG with main agent (agente-liftlio)**
-   - Modify agent to query RAG before Claude
-   - Implement intelligent fallback
-   - Test response quality
-
-### 📋 Valdair To-Do (5 novos cards)
-1. **Implement auto-processing triggers for RAG**
-   - Create database triggers for new records
-   - Queue system for batch processing
-   - Error handling and retry logic
-
-2. **Create support ticket system**
-   - Tables: support_tickets, ticket_messages, ticket_notifications
-   - RLS configuration
-   - Integration with agent
-
-3. **Add conversation history feature**
-   - Store chat sessions
-   - Retrieve past conversations
-   - Context preservation
-
-4. **Implement cron jobs for batch processing**
-   - Supabase scheduled functions
-   - Process pending embeddings
-   - Clean up old data
-
-5. **Create admin panel for tickets**
-   - Route: /admin/tickets
-   - Interface for support team
-   - Notification system
-
-### 🐛 Bugs (2 novos cards)
-1. **Fix vector search returning empty results**
-   - Priority: High
-   - Impact: RAG system not functional
-   - Workaround: Using keyword search temporarily
-
-2. **Resolve occasional timeout on long responses**
-   - Priority: Medium
-   - Impact: User experience
-   - Solution: Optimize Edge function performance
-
-## Configuração de Atualização de Tarefas
-
-### Identificação
-- **Usuário atual**: Valdair
-- **Listas de trabalho**: "Valdair" (to-do) e "Valdair Is Working On it" (em progresso)
-
-### Regras de Idioma
-- **VS Code / Documentação local**: Sempre em português
-- **Trello (cards, comentários, labels)**: Sempre em inglês
-
-### ⚠️ REGRA SOBRE DATAS NO TRELLO
-- **NUNCA adicionar datas manualmente**
-- **O Trello registra automaticamente** quando cada comentário/ação foi feita
-- **Não escrever** "[12/07/2025]" ou qualquer formato de data
-- **Deixar o sistema** cuidar do registro temporal
-
-### Fluxo de Trabalho do Valdair
-1. **Ao iniciar tarefa**: Mover card de "Valdair" → "Valdair Is Working On it"
-2. **Durante o trabalho**: Adicionar comentários em inglês com progresso
-3. **Ao completar**: Mover card → "Completed" com resumo final
-4. **Se bloqueado**: Adicionar label "blocked" e explicação
-
-### Padrão de Cards (em inglês)
-- **Title**: Ação clara (ex: "Implement RAG system")
-- **Description**: Technical details and acceptance criteria
-- **Labels**: bug, feature, enhancement, urgent, blocked
-- **Comments**: Progress updates in English
-
-### Template de Atualização
-```
-Progress Update:
-- Completed: [what was done]
-- Blockers: [if any]
-- Next: [next steps]
-```
-
-### ⚠️ NÃO ADICIONAR DATAS
-- O Trello adiciona data/hora automaticamente
-- NUNCA escrever datas manualmente nos comentários
-- O sistema registra quando cada ação foi feita
-
-### Comandos Rápidos para Claude
-
-#### 📋 Para LISTAR cards:
-```bash
-# SEMPRE executar primeiro (carrega credenciais):
-source .claude/scripts/trello-api.sh
-
-# Depois usar:
-curl -s "https://api.trello.com/1/lists/686b4ad61da133ac3b998284/cards?key=3436c02dafd3cedc7015fd5e881a850c&token=ATTA082e00f4ffc4f35a4b753c8c955d106a21a01c91c2213bc5c9fb3c128a0a8a9f0551C6F6" | python3 -c "import json, sys; cards = json.load(sys.stdin); [print(f'- {card[\"name\"]} (ID: {card[\"id\"]})') for card in cards]"
-```
-
-#### ✅ Para COMPLETAR um card:
-```bash
-# 1. Mover para Completed:
-curl -X PUT "https://api.trello.com/1/cards/CARD_ID?key=3436c02dafd3cedc7015fd5e881a850c&token=ATTA082e00f4ffc4f35a4b753c8c955d106a21a01c91c2213bc5c9fb3c128a0a8a9f0551C6F6" -H "Content-Type: application/json" -d "{\"idList\": \"686b442bd7c4de1dbcb52ba8\"}"
-
-# 2. Adicionar comentário de conclusão:
-curl -X POST "https://api.trello.com/1/cards/CARD_ID/actions/comments?key=3436c02dafd3cedc7015fd5e881a850c&token=ATTA082e00f4ffc4f35a4b753c8c955d106a21a01c91c2213bc5c9fb3c128a0a8a9f0551C6F6" -H "Content-Type: application/json" -d "{\"text\": \"✅ COMPLETED (DATA): Descrição do que foi feito.\"}"
-```
-
-#### 🔧 Para COMEÇAR um card:
-```bash
-# Mover de To-Do para Working:
-curl -X PUT "https://api.trello.com/1/cards/CARD_ID?key=3436c02dafd3cedc7015fd5e881a850c&token=ATTA082e00f4ffc4f35a4b753c8c955d106a21a01c91c2213bc5c9fb3c128a0a8a9f0551C6F6" -H "Content-Type: application/json" -d "{\"idList\": \"686b4ad61da133ac3b998284\"}"
-```
-
-#### ➕ Para CRIAR novo card:
-```bash
-curl -X POST "https://api.trello.com/1/cards?key=3436c02dafd3cedc7015fd5e881a850c&token=ATTA082e00f4ffc4f35a4b753c8c955d106a21a01c91c2213bc5c9fb3c128a0a8a9f0551C6F6" -H "Content-Type: application/json" -d "{\"idList\": \"686b4422d297ee28b3d92163\", \"name\": \"Nome do Card\", \"desc\": \"Descrição técnica detalhada\"}"
-```
-
-### Comandos Interpretativos:
-- "trabalhando em [tarefa]" → Move para "Valdair Is Working On it"
-- "completei [tarefa]" → Move para "Completed"
-- "bloqueado em [tarefa]" → Adiciona label "blocked"
-- "nova tarefa [descrição]" → Cria card em "Valdair"
-
-## ⚠️ INSTRUÇÕES CRÍTICAS para Claude
-
-### 🚨 SEMPRE fazer ANTES de qualquer operação:
-1. **Executar**: `source .claude/scripts/trello-api.sh` (carrega credenciais)
-2. **Usar API direta**: Os aliases não funcionam no Bash tool, use sempre curl
-3. **Substituir CARD_ID**: Trocar literalmente pela ID do card antes de executar
-
-### 🔍 Fluxo Correto:
-1. **Listar** → Pegar ID do card
-2. **Copiar ID** → Substituir em CARD_ID nos comandos
-3. **Executar** → Comando curl completo
-4. **Confirmar** → Verificar se moveu/comentou
-
-### 💡 Dicas:
-- **Nunca usar** aliases como `trello-working` no Bash tool
-- **Sempre usar** comandos curl completos
-- **List IDs fixos**:
-  - To-Do: `686b4422d297ee28b3d92163`
-  - Working: `686b4ad61da133ac3b998284` 
-  - Completed: `686b442bd7c4de1dbcb52ba8`
-
-## Notas Importantes
-- **Método atual**: API REST direta (mais confiável que MCP)
-- **Credenciais**: Armazenadas no script `trello-api.sh`
-- **Board "Liftlio"**: Totalmente acessível
-- **Total de cards**: 47+ (em crescimento)
-
-## Por que mudamos para API direta?
-1. **Mais confiável** - Sempre funciona, não depende de reiniciar Claude
-2. **Mais rápido** - Execução direta sem overhead do MCP
-3. **Mais flexível** - Podemos customizar as funções
-4. **Sempre disponível** - Não precisa de configuração especial
-
-## Credenciais (NÃO compartilhar)
-- **API Key**: `3436c02dafd3cedc7015fd5e881a850c`
-- **Token**: `ATTA082e00f4ffc4f35a4b753c8c955d106a21a01c91c2213bc5c9fb3c128a0a8a9f0551C6F6`
-- **Board ID**: `ZrgSrOmx`
+## Regras Importantes
+1. **Sempre use MCP** - nunca use APIs diretas ou curl
+2. **Cards em inglês** - títulos, descrições e comentários sempre em inglês
+3. **Board padrão** - sempre usar o board Liftlio (ID: `686b43ced8d30f8eb12b9d12`)
+4. **Dados em tempo real** - sempre buscar dados atualizados via MCP

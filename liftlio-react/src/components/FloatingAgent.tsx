@@ -48,30 +48,21 @@ const bounce = keyframes`
   }
 `;
 
-const spin = keyframes`
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+// Animação de pulso para o cérebro pensando
+const brainPulse = keyframes`
+  0% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0.6; transform: scale(1); }
 `;
 
 // Componente de indicador de processamento
 const ProcessingIndicator = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: #666;
+  justify-content: center;
   
-  .spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #007bff;
-    border-radius: 50%;
-    animation: ${spin} 1s linear infinite;
-  }
-  
-  .stage-text {
-    font-weight: 500;
+  span {
+    animation: ${brainPulse} 2s ease-in-out infinite;
   }
 `;
 
@@ -384,7 +375,7 @@ const FloatingAgent: React.FC = () => {
     }
   ]);
   const [isTyping, setIsTyping] = useState(false);
-  const [processingStage, setProcessingStage] = useState<string | null>(null);
+  // Removido processingStage - agora usa apenas cérebro pensando
   const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const sessionIdRef = useRef<string | null>(null);
@@ -447,7 +438,6 @@ const FloatingAgent: React.FC = () => {
   // Processar comando do usuário usando Claude
   const processUserInput = useCallback(async (input: string) => {
     setIsTyping(true);
-    setProcessingStage('🔍 Analisando sua pergunta...');
     
     try {
       // Debug: verificar projeto atual
@@ -467,7 +457,7 @@ const FloatingAgent: React.FC = () => {
       console.log('Contexto enviado para o agente:', context);
 
       // Obter usuário autenticado
-      setProcessingStage('🔐 Autenticando usuário...');
+      // Removido processamento stage
       const { data: { user } } = await supabase.auth.getUser();
       
       // Gerar session ID único para esta conversa se não existir
@@ -475,28 +465,21 @@ const FloatingAgent: React.FC = () => {
         sessionIdRef.current = crypto.randomUUID();
       }
 
-      setProcessingStage('📊 Buscando dados do projeto...');
+      // Removido processamento stage
       
       // Simular delay para mostrar o estágio
       await new Promise(resolve => setTimeout(resolve, 600));
       
       // Mostrar estágio dinâmico baseado no projeto atual
       if (currentProject) {
-        setProcessingStage(`🔍 Analisando dados do projeto ${currentProject.name || 'HW'}...`);
+        // Removido processamento stage
       } else {
-        setProcessingStage('🔍 Analisando dados disponíveis...');
+        // Removido processamento stage
       }
       await new Promise(resolve => setTimeout(resolve, 700));
       
-      // Mensagens aleatórias divertidas para o processamento IA
-      const aiMessages = [
-        '🧠 Processando com IA + RAG...',
-        '🤖 Claude está pensando...',
-        '⚡ Conectando neurônios artificiais...',
-        '🔮 Consultando a base de conhecimento...',
-        '🚀 Turbinando resposta com RAG...'
-      ];
-      setProcessingStage(aiMessages[Math.floor(Math.random() * aiMessages.length)]);
+      // Remover texto - mostrar apenas animação
+      // Removido processamento stage
 
       // MELHOR PRÁTICA: Usar SDK do Supabase para chamar Edge Functions
       // Isso é mais seguro, mantível e segue os padrões recomendados
@@ -511,7 +494,7 @@ const FloatingAgent: React.FC = () => {
 
       if (error) throw error;
 
-      setProcessingStage('✨ Finalizando resposta...');
+      // Removido processamento stage
       
       // Get response text
       const responseText = data.content || data.responseText || 'I apologize, but I couldn\'t process your request.';
@@ -559,7 +542,7 @@ const FloatingAgent: React.FC = () => {
       }
     } finally {
       setIsTyping(false);
-      setProcessingStage(null);
+      // Removido processamento stage
     }
   }, [addAgentMessage, navigate, currentProject, location.pathname]);
 
@@ -629,14 +612,9 @@ const FloatingAgent: React.FC = () => {
           {isTyping && (
             <Message isUser={false}>
               <MessageBubble isUser={false}>
-                {processingStage ? (
-                  <ProcessingIndicator>
-                    <div className="spinner" />
-                    <span className="stage-text">{processingStage}</span>
-                  </ProcessingIndicator>
-                ) : (
-                  <span style={{ opacity: 0.7 }}>Typing...</span>
-                )}
+                <ProcessingIndicator>
+                  <span style={{ fontSize: '24px', display: 'inline-block' }}>🧠</span>
+                </ProcessingIndicator>
               </MessageBubble>
             </Message>
           )}

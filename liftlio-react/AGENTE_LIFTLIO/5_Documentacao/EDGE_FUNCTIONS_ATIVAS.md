@@ -4,10 +4,16 @@
 
 ### 1. **agente-liftlio**
 - **Descrição**: Assistente AI principal com Claude
-- **Versão**: v12 (com correção CORS)
+- **Versão**: v16 (Métricas Sincronizadas com Dashboard)
 - **Função**: Responde perguntas sobre projetos com dados reais
 - **Última atualização**: 13/01/2025
-- **Melhorias**: Headers CORS, memória persistente, integração RAG melhorada
+- **Melhorias**: 
+  - Métricas perfeitamente sincronizadas com dashboard
+  - Usa channels_count direto (não calcula canais ativos)
+  - Nova métrica: Scheduled (mensagens agendadas)
+  - Métricas contextualizadas por página
+  - Métricas de monitoring (views, likes, engagement)
+  - Headers CORS, memória persistente, integração RAG
 
 ### 2. **generate-embedding**
 - **Descrição**: Gera embeddings via OpenAI
