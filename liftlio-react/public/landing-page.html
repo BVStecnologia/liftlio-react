@@ -171,6 +171,10 @@
         .hero-section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:120px 0 80px;position:relative;overflow:hidden}
         .hero-background{position:absolute;top:0;left:0;right:0;bottom:0;opacity:.1;background:radial-gradient(circle at 20% 50%,var(--color-primary-alpha) 0%,transparent 50%),radial-gradient(circle at 80% 80%,var(--color-secondary-alpha) 0%,transparent 50%)}
         [data-theme="dark"] .hero-background{opacity:.3}
+        
+        /* Particles Canvas */
+        #particles-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 1s ease-in-out}
+        [data-theme="dark"] #particles-canvas{opacity:1}
         .hero-content{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;z-index:10;position:relative}
         /* Fix CLS - Reserve space for image */
         .dashboard-preview{position:relative;width:100%;aspect-ratio:3/2;overflow:hidden;border-radius:8px}
@@ -478,6 +482,7 @@
     
     <!-- Hero Section -->
     <section class="hero-section">
+        <canvas id="particles-canvas"></canvas>
         <div class="hero-background"></div>
         <div class="container">
             <div class="hero-content">
@@ -2164,7 +2169,341 @@
                 // Start auto-scroll for testimonials
                 startAutoScroll('testimonials-track');
             }, 1000);
+            
+            // Initialize particles effect
+            initParticles();
         });
+        
+        // Energy Network Transmission Effect
+        function initParticles() {
+            const canvas = document.getElementById('particles-canvas');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            let animationId;
+            let time = 0;
+            let nodes = [];
+            let energyPulses = [];
+            let gridNetwork = [];
+            
+            // Set canvas size
+            function resizeCanvas() {
+                const heroSection = canvas.closest('.hero-section');
+                if (heroSection) {
+                    canvas.width = heroSection.offsetWidth;
+                    canvas.height = heroSection.offsetHeight;
+                }
+            }
+            
+            // Network node class
+            class NetworkNode {
+                constructor(x, y, type = 'relay') {
+                    this.x = x;
+                    this.y = y;
+                    this.type = type; // 'source', 'relay', 'growth'
+                    this.energy = 0;
+                    this.maxEnergy = 1;
+                    this.connections = [];
+                    this.pulsePhase = Math.random() * Math.PI * 2;
+                    this.active = false;
+                    this.growthFactor = 0;
+                }
+                
+                update() {
+                    // Energy decay
+                    this.energy *= 0.95;
+                    
+                    // Pulse animation
+                    this.pulsePhase += 0.05;
+                    
+                    // Growth nodes expand over time
+                    if (this.type === 'growth' && this.active) {
+                        this.growthFactor = Math.min(1, this.growthFactor + 0.01);
+                    }
+                    
+                    // Source nodes generate energy
+                    if (this.type === 'source') {
+                        this.energy = 0.5 + Math.sin(this.pulsePhase) * 0.3;
+                    }
+                }
+                
+                draw() {
+                    const pulse = Math.sin(this.pulsePhase) * 0.2 + 0.8;
+                    let radius = 1;
+                    let opacity = 0.03;
+                    
+                    if (this.type === 'source') {
+                        radius = 2 * pulse;
+                        opacity = 0.08;
+                    } else if (this.type === 'growth') {
+                        radius = 1.5 + this.growthFactor * 2;
+                        opacity = 0.05 * this.growthFactor;
+                    }
+                    
+                    // Node glow based on energy
+                    if (this.energy > 0.01) {
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, radius + this.energy * 10, 0, Math.PI * 2);
+                        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, radius + this.energy * 10);
+                        gradient.addColorStop(0, `rgba(129, 140, 248, ${this.energy * 0.15})`);
+                        gradient.addColorStop(1, 'rgba(129, 140, 248, 0)');
+                        ctx.fillStyle = gradient;
+                        ctx.fill();
+                    }
+                    
+                    // Node core
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(129, 140, 248, ${opacity + this.energy * 0.1})`;
+                    ctx.fill();
+                    
+                    // Growth indicator
+                    if (this.type === 'growth' && this.growthFactor > 0) {
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, radius + 5 * this.growthFactor, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(244, 114, 182, ${0.03 * this.growthFactor})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            // Energy pulse class
+            class EnergyPulse {
+                constructor(startNode, endNode) {
+                    this.start = startNode;
+                    this.end = endNode;
+                    this.progress = 0;
+                    this.speed = 0.01;
+                    this.energy = 0.5;
+                    this.trail = [];
+                    this.maxTrailLength = 15;
+                }
+                
+                update() {
+                    this.progress += this.speed;
+                    
+                    // Calculate current position
+                    const x = this.start.x + (this.end.x - this.start.x) * this.progress;
+                    const y = this.start.y + (this.end.y - this.start.y) * this.progress;
+                    
+                    // Add to trail
+                    this.trail.push({ x, y });
+                    if (this.trail.length > this.maxTrailLength) {
+                        this.trail.shift();
+                    }
+                    
+                    // Transfer energy when reaching destination
+                    if (this.progress >= 1) {
+                        this.end.energy = Math.min(this.end.maxEnergy, this.end.energy + this.energy);
+                        
+                        // Activate growth nodes
+                        if (this.end.type === 'growth') {
+                            this.end.active = true;
+                        }
+                        
+                        // Create new pulses from relay nodes
+                        if (this.end.type === 'relay' && this.end.energy > 0.3) {
+                            this.end.connections.forEach(connection => {
+                                if (Math.random() < 0.5) {
+                                    energyPulses.push(new EnergyPulse(this.end, connection));
+                                }
+                            });
+                        }
+                        
+                        return false;
+                    }
+                    
+                    return true;
+                }
+                
+                draw() {
+                    // Draw trail
+                    if (this.trail.length > 1) {
+                        ctx.beginPath();
+                        this.trail.forEach((point, i) => {
+                            if (i === 0) ctx.moveTo(point.x, point.y);
+                            else ctx.lineTo(point.x, point.y);
+                        });
+                        
+                        const gradient = ctx.createLinearGradient(
+                            this.trail[0].x, this.trail[0].y,
+                            this.trail[this.trail.length - 1].x, this.trail[this.trail.length - 1].y
+                        );
+                        gradient.addColorStop(0, 'rgba(129, 140, 248, 0)');
+                        gradient.addColorStop(1, 'rgba(129, 140, 248, 0.2)');
+                        ctx.strokeStyle = gradient;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                    
+                    // Draw pulse head
+                    if (this.trail.length > 0) {
+                        const head = this.trail[this.trail.length - 1];
+                        ctx.beginPath();
+                        ctx.arc(head.x, head.y, 2, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                        ctx.fill();
+                    }
+                }
+            }
+            
+            // Create network grid
+            function createNetwork() {
+                nodes = [];
+                gridNetwork = [];
+                
+                const spacing = 100;
+                const cols = Math.ceil(canvas.width / spacing) + 1;
+                const rows = Math.ceil(canvas.height / spacing) + 1;
+                
+                // Create grid nodes
+                for (let i = 0; i < cols; i++) {
+                    for (let j = 0; j < rows; j++) {
+                        const x = i * spacing;
+                        const y = j * spacing;
+                        
+                        // Add some randomness to position
+                        const offsetX = (Math.random() - 0.5) * 30;
+                        const offsetY = (Math.random() - 0.5) * 30;
+                        
+                        let type = 'relay';
+                        
+                        // Create some source nodes
+                        if (Math.random() < 0.05) {
+                            type = 'source';
+                        }
+                        // Create growth nodes for scaling effect
+                        else if (Math.random() < 0.1) {
+                            type = 'growth';
+                        }
+                        
+                        const node = new NetworkNode(x + offsetX, y + offsetY, type);
+                        nodes.push(node);
+                        
+                        if (!gridNetwork[i]) gridNetwork[i] = [];
+                        gridNetwork[i][j] = node;
+                    }
+                }
+                
+                // Create connections
+                for (let i = 0; i < cols; i++) {
+                    for (let j = 0; j < rows; j++) {
+                        const node = gridNetwork[i][j];
+                        
+                        // Connect to neighbors
+                        const neighbors = [
+                            [i + 1, j],
+                            [i, j + 1],
+                            [i + 1, j + 1],
+                            [i - 1, j + 1]
+                        ];
+                        
+                        neighbors.forEach(([ni, nj]) => {
+                            if (ni >= 0 && ni < cols && nj >= 0 && nj < rows) {
+                                const neighbor = gridNetwork[ni][nj];
+                                if (neighbor) {
+                                    node.connections.push(neighbor);
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+            
+            // Draw network connections
+            function drawConnections() {
+                ctx.strokeStyle = 'rgba(129, 140, 248, 0.02)';
+                ctx.lineWidth = 0.5;
+                
+                nodes.forEach(node => {
+                    node.connections.forEach(connection => {
+                        // Only draw if there's energy flow
+                        if (node.energy > 0.1 || connection.energy > 0.1) {
+                            ctx.beginPath();
+                            ctx.moveTo(node.x, node.y);
+                            ctx.lineTo(connection.x, connection.y);
+                            ctx.stroke();
+                        }
+                    });
+                });
+            }
+            
+            // Animation loop
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Update time
+                time++;
+                
+                // Draw connections first (background)
+                drawConnections();
+                
+                // Update and draw nodes
+                nodes.forEach(node => {
+                    node.update();
+                    node.draw();
+                });
+                
+                // Create new pulses from source nodes
+                if (time % 120 === 0) {
+                    nodes.filter(n => n.type === 'source').forEach(source => {
+                        source.connections.forEach(connection => {
+                            if (Math.random() < 0.2) {
+                                energyPulses.push(new EnergyPulse(source, connection));
+                            }
+                        });
+                    });
+                }
+                
+                // Update and draw energy pulses
+                energyPulses = energyPulses.filter(pulse => {
+                    const alive = pulse.update();
+                    if (alive) pulse.draw();
+                    return alive;
+                });
+                
+                animationId = requestAnimationFrame(animate);
+            }
+            
+            // Start animation only in dark mode
+            function checkThemeAndAnimate() {
+                const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (isDarkMode && !animationId) {
+                    resizeCanvas();
+                    createNetwork();
+                    animate();
+                } else if (!isDarkMode && animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    nodes = [];
+                    energyPulses = [];
+                }
+            }
+            
+            // Initial setup
+            resizeCanvas();
+            checkThemeAndAnimate();
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                if (animationId) {
+                    createNetwork();
+                }
+            });
+            
+            // Watch for theme changes
+            const observer = new MutationObserver(() => {
+                checkThemeAndAnimate();
+            });
+            
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['data-theme']
+            });
+        }
     </script>
 </body>
 </html>
