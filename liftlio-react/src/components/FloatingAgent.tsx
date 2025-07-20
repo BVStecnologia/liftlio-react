@@ -496,8 +496,8 @@ const FloatingAgent: React.FC = () => {
 
       // Removido processamento stage
       
-      // Get response text
-      const responseText = data.content || data.responseText || 'I apologize, but I couldn\'t process your request.';
+      // Get response text - v27 agora retorna data.response
+      const responseText = data.response || data.content || data.responseText || 'I apologize, but I couldn\'t process your request.';
       
       // Add agent message
       addAgentMessage(responseText);
