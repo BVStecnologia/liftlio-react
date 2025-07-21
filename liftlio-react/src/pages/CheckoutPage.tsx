@@ -455,6 +455,7 @@ const CheckoutPage: React.FC = () => {
     amount: string;
     nextBilling: string;
   } | null>(null);
+  const [allowAutoRedirect, setAllowAutoRedirect] = useState(true);
   
   useEffect(() => {
     if (!user) {
@@ -464,11 +465,11 @@ const CheckoutPage: React.FC = () => {
   
   // Verificar se já tem assinatura ativa
   useEffect(() => {
-    if (subscription?.has_active_subscription) {
+    if (subscription?.has_active_subscription && allowAutoRedirect) {
       // Se já tem assinatura, redireciona para o dashboard
       navigate('/dashboard');
     }
-  }, [subscription, navigate]);
+  }, [subscription, navigate, allowAutoRedirect]);
   
   const handlePlanSelect = (plan: 'starter' | 'growth' | 'scale') => {
     setSelectedPlan(plan);
@@ -573,6 +574,9 @@ const CheckoutPage: React.FC = () => {
           amount: summary.amount,
           nextBilling: summary.nextBilling
         });
+        
+        // Desabilitar redirecionamento automático antes de mostrar modal
+        setAllowAutoRedirect(false);
         
         // Mostrar modal de sucesso
         setShowSuccessModal(true);
