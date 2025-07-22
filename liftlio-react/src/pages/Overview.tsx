@@ -1605,18 +1605,19 @@ const Overview: React.FC = () => {
   } = useDashboardData();
 
   // Effect to manage global loading state
-  useEffect(() => {
-    if (loading) {
-      showGlobalLoader('Loading Dashboard', 'Fetching your data');
-    } else {
-      hideGlobalLoader();
-    }
-    
-    // Cleanup on unmount
-    return () => {
-      hideGlobalLoader();
-    };
-  }, [loading, showGlobalLoader, hideGlobalLoader]);
+  // Comentado temporariamente - loading está sendo gerenciado no ProtectedLayout
+  // useEffect(() => {
+  //   if (loading) {
+  //     showGlobalLoader('Loading Dashboard', 'Fetching your data');
+  //   } else {
+  //     hideGlobalLoader();
+  //   }
+  //   
+  //   // Cleanup on unmount
+  //   return () => {
+  //     hideGlobalLoader();
+  //   };
+  // }, [loading, showGlobalLoader, hideGlobalLoader]);
   
   // Function to handle new project creation
   const handleAddProject = async (project: any) => {

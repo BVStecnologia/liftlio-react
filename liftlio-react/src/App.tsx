@@ -11,7 +11,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { ProjectProvider, useProject } from './context/ProjectContext';
 import { LoadingProvider, useGlobalLoading } from './context/LoadingContext';
 import { ExtensionWarning } from './components/ExtensionWarning';
-import LoadingDataIndicator from './components/LoadingDataIndicator';
 import GlobalLoader from './components/GlobalLoader';
 import { IconComponent } from './utils/IconHelper';
 import { FaBars } from 'react-icons/fa';
@@ -602,8 +601,18 @@ function App() {
 const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean, toggleSidebar: () => void }) => {
   const { user, loading } = useAuth();
   const { isOnboarding, onboardingReady, hasProjects, isLoading, projects, projectIntegrations, currentProject } = useProject();
+  const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
   const [isInitializing, setIsInitializing] = useState(true);
+  const [isPageReady, setIsPageReady] = useState(false);
   const navigate = useNavigate();
+  
+  // Effect para mostrar loading global até TUDO estar pronto
+  useEffect(() => {
+    // Sempre mostrar loading quando qualquer coisa estiver carregando
+    if (loading || !onboardingReady || isLoading || isInitializing) {
+      showGlobalLoader('Loading', 'Preparing your workspace');
+    }
+  }, [loading, onboardingReady, isLoading, isInitializing, showGlobalLoader]);
   
   // Effect para garantir que mostramos loading até tudo estar pronto
   useEffect(() => {
@@ -618,6 +627,9 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
       const delay = oauthCompleted ? 3000 : 1500;
       const timer = setTimeout(() => {
         setIsInitializing(false);
+        setIsPageReady(true);
+        // Só esconder o loading global quando tudo estiver pronto
+        hideGlobalLoader();
         // Limpar o parâmetro oauth_completed da URL
         if (oauthCompleted) {
           window.history.replaceState({}, document.title, window.location.pathname);
@@ -625,7 +637,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
       }, delay);
       return () => clearTimeout(timer);
     }
-  }, [loading, onboardingReady, isLoading]);
+  }, [loading, onboardingReady, isLoading, hideGlobalLoader]);
   
   // Verificar se temos um destino pós-OAuth pendente
   useEffect(() => {
@@ -638,19 +650,9 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     }
   }, [user, loading, isLoading, navigate]);
   
-  // Mostrar loading até TODAS as verificações estarem completas
-  if (loading || !onboardingReady || isLoading || isInitializing) {
-    return (
-      <div style={{
-        height: '100vh',
-        backgroundColor: getThemeBackground(),
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <LoadingDataIndicator />
-      </div>
-    );
+  // Não renderizar nada até estar pronto (loading global está sendo mostrado)
+  if (loading || !onboardingReady || isLoading || isInitializing || !isPageReady) {
+    return null;
   }
   
   // Verificar se há parâmetros OAuth na URL antes de redirecionar
@@ -661,17 +663,8 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   // Se temos código OAuth na URL, NÃO redirecionar - deixar o OAuthHandler processar
   if (hasOAuthCode && hasOAuthState) {
     console.log('[ProtectedLayout] OAuth em andamento, aguardando processamento...');
-    return (
-      <div style={{
-        height: '100vh',
-        backgroundColor: getThemeBackground(),
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <LoadingDataIndicator />
-      </div>
-    );
+    showGlobalLoader('Processing', 'Connecting to YouTube');
+    return null;
   }
   
   // Redirecionar para a página inicial (login) se não estiver autenticado
@@ -828,8 +821,12 @@ const AuthCallback = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading } = useAuth();
+  const { showGlobalLoader } = useGlobalLoading();
   
   useEffect(() => {
+    // Mostrar loading global durante callback
+    showGlobalLoader('Authenticating', 'Verifying your credentials');
+    
     // Log all details for debugging
     console.log('AuthCallback: Running authentication callback handler');
     console.log('Current location:', window.location.href);
@@ -882,16 +879,10 @@ const AuthCallback = () => {
         }
       }
     }
-  }, [user, loading, navigate, location]);
+  }, [user, loading, navigate, location, showGlobalLoader]);
   
-  return (
-    <div style={{
-      height: '100vh',
-      backgroundColor: getThemeBackground()
-    }}>
-      <LoadingDataIndicator />
-    </div>
-  );
+  // Loading global está sendo mostrado
+  return null;
 };
 
 export default App;
