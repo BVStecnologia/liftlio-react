@@ -11,6 +11,7 @@ import { IconComponent } from '../utils/IconHelper';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useProject } from '../context/ProjectContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useGlobalLoading } from '../context/LoadingContext';
 import EmptyState from '../components/EmptyState';
 import ProjectModal from '../components/ProjectModal';
 import { supabase } from '../lib/supabaseClient';
@@ -1525,6 +1526,7 @@ const Overview: React.FC = () => {
   const navigate = useNavigate();
   const { currentProject, hasProjects, projectIntegrations, onboardingStep, setCurrentProject } = useProject();
   const { t } = useLanguage();
+  const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
   const [activeChart, setActiveChart] = useState<'line' | 'bar'>('line');
   const [activeMetrics, setActiveMetrics] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -1601,6 +1603,20 @@ const Overview: React.FC = () => {
     setTimeframe,
     hasValidData
   } = useDashboardData();
+
+  // Effect to manage global loading state
+  useEffect(() => {
+    if (loading) {
+      showGlobalLoader('Loading Dashboard', 'Fetching your data');
+    } else {
+      hideGlobalLoader();
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      hideGlobalLoader();
+    };
+  }, [loading, showGlobalLoader, hideGlobalLoader]);
   
   // Function to handle new project creation
   const handleAddProject = async (project: any) => {
@@ -2465,185 +2481,7 @@ const Overview: React.FC = () => {
     return null; // Nunca deve chegar aqui, mas precaução
   }
   
-  // Mostrar animação de carregamento com gráficos interativos
-  if (loading) {
-    return (
-      <div style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        width: '100%', 
-        height: '100%', 
-        backgroundColor: theme.colors.bg.primary,
-        zIndex: 9999 
-      }}>
-        <LoadingAnimation style={{ 
-          background: theme.name === 'dark' 
-            ? `linear-gradient(180deg, ${theme.colors.bg.primary} 0%, ${theme.colors.bg.secondary} 100%)`
-            : 'linear-gradient(180deg, #f7f9fc 0%, #ffffff 100%)',
-          boxShadow: theme.name === 'dark' ? '0 10px 50px rgba(0, 0, 0, 0.5)' : '0 10px 50px rgba(0, 0, 0, 0.05)'
-        }}>
-          {/* Texto removido para melhor responsividade */}
-          
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-around',
-            width: '100%',
-            flexWrap: 'wrap',
-            gap: '16px',
-            padding: '12px'
-          }}>
-            {/* Gráfico animado de área à esquerda */}
-            <div style={{
-              width: '48%',
-              minWidth: '280px',
-              height: '280px',
-              background: theme.name === 'dark' ? theme.components.card.bg : '#ffffff',
-              borderRadius: '12px',
-              boxShadow: theme.name === 'dark' ? '0 4px 20px rgba(0, 0, 0, 0.3)' : '0 4px 20px rgba(0, 0, 0, 0.06)',
-              padding: '12px',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <ShimmerOverlay className="loading-shimmer" />
-              
-              <h3 style={{ marginBottom: '12px', color: theme.colors.text.primary, fontSize: '14px' }}>Performance Overview</h3>
-              
-              <ResponsiveContainer width="100%" height="85%">
-                <AreaChart data={samplePerformanceData}>
-                  <defs>
-                    <linearGradient id="colorVideos" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={theme.colors.accent.primary} stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor={theme.colors.accent.primary} stopOpacity={0.1}/>
-                    </linearGradient>
-                    <linearGradient id="colorEngagement" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={theme.colors.accent.secondary} stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor={theme.colors.accent.secondary} stopOpacity={0.1}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={theme.colors.border.primary} />
-                  <XAxis dataKey="name" tick={{ fill: theme.colors.text.secondary }} />
-                  <YAxis tick={{ fill: theme.colors.text.secondary }} />
-                  <Tooltip 
-                    contentStyle={{
-                      background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                      border: `1px solid ${theme.colors.border.primary}`,
-                      borderRadius: '8px',
-                      boxShadow: theme.colors.shadow.md
-                    }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="videos" 
-                    stroke={theme.colors.accent.primary} 
-                    fill="url(#colorVideos)" 
-                    activeDot={{ r: 8 }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="engagement" 
-                    stroke={theme.colors.accent.secondary} 
-                    fill="url(#colorEngagement)" 
-                    activeDot={{ r: 8 }} 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            
-            {/* Gráfico de pizza à direita */}
-            <div style={{
-              width: '48%',
-              minWidth: '280px',
-              height: '280px',
-              background: theme.name === 'dark' ? theme.components.card.bg : '#ffffff',
-              borderRadius: '12px',
-              boxShadow: theme.name === 'dark' ? '0 4px 20px rgba(0, 0, 0, 0.3)' : '0 4px 20px rgba(0, 0, 0, 0.06)',
-              padding: '12px',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <ShimmerOverlay className="loading-shimmer" />
-              
-              <h3 style={{ marginBottom: '12px', color: theme.colors.text.primary, fontSize: '14px' }}>Traffic Sources</h3>
-              
-              <ResponsiveContainer width="100%" height="85%">
-                <PieChart>
-                  <Pie
-                    data={sampleTrafficData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {sampleTrafficData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{
-                      background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                      border: `1px solid ${theme.colors.border.primary}`,
-                      borderRadius: '8px',
-                      boxShadow: theme.colors.shadow.md
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          
-          {/* Barra de progresso de carregamento */}
-          <div style={{
-            width: '90%',
-            maxWidth: '600px',
-            margin: '24px auto 16px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}>
-            <div style={{
-              width: '100%',
-              height: '6px',
-              background: theme.colors.border.primary,
-              borderRadius: '3px',
-              overflow: 'hidden',
-              marginBottom: '10px'
-            }}>
-              <div style={{
-                height: '100%',
-                width: `${loadProgress}%`,
-                background: `linear-gradient(90deg, ${theme.colors.accent.primary}, ${theme.colors.accent.secondary})`,
-                borderRadius: '3px',
-                boxShadow: `0 0 10px ${theme.colors.accent.primary}33`,
-                transition: 'width 0.5s ease-out'
-              }} />
-            </div>
-            <div style={{
-              fontSize: '12px',
-              color: theme.colors.text.secondary,
-              fontWeight: 500
-            }}>
-              {`${Math.round(loadProgress)}%`}
-            </div>
-          </div>
-          
-          {/* Partículas sutis e elegantes */}
-          {[...Array(8)].map((_, i) => (
-            <LoadingDotAnimated 
-              key={i}
-              style={{
-                ...getRandomDotStyles(i),
-                opacity: 0.2,
-                boxShadow: `0 0 12px ${theme.colors.accent.primary}4D`
-              }}
-            />
-          ))}
-        </LoadingAnimation>
-      </div>
-    );
-  }
+  // Loading is now handled globally via useGlobalLoading hook
   
   // Animação de erro moderna
   const ErrorAnimation = keyframes`

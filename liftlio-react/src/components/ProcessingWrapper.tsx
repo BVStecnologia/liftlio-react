@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useProject } from '../context/ProjectContext';
-import ProcessingIndicator from './ProcessingIndicator';
-import LoadingScreen from './LoadingScreen';
+import { useGlobalLoading } from '../context/LoadingContext';
 import { supabase } from '../lib/supabaseClient';
 
 interface ProcessingWrapperProps {
@@ -14,6 +13,7 @@ interface ProcessingWrapperProps {
  */
 const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
   const { currentProject, isInitialProcessing } = useProject();
+  const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
   const [showProcessing, setShowProcessing] = useState(false);
   const [verifiedReady, setVerifiedReady] = useState(false);
   const [hasMensagens, setHasMensagens] = useState(false);
@@ -76,6 +76,9 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
       setVerifiedReady(false);
       setShowProcessing(false); // NÃO mostrar processamento até confirmar que precisa
       
+      // Show global loader while checking initial state
+      showGlobalLoader('Loading', 'Checking project status');
+      
       // Função de verificação completa
       const verifyProjectState = async () => {
         if (!currentProject) return;
@@ -98,9 +101,11 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
           console.log(`Projeto ${projectId} está pronto para exibição (status=${status}, hasMensagens=${hasMessages})`);
           setShowProcessing(false);
           setVerifiedReady(true);
+          hideGlobalLoader(); // Hide global loader when ready
         } else {
           console.log(`Projeto ${projectId} ainda em processamento ou sem dados (status=${status}, hasMensagens=${hasMessages})`);
           setShowProcessing(true);
+          showGlobalLoader('Processing project', 'Setting up your workspace');
           
           // Continuar verificando enquanto não estiver pronto, com intervalo mais curto
           const checkAgainTimeout = setTimeout(verifyProjectState, 3000);
@@ -111,25 +116,15 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
       // Iniciar verificação
       verifyProjectState();
     }
-  }, [currentProject, checkForMessages, checkProjectStatus]);
+    
+    // Cleanup function to hide loader when unmounting
+    return () => {
+      hideGlobalLoader();
+    };
+  }, [currentProject, checkForMessages, checkProjectStatus, showGlobalLoader, hideGlobalLoader]);
   
-  // Regras de renderização com verificação inicial:
-  // 1. Se está verificando inicial: mostrar LoadingScreen
-  // 2. Se showProcessing é true: mostrar ProcessingIndicator
-  // 3. Se showProcessing é false: mostrar dashboard (children)
-  
-  if (isCheckingInitial) {
-    console.log(`Verificando estado inicial do projeto ${currentProject?.id}...`);
-    return <LoadingScreen />;
-  }
-  
-  if (showProcessing && currentProject) {
-    console.log(`Renderizando indicador de processamento para projeto ${currentProject.id}`);
-    return <ProcessingIndicator projectId={currentProject.id} />;
-  }
-  
-  // Projeto está pronto, mostrar dashboard
-  console.log(`Renderizando dashboard para projeto ${currentProject?.id}`);
+  // Since we're using global loader, always return children
+  // The global loader will be shown/hidden based on the state
   return <>{children}</>;
 };
 

@@ -9,8 +9,10 @@ import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ProjectProvider, useProject } from './context/ProjectContext';
+import { LoadingProvider, useGlobalLoading } from './context/LoadingContext';
 import { ExtensionWarning } from './components/ExtensionWarning';
 import LoadingDataIndicator from './components/LoadingDataIndicator';
+import GlobalLoader from './components/GlobalLoader';
 import { IconComponent } from './utils/IconHelper';
 import { FaBars } from 'react-icons/fa';
 
@@ -490,7 +492,9 @@ const OAuthHandler = () => {
   return null; // Este componente não renderiza nada
 };
 
-function App() {
+// Component that uses the global loading context
+const AppContent: React.FC = () => {
+  const { isGlobalLoading, loadingMessage, loadingSubMessage } = useGlobalLoading();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   const toggleSidebar = () => {
@@ -526,39 +530,69 @@ function App() {
   }, []);
 
   return (
+    <>
+      {/* Global loading overlay */}
+      {isGlobalLoading && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 10000,
+          backgroundColor: getThemeBackground()
+        }}>
+          <GlobalLoader 
+            message={loadingMessage} 
+            subMessage={loadingSubMessage} 
+            fullScreen={true} 
+          />
+        </div>
+      )}
+      
+      <Router>
+        {/* Adicionar aviso de extensão para todos os usuários */}
+        <ExtensionWarning />
+        {/* Adicionar OAuthHandler para processar códigos do YouTube em qualquer rota */}
+        <OAuthHandler />
+        <Routes>
+          {/* Landing page como ponto de entrada principal */}
+          <Route path="/" element={<LandingPageHTML />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          
+          {/* Páginas institucionais */}
+          <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/security" element={<Security />} />
+          
+          <Route path="/*" element={
+            <ProtectedLayout 
+              sidebarOpen={sidebarOpen} 
+              toggleSidebar={toggleSidebar}
+            />
+          } />
+        </Routes>
+      </Router>
+    </>
+  );
+};
+
+// Main App component with all providers
+function App() {
+  return (
     <ThemeProvider>
       <LanguageProvider>
         <GlobalStyle />
-        <AuthProvider>
-          <ProjectProvider>
-            <Router>
-            {/* Adicionar aviso de extensão para todos os usuários */}
-            <ExtensionWarning />
-            {/* Adicionar OAuthHandler para processar códigos do YouTube em qualquer rota */}
-            <OAuthHandler />
-            <Routes>
-              {/* Landing page como ponto de entrada principal */}
-              <Route path="/" element={<LandingPageHTML />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/checkout" element={<CheckoutPage />} />
-              
-              {/* Páginas institucionais */}
-              <Route path="/about" element={<About />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/security" element={<Security />} />
-              
-              <Route path="/*" element={
-                <ProtectedLayout 
-                  sidebarOpen={sidebarOpen} 
-                  toggleSidebar={toggleSidebar}
-                />
-              } />
-            </Routes>
-            </Router>
-          </ProjectProvider>
-        </AuthProvider>
+        <LoadingProvider>
+          <AuthProvider>
+            <ProjectProvider>
+              <AppContent />
+            </ProjectProvider>
+          </AuthProvider>
+        </LoadingProvider>
       </LanguageProvider>
     </ThemeProvider>
   );
