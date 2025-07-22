@@ -63,6 +63,9 @@
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
     </noscript>
     
+    <!-- Three.js para efeito de ondas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
     <!-- Inline CSS - Todo o estilo da página -->
     <style>
         /* Reset CSS */
@@ -481,7 +484,7 @@
     </div>
     
     <!-- Hero Section -->
-    <section class="hero-section">
+    <section class="hero-section" id="hero-section">
         <canvas id="particles-canvas"></canvas>
         <div class="hero-background"></div>
         <div class="container">
@@ -2504,6 +2507,100 @@
                 attributeFilter: ['data-theme']
             });
         }
+        
+        // Hero 3D Particles - Exatamente como no landing-page-simple
+        (function() {
+            const heroSection = document.getElementById('hero-section');
+            if (!heroSection || typeof THREE === 'undefined') return;
+            
+            // Criar container para o efeito
+            const hero3dContainer = document.createElement('div');
+            hero3dContainer.id = 'hero-3d';
+            hero3dContainer.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 1;
+                pointer-events: none;
+            `;
+            
+            // Inserir no hero section
+            const heroBackground = heroSection.querySelector('.hero-background');
+            if (heroBackground) {
+                heroBackground.insertAdjacentElement('afterend', hero3dContainer);
+            } else {
+                heroSection.insertBefore(hero3dContainer, heroSection.firstChild);
+            }
+            
+            // Setup Three.js
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, heroSection.offsetWidth / heroSection.offsetHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            
+            renderer.setSize(heroSection.offsetWidth, heroSection.offsetHeight);
+            hero3dContainer.appendChild(renderer.domElement);
+            
+            // Create wave of particles
+            const waveGeometry = new THREE.BufferGeometry();
+            const waveCount = 10000;
+            const wavePositions = new Float32Array(waveCount * 3);
+            
+            for (let i = 0; i < waveCount; i++) {
+                const x = (Math.random() - 0.5) * 50;
+                const z = (Math.random() - 0.5) * 50;
+                const y = Math.sin(x * 0.1) * Math.cos(z * 0.1) * 2;
+                
+                wavePositions[i * 3] = x;
+                wavePositions[i * 3 + 1] = y;
+                wavePositions[i * 3 + 2] = z;
+            }
+            
+            waveGeometry.setAttribute('position', new THREE.BufferAttribute(wavePositions, 3));
+            
+            const waveMaterial = new THREE.PointsMaterial({
+                size: 0.08, // Partículas um pouco menores
+                color: '#6366f1',
+                transparent: true,
+                opacity: 0.35, // Opacidade reduzida de 0.6 para 0.35
+                blending: THREE.AdditiveBlending
+            });
+            
+            const waveMesh = new THREE.Points(waveGeometry, waveMaterial);
+            scene.add(waveMesh);
+            
+            camera.position.set(0, 10, 20);
+            camera.lookAt(0, 0, 0);
+            
+            function animateHero() {
+                requestAnimationFrame(animateHero);
+                
+                // Animate wave - movimento mais lento como galáxia
+                const positions = waveGeometry.attributes.position.array;
+                const time = Date.now() * 0.0003; // 3x mais lento
+                
+                for (let i = 0; i < waveCount; i++) {
+                    const x = positions[i * 3];
+                    const z = positions[i * 3 + 2];
+                    positions[i * 3 + 1] = Math.sin(x * 0.1 + time) * Math.cos(z * 0.1 + time) * 2;
+                }
+                
+                waveGeometry.attributes.position.needsUpdate = true;
+                waveMesh.rotation.y += 0.0002; // Rotação 5x mais lenta, como uma galáxia
+                
+                renderer.render(scene, camera);
+            }
+            
+            animateHero();
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                camera.aspect = heroSection.offsetWidth / heroSection.offsetHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(heroSection.offsetWidth, heroSection.offsetHeight);
+            });
+        })();
     </script>
 </body>
 </html>
