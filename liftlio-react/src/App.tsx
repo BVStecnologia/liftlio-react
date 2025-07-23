@@ -581,6 +581,34 @@ const AppContent: React.FC = () => {
 
 // Main App component with all providers
 function App() {
+  // PREVENÇÃO DE RECARREGAMENTO AO MUDAR DE ABA
+  // Este código impede que o Supabase recarregue a página quando você sai e volta
+  // Para desativar: comente ou remova todo o useEffect abaixo
+  useEffect(() => {
+    // Intercepta o evento de mudança de visibilidade da aba
+    const handleVisibilityChange = (e: Event) => {
+      // Para o evento imediatamente, impedindo que o Supabase o detecte
+      e.stopImmediatePropagation();
+    };
+    
+    // Intercepta o evento de foco da janela
+    const handleWindowFocus = (e: Event) => {
+      // Para o evento imediatamente, impedindo refreshs automáticos
+      e.stopImmediatePropagation();
+    };
+    
+    // Adiciona os listeners com prioridade máxima (capture phase)
+    window.addEventListener('visibilitychange', handleVisibilityChange, true);
+    window.addEventListener('focus', handleWindowFocus, true);
+    
+    // Limpa os listeners quando o componente é desmontado
+    return () => {
+      window.removeEventListener('visibilitychange', handleVisibilityChange, true);
+      window.removeEventListener('focus', handleWindowFocus, true);
+    };
+  }, []);
+  // FIM DA PREVENÇÃO DE RECARREGAMENTO
+  
   return (
     <ThemeProvider>
       <LanguageProvider>
