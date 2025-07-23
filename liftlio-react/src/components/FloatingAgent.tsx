@@ -565,10 +565,14 @@ const FloatingAgent: React.FC = () => {
     setInputValue('');
   }, [inputValue, processUserInput]);
 
-  // Quick actions
-  const quickActions = [
+  // Quick actions - context-aware buttons
+  const quickActions = currentProject?.id ? [
+    { label: 'Analyze', action: () => processUserInput('analyze my project performance') },
+    { label: 'Channels', action: () => processUserInput('list all channels') },
+    { label: 'Schedule', action: () => processUserInput('show my posting schedule') }
+  ] : [
     { label: 'Dashboard', action: () => processUserInput('go to dashboard') },
-    { label: 'How it works?', action: () => processUserInput('how does liftlio work') },
+    { label: 'Get Started', action: () => processUserInput('how to get started with liftlio') },
     { label: 'Help', action: () => processUserInput('help') }
   ];
 
