@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Tipo**: Plataforma de monitoramento de vídeos e análise de sentimentos
 - **Stack**: React, TypeScript, Supabase
 - **Data de criação deste arquivo**: 05/06/2025
-- **Última atualização**: 14/01/2025
+- **Última atualização**: 23/07/2025
 
 ## Comandos de Desenvolvimento
 
@@ -384,3 +384,18 @@ await mcp__supabase__generate_typescript_types({
 - **Construída via MCP WordPress**
 - **Sempre usar ferramentas MCP** para edições
 - **Não editar diretamente** no dashboard WordPress
+
+### 🔧 Correções de SEO e Sitemap (23/07/2025)
+- **Problema**: Canonical URLs e sitemap não atualizando automaticamente
+- **Solução**: Plugin `liftlio-canonical-sitemap-fix` criado
+- **Funcionalidades do plugin**:
+  - Força canonical URLs para usar `blog.liftlio.com`
+  - Atualiza sitemap automaticamente ao publicar/atualizar conteúdo
+  - Limpa cache do All in One SEO ao publicar
+  - Adiciona referências do sitemap ao robots.txt
+- **URLs do Sitemap**:
+  - `https://blog.liftlio.com/sitemap.xml`
+  - `https://blog.liftlio.com/sitemap_index.xml`
+  - `https://blog.liftlio.com/post-sitemap.xml`
+  - `https://blog.liftlio.com/page-sitemap.xml`
+- **Debug**: Adicione `?debug_canonical=1` a qualquer URL para verificar canonical

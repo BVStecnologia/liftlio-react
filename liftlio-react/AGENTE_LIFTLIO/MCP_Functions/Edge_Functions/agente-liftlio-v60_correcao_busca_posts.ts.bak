@@ -1,0 +1,25 @@
+/**
+ * Edge Function: Agente Liftlio v60
+ * 
+ * Assistente AI do Liftlio com correção na busca de postagens por data
+ * 
+ * MELHORIAS v60:
+ * - Corrigido bug na query de busca de postagens por data
+ * - Query agora usa sintaxe correta do Supabase para filtros de data
+ * - Melhor tratamento de timezone para busca de postagens
+ * 
+ * Baseado no v59 com correção crítica de busca
+ * 
+ * DEPLOYED: v67 em produção (23/01/2025)
+ * 
+ * CORREÇÃO PRINCIPAL:
+ * Antes (v59 - BUG):
+ * .or(`postado.gte.${startDate}.and.postado.lt.${endDate},proxima_postagem.gte.${startDate}.and.proxima_postagem.lt.${endDate}`)
+ * 
+ * Depois (v60 - CORRETO):
+ * .or(`postado.gte.${startDate},postado.lte.${endDate},proxima_postagem.gte.${startDate},proxima_postagem.lte.${endDate}`)
+ * 
+ * A sintaxe .and. não existe no Supabase. Usar vírgulas para múltiplas condições OR.
+ */
+
+// Código completo salvo - ver arquivo original para detalhes

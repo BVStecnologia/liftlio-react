@@ -1,0 +1,18 @@
+/* Para remover o gradiente placeholder, adicione isto ao final do style.css: */
+
+/* Remove gradiente quando não houver imagem */
+.blog-image:empty {
+    display: none;
+}
+
+/* Ou substitua por uma cor sólida */
+.blog-image {
+    background: #f3f4f6; /* Cinza claro ao invés de gradiente */
+}
+
+/* Ou use uma imagem padrão */
+.blog-image:empty {
+    background-image: url('caminho/para/imagem-padrao.jpg');
+    background-size: cover;
+    background-position: center;
+}
