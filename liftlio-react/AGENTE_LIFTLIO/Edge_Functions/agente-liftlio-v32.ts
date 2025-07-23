@@ -1,16 +1,20 @@
 /**
  * Edge Function: Agente Liftlio v33
  * 
- * Assistente AI do Liftlio com RAG, memória de conversação e busca específica de postagens por data
+ * Assistente AI do Liftlio com RAG, memória de conversação, busca específica de postagens por data
+ * e ferramentas RPC integradas.
  * 
  * MELHORIAS v33:
+ * - Integração com ferramentas RPC da tabela agent_tools
+ * - Suporte específico para list_all_channels quando usuário pede TODOS os canais
+ * - Sistema de seleção inteligente de ferramentas baseado no prompt
  * - Corrigido bug de JOIN que impedia mostrar postagens sem vídeo associado
  * - LEFT JOIN ao invés de INNER JOIN para incluir todas as postagens
  * - Melhor tratamento de campos de vídeo com nomes corretos
  * 
  * JSON de teste:
  *{
-  "prompt": "quais postagens foram feitas hoje?",
+  "prompt": "liste todos os canais monitorados",
   "context": {
     "currentProject": {
       "id": "58",
@@ -149,6 +153,12 @@ function extractUserInfo(history: any[]): any {
 function categorizeQuestion(question: string): string[] {
   const q = question.toLowerCase();
   const categories: string[] = [];
+  
+  // v33: Detectar pedidos para listar TODOS os canais
+  if (q.match(/liste todos os canais|list all channels|todos os canais monitorados|all monitored channels|quais são todos os canais|what are all the channels/)) {
+    categories.push('list_all_channels');
+    categories.push('channels');
+  }
   
   // v32: Detectar perguntas sobre postagens de hoje/ontem
   if (q.match(/hoje|today|postagens de hoje|posts today|postou hoje|posted today/)) {
@@ -700,6 +710,193 @@ function formatPostsByDate(posts: any[], date: 'today' | 'yesterday', language: 
 }
 
 /**
+ * Lista ferramentas disponíveis da tabela agent_tools
+ */
+async function getAvailableTools(projectId?: string): Promise<any[]> {
+  try {
+    const { data, error } = await supabase
+      .from('agent_tools')
+      .select('*')
+      .eq('active', true)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Erro ao buscar ferramentas:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Erro ao buscar ferramentas:', error);
+    return [];
+  }
+}
+
+/**
+ * Executa uma ferramenta RPC
+ */
+async function executeRPCTool(toolName: string, projectId: string, params?: any): Promise<any> {
+  try {
+    console.log(`Executando RPC: ${toolName} com projeto ${projectId}`);
+    
+    // Parâmetros específicos por ferramenta
+    let rpcParams: any = { p_project_id: parseInt(projectId) };
+    
+    // Adicionar parâmetros extras se necessário
+    if (toolName === 'optimal_posting_schedule' && params?.days_back) {
+      rpcParams.p_days_back = params.days_back;
+    }
+    
+    const { data, error } = await supabase.rpc(toolName, rpcParams);
+    
+    if (error) {
+      console.error(`Erro ao executar RPC ${toolName}:`, error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error(`Erro ao executar RPC ${toolName}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Seleciona ferramentas baseado no prompt
+ */
+async function selectTools(prompt: string, categories: string[], availableTools: any[]): Promise<any[]> {
+  const selectedTools: any[] = [];
+  const promptLower = prompt.toLowerCase();
+  
+  // v33: Lógica específica para seleção de ferramentas
+  
+  // 1. Se pediu TODOS os canais, usar list_all_channels
+  if (categories.includes('list_all_channels') || 
+      promptLower.match(/liste todos os canais|list all channels|todos os canais monitorados|all monitored channels/)) {
+    const listAllChannelsTool = availableTools.find(t => t.name === 'list_all_channels');
+    if (listAllChannelsTool) {
+      selectedTools.push(listAllChannelsTool);
+      return selectedTools; // Retorna apenas esta ferramenta
+    }
+  }
+  
+  // 2. Análise de performance de canal
+  if (promptLower.match(/performance do canal|channel performance|análise do canal|analyze channel/)) {
+    const channelTool = availableTools.find(t => t.name === 'channel_performance_analysis');
+    if (channelTool) selectedTools.push(channelTool);
+  }
+  
+  // 3. Métricas de engajamento de vídeo
+  if (promptLower.match(/engajamento do vídeo|video engagement|métricas do vídeo|video metrics/)) {
+    const videoTool = availableTools.find(t => t.name === 'video_engagement_metrics');
+    if (videoTool) selectedTools.push(videoTool);
+  }
+  
+  // 4. Melhor horário para postar
+  if (promptLower.match(/melhor horário|best time|quando postar|when to post|horário ideal|optimal time/)) {
+    const scheduleTool = availableTools.find(t => t.name === 'optimal_posting_schedule');
+    if (scheduleTool) selectedTools.push(scheduleTool);
+  }
+  
+  // 5. Estatísticas gerais do projeto
+  if (categories.includes('statistics') || promptLower.match(/estatísticas|statistics|métricas|metrics/)) {
+    const statsTool = availableTools.find(t => t.name === 'project_stats');
+    if (statsTool) selectedTools.push(statsTool);
+  }
+  
+  return selectedTools;
+}
+
+/**
+ * Formata resultado de ferramenta RPC
+ */
+function formatRPCResult(toolName: string, result: any, language: 'pt' | 'en'): string {
+  if (!result || (Array.isArray(result) && result.length === 0)) {
+    return language === 'pt' 
+      ? `\n## 🔧 Nenhum resultado encontrado para ${toolName}\n`
+      : `\n## 🔧 No results found for ${toolName}\n`;
+  }
+  
+  let formatted = '';
+  
+  switch(toolName) {
+    case 'list_all_channels':
+      if (language === 'pt') {
+        formatted = `\n## 📺 TODOS OS CANAIS MONITORADOS:\n\n`;
+        const byCategory: Record<string, any[]> = {};
+        
+        // Agrupar por categoria
+        result.forEach((channel: any) => {
+          const category = channel.channel_category || 'Outros';
+          if (!byCategory[category]) byCategory[category] = [];
+          byCategory[category].push(channel);
+        });
+        
+        // Listar por categoria
+        Object.entries(byCategory).forEach(([category, channels]) => {
+          formatted += `\n### ${category}:\n`;
+          channels.forEach((ch: any, idx: number) => {
+            formatted += `${idx + 1}. **${ch.channel_name}** - ${ch.subscriber_count.toLocaleString('pt-BR')} inscritos\n`;
+            formatted += `   - Status: ${ch.is_active ? '✅ Ativo' : '❌ Inativo'}\n`;
+            formatted += `   - Vídeos: ${ch.total_videos} (${ch.monitored_videos} monitorados)\n`;
+            formatted += `   - Posts: ${ch.total_posts} (${ch.posts_responded} respondidos)\n`;
+            formatted += `   - Lead Score médio: ${ch.avg_lead_score}\n`;
+            if (ch.last_video_date) {
+              formatted += `   - Último vídeo: ${new Date(ch.last_video_date).toLocaleDateString('pt-BR')}\n`;
+            }
+            formatted += `\n`;
+          });
+        });
+        
+        formatted += `\n**Total: ${result.length} canais monitorados**\n`;
+      } else {
+        formatted = `\n## 📺 ALL MONITORED CHANNELS:\n\n`;
+        const byCategory: Record<string, any[]> = {};
+        
+        // Group by category
+        result.forEach((channel: any) => {
+          const category = channel.channel_category || 'Others';
+          if (!byCategory[category]) byCategory[category] = [];
+          byCategory[category].push(channel);
+        });
+        
+        // List by category
+        Object.entries(byCategory).forEach(([category, channels]) => {
+          formatted += `\n### ${category}:\n`;
+          channels.forEach((ch: any, idx: number) => {
+            formatted += `${idx + 1}. **${ch.channel_name}** - ${ch.subscriber_count.toLocaleString('en-US')} subscribers\n`;
+            formatted += `   - Status: ${ch.is_active ? '✅ Active' : '❌ Inactive'}\n`;
+            formatted += `   - Videos: ${ch.total_videos} (${ch.monitored_videos} monitored)\n`;
+            formatted += `   - Posts: ${ch.total_posts} (${ch.posts_responded} responded)\n`;
+            formatted += `   - Average Lead Score: ${ch.avg_lead_score}\n`;
+            if (ch.last_video_date) {
+              formatted += `   - Last video: ${new Date(ch.last_video_date).toLocaleDateString('en-US')}\n`;
+            }
+            formatted += `\n`;
+          });
+        });
+        
+        formatted += `\n**Total: ${result.length} monitored channels**\n`;
+      }
+      break;
+      
+    case 'channel_performance_analysis':
+      // Formato similar para outras ferramentas...
+      formatted = language === 'pt'
+        ? `\n## 📊 Análise de Performance dos Canais:\n`
+        : `\n## 📊 Channel Performance Analysis:\n`;
+      break;
+      
+    default:
+      // Formato genérico
+      formatted = `\n## 🔧 ${toolName} results:\n`;
+      formatted += '```json\n' + JSON.stringify(result, null, 2) + '\n```\n';
+  }
+  
+  return formatted;
+}
+
+/**
  * Gera resposta usando Claude
  */
 async function generateResponse(systemPrompt: string, userPrompt: string): Promise<string> {
@@ -833,6 +1030,7 @@ Deno.serve(async (req) => {
     let ragResults = null;
     let todayPosts = null;
     let yesterdayPosts = null;
+    let toolResults: any[] = [];
     let ragMetrics = {
       searched: false,
       resultsCount: 0,
@@ -840,9 +1038,33 @@ Deno.serve(async (req) => {
     };
     
     if (context?.currentProject?.id) {
-      // Estatísticas
-      projectStats = await getProjectStats(context.currentProject.id, currentPage);
-      console.log('Stats obtidas:', projectStats);
+      // v33: Buscar e executar ferramentas RPC
+      const availableTools = await getAvailableTools(context.currentProject.id);
+      const selectedTools = await selectTools(prompt, categories, availableTools);
+      
+      console.log('=== FERRAMENTAS v33 ===');
+      console.log('Ferramentas disponíveis:', availableTools.map(t => t.name));
+      console.log('Ferramentas selecionadas:', selectedTools.map(t => t.name));
+      
+      // Executar ferramentas selecionadas
+      for (const tool of selectedTools) {
+        if (tool.type === 'rpc') {
+          const result = await executeRPCTool(tool.name, context.currentProject.id);
+          if (result) {
+            toolResults.push({
+              toolName: tool.name,
+              toolDescription: tool.description,
+              result: result
+            });
+          }
+        }
+      }
+      
+      // Estatísticas (sempre buscar, exceto se já temos via tool)
+      if (!selectedTools.find(t => t.name === 'project_stats')) {
+        projectStats = await getProjectStats(context.currentProject.id, currentPage);
+        console.log('Stats obtidas:', projectStats);
+      }
       
       // v32: Buscar postagens de hoje/ontem se necessário
       if (categories.includes('posts_today')) {
@@ -865,8 +1087,11 @@ Deno.serve(async (req) => {
         console.log('Postagens de ontem:', yesterdayPosts?.length || 0);
       }
       
-      // RAG para outras buscas
-      if (!categories.includes('posts_today') && !categories.includes('posts_yesterday')) {
+      // RAG para outras buscas (não fazer se já temos dados de ferramentas específicas)
+      if (!categories.includes('posts_today') && 
+          !categories.includes('posts_yesterday') && 
+          !categories.includes('list_all_channels') &&
+          toolResults.length === 0) {
         const startTime = Date.now();
         ragMetrics.searched = true;
         
@@ -918,67 +1143,88 @@ Deno.serve(async (req) => {
       contextualPrompt += formatPostsByDate(yesterdayPosts, 'yesterday', language);
     }
     
-    // 7. Adicionar resultados RAG se houver
+    // 7. Adicionar resultados de ferramentas RPC
+    if (toolResults.length > 0) {
+      toolResults.forEach(toolResult => {
+        contextualPrompt += formatRPCResult(
+          toolResult.toolName,
+          toolResult.result,
+          language
+        );
+      });
+    }
+    
+    // 8. Adicionar resultados RAG se houver
     if (ragResults && ragResults.length > 0) {
       contextualPrompt += formatRAGContext(ragResults, language);
     }
     
-    // 8. System prompt v32
+    // 9. System prompt v33
     const systemPrompt = language === 'pt' 
       ? `Você é o assistente AI do Liftlio, uma plataforma de monitoramento de vídeos e análise de sentimentos. 
 
 REGRAS CRÍTICAS (ORDEM DE PRIORIDADE):
 
-1. Para QUANTIDADES, NÚMEROS ou CONTAGENS - use SEMPRE as "MÉTRICAS OFICIAIS DO PROJETO"
+1. Para LISTAR TODOS OS CANAIS - use SEMPRE a seção "TODOS OS CANAIS MONITORADOS"
+   - Se o usuário pedir "liste todos os canais" → Use os dados completos dessa seção
+   - NÃO invente canais ou use apenas os top 5 das métricas
+   - Mostre TODOS os canais com suas estatísticas completas
+
+2. Para QUANTIDADES, NÚMEROS ou CONTAGENS - use SEMPRE as "MÉTRICAS OFICIAIS DO PROJETO"
    - Quantas mensagens agendadas? → Use "MENSAGENS AGENDADAS FUTURAS" das MÉTRICAS OFICIAIS
    - Quantas mensagens postadas? → Use "Menções já postadas" das MÉTRICAS OFICIAIS
    - Quantos vídeos/canais/menções? → Use os números das MÉTRICAS OFICIAIS
    - NÃO conte registros do RAG para responder sobre quantidades
 
-2. Para POSTAGENS DE HOJE/ONTEM - use as seções "POSTAGENS DE HOJE" ou "POSTAGENS DE ONTEM"
+3. Para POSTAGENS DE HOJE/ONTEM - use as seções "POSTAGENS DE HOJE" ou "POSTAGENS DE ONTEM"
    - Estas seções já têm todas as postagens formatadas por horário
    - Mostre claramente quais foram postadas e quais estão agendadas
    - Inclua o conteúdo das mensagens e informações dos vídeos
 
-3. Para DETALHES ou CONTEÚDO - use os "DADOS ENCONTRADOS NO SISTEMA" (RAG)
+4. Para DETALHES ou CONTEÚDO - use os "DADOS ENCONTRADOS NO SISTEMA" (RAG)
    - Quais mensagens estão agendadas? → Liste do RAG
    - O que dizem os comentários? → Mostre conteúdo do RAG
    
-4. Use APENAS os dados fornecidos no contexto
-5. Se não tiver informação, diga que não tem acesso
-6. Seja preciso e direto nas respostas
-7. Mantenha continuidade da conversa
-8. Sempre considere o timezone do usuário ao mencionar horários
+5. Use APENAS os dados fornecidos no contexto
+6. Se não tiver informação, diga que não tem acesso
+7. Seja preciso e direto nas respostas
+8. Mantenha continuidade da conversa
+9. Sempre considere o timezone do usuário ao mencionar horários
 
 ${contextualPrompt}`
       : `You are the Liftlio AI assistant, a video monitoring and sentiment analysis platform. 
 
 CRITICAL RULES (PRIORITY ORDER):
 
-1. For QUANTITIES, NUMBERS or COUNTS - ALWAYS use "OFFICIAL PROJECT METRICS"
+1. To LIST ALL CHANNELS - ALWAYS use the "ALL MONITORED CHANNELS" section
+   - If user asks "list all channels" → Use complete data from this section
+   - DO NOT make up channels or use only top 5 from metrics
+   - Show ALL channels with their complete statistics
+
+2. For QUANTITIES, NUMBERS or COUNTS - ALWAYS use "OFFICIAL PROJECT METRICS"
    - How many scheduled messages? → Use "FUTURE SCHEDULED MESSAGES" from OFFICIAL METRICS
    - How many posted messages? → Use "Posted mentions" from OFFICIAL METRICS
    - How many videos/channels/mentions? → Use numbers from OFFICIAL METRICS
    - DO NOT count RAG records to answer about quantities
 
-2. For TODAY/YESTERDAY POSTS - use "POSTS FROM TODAY" or "POSTS FROM YESTERDAY" sections
+3. For TODAY/YESTERDAY POSTS - use "POSTS FROM TODAY" or "POSTS FROM YESTERDAY" sections
    - These sections already have all posts formatted by time
    - Clearly show which were posted and which are scheduled
    - Include message content and video information
 
-3. For DETAILS or CONTENT - use "DATA FOUND IN THE SYSTEM" (RAG)
+4. For DETAILS or CONTENT - use "DATA FOUND IN THE SYSTEM" (RAG)
    - What messages are scheduled? → List from RAG
    - What do the comments say? → Show content from RAG
    
-4. Use ONLY the data provided in the context
-5. If you don't have information, say you don't have access
-6. Be precise and direct in responses
-7. Maintain conversation continuity
-8. Always consider the user's timezone when mentioning times
+5. Use ONLY the data provided in the context
+6. If you don't have information, say you don't have access
+7. Be precise and direct in responses
+8. Maintain conversation continuity
+9. Always consider the user's timezone when mentioning times
 
 ${contextualPrompt}`;
     
-    // 9. Salvar pergunta
+    // 10. Salvar pergunta
     await saveConversation(
       userId || 'anonymous',
       context?.currentProject?.id || null,
@@ -991,11 +1237,12 @@ ${contextualPrompt}`;
         hasScreenContext: !!context?.visibleData,
         timezone: userTimezone,
         searchedToday: categories.includes('posts_today'),
-        searchedYesterday: categories.includes('posts_yesterday')
+        searchedYesterday: categories.includes('posts_yesterday'),
+        toolsUsed: toolResults.map(t => t.toolName)
       }
     );
     
-    // 10. Gerar resposta
+    // 11. Gerar resposta
     let aiResponse: string;
     try {
       aiResponse = await generateResponse(systemPrompt, prompt);
@@ -1010,7 +1257,7 @@ ${contextualPrompt}`;
       }
     }
     
-    // 11. Salvar resposta
+    // 12. Salvar resposta
     await saveConversation(
       userId || 'anonymous',
       context?.currentProject?.id || null,
@@ -1026,7 +1273,9 @@ ${contextualPrompt}`;
         hadMemoryContext: sessionHistory.length > 0,
         timezone: userTimezone,
         todayPostsCount: todayPosts?.length || 0,
-        yesterdayPostsCount: yesterdayPosts?.length || 0
+        yesterdayPostsCount: yesterdayPosts?.length || 0,
+        toolsUsed: toolResults.map(t => t.toolName),
+        toolResultsCount: toolResults.length
       }
     );
     
@@ -1040,7 +1289,8 @@ ${contextualPrompt}`;
         sessionContinued: sessionHistory.length > 0,
         timezone: userTimezone,
         todayPostsSearched: categories.includes('posts_today'),
-        yesterdayPostsSearched: categories.includes('posts_yesterday')
+        yesterdayPostsSearched: categories.includes('posts_yesterday'),
+        toolsUsed: toolResults.map(t => t.toolName)
       }
     }), {
       status: 200,
