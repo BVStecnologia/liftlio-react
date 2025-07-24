@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "trello-liftlio": {
+      "command": "node",
+      "args": [
+        "/Users/valdair/Documents/Projetos/Liftlio/Servidor/mcp-client-trello.js"
+      ],
+      "env": {
+        "MCP_SERVER_URL": "http://173.249.22.2:5173",
+        "TRELLO_API_KEY": "sua-api-key",
+        "TRELLO_TOKEN": "seu-token"
+      }
+    }
+  }
+}

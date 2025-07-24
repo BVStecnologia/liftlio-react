@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "trello-remote": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-fetch@latest"
+      ],
+      "env": {
+        "BASE_URL": "http://173.249.22.2:5173",
+        "HEADERS": "{\"Content-Type\": \"application/json\"}"
+      }
+    }
+  }
+}
