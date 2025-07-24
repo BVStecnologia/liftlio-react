@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  mcp-inspector:
+    build: .
+    container_name: mcp-inspector-isolated
+    ports:
+      - "5173:5173"  # Será ajustada pelo script se porta estiver em uso
+    environment:
+      # Trello
+      - TRELLO_API_KEY=${TRELLO_API_KEY}
+      - TRELLO_TOKEN=${TRELLO_TOKEN}
+      # WordPress
+      - WORDPRESS_URL=${WORDPRESS_URL}
+      - WORDPRESS_USER=${WORDPRESS_USER}
+      - WORDPRESS_APP_PASSWORD=${WORDPRESS_APP_PASSWORD}
+      # Supabase
+      - SUPABASE_ACCESS_TOKEN=${SUPABASE_ACCESS_TOKEN}
+      - SUPABASE_PROJECT_ID=${SUPABASE_PROJECT_ID}
+    restart: unless-stopped
+    networks:
+      - mcp-isolated
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "mcp.service=inspector"
+      - "mcp.isolated=true"
+      - "mcp.version=1.0"
+
+networks:
+  mcp-isolated:
+    driver: bridge
+    name: mcp-isolated

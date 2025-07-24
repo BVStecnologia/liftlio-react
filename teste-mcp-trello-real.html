@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste MCP Trello REAL</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .section {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            border-left: 4px solid #28a745;
+        }
+        .error {
+            border-left: 4px solid #dc3545;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .status.ok {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Teste MCP Trello REAL - API Funcionando!</h1>
+    
+    <div class="container">
+        <div class="section">
+            <h2>🖥️ Teste Direto no Servidor MCP</h2>
+            <p>Servidor: http://173.249.22.2:5173</p>
+            
+            <button onclick="testServerHealth()">Verificar Saúde</button>
+            <button onclick="testServerLists()">Listar Listas</button>
+            <button onclick="testServerCards()">Ver Cards do Valdair</button>
+            <button onclick="testServerCreateCard()">Criar Card Real</button>
+            
+            <div id="server-response" class="response"></div>
+        </div>
+        
+        <div class="section">
+            <h2>🚀 Teste via Edge Function</h2>
+            <p>Edge Function: agente-teste-mcp</p>
+            
+            <button onclick="testEdgeFunction()">Testar Agente AI</button>
+            <button onclick="testEdgeCreate()">Criar Card via Agente</button>
+            
+            <div id="edge-response" class="response"></div>
+        </div>
+    </div>
+
+    <script>
+        const SERVER_URL = 'http://173.249.22.2:5173';
+        const EDGE_URL = 'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/agente-teste-mcp';
+        const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaYwZ78_D5Om_cWra5zFq-0X-3I';
+        
+        function showResponse(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.className = `response ${isError ? 'error' : 'success'}`;
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+        
+        // Testes do Servidor MCP
+        async function testServerHealth() {
+            try {
+                const response = await fetch(`${SERVER_URL}/health`);
+                const data = await response.json();
+                showResponse('server-response', data);
+            } catch (error) {
+                showResponse('server-response', { error: error.message }, true);
+            }
+        }
+        
+        async function testServerLists() {
+            try {
+                const response = await fetch(`${SERVER_URL}/mcp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        method: 'get_lists',
+                        params: {}
+                    })
+                });
+                const data = await response.json();
+                showResponse('server-response', data);
+            } catch (error) {
+                showResponse('server-response', { error: error.message }, true);
+            }
+        }
+        
+        async function testServerCards() {
+            try {
+                const response = await fetch(`${SERVER_URL}/mcp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        method: 'get_cards_by_list',
+                        params: {
+                            listId: '686b4422d297ee28b3d92163' // Lista Valdair
+                        }
+                    })
+                });
+                const data = await response.json();
+                showResponse('server-response', data);
+            } catch (error) {
+                showResponse('server-response', { error: error.message }, true);
+            }
+        }
+        
+        async function testServerCreateCard() {
+            const now = new Date().toLocaleString('pt-BR');
+            try {
+                const response = await fetch(`${SERVER_URL}/mcp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        method: 'add_card_to_list',
+                        params: {
+                            listId: '686b4422d297ee28b3d92163',
+                            name: `🎯 Teste MCP Trello Real - ${now}`,
+                            description: `Card criado via servidor MCP Python com API real do Trello!\n\nServidor: 173.249.22.2:5173\nData: ${now}`
+                        }
+                    })
+                });
+                const data = await response.json();
+                showResponse('server-response', data);
+            } catch (error) {
+                showResponse('server-response', { error: error.message }, true);
+            }
+        }
+        
+        // Testes da Edge Function
+        async function testEdgeFunction() {
+            try {
+                const response = await fetch(EDGE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${ANON_KEY}`
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: 'user',
+                                content: 'Liste as tarefas pendentes do Trello'
+                            }
+                        ]
+                    })
+                });
+                const data = await response.json();
+                showResponse('edge-response', data);
+            } catch (error) {
+                showResponse('edge-response', { error: error.message }, true);
+            }
+        }
+        
+        async function testEdgeCreate() {
+            try {
+                const response = await fetch(EDGE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${ANON_KEY}`
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: 'user',
+                                content: 'Crie uma tarefa no Trello para testar a integração MCP funcionando com dados reais'
+                            }
+                        ]
+                    })
+                });
+                const data = await response.json();
+                showResponse('edge-response', data);
+            } catch (error) {
+                showResponse('edge-response', { error: error.message }, true);
+            }
+        }
+        
+        // Teste inicial
+        testServerHealth();
+    </script>
+</body>
+</html>
