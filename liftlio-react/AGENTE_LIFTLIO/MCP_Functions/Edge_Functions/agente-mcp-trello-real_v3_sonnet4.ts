@@ -82,7 +82,7 @@ serve(async (req) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-20250514', // SEMPRE usar Claude Sonnet 4
         max_tokens: 1000,
         system: systemPrompt,  // system como parâmetro top-level
         messages: messages     // messages sem role system
@@ -106,7 +106,8 @@ serve(async (req) => {
         }],
         mcp_status: 'Connected to REAL Trello API',
         mcp_server: 'http://173.249.22.2:5173',
-        real_data: true
+        real_data: true,
+        model_used: 'claude-sonnet-4-20250514'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

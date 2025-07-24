@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Tipo**: Plataforma de monitoramento de vídeos e análise de sentimentos
 - **Stack**: React, TypeScript, Supabase
 - **Data de criação deste arquivo**: 05/06/2025
-- **Última atualização**: 23/07/2025
+- **Última atualização**: 24/01/2025
 
 ## Comandos de Desenvolvimento
 
@@ -304,6 +304,13 @@ await mcp__supabase__generate_typescript_types({
 - Nas Edge Functions: `await supabase.functions.invoke('outra-funcao', { body: { params } })`
 - **NUNCA** usar HTTP direto ou fetch manual - SDK é a melhor prática!
 
+## 🚨 REGRA OBRIGATÓRIA - MODELO CLAUDE
+**SEMPRE** usar o modelo `claude-sonnet-4-20250514` em TODAS as Edge Functions:
+- **Modelo obrigatório**: `claude-sonnet-4-20250514`
+- **Documentação**: `/liftlio-react/AGENTE_LIFTLIO/5_Documentacao/MODELO_CLAUDE_PADRAO.md`
+- **Aplicável a**: Todas Edge Functions que usam Claude API
+- **NÃO usar**: Haiku, Opus, ou versões antigas do Sonnet
+
 ## Notas Importantes
 - O projeto usa Supabase como backend
 - Autenticação via OAuth (Google)
@@ -331,9 +338,9 @@ await mcp__supabase__generate_typescript_types({
 - **11/01/2025**: Migração para SDK Supabase, integração RAG no agente, reorganização MCP
 
 ## Última Sessão
-- **Data**: 16/01/2025
-- **Contexto**: Remoção das informações sobre MCP WordPress do CLAUDE.md
-- **Status**: ✅ Informações removidas com sucesso
+- **Data**: 24/01/2025
+- **Contexto**: Atualização Edge Function MCP Trello para usar Claude Sonnet 4
+- **Status**: ✅ Edge Function v3 deployada com modelo claude-sonnet-4-20250514
 
 ## Integração Trello - Gestão de Tarefas via MCP
 

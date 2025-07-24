@@ -1,28 +1,34 @@
-# Servidor Contabo - Liftlio
+# 🚀 Servidor Liftlio - Hub de Serviços MCP
 
 **IP**: 173.249.22.2  
 **Specs**: 6 CPU, 12GB RAM, 300GB SSD  
 **Sistema**: Ubuntu/Debian  
 
-## 📁 Estrutura de Pastas
+## 📁 Estrutura Organizada
 
 ```
 Servidor/
-├── README.md                    # Este arquivo
-├── MCP_INSPECTOR.md            # Documentação do MCP Inspector
-├── docs/                       # Documentações gerais
-├── scripts/                    # Scripts de instalação e manutenção
-│   └── install-mcp-safe.sh    # Instalador do MCP Inspector
-├── mcp-inspector/             # Arquivos do container MCP
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   ├── .env.template
-│   └── add-mcp.sh
-├── backups_vps/               # Backups dos serviços
-│   ├── langflow_backup/
-│   ├── n8n_backup/
-│   └── portainer_backup/
-└── flows_para_upload/         # Flows do Langflow
+├── 📄 README.md                    # Este arquivo
+├── 📁 mcp-services/                # Serviços MCP ativos
+│   ├── 📁 trello/                  # MCP Trello (✅ Funcionando)
+│   │   └── README.md               # Documentação e configuração
+│   └── 📁 gmail/                   # MCP Gmail (🔄 Config pendente)
+│       ├── install.sh              # Script de instalação
+│       ├── setup-oauth-headless.sh # Setup OAuth2
+│       └── README.md               # Documentação
+├── 📁 config/                      # Configurações centralizadas
+│   ├── claude-desktop-config.json  # Config do Claude Desktop
+│   ├── claude-mcp-config.json      # Config geral MCP
+│   └── oauth-credentials.json      # Credenciais (gitignore)
+├── 📁 docs/                        # Documentação completa
+│   └── MCP_SERVICES_GUIDE.md       # Guia completo dos serviços
+├── 📁 examples/                    # Exemplos de implementação
+│   ├── edge-function-example.ts    # Exemplo Edge Function
+│   ├── teste-agente-mcp.html       # Teste web do agente
+│   └── mcp-client-trello.js        # Cliente JS para Trello
+├── 📁 scripts/                     # Scripts utilitários
+│   └── install-mcp-safe.sh         # Instalador seguro
+└── 📁 archive/                     # Documentações antigas
 
 ## 🐳 Containers em Produção
 
@@ -31,21 +37,30 @@ Servidor/
 | Portainer | 9000 | ✅ Ativo | Gerenciador de containers |
 | n8n | 5678 | ✅ Ativo | Automação com MCP nodes |
 | Langflow | 7860 | ✅ Ativo | Flow builder para LLMs |
-| MCP Inspector | 5173 | 🟡 Pronto | Hub para MCPs |
+| MCP Trello | 5173 | ✅ Ativo | Integração com Trello API |
+| MCP Gmail | 3000 | 🔄 Config | Aguardando OAuth2 |
 
-## 🚀 Instalação MCP Inspector
+## 🚀 Quick Start - Serviços MCP
 
+### 1. Testar MCP Trello (Funcionando)
 ```bash
-cd /Users/valdair/Documents/Projetos/Liftlio/Servidor/scripts
-./install-mcp-safe.sh
+curl http://173.249.22.2:5173/health
 ```
 
-## 📝 Notas Importantes
+### 2. Configurar MCP Gmail
+```bash
+# 1. Gerar URL OAuth2
+# 2. Autorizar no navegador
+# 3. Configurar token no servidor
+# Ver: mcp-services/gmail/README.md
+```
 
-1. **Não mexer** nos containers existentes (n8n, Langflow, Portainer)
-2. **MCP Inspector** roda em rede isolada `mcp-isolated`
-3. **Credenciais** devem ser configuradas no `.env` antes de iniciar
-4. **Backups** estão organizados em `backups_vps/`
+## 📝 Edge Functions Disponíveis
+
+| Nome | Endpoint | Capacidades |
+|------|----------|-------------|
+| agente-mcp-trello-real | /functions/v1/agente-mcp-trello-real | Single ops, tempo real |
+| agente-mcp-trello-batch | /functions/v1/agente-mcp-trello-batch | Batch ops, até 25 simultâneas |
 
 ## 🔧 Comandos Úteis
 
@@ -81,6 +96,13 @@ http://173.249.22.2:5173
 - Containers em redes isoladas
 - Credenciais em arquivos .env (não commitados)
 
+## 🔗 Links Importantes
+
+- **Documentação Completa**: [docs/MCP_SERVICES_GUIDE.md](./docs/MCP_SERVICES_GUIDE.md)
+- **MCP Trello**: [mcp-services/trello/README.md](./mcp-services/trello/README.md)
+- **MCP Gmail**: [mcp-services/gmail/README.md](./mcp-services/gmail/README.md)
+- **Exemplos**: [examples/](./examples/)
+
 ---
 
-**Última atualização**: 23/01/2025
+**Última atualização**: 24/01/2025
