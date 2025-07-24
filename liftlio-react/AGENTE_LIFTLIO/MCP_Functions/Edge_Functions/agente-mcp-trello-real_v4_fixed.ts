@@ -17,15 +17,26 @@ serve(async (req) => {
     const lastMessage = messages[messages.length - 1]
     const userContent = lastMessage?.content || ''
     
-    // Detectar se menciona Trello
+    // Detectar menções a Trello/tarefas
     const mentionsTrello = userContent.toLowerCase().includes('trello') || 
                           userContent.toLowerCase().includes('tarefa') ||
-                          userContent.toLowerCase().includes('card')
+                          userContent.toLowerCase().includes('card') ||
+                          userContent.toLowerCase().includes('stev') || // Captura steve, stevn, steven
+                          userContent.toLowerCase().includes('valdair')
     
     let mcpData = null
+    let targetListId = null
     
-    if (mentionsTrello) {
+    // Determinar qual lista buscar baseado no contexto
+    if (userContent.toLowerCase().includes('stev')) { // Captura steve, stevn, steven
+      targetListId = '686b440c1850daf5c7b67d47' // Steve To Do Items
+    } else if (userContent.toLowerCase().includes('valdair')) {
+      targetListId = '686b4422d297ee28b3d92163' // Valdair
+    }
+    
+    if (mentionsTrello && targetListId) {
       console.log('Detectou menção ao Trello, buscando dados REAIS do MCP...')
+      console.log('Lista alvo:', targetListId)
       
       // Chamar o servidor MCP com API REAL
       try {
@@ -33,14 +44,16 @@ serve(async (req) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            method: 'get_lists',
-            params: {}
+            method: 'get_cards_by_list',
+            params: { listId: targetListId }
           })
         })
         
         if (mcpResponse.ok) {
           mcpData = await mcpResponse.json()
-          console.log('Dados REAIS do Trello:', mcpData)
+          console.log('Dados REAIS do Trello recebidos:', JSON.stringify(mcpData))
+        } else {
+          console.error('Erro na resposta MCP:', mcpResponse.status)
         }
       } catch (mcpError) {
         console.error('Erro ao chamar MCP:', mcpError)
@@ -56,23 +69,39 @@ serve(async (req) => {
     // System prompt
     let systemPrompt = `You are a helpful Trello assistant with REAL API integration.\n\n`
     
-    if (mcpData && mcpData.success) {
+    if (mcpData && mcpData.success && mcpData.cards) {
       systemPrompt += `REAL Trello Data from API:\n`
-      systemPrompt += `Board: Liftlio (ID: 686b43ced8d30f8eb12b9d12)\n`
-      systemPrompt += `Lists available:\n`
+      systemPrompt += `Board: Liftlio (ID: 686b43ced8d30f8eb12b9d12)\n\n`
       
-      if (mcpData.lists) {
-        mcpData.lists.forEach((list: any) => {
-          systemPrompt += `- ${list.name} (ID: ${list.id})\n`
-        })
+      if (targetListId === '686b440c1850daf5c7b67d47') {
+        systemPrompt += `Cards in "Steve To Do Items" list:\n`
+      } else if (targetListId === '686b4422d297ee28b3d92163') {
+        systemPrompt += `Cards in "Valdair" list:\n`
       }
       
+      // Ordenar cards por data de atividade (mais recente primeiro)
+      const sortedCards = mcpData.cards.sort((a: any, b: any) => 
+        new Date(b.dateLastActivity).getTime() - new Date(a.dateLastActivity).getTime()
+      )
+      
+      sortedCards.forEach((card: any, index: number) => {
+        const date = new Date(card.dateLastActivity)
+        systemPrompt += `${index + 1}. "${card.name}" - Last activity: ${date.toLocaleString()}\n`
+      })
+      
+      systemPrompt += `\nTotal cards: ${mcpData.cards.length}\n`
       systemPrompt += `\nThis is REAL data from the actual Trello API, not mock data!\n`
       systemPrompt += `The MCP server at 173.249.22.2:5173 is connected to the real Trello API.\n`
+      
+      // Adicionar informação sobre o card mais recente
+      if (sortedCards.length > 0) {
+        systemPrompt += `\nThe most recent card is: "${sortedCards[0].name}"\n`
+      }
     }
     
     systemPrompt += `\nAlways respond in Portuguese (pt-BR).`
-    systemPrompt += `\nEmphasize that this is REAL Trello data when relevant.`
+    systemPrompt += `\nWhen asked about "último card" (last card), refer to the most recent card based on dateLastActivity.`
+    systemPrompt += `\nBe specific and mention the actual card names from the real data.`
     
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -82,10 +111,10 @@ serve(async (req) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-20250514', // SEMPRE usar Claude Sonnet 4
         max_tokens: 1000,
-        system: systemPrompt,  // system como parâmetro top-level
-        messages: messages     // messages sem role system
+        system: systemPrompt,
+        messages: messages
       })
     })
     
@@ -106,7 +135,13 @@ serve(async (req) => {
         }],
         mcp_status: 'Connected to REAL Trello API',
         mcp_server: 'http://173.249.22.2:5173',
-        real_data: true
+        real_data: true,
+        model_used: 'claude-sonnet-4-20250514',
+        debug_info: {
+          cards_found: mcpData?.cards?.length || 0,
+          list_id: targetListId,
+          mcp_success: mcpData?.success || false
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

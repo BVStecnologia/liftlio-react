@@ -1,0 +1,40 @@
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Credenciais e segredos
+config/oauth-credentials.json
+config/client_secret_*.json
+.env
+.env.local
+*.key
+*.pem
+
+# Logs
+*.log
+logs/
+
+# Temporários
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Backups locais
+*.backup
+*.bak
+
+# Node modules (se houver)
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archives (documentação antiga)
+archive/
+
+# IDE
+.vscode/
+.idea/
