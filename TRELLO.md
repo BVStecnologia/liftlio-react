@@ -201,6 +201,88 @@ await mcp__trello__attach_image_to_card({
 
 **Lembre-se**: Cada card é uma oportunidade de mostrar que o Liftlio não é apenas um produto - é uma REVOLUÇÃO! 🔥
 
+## 🖼️ PROCESSO CORRETO PARA ADICIONAR IMAGENS DE CAPA
+
+### ⚠️ IMPORTANTE: SIGA ESTE PROCESSO EXATO OU A IMAGEM NÃO APARECERÁ COMO CAPA!
+
+#### ✅ PROCESSO QUE FUNCIONA:
+
+1. **Gerar a imagem épica**:
+   ```bash
+   ./.claude/scripts/gpt4o-image.sh "seu prompt aqui" "1536x1024" "high"
+   ```
+
+2. **Fazer push para o GitHub ANTES de criar o card**:
+   ```bash
+   git add liftlio-react/generated-images/nome_da_imagem.png
+   git commit -m "Add epic image for [feature]"
+   git push
+   ```
+
+3. **Criar o card SEM imagem na descrição**:
+   ```typescript
+   await mcp__trello__add_card_to_list({
+     listId: "ID_DA_LISTA",
+     name: "🚀 TÍTULO ÉPICO DO CARD!",
+     description: "Descrição empolgante SEM ![imagem] markdown"
+   });
+   ```
+
+4. **Anexar a imagem como arquivo**:
+   ```typescript
+   await mcp__trello__attach_image_to_card({
+     cardId: "ID_DO_CARD_CRIADO",
+     imageUrl: "https://raw.githubusercontent.com/BVStecnologia/liftlio-react/main/liftlio-react/generated-images/nome_da_imagem.png",
+     name: "Nome descritivo da imagem"
+   });
+   ```
+
+5. **Resultado**: Trello processa e define automaticamente como capa! ✨
+
+#### ❌ O QUE NÃO FUNCIONA:
+
+1. **NÃO inclua imagem no markdown da descrição**:
+   ```markdown
+   ![Imagem](URL) <!-- ISSO NÃO VIRA CAPA! -->
+   ```
+
+2. **NÃO anexe antes do push no GitHub** - URL local não funciona
+
+3. **NÃO use outros domínios** - use sempre raw.githubusercontent.com
+
+#### 📝 EXEMPLO COMPLETO:
+
+```typescript
+// 1. Gerar imagem
+// ./gpt4o-image.sh "futuristic email automation" "1536x1024" "high"
+
+// 2. Git push
+// git add . && git commit -m "Add image" && git push
+
+// 3. Criar card
+const card = await mcp__trello__add_card_to_list({
+  listId: "686b4ad61da133ac3b998284",
+  name: "🚀 AMAZING FEATURE!",
+  description: "Epic description WITHOUT image markdown"
+});
+
+// 4. Anexar imagem
+await mcp__trello__attach_image_to_card({
+  cardId: card.id,
+  imageUrl: "https://raw.githubusercontent.com/BVStecnologia/liftlio-react/main/liftlio-react/generated-images/epic_image.png",
+  name: "Epic Feature Visualization"
+});
+```
+
+#### 🎯 CHECKLIST RÁPIDO:
+- [ ] Imagem gerada e salva localmente
+- [ ] Git push feito ANTES de criar card
+- [ ] Card criado SEM markdown de imagem
+- [ ] Imagem anexada via `attach_image_to_card`
+- [ ] URL usando raw.githubusercontent.com
+
+**SEGUINDO ESTES PASSOS, TODA IMAGEM APARECERÁ COMO CAPA! 🎉**
+
 ## Como Usar o MCP do Trello
 
 ### 1. Listar Tarefas Pendentes do Valdair
