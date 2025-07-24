@@ -83,16 +83,52 @@ Quando criar cards no Trello, especialmente sobre conquistas e features, siga es
 ### 3. 🖼️ IMAGENS QUE HIPNOTIZAM
 
 **Sempre adicione imagens! Use:**
-- **Unsplash** (grátis): https://unsplash.com
-  - Busque: "AI", "futuristic", "dashboard", "technology", "data visualization"
-  - Use parâmetros: `?w=1600&h=900&fit=crop&q=80`
+
+#### OPÇÃO 1: 🎨 GPT-Image-1 (RECOMENDADO - Imagens Personalizadas!)
+```bash
+# Gerar imagem específica para o card
+./.claude/scripts/gpt4o-image.sh "futuristic dashboard showing AI analytics, cyberpunk style, neon colors" "1792x1024" "high"
+
+# Fazer upload da imagem gerada para um serviço de hospedagem ou usar diretamente
+```
+
+**Vantagens do GPT-Image-1:**
+- Cria imagens EXATAMENTE como você precisa
+- Renderiza texto e interfaces perfeitamente
+- Estilo consistente com a marca Liftlio
+- Custo: $0.02-0.19 por imagem
+
+#### OPÇÃO 2: Unsplash (grátis)
+- **Link**: https://unsplash.com
+- **Busque**: "AI", "futuristic", "dashboard", "technology", "data visualization"
+- **Use parâmetros**: `?w=1600&h=900&fit=crop&q=80`
 - **Temas visuais**: Futurista, Neon, Cyberpunk, High-tech, Minimalista moderno
+
+**⚠️ IMPORTANTE - ESCOLHA IMAGENS RELEVANTES:**
+- **SEMPRE** verifique se a imagem corresponde ao tema do card
+- **Para Gmail/Email**: Busque "gmail", "email", "mail", "inbox", "google mail"
+- **Para AI/ML**: Busque "artificial intelligence", "machine learning", "neural network"
+- **Para Analytics**: Busque "analytics dashboard", "data visualization", "charts"
+- **EVITE**: Imagens genéricas como "laptop", "computer", "person typing"
+
+**URLs de Imagens Temáticas Recomendadas:**
+```typescript
+// Para Gmail/Email
+"https://images.unsplash.com/photo-1579275542618-a1dfed5f54ba?w=1600&h=900&fit=crop&q=80" // Email interface
+"https://images.unsplash.com/photo-1633856404826-8ceb0fdd190c?w=1600&h=900&fit=crop&q=80" // Gmail app
+"https://images.unsplash.com/photo-1557200134-90327ee9fafa?w=1600&h=900&fit=crop&q=80" // Email API
+
+// Para AI/Analytics
+"https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1600&h=900&fit=crop&q=80" // Dashboard analytics
+"https://images.unsplash.com/photo-1535378917042-10a22c95931a?w=1600&h=900&fit=crop&q=80" // AI visualization
+"https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=1600&h=900&fit=crop&q=80" // Data charts
+```
 
 **Código para adicionar imagem:**
 ```typescript
 await mcp__trello__attach_image_to_card({
   cardId: "ID_DO_CARD",
-  imageUrl: "https://images.unsplash.com/photo-[ID]?w=1600&h=900&fit=crop&q=80",
+  imageUrl: "URL_DA_IMAGEM_APROPRIADA", // Use URLs temáticas acima!
   name: "Nome descritivo da imagem"
 });
 ```

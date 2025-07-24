@@ -1,13 +1,13 @@
-# Google Imagen 4.0 - Guia Completo de Integração no Projeto Liftlio
+# GPT-Image-1 - Guia Completo de Integração no Projeto Liftlio
 
 ## 📋 Para Outro Desenvolvedor Implementar
 
 ### 🎯 O QUE FOI IMPLEMENTADO
-- ✅ API Google Imagen 4.0 funcional
+- ✅ API GPT-Image-1 (OpenAI) funcional
 - ✅ Script automatizado para geração de imagens
 - ✅ Organização de arquivos e estrutura de pastas
 - ✅ Sistema de nomenclatura padronizado
-- ✅ API key com faturamento configurada
+- ✅ API key configurada e testada
 
 ---
 
@@ -24,17 +24,21 @@ tree .claude/ generated-images/
 ```
 
 ### 2. Criar o Script Principal
-**Arquivo**: `.claude/scripts/imagen-api.sh`
+**Arquivo**: `.claude/scripts/gpt4o-image.sh`
 
 ```bash
 #!/bin/bash
 set -e -E
 
-# Google Imagen 4.0 API Script for Liftlio
-# Usage: ./imagen-api.sh "your prompt here"
+# GPT-4o Image Generation API Script for Liftlio
+# Usage: ./gpt4o-image.sh "your prompt here"
 
-GEMINI_API_KEY="AIzaSyBdOOV1fxo7B5ogOtIcxXkHu60UNXlEjeE"
-MODEL_ID="models/imagen-4.0-generate-preview-06-06"
+# API Key from environment or use the provided one
+OPENAI_API_KEY="${OPENAI_API_KEY:-}"
+
+# Model configuration - GPT-4o's latest image model
+MODEL="gpt-image-1"
+API_URL="https://api.openai.com/v1/images/generations"
 
 # Output directory for images
 OUTPUT_DIR="/Users/valdair/Documents/Projetos/Liftlio/liftlio-react/generated-images"
@@ -43,45 +47,44 @@ mkdir -p "$OUTPUT_DIR"
 # Function to generate image
 generate_image() {
     local prompt="$1"
-    local aspect_ratio="${2:-1:1}"
-    local count="${3:-1}"
+    local size="${2:-1024x1024}"
+    local quality="${3:-low}"
+    local count="${4:-1}"
     
     if [[ -z "$prompt" ]]; then
         echo "Error: Please provide a prompt"
-        echo "Usage: $0 \"your prompt here\" [aspect_ratio] [count]"
+        echo "Usage: $0 \"your prompt here\" [size] [quality] [count]"
+        echo "Sizes: 1024x1024, 1024x1792, 1792x1024"
+        echo "Quality: low ($0.02), medium ($0.07), high ($0.19), auto"
         exit 1
     fi
     
-    echo "🎨 Generating image with prompt: $prompt"
+    echo "🎨 Generating image with GPT-4o (gpt-image-1)"
+    echo "📝 Prompt: $prompt"
+    echo "📐 Size: $size | Quality: $quality"
+    echo "💰 Estimated cost: $(if [[ "$quality" == "high" ]]; then echo '$0.19'; elif [[ "$quality" == "medium" ]]; then echo '$0.07'; else echo '$0.02'; fi) per image"
     
     # Create timestamp for unique naming
     TIMESTAMP=$(date +%Y%m%d_%H%M%S)
     
     # Create request JSON
-    cat << EOF > /tmp/imagen_request.json
+    cat << EOF > /tmp/gpt4o_request.json
 {
-    "instances": [
-        {
-            "prompt": "$prompt"
-        }
-    ],
-    "parameters": {
-        "outputMimeType": "image/jpeg",
-        "sampleCount": $count,
-        "personGeneration": "ALLOW_ADULT",
-        "aspectRatio": "$aspect_ratio"
-    }
+    "model": "$MODEL",
+    "prompt": "$prompt",
+    "n": $count,
+    "size": "$size",
+    "quality": "$quality"
 }
 EOF
 
     # Make API request
-    echo "📡 Calling Google Imagen API..."
-    API_RESPONSE=$(curl \
-        -X POST \
+    echo "📡 Calling GPT-4o Image Generation API..."
+    API_RESPONSE=$(curl -s -S \
         -H "Content-Type: application/json" \
-        -sS \
-        "https://generativelanguage.googleapis.com/v1beta/${MODEL_ID}:predict?key=${GEMINI_API_KEY}" \
-        -d '@/tmp/imagen_request.json'
+        -H "Authorization: Bearer $OPENAI_API_KEY" \
+        -d '@/tmp/gpt4o_request.json' \
+        "$API_URL"
     )
     
     # Check for errors
@@ -93,7 +96,7 @@ EOF
     
     # Process images
     image_count=0
-    echo "$API_RESPONSE" | jq -r '.predictions[]?.bytesBase64Encoded' | while IFS= read -r b64_data; do
+    echo "$API_RESPONSE" | jq -r '.data[]?.b64_json' | while IFS= read -r b64_data; do
         image_count=$((image_count + 1))
         
         if [[ "$b64_data" = "null" ]] || [[ -z "$b64_data" ]]; then
@@ -103,7 +106,7 @@ EOF
         
         # Create filename with prompt snippet
         SAFE_PROMPT=$(echo "$prompt" | sed 's/[^a-zA-Z0-9]/_/g' | cut -c1-30)
-        FILENAME="${OUTPUT_DIR}/imagen_${TIMESTAMP}_${SAFE_PROMPT}_${image_count}.jpeg"
+        FILENAME="${OUTPUT_DIR}/gpt4o_${TIMESTAMP}_${SAFE_PROMPT}_${image_count}.png"
         
         # Decode and save
         echo "$b64_data" | base64 --decode > "$FILENAME"
@@ -114,27 +117,34 @@ EOF
             if command -v file &> /dev/null; then
                 file "$FILENAME"
             fi
+            
+            # GPT-4o provides enhanced prompts
+            REVISED_PROMPT=$(echo "$API_RESPONSE" | jq -r ".data[$((image_count-1))].revised_prompt // empty")
+            if [[ -n "$REVISED_PROMPT" ]]; then
+                echo "🔍 Enhanced prompt: $REVISED_PROMPT"
+            fi
         else
-            echo "❌ Error: Failed to save image_${image_count}.jpeg"
+            echo "❌ Error: Failed to save image_${image_count}.png"
         fi
     done
     
     # Clean up
-    rm -f /tmp/imagen_request.json
+    rm -f /tmp/gpt4o_request.json
     
     echo "🎉 Generation complete! Images saved in: $OUTPUT_DIR"
+    echo "💡 Tip: GPT-4o can understand context and refine images through conversation"
 }
 
 # Function to list generated images
 list_images() {
-    echo "📁 Generated images in $OUTPUT_DIR:"
-    ls -la "$OUTPUT_DIR"/*.jpeg 2>/dev/null || echo "No images found"
+    echo "📁 Generated GPT-4o images in $OUTPUT_DIR:"
+    ls -la "$OUTPUT_DIR"/gpt4o_*.png 2>/dev/null || echo "No GPT-4o images found"
 }
 
 # Function to clean old images
 clean_images() {
-    echo "🗑️  Cleaning images older than 7 days..."
-    find "$OUTPUT_DIR" -name "*.jpeg" -mtime +7 -delete
+    echo "🗑️  Cleaning GPT-4o images older than 7 days..."
+    find "$OUTPUT_DIR" -name "gpt4o_*.png" -mtime +7 -delete
     echo "✅ Cleanup complete"
 }
 
@@ -154,22 +164,22 @@ esac
 
 ### 3. Dar Permissão de Execução
 ```bash
-chmod +x .claude/scripts/imagen-api.sh
+chmod +x .claude/scripts/gpt4o-image.sh
 ```
 
 ### 4. Testar a Implementação
 ```bash
 # Teste básico
-./.claude/scripts/imagen-api.sh "a beautiful sunset over mountains"
+./.claude/scripts/gpt4o-image.sh "a beautiful sunset over mountains"
 
 # Teste com parâmetros
-./.claude/scripts/imagen-api.sh "modern UI design" "16:9" 2
+./.claude/scripts/gpt4o-image.sh "modern UI design" "1024x1024" "medium" 2
 
 # Listar imagens
-./.claude/scripts/imagen-api.sh list
+./.claude/scripts/gpt4o-image.sh list
 
 # Limpar imagens antigas
-./.claude/scripts/imagen-api.sh clean
+./.claude/scripts/gpt4o-image.sh clean
 ```
 
 ---
@@ -193,25 +203,26 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, aspectRatio = "1:1", sampleCount = 1 } = await req.json()
+    const { prompt, size = "1024x1024", quality = "low" } = await req.json()
 
     if (!prompt) {
       throw new Error('Prompt is required')
     }
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-preview-06-06:predict?key=${Deno.env.get('GOOGLE_IMAGEN_API_KEY')}`,
+      'https://api.openai.com/v1/images/generations',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`
+        },
         body: JSON.stringify({
-          instances: [{ prompt }],
-          parameters: {
-            outputMimeType: "image/jpeg",
-            sampleCount,
-            aspectRatio,
-            personGeneration: "ALLOW_ADULT"
-          }
+          model: "gpt-image-1",
+          prompt,
+          n: 1,
+          size,
+          quality
         })
       }
     )
@@ -222,9 +233,9 @@ serve(async (req) => {
       throw new Error(data.error.message)
     }
 
-    const images = data.predictions?.map((pred: any) => ({
-      base64: pred.bytesBase64Encoded,
-      mimeType: 'image/jpeg'
+    const images = data.data?.map((img: any) => ({
+      base64: img.b64_json,
+      mimeType: 'image/png'
     })) || []
 
     return new Response(JSON.stringify({ 
@@ -263,6 +274,7 @@ export function ImageGenerator({ onImageGenerated }: ImageGeneratorProps) {
   const [prompt, setPrompt] = useState('')
   const [loading, setLoading] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
+  const [quality, setQuality] = useState<'low' | 'medium' | 'high'>('low')
 
   const generateImage = async () => {
     if (!prompt.trim()) return
@@ -270,7 +282,11 @@ export function ImageGenerator({ onImageGenerated }: ImageGeneratorProps) {
     setLoading(true)
     try {
       const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { prompt, aspectRatio: '1:1', sampleCount: 1 }
+        body: { 
+          prompt, 
+          size: '1024x1024', 
+          quality 
+        }
       })
 
       if (error) throw error
@@ -286,7 +302,7 @@ export function ImageGenerator({ onImageGenerated }: ImageGeneratorProps) {
       }
       
       const byteArray = new Uint8Array(byteNumbers)
-      const blob = new Blob([byteArray], { type: 'image/jpeg' })
+      const blob = new Blob([byteArray], { type: 'image/png' })
       const imageUrl = URL.createObjectURL(blob)
 
       setGeneratedImage(imageUrl)
@@ -300,9 +316,20 @@ export function ImageGenerator({ onImageGenerated }: ImageGeneratorProps) {
     }
   }
 
+  const getCost = (q: string) => {
+    switch(q) {
+      case 'low': return '$0.02'
+      case 'medium': return '$0.07'
+      case 'high': return '$0.19'
+      default: return '$0.02'
+    }
+  }
+
   return (
     <div className="p-6 bg-white rounded-lg shadow-lg">
-      <h3 className="text-lg font-semibold mb-4">Gerador de Imagens</h3>
+      <h3 className="text-lg font-semibold mb-4">
+        Gerador de Imagens GPT-4o
+      </h3>
       
       <div className="space-y-4">
         <textarea
@@ -312,6 +339,19 @@ export function ImageGenerator({ onImageGenerated }: ImageGeneratorProps) {
           className="w-full p-3 border rounded-md resize-none"
           rows={3}
         />
+        
+        <div className="flex items-center gap-4">
+          <label>Qualidade:</label>
+          <select 
+            value={quality} 
+            onChange={(e) => setQuality(e.target.value as any)}
+            className="p-2 border rounded"
+          >
+            <option value="low">Low ({getCost('low')})</option>
+            <option value="medium">Medium ({getCost('medium')})</option>
+            <option value="high">High ({getCost('high')})</option>
+          </select>
+        </div>
         
         <button
           onClick={generateImage}
@@ -344,7 +384,7 @@ export function ImageGenerator({ onImageGenerated }: ImageGeneratorProps) {
 ```sql
 -- No SQL Editor do Supabase
 INSERT INTO vault.secrets (name, secret)
-VALUES ('GOOGLE_IMAGEN_API_KEY', 'AIzaSyBdOOV1fxo7B5ogOtIcxXkHu60UNXlEjeE');
+VALUES ('OPENAI_API_KEY', 'sua-api-key-aqui');
 ```
 
 ### 2. Deploy da Edge Function
@@ -372,10 +412,11 @@ supabase functions deploy generate-image
 liftlio-react/
 ├── .claude/
 │   └── scripts/
-│       ├── imagen-api.sh           # Script principal
-│       └── image-tools.sh          # Ferramentas auxiliares
+│       ├── gpt4o-image.sh          # Script principal GPT-4o
+│       ├── imagen-api.sh           # Script Google (backup)
+│       └── openai-dalle3.sh        # Script DALL-E 3 (legacy)
 ├── generated-images/               # Imagens geradas localmente
-│   └── imagen_YYYYMMDD_HHMMSS_*.jpeg
+│   └── gpt4o_YYYYMMDD_HHMMSS_*.png
 ├── supabase/
 │   └── functions/
 │       └── generate-image/
@@ -383,8 +424,8 @@ liftlio-react/
 ├── src/
 │   └── components/
 │       └── ImageGenerator.tsx      # Componente React
-├── GOOGLE_IMAGEN_SETUP.md         # Este arquivo
-└── IMAGE_APIS.md                  # Documentação geral
+├── GPT_IMAGE_1_SETUP.md           # Este arquivo
+└── IMAGE_GENERATION_GUIDE.md      # Documentação geral
 ```
 
 ---
@@ -394,30 +435,30 @@ liftlio-react/
 ### 1. Via Script Local
 ```bash
 # Dashboard para analytics
-./.claude/scripts/imagen-api.sh "modern analytics dashboard with charts and graphs, blue theme"
+./.claude/scripts/gpt4o-image.sh "modern analytics dashboard with real-time data visualization"
 
 # Logo da empresa
-./.claude/scripts/imagen-api.sh "minimalist logo for tech company, geometric design" "1:1" 1
+./.claude/scripts/gpt4o-image.sh "minimalist tech company logo, abstract geometric" "1024x1024" "high"
 
 # Imagem widescreen
-./.claude/scripts/imagen-api.sh "futuristic cityscape at night" "16:9" 1
+./.claude/scripts/gpt4o-image.sh "futuristic cityscape at sunset" "1792x1024" "medium"
 ```
 
 ### 2. Via Edge Function (Frontend)
 ```typescript
 const { data } = await supabase.functions.invoke('generate-image', {
   body: { 
-    prompt: "user avatar illustration, professional style",
-    aspectRatio: "1:1"
+    prompt: "professional user avatar, friendly and approachable",
+    size: "1024x1024",
+    quality: "medium"
   }
 })
 ```
 
 ### 3. Salvar Localmente no Projeto
 ```typescript
-// Salvar imagem no projeto local (pasta public ou src/assets)
+// Salvar imagem no projeto local
 const saveImageLocally = async (base64: string, filename: string) => {
-  // Para desenvolvimento: salvar na pasta public/images
   const byteCharacters = atob(base64)
   const byteArray = new Uint8Array(byteCharacters.length)
   
@@ -425,10 +466,10 @@ const saveImageLocally = async (base64: string, filename: string) => {
     byteArray[i] = byteCharacters.charCodeAt(i)
   }
   
-  const blob = new Blob([byteArray], { type: 'image/jpeg' })
+  const blob = new Blob([byteArray], { type: 'image/png' })
   const url = URL.createObjectURL(blob)
   
-  // Criar link para download/salvar
+  // Criar link para download
   const a = document.createElement('a')
   a.href = url
   a.download = filename
@@ -443,19 +484,30 @@ const saveImageLocally = async (base64: string, filename: string) => {
 ## ⚠️ PONTOS IMPORTANTES
 
 ### Segurança
-- ✅ API key está no Supabase Vault (produção)
+- ✅ API key está no .env (desenvolvimento)
+- ✅ Usar Supabase Vault em produção
 - ✅ CORS configurado corretamente
 - ✅ Rate limiting via Supabase (automático)
 
 ### Performance
 - ✅ Limpeza automática de imagens antigas
 - ✅ Nomenclatura padronizada
-- ✅ Compressão via JPEG
+- ✅ Formato PNG para melhor qualidade
+- ✅ Diferentes níveis de qualidade disponíveis
 
 ### Custos
-- 💰 Google Imagen: ~$0.04 por imagem
-- 💰 Monitorar uso via Google Cloud Console
+- 💰 GPT-4o Low: $0.02 por imagem
+- 💰 GPT-4o Medium: $0.07 por imagem
+- 💰 GPT-4o High: $0.19 por imagem
+- 💰 Monitorar uso via OpenAI Dashboard
 - 💰 Implementar rate limiting se necessário
+
+### Vantagens do GPT-Image-1
+- 🚀 Geração nativa multimodal
+- 📝 Melhor renderização de texto
+- 🧠 Usa conhecimento completo do GPT-4o
+- 🔄 Refinamento contextual possível
+- 🎯 Melhor aderência aos prompts
 
 ---
 
@@ -466,11 +518,13 @@ const saveImageLocally = async (base64: string, filename: string) => {
 3. **Deploy da Edge Function**
 4. **Integrar no frontend do Liftlio**
 5. **Monitorar custos e uso**
+6. **Implementar cache de imagens**
 
 ---
 
 ## 📞 SUPORTE
 
-- **Documentação Google**: https://cloud.google.com/vertex-ai/docs/generative-ai/image/generate-images
+- **Documentação OpenAI**: https://platform.openai.com/docs/guides/image-generation
+- **API Reference**: https://platform.openai.com/docs/api-reference/images
 - **Supabase Edge Functions**: https://supabase.com/docs/guides/functions
-- **Arquivo de referência**: `/liftlio-react/IMAGE_APIS.md`
+- **Arquivo de referência**: `/liftlio-react/IMAGE_GENERATION_GUIDE.md`
