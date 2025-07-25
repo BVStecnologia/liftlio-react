@@ -5,15 +5,21 @@ Esta pasta contém todos os arquivos relacionados ao tema WordPress do blog Lift
 ## 📦 Versões do Tema
 
 ### ⭐ VERSÃO ATUAL (USAR ESTA!)
-- **`liftlio-wp-theme-v3.1-image-overflow-fix.zip`** - v3.1 (23/07/2025)
-  - ✅ Correção de overflow de imagens (imagens não ultrapassam bordas)
-  - ✅ CSS responsivo para imagens em posts e páginas
-  - ✅ URLs canônicas funcionando para blog.liftlio.com
-  - ✅ Tags H1 verificadas em todos os templates
-  - ✅ Funções de debug incluídas
-  - ✅ Compatível com subdomínios
+- **`liftlio-wp-theme-v3.2-menu-support.zip`** - v3.2 (25/01/2025)
+  - ✅ Suporte completo para menus do WordPress
+  - ✅ Menu dropdown/submenu funcionando
+  - ✅ Fallback automático quando não há menu configurado
+  - ✅ Botões CTA personalizados via classes CSS
+  - ✅ Correção de overflow de imagens mantida
+  - ✅ URLs canônicas funcionando
+  - ✅ Instruções detalhadas incluídas (MENU-INSTRUCTIONS.md)
 
 ### 📂 Versões Anteriores
+- **`liftlio-wp-theme-v3.1-image-overflow-fix.zip`** - v3.1 (23/07/2025)
+  - Correção de overflow de imagens
+  - CSS responsivo para imagens em posts e páginas
+  - URLs canônicas funcionando
+  - Tags H1 verificadas em todos os templates
 - **`liftlio-wp-theme-v3.0-seo-completo-USAR-ESTE.zip`** - v3.0 (23/07/2025)
   - URLs canônicas funcionando para blog.liftlio.com
   - Tags H1 verificadas em todos os templates
@@ -48,8 +54,19 @@ Esta pasta contém todos os arquivos relacionados ao tema WordPress do blog Lift
 1. Faça backup do tema atual
 2. No WordPress Admin, vá para **Aparência > Temas > Adicionar novo**
 3. Clique em **Enviar tema**
-4. Selecione o arquivo `liftlio-wp-theme-v3.1-image-overflow-fix.zip`
+4. Selecione o arquivo `liftlio-wp-theme-v3.2-menu-support.zip`
 5. Clique em **Instalar agora** e depois **Ativar**
+
+## Como Configurar o Menu (NOVO na v3.2!)
+
+1. Vá para **Aparência > Menus** no WordPress Admin
+2. Crie um novo menu ou edite o existente
+3. Adicione páginas, posts, links personalizados, categorias
+4. Para criar botão CTA: adicione classe CSS `menu-item-cta` ao item
+5. Marque **"Primary Menu"** em Locais de exibição
+6. Salve o menu
+
+**Instruções detalhadas**: Veja o arquivo `MENU-INSTRUCTIONS.md` dentro do tema
 
 ## Como Testar as Correções
 
@@ -72,4 +89,4 @@ curl -s https://blog.liftlio.com/about | grep "<h1"
 Consulte o arquivo `SEO-FIXES-README.md` dentro do tema para instruções detalhadas de debug e solução de problemas.
 
 ---
-**Última atualização**: 23/07/2025
+**Última atualização**: 25/01/2025
