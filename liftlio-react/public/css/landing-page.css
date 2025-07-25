@@ -805,14 +805,7 @@
     vertical-align: middle;
 }
 
-/* Utility classes for showing/hiding content based on language */
-[data-lang="pt"] .lang-en {
-    display: none;
-}
-
-[data-lang="en"] .lang-pt {
-    display: none;
-}
+/* Language-specific classes removed - English only */
 
 /* Print styles */
 @media print {

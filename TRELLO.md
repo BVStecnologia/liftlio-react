@@ -46,6 +46,12 @@
 ### 🎯 REGRA DE OURO: FAÇA PARECER REVOLUCIONÁRIO!
 Quando criar cards no Trello, especialmente sobre conquistas e features, siga estas diretrizes para despertar MÁXIMO ENTUSIASMO:
 
+### ⚠️ REGRA OBRIGATÓRIA #1: SEMPRE ADICIONE IMAGENS! ⚠️
+**NUNCA, JAMAIS crie um card sem imagem!** Todo card DEVE ter uma imagem épica anexada.
+- **SEM IMAGEM = CARD INCOMPLETO** 
+- **Use `mcp__trello__attach_image_to_card`** imediatamente após criar o card
+- **Escolha imagens relevantes** do Unsplash ou gere com GPT-4
+
 ### 1. 📝 TÍTULOS QUE IMPRESSIONAM
 ```
 ❌ NÃO FAÇA: "Agente AI atualizado para v60"
@@ -80,9 +86,10 @@ Quando criar cards no Trello, especialmente sobre conquistas e features, siga es
 **STATUS: [ALGO EMPOLGANTE] 🔥**
 ```
 
-### 3. 🖼️ IMAGENS QUE HIPNOTIZAM
+### 3. 🖼️ IMAGENS QUE HIPNOTIZAM (OBRIGATÓRIO!)
 
-**Sempre adicione imagens! Use:**
+**⚠️ ATENÇÃO: IMAGENS SÃO OBRIGATÓRIAS EM TODOS OS CARDS! ⚠️**
+**Não existe card sem imagem. SEMPRE adicione uma imagem relevante:**
 
 #### OPÇÃO 1: 🎨 GPT-Image-1 (RECOMENDADO - Imagens Personalizadas!)
 ```bash
@@ -353,6 +360,7 @@ Quando o usuário disser:
 3. **Board padrão** - sempre usar o board Liftlio (ID: `686b43ced8d30f8eb12b9d12`)
 4. **Dados em tempo real** - sempre buscar dados atualizados via MCP
 5. **FAÇA PARECER INCRÍVEL** - Sempre que criar cards sobre conquistas, features ou melhorias, siga as diretrizes da seção "COMO CRIAR CARDS ESPETACULARES". Transforme cada atualização em uma celebração do progresso!
+6. **🖼️ IMAGENS SÃO OBRIGATÓRIAS** - TODO card DEVE ter uma imagem anexada. Sem exceções!
 
 ## 🎯 LEMBRETE FINAL
 **Cada card no Trello é uma vitrine do trabalho incrível sendo feito no Liftlio. Não seja modesto - CELEBRE cada conquista como se fosse mudar o mundo (porque provavelmente vai! 🚀)**
