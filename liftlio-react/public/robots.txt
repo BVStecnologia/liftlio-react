@@ -1,6 +1,15 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
 
-# Sitemap
+# Disallow query parameters to prevent duplicate content
+Disallow: /*?lang=
+Disallow: /*?utm_
+Disallow: /*?ref=
+
+# Sitemap locations
 Sitemap: https://liftlio.com/sitemap.xml
+Sitemap: https://blog.liftlio.com/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
