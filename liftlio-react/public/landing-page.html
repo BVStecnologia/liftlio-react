@@ -35,7 +35,6 @@
     <!-- Canonical and language alternates -->
     <link rel="canonical" href="https://liftlio.com/">
     <link rel="alternate" href="https://liftlio.com/" hreflang="en">
-    <link rel="alternate" href="https://liftlio.com/?lang=pt" hreflang="pt">
     <link rel="alternate" href="https://liftlio.com/" hreflang="x-default">
     
     <!-- Open Graph -->
@@ -1518,14 +1517,14 @@
         
         // Category translations
         const categoryMap = {
-            'TECHNOLOGY': { pt: 'Tecnologia', en: 'Technology' },
-            'GAMING': { pt: 'Jogos', en: 'Gaming' },
-            'MUSIC': { pt: 'Música', en: 'Music' },
-            'LIFESTYLE': { pt: 'Estilo de Vida', en: 'Lifestyle' },
-            'ENTERTAINMENT': { pt: 'Entretenimento', en: 'Entertainment' },
-            'EDUCATION': { pt: 'Educação', en: 'Education' },
-            'BUSINESS': { pt: 'Negócios', en: 'Business' },
-            'EMERGING TRENDS': { pt: 'Tendências Emergentes', en: 'Emerging Trends' }
+            'TECHNOLOGY': 'Technology',
+            'GAMING': 'Gaming',
+            'MUSIC': 'Music',
+            'LIFESTYLE': 'Lifestyle',
+            'ENTERTAINMENT': 'Entertainment',
+            'EDUCATION': 'Education',
+            'BUSINESS': 'Business',
+            'EMERGING TRENDS': 'Emerging Trends'
         };
         
         // Format volume to K/M
@@ -1555,7 +1554,7 @@
         
         // Create trending topic card
         function createTrendingCard(trend, index) {
-            const category = categoryMap[trend.category] || { pt: trend.category, en: trend.category };
+            const category = categoryMap[trend.category] || trend.category;
             
             return `
                 <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s;animation:fadeIn 0.5s ease-in-out ${index * 0.1}s both">
@@ -1664,7 +1663,7 @@
         // Create declining topic card
         function createDecliningCard(trend, index) {
             const lang = document.documentElement.getAttribute('data-lang');
-            const category = categoryMap[trend.category] || { pt: trend.category, en: trend.category };
+            const category = categoryMap[trend.category] || trend.category;
             const declinePercentage = Math.abs(parseFloat(trend.growth));
             
             return `
@@ -1823,29 +1822,17 @@
             tooltip.classList.toggle('show');
         }
         
-        // Loading steps for analyze function
-        const loadingSteps = {
-            pt: [
-                { text: "Lendo o conteúdo do seu site...", icon: "🔍" },
-                { text: "Entendendo seu produto...", icon: "🧠" },
-                { text: "Analisando seu nicho de mercado...", icon: "📊" },
-                { text: "Buscando discussões no YouTube...", icon: "🎬" },
-                { text: "Encontrando clientes potenciais...", icon: "👥" },
-                { text: "Identificando pontos de dor...", icon: "💬" },
-                { text: "Gerando resposta personalizada...", icon: "🤖" },
-                { text: "Finalizando simulação...", icon: "✨" }
-            ],
-            en: [
-                { text: "Reading your website content...", icon: "🔍" },
-                { text: "Understanding your product...", icon: "🧠" },
-                { text: "Analyzing your market niche...", icon: "📊" },
-                { text: "Searching YouTube discussions...", icon: "🎬" },
-                { text: "Finding potential customers...", icon: "👥" },
-                { text: "Identifying pain points...", icon: "💬" },
-                { text: "Generating personalized response...", icon: "🤖" },
-                { text: "Finalizing simulation...", icon: "✨" }
-            ]
-        };
+        // Loading steps for analyze function - English only
+        const loadingSteps = [
+            { text: "Reading your website content...", icon: "🔍" },
+            { text: "Understanding your product...", icon: "🧠" },
+            { text: "Analyzing your market niche...", icon: "📊" },
+            { text: "Searching YouTube discussions...", icon: "🎬" },
+            { text: "Finding potential customers...", icon: "👥" },
+            { text: "Identifying pain points...", icon: "💬" },
+            { text: "Generating personalized response...", icon: "🤖" },
+            { text: "Finalizing simulation...", icon: "✨" }
+        ];
         
         // Normalize URL function
         function normalizeUrl(inputUrl) {
@@ -1883,9 +1870,7 @@
             urlInput.classList.remove('error');
             
             if (!url) {
-                errorDiv.textContent = lang === 'pt' ? 
-                    'Por favor, insira uma URL' : 
-                    'Please enter a URL';
+                errorDiv.textContent = 'Please enter a URL';
                 errorDiv.style.display = 'block';
                 urlInput.classList.add('error');
                 return;
@@ -1894,9 +1879,7 @@
             // Normalize and validate URL
             const normalizedUrl = normalizeUrl(url);
             if (!validateUrl(normalizedUrl)) {
-                errorDiv.textContent = lang === 'pt' ? 
-                    'Por favor, insira uma URL válida (ex: https://exemplo.com)' : 
-                    'Please enter a valid URL (e.g., https://example.com)';
+                errorDiv.textContent = 'Please enter a valid URL (e.g., https://example.com)';
                 errorDiv.style.display = 'block';
                 urlInput.classList.add('error');
                 return;
@@ -1909,7 +1892,7 @@
             
             // Animate loading steps
             let currentStep = 0;
-            const steps = loadingSteps[lang];
+            const steps = loadingSteps;
             const totalSteps = steps.length;
             const minStepTime = 800;
             const maxStepTime = 1500;
@@ -1955,9 +1938,7 @@
                 } catch (error) {
                     console.error('Error getting IP:', error);
                     // If both fail, show error to user
-                    errorDiv.textContent = lang === 'pt' ? 
-                        'Não foi possível detectar seu endereço IP. Por favor, tente novamente mais tarde.' : 
-                        'Unable to detect your IP address. Please try again later.';
+                    errorDiv.textContent = 'Unable to detect your IP address. Please try again later.';
                     errorDiv.style.display = 'block';
                     loadingContainer.style.display = 'none';
                     analyzeBtn.disabled = false;
@@ -2014,18 +1995,12 @@
                     displayResults(data.simulation, lang);
                 } else {
                     // Handle errors
-                    let errorMessage = lang === 'pt' ? 
-                        'Erro ao gerar simulação. Por favor, tente novamente.' : 
-                        'Error generating simulation. Please try again.';
+                    let errorMessage = 'Error generating simulation. Please try again.';
                     
                     if (response.status === 429 || data.error?.includes('limit')) {
-                        errorMessage = lang === 'pt' ? 
-                            'Você atingiu o limite de 3 análises por dia. Tente novamente amanhã!' : 
-                            "You've reached the limit of 3 analyses per day. Try again tomorrow!";
+                        errorMessage = "You've reached the limit of 3 analyses per day. Try again tomorrow!";
                     } else if (data.error?.includes('fetch') || data.error?.includes('Jina')) {
-                        errorMessage = lang === 'pt' ? 
-                            'Não foi possível acessar este site. Verifique a URL e tente novamente.' : 
-                            'Unable to access this website. Please check the URL and try again.';
+                        errorMessage = 'Unable to access this website. Please check the URL and try again.';
                     }
                     
                     errorDiv.textContent = errorMessage;
@@ -2033,9 +2008,7 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                errorDiv.textContent = lang === 'pt' ? 
-                    'Erro ao conectar com o servidor. Por favor, tente novamente.' : 
-                    'Error connecting to server. Please try again.';
+                errorDiv.textContent = 'Error connecting to server. Please try again.';
                 errorDiv.style.display = 'block';
                 clearInterval(stepInterval);
             } finally {
@@ -2051,7 +2024,7 @@
             resultsContainer.style.display = 'block';
             
             const formatNumber = (num) => {
-                return new Intl.NumberFormat(lang === 'pt' ? 'pt-BR' : 'en-US').format(num);
+                return new Intl.NumberFormat('en-US').format(num);
             };
             
             resultsContainer.innerHTML = `
@@ -2094,8 +2067,7 @@
                                 Sentiment:
                             </span>
                             <span style="font-size:14px;font-weight:600;color:var(--color-primary)">
-                                ${lang === 'pt' && simulation.lead_comment.sentiment === 'seeking_solution' ? 
-                                    'buscando_solução' : simulation.lead_comment.sentiment}
+                                ${simulation.lead_comment.sentiment}
                             </span>
                         </div>
                     </div>
