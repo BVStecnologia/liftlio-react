@@ -4,6 +4,17 @@ echo "🚀 ATUALIZANDO MCP GMAIL COM OAUTH2"
 echo "===================================="
 echo ""
 
+# Verificar se existe arquivo .env
+if [ ! -f "$(dirname "$0")/.env" ]; then
+    echo "❌ ERRO: Arquivo .env não encontrado!"
+    echo "📝 Copie o arquivo .env.example para .env e preencha com suas credenciais:"
+    echo "   cp $(dirname "$0")/.env.example $(dirname "$0")/.env"
+    exit 1
+fi
+
+# Carregar variáveis de ambiente
+source "$(dirname "$0")/.env"
+
 # Salvar o novo servidor localmente
 cat > /tmp/mcp-gmail-oauth.js << 'EOF'
 const express = require('express');
@@ -13,15 +24,15 @@ app.use(express.json());
 
 // Configuração OAuth2
 const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID',
-  process.env.GOOGLE_CLIENT_SECRET || 'YOUR_CLIENT_SECRET',
+  '${GOOGLE_CLIENT_ID}',
+  '${GOOGLE_CLIENT_SECRET}',
   'http://localhost'
 );
 
 // Configurar tokens
 oauth2Client.setCredentials({
-  access_token: process.env.GOOGLE_ACCESS_TOKEN || 'YOUR_ACCESS_TOKEN',
-  refresh_token: process.env.GOOGLE_REFRESH_TOKEN || 'YOUR_REFRESH_TOKEN',
+  access_token: '${GOOGLE_ACCESS_TOKEN}',
+  refresh_token: '${GOOGLE_REFRESH_TOKEN}',
   token_type: 'Bearer'
 });
 
