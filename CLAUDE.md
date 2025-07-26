@@ -4,6 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 # CLAUDE.md - Memória do Projeto Liftlio
 
+## 🚨 REGRA CRÍTICA DE SEGURANÇA PARA CLAUDE 🚨
+
+### ⛔ NUNCA, JAMAIS, COLOQUE SENHAS OU CREDENCIAIS NO GIT!
+
+**REGRAS QUE CLAUDE DEVE SEMPRE SEGUIR:**
+1. **NUNCA escreva senhas diretamente em arquivos**
+2. **SEMPRE use o arquivo `.env` para credenciais**
+3. **SEMPRE verifique se há senhas antes de fazer commit**
+4. **Se encontrar uma senha exposta, remova IMEDIATAMENTE**
+5. **Senhas devem ser referenciadas como variáveis: `$SSH_PASSWORD`**
+
+**EXEMPLO:**
+- ✅ CERTO: `source .env && sshpass -p "$SSH_PASSWORD"`
+- ❌ ERRADO: `sshpass -p 'Bvs20211993***'`
+
+---
+
 ## Informações do Projeto
 - **Nome**: Liftlio
 - **Tipo**: Plataforma de monitoramento de vídeos e análise de sentimentos

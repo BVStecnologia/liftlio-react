@@ -1,5 +1,34 @@
 # 🚀 Servidor Liftlio - Hub de Serviços MCP
 
+## 🚨 REGRAS DE SEGURANÇA - LEIA PRIMEIRO! 🚨
+
+### ⛔ NUNCA COMITAR SENHAS OU CREDENCIAIS NO GIT!
+
+**REGRAS OBRIGATÓRIAS:**
+1. **TODAS as senhas devem ficar APENAS no arquivo `.env`**
+2. **NUNCA coloque senhas diretamente em scripts**
+3. **SEMPRE use variáveis de ambiente: `$SSH_PASSWORD`, `$SSH_USER`, etc**
+4. **Antes de fazer commit, SEMPRE verifique se há senhas expostas**
+5. **O arquivo `.env` NUNCA deve ser commitado (já está no .gitignore)**
+
+**COMO USAR CREDENCIAIS:**
+```bash
+# ✅ CORRETO - Usar variáveis do .env
+source "$(dirname "$0")/../../.env"
+sshpass -p "$SSH_PASSWORD" ssh $SSH_USER@$SSH_HOST
+
+# ❌ ERRADO - Senha hardcoded
+sshpass -p 'Bvs20211993***' ssh root@173.249.22.2
+```
+
+**SE VOCÊ EXPOR UMA SENHA:**
+1. O GitGuardian vai detectar e alertar
+2. Você terá que limpar todo o histórico do Git
+3. A senha ficará comprometida permanentemente
+4. Será necessário trocar todas as senhas do servidor
+
+---
+
 **IP**: 173.249.22.2  
 **Specs**: 6 CPU, 12GB RAM, 300GB SSD  
 **Sistema**: Ubuntu 24.04.2 LTS  
