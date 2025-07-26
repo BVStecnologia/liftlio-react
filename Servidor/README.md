@@ -2,7 +2,7 @@
 
 **IP**: 173.249.22.2  
 **Specs**: 6 CPU, 12GB RAM, 300GB SSD  
-**Sistema**: Ubuntu/Debian  
+**Sistema**: Ubuntu 24.04.2 LTS  
 
 ## 📁 Estrutura Organizada
 
@@ -12,22 +12,29 @@ Servidor/
 ├── 📁 mcp-services/                # Serviços MCP ativos
 │   ├── 📁 trello/                  # MCP Trello (✅ Funcionando)
 │   │   └── README.md               # Documentação e configuração
-│   └── 📁 gmail/                   # MCP Gmail (🔄 Config pendente)
-│       ├── install.sh              # Script de instalação
-│       ├── setup-oauth-headless.sh # Setup OAuth2
-│       └── README.md               # Documentação
+│   └── 📁 gmail/                   # MCP Gmail (✅ Funcionando)
+│       ├── README.md               # Documentação completa
+│       ├── INSTRUCOES_FINAIS.md    # Quick start
+│       ├── configurar-claude.sh    # Script de config
+│       └── criar-container.sh      # Criar container Docker
 ├── 📁 config/                      # Configurações centralizadas
 │   ├── claude-desktop-config.json  # Config do Claude Desktop
 │   ├── claude-mcp-config.json      # Config geral MCP
-│   └── oauth-credentials.json      # Credenciais (gitignore)
+│   ├── server-credentials.txt      # Credenciais SSH
+│   └── client_secret_*.json        # OAuth credentials
 ├── 📁 docs/                        # Documentação completa
-│   └── MCP_SERVICES_GUIDE.md       # Guia completo dos serviços
+│   ├── MCP_SERVICES_GUIDE.md       # Guia completo dos serviços
+│   ├── ESTADO_MCP_GMAIL_SEM_TOKENS.md
+│   ├── MCP_GMAIL_FUNCIONANDO.md
+│   └── ORGANIZACAO_COMPLETA.md
 ├── 📁 examples/                    # Exemplos de implementação
 │   ├── edge-function-example.ts    # Exemplo Edge Function
 │   ├── teste-agente-mcp.html       # Teste web do agente
 │   └── mcp-client-trello.js        # Cliente JS para Trello
 ├── 📁 scripts/                     # Scripts utilitários
-│   └── install-mcp-safe.sh         # Instalador seguro
+│   ├── install-mcp-safe.sh         # Instalador seguro
+│   ├── install-remote.sh           # Instalação remota
+│   └── commit-servidor.sh          # Commit automático
 └── 📁 archive/                     # Documentações antigas
 
 ## 🐳 Containers em Produção
@@ -38,21 +45,30 @@ Servidor/
 | n8n | 5678 | ✅ Ativo | Automação com MCP nodes |
 | Langflow | 7860 | ✅ Ativo | Flow builder para LLMs |
 | MCP Trello | 5173 | ✅ Ativo | Integração com Trello API |
-| MCP Gmail | 3000 | 🔄 Config | Aguardando OAuth2 |
+| MCP Gmail | 3000 | ✅ Ativo | Email via Gmail OAuth2 |
+| Glances | 61208 | ✅ Ativo | Monitor de sistema |
 
 ## 🚀 Quick Start - Serviços MCP
 
-### 1. Testar MCP Trello (Funcionando)
+### 1. Configurar Gmail MCP no Claude Code
 ```bash
-curl http://173.249.22.2:5173/health
+# Remover configuração antiga
+claude mcp remove gmail
+
+# Adicionar novo servidor
+claude mcp add gmail -s user --transport sse "http://173.249.22.2:3000/sse"
+
+# Reiniciar Claude Code
+exit && claude
 ```
 
-### 2. Configurar MCP Gmail
+### 2. Testar Serviços
 ```bash
-# 1. Gerar URL OAuth2
-# 2. Autorizar no navegador
-# 3. Configurar token no servidor
-# Ver: mcp-services/gmail/README.md
+# Testar MCP Trello
+curl http://173.249.22.2:5173/health
+
+# Testar MCP Gmail  
+curl http://173.249.22.2:3000/health
 ```
 
 ## 📝 Edge Functions Disponíveis
@@ -103,6 +119,12 @@ http://173.249.22.2:5173
 - **MCP Gmail**: [mcp-services/gmail/README.md](./mcp-services/gmail/README.md)
 - **Exemplos**: [examples/](./examples/)
 
+## 🎯 Status dos Serviços MCP
+
+- **Gmail MCP**: ✅ Funcionando - Testado com sucesso (26/07/2025)
+- **Trello MCP**: ✅ Funcionando - Integrado ao Claude Code
+- **Servidor**: ✅ Estável - Todos os containers ativos
+
 ---
 
-**Última atualização**: 24/01/2025
+**Última atualização**: 26/07/2025
