@@ -3,6 +3,7 @@
 **IP**: 173.249.22.2  
 **Specs**: 6 CPU, 12GB RAM, 300GB SSD  
 **Sistema**: Ubuntu 24.04.2 LTS  
+**Credenciais SSH**: Ver arquivo `/Servidor/.env`  
 
 ## 📁 Estrutura Organizada
 
