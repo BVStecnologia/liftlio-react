@@ -200,15 +200,19 @@
 @media (max-width: 768px) {
     .dashboard-preview {
         border-radius: 12px;
-        overflow: hidden;
-        margin: 0 -20px;
-        width: calc(100% + 40px);
+        overflow: visible; /* Mudado de hidden para visible */
+        margin: 0;
+        width: 100%;
+        max-width: 100%;
+        position: relative;
     }
     
     .dashboard-preview img {
         width: 100%;
         height: auto;
         display: block;
+        object-fit: contain; /* Mudado para contain para evitar cortes */
+        max-height: 70vh; /* Limitar altura para caber na tela */
     }
     
     /* Feature icons menores */
@@ -311,5 +315,48 @@
     .container {
         padding-left: max(20px, env(safe-area-inset-left));
         padding-right: max(20px, env(safe-area-inset-right));
+    }
+}
+
+/* 1️⃣4️⃣ FIX PARA CABEÇALHO MOBILE */
+@media (max-width: 768px) {
+    /* Garantir espaçamento adequado no header */
+    .header {
+        padding: 16px 0;
+        min-height: 60px;
+    }
+    
+    .header-content {
+        padding: 0 16px;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    /* Evitar texto colado */
+    .header * {
+        line-height: normal;
+        vertical-align: middle;
+    }
+    
+    /* Ajuste específico para o dashboard preview container */
+    .hero-visual {
+        padding: 20px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    /* Container da imagem com padding adequado */
+    .dashboard-preview {
+        margin: 0 auto;
+        padding: 10px;
+        background: transparent;
+        box-shadow: none; /* Remover sombra que pode causar corte visual */
+    }
+    
+    /* Garantir que a imagem não ultrapasse os limites */
+    .dashboard-preview picture,
+    .dashboard-preview img {
+        max-width: 100%;
+        height: auto;
     }
 }

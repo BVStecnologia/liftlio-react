@@ -51,6 +51,7 @@ Quando criar cards no Trello, especialmente sobre conquistas e features, siga es
 - **SEM IMAGEM = CARD INCOMPLETO** 
 - **Use `mcp__trello__attach_image_to_card`** imediatamente após criar o card
 - **Escolha imagens relevantes** do Unsplash ou gere com GPT-4
+- **CLAUDE: SE CRIAR CARD SEM IMAGEM, DEVE DELETAR E REFAZER!**
 
 ### 1. 📝 TÍTULOS QUE IMPRESSIONAM
 ```
