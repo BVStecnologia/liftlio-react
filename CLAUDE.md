@@ -99,10 +99,11 @@ liftlio-react/src/
 
 ### Sistema de Agente AI
 **Localização**: `/liftlio-react/AGENTE_LIFTLIO/`
-- Edge Function `agente-liftlio` (v22 em produção)
+- Edge Function `agente-liftlio` (v68 em produção - LINGUAGEM NATURAL)
 - Sistema RAG com embeddings OpenAI
 - Busca semântica em 14 tabelas
 - Memória persistente de conversas
+- **NOVO**: Usa apenas linguagem natural, sem palavras-gatilho
 
 ## 🔥 REGRA #1: USE MCP PARA TUDO NO SUPABASE!
 **MCP Supabase está TOTALMENTE FUNCIONAL e pode fazer QUASE TUDO:**
@@ -327,6 +328,15 @@ await mcp__supabase__generate_typescript_types({
 - **Documentação**: `/liftlio-react/AGENTE_LIFTLIO/5_Documentacao/MODELO_CLAUDE_PADRAO.md`
 - **Aplicável a**: Todas Edge Functions que usam Claude API
 - **NÃO usar**: Haiku, Opus, ou versões antigas do Sonnet
+
+## 🧠 REGRA OBRIGATÓRIA - LINGUAGEM NATURAL (v68)
+**O agente Liftlio usa APENAS linguagem natural:**
+- **SEM palavras-gatilho**: Claude decide qual ferramenta usar com inteligência
+- **Responde na mesma língua**: Português → Português, English → English
+- **Decisões inteligentes**: Baseadas em contexto, não em patterns
+- **Duas chamadas ao Claude**: 1) Escolhe ferramenta, 2) Responde ao usuário
+- **Documentação completa**: `/liftlio-react/AGENTE_LIFTLIO/AGENTE_LINGUAGEM_NATURAL.md`
+- **Versão atual**: v68 em produção
 
 ## Notas Importantes
 - O projeto usa Supabase como backend

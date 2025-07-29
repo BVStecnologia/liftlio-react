@@ -269,6 +269,30 @@ const ChatFooter = styled.div`
   border-top: 1px solid ${props => props.theme.name === 'dark' ? '#2d2d2d' : '#e5e7eb'};
 `;
 
+const SupportButton = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'};
+  color: ${props => props.theme.colors.text.secondary};
+  text-decoration: none;
+  font-size: 13px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'};
+    color: ${props => props.theme.colors.text.primary};
+    transform: translateY(-1px);
+  }
+  
+  svg {
+    font-size: 14px;
+  }
+`;
+
 const ChatInput = styled.div`
   display: flex;
   gap: 8px;
@@ -649,6 +673,15 @@ const FloatingAgent: React.FC = () => {
               </QuickAction>
             ))}
           </QuickActions>
+          
+          <SupportButton 
+            href="mailto:liftliome@gmail.com?subject=Suporte%20Liftlio"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <IconComponent icon={FaIcons.FaEnvelope} />
+            Suporte: liftliome@gmail.com
+          </SupportButton>
         </ChatFooter>
       </ChatWidget>
     </>

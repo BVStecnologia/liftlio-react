@@ -1,0 +1,315 @@
+/* 📱 MELHORIAS MOBILE PARA LIFTLIO LANDING PAGE */
+
+/* 1️⃣ MELHORAR TOUCH TARGETS (min 48x48px para acessibilidade) */
+@media (max-width: 768px) {
+    /* Botões maiores e mais fáceis de tocar */
+    .btn-primary, .btn-login {
+        min-height: 48px;
+        padding: 14px 24px;
+        font-size: 16px; /* Evita zoom no iOS */
+    }
+    
+    .btn-icon {
+        min-width: 48px;
+        min-height: 48px;
+        padding: 12px;
+    }
+    
+    /* Links do menu mobile maiores */
+    .mobile-nav-link {
+        padding: 12px 0;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Área clicável maior nos cards */
+    .feature-card, .pricing-card, .testimonial-card {
+        padding: 24px 20px;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* 2️⃣ OTIMIZAR ESPAÇAMENTOS PARA MOBILE */
+@media (max-width: 768px) {
+    /* Reduzir padding excessivo */
+    .hero-section {
+        padding: 90px 0 50px;
+        min-height: auto;
+    }
+    
+    .section {
+        padding: 50px 0;
+    }
+    
+    /* Mais espaço entre elementos */
+    .hero-title {
+        font-size: 38px;
+        line-height: 1.2;
+        margin-bottom: 20px;
+    }
+    
+    .hero-description {
+        font-size: 17px;
+        line-height: 1.5;
+        margin-bottom: 32px;
+    }
+    
+    /* Cards com espaçamento interno melhor */
+    .breakthrough-features,
+    .features-grid,
+    .pricing-grid {
+        gap: 20px;
+    }
+}
+
+/* 3️⃣ AJUSTES ESPECÍFICOS PARA TELAS PEQUENAS */
+@media (max-width: 480px) {
+    /* Container com padding lateral adequado */
+    .container {
+        padding: 0 20px; /* Um pouco mais que 16px */
+    }
+    
+    /* Hero responsivo */
+    .hero-title {
+        font-size: 32px;
+        letter-spacing: -0.5px;
+    }
+    
+    /* Badges menores */
+    .badge {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+    
+    /* Seções com títulos menores */
+    .section-title {
+        font-size: 26px;
+        margin-bottom: 16px;
+    }
+    
+    .section-subtitle {
+        font-size: 16px;
+        margin-bottom: 32px;
+    }
+}
+
+/* 4️⃣ MELHORAR FORMULÁRIOS E INPUTS MOBILE */
+@media (max-width: 768px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="url"],
+    textarea {
+        font-size: 16px; /* Previne zoom no iOS */
+        padding: 14px 16px;
+        min-height: 48px;
+    }
+    
+    /* URL input com tooltip melhor posicionado */
+    .url-input-container {
+        position: relative;
+    }
+    
+    .url-tooltip {
+        top: auto;
+        bottom: 100%;
+        margin-bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90vw;
+        max-width: 300px;
+    }
+}
+
+/* 5️⃣ OTIMIZAR CARDS E GRIDS PARA MOBILE */
+@media (max-width: 768px) {
+    /* Cards testimonials com scroll melhor */
+    .testimonials-track {
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 20px;
+    }
+    
+    .testimonial-card {
+        scroll-snap-align: center;
+        min-width: 85vw;
+        margin: 0 10px;
+    }
+    
+    /* Process steps empilhados */
+    .process-grid {
+        gap: 32px;
+    }
+    
+    .process-arrow {
+        display: none;
+    }
+}
+
+/* 6️⃣ MELHORIAS DE PERFORMANCE MOBILE */
+@media (max-width: 768px) {
+    /* Desabilitar animações pesadas */
+    .floating-element,
+    .particle-effect,
+    #particles-canvas {
+        display: none !important;
+    }
+    
+    /* Simplificar transições */
+    * {
+        transition-duration: 0.2s !important;
+    }
+    
+    /* Remover sombras complexas */
+    .dashboard-preview {
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+}
+
+/* 7️⃣ MENU MOBILE MELHORADO */
+@media (max-width: 768px) {
+    .mobile-menu {
+        width: 100%;
+        max-width: 320px;
+        padding: 24px;
+    }
+    
+    .mobile-menu-header {
+        padding-bottom: 20px;
+        margin-bottom: 24px;
+    }
+    
+    .mobile-menu-nav {
+        gap: 16px;
+    }
+    
+    .mobile-nav-link {
+        font-size: 17px;
+        padding: 12px 8px;
+        border-radius: 8px;
+        transition: background 0.2s;
+    }
+    
+    .mobile-nav-link:active {
+        background: var(--color-primary-alpha);
+    }
+}
+
+/* 8️⃣ IMAGENS RESPONSIVAS MELHORADAS */
+@media (max-width: 768px) {
+    .dashboard-preview {
+        border-radius: 12px;
+        overflow: hidden;
+        margin: 0 -20px;
+        width: calc(100% + 40px);
+    }
+    
+    .dashboard-preview img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+    
+    /* Feature icons menores */
+    .feature-icon,
+    .breakthrough-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+}
+
+/* 9️⃣ BOTÕES CTA MOBILE */
+@media (max-width: 480px) {
+    .cta-buttons {
+        gap: 12px;
+    }
+    
+    .btn-primary {
+        width: 100%;
+        justify-content: center;
+        padding: 16px 24px;
+        font-size: 17px;
+        font-weight: 600;
+        border-radius: 12px;
+    }
+    
+    /* Botão com ícone bem alinhado */
+    .btn-primary svg {
+        width: 18px;
+        height: 18px;
+        margin-left: 8px;
+    }
+}
+
+/* 🔟 ACESSIBILIDADE E UX MOBILE */
+@media (max-width: 768px) {
+    /* Focus visível melhor */
+    *:focus {
+        outline: 3px solid var(--color-primary);
+        outline-offset: 2px;
+    }
+    
+    /* Área de toque maior em links */
+    a {
+        position: relative;
+        padding: 4px;
+        margin: -4px;
+    }
+    
+    /* Feedback visual ao tocar */
+    button:active,
+    .btn-primary:active,
+    .btn-login:active,
+    a:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+    
+    /* Scroll suave */
+    html {
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* 1️⃣1️⃣ LANDSCAPE MOBILE */
+@media (max-width: 768px) and (orientation: landscape) {
+    .hero-section {
+        min-height: auto;
+        padding: 60px 0 40px;
+    }
+    
+    .hero-title {
+        font-size: 32px;
+    }
+    
+    .section {
+        padding: 40px 0;
+    }
+}
+
+/* 1️⃣2️⃣ DARK MODE MOBILE ESPECÍFICO */
+@media (max-width: 768px) {
+    [data-theme="dark"] .mobile-menu {
+        background: #0f0f0f;
+        border-left: 1px solid var(--color-border-light);
+    }
+    
+    [data-theme="dark"] .mobile-nav-link:active {
+        background: rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* 1️⃣3️⃣ SAFE AREAS (iPhone X+) */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .mobile-menu {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    .container {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+    }
+}
