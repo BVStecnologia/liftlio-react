@@ -191,10 +191,9 @@
         .btn-primary:hover::before{width:300px;height:300px}
         .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px var(--color-primary-alpha)}
         .hero-visual{position:relative;display:flex;justify-content:center;align-items:center}
-        .dashboard-preview{width:100%;max-width:600px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:32px;position:relative;overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 20px 60px var(--color-shadow-large)}
-        [data-theme="light"] .dashboard-preview{background:rgba(255,255,255,.95)}
+        .dashboard-preview{width:100%;max-width:600px;position:relative;overflow:hidden;border-radius:16px;box-shadow:0 20px 60px var(--color-shadow-large)}
         .dashboard-preview::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,var(--color-primary-alpha) 0%,transparent 70%);animation:pulse 4s ease-in-out infinite}
-        .dashboard-preview img{width:100%;height:auto;border-radius:8px;position:relative;z-index:1}
+        .dashboard-preview img{width:100%;height:auto;border-radius:16px;position:relative;z-index:1}
         .floating-element{position:absolute;animation:float 6s ease-in-out infinite;z-index:5}
         
         /* Trust Section */
@@ -535,9 +534,6 @@
                         </picture>
                     </div>
                     
-                    <div class="floating-element" style="bottom:40px;left:-30px;animation-delay:2s">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                    </div>
                 </div>
             </div>
         </div>
