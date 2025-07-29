@@ -200,7 +200,6 @@
 @media (max-width: 768px) {
     .dashboard-preview {
         border-radius: 12px;
-        overflow: visible; /* Mudado de hidden para visible */
         margin: 0;
         width: 100%;
         max-width: 100%;
@@ -324,6 +323,17 @@
     .header {
         padding: 16px 0;
         min-height: 60px;
+    }
+    
+    /* Fix para badge não colar no header em telas pequenas */
+    @media (max-width: 485px) {
+        .hero-section {
+            padding-top: 100px !important; /* Aumentar espaço do topo */
+        }
+        
+        .badge {
+            margin-top: 20px; /* Espaço adicional acima do badge */
+        }
     }
     
     .header-content {
