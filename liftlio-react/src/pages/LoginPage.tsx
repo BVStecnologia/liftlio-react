@@ -3,6 +3,7 @@ import Login from '../components/Login'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import styled, { keyframes } from 'styled-components'
+import WaveParticles3D from '../components/WaveParticles3D'
 
 // Componente de ícone personalizado
 const SpinnerIcon = () => <span className="icon-spinner">⟳</span>;
@@ -222,7 +223,7 @@ const EnergyNode = styled.div`
 
 const ContentWrapper = styled.div`
   position: relative;
-  z-index: 1;
+  z-index: 20;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -285,6 +286,9 @@ const LoginPage: React.FC = () => {
 
   return (
     <LoginPageContainer>
+      {/* 3D Particle Wave Effect */}
+      <WaveParticles3D particleCount={10000} color="#00a9db" />
+      
       {/* Wave background elements */}
       <WaveElement />
       <WaveElement />

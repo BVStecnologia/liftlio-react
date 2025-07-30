@@ -60,6 +60,7 @@ const LoginContainer = styled.div`
   color: ${props => props.theme.colors.text.primary};
   position: relative;
   overflow: hidden;
+  z-index: 10;
   
   &::before {
     content: '';
