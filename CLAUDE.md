@@ -399,6 +399,23 @@ await mcp__supabase__generate_typescript_types({
 - **Cards sempre em inglês** (título, descrição, comentários)
 - **Comunicação em português** no VS Code
 - **Sempre usar MCP** - está configurado e funcionando
+- **🚨 SEMPRE adicionar imagem ao criar card** - É OBRIGATÓRIO anexar screenshot/imagem relevante
+- **Usar `mcp__trello__attach_image_to_card`** logo após criar o card
+
+### 📸 REGRA OBRIGATÓRIA - IMAGENS NO TRELLO
+**SEMPRE anexar imagem ao criar card no Trello:**
+1. Criar o card com `mcp__trello__add_card_to_list`
+2. IMEDIATAMENTE anexar imagem com `mcp__trello__attach_image_to_card`
+3. Tipos de imagem aceitos:
+   - Screenshots da feature implementada
+   - Capturas de tela do antes/depois
+   - Diagramas ou mockups relevantes
+   - GIFs demonstrando funcionalidade
+4. Se não houver imagem específica, usar uma captura genérica do dashboard
+5. URL da imagem pode ser:
+   - Link direto para imagem hospedada
+   - URL do GitHub (raw.githubusercontent.com)
+   - Qualquer URL pública de imagem
 
 ## Integração WordPress - Site Liftlio
 
