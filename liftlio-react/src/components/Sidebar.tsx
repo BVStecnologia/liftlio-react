@@ -13,6 +13,8 @@ import { useAuth } from '../context/AuthContext';
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const slideIn = keyframes`
@@ -20,17 +22,19 @@ const slideIn = keyframes`
   to { transform: translateX(0); opacity: 1; }
 `;
 
-const SidebarContainer = styled.aside<{ isOpen: boolean }>`
-  width: 249px;
+const SidebarContainer = styled.aside<{ isOpen: boolean; isCollapsed?: boolean }>`
+  width: ${props => props.isCollapsed ? '80px' : '249px'};
   height: 100%;
   background: ${props => props.theme.components.sidebar.bg};
   color: ${props => props.theme.components.sidebar.text};
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   z-index: 1000; /* Higher z-index to appear above header */
   border-right: 1px solid ${props => props.theme.components.sidebar.border};
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   @media (min-width: 769px) {
     position: relative;
@@ -78,10 +82,37 @@ const SidebarContainer = styled.aside<{ isOpen: boolean }>`
   }
 `;
 
-const Logo = styled.div`
-  padding: 32px 24px;
+const ToggleButton = styled.button<{ isCollapsed?: boolean }>`
+  position: absolute;
+  right: -12px;
+  top: 32px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: ${props => props.theme.components.sidebar.bg};
+  border: 1px solid ${props => props.theme.components.sidebar.border};
+  color: ${props => props.theme.components.sidebar.text};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1001;
+  
+  &:hover {
+    background: ${props => props.theme.components.sidebar.itemHover};
+    transform: scale(1.1);
+  }
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const Logo = styled.div<{ isCollapsed?: boolean }>`
+  padding: ${props => props.isCollapsed ? '32px 8px' : '32px 24px'};
   margin-top: 12px;
-  font-size: 1.8rem;
+  font-size: ${props => props.isCollapsed ? '1.2rem' : '1.8rem'};
   font-weight: 900;
   margin-bottom: 20px;
   display: flex;
@@ -318,10 +349,11 @@ const UserButton = styled.button`
 
 // Removed ProjectName as well
 
-const NavItem = styled(NavLink)`
+const NavItem = styled(NavLink)<{ isCollapsed?: boolean }>`
   display: flex;
   align-items: center;
-  padding: 15px 24px;
+  padding: ${props => props.isCollapsed ? '15px 0' : '15px 24px'};
+  justify-content: ${props => props.isCollapsed ? 'center' : 'flex-start'};
   color: ${props => props.theme.components.sidebar.text};
   transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
   position: relative;
@@ -401,6 +433,13 @@ const NavItem = styled(NavLink)`
     transform: translateX(2px) translateZ(2px) scale(0.98);
     transition: all 0.2s ease;
   }
+  
+  /* Tooltip no modo colapsado */
+  ${props => props.isCollapsed && `
+    &:hover ${Tooltip} {
+      opacity: 1;
+    }
+  `}
 `;
 
 const Divider = styled.div`
@@ -905,13 +944,47 @@ const UpgradeButton = styled.div`
   }
 `;
 
-const NavItemIcon = styled.span`
+const NavItemIcon = styled.span<{ isCollapsed?: boolean }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
+  margin-right: ${props => props.isCollapsed ? '0' : '12px'};
   font-size: 1.2rem;
   position: relative;
+`;
+
+const NavItemText = styled.span<{ isCollapsed?: boolean }>`
+  display: ${props => props.isCollapsed ? 'none' : 'inline'};
+  transition: opacity 0.3s ease;
+`;
+
+const Tooltip = styled.div`
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 10px;
+  padding: 8px 12px;
+  background: ${props => props.theme.colors.bg.secondary};
+  color: ${props => props.theme.colors.text.primary};
+  border-radius: 6px;
+  font-size: 14px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1002;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-right-color: ${props => props.theme.colors.bg.secondary};
+  }
 `;
 
 const AddButton = styled.button`
@@ -1124,36 +1197,6 @@ const RefreshHint = styled.div`
   }
 `;
 
-const Tooltip = styled.div<{ visible: boolean }>`
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  opacity: ${props => props.visible ? 1 : 0};
-  visibility: ${props => props.visible ? 'visible' : 'hidden'};
-  transition: all 0.2s ease;
-  pointer-events: none;
-  margin-left: 10px;
-  white-space: nowrap;
-  z-index: 999;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: -6px;
-    transform: translateY(-50%);
-    border-width: 6px 6px 6px 0;
-    border-style: solid;
-    border-color: transparent rgba(0, 0, 0, 0.8) transparent transparent;
-  }
-`;
 
 const overlayFadeIn = keyframes`
   from { opacity: 0; }
@@ -1184,12 +1227,22 @@ const SidebarOverlay = styled.div<{ isOpen: boolean }>`
 /* Removed Close Button as requested */
 
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed: isCollapsedProp = false, onToggleCollapse }) => {
   const { currentProject } = useProject();
   const { theme } = useTheme();
   const { t, language } = useLanguage();
   const { user, signOut } = useAuth();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [isCollapsedLocal, setIsCollapsedLocal] = useState(isCollapsedProp);
+  
+  const isCollapsed = onToggleCollapse ? isCollapsedProp : isCollapsedLocal;
+  const handleToggleCollapse = () => {
+    if (onToggleCollapse) {
+      onToggleCollapse();
+    } else {
+      setIsCollapsedLocal(!isCollapsedLocal);
+    }
+  };
   
   // Navigation items with translations
   const navItems = [
@@ -1368,9 +1421,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
     <>
       <SidebarOverlay isOpen={isOpen} onClick={onClose} />
       <IconContext.Provider value={{ style: { marginRight: '10px' } }}>
-        <SidebarContainer isOpen={isOpen}>
+        <SidebarContainer isOpen={isOpen} isCollapsed={isCollapsed}>
+          <ToggleButton onClick={handleToggleCollapse} isCollapsed={isCollapsed}>
+            <IconComponent icon={isCollapsed ? FaIcons.FaChevronRight : FaIcons.FaChevronLeft} />
+          </ToggleButton>
           {/* Removed close button */}
-          <Logo><span data-text="Liftlio">Liftlio</span></Logo>
+          <Logo isCollapsed={isCollapsed}>
+            <span data-text={isCollapsed ? "L" : "Liftlio"}>
+              {isCollapsed ? "L" : "Liftlio"}
+            </span>
+          </Logo>
           
           <NavContainer>
             {navItems.map(item => (
@@ -1381,21 +1441,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
                 onMouseEnter={() => setHoveredItem(item.path)}
                 onMouseLeave={() => setHoveredItem(null)}
                 aria-label={item.label}
-                title={item.label}
+                title={isCollapsed ? item.label : ''}
                 style={{ position: 'relative' }}
                 onClick={() => {
                   if (window.innerWidth <= 768 && onClose) {
                     onClose();
                   }
                 }}
+                isCollapsed={isCollapsed}
               >
-                <NavItemIcon>
+                <NavItemIcon isCollapsed={isCollapsed}>
                   <IconComponent icon={FaIcons[item.icon as keyof typeof FaIcons]} />
                 </NavItemIcon>
-                {item.label}
-                <Tooltip visible={hoveredItem === item.path}>
+                <NavItemText isCollapsed={isCollapsed}>
                   {item.label}
-                </Tooltip>
+                </NavItemText>
+                {isCollapsed && <Tooltip>{item.label}</Tooltip>}
               </NavItem>
             ))}
             
@@ -1409,18 +1470,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
                   {(user?.user_metadata?.full_name || user?.email || 'U').charAt(0)}
                 </span>
               </UserAvatar>
-              <UserDetails>
-                <UserName>{user?.user_metadata?.full_name || 'User'}</UserName>
-                <UserEmail>{user?.email || ''}</UserEmail>
-              </UserDetails>
+              {!isCollapsed && (
+                <UserDetails>
+                  <UserName>{user?.user_metadata?.full_name || 'User'}</UserName>
+                  <UserEmail>{user?.email || ''}</UserEmail>
+                </UserDetails>
+              )}
             </UserInfo>
             
-            <UserActions>
-              <UserButton onClick={signOut} style={{ width: '100%' }}>
-                <IconComponent icon={FaIcons.FaSignOutAlt} />
-                Sign Out
-              </UserButton>
-            </UserActions>
+            {!isCollapsed && (
+              <UserActions>
+                <UserButton onClick={signOut} style={{ width: '100%' }}>
+                  <IconComponent icon={FaIcons.FaSignOutAlt} />
+                  Sign Out
+                </UserButton>
+              </UserActions>
+            )}
           </UserSection>
         </SidebarContainer>
       </IconContext.Provider>
