@@ -1,10 +1,27 @@
 # TRELLO.md - Integração MCP Trello com Claude
 
+## 🚨 REGRA #1 ABSOLUTA: IMAGENS SÃO OBRIGATÓRIAS! 🚨
+### ⚠️ ATENÇÃO CLAUDE: SEMPRE QUE CRIAR UM CARD NO TRELLO ⚠️
+1. **PRIMEIRO**: Crie o card com `mcp__trello__add_card_to_list`
+2. **IMEDIATAMENTE DEPOIS**: Use `mcp__trello__attach_image_to_card`
+3. **SEM IMAGEM = CARD INCOMPLETO = DELETAR E REFAZER**
+
+```typescript
+// SEMPRE FAÇA ISSO - SEM EXCEÇÕES:
+const card = await mcp__trello__add_card_to_list({...});
+await mcp__trello__attach_image_to_card({
+  cardId: card.id,
+  imageUrl: "URL_RELEVANTE_AO_TEMA", // Ver lista de URLs abaixo
+  name: "Descrição da imagem"
+});
+```
+
 ## 🚨 IMPORTANTE: USE SEMPRE O MCP DO TRELLO
 **Este arquivo documenta como usar o MCP do Trello no Claude**
 - **NUNCA use APIs diretas ou curl** - sempre use as ferramentas MCP
 - **Este arquivo é DOCUMENTAÇÃO** - não é banco de dados
 - **Para dados em tempo real**: use as ferramentas MCP listadas abaixo
+- **IMAGENS SÃO OBRIGATÓRIAS** - Todo card DEVE ter imagem anexada
 
 ## Status da Configuração MCP
 - **MCP Trello**: ✅ Configurado e funcionando
