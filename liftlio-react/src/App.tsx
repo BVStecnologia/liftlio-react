@@ -14,6 +14,14 @@ import { ExtensionWarning } from './components/ExtensionWarning';
 import GlobalLoader from './components/GlobalLoader';
 import { IconComponent } from './utils/IconHelper';
 import { FaBars } from 'react-icons/fa';
+import ErrorBoundary from './components/ErrorBoundary';
+
+// Declaração de tipo para PostHog
+declare global {
+  interface Window {
+    posthog: any;
+  }
+}
 
 // Lazy load all pages
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -581,6 +589,72 @@ const AppContent: React.FC = () => {
 
 // Main App component with all providers
 function App() {
+  // Inicializar PostHog via script tag
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.innerHTML = `
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init Re Cs Fs Pe Rs Ms capture Ve calculateEventProperties Ds register register_once register_for_session unregister unregister_for_session zs getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey canRenderSurveyAsync identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty js As createPersonProfile Ns Is Us opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing Os debug I Ls getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_7ThenvcJ0m1UJfZH1sT7UygnN2eqSsiwm34xyC8u3Kb', {
+          api_host: 'https://us.i.posthog.com',
+          defaults: '2025-05-24',
+          person_profiles: 'identified_only',
+          autocapture: true,
+          capture_pageview: true,
+          capture_pageleave: true,
+          persistence: 'localStorage',
+          // Error tracking configuration
+          _capture_errors: true,
+          loaded: function(posthog) {
+            // Enable exception autocapture
+            posthog.opt_in_capturing();
+            console.log('PostHog loaded with error tracking enabled!');
+          }
+      });
+      console.log('PostHog initialized with error tracking!');
+    `;
+    document.head.appendChild(script);
+    
+    // Testar se PostHog está funcionando após 2 segundos
+    setTimeout(() => {
+      if (window.posthog) {
+        console.log('PostHog está carregado e funcionando!');
+        window.posthog.capture('test_event', { test: true });
+        
+        // Configurar handlers globais de erro
+        window.onerror = function(message, source, lineno, colno, error) {
+          if (window.posthog && error) {
+            window.posthog.captureException(error, {
+              message,
+              source,
+              lineno,
+              colno,
+              timestamp: new Date().toISOString()
+            });
+          }
+          return false;
+        };
+        
+        window.addEventListener('unhandledrejection', function(event) {
+          if (window.posthog) {
+            window.posthog.captureException(new Error(event.reason), {
+              type: 'unhandledrejection',
+              promise: event.promise,
+              timestamp: new Date().toISOString()
+            });
+          }
+        });
+        
+        console.log('Error handlers configurados!');
+      } else {
+        console.error('PostHog não foi carregado');
+      }
+    }, 2000);
+    
+    return () => {
+      // Cleanup se necessário
+    };
+  }, []);
+
   // PREVENÇÃO DE RECARREGAMENTO AO MUDAR DE ABA
   // Este código impede que o Supabase recarregue a página quando você sai e volta
   // Para desativar: comente ou remova todo o useEffect abaixo
@@ -610,18 +684,20 @@ function App() {
   // FIM DA PREVENÇÃO DE RECARREGAMENTO
   
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <GlobalStyle />
-        <LoadingProvider>
-          <AuthProvider>
-            <ProjectProvider>
-              <AppContent />
-            </ProjectProvider>
-          </AuthProvider>
-        </LoadingProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <LanguageProvider>
+          <GlobalStyle />
+          <LoadingProvider>
+            <AuthProvider>
+              <ProjectProvider>
+                <AppContent />
+              </ProjectProvider>
+            </AuthProvider>
+          </LoadingProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

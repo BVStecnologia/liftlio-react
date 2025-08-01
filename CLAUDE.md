@@ -346,6 +346,9 @@ await mcp__supabase__generate_typescript_types({
 - Claude API key configurada como `CLAUDE_API_KEY` (NÃO usar ANTHROPIC_API_KEY)
 
 ## Arquivos Importantes do Projeto
+- `/liftlio-react/project-docs/`: **📚 DOCUMENTAÇÃO DO PROJETO**
+  - **TRELLO.md**: Guia completo de integração com Trello (OBRIGATÓRIO ler antes de criar cards)
+  - Outros arquivos .md com documentação específica do projeto
 - `/liftlio-react/AGENTE_LIFTLIO/`: **📌 TUDO relacionado ao agente AI fica SEMPRE aqui**
   - Documentação, código, planos, testes
   - Edge Functions do agente

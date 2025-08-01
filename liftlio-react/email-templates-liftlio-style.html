@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liftlio Email Templates - Production Ready</title>
+    
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Reset CSS */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Base Variables - Light Theme Only for Emails */
+        :root {
+            --color-background: #fff;
+            --color-text-primary: #1a1a1a;
+            --color-text-secondary: #666;
+            --color-primary: #6366f1;
+            --color-primary-hover: #5558e3;
+            --color-primary-alpha: rgba(99, 102, 241, 0.1);
+            --color-secondary: #ec4899;
+            --color-secondary-alpha: rgba(236, 72, 153, 0.1);
+            --color-border-light: #e5e7eb;
+            --color-card-bg: #f9fafb;
+            --color-card-hover-bg: #f3f4f6;
+            --gradient-landing: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+            --color-shadow-small: rgba(0, 0, 0, 0.05);
+            --color-shadow-medium: rgba(0, 0, 0, 0.1);
+            --color-shadow-large: rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Base Styles */
+        html {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: var(--color-text-primary);
+            padding: 40px 20px;
+        }
+        
+        /* Container */
+        .page-container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .page-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .logo {
+            font-size: 36px;
+            font-weight: 900;
+            letter-spacing: -1px;
+            background: var(--gradient-landing);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+        
+        .page-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--color-text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .page-subtitle {
+            font-size: 18px;
+            color: var(--color-text-secondary);
+        }
+        
+        /* Priority Sections */
+        .priority-section {
+            margin-bottom: 80px;
+        }
+        
+        .priority-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 40px;
+            padding: 24px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .priority-badge {
+            width: 12px;
+            height: 48px;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        
+        .priority-critical { background: #dc3545; }
+        .priority-high { background: #ffc107; }
+        .priority-important { background: #28a745; }
+        
+        .priority-info h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .priority-info p {
+            font-size: 16px;
+            color: var(--color-text-secondary);
+        }
+        
+        /* Template Grid */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        @media (max-width: 768px) {
+            .template-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Template Card */
+        .template-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .template-card:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .template-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--color-border-light);
+            background: var(--color-card-bg);
+        }
+        
+        .template-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-landing);
+            color: white;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 14px;
+            margin-right: 12px;
+        }
+        
+        .template-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+        
+        /* Email Template Styles */
+        .email-preview {
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        
+        .email-container {
+            background-color: #ffffff;
+            max-width: 600px;
+            margin: 0 auto;
+            font-family: Arial, sans-serif;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .email-header {
+            background: var(--gradient-landing);
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .email-logo {
+            font-size: 32px;
+            font-weight: 900;
+            color: white;
+            letter-spacing: -1px;
+            margin-bottom: 8px;
+        }
+        
+        .email-tagline {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+        
+        .email-body {
+            padding: 40px 30px;
+        }
+        
+        .email-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
+        
+        .email-text {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        
+        .email-button {
+            display: inline-block;
+            background: var(--gradient-landing);
+            color: white;
+            padding: 14px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        
+        .email-footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .email-footer a {
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+        
+        /* Email Components */
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+        
+        .feature-list li {
+            padding: 12px 0;
+            padding-left: 32px;
+            position: relative;
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--color-primary);
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .metric-box {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .metric-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--color-primary);
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .alert-box {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            color: #f57c00;
+        }
+        
+        .success-box {
+            background: #e8f5e9;
+            border: 1px solid #81c784;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            color: #2e7d32;
+        }
+        
+        .error-box {
+            background: #ffebee;
+            border: 1px solid #ef5350;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            color: #c62828;
+        }
+        
+        .price-tag {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 20px 0;
+        }
+        
+        .small-text {
+            font-size: 14px;
+            color: #999;
+        }
+        
+        /* Special Styles */
+        .gradient-text {
+            background: var(--gradient-landing);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="logo">Liftlio</div>
+            <h1 class="page-title">Email Templates System</h1>
+            <p class="page-subtitle">Production-ready templates following Liftlio's design system</p>
+        </div>
+        
+        <!-- ESSENTIAL Priority Section -->
+        <div class="priority-section">
+            <div class="priority-header">
+                <div class="priority-badge priority-critical"></div>
+                <div class="priority-info">
+                    <h2>Essential Templates</h2>
+                    <p>Critical for system operation and user authentication</p>
+                </div>
+            </div>
+            
+            <div class="template-grid">
+                
+                <!-- 1. Email Confirmation -->
+                <div class="template-card">
+                    <div class="template-header">
+                        <span class="template-number">1</span>
+                        <span class="template-name">Email Confirmation</span>
+                    </div>
+                    <div class="email-preview">
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="email-logo">Liftlio</div>
+                                <div class="email-tagline">AI Marketing & Branding on Autopilot</div>
+                            </div>
+                            <div class="email-body">
+                                <h1 class="email-title">Confirm Your Email Address</h1>
+                                <p class="email-text">
+                                    Thanks for signing up! Please confirm your email address to complete your registration and start discovering valuable brand mentions.
+                                </p>
+                                <center>
+                                    <a href="#" class="email-button">Confirm Email</a>
+                                </center>
+                                <p class="small-text">
+                                    This link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.
+                                </p>
+                            </div>
+                            <div class="email-footer">
+                                <p>© 2025 Liftlio. All rights reserved.</p>
+                                <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Password Reset -->
+                <div class="template-card">
+                    <div class="template-header">
+                        <span class="template-number">2</span>
+                        <span class="template-name">Password Reset</span>
+                    </div>
+                    <div class="email-preview">
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="email-logo">Liftlio</div>
+                                <div class="email-tagline">AI Marketing & Branding on Autopilot</div>
+                            </div>
+                            <div class="email-body">
+                                <h1 class="email-title">Reset Your Password</h1>
+                                <p class="email-text">
+                                    We received a request to reset your password. Click the button below to create a new password for your Liftlio account.
+                                </p>
+                                <center>
+                                    <a href="#" class="email-button">Reset Password</a>
+                                </center>
+                                <p class="small-text">
+                                    This link will expire in 1 hour for security reasons. If you didn't request this password reset, please ignore this email and your password will remain unchanged.
+                                </p>
+                            </div>
+                            <div class="email-footer">
+                                <p>© 2025 Liftlio. All rights reserved.</p>
+                                <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Subscription Confirmation -->
+                <div class="template-card">
+                    <div class="template-header">
+                        <span class="template-number">3</span>
+                        <span class="template-name">Subscription Confirmation</span>
+                    </div>
+                    <div class="email-preview">
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="email-logo">Liftlio</div>
+                                <div class="email-tagline">AI Marketing & Branding on Autopilot</div>
+                            </div>
+                            <div class="email-body">
+                                <h1 class="email-title">Welcome to <span class="gradient-text">Liftlio Growth!</span></h1>
+                                <div class="success-box">
+                                    <strong>Success!</strong> Your subscription is now active and ready to supercharge your marketing.
+                                </div>
+                                <p class="email-text"><strong>Your Plan Details:</strong></p>
+                                <ul class="feature-list">
+                                    <li>200 brand mentions per month with advanced targeting</li>
+                                    <li>Real-time sentiment analysis and alerts</li>
+                                    <li>Detailed analytics dashboard with insights</li>
+                                    <li>30 AI-powered responses per month</li>
+                                    <li>Priority customer support</li>
+                                </ul>
+                                <div class="metric-box">
+                                    <span class="metric-number">$99</span>
+                                    <span class="metric-label">per month</span>
+                                </div>
+                                <p class="email-text">
+                                    Your next billing date is <strong>February 1, 2025</strong>. We'll send you a reminder before your next payment.
+                                </p>
+                                <center>
+                                    <a href="#" class="email-button">Go to Dashboard</a>
+                                </center>
+                            </div>
+                            <div class="email-footer">
+                                <p>© 2025 Liftlio. All rights reserved.</p>
+                                <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Payment Successful -->
+                <div class="template-card">
+                    <div class="template-header">
+                        <span class="template-number">4</span>
+                        <span class="template-name">Payment Successful</span>
+                    </div>
+                    <div class="email-preview">
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="email-logo">Liftlio</div>
+                                <div class="email-tagline">AI Marketing & Branding on Autopilot</div>
+                            </div>
+                            <div class="email-body">
+                                <h1 class="email-title">Payment Received ✓</h1>
+                                <div class="success-box">
+                                    <strong>Thank you!</strong> Your payment has been processed successfully.
+                                </div>
+                                <p class="email-text"><strong>Receipt Details:</strong></p>
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e5e7eb;">
+                                    <p style="margin: 8px 0; color: #666;">Invoice #: <strong style="color: #1a1a1a;">LIF-2025-0001</strong></p>
+                                    <p style="margin: 8px 0; color: #666;">Date: <strong style="color: #1a1a1a;">January 1, 2025</strong></p>
+                                    <p style="margin: 8px 0; color: #666;">Amount: <strong style="color: #1a1a1a;">$99.00</strong></p>
+                                    <p style="margin: 8px 0; color: #666;">Payment Method: <strong style="color: #1a1a1a;">•••• 4242</strong></p>
+                                    <p style="margin: 8px 0; color: #666;">Plan: <strong style="color: #1a1a1a;">Growth Plan</strong></p>
+                                </div>
+                                <center>
+                                    <a href="#" class="email-button">Download Invoice</a>
+                                </center>
+                                <p class="email-text">
+                                    Your subscription will automatically renew on <strong>February 1, 2025</strong>. You can manage your subscription anytime from your account settings.
+                                </p>
+                            </div>
+                            <div class="email-footer">
+                                <p>© 2025 Liftlio. All rights reserved.</p>
+                                <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Payment Failed -->
+                <div class="template-card">
+                    <div class="template-header">
+                        <span class="template-number">5</span>
+                        <span class="template-name">Payment Failed</span>
+                    </div>
+                    <div class="email-preview">
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="email-logo">Liftlio</div>
+                                <div class="email-tagline">AI Marketing & Branding on Autopilot</div>
+                            </div>
+                            <div class="email-body">
+                                <h1 class="email-title">Payment Failed - Action Required</h1>
+                                <div class="error-box">
+                                    <strong>Important:</strong> We couldn't process your payment for this month's subscription.
+                                </div>
+                                <p class="email-text">
+                                    We attempted to charge your card ending in <strong>4242</strong> for your monthly subscription, but the payment was declined.
+                                </p>
+                                <p class="email-text">
+                                    <strong>What happens next:</strong>
+                                </p>
+                                <ul style="color: #666; margin: 16px 0; padding-left: 24px;">
+                                    <li style="margin: 8px 0;">We'll automatically retry the payment in 3 days</li>
+                                    <li style="margin: 8px 0;">You have 2 more retry attempts remaining</li>
+                                    <li style="margin: 8px 0;">Your service continues uninterrupted until <strong>January 7, 2025</strong></li>
+                                </ul>
+                                <p class="email-text">
+                                    To avoid any service interruption, please update your payment method now:
+                                </p>
+                                <center>
+                                    <a href="#" class="email-button">Update Payment Method</a>
+                                </center>
+                                <p class="small-text">
+                                    If you need assistance, our support team is here to help at support@liftlio.com
+                                </p>
+                            </div>
+                            <div class="email-footer">
+                                <p>© 2025 Liftlio. All rights reserved.</p>
+                                <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- VERY IMPORTANT Priority Section -->
+        <div class="priority-section">
+            <div class="priority-header">
+                <div class="priority-badge priority-high"></div>
+                <div class="priority-info">
+                    <h2>Very Important Templates</h2>
+                    <p>Direct revenue impact and user retention</p>
+                </div>
+            </div>
+            
+            <div class="template-grid">
+                
+                <!-- 6. Welcome Email -->
+                <div class="template-card">
+                    <div class="template-header">
+                        <span class="template-number">6</span>
+                        <span class="template-name">Welcome Email</span>
+                    </div>
+                    <div class="email-preview">
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="email-logo">Liftlio</div>
+                                <div class="email-tagline">AI Marketing & Branding on Autopilot</div>
+                            </div>
+                            <div class="email-body">
+                                <h1 class="email-title">Welcome to Liftlio, {{userName}}! 🎉</h1>
+                                <p class="email-text">
+                                    We're thrilled to have you join thousands of brands using AI to transform mentions into growth. Your <strong>{{planName}}</strong> plan is now active and ready to help you discover valuable conversations about your brand.
+                                </p>
+                                <p class="email-text">
+                                    <strong>What happens next?</strong> Let's get you started on your journey to organic growth:
+                                </p>
+                                <ol style="color: #666; margin: 16px 0; padding-left: 24px; line-height: 1.8;">
+                                    <li style="margin: 8px 0;">Set up your first monitoring project</li>
+                                    <li style="margin: 8px 0;">Add keywords and channels to track</li>
+                                    <li style="margin: 8px 0;">Watch as Liftlio finds your perfect customers</li>
+                                </ol>
+                                <center>
+                                    <a href="#" class="email-button">Start Your First Project</a>
+                                </center>
+                                <p class="email-text">
+                                    Need help? Check out our <a href="#" style="color: var(--color-primary);">quick start guide</a> or reply to this email - we're here to ensure your success!
+                                </p>
+                            </div>
+                            <div class="email-footer">
+                                <p>© 2025 Liftlio. All rights reserved.</p>
+                                <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. Trial Expiring -->
+                <div class="template-card">
+                    <div class="template-header">
+                        <span class="template-number">7</span>
+                        <span class="template-name">Trial Expiring</span>
+                    </div>
+                    <div class="email-preview">
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="email-logo">Liftlio</div>
+                                <div class="email-tagline">AI Marketing & Branding on Autopilot</div>
+                            </div>
+                            <div class="email-body">
+                                <h1 class="email-title">Your Trial Ends in 3 Days ⏰</h1>
+                                <div class="alert-box">
+                                    <strong>Don't lose your momentum!</strong> Your free trial expires on January 4, 2025.
+                                </div>
+                                
+                                <p class="email-text">
+                                    You've already discovered <strong>45 valuable mentions</strong> and generated <strong>12 leads</strong> during your trial. Imagine what you could achieve with continued access!
+                                </p>
+                                
+                                <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1)); border: 2px dashed var(--color-primary); padding: 24px; border-radius: 12px; text-align: center; margin: 24px 0;">
+                                    <p style="font-size: 18px; color: #666; margin-bottom: 8px;">Special Trial Offer</p>
+                                    <p style="font-size: 32px; font-weight: 700; background: var(--gradient-landing); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin: 8px 0;">20% OFF</p>
+                                    <p style="color: #666; margin-top: 8px;">Your first 3 months</p>
+                                </div>
+                                
+                                <p class="email-text">
+                                    Join successful brands that are already transforming conversations into customers:
+                                </p>
+                                <ul class="feature-list">
+                                    <li>Continue monitoring unlimited channels</li>
+                                    <li>Keep all your current data and insights</li>
+                                    <li>Unlock advanced AI responses</li>
+                                    <li>Get priority support when you need it</li>
+                                </ul>
+                                
+                                <center>
+                                    <a href="#" class="email-button">Claim Your Discount</a>
+                                </center>
+                                
+                                <p class="small-text" style="text-align: center;">
+                                    This exclusive offer expires when your trial ends. No credit card required to start.
+                                </p>
+                            </div>
+                            <div class="email-footer">
+                                <p>© 2025 Liftlio. All rights reserved.</p>
+                                <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8. Mentions Limit Warning -->
+                <div class="template-card">
+                    <div class="template-header">
+                        <span class="template-number">8</span>
+                        <span class="template-name">Mentions Limit Warning</span>
+                    </div>
+                    <div class="email-preview">
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="email-logo">Liftlio</div>
+                                <div class="email-tagline">AI Marketing & Branding on Autopilot</div>
+                            </div>
+                            <div class="email-body">
+                                <h1 class="email-title">You're Approaching Your Mentions Limit</h1>
+                                <div class="alert-box">
+                                    <strong>Heads up!</strong> You've used 85% of your monthly mentions quota.
+                                </div>
+                                
+                                <div class="metric-box" style="max-width: 300px; margin: 30px auto;">
+                                    <span class="metric-number">170/200</span>
+                                    <span class="metric-label">Mentions Used This Month</span>
+                                </div>
+                                
+                                <p class="email-text">
+                                    You have <strong>30 mentions remaining</strong> for this billing period. Based on your current usage, you'll reach your limit in approximately 5 days.
+                                </p>
+                                
+                                <p class="email-text">
+                                    <strong>Don't miss valuable opportunities!</strong> Upgrade to our Scale plan and unlock:
+                                </p>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0;">
+                                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center;">
+                                        <p style="font-size: 24px; font-weight: 700; color: var(--color-primary); margin-bottom: 4px;">500</p>
+                                        <p style="font-size: 14px; color: #666;">Monthly Mentions</p>
+                                    </div>
+                                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center;">
+                                        <p style="font-size: 24px; font-weight: 700; color: var(--color-primary); margin-bottom: 4px;">2.5x</p>
+                                        <p style="font-size: 14px; color: #666;">More Coverage</p>
+                                    </div>
+                                </div>
+                                
+                                <center>
+                                    <a href="#" class="email-button">Upgrade to Scale</a>
+                                </center>
+                                
+                                <p class="small-text" style="text-align: center;">
+                                    Questions about your usage? Reply to this email and we'll help optimize your monitoring strategy.
+                                </p>
+                            </div>
+                            <div class="email-footer">
+                                <p>© 2025 Liftlio. All rights reserved.</p>
+                                <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 9. Card Expiring Warning -->
+                <div class="template-card">
+                    <div class="template-header">
+                        <span class="template-number">9</span>
+                        <span class="template-name">Card Expiring Warning</span>
+                    </div>
+                    <div class="email-preview">
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="email-logo">Liftlio</div>
+                                <div class="email-tagline">AI Marketing & Branding on Autopilot</div>
+                            </div>
+                            <div class="email-body">
+                                <h1 class="email-title">Update Your Payment Method</h1>
+                                <div class="alert-box">
+                                    <strong>Action needed:</strong> Your card ending in 4242 expires this month.
+                                </div>
+                                
+                                <p class="email-text">
+                                    To ensure uninterrupted access to your brand monitoring and AI responses, please update your payment method before <strong>January 31, 2025</strong>.
+                                </p>
+                                
+                                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 24px 0; text-align: center;">
+                                    <p style="color: #666; margin-bottom: 8px;">Card on file:</p>
+                                    <p style="font-size: 18px; font-weight: 600; color: #1a1a1a;">•••• •••• •••• 4242</p>
+                                    <p style="color: #dc3545; margin-top: 8px;">Expires 01/2025</p>
+                                </div>
+                                
+                                <p class="email-text">
+                                    Updating your payment method takes less than a minute and ensures you don't miss any valuable brand mentions or leads.
+                                </p>
+                                
+                                <center>
+                                    <a href="#" class="email-button">Update Payment Method</a>
+                                </center>
+                                
+                                <p class="small-text" style="text-align: center;">
+                                    We'll send another reminder in 15 days if your payment method hasn't been updated.
+                                </p>
+                            </div>
+                            <div class="email-footer">
+                                <p>© 2025 Liftlio. All rights reserved.</p>
+                                <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 10. Subscription Suspended -->
+                <div class="template-card">
+                    <div class="template-header">
+                        <span class="template-number">10</span>
+                        <span class="template-name">Subscription Suspended</span>
+                    </div>
+                    <div class="email-preview">
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="email-logo">Liftlio</div>
+                                <div class="email-tagline">AI Marketing & Branding on Autopilot</div>
+                            </div>
+                            <div class="email-body">
+                                <h1 class="email-title">Account Temporarily Suspended</h1>
+                                <div class="error-box">
+                                    <strong>Service paused:</strong> We couldn't process your payment after multiple attempts.
+                                </div>
+                                
+                                <p class="email-text">
+                                    Your Liftlio account has been temporarily suspended, but don't worry - all your data, settings, and insights are safely preserved.
+                                </p>
+                                
+                                <p class="email-text">
+                                    <strong>What's currently affected:</strong>
+                                </p>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0;">
+                                    <div style="padding: 16px; background: #ffebee; border-radius: 8px;">
+                                        <p style="color: #c62828; font-weight: 600; margin-bottom: 8px;">❌ Paused</p>
+                                        <ul style="color: #666; font-size: 14px; padding-left: 20px; margin: 0;">
+                                            <li>New mention monitoring</li>
+                                            <li>AI-powered responses</li>
+                                            <li>Real-time alerts</li>
+                                        </ul>
+                                    </div>
+                                    <div style="padding: 16px; background: #e8f5e9; border-radius: 8px;">
+                                        <p style="color: #2e7d32; font-weight: 600; margin-bottom: 8px;">✓ Still Available</p>
+                                        <ul style="color: #666; font-size: 14px; padding-left: 20px; margin: 0;">
+                                            <li>Access to existing data</li>
+                                            <li>Account settings</li>
+                                            <li>Export capabilities</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <p class="email-text">
+                                    <strong>Ready to continue?</strong> Simply update your payment method and we'll immediately restore your service from where you left off.
+                                </p>
+                                
+                                <center>
+                                    <a href="#" class="email-button">Reactivate Account</a>
+                                </center>
+                                
+                                <p class="small-text" style="text-align: center;">
+                                    Need help? Contact our support team at support@liftlio.com
+                                </p>
+                            </div>
+                            <div class="email-footer">
+                                <p>© 2025 Liftlio. All rights reserved.</p>
+                                <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- IMPORTANT Priority Section -->
+        <div class="priority-section">
+            <div class="priority-header">
+                <div class="priority-badge priority-important"></div>
+                <div class="priority-info">
+                    <h2>Important Templates</h2>
+                    <p>Engagement, retention, and user success</p>
+                </div>
+            </div>
+            
+            <div class="template-grid">
+                
+                <!-- 11. Weekly Report -->
+                <div class="template-card">
+                    <div class="template-header">
+                        <span class="template-number">11</span>
+                        <span class="template-name">Weekly Report</span>
+                    </div>
+                    <div class="email-preview">
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="email-logo">Liftlio</div>
+                                <div class="email-tagline">AI Marketing & Branding on Autopilot</div>
+                            </div>
+                            <div class="email-body">
+                                <h1 class="email-title">Your Weekly Performance Report 📊</h1>
+                                <p class="email-text">Here's how your brand performed this week on Liftlio:</p>
+                                
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 30px 0;">
+                                    <div class="metric-box">
+                                        <span class="metric-number">342</span>
+                                        <span class="metric-label">Videos Analyzed</span>
+                                    </div>
+                                    <div class="metric-box">
+                                        <span class="metric-number">87%</span>
+                                        <span class="metric-label">Positive Sentiment</span>
+                                    </div>
+                                    <div class="metric-box">
+                                        <span class="metric-number">1.2K</span>
+                                        <span class="metric-label">Total Engagement</span>
+                                    </div>
+                                </div>
+                                
+                                <p class="email-text">
+                                    <strong>🔥 Top Performing Keywords This Week:</strong>
+                                </p>
+                                <ol style="color: #666; margin: 16px 0; padding-left: 24px; line-height: 1.8;">
+                                    <li style="margin: 8px 0;">"best productivity tools" - <strong>45 mentions</strong> (↑23%)</li>
+                                    <li style="margin: 8px 0;">"youtube automation" - <strong>32 mentions</strong> (↑15%)</li>
+                                    <li style="margin: 8px 0;">"brand monitoring" - <strong>28 mentions</strong> (↑8%)</li>
+                                </ol>
+                                
+                                <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(236, 72, 153, 0.05)); padding: 20px; border-radius: 8px; margin: 24px 0;">
+                                    <p style="font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">💡 AI Insight:</p>
+                                    <p style="color: #666; margin: 0;">Your brand is gaining traction in productivity communities. Consider creating content around "workflow automation" - we detected 18 purchase-intent signals in this topic.</p>
+                                </div>
+                                
+                                <center>
+                                    <a href="#" class="email-button">View Full Report</a>
+                                </center>
+                            </div>
+                            <div class="email-footer">
+                                <p>© 2025 Liftlio. All rights reserved.</p>
+                                <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 12. Onboarding Day 1 -->
+                <div class="template-card">
+                    <div class="template-header">
+                        <span class="template-number">12</span>
+                        <span class="template-name">Onboarding Day 1</span>
+                    </div>
+                    <div class="email-preview">
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="email-logo">Liftlio</div>
+                                <div class="email-tagline">AI Marketing & Branding on Autopilot</div>
+                            </div>
+                            <div class="email-body">
+                                <h1 class="email-title">Day 1: Let's Set Up Your First Project 🚀</h1>
+                                <p class="email-text">
+                                    Welcome to your Liftlio journey, {{userName}}! Today, we'll get your first monitoring project up and running in just 5 minutes.
+                                </p>
+                                
+                                <div style="background: var(--gradient-landing); padding: 2px; border-radius: 8px; margin: 24px 0;">
+                                    <div style="background: white; padding: 24px; border-radius: 6px;">
+                                        <p style="font-weight: 600; color: #1a1a1a; margin-bottom: 16px;">📋 Quick Start Checklist:</p>
+                                        <ol style="color: #666; margin: 0; padding-left: 24px; line-height: 2;">
+                                            <li>Click "Create New Project" in your dashboard</li>
+                                            <li>Name your project (e.g., "Q1 2025 Brand Monitoring")</li>
+                                            <li>Add 3-5 keywords related to your brand or industry</li>
+                                            <li>Select YouTube channels where your audience hangs out</li>
+                                            <li>Hit "Start Monitoring" and watch the magic happen!</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                
+                                <p class="email-text">
+                                    <strong>💡 Pro Tip:</strong> Start with broader keywords and refine them based on the quality of mentions you discover. Our AI will learn your preferences over time!
+                                </p>
+                                
+                                <center>
+                                    <a href="#" class="email-button">Create Your First Project</a>
+                                </center>
+                                
+                                <p class="email-text" style="text-align: center; margin-top: 24px;">
+                                    <em>Tomorrow, we'll show you how to craft the perfect response that converts mentions into customers.</em>
+                                </p>
+                            </div>
+                            <div class="email-footer">
+                                <p>© 2025 Liftlio. All rights reserved.</p>
+                                <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 13. Re-engagement Email -->
+                <div class="template-card">
+                    <div class="template-header">
+                        <span class="template-number">13</span>
+                        <span class="template-name">Re-engagement Email</span>
+                    </div>
+                    <div class="email-preview">
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="email-logo">Liftlio</div>
+                                <div class="email-tagline">AI Marketing & Branding on Autopilot</div>
+                            </div>
+                            <div class="email-body">
+                                <h1 class="email-title">We Miss You, {{userName}}! 👋</h1>
+                                <p class="email-text">
+                                    We noticed you haven't logged into Liftlio for 14 days. While you were away, your brand kept getting mentioned - and we've been tracking it all for you!
+                                </p>
+                                
+                                <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1)); padding: 24px; border-radius: 12px; margin: 24px 0;">
+                                    <p style="font-weight: 600; color: #1a1a1a; margin-bottom: 16px;">📈 What You've Missed:</p>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                        <div>
+                                            <p style="margin: 8px 0;">📊 <strong style="color: var(--color-primary);">127</strong> new brand mentions</p>
+                                            <p style="margin: 8px 0;">🔥 <strong style="color: var(--color-primary);">3</strong> viral opportunities</p>
+                                        </div>
+                                        <div>
+                                            <p style="margin: 8px 0;">📈 <strong style="color: var(--color-primary);">89%</strong> positive sentiment</p>
+                                            <p style="margin: 8px 0;">💡 <strong style="color: var(--color-primary);">5</strong> competitor insights</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <p class="email-text">
+                                    Your competitors are actively engaging with these opportunities. Don't let valuable conversations pass you by!
+                                </p>
+                                
+                                <p class="email-text">
+                                    <strong>🎁 Welcome back offer:</strong> Reply to this email and tell us how we can help you get the most from Liftlio. Our success team is standing by!
+                                </p>
+                                
+                                <center>
+                                    <a href="#" class="email-button">Check Your Dashboard</a>
+                                </center>
+                            </div>
+                            <div class="email-footer">
+                                <p>© 2025 Liftlio. All rights reserved.</p>
+                                <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 14. High Impact Mention Alert -->
+                <div class="template-card">
+                    <div class="template-header">
+                        <span class="template-number">14</span>
+                        <span class="template-name">High Impact Mention Alert</span>
+                    </div>
+                    <div class="email-preview">
+                        <div class="email-container">
+                            <div class="email-header">
+                                <div class="email-logo">Liftlio</div>
+                                <div class="email-tagline">AI Marketing & Branding on Autopilot</div>
+                            </div>
+                            <div class="email-body">
+                                <h1 class="email-title">🔥 High Impact Mention Detected!</h1>
+                                <div class="success-box">
+                                    <strong>Opportunity Alert!</strong> A major influencer just mentioned your brand in a viral video.
+                                </div>
+                                
+                                <p class="email-text"><strong>Mention Details:</strong></p>
+                                <div style="background: #f8f9fa; padding: 24px; border-radius: 8px; margin: 20px 0; border: 1px solid #e5e7eb;">
+                                    <div style="display: grid; gap: 12px;">
+                                        <p style="margin: 0;"><strong style="color: #1a1a1a;">Channel:</strong> TechReviewPro (2.3M subscribers)</p>
+                                        <p style="margin: 0;"><strong style="color: #1a1a1a;">Video:</strong> "Top 10 Marketing Tools for 2025"</p>
+                                        <p style="margin: 0;"><strong style="color: #1a1a1a;">Views:</strong> 45,231 (uploaded 2 hours ago) 📈</p>
+                                        <p style="margin: 0;"><strong style="color: #1a1a1a;">Engagement Rate:</strong> 8.7% (Very High)</p>
+                                        <p style="margin: 0;"><strong style="color: #1a1a1a;">Sentiment:</strong> <span style="color: #2e7d32;">Very Positive (95%)</span></p>
+                                    </div>
+                                </div>
+                                
+                                <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(236, 72, 153, 0.05)); padding: 20px; border-radius: 8px; margin: 24px 0;">
+                                    <p style="font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">💡 AI Recommendation:</p>
+                                    <p style="color: #666; margin: 0;">This video is gaining traction fast. Engage within the next 2 hours for maximum visibility. We've prepared a response template based on the conversation context.</p>
+                                </div>
+                                
+                                <center>
+                                    <a href="#" class="email-button">View & Respond Now</a>
+                                </center>
+                                
+                                <p class="small-text" style="text-align: center; margin-top: 24px;">
+                                    You're receiving this because you have high-impact alerts enabled. <a href="#" style="color: var(--color-primary);">Manage preferences</a>
+                                </p>
+                            </div>
+                            <div class="email-footer">
+                                <p>© 2025 Liftlio. All rights reserved.</p>
+                                <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</body>
+</html>
