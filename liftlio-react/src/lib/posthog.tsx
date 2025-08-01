@@ -60,7 +60,7 @@ interface PostHogProviderProps {
 }
 
 export function PostHogProvider({ children }: PostHogProviderProps) {
-  const apiKey = process.env.REACT_APP_POSTHOG_KEY || 'phx_lDaGOinBwW8lZ1i48484DqQ7TBqQX9FdHwdPIWaXe3Y'
+  const apiKey = process.env.REACT_APP_POSTHOG_KEY || 'phc_7ThenvcJ0m1UJfZH1sT7UygnN2eqSsiwm34xyC8u3Kb'
   
   if (!apiKey) {
     console.warn('PostHog key not found. Analytics will not be tracked.')
