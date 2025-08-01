@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import posthog from 'posthog-js';
 
 interface Props {
   children: ReactNode;
@@ -23,13 +24,15 @@ class ErrorBoundary extends Component<Props, State> {
     console.error('Uncaught error:', error, errorInfo);
     
     // Send error to PostHog
-    if (window.posthog) {
-      window.posthog.captureException(error, {
+    try {
+      posthog.captureException(error, {
         errorInfo: errorInfo.componentStack,
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
         url: window.location.href
       });
+    } catch (e) {
+      console.error('Failed to send error to PostHog:', e);
     }
   }
 
