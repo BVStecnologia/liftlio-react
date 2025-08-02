@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
 import { withOpacity } from '../styles/colors';
 import * as FaIcons from 'react-icons/fa';
 import * as HiIcons from 'react-icons/hi';
@@ -103,8 +104,87 @@ const MOCK_DISCOVERED_VIDEOS: DiscoveredVideo[] = [
   }
 ];
 
-// Estilos atualizados para o componente
-const DiscoveredVideosContainer = styled.div`
+// Creative monitoring visualization component
+const MonitoringVisualization = styled.div`
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 2;
+`;
+
+const ScanningWave = styled(motion.div)`
+  width: 60px;
+  height: 30px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const WaveBar = styled(motion.div)<{ delay: number }>`
+  width: 3px;
+  background: ${props => props.theme.name === 'dark' ? '#00f5ff' : '#6b00cc'};
+  border-radius: 2px;
+  box-shadow: 0 0 10px ${props => props.theme.name === 'dark' ? '#00f5ff' : '#6b00cc'};
+`;
+
+const RadarContainer = styled.div`
+  width: 40px;
+  height: 40px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const RadarSweep = styled(motion.div)`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    ${props => props.theme.name === 'dark' ? 'rgba(0, 245, 255, 0.6)' : 'rgba(107, 0, 204, 0.6)'} 45deg,
+    transparent 90deg
+  );
+  filter: blur(2px);
+`;
+
+const RadarRing = styled(motion.div)<{ size: number }>`
+  position: absolute;
+  width: ${props => props.size}px;
+  height: ${props => props.size}px;
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(0, 245, 255, 0.3)' 
+    : 'rgba(107, 0, 204, 0.3)'};
+  border-radius: 50%;
+`;
+
+const DataStream = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+const DataDot = styled(motion.div)<{ active: boolean }>`
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: ${props => props.active 
+    ? (props.theme.name === 'dark' ? '#00f5ff' : '#6b00cc')
+    : (props.theme.name === 'dark' ? 'rgba(0, 245, 255, 0.2)' : 'rgba(107, 0, 204, 0.2)')};
+  box-shadow: ${props => props.active 
+    ? `0 0 6px ${props.theme.name === 'dark' ? '#00f5ff' : '#6b00cc'}`
+    : 'none'};
+`;
+
+// Updated styles for the component with animations
+const DiscoveredVideosContainer = styled(motion.div)`
   margin-bottom: 30px;
   position: relative;
   animation: fadeIn 0.6s ease-out;
@@ -200,7 +280,7 @@ const BinaryCodeBackground = styled.div`
   }
 `;
 
-const TechMonitoringBanner = styled.div`
+const TechMonitoringBanner = styled(motion.div)`
   position: relative;
   background: linear-gradient(90deg, 
     ${props => withOpacity(props.theme.colors.primary, 0.05)} 0%,
@@ -299,7 +379,7 @@ const DataMetric = styled.div`
   }
 `;
 
-const MonitoringIcon = styled.div`
+const MonitoringIcon = styled(motion.div)`
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -395,13 +475,13 @@ const VideosGrid = styled.div`
   min-width: min-content;
 `;
 
-const VideoCardWrapper = styled.div`
+const VideoCardWrapper = styled(motion.div)`
   min-width: 350px;
   max-width: 350px;
   flex-shrink: 0;
 `;
 
-const VideoCard = styled.div`
+const VideoCard = styled(motion.div)`
   background: ${props => props.theme.name === 'dark' 
     ? 'rgba(45, 45, 55, 0.95)' 
     : props.theme.colors.white};
@@ -410,16 +490,38 @@ const VideoCard = styled.div`
   box-shadow: ${props => props.theme.name === 'dark'
     ? '0 4px 12px rgba(0, 0, 0, 0.3)'
     : '0 4px 12px rgba(0, 0, 0, 0.05)'};
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   position: relative;
   border: 1px solid ${props => props.theme.name === 'dark'
     ? 'rgba(255, 255, 255, 0.1)'
     : withOpacity(props.theme.colors.tertiary, 0.1)};
+  transform-style: preserve-3d;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: ${props => props.theme.name === 'dark'
+      ? 'radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 245, 255, 0.1), transparent 40%)'
+      : 'radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(107, 0, 204, 0.05), transparent 40%)'};
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
   
   &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09);
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: ${props => props.theme.name === 'dark'
+      ? '0 12px 32px rgba(0, 245, 255, 0.2)'
+      : '0 12px 32px rgba(107, 0, 204, 0.1)'};
+    border-color: ${props => props.theme.name === 'dark'
+      ? 'rgba(0, 245, 255, 0.3)'
+      : 'rgba(107, 0, 204, 0.2)'};
+      
+    &::before {
+      opacity: 1;
+    }
   }
   
   /* Subtle tech pattern */
@@ -1263,7 +1365,11 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
   };
   
   return (
-    <DiscoveredVideosContainer>
+    <DiscoveredVideosContainer
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <DiscoveredVideosHeader>
         <DiscoveredVideosTitle>
           <IconComponent icon={HiIcons.HiOutlineGlobe} />
@@ -1276,8 +1382,21 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
         </LiveTrackingBadge>
       </DiscoveredVideosHeader>
       
-      <TechMonitoringBanner>
-        <MonitoringIcon>
+      <TechMonitoringBanner
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, type: "spring" }}
+      >
+        <MonitoringIcon
+          animate={{ 
+            scale: [1, 1.1, 1],
+          }}
+          transition={{ 
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        >
           <IconComponent icon={monitoringStatus.activeIcon} />
         </MonitoringIcon>
         <MonitoringStatusText>
@@ -1297,6 +1416,72 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
             VIDEOS: <span>{monitoringStatus.metrics.videos}</span>
           </DataMetric>
         </DataMetricsRow>
+        
+        {/* Creative Monitoring Visualization */}
+        <MonitoringVisualization>
+          {/* Sound Wave Animation */}
+          <ScanningWave>
+            {[...Array(5)].map((_, i) => (
+              <WaveBar
+                key={i}
+                delay={i * 0.1}
+                animate={{
+                  height: [10, 25, 10],
+                  opacity: [0.5, 1, 0.5]
+                }}
+                transition={{
+                  duration: 1,
+                  delay: i * 0.1,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+            ))}
+          </ScanningWave>
+          
+          {/* Radar Scanner */}
+          <RadarContainer>
+            <RadarSweep
+              animate={{ rotate: 360 }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "linear"
+              }}
+            />
+            <RadarRing size={40} />
+            <RadarRing 
+              size={30}
+              animate={{ opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+            <RadarRing 
+              size={20}
+              animate={{ opacity: [0.6, 0.3, 0.6] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+          </RadarContainer>
+          
+          {/* Data Stream */}
+          <DataStream>
+            {[...Array(3)].map((_, i) => (
+              <DataDot
+                key={i}
+                active={monitoringStatus.activity === 'SCANNING'}
+                animate={{
+                  opacity: monitoringStatus.activity === 'SCANNING' ? [0.2, 1, 0.2] : 0.2,
+                  scale: monitoringStatus.activity === 'SCANNING' ? [1, 1.5, 1] : 1
+                }}
+                transition={{
+                  duration: 1.5,
+                  delay: i * 0.2,
+                  repeat: Infinity
+                }}
+              />
+            ))}
+          </DataStream>
+        </MonitoringVisualization>
+        
         <BinaryCodeBackground />
       </TechMonitoringBanner>
       
@@ -1328,10 +1513,24 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
           onScroll={checkScrollButtons}
         >
           <VideosGrid>
-            {videosToDisplay.map(video => (
-              <VideoCardWrapper key={video.id}>
-                <VideoCard onClick={() => openVideoDetails(video)}>
-            <VideoHeader>
+            {videosToDisplay.map((video, index) => (
+              <VideoCardWrapper 
+                key={video.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ 
+                  delay: index * 0.1, 
+                  type: "spring",
+                  stiffness: 100
+                }}
+              >
+                <VideoCard 
+                  onClick={() => openVideoDetails(video)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  layoutId={`video-card-${video.id}`}
+                >
+                  <VideoHeader>
               <VideoThumbnail image={video.thumbnailUrl} />
               <VideoOverlay />
               <StatusBadge>

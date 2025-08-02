@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
+import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
 import { COLORS, withOpacity } from '../styles/colors';
 // Import não usado - removido para evitar erros
 // import axios from 'axios';
 import { supabase } from '../lib/supabaseClient';
 import * as FaIcons from 'react-icons/fa';
+import { FaCommentSlash } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -19,6 +21,23 @@ import MetricCard from '../components/ui/MetricCard';
 import { useLocation, useNavigate } from 'react-router-dom';
 import RecentDiscoveredVideos from '../components/RecentDiscoveredVideos';
 import DiscoveredVideosSection from '../components/DiscoveredVideosSection';
+
+// Hook customizado para reduced motion
+const useReducedMotion = () => {
+  const [prefersReduced, setPrefersReduced] = useState(false);
+  
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReduced(mediaQuery.matches);
+    
+    const handleChange = () => setPrefersReduced(mediaQuery.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+  
+  return prefersReduced;
+};
 
 // Funções locais de formatação de data
 const formatDate = (date: Date | string | number): string => {
@@ -272,27 +291,50 @@ const StatsGrid = styled.div`
   }
 `;
 
-const StatCard = styled.div`
+const StatCard = styled(motion.div)`
   background: ${props => props.theme.name === 'dark' 
     ? 'rgba(255, 255, 255, 0.03)' 
     : 'white'};
   padding: 16px;
   border-radius: ${props => props.theme.radius.lg};
   box-shadow: ${props => props.theme.shadows.sm};
-  transition: ${props => props.theme.transitions.default};
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid ${props => props.theme.name === 'dark' 
     ? 'rgba(255, 255, 255, 0.1)' 
     : 'rgba(0, 0, 0, 0.03)'};
   position: relative;
   overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: ${props => props.theme.name === 'dark'
+      ? 'radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 245, 255, 0.15), transparent 40%)'
+      : 'radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(107, 0, 204, 0.08), transparent 40%)'};
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+  
+  &:hover::before {
+    opacity: 1;
+  }
   
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: ${props => props.theme.shadows.md};
+    transform: translateY(-4px) translateZ(10px);
+    box-shadow: ${props => props.theme.name === 'dark'
+      ? '0 12px 32px rgba(0, 245, 255, 0.2)'
+      : '0 12px 32px rgba(107, 0, 204, 0.15)'};
+    border-color: ${props => props.theme.name === 'dark'
+      ? 'rgba(0, 245, 255, 0.3)'
+      : 'rgba(107, 0, 204, 0.2)'};
   }
 `;
 
-const TopGradient = styled.div<{ color?: string }>`
+const TopGradient = styled(motion.div)<{ color?: string }>`
   position: absolute;
   top: 0;
   left: 0;
@@ -303,6 +345,28 @@ const TopGradient = styled.div<{ color?: string }>`
     ${props => props.color || props.theme.colors.primary}44
   );
   opacity: 0.9;
+  overflow: hidden;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.5),
+      transparent
+    );
+    animation: shimmer 3s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+  }
 `;
 
 const StatCardHeader = styled.div`
@@ -714,7 +778,7 @@ const SectionTitle = styled.h2`
   }
 `;
 
-const ChannelList = styled.div`
+const ChannelList = styled(motion.div)`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
@@ -722,7 +786,7 @@ const ChannelList = styled.div`
 `;
 
 // Create a wrapper div that can accept onClick and other interactive props
-const ChannelCardWrapper = styled.div<{ active: boolean }>`
+const ChannelCardWrapper = styled(motion.div)<{ active: boolean }>`
   background: ${props => props.theme.name === 'dark' 
     ? 'rgba(255, 255, 255, 0.03)' 
     : 'white'};
@@ -730,18 +794,24 @@ const ChannelCardWrapper = styled.div<{ active: boolean }>`
   overflow: hidden;
   cursor: pointer;
   position: relative;
-  transition: ${props => props.theme.transitions.default};
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: ${props => props.active ? 
     props.theme.shadows.md : 
     props.theme.shadows.sm};
   border: ${props => props.active ? 
-    `1px solid ${props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.3)' : props.theme.colors.primary + '40'}` : 
+    `1px solid ${props.theme.name === 'dark' ? 'rgba(0, 245, 255, 0.3)' : props.theme.colors.primary + '40'}` : 
     props.theme.name === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.03)'};
   transform: ${props => props.active ? 'translateY(-3px)' : 'none'};
+  transform-style: preserve-3d;
   
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: ${props => props.theme.shadows.md};
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: ${props => props.theme.name === 'dark'
+      ? '0 12px 32px rgba(0, 245, 255, 0.2)'
+      : '0 12px 32px rgba(107, 0, 204, 0.15)'};
+    border-color: ${props => props.theme.name === 'dark'
+      ? 'rgba(0, 245, 255, 0.4)'
+      : props.theme.colors.primary + '60'};
   }
   
   &::before {
@@ -752,7 +822,7 @@ const ChannelCardWrapper = styled.div<{ active: boolean }>`
     right: 0;
     height: 3px;
     background: ${props => props.active ? 
-      props.theme.colors.primary : 
+      `linear-gradient(90deg, #00f5ff, #6b00cc)` : 
       'transparent'};
     opacity: ${props => props.active ? 1 : 0};
     transition: ${props => props.theme.transitions.default};
@@ -1040,7 +1110,7 @@ const ChannelStatItem = styled.div`
 `;
 
 // Adicionar um componente de tooltip para melhorar a UX
-const CustomTooltip = styled.div`
+const StyledTooltip = styled.div`
   position: absolute;
   bottom: 100%;
   left: 50%;
@@ -1073,7 +1143,7 @@ const CustomTooltip = styled.div`
 const TooltipContainer = styled.div`
   position: relative;
   
-  &:hover ${CustomTooltip} {
+  &:hover ${StyledTooltip} {
     opacity: 1;
     visibility: visible;
     bottom: calc(100% + 10px);
@@ -3381,6 +3451,213 @@ interface VideoDetails {
 }
 
 // Component implementation
+// Neural network loading animation component
+const NeuralLoadingState: React.FC<{ text?: string }> = ({ text = "Analisando dados..." }) => {
+  const { theme } = useTheme();
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '60px',
+        gap: '24px'
+      }}
+    >
+      <svg width="120" height="120" viewBox="0 0 120 120" style={{ overflow: 'visible' }}>
+        {/* Neural network nodes */}
+        {[...Array(8)].map((_, i) => {
+          const angle = (i * Math.PI * 2) / 8;
+          const x = 60 + 40 * Math.cos(angle);
+          const y = 60 + 40 * Math.sin(angle);
+          
+          return (
+            <motion.circle
+              key={i}
+              cx={x}
+              cy={y}
+              r="6"
+              fill={theme.name === 'dark' ? '#00f5ff' : '#6b00cc'}
+              animate={{
+                scale: [1, 1.5, 1],
+                opacity: [0.5, 1, 0.5],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                delay: i * 0.1,
+                ease: "easeInOut"
+              }}
+            />
+          );
+        })}
+        
+        {/* Connection lines */}
+        <motion.path
+          d="M60,20 L100,60 L60,100 L20,60 Z"
+          fill="none"
+          stroke={theme.name === 'dark' ? '#00f5ff' : '#6b00cc'}
+          strokeWidth="1"
+          strokeDasharray="5,5"
+          opacity="0.3"
+          animate={{
+            strokeDashoffset: [0, -10],
+          }}
+          transition={{
+            duration: 1,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        />
+        
+        {/* Center pulse */}
+        <motion.circle
+          cx="60"
+          cy="60"
+          r="8"
+          fill={theme.name === 'dark' ? '#00f5ff' : '#6b00cc'}
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [1, 0.6, 1],
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </svg>
+      
+      <motion.p
+        style={{
+          color: theme.colors.text.secondary,
+          fontSize: '14px',
+          fontWeight: 500
+        }}
+        animate={{
+          opacity: [0.5, 1, 0.5],
+        }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      >
+        {text}
+      </motion.p>
+    </motion.div>
+  );
+};
+
+// Custom animated tooltip for charts
+const CustomTooltip = ({ active, payload, label }: any) => {
+  const { theme } = useTheme();
+  
+  if (active && payload && payload.length) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2 }}
+        style={{
+          background: theme.name === 'dark'
+            ? 'rgba(20, 20, 25, 0.95)'
+            : 'rgba(255, 255, 255, 0.95)',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          border: `1px solid ${theme.name === 'dark' 
+            ? 'rgba(0, 245, 255, 0.2)' 
+            : 'rgba(107, 0, 204, 0.1)'}`,
+          boxShadow: theme.name === 'dark'
+            ? '0 8px 24px rgba(0, 245, 255, 0.2)'
+            : '0 8px 24px rgba(0, 0, 0, 0.1)',
+          backdropFilter: 'blur(10px)',
+        }}
+      >
+        <p style={{ 
+          margin: 0, 
+          fontSize: '12px',
+          color: theme.colors.text.secondary,
+          marginBottom: '8px'
+        }}>
+          {label}
+        </p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} style={{ 
+            margin: 0,
+            fontSize: '14px',
+            fontWeight: 600,
+            color: entry.color || theme.colors.text.primary
+          }}>
+            {entry.name}: {entry.value.toLocaleString()}
+          </p>
+        ))}
+      </motion.div>
+    );
+  }
+  
+  return null;
+};
+
+// Enhanced MetricCard wrapper component
+const AnimatedMetricCard: React.FC<{
+  title: string;
+  value: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  color: string;
+  index?: number;
+}> = ({ title, value, subtitle, icon, color, index = 0 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const springValue = useSpring(0, { stiffness: 300, damping: 30 });
+  const prefersReduced = useReducedMotion();
+  
+  useEffect(() => {
+    springValue.set(isHovered ? 1 : 0);
+  }, [isHovered, springValue]);
+  
+  const glowOpacity = useTransform(springValue, [0, 1], [0, 0.3]);
+  const scale = useTransform(springValue, [0, 1], [1, 1.02]);
+  
+  return (
+    <motion.div
+      initial={prefersReduced ? {} : { opacity: 0, y: 20 }}
+      animate={prefersReduced ? {} : { opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1, type: "spring", stiffness: 100 }}
+      style={{ scale: prefersReduced ? 1 : scale }}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+    >
+      <div style={{ position: 'relative' }}>
+        {/* Glow effect */}
+        <motion.div
+          style={{
+            position: 'absolute',
+            inset: -20,
+            background: `radial-gradient(circle at center, ${color}40 0%, transparent 70%)`,
+            filter: 'blur(20px)',
+            opacity: prefersReduced ? 0 : glowOpacity,
+            zIndex: -1,
+          }}
+        />
+        
+        <MetricCard
+          title={title}
+          value={value}
+          subtitle={subtitle}
+          icon={icon}
+          color={color}
+        />
+      </div>
+    </motion.div>
+  );
+};
+
 const YoutubeMonitoring: React.FC = () => {
   // Router hooks para manipular URL params
   const location = useLocation();
@@ -3399,6 +3676,10 @@ const YoutubeMonitoring: React.FC = () => {
   const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<VideoDetails | null>(null);
   const [showChannelDetails, setShowChannelDetails] = useState(false);
+  
+  // Channel pagination states
+  const [channelPage, setChannelPage] = useState(1);
+  const channelsPerPage = 6;
   const [currentChannelDetails, setCurrentChannelDetails] = useState<any>(null);
   
   // Estados para dados
@@ -4362,6 +4643,11 @@ const YoutubeMonitoring: React.FC = () => {
   };
   
   // Atualizar a URL quando mudar de aba manualmente
+  // Reset page when filters change
+  useEffect(() => {
+    setChannelPage(1);
+  }, [channelFilter, searchTerm]);
+
   const handleTabChange = (tab: 'overview' | 'channels' | 'videos' | 'comments') => {
     // Verificar a validade da navegação antes de executar
     if (tab === 'videos' && selectedChannel === null) {
@@ -4471,39 +4757,43 @@ const YoutubeMonitoring: React.FC = () => {
         <>
           <StatsGrid>
             {/* Card 1: Total Views */}
-            <MetricCard
+            <AnimatedMetricCard
               title="Total Views"
               value={rpcData.total_views.toLocaleString()}
               subtitle="Total views of all commented videos"
               icon={<IconComponent icon={FaIcons.FaEye} />}
               color="#5856D6"
+              index={0}
             />
             
             {/* Card 2: Likes */}
-            <MetricCard
+            <AnimatedMetricCard
               title="Likes"
               value={rpcData.total_likes.toLocaleString()}
               subtitle="Positive engagement"
               icon={<IconComponent icon={FaIcons.FaThumbsUp} />}
               color="#FF9500"
+              index={1}
             />
             
             {/* Card 3: Engagement Rate */}
-            <MetricCard
+            <AnimatedMetricCard
               title="Engagement Rate"
               value={`${parseFloat(rpcData.media).toFixed(1)}%`}
               subtitle="Average interaction rate"
               icon={<IconComponent icon={FaIcons.FaChartLine} />}
               color="#34C759"
+              index={2}
             />
             
             {/* Card 4: Videos */}
-            <MetricCard
+            <AnimatedMetricCard
               title="Videos"
               value={rpcData.total_videos.toLocaleString()}
               subtitle={`${rpcData.posts} total posts`}
               icon={<IconComponent icon={FaIcons.FaVideo} />}
               color="#007AFF"
+              index={3}
             />
           </StatsGrid>
           
@@ -4561,10 +4851,11 @@ const YoutubeMonitoring: React.FC = () => {
                           fill={chartPalette[0]}
                           dataKey="value"
                           nameKey="shortName"
+                          animationBegin={0}
+                          animationDuration={1500}
+                          animationEasing="ease-out"
                           paddingAngle={2}
                           strokeWidth={0}
-                          animationDuration={1000}
-                          animationBegin={200}
                           isAnimationActive
                         >
                           {getContentDistributionData().map((entry, index) => (
@@ -4578,19 +4869,9 @@ const YoutubeMonitoring: React.FC = () => {
                         </Pie>
                         
                         <Tooltip 
-                          formatter={(value, name, props) => [
-                            `${props.payload.percentage}% (${props.payload.videos} vídeos)`, 
-                            props.payload.fullName
-                          ]} 
-                          contentStyle={{
-                            background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                            borderRadius: '12px',
-                            boxShadow: theme.name === 'dark' ? '0 8px 24px rgba(0, 0, 0, 0.4)' : '0 8px 24px rgba(0, 0, 0, 0.12)',
-                            border: theme.name === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
-                            padding: '12px 16px',
-                            fontSize: '14px',
-                            color: theme.colors.text.primary
-                          }}
+                          content={<CustomTooltip />}
+                          wrapperStyle={{ outline: 'none' }}
+                          cursor={{ fill: 'transparent' }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -4998,10 +5279,10 @@ const YoutubeMonitoring: React.FC = () => {
               <SectionTitle>Your Channels</SectionTitle>
             </ChannelsHeader>
             
-            <ChannelList>
-              {isLoadingChannels ? (
-                // Loading state with 3 placeholder cards
-                Array(3).fill(0).map((_, index) => (
+            {isLoadingChannels ? (
+              <ChannelList>
+                {/* Loading state with 3 placeholder cards */}
+                {Array(3).fill(0).map((_, index) => (
                   <ChannelCardWrapper 
                     key={`loading-${index}`}
                     active={false}
@@ -5024,52 +5305,83 @@ const YoutubeMonitoring: React.FC = () => {
                       </ChannelStatsGrid>
                     </ChannelInfo>
                   </ChannelCardWrapper>
-                ))
-              ) : channels.length === 0 ? (
-                // Empty state
-                <div style={{ gridColumn: '1 / -1', padding: '40px 0', textAlign: 'center' }}>
-                  <div style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}>
-                    <IconComponent icon={FaIcons.FaYoutube} />
-                  </div>
-                  <h3>No YouTube channels found</h3>
-                  <p>Add YouTube channels to your project to see them here</p>
-                  <div style={{ marginTop: '24px' }}>
-                    <ActionButton variant="primary" leftIcon={<IconComponent icon={FaIcons.FaPlus} />}>
-                      Add Channel
-                    </ActionButton>
-                  </div>
+                ))}
+              </ChannelList>
+            ) : channels.length === 0 ? (
+              // Empty state
+              <div style={{ padding: '40px 0', textAlign: 'center' }}>
+                <div style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}>
+                  <IconComponent icon={FaIcons.FaYoutube} />
                 </div>
-              ) : (
-                // Actual channel data
-                channels
-                  .filter(channel => {
-                    // Filtro por status baseado apenas no campo is_active
-                    let statusMatch = false;
-                    
-                    if (channelFilter === 'all') {
-                      statusMatch = true;
-                    } else if (channelFilter === 'active') {
-                      // Usar apenas o campo is_active como era originalmente
-                      statusMatch = (channel.is_active === true);
-                    } else if (channelFilter === 'inactive') {
-                      // Usar apenas o campo is_active como era originalmente
-                      statusMatch = (channel.is_active === false);
-                    }
-                    
-                    // Filtro por nome com verificação de segurança
-                    let nameMatch = searchTerm === '';
-                    if (!nameMatch) {
-                      const channelName = channel.channel_name || channel.name || '';
-                      nameMatch = channelName.toLowerCase().includes(searchTerm.toLowerCase());
-                    }
-                    
-                    return statusMatch && nameMatch;
-                  })
-                  .map(channel => (
-                  <ChannelCardWrapper 
-                    key={channel.id} 
-                    active={selectedChannel === channel.id}
-                      onClick={() => handleChannelSelect(channel.id)}
+                <h3>No YouTube channels found</h3>
+                <p>Add YouTube channels to your project to see them here</p>
+                <div style={{ marginTop: '24px' }}>
+                  <ActionButton variant="primary" leftIcon={<IconComponent icon={FaIcons.FaPlus} />}>
+                    Add Channel
+                  </ActionButton>
+                </div>
+              </div>
+            ) : (
+              // Actual channel data with filtering and pagination
+              (() => {
+                // Filter channels
+                const filteredChannels = channels
+                    .filter(channel => {
+                      // Show all active channels (remove filter for posts requirement)
+                      // This allows seeing all 18 channels that have videos
+                      // const hasPostedMessages = (channel.total_mensagens_postadas || 0) > 0;
+                      // if (!hasPostedMessages) return false;
+                      
+                      // Status filter
+                      let statusMatch = false;
+                      if (channelFilter === 'all') {
+                        statusMatch = true;
+                      } else if (channelFilter === 'active') {
+                        statusMatch = (channel.is_active === true);
+                      } else if (channelFilter === 'inactive') {
+                        statusMatch = (channel.is_active === false);
+                      }
+                      
+                      // Name filter
+                      let nameMatch = searchTerm === '';
+                      if (!nameMatch) {
+                        const channelName = channel.channel_name || channel.name || '';
+                        nameMatch = channelName.toLowerCase().includes(searchTerm.toLowerCase());
+                      }
+                      
+                      return statusMatch && nameMatch;
+                    });
+                  
+                  // Calculate pagination
+                  const totalFilteredChannels = filteredChannels.length;
+                  const totalPages = Math.ceil(totalFilteredChannels / channelsPerPage);
+                  const startIndex = (channelPage - 1) * channelsPerPage;
+                  const endIndex = startIndex + channelsPerPage;
+                  const paginatedChannels = filteredChannels.slice(startIndex, endIndex);
+                  
+                  // Reset to page 1 if current page is out of bounds
+                  if (channelPage > totalPages && totalPages > 0) {
+                    setChannelPage(1);
+                  }
+                  
+                  return (
+                    <>
+                      <ChannelList>
+                        {paginatedChannels.map((channel, index) => (
+                          <ChannelCardWrapper 
+                            key={`channel-${channel.id}-page-${channelPage}`} 
+                            active={selectedChannel === channel.id}
+                            onClick={() => handleChannelSelect(channel.id)}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ 
+                              duration: 0.3, 
+                              delay: index * 0.05,
+                              ease: [0.4, 0, 0.2, 1]
+                            }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                     onContextMenu={(e) => {
                       e.preventDefault();
                       setSelectedChannelForToggle(channel);
@@ -5163,9 +5475,80 @@ const YoutubeMonitoring: React.FC = () => {
                         </ChannelInfoContainer>
                       </CardContent>
                   </ChannelCardWrapper>
-                ))
+                        ))}
+                      </ChannelList>
+                      
+                      {/* Pagination Component */}
+                      {totalFilteredChannels > channelsPerPage && (
+                        <PaginationContainer>
+                          <PaginationInfo>
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ delay: 0.3 }}
+                            >
+                              Showing <strong>{startIndex + 1}-{Math.min(endIndex, totalFilteredChannels)}</strong> of <strong>{totalFilteredChannels}</strong> channels
+                            </motion.div>
+                          </PaginationInfo>
+                          
+                          <PaginationControls>
+                            <PaginationButton
+                              disabled={channelPage === 1}
+                              onClick={() => setChannelPage(prev => Math.max(1, prev - 1))}
+                            >
+                              <IconComponent icon={FaIcons.FaChevronLeft} />
+                              Previous
+                            </PaginationButton>
+                            
+                            <div style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '4px',
+                              margin: '0 12px',
+                              fontSize: theme.fontSizes.sm,
+                              color: theme.colors.text.secondary
+                            }}>
+                              Page <span style={{ 
+                                color: theme.colors.primary, 
+                                fontWeight: theme.fontWeights.semiBold 
+                              }}>{channelPage}</span> of {totalPages}
+                            </div>
+                            
+                            <PaginationButton
+                              disabled={channelPage === totalPages}
+                              onClick={() => setChannelPage(prev => Math.min(totalPages, prev + 1))}
+                            >
+                              Next
+                              <IconComponent icon={FaIcons.FaChevronRight} />
+                            </PaginationButton>
+                          </PaginationControls>
+                        </PaginationContainer>
+                      )}
+                      
+                      {/* Show message if no channels match filters */}
+                      {filteredChannels.length === 0 && channels.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          style={{ 
+                            padding: '40px 0', 
+                            textAlign: 'center',
+                            color: theme.colors.text.secondary
+                          }}
+                        >
+                          <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.5 }}>
+                            <IconComponent icon={FaIcons.FaSearch} />
+                          </div>
+                          <h3 style={{ color: theme.colors.text.primary, marginBottom: '8px' }}>
+                            No channels match your filters
+                          </h3>
+                          <p>Try adjusting your search or filter criteria</p>
+                        </motion.div>
+                      )}
+                    </>
+                  );
+                })()
               )}
-            </ChannelList>
             
             {/* Status Toggle Popup */}
             {isStatusPopupOpen && selectedChannelForToggle && (
@@ -5286,10 +5669,7 @@ const YoutubeMonitoring: React.FC = () => {
         <ChartContainer>
           {/* Channel Header Section */}
           {isLoadingChannelDetails ? (
-            <div style={{ padding: '30px 0', textAlign: 'center' }}>
-              <IconComponent icon={FaIcons.FaSpinner} style={{ fontSize: '24px', animation: 'spin 1s linear infinite' }} />
-              <p>Loading channel details...</p>
-            </div>
+            <NeuralLoadingState text="Carregando detalhes do canal..." />
           ) : selectedChannelDetails ? (
             <ChannelHeaderSection>
               <ChannelHeaderBanner />
