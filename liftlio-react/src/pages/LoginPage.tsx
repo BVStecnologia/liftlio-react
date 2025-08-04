@@ -287,7 +287,7 @@ const LoginPage: React.FC = () => {
   return (
     <LoginPageContainer>
       {/* 3D Particle Wave Effect */}
-      <WaveParticles3D particleCount={10000} color="#00a9db" />
+      <WaveParticles3D particleCount={10000} color="#6366f1" />
       
       {/* Wave background elements */}
       <WaveElement />

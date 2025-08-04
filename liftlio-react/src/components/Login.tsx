@@ -20,17 +20,17 @@ const energyLineAnimation = keyframes`
   0% {
     opacity: 0.3;
     transform: scaleX(0.95);
-    box-shadow: 0 0 5px #00a9db, 0 0 10px #00a9db;
+    box-shadow: 0 0 5px #6366f1, 0 0 10px #6366f1;
   }
   50% {
     opacity: 0.8;
     transform: scaleX(1);
-    box-shadow: 0 0 15px #2d3e50, 0 0 30px #2d3e50;
+    box-shadow: 0 0 15px #6366f1, 0 0 30px #6366f1;
   }
   100% {
     opacity: 0.3;
     transform: scaleX(0.95);
-    box-shadow: 0 0 5px #00a9db, 0 0 10px #00a9db;
+    box-shadow: 0 0 5px #6366f1, 0 0 10px #6366f1;
   }
 `;
 
@@ -89,16 +89,16 @@ const LogoContainer = styled.div`
 const Logo = styled.div`
   font-size: 2.5rem;
   font-weight: ${props => props.theme.fontWeights.bold};
-  color: ${props => props.theme.name === 'dark' ? '#00a9db' : '#2d3e50'};
+  color: ${props => props.theme.name === 'dark' ? '#6366f1' : '#6366f1'};
   margin-bottom: 0.5rem;
   letter-spacing: -0.5px;
   position: relative;
   z-index: 2;
   text-shadow: ${props => props.theme.name === 'dark' 
-    ? '0 0 20px rgba(0, 169, 219, 0.5), 0 0 40px rgba(0, 169, 219, 0.3)' 
-    : '0 1px 3px rgba(0, 169, 219, 0.2)'};
+    ? '0 0 20px rgba(99, 102, 241, 0.5), 0 0 40px rgba(99, 102, 241, 0.3)' 
+    : '0 1px 3px rgba(99, 102, 241, 0.2)'};
   background: ${props => props.theme.name === 'dark' 
-    ? 'linear-gradient(135deg, #00a9db 0%, #0080ff 100%)' 
+    ? 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)' 
     : 'none'};
   -webkit-background-clip: ${props => props.theme.name === 'dark' ? 'text' : 'initial'};
   -webkit-text-fill-color: ${props => props.theme.name === 'dark' ? 'transparent' : 'initial'};
@@ -129,7 +129,7 @@ const PowerPhrase = styled.div`
     height: 3px;
     bottom: -8px;
     left: 25%;
-    background: linear-gradient(90deg, transparent, #00a9db, transparent);
+    background: linear-gradient(90deg, transparent, #6366f1, transparent);
   }
 `
 
@@ -145,7 +145,7 @@ const EnergyLine = styled.div`
   position: absolute;
   height: 3px;
   width: 60px;
-  background: #00a9db;
+  background: #6366f1;
   top: 20px;
   right: -30px;
   opacity: 0.8;
@@ -158,7 +158,7 @@ const EnergyLine = styled.div`
     position: absolute;
     height: 6px;
     width: 6px;
-    background: #00a9db;
+    background: #6366f1;
     border-radius: 50%;
     top: -1.5px;
   }
@@ -202,8 +202,8 @@ const Input = styled.input`
   
   &:focus {
     outline: none;
-    border-color: #00a9db;
-    box-shadow: 0 0 0 3px rgba(0, 169, 219, 0.2);
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
   }
 `
 
@@ -212,7 +212,7 @@ const Button = styled.button`
   align-items: center;
   justify-content: center;
   padding: 14px 20px;
-  background: linear-gradient(90deg, #00a9db, #2d3e50);
+  background: linear-gradient(90deg, #6366f1, #818cf8);
   color: white;
   border: none;
   border-radius: ${props => props.theme.radius.md};
@@ -222,7 +222,7 @@ const Button = styled.button`
   transition: all ${props => props.theme.transitions.default};
   width: 100%;
   margin-top: 1.5rem;
-  box-shadow: 0 4px 10px rgba(0, 169, 219, 0.3);
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
   position: relative;
   overflow: hidden;
   

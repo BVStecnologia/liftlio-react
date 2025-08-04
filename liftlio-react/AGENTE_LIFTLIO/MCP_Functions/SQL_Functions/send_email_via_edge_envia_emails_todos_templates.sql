@@ -1,8 +1,11 @@
+-- =============================================
 -- Função Universal para Envio de Emails via Edge Function
 -- Criada: 02/02/2025
--- Testada com sucesso para templates: welcome-email, payment-successful
--- Message IDs de teste: 1986c056528b5e1c (welcome), 1986c05a0f634292 (payment)
+-- Atualizada: 02/02/2025 - Correção de autenticação
+-- Testada com sucesso: Message ID 1986c865e9537bfb
+-- =============================================
 
+-- SEMPRE fazer DROP primeiro para evitar duplicação
 DROP FUNCTION IF EXISTS send_email_via_edge(text, text, jsonb);
 
 CREATE OR REPLACE FUNCTION send_email_via_edge(
@@ -21,7 +24,18 @@ DECLARE
     var_key TEXT;
     var_value TEXT;
     template_id_var UUID;
+    anon_key TEXT;
 BEGIN
+    -- Pegar a anon key do ambiente
+    BEGIN
+        anon_key := current_setting('app.settings.supabase_anon_key', true);
+        IF anon_key IS NULL THEN
+            anon_key := 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I';
+        END IF;
+    EXCEPTION WHEN OTHERS THEN
+        anon_key := 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I';
+    END;
+    
     -- Buscar template do banco
     SELECT * INTO template_data
     FROM email_templates
@@ -63,6 +77,7 @@ BEGIN
     
     -- Log para depuração
     RAISE NOTICE 'Enviando email para: % com template: %', recipient_email, template_name;
+    RAISE NOTICE 'Usando Bearer token: Bearer %...', LEFT(anon_key, 20);
     
     -- Fazer a chamada à Edge Function
     SELECT * INTO http_response
@@ -71,7 +86,7 @@ BEGIN
         'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/email-automation-engine',
         ARRAY[
             http_header('Content-Type', 'application/json'),
-            http_header('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I')
+            http_header('Authorization', 'Bearer ' || anon_key)
         ]::http_header[],
         'application/json',
         request_body
@@ -103,13 +118,15 @@ BEGIN
             'complex',
             jsonb_build_object(
                 'variables', variables,
-                'response', http_response.content::jsonb
+                'response', http_response.content,
+                'status', http_response.status
             )
         );
         
         RETURN jsonb_build_object(
             'success', false,
-            'error', 'HTTP Error: ' || http_response.status
+            'error', 'HTTP Error: ' || http_response.status,
+            'details', http_response.content
         );
     END IF;
     
@@ -213,11 +230,13 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql;
 
--- Exemplos de uso:
+-- =============================================
+-- EXEMPLOS DE USO
+-- =============================================
 
 -- 1. Email de boas-vindas
 -- SELECT send_email_via_edge(
---     'usuario@email.com',
+--     'seu-email@gmail.com',
 --     'welcome-email',
 --     '{"userName": "João Silva"}'::jsonb
 -- );
@@ -235,9 +254,23 @@ $$ LANGUAGE plpgsql;
 --     }'::jsonb
 -- );
 
--- 3. Qualquer outro template
--- SELECT send_email_via_edge(
---     'destinatario@email.com',
---     'nome-do-template',
---     '{"variavel1": "valor1", "variavel2": "valor2"}'::jsonb
--- );
+-- 3. Ver últimos emails enviados
+-- SELECT 
+--     message_id,
+--     template_id,
+--     recipients,
+--     subject,
+--     status,
+--     created_at
+-- FROM email_logs
+-- ORDER BY created_at DESC
+-- LIMIT 5;
+
+-- 4. Listar templates disponíveis
+-- SELECT 
+--     name,
+--     subject,
+--     description
+-- FROM email_templates
+-- WHERE active = true
+-- ORDER BY name;
