@@ -115,7 +115,7 @@ const Tagline = styled.p`
 
 const PowerPhrase = styled.div`
   font-size: ${props => props.theme.fontSizes.md};
-  color: ${props => props.theme.name === 'dark' ? props.theme.colors.text.secondary : '#2d3e50'};
+  color: ${props => props.theme.name === 'dark' ? props.theme.colors.text.secondary : '#6366f1'};
   text-align: center;
   font-weight: ${props => props.theme.fontWeights.medium};
   margin-bottom: 1.5rem;

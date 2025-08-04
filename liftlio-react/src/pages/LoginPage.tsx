@@ -49,19 +49,19 @@ const lightBeamAnimation = keyframes`
 const energyPulse = keyframes`
   0% {
     opacity: 0.6;
-    box-shadow: 0 0 10px #00a9db,
-                0 0 20px #2d3e50;
+    box-shadow: 0 0 10px #6366f1,
+                0 0 20px #818cf8;
   }
   50% {
     opacity: 1;
-    box-shadow: 0 0 20px #00a9db,
-                0 0 40px #2d3e50,
-                0 0 60px #00a9db;
+    box-shadow: 0 0 20px #6366f1,
+                0 0 40px #818cf8,
+                0 0 60px #6366f1;
   }
   100% {
     opacity: 0.6;
-    box-shadow: 0 0 10px #00a9db,
-                0 0 20px #2d3e50;
+    box-shadow: 0 0 10px #6366f1,
+                0 0 20px #818cf8;
   }
 `;
 
@@ -124,14 +124,14 @@ const LightBeam = styled.div`
   width: 100%;
   background: linear-gradient(90deg, 
     transparent 0%, 
-    #00a9db 20%, 
-    #2d3e50 50%,
-    #00a9db 80%, 
+    #6366f1 20%, 
+    #818cf8 50%,
+    #6366f1 80%, 
     transparent 100%
   );
   opacity: 0;
-  box-shadow: 0 0 15px #00a9db, 
-              0 0 30px #2d3e50;
+  box-shadow: 0 0 15px #6366f1, 
+              0 0 30px #818cf8;
   z-index: 1;
   animation: ${lightBeamAnimation} 10s ease-in-out infinite;
   
@@ -163,7 +163,7 @@ const EnergyNode = styled.div`
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: #2d3e50;
+  background: #6366f1;
   animation: ${energyPulse} 4s ease-in-out infinite;
   z-index: 2;
   
@@ -172,7 +172,7 @@ const EnergyNode = styled.div`
     position: absolute;
     width: 100%;
     height: 2px;
-    background: #00a9db;
+    background: #6366f1;
     opacity: 0.9;
     top: 50%;
     transform: translateY(-50%);
@@ -245,7 +245,7 @@ const spin = keyframes`
 `;
 
 const LoadingSpinner = styled.div`
-  color: #2d3e50;
+  color: #6366f1;
   font-size: 2.5rem;
   
   .icon-spinner {
