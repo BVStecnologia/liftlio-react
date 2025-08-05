@@ -22,6 +22,33 @@ const slideIn = keyframes`
   to { transform: translateX(0); opacity: 1; }
 `;
 
+const floatingAnimation = keyframes`
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+`;
+
+const energyLineAnimation = keyframes`
+  0% {
+    opacity: 0.3;
+    transform: scaleX(0.95);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scaleX(0.95);
+  }
+`;
+
 const SidebarContainer = styled.aside<{ isOpen: boolean; isCollapsed?: boolean }>`
   width: ${props => props.isCollapsed ? '80px' : '249px'};
   height: 100%;
@@ -123,8 +150,9 @@ const Logo = styled.div<{ isCollapsed?: boolean }>`
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
   text-transform: uppercase;
+  gap: ${props => props.isCollapsed ? '0' : '10px'};
   
-  span {
+  span:first-child {
     background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -290,6 +318,49 @@ const UserAvatar = styled.div`
   &:hover {
     transform: scale(1.05);
     box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+  }
+`;
+
+const BetaBadge = styled.span<{ isCollapsed?: boolean }>`
+  font-size: 0.4em;
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  padding: 0.1em 0.4em;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(99, 102, 241, 0.15)' 
+    : 'rgba(99, 102, 241, 0.08)'};
+  color: ${props => props.theme.name === 'dark' ? '#a78bfa' : '#6366f1'};
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  position: relative;
+  text-transform: uppercase;
+  vertical-align: text-top;
+  margin-left: 0.3em;
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(167, 139, 250, 0.2)' 
+    : 'rgba(99, 102, 241, 0.15)'};
+  transition: all 0.3s ease;
+  line-height: 1;
+  display: inline-block;
+  ${props => props.isCollapsed && `
+    position: absolute;
+    top: -8px;
+    right: -10px;
+    font-size: 0.45rem;
+    padding: 1px 3px;
+  `}
+  
+  &:hover {
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(99, 102, 241, 0.25)' 
+      : 'rgba(99, 102, 241, 0.12)'};
+    border-color: ${props => props.theme.name === 'dark' 
+      ? 'rgba(167, 139, 250, 0.3)' 
+      : 'rgba(99, 102, 241, 0.2)'};
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.4em;
+    padding: 0.1em 0.4em;
   }
 `;
 
@@ -1430,6 +1501,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
             <span data-text={isCollapsed ? "L" : "Liftlio"}>
               {isCollapsed ? "L" : "Liftlio"}
             </span>
+            <BetaBadge isCollapsed={isCollapsed}>Beta</BetaBadge>
           </Logo>
           
           <NavContainer>

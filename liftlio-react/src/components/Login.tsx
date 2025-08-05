@@ -103,6 +103,36 @@ const Logo = styled.div`
   -webkit-background-clip: ${props => props.theme.name === 'dark' ? 'text' : 'initial'};
   -webkit-text-fill-color: ${props => props.theme.name === 'dark' ? 'transparent' : 'initial'};
   background-clip: ${props => props.theme.name === 'dark' ? 'text' : 'initial'};
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+`
+
+const BetaBadge = styled.span`
+  display: inline-block;
+  font-size: 0.4em;
+  font-weight: ${props => props.theme.fontWeights.medium};
+  padding: 0.1em 0.4em;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(99, 102, 241, 0.15)' 
+    : 'rgba(99, 102, 241, 0.08)'};
+  color: ${props => props.theme.name === 'dark' ? '#a78bfa' : '#6366f1'};
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-left: 0.3em;
+  vertical-align: text-top;
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(167, 139, 250, 0.2)' 
+    : 'rgba(99, 102, 241, 0.15)'};
+  transition: all 0.2s ease;
+  line-height: 1;
+  
+  &:hover {
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(99, 102, 241, 0.25)' 
+      : 'rgba(99, 102, 241, 0.12)'};
+  }
 `
 
 const Tagline = styled.p`
@@ -543,7 +573,9 @@ const Login: React.FC = () => {
     <LoginContainer>
       <LogoContainer>
         <EnergyLine />
-        <Logo>Liftlio</Logo>
+        <Logo>
+          Liftlio<BetaBadge>Beta</BetaBadge>
+        </Logo>
         <Tagline>Monitor your digital presence</Tagline>
       </LogoContainer>
       

@@ -168,7 +168,8 @@
         .header{position:fixed;top:0;left:0;right:0;z-index:1000;padding:20px 0;background:var(--color-header-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--color-border-light);transition:all .3s}
         .header.scrolled{background:var(--color-header-bg-solid);backdrop-filter:blur(20px)}
         .header-content{display:flex;justify-content:space-between;align-items:center}
-        .logo{font-size:28px;font-weight:900;letter-spacing:-1px;background:var(--gradient-landing);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer;display:flex;align-items:center;gap:8px;text-decoration:none}
+        .logo{font-size:28px;font-weight:900;letter-spacing:-1px;cursor:pointer;display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--color-text-primary)}
+        .logo-text{background:var(--gradient-landing);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
         .nav{display:flex;gap:40px;align-items:center}
         .nav-link{color:var(--color-text-secondary);text-decoration:none;font-weight:500;transition:color .3s}
         .nav-link:hover{color:var(--color-primary)}
@@ -388,6 +389,41 @@
             .footer-content{grid-template-columns:1fr}
         }
         
+        /* Beta Badge */
+        .beta-badge {
+            display: inline-block;
+            vertical-align: text-top;
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            color: #6366f1;
+            font-size: 0.4em;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 0.1em 0.4em;
+            border-radius: 4px;
+            margin-left: 0.3em;
+            position: relative;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            line-height: 1;
+        }
+        
+        [data-theme="dark"] .beta-badge {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: rgba(167, 139, 250, 0.2);
+            color: #a78bfa;
+        }
+        
+        .logo:hover .beta-badge {
+            background: rgba(99, 102, 241, 0.12);
+            transform: translateY(-1px);
+        }
+        
+        [data-theme="dark"] .logo:hover .beta-badge {
+            background: rgba(99, 102, 241, 0.25);
+        }
+        
+        
         /* Utility */
         .icon{display:inline-flex;align-items:center;justify-content:center;width:1em;height:1em}
         .floating-element{position:absolute;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:12px;padding:16px;animation:float 6s ease-in-out infinite}
@@ -453,7 +489,7 @@
             <div class="header-content">
                 <a href="/" class="logo">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                    LIFTLIO
+                    <span class="logo-text">LIFTLIO</span><span class="beta-badge">Beta</span>
                 </a>
                 
                 <nav class="nav">
@@ -492,7 +528,7 @@
         <div class="mobile-menu-header">
             <div class="logo">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                LIFTLIO
+                <span class="logo-text">LIFTLIO</span><span class="beta-badge">Beta</span>
             </div>
             <button class="btn-icon" onclick="toggleMobileMenu(false)" aria-label="Close menu">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1363,7 +1399,7 @@
                 <div class="footer-brand">
                     <div class="footer-logo">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:8px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                        LIFTLIO
+                        <span class="logo-text">LIFTLIO</span><span class="beta-badge">Beta</span>
                     </div>
                     <p class="footer-description">
                         AI-powered platform to scale word-of-mouth recommendations without paying for ads.

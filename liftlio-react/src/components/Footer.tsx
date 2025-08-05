@@ -1,9 +1,36 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { BiPulse } from '../utils/icons';
 import { renderIcon } from '../utils/IconHelper';
+
+const floatingAnimation = keyframes`
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+`;
+
+const energyLineAnimation = keyframes`
+  0% {
+    opacity: 0.3;
+    transform: scaleX(0.95);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scaleX(0.95);
+  }
+`;
 
 const FooterContainer = styled.footer`
   background: ${props => props.theme.name === 'dark' ? '#0a0a0a' : '#111'};
@@ -79,6 +106,42 @@ const Logo = styled.div`
   color: ${props => props.theme.name === 'light' ? '#ffffff' : props.theme.colors.primary};
 `;
 
+const BetaBadge = styled.span`
+  font-size: 0.4em;
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  padding: 0.1em 0.4em;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'rgba(99, 102, 241, 0.15)' 
+    : 'rgba(99, 102, 241, 0.08)'};
+  color: ${props => props.theme.name === 'dark' ? '#a78bfa' : '#6366f1'};
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  position: relative;
+  text-transform: uppercase;
+  vertical-align: text-top;
+  margin-left: 0.3em;
+  border: 1px solid ${props => props.theme.name === 'dark' 
+    ? 'rgba(167, 139, 250, 0.2)' 
+    : 'rgba(99, 102, 241, 0.15)'};
+  transition: all 0.3s ease;
+  line-height: 1;
+  display: inline-block;
+  
+  &:hover {
+    background: ${props => props.theme.name === 'dark' 
+      ? 'rgba(99, 102, 241, 0.25)' 
+      : 'rgba(99, 102, 241, 0.12)'};
+    border-color: ${props => props.theme.name === 'dark' 
+      ? 'rgba(167, 139, 250, 0.3)' 
+      : 'rgba(99, 102, 241, 0.2)'};
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.4em;
+    padding: 0.1em 0.4em;
+  }
+`;
+
 const translations = {
   en: {
     description: "AI-powered platform to scale word-of-mouth recommendations without paying for ads.",
@@ -129,6 +192,7 @@ const Footer: React.FC = () => {
             <Logo>
               {renderIcon(BiPulse)}
               LIFTLIO
+              <BetaBadge>Beta</BetaBadge>
             </Logo>
           </FooterTitle>
           <FooterDescription>
