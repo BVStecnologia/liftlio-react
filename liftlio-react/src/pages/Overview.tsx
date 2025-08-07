@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import styled, { keyframes, css, useTheme } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence, useSpring, useTransform, useScroll, useMotionValue } from 'framer-motion';
 import { COLORS, withOpacity } from '../styles/colors';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, PieChart, Pie, Cell, BarChart, Bar, Label, AreaChart, Area } from 'recharts';
 import * as FaIcons from 'react-icons/fa';
@@ -17,16 +18,55 @@ import ProjectModal from '../components/ProjectModal';
 import { supabase } from '../lib/supabaseClient';
 import { PieLabelRenderProps } from 'recharts';
 
-// Efeito de onda suave e fluido
+// Premium wave effect with physics
 const waveEffect = keyframes`
   0% {
-    transform: translateY(0) scale(1);
+    transform: translateY(0) scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+  25% {
+    transform: translateY(-4px) scale(1.01) rotate(0.5deg);
+    filter: brightness(1.05);
   }
   50% {
-    transform: translateY(-8px) scale(1.02);
+    transform: translateY(-8px) scale(1.02) rotate(0deg);
+    filter: brightness(1.1);
+  }
+  75% {
+    transform: translateY(-4px) scale(1.01) rotate(-0.5deg);
+    filter: brightness(1.05);
   }
   100% {
-    transform: translateY(0) scale(1);
+    transform: translateY(0) scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+`;
+
+// Glitch effect for tech feel
+const glitchEffect = keyframes`
+  0% {
+    clip-path: inset(40% 0 61% 0);
+    transform: translateX(0);
+  }
+  20% {
+    clip-path: inset(92% 0 1% 0);
+    transform: translateX(-2px);
+  }
+  40% {
+    clip-path: inset(43% 0 1% 0);
+    transform: translateX(2px);
+  }
+  60% {
+    clip-path: inset(25% 0 58% 0);
+    transform: translateX(-1px);
+  }
+  80% {
+    clip-path: inset(54% 0 7% 0);
+    transform: translateX(1px);
+  }
+  100% {
+    clip-path: inset(58% 0 43% 0);
+    transform: translateX(0);
   }
 `;
 
@@ -159,18 +199,71 @@ const ledFlow = keyframes`
   }
 `;
 
-// Modern digital pulse animation
+// Modern digital pulse animation with enhanced effects
 const digitalPulse = keyframes`
   0% {
     background-position: -20px 0;
     opacity: 0.05;
+    filter: blur(0px);
+  }
+  25% {
+    opacity: 0.1;
+    filter: blur(0.5px);
   }
   50% {
     opacity: 0.15;
+    filter: blur(1px);
+  }
+  75% {
+    opacity: 0.1;
+    filter: blur(0.5px);
   }
   100% {
     background-position: 20px 0;
     opacity: 0.05;
+    filter: blur(0px);
+  }
+`;
+
+// Premium skeleton loading animation
+const skeletonWave = keyframes`
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+`;
+
+// Smooth morph animation
+const morphAnimation = keyframes`
+  0%, 100% {
+    border-radius: 20px;
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    border-radius: 24px;
+    transform: scale(1.01) rotate(0.5deg);
+  }
+  50% {
+    border-radius: 22px;
+    transform: scale(1.02) rotate(0deg);
+  }
+  75% {
+    border-radius: 24px;
+    transform: scale(1.01) rotate(-0.5deg);
+  }
+`;
+
+// Ripple effect for interactions
+const rippleEffect = keyframes`
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
   }
 `;
 
@@ -318,14 +411,46 @@ const borderGlow = keyframes`
   }
 `;
 
-// Page container with max width and centering
-const PageContainer = styled.div`
+// Premium page container with glassmorphism
+const PageContainer = styled(motion.div)`
   max-width: 1600px;
   margin: 0 auto;
   padding: 24px;
   position: relative;
   overflow: hidden;
-  background-color: ${props => props.theme.colors.bg.primary};
+  background: ${props => props.theme.colors.bg.primary};
+  min-height: 100vh;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 300px;
+    background: linear-gradient(
+      135deg,
+      rgba(0, 245, 255, 0.03) 0%,
+      rgba(107, 0, 204, 0.03) 100%
+    );
+    pointer-events: none;
+    animation: ${digitalFlow} 20s ease-in-out infinite;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 300px;
+    background: radial-gradient(
+      circle at center,
+      rgba(45, 62, 80, 0.02) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+  }
   
   @media (max-width: 768px) {
     padding: 16px 12px;
@@ -589,14 +714,24 @@ const OverviewGrid = styled.div`
   }
 `;
 
-// Enhanced stat card with modern tech-inspired design
-const StatCard = styled.div<{ gridSpan?: number; cardIndex?: number; active?: boolean }>`
-  background: ${props => props.theme.components.card.bg};
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: ${props => props.theme.shadows.md};
-  transition: all 0.3s ease;
+// Ultra-premium stat card with glassmorphism and micro-interactions
+const StatCard = styled(motion.div)<{ gridSpan?: number; cardIndex?: number; active?: boolean }>`
+  background: ${props => props.theme.name === 'dark' 
+    ? 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)'
+    : 'linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%)'};
+  backdrop-filter: blur(10px) saturate(200%);
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255,255,255,0.08)'
+    : 'rgba(0,0,0,0.04)'};
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 
+    0 10px 40px rgba(0,0,0,${props => props.theme.name === 'dark' ? '0.2' : '0.05'}),
+    inset 0 1px 0 rgba(255,255,255,${props => props.theme.name === 'dark' ? '0.1' : '0.5'});
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
   overflow: hidden;
   grid-column: span ${props => props.gridSpan || 3};
   animation: ${fadeIn} 0.6s ease-out forwards;
@@ -949,21 +1084,45 @@ const StatIconContainer = styled.div`
   position: relative;
 `;
 
-const StatIcon = styled.div<{ bgColor: string; animationDelay?: string }>`
+const StatIcon = styled(motion.div)<{ bgColor: string; animationDelay?: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: ${props => props.bgColor};
+  background: linear-gradient(135deg, ${props => props.bgColor}, ${props => props.bgColor}dd);
   color: white;
   font-size: 1.5rem;
   position: relative;
   overflow: hidden;
   animation: ${waveEffect} 3s infinite cubic-bezier(0.4, 0, 0.6, 1);
   animation-delay: ${props => props.animationDelay || '0s'};
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 
+    0 4px 12px ${props => props.bgColor}40,
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.3) 0%,
+      transparent 70%
+    );
+    transform: rotate(45deg);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  &:hover::before {
+    opacity: 1;
+  }
   
   svg {
     position: relative;
@@ -2822,8 +2981,86 @@ const Overview: React.FC = () => {
     keyword.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
+  // Premium skeleton loader component
+  const SkeletonLoader = memo(() => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      style={{ width: '100%', padding: '24px' }}
+    >
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '32px' }}>
+        {[1, 2, 3, 4].map(i => (
+          <motion.div
+            key={i}
+            initial={{ scale: 0.95 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: i * 0.1, duration: 0.3 }}
+            style={{
+              height: '140px',
+              borderRadius: '20px',
+              background: theme.name === 'dark' 
+                ? 'linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.05) 100%)'
+                : 'linear-gradient(90deg, #f0f0f0 0%, #f8f8f8 50%, #f0f0f0 100%)',
+              backgroundSize: '200% 100%',
+              animation: `${skeletonWave} 1.5s ease-in-out infinite`,
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+              transform: 'translateX(-100%)',
+              animation: `${skeletonWave} 1.5s ease-in-out infinite`
+            }} />
+          </motion.div>
+        ))}
+      </div>
+      
+      <motion.div
+        initial={{ scale: 0.95 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.4, duration: 0.3 }}
+        style={{
+          height: '400px',
+          borderRadius: '20px',
+          background: theme.name === 'dark'
+            ? 'linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.05) 100%)'
+            : 'linear-gradient(90deg, #f0f0f0 0%, #f8f8f8 50%, #f0f0f0 100%)',
+          backgroundSize: '200% 100%',
+          animation: `${skeletonWave} 1.5s ease-in-out infinite`,
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      />
+    </motion.div>
+  ));
+
+  // Show skeleton loader while loading
+  if (loading && !statsData.reach.value && !hasProjects) {
+    return (
+      <PageContainer
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <SkeletonLoader />
+      </PageContainer>
+    );
+  }
+
   return (
-    <PageContainer>
+    <PageContainer
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <DashboardHeader>
         <PageTitle>
           <div>
