@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  liftlio-analytics:
+    build: .
+    container_name: liftlio-analytics
+    ports:
+      - "3001:3000"  # Mapear para 3001 local para evitar conflito
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+    restart: always
+    networks:
+      - analytics-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+networks:
+  analytics-network:
+    driver: bridge

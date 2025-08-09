@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Analytics Liftlio</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .log {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #667eea;
+            background: white;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Teste do Liftlio Analytics</h1>
+        
+        <div class="status success" id="status">
+            Script carregado com sucesso!
+        </div>
+
+        <h2>Eventos de Teste:</h2>
+        <div>
+            <button onclick="trackCustomEvent()">📊 Enviar Evento Customizado</button>
+            <button onclick="trackGoal()">🎯 Rastrear Goal</button>
+            <button onclick="trackPurchase()">💰 Simular Compra</button>
+            <button onclick="setUser()">👤 Identificar Usuário</button>
+            <button onclick="simulateError()">❌ Simular Erro JS</button>
+            <button onclick="clearLog()">🗑️ Limpar Log</button>
+        </div>
+
+        <h3>Log de Eventos:</h3>
+        <div class="log" id="log">
+            <div class="log-entry">Aguardando eventos...</div>
+        </div>
+
+        <h3>Informações da Sessão:</h3>
+        <div id="sessionInfo" style="background: #f7fafc; padding: 15px; border-radius: 6px; margin-top: 10px;">
+            Carregando...
+        </div>
+    </div>
+
+    <!-- Script de Analytics - AJUSTE O data-project PARA SEU PROJECT_ID -->
+    <script src="http://localhost:3001/track.js" data-project="58"></script>
+
+    <script>
+        // Função para adicionar ao log
+        function addToLog(message, type = 'info') {
+            const log = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const timestamp = new Date().toLocaleTimeString();
+            entry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            log.insertBefore(entry, log.firstChild);
+            
+            // Limitar a 20 entradas
+            while (log.children.length > 20) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        // Verificar se o script foi carregado
+        if (window.liftlio && window.liftlio.track) {
+            addToLog('✅ Liftlio Analytics carregado com sucesso!', 'success');
+            
+            // Mostrar informações da sessão
+            const visitorId = localStorage.getItem('liftlio_visitor_id');
+            const sessionData = JSON.parse(sessionStorage.getItem('liftlio_session_id') || '{}');
+            
+            document.getElementById('sessionInfo').innerHTML = `
+                <strong>Visitor ID:</strong> ${visitorId || 'Será gerado'}<br>
+                <strong>Session ID:</strong> ${sessionData.id || 'Será gerado'}<br>
+                <strong>Page URL:</strong> ${window.location.href}<br>
+                <strong>User Agent:</strong> ${navigator.userAgent.substring(0, 50)}...<br>
+                <strong>Screen:</strong> ${window.screen.width}x${window.screen.height}
+            `;
+        } else {
+            document.getElementById('status').className = 'status error';
+            document.getElementById('status').textContent = 'Erro ao carregar script!';
+            addToLog('❌ Erro: window.liftlio não está disponível', 'error');
+        }
+
+        // Funções de teste
+        function trackCustomEvent() {
+            if (window.liftlio) {
+                window.liftlio.trackEvent('button_click', {
+                    button: 'test_custom_event',
+                    timestamp: Date.now()
+                });
+                addToLog('📊 Evento customizado enviado: button_click');
+            }
+        }
+
+        function trackGoal() {
+            if (window.liftlio) {
+                window.liftlio.trackGoal('test_goal', 100);
+                addToLog('🎯 Goal rastreado: test_goal (valor: 100)');
+            }
+        }
+
+        function trackPurchase() {
+            if (window.liftlio) {
+                window.liftlio.trackPurchase('ORDER-' + Date.now(), 299.99, [
+                    { id: 'PROD-1', name: 'Produto Teste', price: 299.99 }
+                ]);
+                addToLog('💰 Compra simulada: R$ 299,99');
+            }
+        }
+
+        function setUser() {
+            if (window.liftlio) {
+                const userId = 'USER-' + Math.floor(Math.random() * 1000);
+                window.liftlio.setUser(userId, {
+                    name: 'Usuário Teste',
+                    email: 'teste@liftlio.com',
+                    plan: 'premium'
+                });
+                addToLog('👤 Usuário identificado: ' + userId);
+            }
+        }
+
+        function simulateError() {
+            addToLog('❌ Simulando erro JavaScript...');
+            setTimeout(() => {
+                throw new Error('Erro de teste do Liftlio Analytics');
+            }, 100);
+        }
+
+        function clearLog() {
+            const log = document.getElementById('log');
+            log.innerHTML = '<div class="log-entry">Log limpo!</div>';
+        }
+
+        // Auto-track pageview já é feito pelo script
+        addToLog('📄 Pageview automático enviado');
+    </script>
+</body>
+</html>
