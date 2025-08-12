@@ -379,7 +379,7 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
           // Mostrar notificação se houver novo visitante
           // Simular visitantes ativos com dados mais detalhados
           if (data.length > 0) {
-            const mockActiveVisitors = data.slice(0, 5).map((visitor, index) => ({
+            const mockActiveVisitors = data.slice(0, 5).map((visitor: any, index: number) => ({
               ...visitor,
               page: index === 0 ? '/products/ai-writer' : 
                     index === 1 ? '/checkout' : 
