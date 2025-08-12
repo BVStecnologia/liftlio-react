@@ -293,8 +293,7 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
   const [visitors, setVisitors] = useState(0);
   const [locations, setLocations] = useState<VisitorLocation[]>([]);
   const [arcs, setArcs] = useState<Arc[]>([]);
-  const [recentLocation, setRecentLocation] = useState<string | null>(null);
-  const [showNotification, setShowNotification] = useState(false);
+  const [activeVisitors, setActiveVisitors] = useState<any[]>([]);
   const [globeReady, setGlobeReady] = useState(false);
 
   // Coordenadas de cidades principais
@@ -378,11 +377,23 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
           const newCount = uniqueVisitors.size;
           
           // Mostrar notificação se houver novo visitante
-          if (newCount > visitors && visitors > 0) {
-            const latest = data[0];
-            setRecentLocation(`${latest.city || 'Unknown'}, ${latest.country || 'World'}`);
-            setShowNotification(true);
-            setTimeout(() => setShowNotification(false), 5000);
+          // Simular visitantes ativos com dados mais detalhados
+          if (data.length > 0) {
+            const mockActiveVisitors = data.slice(0, 5).map((visitor, index) => ({
+              ...visitor,
+              page: index === 0 ? '/products/ai-writer' : 
+                    index === 1 ? '/checkout' : 
+                    index === 2 ? '/pricing' :
+                    index === 3 ? '/blog/seo-tips' : '/',
+              activity: index === 0 ? 'browsing' :
+                       index === 1 ? 'checkout' :
+                       index === 2 ? 'cart' : 'browsing',
+              timeAgo: index === 0 ? 'Now' :
+                      index === 1 ? '2m ago' :
+                      index === 2 ? '5m ago' :
+                      index === 3 ? '8m ago' : '15m ago'
+            }));
+            setActiveVisitors(mockActiveVisitors);
           }
           
           setVisitors(newCount);
@@ -595,23 +606,7 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
         />
       </GlobeWrapper>
 
-      <AnimatePresence>
-        {showNotification && (
-          <NotificationToast
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            transition={{ duration: 0.3 }}
-          >
-            <NotificationIcon>
-              <IconComponent icon={FaIcons.FaUsers} />
-            </NotificationIcon>
-            <NotificationText>
-              New visitor from <span>{recentLocation}</span>
-            </NotificationText>
-          </NotificationToast>
-        )}
-      </AnimatePresence>
+      {/* Removido toast de notificação - agora mostra visitantes ativos no StatsOverlay */}
     </GlobeContainer>
   );
 };

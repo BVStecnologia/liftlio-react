@@ -27,8 +27,21 @@ export const posthogConfig = {
     posthog.opt_in_capturing();
     console.log('PostHog loaded with error tracking enabled!');
     
-    // Configure global error handlers
+    // Configure global error handlers with filtering
     window.onerror = function(message, source, lineno, colno, error) {
+      // Ignorar erros de extensões do Chrome
+      if (source && source.includes('chrome-extension://')) {
+        return true; // Suprime o erro
+      }
+      
+      // Ignorar erros específicos do PostHog com extensões
+      if (error && error.message && error.message.includes('Failed to fetch')) {
+        const stack = error.stack || '';
+        if (stack.includes('chrome-extension://') || stack.includes('frame_ant.js')) {
+          return true; // Suprime o erro
+        }
+      }
+      
       if (error) {
         posthog.captureException(error, {
           message,
@@ -44,6 +57,16 @@ export const posthogConfig = {
     };
     
     window.addEventListener('unhandledrejection', function(event) {
+      // Ignorar erros de fetch causados por extensões
+      const reason = event.reason;
+      if (reason && reason.message && reason.message.includes('Failed to fetch')) {
+        const stack = reason.stack || '';
+        if (stack.includes('chrome-extension://') || stack.includes('frame_ant.js')) {
+          event.preventDefault(); // Previne o erro de aparecer no console
+          return;
+        }
+      }
+      
       posthog.captureException(new Error(event.reason), {
         type: 'unhandledrejection',
         timestamp: new Date().toISOString(),
