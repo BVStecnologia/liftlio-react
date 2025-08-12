@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Globe from 'react-globe.gl';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaCircle, FaMapMarkerAlt, FaGlobeAmericas, FaUsers, FaFire } from 'react-icons/fa';
+import * as FaIcons from 'react-icons/fa';
+import { IconComponent } from '../utils/IconHelper';
 import * as THREE from 'three';
 
 // Container principal
@@ -481,29 +482,13 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
     return () => clearInterval(interval);
   }, [projectId, supabase, visitors]);
 
-  // HTML customizado para os pontos
-  const htmlElement = useMemo(() => {
-    return (d: any) => `
-      <div style="
-        color: #fff;
-        font-size: 12px;
-        font-weight: bold;
-        text-align: center;
-        background: rgba(139, 92, 246, 0.8);
-        padding: 4px 8px;
-        border-radius: 8px;
-        backdrop-filter: blur(10px);
-      ">
-        ${d.city}
-      </div>
-    `;
-  }, []);
+  // HTML customizado para os pontos - removido por incompatibilidade de tipos
 
   return (
     <GlobeContainer>
       <TitleOverlay>
         <GlobeTitle>
-          <FaGlobeAmericas />
+          <IconComponent icon={FaIcons.FaGlobeAmericas} />
           Live Global Traffic
         </GlobeTitle>
         <GlobeSubtitle>Real-time visitor activity from around the world</GlobeSubtitle>
@@ -515,7 +500,7 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
         transition={{ duration: 0.5 }}
       >
         <LiveBadge>
-          <FaCircle size={8} />
+          <IconComponent icon={FaIcons.FaCircle} style={{ fontSize: '8px' }} />
           Live Now
         </LiveBadge>
         
@@ -526,7 +511,7 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
 
         <LocationsList>
           <LocationTitle>
-            <FaFire />
+            <IconComponent icon={FaIcons.FaFire} />
             Hottest Locations
           </LocationTitle>
           {locations.slice(0, 5).map((location, index) => (
@@ -537,7 +522,7 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
               transition={{ delay: index * 0.1 }}
             >
               <LocationName>
-                <FaMapMarkerAlt />
+                <IconComponent icon={FaIcons.FaMapMarkerAlt} />
                 {location.city}, {location.country}
               </LocationName>
               <LocationCount>{location.count}</LocationCount>
@@ -575,12 +560,6 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
           arcStroke={0.5}
           arcsTransitionDuration={0}
           
-          // Labels HTML
-          htmlElementsData={locations}
-          htmlLat="lat"
-          htmlLng="lng"
-          htmlElement={htmlElement}
-          htmlAltitude={0.02}
           
           // Hexágonos (densidade)
           hexBinPointsData={locations}
@@ -612,7 +591,7 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
             transition={{ duration: 0.3 }}
           >
             <NotificationIcon>
-              <FaUsers />
+              <IconComponent icon={FaIcons.FaUsers} />
             </NotificationIcon>
             <NotificationText>
               New visitor from <span>{recentLocation}</span>

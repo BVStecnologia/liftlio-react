@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaBell, FaRocket, FaArrowUp, FaFire, FaStar, FaChartLine, FaTimes } from 'react-icons/fa';
+import * as FaIcons from 'react-icons/fa';
+import { IconComponent } from '../utils/IconHelper';
 
 // Animações
 const slideIn = keyframes`
@@ -285,10 +286,10 @@ const RealTimeInsights: React.FC<RealTimeInsightsProps> = ({ projectId, supabase
 
   const getNotificationIcon = (type: string) => {
     switch(type) {
-      case 'success': return <FaArrowUp />;
-      case 'warning': return <FaBell />;
-      case 'achievement': return <FaStar />;
-      default: return <FaChartLine />;
+      case 'success': return <IconComponent icon={FaIcons.FaArrowUp} />;
+      case 'warning': return <IconComponent icon={FaIcons.FaBell} />;
+      case 'achievement': return <IconComponent icon={FaIcons.FaStar} />;
+      default: return <IconComponent icon={FaIcons.FaChartLine} />;
     }
   };
 
@@ -328,7 +329,7 @@ const RealTimeInsights: React.FC<RealTimeInsightsProps> = ({ projectId, supabase
                   {notification.title}
                   {notification.type === 'achievement' && (
                     <AchievementBadge>
-                      <FaFire /> NEW
+                      <IconComponent icon={FaIcons.FaFire} /> NEW
                     </AchievementBadge>
                   )}
                 </NotificationTitle>
@@ -339,7 +340,7 @@ const RealTimeInsights: React.FC<RealTimeInsightsProps> = ({ projectId, supabase
                 e.stopPropagation();
                 removeNotification(notification.id);
               }}>
-                <FaTimes size={12} />
+                <IconComponent icon={FaIcons.FaTimes} style={{ fontSize: '12px' }} />
               </CloseButton>
             </NotificationCard>
           ))}
@@ -356,7 +357,7 @@ const RealTimeInsights: React.FC<RealTimeInsightsProps> = ({ projectId, supabase
             transition={{ type: 'spring', damping: 20 }}
           >
             <InsightIcon>
-              <FaRocket />
+              <IconComponent icon={FaIcons.FaRocket} />
             </InsightIcon>
             <InsightText dangerouslySetInnerHTML={{ __html: currentInsight }} />
           </FloatingInsight>
