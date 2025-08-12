@@ -22,6 +22,7 @@ import { PostHogTest } from './components/PostHogTest';
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const LandingPageHTML = lazy(() => import('./pages/LandingPageHTML'));
 const Overview = lazy(() => import('./pages/Overview'));
+const Analytics = lazy(() => import('./pages/Analytics'));
 const Monitoring = lazy(() => import('./pages/Monitoring'));
 const Mentions = lazy(() => import('./pages/Mentions'));
 const Settings = lazy(() => import('./pages/Settings'));
@@ -570,6 +571,8 @@ const AppContent: React.FC = () => {
           <Route path="/terms" element={<Terms />} />
           <Route path="/security" element={<Security />} />
           
+          {/* Rota removida: Analytics Showcase (não utilizada) */}
+          
           <Route path="/*" element={
             <ProtectedLayout 
               sidebarOpen={sidebarOpen} 
@@ -830,6 +833,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
               <Routes>
                 <Route path="/" element={<SubscriptionGate><ProcessingWrapper><Overview /></ProcessingWrapper></SubscriptionGate>} />
                 <Route path="/dashboard" element={<SubscriptionGate><ProcessingWrapper><Overview /></ProcessingWrapper></SubscriptionGate>} />
+                <Route path="/analytics" element={<SubscriptionGate><Analytics /></SubscriptionGate>} />
                 <Route path="/monitoring" element={<SubscriptionGate><ProcessingWrapper><Monitoring /></ProcessingWrapper></SubscriptionGate>} />
                 <Route path="/mentions" element={<SubscriptionGate><ProcessingWrapper><Mentions /></ProcessingWrapper></SubscriptionGate>} />
                 <Route path="/settings" element={<SubscriptionGate><Settings /></SubscriptionGate>} />

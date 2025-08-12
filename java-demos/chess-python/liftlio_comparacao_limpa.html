@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liftlio - Comparação de Crescimento</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: transparent;
+            overflow: hidden;
+            position: relative;
+            color: #333;
+        }
+        
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Labels identificadores */
+        .label-container {
+            position: fixed;
+            top: 80px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .plant-label {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .label-sem {
+            border: 2px solid #999;
+        }
+        
+        .label-com {
+            border: 2px solid #6366f1;
+        }
+        
+        .label-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .label-subtitle {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        /* Painel de métricas comparativas */
+        .comparison-panel {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid #6366f1;
+            border-radius: 20px;
+            padding: 20px 40px;
+            z-index: 100;
+            opacity: 0;
+        }
+        
+        .metrics-row {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+        }
+        
+        .metric-block {
+            text-align: center;
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        
+        .value-sem {
+            color: #999;
+        }
+        
+        .value-com {
+            color: #6366f1;
+        }
+        
+        /* Indicador de fase */
+        .phase-banner {
+            position: fixed;
+            top: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 1.2em;
+            font-weight: 600;
+            opacity: 0;
+            z-index: 200;
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <!-- Labels das plantas -->
+    <div class="label-container">
+        <div class="plant-label label-sem">
+            <div class="label-title" style="color: #999;">SEM Liftlio</div>
+            <div class="label-subtitle" style="color: #999;">Crescimento Tradicional</div>
+        </div>
+        <div class="plant-label label-com">
+            <div class="label-title" style="color: #6366f1;">COM Liftlio</div>
+            <div class="label-subtitle" style="color: #818cf8;">Crescimento Viral</div>
+        </div>
+    </div>
+    
+    <!-- Banner de fase -->
+    <div class="phase-banner" id="phaseBanner">
+        <span id="phaseText">Iniciando...</span>
+    </div>
+    
+    <!-- Painel de comparação -->
+    <div class="comparison-panel" id="comparisonPanel">
+        <div class="metrics-row">
+            <div class="metric-block">
+                <div class="metric-label">Sem Liftlio</div>
+                <div class="metric-value value-sem" id="heightSem">0m</div>
+            </div>
+            <div class="metric-block">
+                <div class="metric-label">🎋 Altura</div>
+                <div class="metric-value" style="color: #333;">VS</div>
+            </div>
+            <div class="metric-block">
+                <div class="metric-label">Com Liftlio</div>
+                <div class="metric-value value-com" id="heightCom">0m</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Configuração Three.js
+        let scene, camera, renderer;
+        let plantSem, plantCom;
+        let rootsSem = [], rootsCom = [];
+        let heightSem = 0, heightCom = 0;
+        
+        // Fases de crescimento
+        const phases = [
+            { name: "🌱 Fase 1: Plantio", duration: 3000 },
+            { name: "🌿 Fase 2: Primeiros Meses", duration: 3000 },
+            { name: "🌾 Fase 3: Construindo Base", duration: 3000 },
+            { name: "⚡ Fase 4: Massa Crítica", duration: 3000 },
+            { name: "🚀 Fase 5: EXPLOSÃO VIRAL!", duration: 5000 }
+        ];
+        
+        function init() {
+            setupThreeJS();
+            setupLighting();
+            createPlants();
+            setupCamera();
+            
+            // Mostrar UI
+            gsap.to('#comparisonPanel', {
+                opacity: 1,
+                duration: 1,
+                delay: 0.5
+            });
+            
+            // Iniciar crescimento
+            startGrowthComparison();
+        }
+        
+        function setupThreeJS() {
+            scene = new THREE.Scene();
+            
+            camera = new THREE.PerspectiveCamera(
+                60,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            
+            renderer = new THREE.WebGLRenderer({
+                canvas: document.getElementById('canvas'),
+                antialias: true,
+                alpha: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.setClearColor(0x000000, 0);
+        }
+        
+        function setupLighting() {
+            // Luz ambiente clara
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            
+            // Luz direcional
+            const sunLight = new THREE.DirectionalLight(0xffffff, 1);
+            sunLight.position.set(10, 30, 10);
+            sunLight.castShadow = true;
+            scene.add(sunLight);
+            
+            // Luz focal no centro
+            const spotLight = new THREE.SpotLight(0xffffff, 0.5);
+            spotLight.position.set(0, 50, 0);
+            spotLight.angle = Math.PI / 4;
+            scene.add(spotLight);
+        }
+        
+        function createPlants() {
+            // Planta SEM Liftlio (esquerda)
+            plantSem = new THREE.Group();
+            plantSem.position.set(-15, 0, 0);
+            scene.add(plantSem);
+            
+            // Semente cinza
+            const seedSemGeom = new THREE.SphereGeometry(0.3, 16, 16);
+            const seedSemMat = new THREE.MeshPhongMaterial({
+                color: 0x999999,
+                emissive: 0x666666,
+                emissiveIntensity: 0.1
+            });
+            const seedSem = new THREE.Mesh(seedSemGeom, seedSemMat);
+            plantSem.add(seedSem);
+            
+            // Planta COM Liftlio (direita)
+            plantCom = new THREE.Group();
+            plantCom.position.set(15, 0, 0);
+            scene.add(plantCom);
+            
+            // Semente roxa Liftlio
+            const seedComGeom = new THREE.SphereGeometry(0.3, 16, 16);
+            const seedComMat = new THREE.MeshPhongMaterial({
+                color: 0x6366f1,
+                emissive: 0x6366f1,
+                emissiveIntensity: 0.3
+            });
+            const seedCom = new THREE.Mesh(seedComGeom, seedComMat);
+            plantCom.add(seedCom);
+            
+            // Pulsação da semente Liftlio
+            gsap.to(seedCom.scale, {
+                x: 1.2,
+                y: 1.2,
+                z: 1.2,
+                duration: 2,
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut"
+            });
+        }
+        
+        function setupCamera() {
+            camera.position.set(0, 25, 50);
+            camera.lookAt(0, 10, 0);
+        }
+        
+        function growPlantSem(phase) {
+            // Crescimento mínimo e linear
+            const growth = phase * 1.5; // Cresce apenas 1.5m por fase
+            heightSem = growth;
+            
+            // Caule fino cinza
+            const stemGeom = new THREE.CylinderGeometry(0.3, 0.4, growth, 8);
+            const stemMat = new THREE.MeshPhongMaterial({
+                color: 0x999999,
+                emissive: 0x666666,
+                emissiveIntensity: 0.05
+            });
+            const stem = new THREE.Mesh(stemGeom, stemMat);
+            stem.position.y = growth / 2;
+            plantSem.add(stem);
+            
+            // Poucas folhas cinzas
+            if (phase > 2) {
+                for (let i = 0; i < 3; i++) {
+                    const leafGeom = new THREE.ConeGeometry(0.3, 0.8, 4);
+                    const leafMat = new THREE.MeshPhongMaterial({
+                        color: 0xaaaaaa,
+                        emissive: 0x666666,
+                        emissiveIntensity: 0.05
+                    });
+                    const leaf = new THREE.Mesh(leafGeom, leafMat);
+                    const angle = (i / 3) * Math.PI * 2;
+                    leaf.position.set(
+                        Math.cos(angle) * 0.5,
+                        growth - 0.5,
+                        Math.sin(angle) * 0.5
+                    );
+                    leaf.rotation.z = angle;
+                    plantSem.add(leaf);
+                }
+            }
+            
+            // Raízes fracas superficiais
+            if (phase === 1) {
+                for (let i = 0; i < 2; i++) {
+                    const rootGeom = new THREE.CylinderGeometry(0.05, 0.1, 1, 4);
+                    const rootMat = new THREE.MeshPhongMaterial({
+                        color: 0x888888
+                    });
+                    const root = new THREE.Mesh(rootGeom, rootMat);
+                    const angle = i * Math.PI;
+                    root.position.set(Math.cos(angle) * 0.3, -0.5, Math.sin(angle) * 0.3);
+                    root.rotation.z = angle / 2;
+                    plantSem.add(root);
+                }
+            }
+            
+            // Atualizar métrica
+            document.getElementById('heightSem').textContent = `${heightSem.toFixed(1)}m`;
+        }
+        
+        function growPlantCom(phase) {
+            if (phase < 5) {
+                // Fases 1-4: Construindo raízes profundas
+                heightCom = 0.5; // Quase não cresce acima
+                
+                // Criar raízes profundas roxas
+                for (let i = 0; i < phase * 5; i++) {
+                    const angle = (i / (phase * 5)) * Math.PI * 2;
+                    const depth = 2 + phase * 2;
+                    
+                    const points = [];
+                    for (let j = 0; j <= 10; j++) {
+                        const t = j / 10;
+                        points.push(new THREE.Vector3(
+                            15 + Math.sin(angle) * t * depth,
+                            -t * depth,
+                            Math.cos(angle) * t * depth
+                        ));
+                    }
+                    
+                    const curve = new THREE.CatmullRomCurve3(points);
+                    const tubeGeom = new THREE.TubeGeometry(curve, 20, 0.2, 8, false);
+                    const tubeMat = new THREE.MeshPhongMaterial({
+                        color: 0x6366f1,
+                        emissive: 0x6366f1,
+                        emissiveIntensity: 0.2
+                    });
+                    const root = new THREE.Mesh(tubeGeom, tubeMat);
+                    scene.add(root);
+                    rootsCom.push(root);
+                    
+                    // Animação de crescimento
+                    gsap.from(root.scale, {
+                        x: 0,
+                        y: 0,
+                        z: 0,
+                        duration: 1,
+                        delay: i * 0.1,
+                        ease: "power2.out"
+                    });
+                }
+                
+            } else {
+                // Fase 5: EXPLOSÃO DE CRESCIMENTO!
+                heightCom = 30; // Cresce 30 metros!
+                
+                // Bambu principal roxo
+                for (let i = 0; i < 20; i++) {
+                    const segGeom = new THREE.CylinderGeometry(
+                        1 - i * 0.03,
+                        1.2 - i * 0.03,
+                        1.5,
+                        12
+                    );
+                    const segMat = new THREE.MeshPhongMaterial({
+                        color: 0x6366f1,
+                        emissive: 0x6366f1,
+                        emissiveIntensity: 0.2
+                    });
+                    const segment = new THREE.Mesh(segGeom, segMat);
+                    segment.position.set(15, i * 1.5, 0);
+                    plantCom.add(segment);
+                    
+                    // Animação explosiva
+                    gsap.from(segment.scale, {
+                        y: 0,
+                        duration: 0.2,
+                        delay: i * 0.05,
+                        ease: "power4.out"
+                    });
+                    
+                    // Adicionar folhas roxas
+                    if (i > 10) {
+                        for (let j = 0; j < 4; j++) {
+                            const leafGeom = new THREE.ConeGeometry(0.3, 1.5, 6);
+                            const leafMat = new THREE.MeshPhongMaterial({
+                                color: 0x818cf8,
+                                emissive: 0x6366f1,
+                                emissiveIntensity: 0.1
+                            });
+                            const leaf = new THREE.Mesh(leafGeom, leafMat);
+                            const angle = (j / 4) * Math.PI * 2;
+                            leaf.position.set(
+                                15 + Math.cos(angle) * 1.5,
+                                i * 1.5,
+                                Math.sin(angle) * 1.5
+                            );
+                            leaf.rotation.z = angle;
+                            plantCom.add(leaf);
+                        }
+                    }
+                }
+                
+                // Brotos laterais
+                for (let i = 0; i < 3; i++) {
+                    const angle = (i / 3) * Math.PI * 2;
+                    const distance = 4;
+                    
+                    for (let j = 0; j < 10; j++) {
+                        const segGeom = new THREE.CylinderGeometry(0.4, 0.5, 1, 8);
+                        const segMat = new THREE.MeshPhongMaterial({
+                            color: 0x818cf8,
+                            emissive: 0x6366f1,
+                            emissiveIntensity: 0.15
+                        });
+                        const segment = new THREE.Mesh(segGeom, segMat);
+                        segment.position.set(
+                            15 + Math.cos(angle) * distance,
+                            j * 1,
+                            Math.sin(angle) * distance
+                        );
+                        plantCom.add(segment);
+                    }
+                }
+                
+                // Zoom out da câmera
+                gsap.to(camera.position, {
+                    y: 35,
+                    z: 70,
+                    duration: 3,
+                    ease: "power2.out"
+                });
+            }
+            
+            // Atualizar métrica
+            document.getElementById('heightCom').textContent = `${heightCom.toFixed(1)}m`;
+        }
+        
+        function showPhase(text) {
+            const banner = document.getElementById('phaseBanner');
+            document.getElementById('phaseText').textContent = text;
+            
+            gsap.to(banner, {
+                opacity: 1,
+                y: 10,
+                duration: 0.5,
+                ease: "back.out"
+            });
+            
+            setTimeout(() => {
+                gsap.to(banner, {
+                    opacity: 0,
+                    y: 0,
+                    duration: 0.5
+                });
+            }, 2000);
+        }
+        
+        function startGrowthComparison() {
+            let currentPhase = 0;
+            
+            function processPhase() {
+                if (currentPhase < phases.length) {
+                    const phase = phases[currentPhase];
+                    
+                    showPhase(phase.name);
+                    
+                    // Crescer ambas as plantas
+                    growPlantSem(currentPhase + 1);
+                    growPlantCom(currentPhase + 1);
+                    
+                    currentPhase++;
+                    
+                    setTimeout(processPhase, phase.duration);
+                }
+            }
+            
+            // Iniciar após 1 segundo
+            setTimeout(processPhase, 1000);
+        }
+        
+        // Animação
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotação suave das plantas
+            if (plantSem) plantSem.rotation.y += 0.001;
+            if (plantCom) plantCom.rotation.y += 0.001;
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Responsividade
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Iniciar
+        window.addEventListener('DOMContentLoaded', () => {
+            init();
+            animate();
+        });
+    </script>
+</body>
+</html>

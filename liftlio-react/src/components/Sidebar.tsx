@@ -1297,6 +1297,49 @@ const SidebarOverlay = styled.div<{ isOpen: boolean }>`
 
 /* Removed Close Button as requested */
 
+const NotificationDot = styled.div`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  background: #f97316;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+  
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+`;
+
+const NotificationTooltip = styled.div`
+  position: absolute;
+  right: -180px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: ${props => props.theme.name === 'dark' ? '#1f2937' : '#ffffff'};
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  pointer-events: none;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed: isCollapsedProp = false, onToggleCollapse }) => {
   const { currentProject } = useProject();
@@ -1305,6 +1348,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
   const { user, signOut } = useAuth();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [isCollapsedLocal, setIsCollapsedLocal] = useState(isCollapsedProp);
+  const [hasAnalyticsData, setHasAnalyticsData] = useState(false);
   
   const isCollapsed = onToggleCollapse ? isCollapsedProp : isCollapsedLocal;
   const handleToggleCollapse = () => {
@@ -1318,6 +1362,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
   // Navigation items with translations
   const navItems = [
     { path: '/dashboard', label: t('nav.overview'), icon: 'FaHome' },
+    { path: '/analytics', label: 'Analytics', icon: 'FaChartLine' },
     { path: '/mentions', label: t('nav.mentions'), icon: 'FaComments' },
     { path: '/monitoring', label: t('nav.monitoring'), icon: 'FaYoutube' },
     { path: '/settings', label: t('nav.settings'), icon: 'FaCog' },
@@ -1329,6 +1374,31 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
   const [currentInsight, setCurrentInsight] = useState(0);
   const [typing, setTyping] = useState(false); // No longer using typing animation
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Check if project has analytics data
+  useEffect(() => {
+    const checkAnalyticsData = async () => {
+      if (!currentProject?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('analytics')
+          .select('id')
+          .eq('project_id', currentProject.id)
+          .limit(1);
+        
+        if (data && data.length > 0) {
+          setHasAnalyticsData(true);
+        } else {
+          setHasAnalyticsData(false);
+        }
+      } catch (error) {
+        console.error('Error checking analytics data:', error);
+      }
+    };
+    
+    checkAnalyticsData();
+  }, [currentProject]);
   
   // Initial insights to show while loading
   const defaultInsights = [
@@ -1529,6 +1599,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
                   {item.label}
                 </NavItemText>
                 {isCollapsed && <Tooltip>{item.label}</Tooltip>}
+                
+                {/* Show notification dot for Analytics when no data */}
+                {item.path === '/analytics' && !hasAnalyticsData && (
+                  <>
+                    <NotificationDot />
+                    {hoveredItem === '/analytics' && (
+                      <NotificationTooltip>
+                        Add tracking tag to start measuring traffic
+                      </NotificationTooltip>
+                    )}
+                  </>
+                )}
               </NavItem>
             ))}
             

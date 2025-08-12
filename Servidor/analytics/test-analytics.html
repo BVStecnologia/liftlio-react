@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Analytics Liftlio</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #764ba2;
+            text-align: center;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #764ba2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #667eea;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .logs {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Teste do Analytics Liftlio</h1>
+        
+        <div id="script-status" class="status info">
+            Carregando script de analytics...
+        </div>
+
+        <h2>Ações de Teste</h2>
+        <button onclick="trackCustomEvent()">Enviar Evento Customizado</button>
+        <button onclick="trackGoal()">Registrar Meta</button>
+        <button onclick="trackPurchase()">Simular Compra</button>
+        <button onclick="setUser()">Identificar Usuário</button>
+        <button onclick="clearLogs()">Limpar Logs</button>
+
+        <h2>Console de Eventos</h2>
+        <div id="logs" class="logs">
+            <pre id="log-content">Aguardando eventos...</pre>
+        </div>
+
+        <h2>Informações da Sessão</h2>
+        <pre id="session-info">Carregando...</pre>
+    </div>
+
+    <!-- Script de Analytics - Usando direto no IP por enquanto -->
+    <script async src="http://173.249.22.2/t.js" data-id="58"></script>
+    
+    <!-- Script de teste depois que mudar para HTTPS -->
+    <!-- <script async src="https://track.liftlio.com/t.js" data-id="58"></script> -->
+
+    <script>
+        let logCount = 0;
+        
+        // Interceptar console.log para mostrar na página
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLog('LOG', args.join(' '));
+        };
+
+        function addLog(type, message) {
+            logCount++;
+            const logContent = document.getElementById('log-content');
+            const timestamp = new Date().toLocaleTimeString('pt-BR');
+            const newLog = `[${timestamp}] ${type}: ${message}\n`;
+            
+            if (logCount === 1) {
+                logContent.textContent = newLog;
+            } else {
+                logContent.textContent += newLog;
+            }
+            
+            // Auto-scroll
+            const logsDiv = document.getElementById('logs');
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        // Verificar carregamento do script
+        setTimeout(() => {
+            const scriptStatus = document.getElementById('script-status');
+            if (window.liftlio && window.liftlio.track) {
+                scriptStatus.className = 'status success';
+                scriptStatus.innerHTML = '✅ Script carregado com sucesso! API Liftlio disponível.';
+                addLog('SUCCESS', 'Analytics Liftlio carregado e pronto!');
+                updateSessionInfo();
+            } else {
+                scriptStatus.className = 'status error';
+                scriptStatus.innerHTML = '❌ Erro ao carregar script de analytics';
+                addLog('ERROR', 'Falha ao carregar Analytics Liftlio');
+            }
+        }, 2000);
+
+        function updateSessionInfo() {
+            const visitorId = localStorage.getItem('liftlio_visitor_id');
+            const sessionData = JSON.parse(sessionStorage.getItem('liftlio_session_id') || '{}');
+            
+            document.getElementById('session-info').textContent = JSON.stringify({
+                visitor_id: visitorId || 'Não definido',
+                session_id: sessionData.id || 'Não definido',
+                last_activity: sessionData.lastActivity ? new Date(sessionData.lastActivity).toLocaleString('pt-BR') : 'N/A',
+                page_url: window.location.href,
+                user_agent: navigator.userAgent.substring(0, 50) + '...'
+            }, null, 2);
+        }
+
+        function trackCustomEvent() {
+            if (window.liftlio && window.liftlio.trackEvent) {
+                window.liftlio.trackEvent('button_click', {
+                    button_name: 'teste_customizado',
+                    timestamp: Date.now()
+                });
+                addLog('EVENT', 'Evento customizado enviado: button_click');
+            } else {
+                addLog('ERROR', 'API Liftlio não disponível');
+            }
+        }
+
+        function trackGoal() {
+            if (window.liftlio && window.liftlio.trackGoal) {
+                window.liftlio.trackGoal('teste_meta', 100);
+                addLog('GOAL', 'Meta registrada: teste_meta (valor: 100)');
+            } else {
+                addLog('ERROR', 'API Liftlio não disponível');
+            }
+        }
+
+        function trackPurchase() {
+            if (window.liftlio && window.liftlio.trackPurchase) {
+                const orderId = 'ORDER_' + Date.now();
+                window.liftlio.trackPurchase(orderId, 299.90, [
+                    { name: 'Produto Teste', quantity: 1, price: 299.90 }
+                ]);
+                addLog('PURCHASE', `Compra simulada: ${orderId} (R$ 299,90)`);
+            } else {
+                addLog('ERROR', 'API Liftlio não disponível');
+            }
+        }
+
+        function setUser() {
+            if (window.liftlio && window.liftlio.setUser) {
+                const userId = 'USER_' + Math.random().toString(36).substr(2, 9);
+                window.liftlio.setUser(userId, {
+                    name: 'Usuário Teste',
+                    email: 'teste@liftlio.com',
+                    plan: 'premium'
+                });
+                addLog('USER', `Usuário identificado: ${userId}`);
+            } else {
+                addLog('ERROR', 'API Liftlio não disponível');
+            }
+        }
+
+        function clearLogs() {
+            logCount = 0;
+            document.getElementById('log-content').textContent = 'Logs limpos...';
+            addLog('INFO', 'Console limpo');
+        }
+
+        // Atualizar informações a cada 5 segundos
+        setInterval(updateSessionInfo, 5000);
+    </script>
+</body>
+</html>
