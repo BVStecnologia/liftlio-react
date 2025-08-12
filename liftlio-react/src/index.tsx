@@ -4,6 +4,9 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+// A proteção contra extensões já está implementada no index.html
+// Não precisamos duplicar aqui pois causaria conflito
+
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );

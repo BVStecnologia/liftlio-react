@@ -27,41 +27,63 @@ export const posthogConfig = {
     posthog.opt_in_capturing();
     console.log('PostHog loaded with error tracking enabled!');
     
-    // Configure global error handlers with filtering
-    window.onerror = function(message, source, lineno, colno, error) {
-      // Ignorar erros de extensões do Chrome
-      if (source && source.includes('chrome-extension://')) {
-        return true; // Suprime o erro
-      }
-      
-      // Ignorar erros específicos do PostHog com extensões
-      if (error && error.message && error.message.includes('Failed to fetch')) {
-        const stack = error.stack || '';
-        if (stack.includes('chrome-extension://') || stack.includes('frame_ant.js')) {
-          return true; // Suprime o erro
+    // Não sobrescrever window.onerror pois já está protegido no index.html
+    // Apenas adicionar listener para capturar erros relevantes
+    const originalOnerror = window.onerror;
+    if (typeof originalOnerror === 'function') {
+      // Encadear com o handler existente se possível
+      const chainedHandler = function(message: any, source: any, lineno: any, colno: any, error: any) {
+        // Primeiro chamar o handler de proteção do index.html
+        const result = originalOnerror.call(window, message, source, lineno, colno, error);
+        
+        // Se o erro não foi suprimido e é relevante, capturar no PostHog
+        if (!result && error && !source?.includes('chrome-extension://') && !source?.includes('frame_ant')) {
+          posthog.captureException(error, {
+            message,
+            source,
+            lineno,
+            colno,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            url: window.location.href
+          });
         }
-      }
+        
+        return result;
+      };
       
-      if (error) {
-        posthog.captureException(error, {
-          message,
-          source,
-          lineno,
-          colno,
-          timestamp: new Date().toISOString(),
-          userAgent: navigator.userAgent,
-          url: window.location.href
+      // Tentar adicionar o handler sem sobrescrever (pode falhar se não-configurável)
+      try {
+        Object.defineProperty(window, 'onerror', {
+          value: chainedHandler,
+          writable: true,
+          configurable: true
         });
+      } catch (e) {
+        // Se não puder sobrescrever, tudo bem - a proteção do HTML já está ativa
+        console.log('PostHog: Using existing error protection from HTML');
       }
-      return false;
-    };
+    }
     
     window.addEventListener('unhandledrejection', function(event) {
-      // Ignorar erros de fetch causados por extensões
       const reason = event.reason;
+      
+      // Ignorar AbortErrors - são esperados quando requests são cancelados
+      if (reason && (reason.name === 'AbortError' || reason.message === 'signal is aborted without reason')) {
+        event.preventDefault();
+        return;
+      }
+      
+      // Ignorar TODOS os erros "Failed to fetch"
       if (reason && reason.message && reason.message.includes('Failed to fetch')) {
-        const stack = reason.stack || '';
-        if (stack.includes('chrome-extension://') || stack.includes('frame_ant.js')) {
+        event.preventDefault(); // Previne o erro de aparecer no console
+        return;
+      }
+      
+      // Ignorar erros relacionados a frame_ant ou extensões
+      if (reason && reason.stack) {
+        const stack = reason.stack;
+        if (stack.includes('chrome-extension://') || stack.includes('frame_ant') || stack.includes('hoklmmgfnpapgjgcpechhaamimifchmp')) {
           event.preventDefault(); // Previne o erro de aparecer no console
           return;
         }

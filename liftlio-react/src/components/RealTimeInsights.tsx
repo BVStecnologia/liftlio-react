@@ -229,7 +229,9 @@ const RealTimeInsights: React.FC<RealTimeInsightsProps> = ({ projectId, supabase
   ];
 
   useEffect(() => {
-    // Rotacionar insights a cada 15 segundos
+    // Notificações e insights desativados
+    // Para reativar, descomente o código abaixo
+    /*
     const insightInterval = setInterval(() => {
       const randomInsight = insights[Math.floor(Math.random() * insights.length)];
       setCurrentInsight(randomInsight);
@@ -238,7 +240,6 @@ const RealTimeInsights: React.FC<RealTimeInsightsProps> = ({ projectId, supabase
       setTimeout(() => setShowInsight(false), 10000);
     }, 15000);
 
-    // Simular notificações em tempo real
     const notificationInterval = setInterval(() => {
       const types: Array<'success' | 'warning' | 'info' | 'achievement'> = ['success', 'warning', 'info', 'achievement'];
       const randomType = types[Math.floor(Math.random() * types.length)];
@@ -254,16 +255,16 @@ const RealTimeInsights: React.FC<RealTimeInsightsProps> = ({ projectId, supabase
       
       setNotifications(prev => [newNotification, ...prev].slice(0, 3));
       
-      // Auto remover após 10 segundos
       setTimeout(() => {
         removeNotification(newNotification.id);
       }, 10000);
-    }, 30000); // Nova notificação a cada 30 segundos
+    }, 30000);
 
     return () => {
       clearInterval(insightInterval);
       clearInterval(notificationInterval);
     };
+    */
   }, [projectId]);
 
   const getNotificationTitle = (type: string) => {
@@ -308,8 +309,8 @@ const RealTimeInsights: React.FC<RealTimeInsightsProps> = ({ projectId, supabase
 
   return (
     <>
-      {/* Notificações */}
-      <NotificationContainer>
+      {/* Notificações desativadas - remova este comentário para reativar */}
+      {/* <NotificationContainer>
         <AnimatePresence>
           {notifications.map((notification) => (
             <NotificationCard
@@ -345,10 +346,10 @@ const RealTimeInsights: React.FC<RealTimeInsightsProps> = ({ projectId, supabase
             </NotificationCard>
           ))}
         </AnimatePresence>
-      </NotificationContainer>
+      </NotificationContainer> */}
 
-      {/* Floating Insight */}
-      <AnimatePresence>
+      {/* Floating Insight desativado - remova este comentário para reativar */}
+      {/* <AnimatePresence>
         {showInsight && (
           <FloatingInsight
             initial={{ y: 100, opacity: 0 }}
@@ -362,7 +363,7 @@ const RealTimeInsights: React.FC<RealTimeInsightsProps> = ({ projectId, supabase
             <InsightText dangerouslySetInnerHTML={{ __html: currentInsight }} />
           </FloatingInsight>
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
     </>
   );
 };

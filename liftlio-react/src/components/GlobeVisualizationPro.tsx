@@ -82,7 +82,7 @@ const LiveBadge = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
   color: white;
   padding: 6px 14px;
   border-radius: 20px;
@@ -91,7 +91,7 @@ const LiveBadge = styled.div`
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
   
   svg {
     animation: pulse 2s infinite;

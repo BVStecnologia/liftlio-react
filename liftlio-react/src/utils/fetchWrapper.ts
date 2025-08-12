@@ -82,7 +82,13 @@ export async function safeFetch(url: string, options: FetchOptions = {}): Promis
           });
           
           return response;
-        } catch (error) {
+        } catch (error: any) {
+          // Check if it's an abort error
+          if (error.name === 'AbortError') {
+            // Don't log abort errors - they're expected when requests are cancelled
+            throw error;
+          }
+          
           // Check if it's an extension error
           if (isExtensionError(error)) {
             console.warn('Browser extension interference detected. Attempting workaround...');
@@ -99,6 +105,16 @@ export async function safeFetch(url: string, options: FetchOptions = {}): Promis
     );
     
     return response;
+  } catch (error: any) {
+    // Handle abort errors silently
+    if (error.name === 'AbortError') {
+      // Create a synthetic response for aborted requests
+      return new Response(null, {
+        status: 499,
+        statusText: 'Client Closed Request'
+      });
+    }
+    throw error;
   } finally {
     clearTimeout(timeoutId);
   }

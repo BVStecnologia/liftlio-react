@@ -81,6 +81,61 @@
       }
     </script>
     
+    <!-- Proteção IMEDIATA contra erros de extensões no localhost -->
+    <script>
+      // Executar ANTES de qualquer outra coisa
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        // Criar um proxy para window.onerror que filtra erros de extensões
+        Object.defineProperty(window, 'onerror', {
+          value: function(msg, src, lineno, colno, error) {
+            if (src && (src.includes('chrome-extension://') || src.includes('frame_ant'))) return true;
+            if (msg && typeof msg === 'string' && msg.includes('Failed to fetch')) return true;
+            return false;
+          },
+          writable: false,
+          configurable: false
+        });
+        
+        // Interceptar TODOS os event listeners para unhandledrejection
+        const originalAddEventListener = window.addEventListener;
+        window.addEventListener = function(type, listener, options) {
+          if (type === 'unhandledrejection') {
+            // Criar um wrapper que filtra erros de extensões
+            const wrappedListener = function(event) {
+              if (event.reason) {
+                const msg = event.reason.message || '';
+                const stack = event.reason.stack || '';
+                if (msg.includes('Failed to fetch') || 
+                    stack.includes('chrome-extension://') || 
+                    stack.includes('frame_ant')) {
+                  event.preventDefault();
+                  event.stopImmediatePropagation();
+                  return;
+                }
+              }
+              return listener.call(this, event);
+            };
+            return originalAddEventListener.call(this, type, wrappedListener, options);
+          }
+          return originalAddEventListener.call(this, type, listener, options);
+        };
+        
+        // Sobrescrever console.error para filtrar mensagens de extensões
+        const originalConsoleError = console.error;
+        console.error = function(...args) {
+          const errorStr = args.join(' ');
+          if (errorStr.includes('Failed to fetch') || 
+              errorStr.includes('chrome-extension://') || 
+              errorStr.includes('frame_ant')) {
+            return; // Ignorar silenciosamente
+          }
+          return originalConsoleError.apply(console, args);
+        };
+        
+        console.log('%c🛡️ Extension Protection: ACTIVE', 'color: #8b5cf6; font-weight: bold;');
+      }
+    </script>
+    
     <!-- PostHog Analytics -->
     <script>
       !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init Re Cs Fs Pe Rs Ms capture Ve calculateEventProperties Ds register register_once register_for_session unregister unregister_for_session zs getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey canRenderSurveyAsync identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty js As createPersonProfile Ns Is Us opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing Os debug I Ls getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);

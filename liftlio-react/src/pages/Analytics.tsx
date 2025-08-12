@@ -266,7 +266,7 @@ const ChartHeader = styled.div`
 
 const DemoIndicator = styled.span`
   background: rgba(249, 115, 22, 0.1);
-  color: #f97316;
+  color: #8b5cf6;
   padding: 4px 12px;
   border-radius: 12px;
   font-size: 11px;
@@ -517,7 +517,7 @@ const NoDataAlert = styled(motion.div)`
 `;
 
 const DemoDataBadge = styled.div`
-  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
   color: white;
   padding: 6px 16px;
   border-radius: 20px;
@@ -695,20 +695,20 @@ const Analytics: React.FC = () => {
     };
     
     const loadMockData = () => {
-      // Traffic data over time - showing Liftlio dominating other sources
+      // Traffic data over time - Liftlio includes all organic traffic
       const traffic = [
-        { date: 'Mon', liftlio: 3500, organic: 1800, ads: 1200, social: 800, direct: 500 },
-        { date: 'Tue', liftlio: 4200, organic: 1900, ads: 1100, social: 900, direct: 600 },
-        { date: 'Wed', liftlio: 4800, organic: 2000, ads: 1300, social: 850, direct: 550 },
-        { date: 'Thu', liftlio: 4600, organic: 1850, ads: 1150, social: 800, direct: 600 },
-        { date: 'Fri', liftlio: 5400, organic: 2100, ads: 1400, social: 1000, direct: 700 },
-        { date: 'Sat', liftlio: 6200, organic: 2300, ads: 1500, social: 1100, direct: 800 },
-        { date: 'Sun', liftlio: 6800, organic: 2500, ads: 1600, social: 1200, direct: 900 },
+        { date: 'Mon', liftlio: 5300, ads: 1200, social: 800, direct: 500 },
+        { date: 'Tue', liftlio: 6100, ads: 1100, social: 900, direct: 600 },
+        { date: 'Wed', liftlio: 6800, ads: 1300, social: 850, direct: 550 },
+        { date: 'Thu', liftlio: 6450, ads: 1150, social: 800, direct: 600 },
+        { date: 'Fri', liftlio: 7500, ads: 1400, social: 1000, direct: 700 },
+        { date: 'Sat', liftlio: 8500, ads: 1500, social: 1100, direct: 800 },
+        { date: 'Sun', liftlio: 9300, ads: 1600, social: 1200, direct: 900 },
       ];
 
       // Traffic sources with Liftlio purple theme colors
       const sources = [
-        { name: 'Google', value: 45, color: '#8b5cf6' },
+        { name: 'Liftlio', value: 45, color: '#8b5cf6' },
         { name: 'YouTube', value: 25, color: '#a855f7' },
         { name: 'Instagram', value: 15, color: '#c084fc' },
         { name: 'LinkedIn', value: 10, color: '#d8b4fe' },
@@ -769,7 +769,7 @@ const Analytics: React.FC = () => {
       positive: true,
       description: 'from organic traffic',
       icon: <IconComponent icon={FaIcons.FaRocket} />,
-      color: '#f97316',
+      color: '#8b5cf6',
       trend: 'up' as const
     },
     {
@@ -921,16 +921,16 @@ const Analytics: React.FC = () => {
                   <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.3}/>
                 </linearGradient>
                 <linearGradient id="colorOrganic" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.9}/>
-                  <stop offset="100%" stopColor="#06b6d4" stopOpacity={0.2}/>
+                  <stop offset="0%" stopColor="#a855f7" stopOpacity={0.9}/>
+                  <stop offset="100%" stopColor="#a855f7" stopOpacity={0.2}/>
                 </linearGradient>
                 <linearGradient id="colorAds" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#10b981" stopOpacity={0.9}/>
                   <stop offset="100%" stopColor="#10b981" stopOpacity={0.2}/>
                 </linearGradient>
                 <linearGradient id="colorSocial" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9}/>
-                  <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.2}/>
+                  <stop offset="0%" stopColor="#c084fc" stopOpacity={0.9}/>
+                  <stop offset="100%" stopColor="#c084fc" stopOpacity={0.2}/>
                 </linearGradient>
                 <linearGradient id="colorDirect" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9}/>
@@ -1005,24 +1005,13 @@ const Analytics: React.FC = () => {
               />
               <Area 
                 type="monotone" 
-                dataKey="organic" 
-                stackId="1"
-                stroke="transparent" 
-                fillOpacity={1} 
-                fill="url(#colorOrganic)" 
-                strokeWidth={0}
-                name="Organic Search"
-                animationDuration={1500}
-              />
-              <Area 
-                type="monotone" 
                 dataKey="liftlio" 
                 stackId="1"
                 stroke="#8b5cf6" 
                 fillOpacity={1} 
                 fill="url(#colorLiftlio)" 
                 strokeWidth={2}
-                name="Liftlio SEO"
+                name="Liftlio Organic"
                 animationDuration={1500}
               />
             </AreaChart>
@@ -1030,22 +1019,18 @@ const Analytics: React.FC = () => {
           <ChartLegend>
             <LegendItem>
               <LegendDot color="#8b5cf6" />
-              <span><strong>Liftlio SEO</strong> - 45% of total traffic</span>
+              <span><strong>Liftlio Organic</strong> - 68% of total traffic (Google, Bing, etc.)</span>
             </LegendItem>
             <LegendItem>
-              <LegendDot color="#a855f7" />
-              <span><strong>Organic Search</strong> - 23% from Google/Bing</span>
-            </LegendItem>
-            <LegendItem>
-              <LegendDot color="#c084fc" />
+              <LegendDot color="#10b981" />
               <span><strong>Paid Ads</strong> - 15% from Google/Meta Ads</span>
             </LegendItem>
             <LegendItem>
-              <LegendDot color="#d8b4fe" />
+              <LegendDot color="#c084fc" />
               <span><strong>Social Media</strong> - 10% from social networks</span>
             </LegendItem>
             <LegendItem>
-              <LegendDot color="#e9d5ff" />
+              <LegendDot color="#ef4444" />
               <span><strong>Direct</strong> - 7% direct visits</span>
             </LegendItem>
           </ChartLegend>
