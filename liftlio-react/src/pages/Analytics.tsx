@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { 
   LineChart, Line, AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
@@ -10,10 +10,33 @@ import {
 import * as FaIcons from 'react-icons/fa';
 import { FaCode, FaCopy, FaCheck, FaCheckCircle, FaInfoCircle } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useProject } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
+import GlobeVisualization from '../components/GlobeVisualization';
+import RealTimeInsights from '../components/RealTimeInsights';
+
+// Animações adicionais
+const shimmer = keyframes`
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+`;
+
+const slideInFromRight = keyframes`
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+`;
 
 const Container = styled.div`
   padding: 0;
@@ -772,6 +795,12 @@ const Analytics: React.FC = () => {
 
   return (
     <Container>
+      {/* Sistema de Notificações e Insights em Tempo Real */}
+      <RealTimeInsights 
+        projectId={currentProject?.id || 0} 
+        supabase={supabase} 
+      />
+      
       <Header>
         <Title>
           <IconComponent icon={FaIcons.FaChartLine} />
@@ -789,6 +818,12 @@ const Analytics: React.FC = () => {
           </FilterButton>
         </FilterGroup>
       </Header>
+
+      {/* Globo 3D de visitantes online */}
+      <GlobeVisualization 
+        projectId={currentProject?.id || 0} 
+        supabase={supabase} 
+      />
 
       {!hasData && (
         <>
