@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useProject } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
-import GlobeVisualization from '../components/GlobeVisualization';
+import GlobeVisualizationPro from '../components/GlobeVisualizationPro';
 import RealTimeInsights from '../components/RealTimeInsights';
 
 // Animações adicionais
@@ -797,7 +797,7 @@ const Analytics: React.FC = () => {
     <Container>
       {/* Sistema de Notificações e Insights em Tempo Real */}
       <RealTimeInsights 
-        projectId={currentProject?.id || 0} 
+        projectId={Number(currentProject?.id) || 0} 
         supabase={supabase} 
       />
       
@@ -819,9 +819,9 @@ const Analytics: React.FC = () => {
         </FilterGroup>
       </Header>
 
-      {/* Globo 3D de visitantes online */}
-      <GlobeVisualization 
-        projectId={currentProject?.id || 0} 
+      {/* Globo 3D Profissional de visitantes online */}
+      <GlobeVisualizationPro
+        projectId={Number(currentProject?.id) || 0} 
         supabase={supabase} 
       />
 
