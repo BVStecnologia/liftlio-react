@@ -176,3 +176,4 @@ npm test                    # Jest + React Testing Library
 - **14/01/2025**: MCP Supabase totalmente funcional
 - **26/07/2025**: Gmail MCP configurado via Docker
 - **11/08/2025**: Análise e otimização do CLAUDE.md
+- **12/08/2025**: Correções em Analytics - Unificação de tráfego orgânico como Liftlio, cores roxas aplicadas, proteção contra erros de extensões no localhost
