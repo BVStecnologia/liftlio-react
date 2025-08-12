@@ -30,7 +30,8 @@ function hasProblematicExtensions(): boolean {
     
     for (const global of suspiciousGlobals) {
       if (global in window) {
-        console.warn(`Detected potential extension: ${global}`);
+        // Using debug level to reduce console noise - these are just informative
+        console.debug(`Detected potential extension: ${global}`);
       }
     }
   } catch (e) {

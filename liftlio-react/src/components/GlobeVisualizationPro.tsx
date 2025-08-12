@@ -324,28 +324,33 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
   // Configuração inicial do globo
   useEffect(() => {
     if (globeEl.current && !globeReady) {
-      // Configurações do globo
-      globeEl.current
-        .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
-        .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
-        .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
-        .showAtmosphere(true)
-        .atmosphereColor('#8b5cf6')
-        .atmosphereAltitude(0.25)
-        .pointOfView({ lat: 0, lng: 0, altitude: 2.5 }, 1000);
+      // Tentar adicionar iluminação customizada se o método scene estiver disponível
+      try {
+        if (globeEl.current.scene && typeof globeEl.current.scene === 'function') {
+          const scene = globeEl.current.scene();
+          const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+          scene.add(ambientLight);
+          
+          const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+          directionalLight.position.set(1, 1, 1);
+          scene.add(directionalLight);
+        }
 
-      // Adicionar iluminação customizada
-      const scene = globeEl.current.scene();
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-      scene.add(ambientLight);
-      
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-      directionalLight.position.set(1, 1, 1);
-      scene.add(directionalLight);
+        // Configurar ponto de vista e rotação se os métodos estiverem disponíveis
+        if (globeEl.current.pointOfView && typeof globeEl.current.pointOfView === 'function') {
+          globeEl.current.pointOfView({ lat: 0, lng: 0, altitude: 2.5 }, 1000);
+        }
 
-      // Auto-rotação
-      globeEl.current.controls().autoRotate = true;
-      globeEl.current.controls().autoRotateSpeed = 0.5;
+        if (globeEl.current.controls && typeof globeEl.current.controls === 'function') {
+          const controls = globeEl.current.controls();
+          if (controls) {
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.5;
+          }
+        }
+      } catch (error) {
+        console.warn('Alguns métodos do Globe não estão disponíveis:', error);
+      }
       
       setGlobeReady(true);
     }
@@ -537,6 +542,14 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
           width={window.innerWidth}
           height={600}
           backgroundColor="rgba(0,0,0,0)"
+          
+          // Configurações visuais do globo
+          globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+          bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+          backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
+          showAtmosphere={true}
+          atmosphereColor="#8b5cf6"
+          atmosphereAltitude={0.25}
           
           // Pontos de visitantes
           pointsData={locations}

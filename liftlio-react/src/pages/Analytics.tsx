@@ -914,92 +914,105 @@ const Analytics: React.FC = () => {
             {!hasData && <DemoIndicator>Demo Data</DemoIndicator>}
           </ChartHeader>
           <ResponsiveContainer width="100%" height={400}>
-            <AreaChart data={trafficData} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
+            <AreaChart data={trafficData} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
               <defs>
                 <linearGradient id="colorLiftlio" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.95}/>
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.4}/>
+                  <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1}/>
+                  <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.3}/>
                 </linearGradient>
                 <linearGradient id="colorOrganic" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#a855f7" stopOpacity={0.7}/>
-                  <stop offset="95%" stopColor="#a855f7" stopOpacity={0.2}/>
+                  <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.9}/>
+                  <stop offset="100%" stopColor="#06b6d4" stopOpacity={0.2}/>
                 </linearGradient>
                 <linearGradient id="colorAds" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#c084fc" stopOpacity={0.6}/>
-                  <stop offset="95%" stopColor="#c084fc" stopOpacity={0.15}/>
+                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.9}/>
+                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.2}/>
                 </linearGradient>
                 <linearGradient id="colorSocial" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#d8b4fe" stopOpacity={0.5}/>
-                  <stop offset="95%" stopColor="#d8b4fe" stopOpacity={0.1}/>
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9}/>
+                  <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.2}/>
                 </linearGradient>
                 <linearGradient id="colorDirect" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#e9d5ff" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#e9d5ff" stopOpacity={0.05}/>
+                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9}/>
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0.2}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+              <CartesianGrid strokeDasharray="0" stroke={chartColors.grid} vertical={false} opacity={0.1} />
               <XAxis 
                 dataKey="date" 
                 stroke={chartColors.text}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 11, fontWeight: 500 }}
                 tickLine={false}
-                axisLine={false}
+                axisLine={{ stroke: chartColors.grid, strokeWidth: 0.5 }}
+                dy={10}
               />
               <YAxis 
                 stroke={chartColors.text}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 11, fontWeight: 500 }}
                 tickLine={false}
                 axisLine={false}
+                dx={-5}
               />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: theme.name === 'dark' ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                  border: `1px solid ${chartColors.primary}`,
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)',
-                  color: theme.colors.text.primary
+                  backgroundColor: theme.name === 'dark' ? 'rgba(17, 24, 39, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+                  border: 'none',
+                  borderRadius: '16px',
+                  boxShadow: theme.name === 'dark' 
+                    ? '0 10px 40px rgba(0, 0, 0, 0.4), 0 0 1px rgba(139, 92, 246, 0.5)'
+                    : '0 10px 40px rgba(0, 0, 0, 0.1), 0 0 1px rgba(139, 92, 246, 0.3)',
+                  color: theme.colors.text.primary,
+                  padding: '12px 16px',
+                  fontSize: '13px',
+                  fontWeight: 500
                 }}
                 formatter={(value: number) => [`${value.toLocaleString()} visits`, '']}
+                labelStyle={{ fontWeight: 600, marginBottom: 8 }}
+                itemStyle={{ padding: '2px 0' }}
               />
               <Area 
                 type="monotone" 
                 dataKey="direct" 
                 stackId="1"
-                stroke="#e9d5ff" 
+                stroke="transparent" 
                 fillOpacity={1} 
                 fill="url(#colorDirect)" 
                 strokeWidth={0}
                 name="Direct"
+                animationDuration={1500}
               />
               <Area 
                 type="monotone" 
                 dataKey="social" 
                 stackId="1"
-                stroke="#d8b4fe" 
+                stroke="transparent" 
                 fillOpacity={1} 
                 fill="url(#colorSocial)" 
                 strokeWidth={0}
                 name="Social Media"
+                animationDuration={1500}
               />
               <Area 
                 type="monotone" 
                 dataKey="ads" 
                 stackId="1"
-                stroke="#c084fc" 
+                stroke="transparent" 
                 fillOpacity={1} 
                 fill="url(#colorAds)" 
                 strokeWidth={0}
                 name="Paid Ads"
+                animationDuration={1500}
               />
               <Area 
                 type="monotone" 
                 dataKey="organic" 
                 stackId="1"
-                stroke="#a855f7" 
+                stroke="transparent" 
                 fillOpacity={1} 
                 fill="url(#colorOrganic)" 
                 strokeWidth={0}
                 name="Organic Search"
+                animationDuration={1500}
               />
               <Area 
                 type="monotone" 
@@ -1008,8 +1021,9 @@ const Analytics: React.FC = () => {
                 stroke="#8b5cf6" 
                 fillOpacity={1} 
                 fill="url(#colorLiftlio)" 
-                strokeWidth={3}
+                strokeWidth={2}
                 name="Liftlio SEO"
+                animationDuration={1500}
               />
             </AreaChart>
           </ResponsiveContainer>

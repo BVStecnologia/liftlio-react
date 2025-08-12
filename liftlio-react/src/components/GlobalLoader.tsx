@@ -34,12 +34,12 @@ const fadeIn = keyframes`
   }
 `;
 
-const Container = styled.div<{ fullScreen?: boolean }>`
+const Container = styled.div<{ $fullScreen?: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  ${props => props.fullScreen ? `
+  ${props => props.$fullScreen ? `
     position: fixed;
     inset: 0;
     background: ${props.theme.colors.background};
@@ -79,23 +79,23 @@ const RadarSweep = styled.div`
   opacity: 0.8;
 `;
 
-const RadarRing = styled.div<{ inset: string }>`
+const RadarRing = styled.div<{ $inset: string }>`
   position: absolute;
-  inset: ${props => props.inset};
+  inset: ${props => props.$inset};
   border: 1px solid ${props => `${props.theme.colors.primary}15`};
   border-radius: 50%;
 `;
 
-const MentionBlip = styled.div<{ top: string; left: string; delay: string }>`
+const MentionBlip = styled.div<{ $top: string; $left: string; $delay: string }>`
   position: absolute;
   width: 8px;
   height: 8px;
   background: ${props => props.theme.colors.primaryLight};
   border-radius: 50%;
-  top: ${props => props.top};
-  left: ${props => props.left};
+  top: ${props => props.$top};
+  left: ${props => props.$left};
   animation: ${blipAppear} 3s ease-in-out infinite;
-  animation-delay: ${props => props.delay};
+  animation-delay: ${props => props.$delay};
   box-shadow: 
     0 0 20px ${props => props.theme.colors.primaryLight},
     0 0 40px ${props => `${props.theme.colors.primaryLight}50`};
@@ -124,21 +124,21 @@ const GlobalLoader: React.FC<GlobalLoaderProps> = ({
   fullScreen = true 
 }) => {
   return (
-    <Container fullScreen={fullScreen}>
+    <Container $fullScreen={fullScreen}>
       <RadarContainer>
         <RadarSweep />
         
         {/* Radar rings */}
-        <RadarRing inset="20%" />
-        <RadarRing inset="40%" />
-        <RadarRing inset="60%" />
+        <RadarRing $inset="20%" />
+        <RadarRing $inset="40%" />
+        <RadarRing $inset="60%" />
         
         {/* Mention blips - positions calculated for better distribution */}
-        <MentionBlip top="25%" left="70%" delay="0s" />
-        <MentionBlip top="60%" left="35%" delay="0.8s" />
-        <MentionBlip top="45%" left="55%" delay="1.6s" />
-        <MentionBlip top="30%" left="30%" delay="2.4s" />
-        <MentionBlip top="70%" left="65%" delay="3.2s" />
+        <MentionBlip $top="25%" $left="70%" $delay="0s" />
+        <MentionBlip $top="60%" $left="35%" $delay="0.8s" />
+        <MentionBlip $top="45%" $left="55%" $delay="1.6s" />
+        <MentionBlip $top="30%" $left="30%" $delay="2.4s" />
+        <MentionBlip $top="70%" $left="65%" $delay="3.2s" />
       </RadarContainer>
       
       <LoadingText>{message}</LoadingText>

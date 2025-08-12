@@ -221,6 +221,50 @@ type ProjectModalProps = {
   selectedProject?: any;
 };
 
+// Move styled components out of component to avoid dynamic creation warnings
+const TabContainer = styled.div`
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid ${props => props.theme.colors.grey};
+`;
+
+const Tab = styled.button<{ $active: boolean }>`
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid ${props => props.$active ? props.theme.colors.primary : 'transparent'};
+  color: ${props => props.$active ? props.theme.colors.primary : props.theme.colors.darkGrey};
+  font-weight: ${props => props.$active ? '600' : '400'};
+  cursor: pointer;
+`;
+
+const ProjectList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+`;
+
+const ProjectCard = styled.div<{ $active?: boolean }>`
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid ${props => props.$active ? props.theme.colors.primary : props.theme.colors.grey};
+  background-color: ${props => props.$active ? `${props.theme.colors.primary}0A` : 'white'};
+  cursor: pointer;
+`;
+
+const ProjectTitle = styled.h3`
+  margin: 0 0 5px 0;
+  font-size: 16px;
+`;
+
+const ProjectDescription = styled.p`
+  margin: 0;
+  font-size: 14px;
+  color: ${props => props.theme.colors.darkGrey};
+`;
+
 const ProjectModal: React.FC<ProjectModalProps> = ({ 
   isOpen = false, 
   onClose, 
@@ -572,48 +616,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   );
   
   // Estilos adicionais
-  const TabContainer = styled.div`
-    display: flex;
-    margin-bottom: 20px;
-    border-bottom: 1px solid ${props => props.theme.colors.grey};
-  `;
-
-  const Tab = styled.button<{ active: boolean }>`
-    padding: 12px 24px;
-    background: none;
-    border: none;
-    border-bottom: 2px solid ${props => props.active ? props.theme.colors.primary : 'transparent'};
-    color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.darkGrey};
-    font-weight: ${props => props.active ? '600' : '400'};
-    cursor: pointer;
-  `;
-
-  const ProjectList = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-height: 300px;
-    overflow-y: auto;
-  `;
-
-  const ProjectCard = styled.div<{ active?: boolean }>`
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid ${props => props.active ? props.theme.colors.primary : props.theme.colors.grey};
-    background-color: ${props => props.active ? `${props.theme.colors.primary}0A` : 'white'};
-    cursor: pointer;
-  `;
-
-  const ProjectTitle = styled.h3`
-    margin: 0 0 5px 0;
-    font-size: 16px;
-  `;
-
-  const ProjectDescription = styled.p`
-    margin: 0;
-    font-size: 14px;
-    color: ${props => props.theme.colors.darkGrey};
-  `;
+  // Styled components moved outside to avoid dynamic creation warnings
 
   return (
     <Modal
