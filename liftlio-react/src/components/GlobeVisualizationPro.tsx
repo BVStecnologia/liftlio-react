@@ -17,32 +17,7 @@ const GlobeContainer = styled.div`
   border-radius: 24px;
   margin-bottom: 32px;
   overflow: hidden;
-  border: 1px solid ${props => props.theme.name === 'dark' 
-    ? 'rgba(139, 92, 246, 0.2)' 
-    : 'rgba(139, 92, 246, 0.1)'};
   position: relative;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, 
-      transparent,
-      #8b5cf6 20%,
-      #a855f7 50%,
-      #8b5cf6 80%,
-      transparent
-    );
-    animation: shimmer 3s infinite;
-  }
-  
-  @keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
 `;
 
 // Wrapper do Globo
@@ -65,15 +40,15 @@ const StatsOverlay = styled(motion.div)`
   top: 40px;
   left: 40px;
   background: ${props => props.theme.name === 'dark'
-    ? 'rgba(17, 24, 39, 0.95)'
+    ? 'rgba(26, 26, 26, 0.95)'
     : 'rgba(255, 255, 255, 0.95)'};
   backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 28px;
   border: 1px solid ${props => props.theme.name === 'dark'
-    ? 'rgba(139, 92, 246, 0.3)'
-    : 'rgba(139, 92, 246, 0.2)'};
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    ? 'rgba(255, 255, 255, 0.1)'
+    : props.theme.colors.border};
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   min-width: 260px;
   z-index: 10;
 `;
@@ -153,21 +128,23 @@ const LocationItem = styled(motion.div)`
   justify-content: space-between;
   padding: 12px 16px;
   background: ${props => props.theme.name === 'dark'
-    ? 'rgba(139, 92, 246, 0.05)'
-    : 'rgba(139, 92, 246, 0.03)'};
+    ? 'rgba(37, 37, 37, 0.5)'
+    : 'rgba(249, 250, 251, 0.5)'};
   border-radius: 12px;
   margin-bottom: 8px;
   border: 1px solid ${props => props.theme.name === 'dark'
-    ? 'rgba(139, 92, 246, 0.15)'
-    : 'rgba(139, 92, 246, 0.1)'};
+    ? 'rgba(255, 255, 255, 0.08)'
+    : 'rgba(229, 231, 235, 0.5)'};
   transition: all 0.2s ease;
   
   &:hover {
     background: ${props => props.theme.name === 'dark'
-      ? 'rgba(139, 92, 246, 0.1)'
-      : 'rgba(139, 92, 246, 0.05)'};
+      ? 'rgba(37, 37, 37, 0.8)'
+      : 'rgba(243, 244, 246, 0.8)'};
     transform: translateX(4px);
-    border-color: ${props => props.theme.colors.primary};
+    border-color: ${props => props.theme.name === 'dark'
+      ? 'rgba(255, 255, 255, 0.12)'
+      : 'rgba(209, 213, 219, 0.7)'};
   }
 `;
 
@@ -180,7 +157,7 @@ const LocationName = styled.div`
   color: ${props => props.theme.colors.text.primary};
   
   svg {
-    color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.name === 'dark' ? '#9ca3af' : '#6b7280'};
     font-size: 16px;
   }
 `;
