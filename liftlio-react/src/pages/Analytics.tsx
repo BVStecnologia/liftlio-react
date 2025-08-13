@@ -1362,56 +1362,6 @@ const Analytics: React.FC = () => {
         supabase={supabase} 
       />
       
-      {/* Tag Connection Status */}
-      <TagStatusCard $connected={tagStatus.connected}>
-        <TagStatusInfo>
-          <TagStatusIcon $connected={tagStatus.connected}>
-            <IconComponent icon={tagStatus.connected ? FaIcons.FaCheckCircle : FaIcons.FaExclamationCircle} />
-          </TagStatusIcon>
-          <TagStatusText>
-            <TagStatusTitle $connected={tagStatus.connected}>
-              {tagStatus.connected ? (
-                <>
-                  🟣 Tag Connected
-                  {tagStatus.lastSeen && (
-                    <span style={{ fontSize: '12px', fontWeight: 400, marginLeft: '8px' }}>
-                      Last seen: {new Date(tagStatus.lastSeen).toLocaleTimeString()}
-                    </span>
-                  )}
-                </>
-              ) : (
-                '🔴 Tag Not Connected'
-              )}
-            </TagStatusTitle>
-            <TagStatusDescription>
-              {tagStatus.connected 
-                ? `Your tracking tag is active and receiving data. ${tagStatus.totalEvents24h} events tracked in the last 24 hours.`
-                : 'No data received in the last 24 hours. Please install the tracking tag on your website.'
-              }
-            </TagStatusDescription>
-          </TagStatusText>
-        </TagStatusInfo>
-        
-        {tagStatus.connected && (
-          <TagStatusMetrics>
-            <TagMetric>
-              <TagMetricValue>{tagStatus.totalEvents24h}</TagMetricValue>
-              <TagMetricLabel>Total Events (24h)</TagMetricLabel>
-            </TagMetric>
-            <TagMetric>
-              <TagMetricValue>{tagStatus.pageviews24h}</TagMetricValue>
-              <TagMetricLabel>Page Views (24h)</TagMetricLabel>
-            </TagMetric>
-            <TagMetric>
-              <TagMetricValue>
-                {Object.values(verifiedEvents).filter(v => v).length}/5
-              </TagMetricValue>
-              <TagMetricLabel>Events Verified</TagMetricLabel>
-            </TagMetric>
-          </TagStatusMetrics>
-        )}
-      </TagStatusCard>
-      
       <Header>
         <Title>
           <IconComponent icon={FaIcons.FaChartLine} />
@@ -1424,6 +1374,114 @@ const Analytics: React.FC = () => {
         projectId={Number(currentProject?.id) || 0} 
         supabase={supabase} 
       />
+
+      {/* Tag Connection Status - Compact version below globe */}
+      {tagStatus.connected && (
+        <TagStatusCard 
+          $connected={tagStatus.connected} 
+          style={{ 
+            marginTop: '24px', 
+            marginBottom: '20px',
+            padding: '12px 20px',
+            background: theme.name === 'dark' 
+              ? 'rgba(139, 92, 246, 0.05)'
+              : 'rgba(139, 92, 246, 0.03)',
+            border: `1px solid ${theme.name === 'dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.15)'}`,
+            borderRadius: '12px'
+          }}
+        >
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <TagStatusIcon 
+                $connected={tagStatus.connected} 
+                style={{ fontSize: '18px', color: '#8b5cf6' }}
+              >
+                <IconComponent icon={FaIcons.FaCheckCircle} />
+              </TagStatusIcon>
+              <span style={{ 
+                fontSize: '14px', 
+                fontWeight: 600,
+                color: '#8b5cf6'
+              }}>
+                Tag Connected
+              </span>
+              <span style={{ 
+                fontSize: '12px', 
+                color: theme.colors.text.secondary,
+                opacity: 0.8
+              }}>
+                Last seen: {tagStatus.lastSeen ? new Date(tagStatus.lastSeen).toLocaleTimeString() : 'N/A'}
+              </span>
+            </div>
+            
+            <div style={{ 
+              display: 'flex', 
+              gap: '24px',
+              alignItems: 'center'
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ 
+                  fontSize: '18px', 
+                  fontWeight: 700,
+                  color: theme.colors.text.primary
+                }}>
+                  {tagStatus.totalEvents24h}
+                </div>
+                <div style={{ 
+                  fontSize: '10px', 
+                  color: theme.colors.text.secondary,
+                  opacity: 0.7,
+                  marginTop: '2px'
+                }}>
+                  Total Events (24h)
+                </div>
+              </div>
+              
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ 
+                  fontSize: '18px', 
+                  fontWeight: 700,
+                  color: theme.colors.text.primary
+                }}>
+                  {tagStatus.pageviews24h}
+                </div>
+                <div style={{ 
+                  fontSize: '10px', 
+                  color: theme.colors.text.secondary,
+                  opacity: 0.7,
+                  marginTop: '2px'
+                }}>
+                  Page Views (24h)
+                </div>
+              </div>
+              
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ 
+                  fontSize: '18px', 
+                  fontWeight: 700,
+                  color: '#8b5cf6'
+                }}>
+                  {Object.values(verifiedEvents).filter(v => v).length}/5
+                </div>
+                <div style={{ 
+                  fontSize: '10px', 
+                  color: theme.colors.text.secondary,
+                  opacity: 0.7,
+                  marginTop: '2px'
+                }}>
+                  Events Verified
+                </div>
+              </div>
+            </div>
+          </div>
+        </TagStatusCard>
+      )}
 
       {!hasData && (
         <>

@@ -198,7 +198,7 @@ const LocationCount = styled.div`
 // Title Overlay
 const TitleOverlay = styled.div`
   position: absolute;
-  top: 40px;
+  top: 50px;
   right: 40px;
   z-index: 10;
 `;
@@ -220,7 +220,8 @@ const GlobeTitle = styled.h2`
 const GlobeSubtitle = styled.p`
   color: ${props => props.theme.colors.text.secondary};
   font-size: 14px;
-  margin-top: 8px;
+  margin-top: 24px;
+  margin-bottom: 0;
 `;
 
 // Notification Toast
