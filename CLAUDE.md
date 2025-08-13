@@ -11,7 +11,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Projeto Liftlio
 **Stack**: React 19, TypeScript 4.9, Supabase, Fly.io  
 **Tipo**: Plataforma de monitoramento de vídeos e análise de sentimentos com AI  
-**Última atualização**: 11/08/2025
+**Última atualização**: 13/08/2025
+
+## 🖥️ Servidores e Ambientes
+
+### Frontend Principal
+- **Local**: `/liftlio-react/` (desenvolvimento)
+- **Produção**: Fly.io (app: liftlio, região: sjc)
+- **URL**: https://liftlio.com
+
+### Analytics Server (SERVIDOR REMOTO!)
+- **Código-fonte**: `/Servidor/analytics/` (apenas código, NÃO roda local)
+- **Servidor Remoto**: 173.249.22.2 (VPS Linux)
+- **Container**: Docker `liftlio-analytics-prod`
+- **URL Pública**: https://track.liftlio.com (via Cloudflare)
+- **⚠️ IMPORTANTE**: Alterações em `/Servidor/analytics/` precisam ser deployadas via SSH no servidor remoto!
+
+### WordPress/Blog
+- **URL**: https://blog.liftlio.com
+- **Server**: Cloudways (wordpress-1319296-5689133.cloudwaysapps.com)
+- **Acesso**: Via MCP WordPress tools
 
 ## Comandos Essenciais
 
@@ -172,8 +191,38 @@ npm test                    # Jest + React Testing Library
 - OpenAI API key como `OPENAI_API_KEY` no Vault
 - Fly.io configurado com auto-stop/start para economia
 
+## 📊 Sistema de Analytics (track.liftlio.com)
+
+### Arquitetura
+- **Servidor**: VPS Linux em 173.249.22.2 (NÃO local!)
+- **Proxy**: Cloudflare com SSL Flexible (Configuration Rule específica)
+- **Container**: Docker rodando `liftlio-analytics-prod`
+- **Banco**: Tabela `analytics` no Supabase
+- **RPC**: Função `track_event` para inserir eventos
+
+### Como Usar
+```html
+<!-- Tag de tracking para sites -->
+<script async src="https://track.liftlio.com/t.js" data-id="58"></script>
+```
+
+### Troubleshooting Analytics
+- **Erro 521**: Verificar Configuration Rule no Cloudflare (SSL = Flexible)
+- **Eventos não salvam**: Verificar função RPC `track_event` (pode ter duplicatas)
+- **Bot detected**: Servidor tem proteção anti-bot agressiva
+
+### Deploy de Mudanças
+```bash
+# NO SERVIDOR REMOTO (não local!)
+ssh root@173.249.22.2
+cd /opt/liftlio-analytics
+git pull
+docker-compose down && docker-compose up -d --build
+```
+
 ## Histórico de Sessões Relevantes
 - **14/01/2025**: MCP Supabase totalmente funcional
 - **26/07/2025**: Gmail MCP configurado via Docker
 - **11/08/2025**: Análise e otimização do CLAUDE.md
 - **12/08/2025**: Correções em Analytics - Unificação de tráfego orgânico como Liftlio, cores roxas aplicadas, proteção contra erros de extensões no localhost
+- **13/08/2025**: Analytics Server - Configuração Cloudflare SSL Flexible, correção função track_event duplicada, documentação sobre servidor remoto, correção de tipos implícitos no GlobeVisualizationPro

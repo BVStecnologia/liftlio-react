@@ -611,4 +611,5 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
   );
 };
 
+export { GlobeVisualizationPro };
 export default GlobeVisualizationPro;

@@ -699,10 +699,10 @@ const AccordionTitle = styled.div`
   }
 `;
 
-const AccordionIcon = styled.div<{ $isOpen?: boolean }>`
+const AccordionIcon = styled.div<{ isOpen?: boolean }>`
   color: ${props => props.theme.colors.primary};
   transition: transform 0.3s ease;
-  transform: ${props => props.$isOpen ? 'rotate(180deg)' : 'rotate(0)'};
+  transform: ${props => props.isOpen ? 'rotate(180deg)' : 'rotate(0)'};
   font-size: 20px;
 `;
 
@@ -858,7 +858,7 @@ const TooltipContent = styled.div`
   }
 `;
 
-const VerifiedBadge = styled.span<{ $verified: boolean }>`
+const VerifiedBadge = styled.span<{ verified: boolean }>`
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -867,7 +867,7 @@ const VerifiedBadge = styled.span<{ $verified: boolean }>`
   border-radius: 20px;
   font-size: 11px;
   font-weight: 500;
-  background: ${props => props.$verified
+  background: ${props => props.verified
     ? props.theme.name === 'dark'
       ? 'rgba(139, 92, 246, 0.15)'
       : 'rgba(139, 92, 246, 0.1)'
@@ -875,11 +875,11 @@ const VerifiedBadge = styled.span<{ $verified: boolean }>`
       ? 'rgba(107, 114, 128, 0.15)'
       : 'rgba(107, 114, 128, 0.1)'
   };
-  color: ${props => props.$verified 
+  color: ${props => props.verified 
     ? '#8b5cf6'
     : props.theme.colors.text.secondary
   };
-  border: 1px solid ${props => props.$verified
+  border: 1px solid ${props => props.verified
     ? 'rgba(139, 92, 246, 0.2)'
     : 'rgba(107, 114, 128, 0.1)'
   };
@@ -889,8 +889,8 @@ const VerifiedBadge = styled.span<{ $verified: boolean }>`
   }
 `;
 
-const TagStatusCard = styled.div<{ $connected: boolean }>`
-  background: ${props => props.$connected
+const TagStatusCard = styled.div<{ connected: boolean }>`
+  background: ${props => props.connected
     ? props.theme.name === 'dark' 
       ? 'rgba(139, 92, 246, 0.03)'
       : 'rgba(139, 92, 246, 0.02)'
@@ -898,7 +898,7 @@ const TagStatusCard = styled.div<{ $connected: boolean }>`
       ? 'rgba(107, 114, 128, 0.05)'
       : 'rgba(107, 114, 128, 0.03)'
   };
-  border: 1px solid ${props => props.$connected 
+  border: 1px solid ${props => props.connected 
     ? props.theme.name === 'dark'
       ? 'rgba(139, 92, 246, 0.2)'
       : 'rgba(139, 92, 246, 0.15)'
@@ -921,11 +921,11 @@ const TagStatusInfo = styled.div`
   gap: 16px;
 `;
 
-const TagStatusIcon = styled.div<{ $connected: boolean }>`
+const TagStatusIcon = styled.div<{ connected: boolean }>`
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: ${props => props.$connected 
+  background: ${props => props.connected 
     ? props.theme.name === 'dark'
       ? 'rgba(139, 92, 246, 0.15)'
       : 'rgba(139, 92, 246, 0.1)'
@@ -933,12 +933,12 @@ const TagStatusIcon = styled.div<{ $connected: boolean }>`
       ? 'rgba(107, 114, 128, 0.15)'
       : 'rgba(107, 114, 128, 0.1)'
   };
-  color: ${props => props.$connected ? '#8b5cf6' : '#6b7280'};
+  color: ${props => props.connected ? '#8b5cf6' : '#6b7280'};
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24px;
-  border: 1px solid ${props => props.$connected 
+  border: 1px solid ${props => props.connected 
     ? 'rgba(139, 92, 246, 0.2)' 
     : 'rgba(107, 114, 128, 0.15)'
   };
@@ -948,8 +948,8 @@ const TagStatusText = styled.div`
   flex: 1;
 `;
 
-const TagStatusTitle = styled.h3<{ $connected: boolean }>`
-  color: ${props => props.$connected ? '#8b5cf6' : '#6b7280'};
+const TagStatusTitle = styled.h3<{ connected: boolean }>`
+  color: ${props => props.connected ? '#8b5cf6' : '#6b7280'};
   font-size: 18px;
   font-weight: 700;
   margin: 0 0 4px 0;
@@ -1363,13 +1363,13 @@ const Analytics: React.FC = () => {
       />
       
       {/* Tag Connection Status */}
-      <TagStatusCard $connected={tagStatus.connected}>
+      <TagStatusCard connected={tagStatus.connected}>
         <TagStatusInfo>
-          <TagStatusIcon $connected={tagStatus.connected}>
+          <TagStatusIcon connected={tagStatus.connected}>
             <IconComponent icon={tagStatus.connected ? FaIcons.FaCheckCircle : FaIcons.FaExclamationCircle} />
           </TagStatusIcon>
           <TagStatusText>
-            <TagStatusTitle $connected={tagStatus.connected}>
+            <TagStatusTitle connected={tagStatus.connected}>
               {tagStatus.connected ? (
                 <>
                   🟣 Tag Connected
@@ -1419,7 +1419,7 @@ const Analytics: React.FC = () => {
         </Title>
       </Header>
 
-      {/* Globo 3D de visitantes online */}
+      {/* Globo 3D Profissional de visitantes online */}
       <GlobeVisualizationPro
         projectId={Number(currentProject?.id) || 0} 
         supabase={supabase} 
@@ -1901,23 +1901,23 @@ const Analytics: React.FC = () => {
           <div style={{ width: '100%', marginBottom: '12px', fontWeight: 600, color: theme.colors.primary }}>
             📊 Event Implementation Status:
           </div>
-          <VerifiedBadge $verified={verifiedEvents.add_to_cart}>
+          <VerifiedBadge verified={verifiedEvents.add_to_cart}>
             <IconComponent icon={FaIcons.FaShoppingCart} />
             Add to Cart {verifiedEvents.add_to_cart ? '✓' : '✗'}
           </VerifiedBadge>
-          <VerifiedBadge $verified={verifiedEvents.checkout_start}>
+          <VerifiedBadge verified={verifiedEvents.checkout_start}>
             <IconComponent icon={FaIcons.FaCreditCard} />
             Checkout {verifiedEvents.checkout_start ? '✓' : '✗'}
           </VerifiedBadge>
-          <VerifiedBadge $verified={verifiedEvents.purchase}>
+          <VerifiedBadge verified={verifiedEvents.purchase}>
             <IconComponent icon={FaIcons.FaCheckCircle} />
             Purchase {verifiedEvents.purchase ? '✓' : '✗'}
           </VerifiedBadge>
-          <VerifiedBadge $verified={verifiedEvents.product_view}>
+          <VerifiedBadge verified={verifiedEvents.product_view}>
             <IconComponent icon={FaIcons.FaEye} />
             Product View {verifiedEvents.product_view ? '✓' : '✗'}
           </VerifiedBadge>
-          <VerifiedBadge $verified={verifiedEvents.form_submit}>
+          <VerifiedBadge verified={verifiedEvents.form_submit}>
             <IconComponent icon={FaIcons.FaEnvelope} />
             Form Submit {verifiedEvents.form_submit ? '✓' : '✗'}
           </VerifiedBadge>
@@ -1952,7 +1952,7 @@ const Analytics: React.FC = () => {
                 <IconComponent icon={FaIcons.FaShoppingCart} />
                 E-commerce Tracking (Cart, Checkout, Purchase)
               </AccordionTitle>
-              <AccordionIcon $isOpen={openAccordion === 'ecommerce'}>
+              <AccordionIcon isOpen={openAccordion === 'ecommerce'}>
                 <IconComponent icon={FaIcons.FaChevronDown} />
               </AccordionIcon>
             </AccordionHeader>
@@ -1969,7 +1969,7 @@ const Analytics: React.FC = () => {
                     <EventTitle>
                       <IconComponent icon={FaIcons.FaCartPlus} /> 
                       Add to Cart
-                      <VerifiedBadge $verified={verifiedEvents.add_to_cart}>
+                      <VerifiedBadge verified={verifiedEvents.add_to_cart}>
                         <IconComponent icon={verifiedEvents.add_to_cart ? FaIcons.FaCheck : FaIcons.FaTimes} />
                         {verifiedEvents.add_to_cart ? 'Verified' : 'Not Implemented'}
                       </VerifiedBadge>
@@ -1998,7 +1998,7 @@ const Analytics: React.FC = () => {
                     <EventTitle>
                       <IconComponent icon={FaIcons.FaCreditCard} /> 
                       Start Checkout
-                      <VerifiedBadge $verified={verifiedEvents.checkout_start}>
+                      <VerifiedBadge verified={verifiedEvents.checkout_start}>
                         <IconComponent icon={verifiedEvents.checkout_start ? FaIcons.FaCheck : FaIcons.FaTimes} />
                         {verifiedEvents.checkout_start ? 'Verified' : 'Not Implemented'}
                       </VerifiedBadge>
@@ -2018,7 +2018,7 @@ const Analytics: React.FC = () => {
                     <EventTitle>
                       <IconComponent icon={FaIcons.FaCheckCircle} /> 
                       Purchase Complete
-                      <VerifiedBadge $verified={verifiedEvents.purchase}>
+                      <VerifiedBadge verified={verifiedEvents.purchase}>
                         <IconComponent icon={verifiedEvents.purchase ? FaIcons.FaCheck : FaIcons.FaTimes} />
                         {verifiedEvents.purchase ? 'Verified' : 'Not Implemented'}
                       </VerifiedBadge>
@@ -2060,7 +2060,7 @@ if (window.liftlio) {
                 <IconComponent icon={FaIcons.FaMousePointer} />
                 User Engagement (Forms, Videos, Downloads)
               </AccordionTitle>
-              <AccordionIcon $isOpen={openAccordion === 'engagement'}>
+              <AccordionIcon isOpen={openAccordion === 'engagement'}>
                 <IconComponent icon={FaIcons.FaChevronDown} />
               </AccordionIcon>
             </AccordionHeader>
@@ -2077,7 +2077,7 @@ if (window.liftlio) {
                     <EventTitle>
                       <IconComponent icon={FaIcons.FaEnvelope} /> 
                       Form Submission
-                      <VerifiedBadge $verified={verifiedEvents.form_submit}>
+                      <VerifiedBadge verified={verifiedEvents.form_submit}>
                         <IconComponent icon={verifiedEvents.form_submit ? FaIcons.FaCheck : FaIcons.FaTimes} />
                         {verifiedEvents.form_submit ? 'Verified' : 'Not Implemented'}
                       </VerifiedBadge>
@@ -2148,7 +2148,7 @@ if (window.liftlio) {
                 <IconComponent icon={FaIcons.FaCode} />
                 Platform-Specific Setup (WordPress, React, Shopify)
               </AccordionTitle>
-              <AccordionIcon $isOpen={openAccordion === 'platforms'}>
+              <AccordionIcon isOpen={openAccordion === 'platforms'}>
                 <IconComponent icon={FaIcons.FaChevronDown} />
               </AccordionIcon>
             </AccordionHeader>
@@ -2233,7 +2233,7 @@ add_action('woocommerce_after_single_product', function() {
                         <EventTitle>
                           <IconComponent icon={FaIcons.FaReact} /> 
                           React / Next.js Setup
-                          <VerifiedBadge $verified={verifiedEvents.product_view}>
+                          <VerifiedBadge verified={verifiedEvents.product_view}>
                             <IconComponent icon={verifiedEvents.product_view ? FaIcons.FaCheck : FaIcons.FaTimes} />
                             {verifiedEvents.product_view ? 'Product View Verified' : 'Product View Not Detected'}
                           </VerifiedBadge>
@@ -2366,7 +2366,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <IconComponent icon={FaIcons.FaBug} />
                 Testing & Verification
               </AccordionTitle>
-              <AccordionIcon $isOpen={openAccordion === 'testing'}>
+              <AccordionIcon isOpen={openAccordion === 'testing'}>
                 <IconComponent icon={FaIcons.FaChevronDown} />
               </AccordionIcon>
             </AccordionHeader>

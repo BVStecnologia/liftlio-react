@@ -2,12 +2,30 @@
 
 Sistema de rastreamento de analytics para o Liftlio, com validação de projetos via Supabase e armazenamento centralizado de eventos.
 
-## 🚀 Status: EM PRODUÇÃO
+## 🚨 ATENÇÃO: SERVIDOR REMOTO EM PRODUÇÃO
 
-- **Servidor**: 173.249.22.2
-- **Porta**: 3100
-- **Container**: liftlio-analytics-prod
-- **Health**: http://173.249.22.2:3100/health
+⚠️ **IMPORTANTE**: Este diretório contém o código-fonte do servidor analytics que está **RODANDO EM PRODUÇÃO NO SERVIDOR REMOTO 173.249.22.2**, não localmente!
+
+### 📍 Localização do Servidor:
+- **🖥️ Servidor Remoto**: 173.249.22.2 (VPS Linux)
+- **📂 Caminho no Servidor**: `/opt/liftlio-analytics/`
+- **🐳 Container Docker**: `liftlio-analytics-prod`
+- **🔧 Acesso SSH**: `ssh root@173.249.22.2`
+
+### 🌐 URLs e Acessos:
+- **URL Pública**: https://track.liftlio.com (via Cloudflare Proxy)
+- **Porta no Servidor**: 3100
+- **Health Check Direto**: http://173.249.22.2:3100/health (apenas para debug)
+
+### ⚠️ Configuração Cloudflare (NÃO MEXER SEM NECESSIDADE):
+- **Domínio**: track.liftlio.com
+- **Tipo**: A Record apontando para 173.249.22.2
+- **Proxy**: ✅ ATIVADO (nuvem laranja)
+- **SSL Mode**: Flexible (via Configuration Rule específica)
+- **Proteção DDoS**: Ativa
+
+**❌ NUNCA usar o IP direto em produção! Sempre usar track.liftlio.com**
+**❌ NUNCA rodar docker-compose localmente para produção!**
 
 ## 🚀 Características
 
@@ -29,7 +47,40 @@ Sistema de rastreamento de analytics para o Liftlio, com validação de projetos
 - Docker e Docker Compose (deploy)
 - Acesso ao projeto Supabase
 
-## 🛠️ Instalação
+## 🔧 Como Fazer Alterações no Servidor de Produção
+
+### ⚠️ FLUXO CORRETO para atualizar o servidor:
+
+1. **Fazer alterações localmente** neste diretório
+2. **Testar localmente** (opcional):
+   ```bash
+   npm install
+   npm run dev  # Roda na porta 3000 local para teste
+   ```
+3. **Fazer commit e push** para o Git
+4. **Conectar no servidor remoto**:
+   ```bash
+   ssh root@173.249.22.2
+   cd /opt/liftlio-analytics
+   ```
+5. **Atualizar código no servidor**:
+   ```bash
+   git pull
+   docker-compose down
+   docker-compose build --no-cache
+   docker-compose up -d
+   ```
+6. **Verificar logs**:
+   ```bash
+   docker logs -f liftlio-analytics-prod
+   ```
+
+### ❌ O QUE NÃO FAZER:
+- NÃO rodar `docker-compose up` localmente achando que vai afetar produção
+- NÃO editar arquivos diretamente no servidor (sempre via Git)
+- NÃO expor o IP 173.249.22.2 publicamente
+
+## 🛠️ Instalação (APENAS PARA DESENVOLVIMENTO LOCAL)
 
 ### 1. Configurar variáveis de ambiente
 
@@ -86,8 +137,13 @@ docker-compose up -d
 ### 1. Adicionar script no site
 
 ```html
-<!-- Substitua PROJECT_ID pelo ID do seu projeto -->
-<script src="https://seu-dominio.com/track.js" data-project="58"></script>
+<!-- IMPORTANTE: Sempre usar track.liftlio.com (Cloudflare Proxy) -->
+<!-- O PROJECT_ID é gerado automaticamente na tabela Projeto -->
+<script async src="https://track.liftlio.com/t.js" data-id="58"></script>
+
+<!-- NUNCA usar o IP direto! -->
+<!-- ❌ ERRADO: <script src="http://173.249.22.2:3100/track.js"> -->
+<!-- ✅ CORRETO: <script src="https://track.liftlio.com/t.js"> -->
 ```
 
 ### 2. API JavaScript
@@ -253,19 +309,36 @@ ORDER BY total DESC;
 
 ## 🐛 Troubleshooting
 
-### Container não inicia
-- Verifique se a porta 3001 está livre: `lsof -i :3001`
-- Verifique logs: `docker-compose logs`
+### Erro 521 no Cloudflare (Web server is down)
+**Problema**: Cloudflare não consegue conectar ao servidor
+**Soluções**:
+1. Verificar se o container está rodando no servidor:
+   ```bash
+   ssh root@173.249.22.2
+   docker ps | grep analytics
+   ```
+2. Verificar Configuration Rule no Cloudflare:
+   - Ir em Rules → Configuration Rules
+   - Confirmar que track.liftlio.com está com SSL = Flexible
+3. Testar direto no servidor:
+   ```bash
+   curl http://173.249.22.2:3100/health
+   ```
+
+### Container não inicia NO SERVIDOR REMOTO
+- SSH no servidor: `ssh root@173.249.22.2`
+- Verificar logs: `docker logs liftlio-analytics-prod`
+- Reiniciar: `docker restart liftlio-analytics-prod`
 
 ### Eventos não chegam ao Supabase
-- Verifique credenciais no `.env`
-- Teste conexão: `curl http://localhost:3001/health`
-- Verifique logs do servidor
+- Verificar função RPC `track_event` no Supabase
+- Checar se há funções duplicadas (pode causar conflito)
+- Verificar logs: `mcp__supabase__get_logs` com service='api'
 
 ### Script não carrega no site
-- Verifique CORS no navegador (F12 > Console)
-- Confirme que `data-project` está presente
-- Teste com `test-local.html` primeiro
+- URL correta: `https://track.liftlio.com/t.js`
+- Verificar no Console do navegador (F12)
+- Confirmar `data-id="58"` no script tag
 
 ## 📝 Licença
 
