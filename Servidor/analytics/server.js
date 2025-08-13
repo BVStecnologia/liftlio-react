@@ -187,6 +187,54 @@ function extractUTMParams(url) {
   }
 }
 
+// Função para buscar geolocalização por IP
+async function getGeoLocation(ip) {
+  // IPs locais ou inválidos
+  if (!ip || ip === '::1' || ip === '127.0.0.1' || ip.startsWith('192.168') || ip.startsWith('10.')) {
+    return { country: 'Local', city: 'Local', region: 'Local' };
+  }
+  
+  try {
+    // Usar http para ip-api (não suporta https no free tier)
+    const http = require('http');
+    const url = `http://ip-api.com/json/${ip}?fields=status,country,countryCode,region,regionName,city`;
+    
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        resolve({ country: 'Unknown', city: 'Unknown', region: '' });
+      }, 2000);
+      
+      http.get(url, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          clearTimeout(timeout);
+          try {
+            const json = JSON.parse(data);
+            if (json.status === 'success') {
+              resolve({
+                country: json.country || 'Unknown',
+                country_code: json.countryCode || '',
+                city: json.city || 'Unknown',
+                region: json.regionName || ''
+              });
+            } else {
+              resolve({ country: 'Unknown', city: 'Unknown', region: '' });
+            }
+          } catch {
+            resolve({ country: 'Unknown', city: 'Unknown', region: '' });
+          }
+        });
+      }).on('error', () => {
+        clearTimeout(timeout);
+        resolve({ country: 'Unknown', city: 'Unknown', region: '' });
+      });
+    });
+  } catch (error) {
+    return { country: 'Unknown', city: 'Unknown', region: '' };
+  }
+}
+
 // ================================================
 // MIDDLEWARE
 // ================================================
@@ -274,6 +322,9 @@ app.post('/track', async (req, res) => {
     const clientIP = req.headers['x-forwarded-for'] || 
                     req.headers['x-real-ip'] || 
                     req.connection.remoteAddress;
+    
+    // Extrair primeiro IP se vier múltiplos
+    const realIP = clientIP ? clientIP.split(',')[0].trim() : '';
 
     // ================================================
     // VALIDAÇÕES
@@ -380,6 +431,14 @@ app.post('/track', async (req, res) => {
       validated_at: new Date().toISOString()
     };
 
+    // Buscar geolocalização se não vier do cliente
+    let geoData = { country: country || '', city: city || '', region: '' };
+    if (!city && realIP) {
+      // Buscar cidade pelo IP
+      geoData = await getGeoLocation(realIP);
+      console.log(`Geo lookup for ${realIP}: ${geoData.city}, ${geoData.country}`);
+    }
+    
     // Garantir que todos os campos estejam preenchidos
     const eventData = {
       project_id: parseInt(project_id),
@@ -395,10 +454,15 @@ app.post('/track', async (req, res) => {
       device_type: device_type || detectDeviceType(user_agent || req.headers['user-agent']),
       browser: browser || detectBrowser(user_agent || req.headers['user-agent']),
       os: os || detectOS(user_agent || req.headers['user-agent']),
-      country: country || '',
-      city: city || '',
+      country: geoData.country_code || country || '',  // Usar código de 2 letras
+      city: geoData.city || city || '',
       is_organic: isOrganic, // CAMPO NOVO DIRETO NA TABELA!
-      custom_data: enrichedData
+      custom_data: {
+        ...enrichedData,
+        region: geoData.region || enrichedData.region || '',
+        country_name: geoData.country || '',  // Nome completo do país
+        city: geoData.city || city || ''      // Cidade também no custom_data
+      }
     };
 
     // ================================================
