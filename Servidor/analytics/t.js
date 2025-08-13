@@ -3,20 +3,21 @@
 
   // Configuração
   const ANALYTICS_ENDPOINT = (function() {
-    const scriptTag = document.currentScript || document.querySelector('script[data-project]');
+    const scriptTag = document.currentScript || document.querySelector('script[data-id]') || document.querySelector('script[data-project]');
     const src = scriptTag ? scriptTag.src : '';
     const url = new URL(src);
     return url.origin + '/track';
   })();
 
-  // Obter project_id do atributo data-project
+  // Obter project_id do atributo data-id OU data-project (suporta ambos)
   const PROJECT_ID = (function() {
-    const scriptTag = document.currentScript || document.querySelector('script[data-project]');
-    return scriptTag ? scriptTag.getAttribute('data-project') : null;
+    const scriptTag = document.currentScript || document.querySelector('script[data-id]') || document.querySelector('script[data-project]');
+    // Tenta primeiro data-id (novo padrão), depois data-project (compatibilidade)
+    return scriptTag ? (scriptTag.getAttribute('data-id') || scriptTag.getAttribute('data-project')) : null;
   })();
 
   if (!PROJECT_ID) {
-    console.error('Liftlio Analytics: data-project attribute is required');
+    console.error('Liftlio Analytics: data-id or data-project attribute is required');
     return;
   }
 
