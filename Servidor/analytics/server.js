@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 const path = require('path');
 const crypto = require('crypto');
@@ -191,12 +190,23 @@ function extractUTMParams(url) {
 // ================================================
 // MIDDLEWARE
 // ================================================
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+// CORS configurado apenas uma vez
+app.use((req, res, next) => {
+  // Verifica se já tem CORS (vindo do Cloudflare)
+  if (!res.getHeader('Access-Control-Allow-Origin')) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  
+  // Responde OPTIONS requests
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
 app.use(express.json());
 
 // ================================================
@@ -221,8 +231,8 @@ app.get('/health', (req, res) => {
 // Servir arquivo t.js
 app.get('/t.js', (req, res) => {
   res.setHeader('Content-Type', 'application/javascript');
-  res.setHeader('Cache-Control', 'public, max-age=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'public, max-age=300, must-revalidate');
+  // CORS já configurado globalmente
   res.sendFile(path.join(__dirname, 't.js'));
 });
 
@@ -230,7 +240,7 @@ app.get('/t.js', (req, res) => {
 app.get('/track.js', (req, res) => {
   res.setHeader('Content-Type', 'application/javascript');
   res.setHeader('Cache-Control', 'public, max-age=3600');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS já configurado globalmente
   res.sendFile(path.join(__dirname, 't.js'));
 });
 
