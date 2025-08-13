@@ -51,26 +51,39 @@ Sistema de rastreamento de analytics para o Liftlio, com validação de projetos
 
 ### ⚠️ FLUXO CORRETO para atualizar o servidor:
 
+#### 🔑 CREDENCIAIS SSH (IMPORTANTE!)
+- **Senha SSH**: Está no arquivo `.env` local (`SSH_PASSWORD=Bvs20211993***`)
+- **Diretório no servidor**: `/opt/containers/liftlio-analytics` (NÃO é git repo!)
+- **Container Docker**: `liftlio-analytics-prod`
+
+#### Deploy Rápido (com sshpass):
+```bash
+# Copiar arquivo alterado
+SSHPASS='Bvs20211993***' sshpass -e scp t.js root@173.249.22.2:/opt/containers/liftlio-analytics/
+
+# Reiniciar container
+SSHPASS='Bvs20211993***' sshpass -e ssh root@173.249.22.2 "docker restart liftlio-analytics-prod"
+```
+
+#### Deploy Manual:
 1. **Fazer alterações localmente** neste diretório
 2. **Testar localmente** (opcional):
    ```bash
    npm install
    npm run dev  # Roda na porta 3000 local para teste
    ```
-3. **Fazer commit e push** para o Git
-4. **Conectar no servidor remoto**:
+3. **Copiar arquivos para o servidor**:
+   ```bash
+   scp *.js *.json root@173.249.22.2:/opt/containers/liftlio-analytics/
+   # Senha: Bvs20211993***
+   ```
+4. **Reiniciar container**:
    ```bash
    ssh root@173.249.22.2
-   cd /opt/liftlio-analytics
+   # Senha: Bvs20211993***
+   docker restart liftlio-analytics-prod
    ```
-5. **Atualizar código no servidor**:
-   ```bash
-   git pull
-   docker-compose down
-   docker-compose build --no-cache
-   docker-compose up -d
-   ```
-6. **Verificar logs**:
+5. **Verificar logs**:
    ```bash
    docker logs -f liftlio-analytics-prod
    ```
