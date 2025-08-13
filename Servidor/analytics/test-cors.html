@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste CORS - Liftlio Analytics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #8B5CF6;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #10B981;
+            color: white;
+        }
+        .error {
+            background: #EF4444;
+            color: white;
+        }
+        .pending {
+            background: #F59E0B;
+            color: white;
+        }
+        button {
+            background: #8B5CF6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #7C3AED;
+        }
+        .log {
+            background: #1F2937;
+            color: #10B981;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Teste CORS - Liftlio Analytics</h1>
+        
+        <div id="status" class="status pending">
+            Aguardando teste...
+        </div>
+        
+        <div>
+            <h3>Configuração:</h3>
+            <p>
+                <label>URL do Servidor: 
+                    <input type="text" id="serverUrl" value="https://track.liftlio.com" style="width: 300px;">
+                </label>
+            </p>
+            <p>
+                <label>Project ID: 
+                    <input type="text" id="projectId" value="58" style="width: 100px;">
+                </label>
+            </p>
+        </div>
+        
+        <div>
+            <h3>Testes:</h3>
+            <button onclick="testCORS()">1. Testar CORS (OPTIONS)</button>
+            <button onclick="testTracking()">2. Enviar Evento Teste</button>
+            <button onclick="loadScript()">3. Carregar Script t.js</button>
+            <button onclick="testFromScript()">4. Testar via Script</button>
+            <button onclick="clearLog()">Limpar Log</button>
+        </div>
+        
+        <div class="log" id="log"></div>
+    </div>
+    
+    <script>
+        function log(message, type = 'info') {
+            const logEl = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#EF4444' : type === 'success' ? '#10B981' : '#6B7280';
+            logEl.innerHTML += `<div style="color: ${color}">[${time}] ${message}</div>`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        function updateStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            log('Log limpo', 'info');
+        }
+        
+        async function testCORS() {
+            const url = document.getElementById('serverUrl').value + '/track';
+            log(`Testando CORS preflight para ${url}...`);
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type'
+                    }
+                });
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers')
+                };
+                
+                log(`✅ CORS Headers recebidos:`, 'success');
+                for (const [key, value] of Object.entries(corsHeaders)) {
+                    log(`  ${key}: ${value}`, 'success');
+                }
+                
+                // Verificar duplicação
+                const allHeaders = [...response.headers.entries()];
+                const originHeaders = allHeaders.filter(([key]) => 
+                    key.toLowerCase() === 'access-control-allow-origin'
+                );
+                
+                if (originHeaders.length > 1) {
+                    log(`⚠️ AVISO: Headers CORS duplicados detectados!`, 'error');
+                    updateStatus('❌ CORS duplicado!', 'error');
+                } else {
+                    updateStatus('✅ CORS configurado corretamente!', 'success');
+                }
+                
+            } catch (error) {
+                log(`❌ Erro no teste CORS: ${error.message}`, 'error');
+                updateStatus('❌ Erro no teste CORS', 'error');
+            }
+        }
+        
+        async function testTracking() {
+            const url = document.getElementById('serverUrl').value + '/track';
+            const projectId = document.getElementById('projectId').value;
+            
+            log(`Enviando evento teste para projeto ${projectId}...`);
+            
+            const eventData = {
+                project_id: projectId,
+                event_type: 'test_cors',
+                visitor_id: 'visitor_test_' + Date.now(),
+                session_id: 'session_test_' + Date.now(),
+                page_url: window.location.href,
+                page_title: 'Teste CORS',
+                referrer: document.referrer,
+                user_agent: navigator.userAgent,
+                screen_resolution: screen.width + 'x' + screen.height,
+                viewport_size: window.innerWidth + 'x' + window.innerHeight
+            };
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(eventData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    log(`✅ Evento enviado com sucesso! ID: ${result.event_id}`, 'success');
+                    updateStatus('✅ Tracking funcionando!', 'success');
+                } else {
+                    log(`⚠️ Resposta: ${JSON.stringify(result)}`, 'error');
+                    updateStatus('⚠️ Evento rejeitado', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Erro ao enviar evento: ${error.message}`, 'error');
+                updateStatus('❌ Erro no tracking', 'error');
+            }
+        }
+        
+        function loadScript() {
+            const url = document.getElementById('serverUrl').value + '/t.js';
+            const projectId = document.getElementById('projectId').value;
+            
+            log(`Carregando script de ${url}...`);
+            
+            // Remove script anterior se existir
+            const oldScript = document.querySelector('script[data-id]');
+            if (oldScript) oldScript.remove();
+            
+            const script = document.createElement('script');
+            script.src = url + '?v=' + Date.now();
+            script.setAttribute('data-id', projectId);
+            script.onload = () => {
+                log('✅ Script carregado com sucesso!', 'success');
+                if (window.liftlio) {
+                    log('✅ Objeto window.liftlio disponível', 'success');
+                    updateStatus('✅ Script funcionando!', 'success');
+                } else {
+                    log('⚠️ Objeto window.liftlio não encontrado', 'error');
+                }
+            };
+            script.onerror = () => {
+                log('❌ Erro ao carregar script', 'error');
+                updateStatus('❌ Erro no script', 'error');
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        function testFromScript() {
+            if (!window.liftlio) {
+                log('❌ Script não carregado. Execute o teste 3 primeiro.', 'error');
+                return;
+            }
+            
+            log('Enviando evento via script...');
+            
+            try {
+                window.liftlio.trackEvent('teste_via_script', {
+                    origem: 'teste_cors',
+                    timestamp: new Date().toISOString()
+                });
+                
+                log('✅ Evento enviado via script!', 'success');
+                updateStatus('✅ Script API funcionando!', 'success');
+                
+            } catch (error) {
+                log(`❌ Erro: ${error.message}`, 'error');
+                updateStatus('❌ Erro na API', 'error');
+            }
+        }
+        
+        // Teste automático ao carregar
+        window.addEventListener('load', () => {
+            log('Página de teste carregada. Clique nos botões para testar.', 'info');
+        });
+    </script>
+</body>
+</html>

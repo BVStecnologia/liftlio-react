@@ -190,17 +190,19 @@ function extractUTMParams(url) {
 // ================================================
 // MIDDLEWARE
 // ================================================
-// CORS configurado apenas uma vez
+// CORS Inteligente - Detecta se está atrás de proxy
 app.use((req, res, next) => {
-  // Verifica se já tem CORS (vindo do Cloudflare)
-  if (!res.getHeader('Access-Control-Allow-Origin')) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  // Se vier do Cloudflare, ele já adiciona CORS
+  const isCloudflare = req.headers['cf-ray'] || req.headers['cf-connecting-ip'];
+  
+  // Se NÃO for Cloudflare, adiciona CORS
+  if (!isCloudflare) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
   }
   
-  // Responde OPTIONS requests
+  // Responde OPTIONS para preflight
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }

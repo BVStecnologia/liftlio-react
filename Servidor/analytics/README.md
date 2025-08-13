@@ -320,6 +320,34 @@ GROUP BY event_type
 ORDER BY total DESC;
 ```
 
+## ⚠️ IMPORTANTE: Problema CORS com Cloudflare
+
+### Problema Comum: Headers CORS Duplicados
+Se você ver o erro:
+```
+The 'Access-Control-Allow-Origin' header contains multiple values '*, *', but only one is allowed
+```
+
+### Causa:
+O Cloudflare Proxy adiciona seus próprios headers CORS, duplicando com os do servidor.
+
+### Solução Implementada:
+O servidor detecta automaticamente se está atrás do Cloudflare:
+- **COM Cloudflare**: NÃO adiciona CORS (Cloudflare adiciona)
+- **SEM Cloudflare**: Adiciona CORS normalmente
+
+### Como Testar:
+1. Abra o arquivo `test-cors.html` no navegador
+2. Clique nos botões de teste na ordem
+3. Verifique se não há duplicação de headers
+
+### Para Outras Plataformas:
+O código já está preparado para funcionar em:
+- ✅ Cloudflare (detecta automaticamente)
+- ✅ Servidor direto (adiciona CORS)
+- ✅ Vercel/Netlify (adiciona CORS)
+- ✅ Nginx/Apache proxy (adiciona CORS)
+
 ## 🐛 Troubleshooting
 
 ### Erro 521 no Cloudflare (Web server is down)
