@@ -815,7 +815,7 @@ const HelpTooltip = styled.div`
 
 const TooltipContent = styled.div`
   position: absolute;
-  bottom: 100%;
+  bottom: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%);
   background: ${props => props.theme.name === 'dark' 
@@ -826,19 +826,18 @@ const TooltipContent = styled.div`
   border-radius: 8px;
   font-size: 13px;
   line-height: 1.5;
-  white-space: nowrap;
-  max-width: 300px;
+  min-width: 200px;
+  max-width: 350px;
   white-space: normal;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   border: 1px solid ${props => props.theme.name === 'dark'
     ? 'rgba(139, 92, 246, 0.3)'
     : 'rgba(139, 92, 246, 0.2)'};
-  z-index: 1000;
+  z-index: 99999;
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
   transition: all 0.2s ease;
-  margin-bottom: 8px;
   
   &::after {
     content: '';
@@ -1052,7 +1051,7 @@ const Analytics: React.FC = () => {
   const [hasData, setHasData] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [implementationCollapsed, setImplementationCollapsed] = useState(false);
-  const [advancedCollapsed, setAdvancedCollapsed] = useState(false);
+  const [advancedCollapsed, setAdvancedCollapsed] = useState(true); // Iniciar fechado por padrão
   
   // Estado para rastrear eventos verificados
   const [verifiedEvents, setVerifiedEvents] = useState<{
@@ -1117,9 +1116,7 @@ const Analytics: React.FC = () => {
           pageviews24h: pageviews
         });
         setHasData(true);
-        // Se tag conectada, colapsar as seções
-        setImplementationCollapsed(true);
-        setAdvancedCollapsed(true);
+        // Não colapsar automaticamente - deixar o usuário controlar o estado
       } else {
         setTagStatus({
           connected: false,
@@ -1919,8 +1916,8 @@ const Analytics: React.FC = () => {
       {/* Nova Seção: Guia Avançado de Rastreamento */}
       <AdvancedSection>
         <AdvancedTitle 
-          style={{ cursor: tagStatus.connected ? 'pointer' : 'default', userSelect: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-          onClick={() => tagStatus.connected && setAdvancedCollapsed(!advancedCollapsed)}
+          style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          onClick={() => setAdvancedCollapsed(!advancedCollapsed)}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <IconComponent icon={FaIcons.FaRocket} /> Advanced Tracking Guide
@@ -1932,14 +1929,12 @@ const Analytics: React.FC = () => {
               </TooltipContent>
             </HelpTooltip>
           </div>
-          {tagStatus.connected && (
-            <CollapseIcon collapsed={advancedCollapsed}>
-              <IconComponent icon={FaIcons.FaChevronDown} />
-            </CollapseIcon>
-          )}
+          <CollapseIcon collapsed={advancedCollapsed}>
+            <IconComponent icon={FaIcons.FaChevronDown} />
+          </CollapseIcon>
         </AdvancedTitle>
         
-        <CollapsibleContent collapsed={tagStatus.connected ? advancedCollapsed : false}>
+        <CollapsibleContent collapsed={advancedCollapsed}>
           <AdvancedSubtitle>
             Track specific user actions like purchases, cart additions, and form submissions. 
             Choose what you want to track and add simple code snippets to your site.
