@@ -15,7 +15,6 @@ import { useProject } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
 import GlobeVisualizationPro from '../components/GlobeVisualizationPro';
-import RealTimeInsights from '../components/RealTimeInsights';
 
 // Animações adicionais
 const shimmer = keyframes`
@@ -1039,6 +1038,26 @@ const Analytics: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('wordpress');
   const { currentProject } = useProject();
   const { theme } = useTheme();
+  
+  // Estados para os novos gráficos de conversão
+  const [funnelData, setFunnelData] = useState([
+    { name: 'Visited', value: 0, percentage: '0%' },
+    { name: 'Engaged', value: 0, percentage: '0%' },
+    { name: 'Converted', value: 0, percentage: '0%' }
+  ]);
+  
+  const [qualityData, setQualityData] = useState([
+    { metric: 'Time on Page', value: 0 },
+    { metric: 'Scroll Depth', value: 0 },
+    { metric: 'Interactions', value: 0 },
+    { metric: 'Pages/Session', value: 0 },
+    { metric: 'Return Rate', value: 0 }
+  ]);
+  
+  const [returnRateData, setReturnRateData] = useState([
+    { name: 'New Visitors', value: 100, color: '' },
+    { name: 'Returning', value: 0, color: '' }
+  ]);
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('7d');
   const [analyticsData, setAnalyticsData] = useState<any[]>([]);
   const [analyticsScript, setAnalyticsScript] = useState<string>('');
@@ -1480,6 +1499,71 @@ const Analytics: React.FC = () => {
     fetchAnalyticsData();
   }, [period, currentProject, theme, chartColors.primary]);
 
+  // Calcular dados de conversão e engajamento
+  useEffect(() => {
+    const calculateConversionData = async () => {
+      if (!currentProject?.id || analyticsData.length === 0) return;
+      
+      // Calcular funil de engajamento
+      const totalVisits = analyticsData.filter(d => d.event_type === 'pageview').length;
+      const engagedVisits = analyticsData.filter(d => 
+        (d.scroll_depth && d.scroll_depth > 50) || 
+        (d.time_on_page && d.time_on_page > 30) ||
+        d.event_type === 'click'
+      ).length;
+      const convertedVisits = analyticsData.filter(d => 
+        d.click_target && (
+          d.click_target.toLowerCase().includes('signup') ||
+          d.click_target.toLowerCase().includes('start') ||
+          d.click_target.toLowerCase().includes('buy') ||
+          d.click_target.toLowerCase().includes('contact')
+        )
+      ).length;
+      
+      setFunnelData([
+        { name: 'Visited', value: totalVisits, percentage: '100%' },
+        { name: 'Engaged', value: engagedVisits, percentage: totalVisits > 0 ? `${Math.round((engagedVisits/totalVisits)*100)}%` : '0%' },
+        { name: 'Converted', value: convertedVisits, percentage: totalVisits > 0 ? `${Math.round((convertedVisits/totalVisits)*100)}%` : '0%' }
+      ]);
+      
+      // Calcular qualidade da visita
+      const avgTimeOnPage = analyticsData.filter(d => d.time_on_page).reduce((sum, d) => sum + (d.time_on_page || 0), 0) / (analyticsData.filter(d => d.time_on_page).length || 1);
+      const avgScrollDepth = analyticsData.filter(d => d.scroll_depth).reduce((sum, d) => sum + (d.scroll_depth || 0), 0) / (analyticsData.filter(d => d.scroll_depth).length || 1);
+      const clickRate = (analyticsData.filter(d => d.event_type === 'click').length / totalVisits) * 100;
+      
+      // Calcular páginas por sessão
+      const sessions = Array.from(new Set(analyticsData.map(d => d.session_id)));
+      const totalPages = analyticsData.filter(d => d.event_type === 'pageview').length;
+      const pagesPerSession = sessions.length > 0 ? totalPages / sessions.length : 0;
+      
+      // Calcular taxa de retorno
+      const uniqueVisitors = Array.from(new Set(analyticsData.map(d => d.visitor_id)));
+      const returningVisitors = uniqueVisitors.filter(vid => 
+        analyticsData.filter(d => d.visitor_id === vid).length > 1
+      ).length;
+      const returnRate = uniqueVisitors.length > 0 ? (returningVisitors / uniqueVisitors.length) * 100 : 0;
+      
+      setQualityData([
+        { metric: 'Time on Page', value: Math.min(100, Math.round((avgTimeOnPage / 60) * 20)) }, // Normalizado para 100
+        { metric: 'Scroll Depth', value: Math.round(avgScrollDepth) },
+        { metric: 'Interactions', value: Math.min(100, Math.round(clickRate * 10)) }, // Normalizado
+        { metric: 'Pages/Session', value: Math.min(100, Math.round(pagesPerSession * 20)) }, // Normalizado
+        { metric: 'Return Rate', value: Math.round(returnRate) }
+      ]);
+      
+      // Calcular taxa de retorno para o gráfico de pizza
+      const newVisitorPercentage = Math.round((1 - returnRate/100) * 100);
+      const returningPercentage = Math.round(returnRate);
+      
+      setReturnRateData([
+        { name: 'New Visitors', value: newVisitorPercentage, color: '#8b5cf6' },
+        { name: 'Returning', value: returningPercentage, color: '#c084fc' }
+      ]);
+    };
+    
+    calculateConversionData();
+  }, [analyticsData, currentProject]);
+
   // Formatar valores dos dados reais
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -1555,11 +1639,6 @@ const Analytics: React.FC = () => {
 
   return (
     <Container>
-      {/* Sistema de Notificações e Insights em Tempo Real */}
-      <RealTimeInsights 
-        projectId={Number(currentProject?.id) || 0} 
-        supabase={supabase} 
-      />
       
       <Header>
         <Title>
@@ -2043,6 +2122,192 @@ const Analytics: React.FC = () => {
           </ResponsiveContainer>
         </ChartCard>
       </SecondaryChartsGrid>
+
+      {/* Nova Seção de Conversão e Engajamento */}
+      <div style={{ marginTop: '40px', marginBottom: '40px' }}>
+        <h2 style={{ 
+          fontSize: '24px', 
+          fontWeight: '700',
+          color: chartColors.primary,
+          marginBottom: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <IconComponent icon={FaIcons.FaChartLine} />
+          Conversion & Engagement
+        </h2>
+        
+        <SecondaryChartsGrid>
+          {/* Gráfico 1: Funil de Engajamento */}
+          <ChartCard
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <ChartHeader>
+              <ChartTitle>
+                <IconComponent icon={FaIcons.FaFilter} style={{ color: chartColors.primary }} />
+                Engagement Funnel
+              </ChartTitle>
+              {!hasData && <DemoIndicator>Demo</DemoIndicator>}
+            </ChartHeader>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart 
+                data={funnelData}
+                layout="horizontal"
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                <XAxis type="number" stroke={chartColors.text} />
+                <YAxis dataKey="name" type="category" stroke={chartColors.text} width={80} />
+                <Tooltip 
+                  formatter={(value, name) => [`${value} (${name === 'value' ? 'Users' : name})`, '']}
+                  contentStyle={{
+                    backgroundColor: theme.name === 'dark' ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    border: `1px solid ${chartColors.primary}`,
+                    borderRadius: '12px',
+                    padding: '10px'
+                  }}
+                />
+                <Bar dataKey="value" fill={chartColors.primary} radius={[0, 4, 4, 0]}>
+                  <Cell fill={chartColors.primary} />
+                  <Cell fill={chartColors.secondary} />
+                  <Cell fill={chartColors.accent} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          {/* Gráfico 2: Qualidade da Visita (Gauge) */}
+          <ChartCard
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <ChartHeader>
+              <ChartTitle>
+                <IconComponent icon={FaIcons.FaTachometerAlt} style={{ color: chartColors.primary }} />
+                Visit Quality Score
+              </ChartTitle>
+              {!hasData && <DemoIndicator>Demo</DemoIndicator>}
+            </ChartHeader>
+            <ResponsiveContainer width="100%" height={250}>
+              <RadarChart data={qualityData}>
+                <PolarGrid stroke={chartColors.grid} />
+                <PolarAngleAxis dataKey="metric" stroke={chartColors.text} tick={{ fontSize: 10 }} />
+                <PolarRadiusAxis 
+                  angle={90} 
+                  domain={[0, 100]} 
+                  stroke={chartColors.text}
+                  tick={{ fontSize: 10 }}
+                />
+                <Radar 
+                  name="Score" 
+                  dataKey="value" 
+                  stroke={chartColors.primary} 
+                  fill={chartColors.primary} 
+                  fillOpacity={0.3}
+                  strokeWidth={2}
+                />
+                <Tooltip 
+                  formatter={(value) => [`${value}%`, 'Score']}
+                  contentStyle={{
+                    backgroundColor: theme.name === 'dark' ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    border: `1px solid ${chartColors.primary}`,
+                    borderRadius: '12px',
+                    padding: '10px'
+                  }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          {/* Gráfico 3: Taxa de Retorno */}
+          <ChartCard
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <ChartHeader>
+              <ChartTitle>
+                <IconComponent icon={FaIcons.FaUserClock} style={{ color: chartColors.primary }} />
+                Return Rate
+              </ChartTitle>
+              {!hasData && <DemoIndicator>Demo</DemoIndicator>}
+            </ChartHeader>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={returnRateData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  <Cell fill={chartColors.primary} />
+                  <Cell fill={chartColors.accent} />
+                </Pie>
+                <Tooltip 
+                  formatter={(value) => [`${value}%`, '']}
+                  contentStyle={{
+                    backgroundColor: theme.name === 'dark' ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    border: `1px solid ${chartColors.primary}`,
+                    borderRadius: '12px',
+                    padding: '10px'
+                  }}
+                />
+                <text 
+                  x="50%" 
+                  y="50%" 
+                  textAnchor="middle" 
+                  dominantBaseline="middle"
+                  style={{ fontSize: '24px', fontWeight: 'bold', fill: chartColors.primary }}
+                >
+                  {returnRateData[1]?.value || 0}%
+                </text>
+                <text 
+                  x="50%" 
+                  y="50%" 
+                  dy={20}
+                  textAnchor="middle" 
+                  dominantBaseline="middle"
+                  style={{ fontSize: '12px', fill: chartColors.text }}
+                >
+                  Returning
+                </text>
+              </PieChart>
+            </ResponsiveContainer>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              gap: '20px', 
+              marginTop: '10px',
+              fontSize: '12px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <div style={{ 
+                  width: '12px', 
+                  height: '12px', 
+                  backgroundColor: chartColors.primary,
+                  borderRadius: '2px'
+                }} />
+                <span>New ({returnRateData[0]?.value || 0}%)</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <div style={{ 
+                  width: '12px', 
+                  height: '12px', 
+                  backgroundColor: chartColors.accent,
+                  borderRadius: '2px'
+                }} />
+                <span>Returning ({returnRateData[1]?.value || 0}%)</span>
+              </div>
+            </div>
+          </ChartCard>
+        </SecondaryChartsGrid>
+      </div>
 
       <TagImplementation id="implementation-guide">
         <TagTitle 
