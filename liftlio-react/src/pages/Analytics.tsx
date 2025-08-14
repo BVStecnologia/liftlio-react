@@ -1325,9 +1325,17 @@ const Analytics: React.FC = () => {
         if (analytics && analytics.length > 0) {
           console.log('✅ Processing data (real or demo from SQL)...');
           // Verifica se são dados demo baseado no visitor_id ou custom_data
+          // Dados reais têm visitor_id como 'v_xxx' ou similares, demo tem 'visitor_'
           const isDemo = analytics[0]?.visitor_id?.startsWith('visitor_') || 
-                         analytics[0]?.custom_data?.demo === true || 
-                         false;
+                         analytics[0]?.custom_data?.demo === true;
+          
+          console.log('📊 Data type detection:', {
+            firstVisitorId: analytics[0]?.visitor_id,
+            customData: analytics[0]?.custom_data,
+            isDemo,
+            willSetHasData: !isDemo
+          });
+          
           setHasData(!isDemo);
           
           // Se são dados demo, usar valores demo bonitos ao invés de calcular
@@ -1343,6 +1351,28 @@ const Analytics: React.FC = () => {
               conversionChange: 12.7,
               timeChange: 15.3
             });
+            
+            // Set demo data for Engagement Funnel
+            setFunnelData([
+              { name: 'Visited', value: 3562, percentage: '100%' },
+              { name: 'Engaged', value: 1674, percentage: '47%' },
+              { name: 'Converted', value: 506, percentage: '14%' }
+            ]);
+            
+            // Set demo data for Visit Quality
+            setQualityData([
+              { metric: 'Time on Page', value: 75 },
+              { metric: 'Scroll Depth', value: 82 },
+              { metric: 'Interactions', value: 68 },
+              { metric: 'Pages/Session', value: 71 },
+              { metric: 'Return Rate', value: 35 }
+            ]);
+            
+            // Set demo data for Return Rate
+            setReturnRateData([
+              { name: 'New Visitors', value: 65, color: '#8b5cf6' },
+              { name: 'Returning', value: 35, color: '#c084fc' }
+            ]);
           }
           
           processAnalyticsData(analytics);
@@ -1662,34 +1692,60 @@ const Analytics: React.FC = () => {
   useEffect(() => {
     const calculateConversionData = async () => {
       // Se não há dados, os dados demo já foram definidos em generateDemoData()
+      console.log('🔍 calculateConversionData:', {
+        hasProject: !!currentProject?.id,
+        analyticsLength: analyticsData.length,
+        hasData,
+        willProcess: currentProject?.id && analyticsData.length > 0 && hasData
+      });
+      
       if (!currentProject?.id || analyticsData.length === 0 || !hasData) return;
       
-      // Calcular funil de engajamento
-      const totalVisits = analyticsData.filter(d => d.event_type === 'pageview').length;
-      const engagedVisits = analyticsData.filter(d => 
-        (d.scroll_depth && d.scroll_depth > 50) || 
-        (d.time_on_page && d.time_on_page > 30) ||
-        d.event_type === 'click'
-      ).length;
-      const convertedVisits = analyticsData.filter(d => 
-        d.click_target && (
-          d.click_target.toLowerCase().includes('signup') ||
-          d.click_target.toLowerCase().includes('start') ||
-          d.click_target.toLowerCase().includes('buy') ||
-          d.click_target.toLowerCase().includes('contact')
-        )
-      ).length;
+      // Calcular funil de engajamento baseado em visitantes únicos
+      const uniqueVisitors = new Set(analyticsData.map(d => d.visitor_id)).size;
+      
+      // Visitantes engajados: aqueles com alto scroll, tempo ou qualquer click
+      const engagedVisitorIds = new Set(
+        analyticsData.filter(d => 
+          (d.scroll_depth && d.scroll_depth > 50) || 
+          (d.time_on_page && d.time_on_page > 30) ||
+          d.event_type === 'click'
+        ).map(d => d.visitor_id)
+      );
+      const engagedVisitors = engagedVisitorIds.size;
+      
+      // Visitantes convertidos: aqueles que clicaram em CTAs específicos
+      const convertedVisitorIds = new Set(
+        analyticsData.filter(d => 
+          d.click_target && (
+            d.click_target.toLowerCase().includes('signup') ||
+            d.click_target.toLowerCase().includes('start') ||
+            d.click_target.toLowerCase().includes('buy') ||
+            d.click_target.toLowerCase().includes('contact')
+          )
+        ).map(d => d.visitor_id)
+      );
+      const convertedVisitors = convertedVisitorIds.size;
+      
+      console.log('📊 Funnel calculation:', {
+        uniqueVisitors,
+        engagedVisitors,
+        convertedVisitors,
+        engagedIds: Array.from(engagedVisitorIds),
+        convertedIds: Array.from(convertedVisitorIds)
+      });
       
       setFunnelData([
-        { name: 'Visited', value: totalVisits, percentage: '100%' },
-        { name: 'Engaged', value: engagedVisits, percentage: totalVisits > 0 ? `${Math.round((engagedVisits/totalVisits)*100)}%` : '0%' },
-        { name: 'Converted', value: convertedVisits, percentage: totalVisits > 0 ? `${Math.round((convertedVisits/totalVisits)*100)}%` : '0%' }
+        { name: 'Visited', value: uniqueVisitors, percentage: '100%' },
+        { name: 'Engaged', value: engagedVisitors, percentage: uniqueVisitors > 0 ? `${Math.round((engagedVisitors/uniqueVisitors)*100)}%` : '0%' },
+        { name: 'Converted', value: convertedVisitors, percentage: uniqueVisitors > 0 ? `${Math.round((convertedVisitors/uniqueVisitors)*100)}%` : '0%' }
       ]);
       
       // Calcular qualidade da visita
       const avgTimeOnPage = analyticsData.filter(d => d.time_on_page).reduce((sum, d) => sum + (d.time_on_page || 0), 0) / (analyticsData.filter(d => d.time_on_page).length || 1);
       const avgScrollDepth = analyticsData.filter(d => d.scroll_depth).reduce((sum, d) => sum + (d.scroll_depth || 0), 0) / (analyticsData.filter(d => d.scroll_depth).length || 1);
-      const clickRate = (analyticsData.filter(d => d.event_type === 'click').length / totalVisits) * 100;
+      const totalClicks = analyticsData.filter(d => d.event_type === 'click').length;
+      const clickRate = uniqueVisitors > 0 ? (totalClicks / uniqueVisitors) * 100 : 0;
       
       // Calcular páginas por sessão
       const sessions = Array.from(new Set(analyticsData.map(d => d.session_id)));
@@ -1697,11 +1753,11 @@ const Analytics: React.FC = () => {
       const pagesPerSession = sessions.length > 0 ? totalPages / sessions.length : 0;
       
       // Calcular taxa de retorno
-      const uniqueVisitors = Array.from(new Set(analyticsData.map(d => d.visitor_id)));
-      const returningVisitors = uniqueVisitors.filter(vid => 
+      const uniqueVisitorIds = Array.from(new Set(analyticsData.map(d => d.visitor_id)));
+      const returningVisitors = uniqueVisitorIds.filter(vid => 
         analyticsData.filter(d => d.visitor_id === vid).length > 1
       ).length;
-      const returnRate = uniqueVisitors.length > 0 ? (returningVisitors / uniqueVisitors.length) * 100 : 0;
+      const returnRate = uniqueVisitorIds.length > 0 ? (returningVisitors / uniqueVisitorIds.length) * 100 : 0;
       
       setQualityData([
         { metric: 'Time on Page', value: Math.min(100, Math.round((avgTimeOnPage / 60) * 20)) }, // Normalizado para 100
@@ -2333,30 +2389,75 @@ const Analytics: React.FC = () => {
               </ChartTitle>
               {!hasData && <DemoIndicator>Demo</DemoIndicator>}
             </ChartHeader>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart 
-                data={funnelData}
-                layout="horizontal"
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                <XAxis type="number" stroke={chartColors.text} />
-                <YAxis dataKey="name" type="category" stroke={chartColors.text} width={80} />
-                <Tooltip 
-                  formatter={(value, name) => [`${value} (${name === 'value' ? 'Users' : name})`, '']}
-                  contentStyle={{
-                    backgroundColor: theme.name === 'dark' ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                    border: `1px solid ${chartColors.primary}`,
-                    borderRadius: '12px',
-                    padding: '10px'
-                  }}
-                />
-                <Bar dataKey="value" fill={chartColors.primary} radius={[0, 4, 4, 0]}>
-                  <Cell fill={chartColors.primary} />
-                  <Cell fill={chartColors.secondary} />
-                  <Cell fill={chartColors.accent} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <div style={{ padding: '20px 10px', height: '250px' }}>
+              {funnelData.map((item, index) => {
+                const maxValue = Math.max(...funnelData.map(d => d.value));
+                const barWidth = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
+                const colors = ['#8b5cf6', '#a855f7', '#c084fc'];
+                
+                return (
+                  <div key={item.name} style={{ marginBottom: '25px' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '8px'
+                    }}>
+                      <span style={{ 
+                        color: theme.colors.text.secondary,
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        minWidth: '80px'
+                      }}>
+                        {item.name}
+                      </span>
+                      <span style={{ 
+                        color: theme.colors.text.primary,
+                        fontSize: '14px',
+                        fontWeight: 600
+                      }}>
+                        {item.value.toLocaleString()} users ({item.percentage})
+                      </span>
+                    </div>
+                    <div style={{ 
+                      background: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                      borderRadius: '6px',
+                      height: '32px',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${barWidth}%` }}
+                        transition={{ duration: 0.8, delay: index * 0.1 }}
+                        style={{ 
+                          background: `linear-gradient(90deg, ${colors[index]}, ${colors[index]}dd)`,
+                          height: '100%',
+                          borderRadius: '6px',
+                          boxShadow: `0 2px 8px ${colors[index]}40`,
+                          position: 'relative'
+                        }}
+                      >
+                        {barWidth > 20 && (
+                          <span style={{
+                            position: 'absolute',
+                            right: '12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            color: 'white',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                          }}>
+                            {item.value}
+                          </span>
+                        )}
+                      </motion.div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </ChartCard>
 
           {/* Gráfico 2: Qualidade da Visita (Gauge) */}
