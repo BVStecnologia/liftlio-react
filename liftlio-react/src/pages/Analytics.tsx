@@ -271,6 +271,40 @@ const DemoIndicator = styled.span`
   font-size: 11px;
   font-weight: 600;
   border: 1px solid rgba(249, 115, 22, 0.2);
+  cursor: help;
+  position: relative;
+  
+  &:hover::after {
+    content: "Real data will appear once the tracking tag is installed";
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.95);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 1000;
+    font-weight: 400;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  &:hover::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.95);
+    pointer-events: none;
+    z-index: 1000;
+    margin-bottom: 2px;
+  }
 `;
 
 const ChartTitle = styled.h3`
@@ -1039,24 +1073,24 @@ const Analytics: React.FC = () => {
   const { currentProject } = useProject();
   const { theme } = useTheme();
   
-  // Estados para os novos gráficos de conversão
+  // Estados para os novos gráficos de conversão - com dados demo iniciais
   const [funnelData, setFunnelData] = useState([
-    { name: 'Visited', value: 0, percentage: '0%' },
-    { name: 'Engaged', value: 0, percentage: '0%' },
-    { name: 'Converted', value: 0, percentage: '0%' }
+    { name: 'Visited', value: 1000, percentage: '100%' },
+    { name: 'Engaged', value: 450, percentage: '45%' },
+    { name: 'Converted', value: 120, percentage: '12%' }
   ]);
   
   const [qualityData, setQualityData] = useState([
-    { metric: 'Time on Page', value: 0 },
-    { metric: 'Scroll Depth', value: 0 },
-    { metric: 'Interactions', value: 0 },
-    { metric: 'Pages/Session', value: 0 },
-    { metric: 'Return Rate', value: 0 }
+    { metric: 'Time on Page', value: 75 },
+    { metric: 'Scroll Depth', value: 82 },
+    { metric: 'Interactions', value: 68 },
+    { metric: 'Pages/Session', value: 71 },
+    { metric: 'Return Rate', value: 35 }
   ]);
   
   const [returnRateData, setReturnRateData] = useState([
-    { name: 'New Visitors', value: 100, color: '' },
-    { name: 'Returning', value: 0, color: '' }
+    { name: 'New Visitors', value: 65, color: '#8b5cf6' },
+    { name: 'Returning', value: 35, color: '#c084fc' }
   ]);
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('7d');
   const [analyticsData, setAnalyticsData] = useState<any[]>([]);
@@ -1064,7 +1098,14 @@ const Analytics: React.FC = () => {
   const [trafficData, setTrafficData] = useState<any[]>([]);
   const [sourceData, setSourceData] = useState<any[]>([]);
   const [deviceData, setDeviceData] = useState<any[]>([]);
-  const [growthData, setGrowthData] = useState<any[]>([]);
+  const [growthData, setGrowthData] = useState<any[]>([
+    { month: 'Aug', crescimento: 100, meta: 100 },
+    { month: 'Sep', crescimento: 145, meta: 130 },
+    { month: 'Oct', crescimento: 178, meta: 160 },
+    { month: 'Nov', crescimento: 215, meta: 190 },
+    { month: 'Dec', crescimento: 268, meta: 220 },
+    { month: 'Jan', crescimento: 295, meta: 250 }
+  ]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [hasData, setHasData] = useState(false);
@@ -1240,7 +1281,15 @@ const Analytics: React.FC = () => {
   // Fetch real analytics data from Supabase
   useEffect(() => {
     const fetchAnalyticsData = async () => {
-      if (!currentProject?.id) return;
+      console.log('🚀 fetchAnalyticsData - currentProject:', currentProject);
+      if (!currentProject?.id) {
+        // Se não há projeto, mostrar dados demo
+        console.log('⚠️ No project ID, generating demo data...');
+        setHasData(false);
+        generateDemoData();
+        setLoading(false);
+        return;
+      }
       
       setLoading(true);
       
@@ -1261,47 +1310,141 @@ const Analytics: React.FC = () => {
             break;
         }
         
-        // Fetch analytics data
+        // Fetch analytics data com fallback para demo
         const { data: analytics, error } = await supabase
-          .from('analytics')
-          .select('*')
-          .eq('project_id', currentProject.id)
-          .gte('created_at', startDate.toISOString())
-          .order('created_at', { ascending: false });
+          .rpc('get_analytics_with_demo_fallback', {
+            p_project_id: currentProject.id,
+            p_start_date: startDate.toISOString()
+          });
         
         if (error) throw error;
         
-        // Process data for charts
+        console.log('📈 Analytics data fetched:', analytics?.length || 0, 'records');
+        
+        // Process data for charts (agora sempre processa pois a função SQL já retorna demo se necessário)
         if (analytics && analytics.length > 0) {
-          setHasData(true);
+          console.log('✅ Processing data (real or demo from SQL)...');
+          // Verifica se são dados demo baseado no visitor_id ou custom_data
+          const isDemo = analytics[0]?.visitor_id?.startsWith('visitor_') || 
+                         analytics[0]?.custom_data?.demo === true || 
+                         false;
+          setHasData(!isDemo);
+          
+          // Se são dados demo, usar valores demo bonitos ao invés de calcular
+          if (isDemo) {
+            // Set beautiful demo metrics
+            setMetricsData({
+              organicTraffic: 12847,
+              uniqueUsers: 3562,
+              conversionRate: 14.2,
+              avgTime: 185, // 3m 5s
+              organicChange: 32.5,
+              usersChange: 28.4,
+              conversionChange: 12.7,
+              timeChange: 15.3
+            });
+          }
+          
           processAnalyticsData(analytics);
-        } else {
-          setHasData(false);
-          // Set empty data when no analytics available
-          setTrafficData([]);
-          setSourceData([{ name: 'No data', value: 100, color: '#8b5cf6' }]);
-          setDeviceData([
-            { name: 'Desktop', users: 0, percentage: 0, color: '#8b5cf6' },
-            { name: 'Mobile', users: 0, percentage: 0, color: '#a855f7' },
-            { name: 'Tablet', users: 0, percentage: 0, color: '#c084fc' }
-          ]);
-          setGrowthData([]);
         }
       } catch (error) {
         console.error('Error fetching analytics:', error);
         setHasData(false);
-        // Set empty data on error
-        setTrafficData([]);
-        setSourceData([{ name: 'Error loading', value: 100, color: '#ef4444' }]);
-        setDeviceData([
-          { name: 'Desktop', users: 0, percentage: 0, color: '#8b5cf6' },
-          { name: 'Mobile', users: 0, percentage: 0, color: '#a855f7' },
-          { name: 'Tablet', users: 0, percentage: 0, color: '#c084fc' }
-        ]);
-        setGrowthData([]);
+        // Set realistic demo data even on error
+        generateDemoData();
       } finally {
         setLoading(false);
       }
+    };
+    
+    const generateDemoData = () => {
+      console.log('🎯 generateDemoData CALLED!');
+      // Generate realistic demo data for all charts
+      const now = new Date();
+      const demoTraffic = [];
+      
+      // Generate 30 days of traffic data with realistic growth pattern
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const baseVisitors = 150 + Math.floor(Math.random() * 50);
+        const growth = Math.floor((30 - i) * 2); // Gradual growth
+        const dailyVariation = Math.floor(Math.random() * 30) - 15; // Daily variation
+        
+        demoTraffic.push({
+          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          visitors: Math.max(50, baseVisitors + growth + dailyVariation),
+          pageViews: Math.max(100, (baseVisitors + growth + dailyVariation) * 2.5),
+          sessions: Math.max(80, (baseVisitors + growth + dailyVariation) * 1.8)
+        });
+      }
+      
+      setTrafficData(demoTraffic);
+      console.log('📊 Traffic data set:', demoTraffic.length, 'days');
+      
+      // Realistic traffic sources - Liftlio generates the search traffic
+      setSourceData([
+        { name: 'Liftlio', value: 45, color: '#8b5cf6' },
+        { name: 'Direct', value: 30, color: '#a855f7' },
+        { name: 'Social Media', value: 15, color: '#c084fc' },
+        { name: 'Referral', value: 7, color: '#d8b4fe' },
+        { name: 'Others', value: 3, color: '#e9d5ff' }
+      ]);
+      
+      // Realistic device distribution
+      setDeviceData([
+        { name: 'Desktop', users: 580, sessions: 1450, percentage: 55, color: '#8b5cf6' },
+        { name: 'Mobile', users: 380, sessions: 720, percentage: 35, color: '#a855f7' },
+        { name: 'Tablet', users: 120, sessions: 180, percentage: 10, color: '#c084fc' }
+      ]);
+      
+      // Realistic growth data - últimos 6 meses
+      const growth = [];
+      for (let i = 5; i >= 0; i--) {
+        const monthDate = new Date();
+        monthDate.setMonth(monthDate.getMonth() - i);
+        const monthName = monthDate.toLocaleDateString('en-US', { month: 'short' });
+        
+        growth.push({
+          month: monthName,
+          crescimento: 100 + ((5-i) * 35) + Math.floor(Math.random() * 20),
+          meta: 100 + ((5-i) * 30)
+        });
+      }
+      setGrowthData(growth);
+      console.log('📊 Demo growth data set:', growth);
+      
+      // Set realistic metrics
+      setMetricsData({
+        organicTraffic: 12500,
+        uniqueUsers: 3247,
+        conversionRate: 12.5,
+        avgTime: 165, // 2m 45s in seconds
+        organicChange: 24.7,
+        usersChange: 12.5,
+        conversionChange: 8.3,
+        timeChange: -5.2
+      });
+      
+      // Set demo data for conversion charts
+      setFunnelData([
+        { name: 'Visited', value: 1000, percentage: '100%' },
+        { name: 'Engaged', value: 450, percentage: '45%' },
+        { name: 'Converted', value: 120, percentage: '12%' }
+      ]);
+      
+      setQualityData([
+        { metric: 'Time on Page', value: 75 },
+        { metric: 'Scroll Depth', value: 82 },
+        { metric: 'Interactions', value: 68 },
+        { metric: 'Pages/Session', value: 71 },
+        { metric: 'Return Rate', value: 35 }
+      ]);
+      
+      setReturnRateData([
+        { name: 'New Visitors', value: 65, color: '#8b5cf6' },
+        { name: 'Returning', value: 35, color: '#c084fc' }
+      ]);
     };
     
     const processAnalyticsData = (data: any[]) => {
@@ -1360,34 +1503,50 @@ const Analytics: React.FC = () => {
       const deviceCount = new Map();
       const dailyTotals = new Map();
       
-      // Get last 7 days
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      // Get last 7 days with actual dates
+      const today = new Date();
       const last7Days = [];
+      const dateToKey = new Map();
+      
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        const dayName = days[date.getDay()];
+        const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
         last7Days.push(dayName);
+        dateToKey.set(dateKey, dayName);
         trafficByDay.set(dayName, { liftlio: 0, ads: 0, social: 0, direct: 0 });
       }
       
       // Process each event
       data.forEach((event: any) => {
-        const date = new Date(event.created_at);
-        const dayName = days[date.getDay()];
+        const eventDate = new Date(event.created_at);
+        const eventDateKey = eventDate.toISOString().split('T')[0];
+        const dayName = dateToKey.get(eventDateKey);
         
-        if (trafficByDay.has(dayName)) {
+        if (dayName && trafficByDay.has(dayName)) {
           const dayData = trafficByDay.get(dayName);
           
-          // Categorize traffic source
-          const source = event.custom_data?.traffic_source || 'Direct';
+          // Categorize traffic source based on actual database fields
+          const referrer = event.referrer || '';
+          const utmMedium = event.utm_medium || '';
+          const utmSource = event.utm_source || '';
           const isOrganic = event.is_organic === true;
           
-          if (isOrganic || source.includes('Search') || source.includes('Liftlio')) {
+          // Categorize into 4 groups for the Traffic Growth chart
+          if (isOrganic || referrer.toLowerCase().includes('liftlio') || utmSource === 'liftlio') {
             dayData.liftlio++;
-          } else if (source.includes('Ads') || event.custom_data?.utm_params?.utm_medium === 'cpc') {
+          } else if (utmMedium === 'cpc' || utmMedium === 'cpm' || utmMedium === 'cpv') {
             dayData.ads++;
-          } else if (source.includes('Facebook') || source.includes('Instagram') || source.includes('Twitter') || source.includes('LinkedIn')) {
+          } else if (utmMedium === 'social' || 
+                     referrer.toLowerCase().includes('facebook') || 
+                     referrer.toLowerCase().includes('instagram') || 
+                     referrer.toLowerCase().includes('twitter') || 
+                     referrer.toLowerCase().includes('linkedin') ||
+                     referrer.toLowerCase().includes('youtube') ||
+                     referrer.toLowerCase().includes('reddit') ||
+                     referrer.toLowerCase().includes('tiktok') ||
+                     referrer.toLowerCase().includes('pinterest')) {
             dayData.social++;
           } else {
             dayData.direct++;
@@ -1491,9 +1650,9 @@ const Analytics: React.FC = () => {
         { name: 'No data yet', value: 100, color: '#8b5cf6' }
       ]);
       setDeviceData(devices);
-      setGrowthData(growth.length > 0 ? growth : [
-        { month: new Date().toLocaleDateString('en-US', { month: 'short' }), crescimento: 0, meta: 0 }
-      ]);
+      // Sempre atualiza growthData (agora já tem fallback para dados demo)
+      setGrowthData(growth);
+      console.log('🔴 processAnalyticsData - growth data:', growth);
     };
     
     fetchAnalyticsData();
@@ -1502,7 +1661,8 @@ const Analytics: React.FC = () => {
   // Calcular dados de conversão e engajamento
   useEffect(() => {
     const calculateConversionData = async () => {
-      if (!currentProject?.id || analyticsData.length === 0) return;
+      // Se não há dados, os dados demo já foram definidos em generateDemoData()
+      if (!currentProject?.id || analyticsData.length === 0 || !hasData) return;
       
       // Calcular funil de engajamento
       const totalVisits = analyticsData.filter(d => d.event_type === 'pageview').length;
@@ -1562,7 +1722,7 @@ const Analytics: React.FC = () => {
     };
     
     calculateConversionData();
-  }, [analyticsData, currentProject]);
+  }, [analyticsData, currentProject, hasData]);
 
   // Formatar valores dos dados reais
   const formatNumber = (num: number) => {
@@ -1837,7 +1997,28 @@ const Analytics: React.FC = () => {
           >
             <MetricHeader>
               <div>
-                <MetricTitle>{metric.title}</MetricTitle>
+                <MetricTitle>
+                  {metric.title}
+                  {!hasData && (
+                    <span 
+                      title="Real data will appear once the tracking tag is installed"
+                      style={{ 
+                        marginLeft: '8px',
+                        fontSize: '10px',
+                        padding: '2px 6px',
+                        background: 'rgba(139, 92, 246, 0.2)',
+                        borderRadius: '4px',
+                        color: '#8b5cf6',
+                        fontWeight: 600,
+                        verticalAlign: 'middle',
+                        display: 'inline-block',
+                        cursor: 'help'
+                      }}
+                    >
+                      DEMO
+                    </span>
+                  )}
+                </MetricTitle>
                 <MetricValue>{metric.value}</MetricValue>
                 <MetricChange positive={metric.positive}>
                   {metric.positive ? <IconComponent icon={FaIcons.FaArrowUp} /> : <IconComponent icon={FaIcons.FaArrowDown} />}
@@ -1881,8 +2062,8 @@ const Analytics: React.FC = () => {
                   <stop offset="100%" stopColor="#fb923c" stopOpacity={0.2}/>
                 </linearGradient>
                 <linearGradient id="colorSocial" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#c084fc" stopOpacity={0.9}/>
-                  <stop offset="100%" stopColor="#c084fc" stopOpacity={0.2}/>
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9}/>
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.2}/>
                 </linearGradient>
                 <linearGradient id="colorDirect" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#e9d5ff" stopOpacity={0.9}/>
@@ -1975,10 +2156,10 @@ const Analytics: React.FC = () => {
             </LegendItem>
             <LegendItem>
               <LegendDot color="#fb923c" />
-              <span><strong>Paid Ads</strong> - Google/Meta Ads</span>
+              <span><strong>Paid Ads</strong> - Sponsored Traffic</span>
             </LegendItem>
             <LegendItem>
-              <LegendDot color="#c084fc" />
+              <LegendDot color="#3b82f6" />
               <span><strong>Social Media</strong> - Social networks</span>
             </LegendItem>
             <LegendItem>
