@@ -1800,19 +1800,19 @@ const Analytics: React.FC = () => {
           <ChartLegend>
             <LegendItem>
               <LegendDot color="#8b5cf6" />
-              <span><strong>Liftlio Organic</strong> - 68% of total traffic (Google, Bing, etc.)</span>
+              <span><strong>Liftlio Organic</strong> - SEO optimized traffic</span>
             </LegendItem>
             <LegendItem>
-              <LegendDot color="#10b981" />
-              <span><strong>Paid Ads</strong> - 15% from Google/Meta Ads</span>
+              <LegendDot color="#fb923c" />
+              <span><strong>Paid Ads</strong> - Google/Meta Ads</span>
             </LegendItem>
             <LegendItem>
               <LegendDot color="#c084fc" />
-              <span><strong>Social Media</strong> - 10% from social networks</span>
+              <span><strong>Social Media</strong> - Social networks</span>
             </LegendItem>
             <LegendItem>
-              <LegendDot color="#ef4444" />
-              <span><strong>Direct</strong> - 7% direct visits</span>
+              <LegendDot color="#e9d5ff" />
+              <span><strong>Direct</strong> - Direct visits</span>
             </LegendItem>
           </ChartLegend>
         </ChartCard>
