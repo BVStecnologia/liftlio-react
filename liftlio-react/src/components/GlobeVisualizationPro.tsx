@@ -3,6 +3,7 @@ import Globe from 'react-globe.gl';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as FaIcons from 'react-icons/fa';
+import { FaRoute, FaShoppingCart, FaCreditCard, FaCheckCircle, FaHome, FaSearch, FaMapMarkedAlt, FaBolt } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import * as THREE from 'three';
 
@@ -50,7 +51,76 @@ const StatsOverlay = styled(motion.div)`
     : props.theme.colors.border};
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   min-width: 260px;
+  max-width: 320px;
   z-index: 10;
+  max-height: 520px;
+  display: flex;
+  flex-direction: column;
+`;
+
+// Tabs Container
+const TabsContainer = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 4px;
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(37, 37, 37, 0.5)'
+    : 'rgba(243, 244, 246, 0.5)'};
+  border-radius: 12px;
+`;
+
+const TabButton = styled.button<{ active: boolean }>`
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background: ${props => props.active 
+    ? 'linear-gradient(135deg, #8b5cf6, #a855f7)'
+    : 'transparent'};
+  color: ${props => props.active 
+    ? 'white' 
+    : props.theme.colors.text.secondary};
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  
+  &:hover {
+    background: ${props => !props.active && props.theme.name === 'dark'
+      ? 'rgba(139, 92, 246, 0.1)'
+      : !props.active ? 'rgba(139, 92, 246, 0.05)' 
+      : 'linear-gradient(135deg, #8b5cf6, #a855f7)'};
+  }
+  
+  svg {
+    font-size: 14px;
+  }
+`;
+
+const TabContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+  
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(139, 92, 246, 0.3);
+    border-radius: 2px;
+  }
 `;
 
 const LiveBadge = styled.div`
@@ -172,6 +242,180 @@ const LocationCount = styled.div`
   box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 `;
 
+// Lista de eventos recentes
+const RecentEventsList = styled.div`
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(139, 92, 246, 0.2)'
+    : 'rgba(139, 92, 246, 0.1)'};
+`;
+
+// Journey Funnel Section
+const JourneySection = styled.div`
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(139, 92, 246, 0.2)'
+    : 'rgba(139, 92, 246, 0.1)'};
+`;
+
+const JourneyTitle = styled.div`
+  font-size: 12px;
+  font-weight: 700;
+  color: ${props => props.theme.colors.text.secondary};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  svg {
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
+const JourneyStage = styled(motion.div)`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(37, 37, 37, 0.4)'
+    : 'rgba(249, 250, 251, 0.4)'};
+  border-radius: 10px;
+  margin-bottom: 8px;
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.06)'
+    : 'rgba(229, 231, 235, 0.4)'};
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${props => props.theme.name === 'dark'
+      ? 'rgba(37, 37, 37, 0.6)'
+      : 'rgba(243, 244, 246, 0.6)'};
+    transform: translateX(2px);
+  }
+`;
+
+const StageInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const StageIcon = styled.div<{ stage: string }>`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  background: ${props => {
+    switch(props.stage) {
+      case 'visiting': return 'linear-gradient(135deg, #c084fc, #a855f7)';
+      case 'browsing': return 'linear-gradient(135deg, #a855f7, #9333ea)';
+      case 'cart': return 'linear-gradient(135deg, #9333ea, #7c3aed)';
+      case 'checkout': return 'linear-gradient(135deg, #7c3aed, #6d28d9)';
+      case 'purchased': return 'linear-gradient(135deg, #10b981, #059669)';
+      default: return 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+    }
+  }};
+  color: white;
+`;
+
+const StageName = styled.div`
+  font-size: 13px;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const StageCount = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const CountBadge = styled.div`
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(139, 92, 246, 0.2)'
+    : 'rgba(139, 92, 246, 0.15)'};
+  color: ${props => props.theme.colors.primary};
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+`;
+
+const LocationTag = styled.div`
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(107, 114, 128, 0.2)'
+    : 'rgba(107, 114, 128, 0.1)'};
+  color: ${props => props.theme.colors.text.secondary};
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+`;
+
+const EventItem = styled(motion.div)`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(37, 37, 37, 0.3)'
+    : 'rgba(249, 250, 251, 0.3)'};
+  border-radius: 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${props => props.theme.name === 'dark'
+      ? 'rgba(37, 37, 37, 0.5)'
+      : 'rgba(243, 244, 246, 0.5)'};
+    transform: translateX(2px);
+  }
+`;
+
+const EventIcon = styled.div`
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(139, 92, 246, 0.2)'
+    : 'rgba(139, 92, 246, 0.1)'};
+  color: ${props => props.theme.colors.primary};
+  font-size: 14px;
+  flex-shrink: 0;
+`;
+
+const EventDetails = styled.div`
+  flex: 1;
+  
+  .event-location {
+    font-weight: 600;
+    color: ${props => props.theme.colors.text.primary};
+  }
+  
+  .event-type {
+    color: ${props => props.theme.colors.text.secondary};
+    font-size: 11px;
+  }
+`;
+
+const EventTime = styled.div`
+  color: ${props => props.theme.colors.text.secondary};
+  font-size: 11px;
+  white-space: nowrap;
+`;
+
 // Title Overlay
 const TitleOverlay = styled.div`
   position: absolute;
@@ -273,29 +517,58 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
   const [arcs, setArcs] = useState<Arc[]>([]);
   const [activeVisitors, setActiveVisitors] = useState<any[]>([]);
   const [globeReady, setGlobeReady] = useState(false);
+  const [journeyData, setJourneyData] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'live' | 'journey'>('live');
 
   // Coordenadas de cidades principais
   const cityCoordinates: { [key: string]: { lat: number; lng: number } } = {
-    'Brazil-São Paulo': { lat: -23.5505, lng: -46.6333 },
-    'Brazil-Rio de Janeiro': { lat: -22.9068, lng: -43.1729 },
-    'United States-New York': { lat: 40.7128, lng: -74.0060 },
-    'United States-San Francisco': { lat: 37.7749, lng: -122.4194 },
-    'United States-Los Angeles': { lat: 34.0522, lng: -118.2437 },
-    'United Kingdom-London': { lat: 51.5074, lng: -0.1278 },
-    'Germany-Berlin': { lat: 52.5200, lng: 13.4050 },
-    'France-Paris': { lat: 48.8566, lng: 2.3522 },
-    'Japan-Tokyo': { lat: 35.6762, lng: 139.6503 },
-    'China-Beijing': { lat: 39.9042, lng: 116.4074 },
-    'Australia-Sydney': { lat: -33.8688, lng: 151.2093 },
-    'Canada-Toronto': { lat: 43.6532, lng: -79.3832 },
-    'India-Mumbai': { lat: 19.0760, lng: 72.8777 },
-    'Mexico-Mexico City': { lat: 19.4326, lng: -99.1332 },
-    'Argentina-Buenos Aires': { lat: -34.6037, lng: -58.3816 },
-    'Spain-Madrid': { lat: 40.4168, lng: -3.7038 },
-    'Italy-Rome': { lat: 41.9028, lng: 12.4964 },
-    'Russia-Moscow': { lat: 55.7558, lng: 37.6173 },
-    'South Korea-Seoul': { lat: 37.5665, lng: 126.9780 },
-    'Netherlands-Amsterdam': { lat: 52.3676, lng: 4.9041 },
+    // Brasil
+    'BR-São Paulo': { lat: -23.5505, lng: -46.6333 },
+    'BR-Sao Paulo': { lat: -23.5505, lng: -46.6333 },
+    'BR-Rio de Janeiro': { lat: -22.9068, lng: -43.1729 },
+    'BR-São José': { lat: -27.6147, lng: -48.6047 }, // São José, SC
+    'BR-Florianópolis': { lat: -27.5954, lng: -48.5480 },
+    'BR-Brasília': { lat: -15.7975, lng: -47.8919 },
+    'BR-Salvador': { lat: -12.9714, lng: -38.5014 },
+    'BR-Belo Horizonte': { lat: -19.9245, lng: -43.9352 },
+    'BR-Curitiba': { lat: -25.4284, lng: -49.2733 },
+    'BR-Porto Alegre': { lat: -30.0346, lng: -51.2177 },
+    'BR-Recife': { lat: -8.0476, lng: -34.8770 },
+    'BR-Fortaleza': { lat: -3.7172, lng: -38.5433 },
+    
+    // EUA
+    'US-New York': { lat: 40.7128, lng: -74.0060 },
+    'US-San Francisco': { lat: 37.7749, lng: -122.4194 },
+    'US-Los Angeles': { lat: 34.0522, lng: -118.2437 },
+    'US-Chicago': { lat: 41.8781, lng: -87.6298 },
+    'US-Houston': { lat: 29.7604, lng: -95.3698 },
+    'US-Phoenix': { lat: 33.4484, lng: -112.0740 },
+    
+    // Europa
+    'GB-London': { lat: 51.5074, lng: -0.1278 },
+    'DE-Berlin': { lat: 52.5200, lng: 13.4050 },
+    'FR-Paris': { lat: 48.8566, lng: 2.3522 },
+    'ES-Madrid': { lat: 40.4168, lng: -3.7038 },
+    'IT-Rome': { lat: 41.9028, lng: 12.4964 },
+    'NL-Amsterdam': { lat: 52.3676, lng: 4.9041 },
+    
+    // Ásia
+    'JP-Tokyo': { lat: 35.6762, lng: 139.6503 },
+    'CN-Beijing': { lat: 39.9042, lng: 116.4074 },
+    'IN-Mumbai': { lat: 19.0760, lng: 72.8777 },
+    'KR-Seoul': { lat: 37.5665, lng: 126.9780 },
+    
+    // Outros
+    'AU-Sydney': { lat: -33.8688, lng: 151.2093 },
+    'CA-Toronto': { lat: 43.6532, lng: -79.3832 },
+    'MX-Mexico City': { lat: 19.4326, lng: -99.1332 },
+    'AR-Buenos Aires': { lat: -34.6037, lng: -58.3816 },
+    'RU-Moscow': { lat: 55.7558, lng: 37.6173 },
+    
+    // Fallback genérico por país
+    'BR': { lat: -14.2350, lng: -51.9253 }, // Centro do Brasil
+    'US': { lat: 37.0902, lng: -95.7129 }, // Centro dos EUA
+    'GB': { lat: 55.3781, lng: -3.4360 }, // Centro do Reino Unido
   };
 
   // Configuração inicial do globo
@@ -333,20 +606,108 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
     }
   }, [globeReady]);
 
-  // Fetch de dados
+  // Detectar se a página está visível
+  const [isPageVisible, setIsPageVisible] = useState(!document.hidden);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsPageVisible(!document.hidden);
+      if (!document.hidden) {
+        console.log('🟢 Page visible - resuming updates');
+      } else {
+        console.log('🔴 Page hidden - pausing updates');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Também detectar quando a janela perde/ganha foco
+    const handleFocus = () => {
+      setIsPageVisible(true);
+      console.log('🟢 Window focused - resuming updates');
+    };
+    
+    const handleBlur = () => {
+      setIsPageVisible(false);
+      console.log('🔴 Window blurred - pausing updates');
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('blur', handleBlur);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, []);
+
+  // Fetch de dados com otimização de performance
   useEffect(() => {
     const fetchVisitorData = async () => {
       if (!projectId) return;
+      
+      // Performance optimization: não buscar se página não estiver visível
+      if (!isPageVisible) {
+        console.log('⏸️ Skipping fetch - page not visible');
+        return;
+      }
+      
+      console.log('📊 Fetching visitor data...', { 
+        activeTab, 
+        timestamp: new Date().toLocaleTimeString() 
+      });
 
       try {
-        // Buscar eventos dos últimos 60 segundos
-        const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+        // Buscar eventos dos últimos 30 minutos
+        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+        
+        // Buscar dados da jornada agregados (apenas se a tab Journey estiver ativa)
+        if (activeTab === 'journey') {
+          const { data: journeyStats, error: journeyError } = await supabase
+            .rpc('get_visitor_journey_map', { 
+              p_project_id: projectId, 
+              p_time_window: '30 minutes' 
+            });
+
+          if (journeyStats && !journeyError) {
+            // Agrupar por estágio e somar visitantes
+            const stageMap = new Map();
+            journeyStats.forEach((item: any) => {
+              const stage = item.journey_stage;
+              if (!stageMap.has(stage)) {
+                stageMap.set(stage, {
+                  stage: stage,
+                  count: 0,
+                  locations: []
+                });
+              }
+              const stageData = stageMap.get(stage);
+              stageData.count += parseInt(item.visitor_count);
+              if (stageData.locations.length < 3) { // Máximo 3 localizações por estágio
+                stageData.locations.push({
+                  city: item.location_city,
+                  country: item.location_country,
+                  count: item.visitor_count
+                });
+              }
+            });
+
+            // Converter para array ordenado pelo funil
+            const stageOrder = ['visiting', 'browsing', 'cart', 'checkout', 'purchased'];
+            const orderedJourney = stageOrder
+              .map(stage => stageMap.get(stage))
+              .filter(Boolean);
+            
+            setJourneyData(orderedJourney);
+          }
+        }
         
         const { data, error } = await supabase
           .from('analytics')
-          .select('visitor_id, country, city, created_at')
+          .select('visitor_id, country, custom_data, event_type, url, created_at')
           .eq('project_id', projectId)
-          .gte('created_at', oneMinuteAgo)
+          .gte('created_at', thirtyMinutesAgo)
           .order('created_at', { ascending: false });
 
         if (data && data.length > 0) {
@@ -354,24 +715,27 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
           const uniqueVisitors = new Set(data.map((d: any) => d.visitor_id));
           const newCount = uniqueVisitors.size;
           
-          // Mostrar notificação se houver novo visitante
-          // Simular visitantes ativos com dados mais detalhados
+          // Processar visitantes ativos com dados reais
           if (data.length > 0) {
-            const mockActiveVisitors = data.slice(0, 5).map((visitor: any, index: number) => ({
-              ...visitor,
-              page: index === 0 ? '/products/ai-writer' : 
-                    index === 1 ? '/checkout' : 
-                    index === 2 ? '/pricing' :
-                    index === 3 ? '/blog/seo-tips' : '/',
-              activity: index === 0 ? 'browsing' :
-                       index === 1 ? 'checkout' :
-                       index === 2 ? 'cart' : 'browsing',
-              timeAgo: index === 0 ? 'Now' :
-                      index === 1 ? '2m ago' :
-                      index === 2 ? '5m ago' :
-                      index === 3 ? '8m ago' : '15m ago'
-            }));
-            setActiveVisitors(mockActiveVisitors);
+            const processedVisitors = data.slice(0, 10).map((visitor: any) => {
+              const now = new Date();
+              const visitTime = new Date(visitor.created_at);
+              const diffMinutes = Math.floor((now.getTime() - visitTime.getTime()) / (1000 * 60));
+              
+              let timeAgo = 'Now';
+              if (diffMinutes >= 1) {
+                timeAgo = `${diffMinutes}m ago`;
+              }
+              
+              return {
+                ...visitor,
+                city: visitor.custom_data?.city || visitor.city || 'Unknown',
+                page: visitor.url || '/',
+                activity: visitor.event_type || 'pageview',
+                timeAgo: timeAgo
+              };
+            });
+            setActiveVisitors(processedVisitors);
           }
           
           setVisitors(newCount);
@@ -380,21 +744,29 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
           const locationMap: { [key: string]: VisitorLocation } = {};
           
           data.forEach((visitor: any) => {
-            const key = `${visitor.country || 'Unknown'}-${visitor.city || 'Unknown'}`;
+            const city = visitor.custom_data?.city || visitor.city || 'Unknown';
+            const country = visitor.country || 'Unknown';
+            const key = `${country}-${city}`;
             
             if (!locationMap[key]) {
-              const coords = cityCoordinates[key] || {
-                lat: (Math.random() - 0.5) * 180,
-                lng: (Math.random() - 0.5) * 360
-              };
+              // Tentar várias combinações para encontrar as coordenadas
+              const coords = 
+                cityCoordinates[`${country}-${city}`] || // Formato completo
+                cityCoordinates[`${country}`] || // Só país
+                cityCoordinates[key] || // Chave original
+                {
+                  // Coordenadas aleatórias se não encontrar
+                  lat: (Math.random() - 0.5) * 140,
+                  lng: (Math.random() - 0.5) * 340
+                };
               
               locationMap[key] = {
                 ...coords,
-                city: visitor.city || 'Unknown',
-                country: visitor.country || 'Unknown',
+                city: city,
+                country: country,
                 count: 0,
                 size: 0,
-                color: '#fbbf24'
+                color: '#c084fc' // Roxo claro padrão
               };
             }
             locationMap[key].count++;
@@ -404,7 +776,7 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
           const locationsArray = Object.values(locationMap).map(loc => ({
             ...loc,
             size: Math.min(loc.count * 0.5, 3),
-            color: loc.count > 5 ? '#ef4444' : loc.count > 2 ? '#fbbf24' : '#10b981'
+            color: loc.count > 5 ? '#8b5cf6' : loc.count > 2 ? '#a855f7' : '#c084fc' // Tons de roxo
           }));
 
           setLocations(locationsArray);
@@ -424,57 +796,31 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
             setArcs(newArcs);
           }
         } else {
-          // Dados de demonstração
-          const demoLocations = [
-            { ...cityCoordinates['United States-New York'], city: 'New York', country: 'USA', count: 12, size: 2, color: '#ef4444' },
-            { ...cityCoordinates['Brazil-São Paulo'], city: 'São Paulo', country: 'Brazil', count: 8, size: 1.5, color: '#fbbf24' },
-            { ...cityCoordinates['United Kingdom-London'], city: 'London', country: 'UK', count: 6, size: 1.2, color: '#fbbf24' },
-            { ...cityCoordinates['Japan-Tokyo'], city: 'Tokyo', country: 'Japan', count: 5, size: 1, color: '#10b981' },
-            { ...cityCoordinates['Germany-Berlin'], city: 'Berlin', country: 'Germany', count: 4, size: 0.8, color: '#10b981' },
-          ];
-          
-          setVisitors(35);
-          setLocations(demoLocations);
-          
-          // Criar arcos de demonstração
-          const demoArcs: Arc[] = [
-            {
-              startLat: demoLocations[0].lat,
-              startLng: demoLocations[0].lng,
-              endLat: demoLocations[1].lat,
-              endLng: demoLocations[1].lng,
-              color: '#8b5cf6'
-            },
-            {
-              startLat: demoLocations[1].lat,
-              startLng: demoLocations[1].lng,
-              endLat: demoLocations[2].lat,
-              endLng: demoLocations[2].lng,
-              color: '#a855f7'
-            },
-            {
-              startLat: demoLocations[2].lat,
-              startLng: demoLocations[2].lng,
-              endLat: demoLocations[3].lat,
-              endLng: demoLocations[3].lng,
-              color: '#c084fc'
-            }
-          ];
-          setArcs(demoArcs);
+          // Sem dados reais - mostrar 0 visitantes
+          setVisitors(0);
+          setLocations([]);
+          setActiveVisitors([]);
+          setArcs([]);
         }
       } catch (error) {
         console.error('Error fetching visitor data:', error);
       }
     };
 
-    // Buscar imediatamente
-    fetchVisitorData();
+    // Buscar imediatamente se a página estiver visível
+    if (isPageVisible) {
+      fetchVisitorData();
+    }
     
-    // Atualizar a cada 5 segundos
-    const interval = setInterval(fetchVisitorData, 5000);
+    // Atualizar a cada 5 segundos APENAS se a página estiver visível
+    const interval = setInterval(() => {
+      if (isPageVisible) {
+        fetchVisitorData();
+      }
+    }, 5000);
     
     return () => clearInterval(interval);
-  }, [projectId, supabase, visitors]);
+  }, [projectId, supabase, visitors, isPageVisible, activeTab]);
 
   // HTML customizado para os pontos - removido por incompatibilidade de tipos
 
@@ -493,22 +839,55 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <LiveBadge>
-          <IconComponent icon={FaIcons.FaCircle} style={{ fontSize: '8px' }} />
-          Live Now
+        <LiveBadge style={{ 
+          background: isPageVisible 
+            ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)' 
+            : 'linear-gradient(135deg, #6b7280, #4b5563)',
+          opacity: isPageVisible ? 1 : 0.8
+        }}>
+          <IconComponent icon={FaIcons.FaCircle} style={{ 
+            fontSize: '8px',
+            animation: isPageVisible ? 'pulse 2s infinite' : 'none'
+          }} />
+          {isPageVisible ? 'Live Now' : 'Paused'}
         </LiveBadge>
         
         <MainStat>
           <StatNumber>{visitors}</StatNumber>
-          <StatLabel>Active Visitors</StatLabel>
+          <StatLabel>
+            {visitors > 0 ? 'Active Visitors' : 'No Active Visitors'}
+            {visitors === 0 && <div style={{ fontSize: '11px', marginTop: '4px', opacity: 0.7 }}>
+              Last 30 minutes
+            </div>}
+          </StatLabel>
         </MainStat>
 
-        <LocationsList>
-          <LocationTitle>
-            <IconComponent icon={FaIcons.FaFire} />
-            Hottest Locations
-          </LocationTitle>
-          {locations.slice(0, 5).map((location, index) => (
+        <TabsContainer>
+          <TabButton 
+            active={activeTab === 'live'} 
+            onClick={() => setActiveTab('live')}
+          >
+            <IconComponent icon={FaMapMarkedAlt} />
+            Live
+          </TabButton>
+          <TabButton 
+            active={activeTab === 'journey'} 
+            onClick={() => setActiveTab('journey')}
+          >
+            <IconComponent icon={FaRoute} />
+            Journey
+          </TabButton>
+        </TabsContainer>
+
+        <TabContent>
+          {activeTab === 'live' ? (
+            <>
+              <LocationsList>
+                <LocationTitle>
+                  <IconComponent icon={FaIcons.FaFire} />
+                  Hottest Locations
+                </LocationTitle>
+                {locations.length > 0 ? locations.slice(0, 5).map((location, index) => (
             <LocationItem
               key={`${location.country}-${location.city}`}
               initial={{ opacity: 0, x: -20 }}
@@ -521,8 +900,106 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
               </LocationName>
               <LocationCount>{location.count}</LocationCount>
             </LocationItem>
-          ))}
-        </LocationsList>
+                )) : (
+                  <div style={{ 
+                    padding: '20px', 
+                    textAlign: 'center', 
+                    color: 'rgba(139, 92, 246, 0.6)',
+                    fontSize: '13px'
+                  }}>
+                    No visitor activity detected
+                  </div>
+                )}
+              </LocationsList>
+
+              {activeVisitors.length > 0 && (
+                <RecentEventsList>
+                  <LocationTitle>
+                    <IconComponent icon={FaBolt} />
+                    Recent Activity
+                  </LocationTitle>
+                  {activeVisitors.slice(0, 5).map((visitor, index) => (
+                    <EventItem
+                      key={`event-${index}`}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <EventIcon>
+                        {visitor.event_type === 'pageview' && <IconComponent icon={FaIcons.FaEye} />}
+                        {visitor.event_type === 'click' && <IconComponent icon={FaIcons.FaMousePointer} />}
+                        {visitor.event_type === 'scroll' && <IconComponent icon={FaIcons.FaArrowDown} />}
+                        {visitor.event_type === 'performance' && <IconComponent icon={FaIcons.FaTachometerAlt} />}
+                        {visitor.event_type === 'page_leave' && <IconComponent icon={FaIcons.FaSignOutAlt} />}
+                        {!['pageview', 'click', 'scroll', 'performance', 'page_leave'].includes(visitor.event_type) && 
+                          <IconComponent icon={FaIcons.FaCircle} />}
+                      </EventIcon>
+                      <EventDetails>
+                        <div className="event-location">{visitor.city}, {visitor.country}</div>
+                        <div className="event-type">{visitor.event_type || 'pageview'}</div>
+                      </EventDetails>
+                      <EventTime>{visitor.timeAgo}</EventTime>
+                    </EventItem>
+                  ))}
+                </RecentEventsList>
+              )}
+            </>
+          ) : (
+            /* Journey Tab Content */
+            journeyData.length > 0 ? (
+              <JourneySection style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
+                {journeyData.map((stage, index) => (
+              <JourneyStage
+                key={stage.stage}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <StageInfo>
+                  <StageIcon stage={stage.stage}>
+                    {stage.stage === 'visiting' && <IconComponent icon={FaHome} />}
+                    {stage.stage === 'browsing' && <IconComponent icon={FaSearch} />}
+                    {stage.stage === 'cart' && <IconComponent icon={FaShoppingCart} />}
+                    {stage.stage === 'checkout' && <IconComponent icon={FaCreditCard} />}
+                    {stage.stage === 'purchased' && <IconComponent icon={FaCheckCircle} />}
+                  </StageIcon>
+                  <div>
+                    <StageName>
+                      {stage.stage === 'visiting' && 'Visiting'}
+                      {stage.stage === 'browsing' && 'Browsing Products'}
+                      {stage.stage === 'cart' && 'Added to Cart'}
+                      {stage.stage === 'checkout' && 'At Checkout'}
+                      {stage.stage === 'purchased' && 'Purchased'}
+                    </StageName>
+                    {stage.locations.length > 0 && (
+                      <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        {stage.locations.slice(0, 2).map((loc: any, idx: number) => (
+                          <LocationTag key={idx}>
+                            {loc.city} ({loc.count})
+                          </LocationTag>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </StageInfo>
+                <StageCount>
+                  <CountBadge>{stage.count}</CountBadge>
+                </StageCount>
+                  </JourneyStage>
+                ))}
+              </JourneySection>
+            ) : (
+              <div style={{ 
+                padding: '40px 20px', 
+                textAlign: 'center', 
+                color: 'rgba(139, 92, 246, 0.6)',
+                fontSize: '13px'
+              }}>
+                No journey data available
+              </div>
+            )
+          )}
+        </TabContent>
       </StatsOverlay>
 
       <GlobeWrapper>
