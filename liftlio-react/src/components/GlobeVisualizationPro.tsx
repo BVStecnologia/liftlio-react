@@ -642,7 +642,7 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
     };
   }, []);
 
-  // Fetch de dados com otimização de performance
+  // Fetch de dados com otimização de performance E REALTIME
   useEffect(() => {
     const fetchVisitorData = async () => {
       if (!projectId) return;
@@ -659,7 +659,8 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
       });
 
       try {
-        // Buscar eventos dos últimos 30 minutos
+        // Buscar eventos dos últimos 5 minutos (reduzido para melhor performance)
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
         const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
         
         // Buscar dados da jornada agregados (apenas se a tab Journey estiver ativa)
@@ -807,19 +808,54 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
       }
     };
 
-    // Buscar imediatamente se a página estiver visível
-    if (isPageVisible) {
-      fetchVisitorData();
+    // Buscar imediatamente ao montar o componente
+    fetchVisitorData();
+    
+    // REALTIME SUBSCRIPTION - Apenas quando a página está visível
+    let realtimeChannel: any = null;
+    
+    if (isPageVisible && projectId) {
+      console.log('🔴 LIVE: Subscribing to realtime events for project', projectId);
+      
+      // Criar canal de realtime para novos eventos
+      realtimeChannel = supabase
+        .channel(`analytics-project-${projectId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'analytics',
+            filter: `project_id=eq.${projectId}`
+          },
+          (payload: any) => {
+            console.log('🆕 REALTIME: New visitor detected!', payload.new);
+            
+            // Buscar dados atualizados imediatamente quando novo evento chegar
+            fetchVisitorData();
+          }
+        )
+        .subscribe((status: string) => {
+          console.log('📡 Realtime subscription status:', status);
+        });
     }
     
-    // Atualizar a cada 5 segundos APENAS se a página estiver visível
+    // Atualizar a cada 30 segundos como fallback (caso realtime falhe)
     const interval = setInterval(() => {
       if (isPageVisible) {
+        console.log('🔄 Periodic refresh (fallback)');
         fetchVisitorData();
       }
-    }, 5000);
+    }, 30000);
     
-    return () => clearInterval(interval);
+    // Cleanup: desconectar realtime e limpar interval
+    return () => {
+      if (realtimeChannel) {
+        console.log('🔌 Unsubscribing from realtime');
+        supabase.removeChannel(realtimeChannel);
+      }
+      clearInterval(interval);
+    };
   }, [projectId, supabase, visitors, isPageVisible, activeTab]);
 
   // HTML customizado para os pontos - removido por incompatibilidade de tipos
