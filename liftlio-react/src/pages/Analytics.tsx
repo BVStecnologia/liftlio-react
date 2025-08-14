@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { 
   LineChart, Line, AreaChart, Area, BarChart, Bar,
@@ -1166,7 +1166,7 @@ const Analytics: React.FC = () => {
   };
 
   // Função para verificar eventos implementados e status da tag
-  const checkVerifiedEvents = async () => {
+  const checkVerifiedEvents = useCallback(async () => {
     if (!currentProject?.id) return;
     
     try {
@@ -1228,7 +1228,7 @@ const Analytics: React.FC = () => {
     } catch (error) {
       console.error('Error checking verified events:', error);
     }
-  };
+  }, [currentProject]);
 
   // Efeito para controlar o colapso inicial baseado na tag
   useEffect(() => {
@@ -1269,18 +1269,8 @@ const Analytics: React.FC = () => {
     checkVerifiedEvents(); // Verificar eventos implementados
   }, [currentProject]);
   
-  // Atualizar verificações a cada 30 segundos
-  useEffect(() => {
-    const interval = setInterval(() => {
-      checkVerifiedEvents();
-    }, 30000); // 30 segundos
-    
-    return () => clearInterval(interval);
-  }, [currentProject]);
-  
-  // Fetch real analytics data from Supabase
-  useEffect(() => {
-    const fetchAnalyticsData = async () => {
+  // Função para buscar dados de analytics - movida para fora para ser reutilizável
+  const fetchAnalyticsData = useCallback(async () => {
       console.log('🚀 fetchAnalyticsData - currentProject:', currentProject);
       if (!currentProject?.id) {
         // Se não há projeto, mostrar dados demo
@@ -1385,7 +1375,7 @@ const Analytics: React.FC = () => {
       } finally {
         setLoading(false);
       }
-    };
+  }, [currentProject, period, theme, chartColors.primary, checkVerifiedEvents]);
     
     const generateDemoData = () => {
       console.log('🎯 generateDemoData CALLED!');
@@ -1684,9 +1674,62 @@ const Analytics: React.FC = () => {
       setGrowthData(growth);
       console.log('🔴 processAnalyticsData - growth data:', growth);
     };
+  
+  // Atualizar verificações a cada 30 segundos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkVerifiedEvents();
+    }, 30000); // 30 segundos
     
+    return () => clearInterval(interval);
+  }, [currentProject, checkVerifiedEvents]);
+  
+  // useEffect principal para buscar dados e configurar realtime
+  useEffect(() => {
     fetchAnalyticsData();
-  }, [period, currentProject, theme, chartColors.primary]);
+    
+    // REALTIME SUBSCRIPTION - Atualizar TODOS os componentes quando novo evento chegar
+    let realtimeChannel: any = null;
+    
+    if (currentProject?.id) {
+      console.log('📡 Setting up REALTIME for Analytics page - Project:', currentProject.id);
+      
+      realtimeChannel = supabase
+        .channel(`analytics-page-${currentProject.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'analytics',
+            filter: `project_id=eq.${currentProject.id}`
+          },
+          (payload: any) => {
+            console.log('🔥 REALTIME EVENT RECEIVED - Updating ALL components!', payload.new);
+            
+            // Recarregar TODOS os dados quando novo evento chegar
+            fetchAnalyticsData();
+            
+            // Forçar atualização dos componentes
+            checkVerifiedEvents();
+          }
+        )
+        .subscribe((status: string) => {
+          console.log('📡 Analytics Realtime Status:', status);
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Analytics page subscribed to realtime updates!');
+          }
+        });
+    }
+    
+    // Cleanup
+    return () => {
+      if (realtimeChannel) {
+        console.log('🔌 Unsubscribing from Analytics realtime');
+        supabase.removeChannel(realtimeChannel);
+      }
+    };
+  }, [period, currentProject, fetchAnalyticsData]);
 
   // Calcular dados de conversão e engajamento
   useEffect(() => {
