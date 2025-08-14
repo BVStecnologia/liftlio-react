@@ -1258,12 +1258,28 @@ const Analytics: React.FC = () => {
           processAnalyticsData(analytics);
         } else {
           setHasData(false);
-          // Use mock data for demonstration
-          loadMockData();
+          // Set empty data when no analytics available
+          setTrafficData([]);
+          setSourceData([{ name: 'No data', value: 100, color: '#8b5cf6' }]);
+          setDeviceData([
+            { name: 'Desktop', users: 0, percentage: 0, color: '#8b5cf6' },
+            { name: 'Mobile', users: 0, percentage: 0, color: '#a855f7' },
+            { name: 'Tablet', users: 0, percentage: 0, color: '#c084fc' }
+          ]);
+          setGrowthData([]);
         }
       } catch (error) {
         console.error('Error fetching analytics:', error);
-        loadMockData();
+        setHasData(false);
+        // Set empty data on error
+        setTrafficData([]);
+        setSourceData([{ name: 'Error loading', value: 100, color: '#ef4444' }]);
+        setDeviceData([
+          { name: 'Desktop', users: 0, percentage: 0, color: '#8b5cf6' },
+          { name: 'Mobile', users: 0, percentage: 0, color: '#a855f7' },
+          { name: 'Tablet', users: 0, percentage: 0, color: '#c084fc' }
+        ]);
+        setGrowthData([]);
       } finally {
         setLoading(false);
       }
@@ -1363,9 +1379,16 @@ const Analytics: React.FC = () => {
         const sourceName = event.custom_data?.traffic_source || 'Direct';
         sourceCount.set(sourceName, (sourceCount.get(sourceName) || 0) + 1);
         
-        // Count devices
-        const device = event.device_type || 'Desktop';
-        const deviceKey = device.charAt(0).toUpperCase() + device.slice(1);
+        // Count devices - normalize device types
+        const deviceType = event.device_type ? event.device_type.toLowerCase() : 'desktop';
+        let deviceKey = 'Desktop';
+        if (deviceType === 'mobile' || deviceType === 'smartphone' || deviceType === 'phone') {
+          deviceKey = 'Mobile';
+        } else if (deviceType === 'tablet' || deviceType === 'ipad') {
+          deviceKey = 'Tablet';
+        } else if (deviceType === 'desktop' || deviceType === 'computer' || deviceType === 'pc') {
+          deviceKey = 'Desktop';
+        }
         deviceCount.set(deviceKey, (deviceCount.get(deviceKey) || 0) + 1);
       });
       
@@ -1390,13 +1413,15 @@ const Analytics: React.FC = () => {
         color: ['#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe', '#e9d5ff'][index]
       }));
       
-      // Process devices
-      const devices = Array.from(deviceCount.entries()).map(([device, count]) => ({
-        device,
-        users: count,
-        color: device === 'Desktop' ? chartColors.primary : 
-               device === 'Mobile' ? chartColors.secondary : 
-               chartColors.tertiary
+      // Process devices - ensure all types are represented
+      const deviceTypes = ['Desktop', 'Mobile', 'Tablet'];
+      const devices = deviceTypes.map(device => ({
+        name: device,
+        users: deviceCount.get(device) || 0,
+        percentage: totalEvents > 0 ? Math.round(((deviceCount.get(device) || 0) / totalEvents) * 100) : 0,
+        color: device === 'Desktop' ? '#8b5cf6' : 
+               device === 'Mobile' ? '#a855f7' : 
+               '#c084fc'
       }));
       
       // Growth data - compare months
@@ -1419,63 +1444,15 @@ const Analytics: React.FC = () => {
         });
       }
       
-      // Set all chart data
+      // Set all chart data - always use real data
       setTrafficData(traffic);
       setSourceData(sources.length > 0 ? sources : [
         { name: 'No data yet', value: 100, color: '#8b5cf6' }
       ]);
-      setDeviceData(devices.length > 0 ? devices : [
-        { device: 'Desktop', users: 0, color: chartColors.primary },
-        { device: 'Mobile', users: 0, color: chartColors.secondary },
-        { device: 'Tablet', users: 0, color: chartColors.tertiary }
-      ]);
-      setGrowthData(growth.length > 0 ? growth : [
-        { month: 'Jan', crescimento: 0, meta: 0 }
-      ]);
-    };
-    
-    const loadMockData = () => {
-      // Traffic data over time - Liftlio includes all organic traffic
-      const traffic = [
-        { date: 'Mon', liftlio: 5300, ads: 1200, social: 800, direct: 500 },
-        { date: 'Tue', liftlio: 6100, ads: 1100, social: 900, direct: 600 },
-        { date: 'Wed', liftlio: 6800, ads: 1300, social: 850, direct: 550 },
-        { date: 'Thu', liftlio: 6450, ads: 1150, social: 800, direct: 600 },
-        { date: 'Fri', liftlio: 7500, ads: 1400, social: 1000, direct: 700 },
-        { date: 'Sat', liftlio: 8500, ads: 1500, social: 1100, direct: 800 },
-        { date: 'Sun', liftlio: 9300, ads: 1600, social: 1200, direct: 900 },
-      ];
-
-      // Traffic sources with Liftlio purple theme colors
-      const sources = [
-        { name: 'Liftlio', value: 45, color: '#8b5cf6' },
-        { name: 'YouTube', value: 25, color: '#a855f7' },
-        { name: 'Instagram', value: 15, color: '#c084fc' },
-        { name: 'LinkedIn', value: 10, color: '#d8b4fe' },
-        { name: 'Direct', value: 5, color: '#e9d5ff' },
-      ];
-
-      // Devices
-      const devices = [
-        { name: 'Desktop', users: 5800, sessions: 8200 },
-        { name: 'Mobile', users: 4200, sessions: 5900 },
-        { name: 'Tablet', users: 1000, sessions: 1400 },
-      ];
-
-      // Monthly growth
-      const growth = [
-        { month: 'Jan', crescimento: 12, meta: 10 },
-        { month: 'Feb', crescimento: 18, meta: 15 },
-        { month: 'Mar', crescimento: 25, meta: 20 },
-        { month: 'Apr', crescimento: 32, meta: 25 },
-        { month: 'May', crescimento: 41, meta: 30 },
-        { month: 'Jun', crescimento: 48, meta: 35 },
-      ];
-
-      setTrafficData(traffic);
-      setSourceData(sources);
       setDeviceData(devices);
-      setGrowthData(growth);
+      setGrowthData(growth.length > 0 ? growth : [
+        { month: new Date().toLocaleDateString('en-US', { month: 'short' }), crescimento: 0, meta: 0 }
+      ]);
     };
     
     fetchAnalyticsData();
