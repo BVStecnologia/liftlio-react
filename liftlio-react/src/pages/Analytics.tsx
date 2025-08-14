@@ -1088,6 +1088,7 @@ const Analytics: React.FC = () => {
   const chartColors = {
     primary: '#8b5cf6', // Roxo principal do Liftlio
     secondary: '#a855f7', // Roxo secundário
+    tertiary: '#d8b4fe', // Roxo ainda mais claro
     accent: '#c084fc', // Roxo mais claro
     grid: theme.name === 'dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)',
     text: theme.name === 'dark' ? '#9ca3af' : '#6b7280',
