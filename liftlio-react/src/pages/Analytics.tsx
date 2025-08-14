@@ -1050,6 +1050,9 @@ const Analytics: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [hasData, setHasData] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  // Estado para controlar se o usuário expandiu manualmente
+  const [userHasExpanded, setUserHasExpanded] = useState(false);
+  // Iniciar colapsado será definido depois baseado na tag
   const [implementationCollapsed, setImplementationCollapsed] = useState(false);
   const [advancedCollapsed, setAdvancedCollapsed] = useState(true); // Iniciar fechado por padrão
   
@@ -1125,7 +1128,9 @@ const Analytics: React.FC = () => {
           pageviews24h: 0
         });
         // Se tag não conectada, abrir as seções
-        setImplementationCollapsed(false);
+        if (!userHasExpanded) {
+          setImplementationCollapsed(false); // Abrir quando não tem tag
+        }
         setAdvancedCollapsed(false);
       }
       
@@ -1153,6 +1158,14 @@ const Analytics: React.FC = () => {
       console.error('Error checking verified events:', error);
     }
   };
+
+  // Efeito para controlar o colapso inicial baseado na tag
+  useEffect(() => {
+    // Se tag está conectada e usuário nunca expandiu manualmente, colapsar
+    if (tagStatus.connected && !userHasExpanded) {
+      setImplementationCollapsed(true);
+    }
+  }, [tagStatus.connected]); // Só re-executar quando status da tag mudar
 
   // Fetch analytics script from project
   useEffect(() => {
@@ -1829,7 +1842,15 @@ const Analytics: React.FC = () => {
       <TagImplementation id="implementation-guide">
         <TagTitle 
           clickable={tagStatus.connected}
-          onClick={() => tagStatus.connected && setImplementationCollapsed(!implementationCollapsed)}
+          onClick={() => {
+            if (tagStatus.connected) {
+              // Marcar que usuário expandiu manualmente
+              if (implementationCollapsed) {
+                setUserHasExpanded(true);
+              }
+              setImplementationCollapsed(!implementationCollapsed);
+            }
+          }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <IconComponent icon={FaIcons.FaCode} /> Implementation Guide
