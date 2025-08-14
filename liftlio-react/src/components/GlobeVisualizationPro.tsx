@@ -896,7 +896,7 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
       }
       clearInterval(interval);
     };
-  }, [projectId, supabase, visitors, isPageVisible, activeTab]);
+  }, [projectId, supabase, isPageVisible, activeTab]);
 
   // HTML customizado para os pontos - removido por incompatibilidade de tipos
 
