@@ -1706,16 +1706,16 @@ const Analytics: React.FC = () => {
                   <stop offset="100%" stopColor="#a855f7" stopOpacity={0.2}/>
                 </linearGradient>
                 <linearGradient id="colorAds" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.9}/>
-                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.2}/>
+                  <stop offset="0%" stopColor="#fb923c" stopOpacity={0.9}/>
+                  <stop offset="100%" stopColor="#fb923c" stopOpacity={0.2}/>
                 </linearGradient>
                 <linearGradient id="colorSocial" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#c084fc" stopOpacity={0.9}/>
                   <stop offset="100%" stopColor="#c084fc" stopOpacity={0.2}/>
                 </linearGradient>
                 <linearGradient id="colorDirect" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9}/>
-                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0.2}/>
+                  <stop offset="0%" stopColor="#e9d5ff" stopOpacity={0.9}/>
+                  <stop offset="100%" stopColor="#e9d5ff" stopOpacity={0.2}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="0" stroke={chartColors.grid} vertical={false} opacity={0.1} />
