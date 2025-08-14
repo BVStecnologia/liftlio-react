@@ -1259,10 +1259,122 @@ const Analytics: React.FC = () => {
     };
     
     const processAnalyticsData = (data: any[]) => {
-      // Process real data here
+      // Process real data from database
       setAnalyticsData(data);
-      // For now, still use mock data structure
-      loadMockData();
+      
+      // Process traffic data by day
+      const trafficByDay = new Map();
+      const sourceCount = new Map();
+      const deviceCount = new Map();
+      const dailyTotals = new Map();
+      
+      // Get last 7 days
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dayName = days[date.getDay()];
+        last7Days.push(dayName);
+        trafficByDay.set(dayName, { liftlio: 0, ads: 0, social: 0, direct: 0 });
+      }
+      
+      // Process each event
+      data.forEach((event: any) => {
+        const date = new Date(event.created_at);
+        const dayName = days[date.getDay()];
+        
+        if (trafficByDay.has(dayName)) {
+          const dayData = trafficByDay.get(dayName);
+          
+          // Categorize traffic source
+          const source = event.custom_data?.traffic_source || 'Direct';
+          const isOrganic = event.is_organic === true;
+          
+          if (isOrganic || source.includes('Search') || source.includes('Liftlio')) {
+            dayData.liftlio++;
+          } else if (source.includes('Ads') || event.custom_data?.utm_params?.utm_medium === 'cpc') {
+            dayData.ads++;
+          } else if (source.includes('Facebook') || source.includes('Instagram') || source.includes('Twitter') || source.includes('LinkedIn')) {
+            dayData.social++;
+          } else {
+            dayData.direct++;
+          }
+        }
+        
+        // Count sources
+        const sourceName = event.custom_data?.traffic_source || 'Direct';
+        sourceCount.set(sourceName, (sourceCount.get(sourceName) || 0) + 1);
+        
+        // Count devices
+        const device = event.device_type || 'Desktop';
+        const deviceKey = device.charAt(0).toUpperCase() + device.slice(1);
+        deviceCount.set(deviceKey, (deviceCount.get(deviceKey) || 0) + 1);
+      });
+      
+      // Convert to chart format
+      const traffic = last7Days.map(day => {
+        const data = trafficByDay.get(day) || { liftlio: 0, ads: 0, social: 0, direct: 0 };
+        return {
+          date: day,
+          ...data
+        };
+      });
+      
+      // Process sources - top 5
+      const totalEvents = data.length;
+      const sourcesArray = Array.from(sourceCount.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+      
+      const sources = sourcesArray.map(([name, count], index) => ({
+        name: name.replace('Search', '').trim() || name,
+        value: Math.round((count / totalEvents) * 100),
+        color: ['#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe', '#e9d5ff'][index]
+      }));
+      
+      // Process devices
+      const devices = Array.from(deviceCount.entries()).map(([device, count]) => ({
+        device,
+        users: count,
+        color: device === 'Desktop' ? chartColors.primary : 
+               device === 'Mobile' ? chartColors.secondary : 
+               chartColors.tertiary
+      }));
+      
+      // Growth data - compare months
+      const growth = [];
+      for (let i = 5; i >= 0; i--) {
+        const monthDate = new Date();
+        monthDate.setMonth(monthDate.getMonth() - i);
+        const monthName = monthDate.toLocaleDateString('en-US', { month: 'short' });
+        
+        const monthEvents = data.filter((e: any) => {
+          const eventDate = new Date(e.created_at);
+          return eventDate.getMonth() === monthDate.getMonth() &&
+                 eventDate.getFullYear() === monthDate.getFullYear();
+        }).length;
+        
+        growth.push({
+          month: monthName,
+          crescimento: monthEvents,
+          meta: Math.round(monthEvents * 1.2) // Meta 20% higher
+        });
+      }
+      
+      // Set all chart data
+      setTrafficData(traffic);
+      setSourceData(sources.length > 0 ? sources : [
+        { name: 'No data yet', value: 100, color: '#8b5cf6' }
+      ]);
+      setDeviceData(devices.length > 0 ? devices : [
+        { device: 'Desktop', users: 0, color: chartColors.primary },
+        { device: 'Mobile', users: 0, color: chartColors.secondary },
+        { device: 'Tablet', users: 0, color: chartColors.tertiary }
+      ]);
+      setGrowthData(growth.length > 0 ? growth : [
+        { month: 'Jan', crescimento: 0, meta: 0 }
+      ]);
     };
     
     const loadMockData = () => {
