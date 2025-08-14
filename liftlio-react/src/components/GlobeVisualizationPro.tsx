@@ -711,10 +711,19 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
           .gte('created_at', thirtyMinutesAgo)
           .order('created_at', { ascending: false });
 
+        console.log('📊 Analytics data received:', { 
+          totalRecords: data?.length || 0,
+          firstRecord: data?.[0],
+          projectId 
+        });
+
         if (data && data.length > 0) {
           // Contar visitantes únicos
           const uniqueVisitors = new Set(data.map((d: any) => d.visitor_id));
           const newCount = uniqueVisitors.size;
+          
+          console.log('👥 Unique visitors:', newCount);
+          console.log('📍 Visitor IDs:', Array.from(uniqueVisitors));
           
           // Processar visitantes ativos com dados reais
           if (data.length > 0) {
@@ -751,6 +760,19 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
             
             if (!locationMap[key]) {
               // Tentar várias combinações para encontrar as coordenadas
+              const lookupKeys = [
+                `${country}-${city}`,
+                `${country}`,
+                key
+              ];
+              
+              console.log('🔍 Looking for coordinates:', {
+                country,
+                city,
+                lookupKeys,
+                availableKeys: Object.keys(cityCoordinates).filter(k => k.includes(country))
+              });
+              
               const coords = 
                 cityCoordinates[`${country}-${city}`] || // Formato completo
                 cityCoordinates[`${country}`] || // Só país
@@ -779,6 +801,12 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
             size: Math.min(loc.count * 0.5, 3),
             color: loc.count > 5 ? '#8b5cf6' : loc.count > 2 ? '#a855f7' : '#c084fc' // Tons de roxo
           }));
+
+          console.log('🌍 Globe locations processed:', {
+            count: locationsArray.length,
+            locations: locationsArray,
+            locationMap
+          });
 
           setLocations(locationsArray);
 
@@ -830,6 +858,11 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
           },
           (payload: any) => {
             console.log('🆕 REALTIME: New visitor detected!', payload.new);
+            console.log('📍 Visitor details:', {
+              visitor_id: payload.new.visitor_id,
+              country: payload.new.country,
+              created_at: payload.new.created_at
+            });
             
             // Buscar dados atualizados imediatamente quando novo evento chegar
             fetchVisitorData();
@@ -837,6 +870,13 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
         )
         .subscribe((status: string) => {
           console.log('📡 Realtime subscription status:', status);
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Successfully subscribed to realtime updates!');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('❌ Realtime channel error!');
+          } else if (status === 'TIMED_OUT') {
+            console.error('⏱️ Realtime connection timed out!');
+          }
         });
     }
     
