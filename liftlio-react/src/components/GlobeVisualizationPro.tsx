@@ -839,17 +839,12 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <LiveBadge style={{ 
-          background: isPageVisible 
-            ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)' 
-            : 'linear-gradient(135deg, #6b7280, #4b5563)',
-          opacity: isPageVisible ? 1 : 0.8
-        }}>
+        <LiveBadge>
           <IconComponent icon={FaIcons.FaCircle} style={{ 
             fontSize: '8px',
-            animation: isPageVisible ? 'pulse 2s infinite' : 'none'
+            animation: 'pulse 2s infinite'
           }} />
-          {isPageVisible ? 'Live Now' : 'Paused'}
+          Live Now
         </LiveBadge>
         
         <MainStat>
