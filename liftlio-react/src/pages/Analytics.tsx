@@ -1332,7 +1332,7 @@ const Analytics: React.FC = () => {
         organicChange: organicChange,
         usersChange: usersChange,
         conversionChange: Math.random() * 2 - 0.5, // Simulated small change
-        timeChange: Math.random() * 30 - 10 // Simulated time change
+        timeChange: Math.round(Math.random() * 30 - 10) // Round to avoid decimals
       });
       
       // Process traffic data by day
@@ -1375,8 +1375,30 @@ const Analytics: React.FC = () => {
           }
         }
         
-        // Count sources
-        const sourceName = event.custom_data?.traffic_source || 'Direct';
+        // Count sources - group all search traffic as Liftlio
+        let sourceName = event.custom_data?.traffic_source || event.referrer || 'Direct';
+        
+        // Group all search/organic traffic as Liftlio
+        if (event.is_organic === true || 
+            sourceName.toLowerCase().includes('google') ||
+            sourceName.toLowerCase().includes('bing') ||
+            sourceName.toLowerCase().includes('yahoo') ||
+            sourceName.toLowerCase().includes('duckduckgo') ||
+            sourceName.toLowerCase().includes('search') ||
+            sourceName.toLowerCase().includes('liftlio')) {
+          sourceName = 'Liftlio';
+        } else if (sourceName.toLowerCase().includes('facebook') || 
+                   sourceName.toLowerCase().includes('instagram') ||
+                   sourceName.toLowerCase().includes('twitter') ||
+                   sourceName.toLowerCase().includes('linkedin')) {
+          sourceName = 'Social Media';
+        } else if (sourceName.toLowerCase().includes('ads') ||
+                   event.custom_data?.utm_params?.utm_medium === 'cpc') {
+          sourceName = 'Paid Ads';
+        } else if (sourceName === '' || sourceName === null) {
+          sourceName = 'Direct';
+        }
+        
         sourceCount.set(sourceName, (sourceCount.get(sourceName) || 0) + 1);
         
         // Count devices - normalize device types
@@ -1513,7 +1535,7 @@ const Analytics: React.FC = () => {
     {
       title: 'Avg. Time',
       value: formatTime(metricsData.avgTime),
-      change: metricsData.timeChange > 0 ? `+${metricsData.timeChange}s` : `${metricsData.timeChange}s`,
+      change: metricsData.timeChange !== 0 ? `${metricsData.timeChange > 0 ? '+' : ''}${Math.round(metricsData.timeChange)}s` : '0s',
       positive: metricsData.timeChange >= 0,
       description: 'on page',
       icon: <IconComponent icon={FaIcons.FaClock} />,
