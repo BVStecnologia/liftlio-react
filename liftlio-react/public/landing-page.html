@@ -2,7 +2,19 @@
 <html lang="en" data-theme="dark" data-lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <script>
+        // Force cache refresh with version - v2.0.2
+        const VERSION = 'v2.0.2';
+        const lastVersion = localStorage.getItem('liftlio-version');
+        if (lastVersion && lastVersion !== VERSION) {
+            localStorage.setItem('liftlio-version', VERSION);
+            location.reload(true);
+        }
+        localStorage.setItem('liftlio-version', VERSION);
+        
         // Ajustar caminhos para desenvolvimento local
         if (window.location.protocol === 'file:') {
             window.addEventListener('DOMContentLoaded', function() {
