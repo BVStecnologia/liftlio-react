@@ -152,14 +152,25 @@
         @media(max-width:480px){
             .container{padding:0 16px}
             .header{padding:12px 16px}
-            .logo{font-size:20px}
+            .header-content{justify-content:space-between;align-items:center}
+            .logo{font-size:18px;gap:4px;min-width:0}
+            .logo svg{width:20px;height:20px}
+            .beta-badge{font-size:10px;padding:2px 6px}
             .btn-icon{min-width:40px;min-height:40px;padding:6px}
-            .mobile-menu-button{padding:6px;margin-left:12px}
+            .mobile-menu-button{padding:6px;margin-left:8px}
+            .mobile-nav-container{flex-shrink:0}
             .hero-section{padding:80px 16px 40px}
             .hero-content{padding:0}
             .hero-title{font-size:32px;line-height:1.1}
             .hero-description{font-size:16px}
             .btn-primary{padding:16px 24px;font-size:15px}
+        }
+        
+        @media(max-width:380px){
+            .logo{font-size:16px}
+            .logo-text{display:none}
+            .beta-badge{position:absolute;top:-8px;right:-8px;font-size:9px;padding:1px 4px}
+            .logo{position:relative}
         }
         
         /* Animations */
@@ -355,10 +366,10 @@
         
         @media(max-width:768px){
             .header{padding:16px 20px}
-            .header-content{padding:0}
-            .logo{font-size:24px}
+            .header-content{padding:0;gap:12px}
+            .logo{font-size:24px;flex:1}
             .nav{display:none}
-            .mobile-nav-container{display:block}
+            .mobile-nav-container{display:flex;align-items:center}
             .mobile-menu-overlay,.mobile-menu{display:block}
             .hero-section{padding:100px 20px 60px;margin-top:20px}
             .hero-content{padding:0 16px}
