@@ -668,6 +668,51 @@ const StatCardChange = styled.div<{ $positive?: boolean }>`
   }
 `;
 
+// Conversion Chart Layout
+const ConversionChartLayout = styled.div`
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+  
+  @media (max-width: 968px) {
+    flex-direction: column;
+    gap: 20px;
+  }
+`;
+
+const ConversionChartLeft = styled.div`
+  flex: 1 1 60%;
+  
+  @media (max-width: 968px) {
+    flex: 1 1 100%;
+  }
+`;
+
+const ConversionMetricsBox = styled.div`
+  flex: 0 0 35%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(168, 85, 247, 0.05));
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 12px;
+  
+  @media (max-width: 968px) {
+    flex: 1 1 100%;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    padding: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 16px;
+  }
+`;
+
 // Charts Section
 const ChartsGrid = styled.div`
   display: grid;
@@ -1155,100 +1200,123 @@ const LiftlioAnalytics: React.FC = () => {
         </StatCard>
       </StatsSection>
 
-      {/* Conversion by Traffic Source - DESTAQUE DO PODER DO LIFTLIO */}
+      {/* Conversion by Traffic Source - VERSÃO COMPACTA */}
       <ChartCard
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.45 }}
-        style={{ marginBottom: '40px', marginTop: '40px' }}
+        style={{ marginBottom: '32px', marginTop: '32px' }}
       >
-        
-        <ChartTitle>
-          <IconComponent icon={FaIcons.FaTrophy} style={{ color: '#fbbf24' }} />
-          Conversion Rate by Traffic Source
-        </ChartTitle>
-        <p style={{ color: '#94a3b8', marginBottom: '24px', fontSize: '14px' }}>
-          Outperforming paid advertising with organic, qualified traffic
-        </p>
-        
-        <ResponsiveContainer width="100%" height={350}>
-          <BarChart data={[
-            { source: 'Liftlio', rate: 24.8, visitors: 11580, conversions: 2872, color: '#8b5cf6' },
-            { source: 'Paid Ads', rate: 3.2, visitors: 514, conversions: 16, color: '#ef4444' },
-            { source: 'Social Media', rate: 2.1, visitors: 385, conversions: 8, color: '#3b82f6' },
-            { source: 'Direct', rate: 1.8, visitors: 385, conversions: 7, color: '#10b981' },
-          ]}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 92, 246, 0.1)" />
-            <XAxis dataKey="source" stroke="#a1a1aa" />
-            <YAxis stroke="#a1a1aa" label={{ value: 'Conversion Rate (%)', angle: -90, position: 'insideLeft', style: { fill: '#a1a1aa' } }} />
-            <Tooltip 
-              contentStyle={{ 
-                background: 'rgba(26, 26, 26, 0.95)', 
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-                borderRadius: '8px'
-              }}
-              formatter={(value, name) => {
-                if (name === 'rate') return [`${value}%`, 'Conversion Rate'];
-                return [value, name];
-              }}
-              labelFormatter={(label) => `Source: ${label}`}
-              content={({ active, payload, label }) => {
-                if (active && payload && payload.length) {
-                  const data = payload[0].payload;
-                  return (
-                    <div style={{
-                      background: 'rgba(26, 26, 26, 0.95)',
-                      border: '1px solid rgba(139, 92, 246, 0.3)',
-                      borderRadius: '8px',
-                      padding: '12px'
-                    }}>
-                      <p style={{ color: '#fff', fontWeight: 'bold', marginBottom: '8px' }}>{label}</p>
-                      <p style={{ color: '#a1a1aa', fontSize: '12px' }}>Visitors: {data.visitors.toLocaleString()}</p>
-                      <p style={{ color: '#10b981', fontSize: '12px' }}>Conversions: {data.conversions.toLocaleString()}</p>
-                      <p style={{ color: '#8b5cf6', fontSize: '14px', fontWeight: 'bold', marginTop: '4px' }}>
-                        Rate: {data.rate}%
-                      </p>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-            <Bar dataKey="rate" fill="#8b5cf6" barSize={60}>
-              {[
-                { source: 'Liftlio', rate: 24.8, color: '#8b5cf6' },
-                { source: 'Paid Ads', rate: 3.2, color: '#ef4444' },
-                { source: 'Social Media', rate: 2.1, color: '#3b82f6' },
-                { source: 'Direct', rate: 1.8, color: '#10b981' },
-              ].map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-        
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-around',
-          marginTop: '32px',
-          padding: '20px',
-          background: 'rgba(139, 92, 246, 0.05)',
-          border: '1px solid rgba(139, 92, 246, 0.2)',
-          borderRadius: '12px'
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#8b5cf6' }}>24.8%</div>
-            <div style={{ color: '#a1a1aa', fontSize: '14px' }}>Liftlio Conversion</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#10b981' }}>7.7x</div>
-            <div style={{ color: '#a1a1aa', fontSize: '14px' }}>Better than Paid Ads</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#fbbf24' }}>2,872</div>
-            <div style={{ color: '#a1a1aa', fontSize: '14px' }}>Total Conversions</div>
-          </div>
-        </div>
+        <ConversionChartLayout>
+          {/* Lado Esquerdo - Gráfico Compacto */}
+          <ConversionChartLeft>
+            <ChartTitle style={{ marginBottom: '12px' }}>
+              <IconComponent icon={FaIcons.FaTrophy} style={{ color: '#fbbf24' }} />
+              Conversion Rate by Traffic Source
+            </ChartTitle>
+            <p style={{ color: '#94a3b8', marginBottom: '16px', fontSize: '13px' }}>
+              Outperforming paid ads with organic traffic
+            </p>
+            
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart 
+                data={[
+                  { source: 'Liftlio', rate: 24.8, visitors: 11580, conversions: 2872, color: '#8b5cf6' },
+                  { source: 'Paid Ads', rate: 3.2, visitors: 514, conversions: 16, color: '#ef4444' },
+                  { source: 'Social', rate: 2.1, visitors: 385, conversions: 8, color: '#3b82f6' },
+                  { source: 'Direct', rate: 1.8, visitors: 385, conversions: 7, color: '#10b981' },
+                ]}
+                margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 92, 246, 0.1)" />
+                <XAxis 
+                  dataKey="source" 
+                  stroke="#a1a1aa" 
+                  tick={{ fontSize: 11 }}
+                />
+                <YAxis 
+                  stroke="#a1a1aa" 
+                  tick={{ fontSize: 11 }}
+                  label={{ value: 'Rate (%)', angle: -90, position: 'insideLeft', style: { fill: '#a1a1aa', fontSize: 11 } }} 
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    background: 'rgba(26, 26, 26, 0.95)', 
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    borderRadius: '8px',
+                    fontSize: '12px'
+                  }}
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div style={{
+                          background: 'rgba(26, 26, 26, 0.95)',
+                          border: '1px solid rgba(139, 92, 246, 0.3)',
+                          borderRadius: '8px',
+                          padding: '10px'
+                        }}>
+                          <p style={{ color: '#fff', fontWeight: 'bold', marginBottom: '6px', fontSize: '12px' }}>{label}</p>
+                          <p style={{ color: '#a1a1aa', fontSize: '11px', margin: '2px 0' }}>Visitors: {data.visitors.toLocaleString()}</p>
+                          <p style={{ color: '#10b981', fontSize: '11px', margin: '2px 0' }}>Conversions: {data.conversions.toLocaleString()}</p>
+                          <p style={{ color: '#8b5cf6', fontSize: '13px', fontWeight: 'bold', marginTop: '4px' }}>
+                            Rate: {data.rate}%
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="rate" fill="#8b5cf6" barSize={40} radius={[4, 4, 0, 0]}>
+                  {[
+                    { source: 'Liftlio', rate: 24.8, color: '#8b5cf6' },
+                    { source: 'Paid Ads', rate: 3.2, color: '#ef4444' },
+                    { source: 'Social', rate: 2.1, color: '#3b82f6' },
+                    { source: 'Direct', rate: 1.8, color: '#10b981' },
+                  ].map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </ConversionChartLeft>
+          
+          {/* Lado Direito - Métricas Destacadas */}
+          <ConversionMetricsBox>
+            <div style={{ 
+              textAlign: 'center',
+              paddingBottom: '12px',
+              borderBottom: '1px solid rgba(139, 92, 246, 0.1)'
+            }}>
+              <div style={{ fontSize: '36px', fontWeight: '900', color: '#8b5cf6', lineHeight: '1' }}>24.8%</div>
+              <div style={{ color: '#a1a1aa', fontSize: '12px', marginTop: '4px' }}>Liftlio Conversion</div>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-around', gap: '12px' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981' }}>7.7x</div>
+                <div style={{ color: '#a1a1aa', fontSize: '11px' }}>vs Paid Ads</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fbbf24' }}>2.8k</div>
+                <div style={{ color: '#a1a1aa', fontSize: '11px' }}>Conversions</div>
+              </div>
+            </div>
+            
+            <div style={{
+              marginTop: '8px',
+              padding: '8px',
+              background: 'rgba(139, 92, 246, 0.1)',
+              borderRadius: '8px',
+              textAlign: 'center'
+            }}>
+              <div style={{ color: '#8b5cf6', fontSize: '11px', fontWeight: '600' }}>
+                💡 Organic traffic converts 7.7x better
+              </div>
+            </div>
+          </ConversionMetricsBox>
+        </ConversionChartLayout>
       </ChartCard>
 
       {/* Traffic Growth Chart */}
