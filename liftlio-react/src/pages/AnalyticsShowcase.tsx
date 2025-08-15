@@ -1,12 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
-import styled, { createGlobalStyle, keyframes } from 'styled-components';
+import styled, { createGlobalStyle, keyframes, ThemeProvider } from 'styled-components';
 import { 
   LineChart, Line, AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
-  ResponsiveContainer, PieChart, Pie, Cell
+  ResponsiveContainer, PieChart, Pie, Cell, ComposedChart
 } from 'recharts';
 import { motion } from 'framer-motion';
-import GlobeVisualizationPro from '../components/GlobeVisualizationPro';
+import GlobeDemo from '../components/GlobeDemo';
+import { FaGlobe, FaRoute, FaShoppingCart, FaCreditCard, FaCheckCircle, 
+         FaChartLine, FaFunnelDollar, FaExchangeAlt, FaChartBar } from 'react-icons/fa';
+
+// Tema Dark
+const darkTheme = {
+  name: 'dark',
+  colors: {
+    primary: '#8b5cf6',
+    primaryHover: '#7c3aed',
+    background: '#0f0f0f',
+    text: {
+      primary: '#ffffff',
+      secondary: '#9ca3af'
+    },
+    border: '#2a2a2a'
+  }
+};
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -167,25 +184,48 @@ const StatLabel = styled.div`
   letter-spacing: 1px;
 `;
 
-const GlobeWrapper = styled.div`
+const GlobeSection = styled.div`
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: 24px;
   padding: 40px;
   margin-bottom: 60px;
-  min-height: 600px;
   position: relative;
   overflow: hidden;
+`;
+
+const TabsContainer = styled.div`
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+`;
+
+const Tab = styled.button<{ active?: boolean }>`
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  color: ${props => props.active ? '#8b5cf6' : '#9ca3af'};
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
   
-  &::before {
+  &::after {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
-    animation: ${pulse} 10s ease-in-out infinite;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #8b5cf6;
+    transform: scaleX(${props => props.active ? 1 : 0});
+    transition: transform 0.3s ease;
+  }
+  
+  &:hover {
+    color: #8b5cf6;
   }
 `;
 
@@ -213,152 +253,143 @@ const ChartTitle = styled.h3`
   font-weight: 600;
   margin-bottom: 24px;
   color: white;
-`;
-
-const FeatureList = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px;
-  margin: 80px 0;
-`;
-
-const FeatureItem = styled(motion.div)`
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-`;
-
-const FeatureIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  background: rgba(139, 92, 246, 0.2);
-  border-radius: 12px;
   display: flex;
   align-items: center;
+  gap: 10px;
+`;
+
+const JourneyContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40px 20px;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+    z-index: 0;
+  }
+`;
+
+const JourneyStep = styled.div<{ active?: boolean }>`
+  background: ${props => props.active ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)' : 'rgba(255, 255, 255, 0.05)'};
+  border: 2px solid ${props => props.active ? '#8b5cf6' : 'rgba(139, 92, 246, 0.3)'};
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  z-index: 1;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
+  }
+`;
+
+const JourneyIcon = styled.div`
   font-size: 24px;
-  flex-shrink: 0;
+  margin-bottom: 4px;
 `;
 
-const FeatureContent = styled.div``;
-
-const FeatureTitle = styled.h4`
-  font-size: 18px;
+const JourneyLabel = styled.div`
+  font-size: 10px;
   font-weight: 600;
-  margin: 0 0 8px 0;
-  color: white;
+  text-transform: uppercase;
 `;
 
-const FeatureDescription = styled.p`
-  font-size: 14px;
-  color: #9ca3af;
-  margin: 0;
-  line-height: 1.5;
+const ConversionFunnel = styled.div`
+  padding: 30px;
 `;
 
-const Footer = styled.footer`
-  padding: 60px 20px;
+const FunnelStep = styled.div<{ width: number }>`
+  background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+  margin: 10px auto;
+  padding: 20px;
+  border-radius: 8px;
+  width: ${props => props.width}%;
   text-align: center;
-  border-top: 1px solid rgba(139, 92, 246, 0.1);
+  position: relative;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateX(10px);
+    box-shadow: 0 5px 20px rgba(139, 92, 246, 0.3);
+  }
 `;
 
-// Dados demo para o Globe
-const DEMO_LOCATIONS = [
-  { lat: -23.5505, lng: -46.6333, label: 'São Paulo', country: 'BR', visitors: 342 },
-  { lat: 40.7128, lng: -74.0060, label: 'New York', country: 'US', visitors: 521 },
-  { lat: 51.5074, lng: -0.1278, label: 'London', country: 'UK', visitors: 287 },
-  { lat: 35.6762, lng: 139.6503, label: 'Tokyo', country: 'JP', visitors: 198 },
-  { lat: 48.8566, lng: 2.3522, label: 'Paris', country: 'FR', visitors: 165 },
-  { lat: -33.8688, lng: 151.2093, label: 'Sydney', country: 'AU', visitors: 124 },
-  { lat: 52.5200, lng: 13.4050, label: 'Berlin', country: 'DE', visitors: 143 },
-  { lat: 43.6532, lng: -79.3832, label: 'Toronto', country: 'CA', visitors: 167 },
-  { lat: 19.4326, lng: -99.1332, label: 'Mexico City', country: 'MX', visitors: 234 },
-  { lat: 28.6139, lng: 77.2090, label: 'New Delhi', country: 'IN', visitors: 412 }
-];
+const FunnelLabel = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  font-weight: 600;
+`;
 
 export default function AnalyticsShowcase() {
+  const [activeTab, setActiveTab] = useState('overview');
   const [liveVisitors, setLiveVisitors] = useState(1247);
   const [pageViews, setPageViews] = useState(45231);
-  const [avgDuration, setAvgDuration] = useState(222); // seconds
+  const [avgDuration, setAvgDuration] = useState(222);
   const [conversionRate, setConversionRate] = useState(4.8);
-  const [currentLocations, setCurrentLocations] = useState(DEMO_LOCATIONS);
-  const globeRef = useRef<any>(null);
 
   // Simular dados em tempo real
   useEffect(() => {
     const interval = setInterval(() => {
-      // Atualizar métricas
       setLiveVisitors(prev => Math.max(100, prev + Math.floor(Math.random() * 10 - 3)));
       setPageViews(prev => prev + Math.floor(Math.random() * 15));
       setAvgDuration(prev => Math.max(60, prev + Math.floor(Math.random() * 5 - 2)));
       setConversionRate(prev => Math.max(1, Math.min(10, prev + (Math.random() * 0.2 - 0.1))));
-      
-      // Adicionar novo ponto no globe aleatoriamente
-      if (Math.random() > 0.7) {
-        const randomLocation = DEMO_LOCATIONS[Math.floor(Math.random() * DEMO_LOCATIONS.length)];
-        setCurrentLocations(prev => {
-          const newLocation = {
-            ...randomLocation,
-            lat: randomLocation.lat + (Math.random() - 0.5) * 5,
-            lng: randomLocation.lng + (Math.random() - 0.5) * 5,
-            visitors: Math.floor(Math.random() * 50 + 10)
-          };
-          return [...prev.slice(-20), newLocation];
-        });
-      }
     }, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  // Formatar duração
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}m ${secs}s`;
-  };
-
-  // Dados demo para gráficos com variação
-  const [trafficData] = useState([
-    { time: '00:00', visitors: 420, pageviews: 1250, events: 2100 },
-    { time: '04:00', visitors: 280, pageviews: 820, events: 1400 },
-    { time: '08:00', visitors: 620, pageviews: 1850, events: 3200 },
-    { time: '12:00', visitors: 890, pageviews: 2680, events: 4500 },
-    { time: '16:00', visitors: 1100, pageviews: 3200, events: 5400 },
-    { time: '20:00', visitors: 980, pageviews: 2900, events: 4800 },
-    { time: '23:00', visitors: 680, pageviews: 1980, events: 3200 }
-  ]);
-
-  const sourceData = [
-    { name: 'Organic Search', value: 45, color: '#8b5cf6' },
-    { name: 'Direct Traffic', value: 28, color: '#a78bfa' },
-    { name: 'Social Media', value: 18, color: '#c4b5fd' },
-    { name: 'Referral', value: 9, color: '#ddd6fe' }
+  // Dados para gráficos - Mostrando Liftlio como melhor fonte
+  const trafficSourceData = [
+    { time: '00:00', liftlio: 420, paid: 180, social: 120, direct: 280 },
+    { time: '04:00', liftlio: 380, paid: 150, social: 90, direct: 180 },
+    { time: '08:00', liftlio: 680, paid: 320, social: 280, direct: 420 },
+    { time: '12:00', liftlio: 1120, paid: 480, social: 420, direct: 580 },
+    { time: '16:00', liftlio: 1450, paid: 520, social: 480, direct: 650 },
+    { time: '20:00', liftlio: 1280, paid: 420, social: 380, direct: 520 },
+    { time: '23:00', liftlio: 820, paid: 280, social: 220, direct: 380 }
   ];
 
-  const deviceData = [
-    { name: 'Desktop', value: 52, color: '#8b5cf6' },
-    { name: 'Mobile', value: 38, color: '#a78bfa' },
-    { name: 'Tablet', value: 10, color: '#c4b5fd' }
+  const conversionBySource = [
+    { source: 'Liftlio', rate: 8.2, visitors: 5450, conversions: 447 },
+    { source: 'Paid Ads', rate: 2.1, visitors: 2350, conversions: 49 },
+    { source: 'Social', rate: 1.8, visitors: 1890, conversions: 34 },
+    { source: 'Direct', rate: 3.5, visitors: 2680, conversions: 94 }
   ];
 
-  const countryData = [
-    { country: 'United States', visitors: 3421, flag: '🇺🇸' },
-    { country: 'Brazil', visitors: 2854, flag: '🇧🇷' },
-    { country: 'United Kingdom', visitors: 1923, flag: '🇬🇧' },
-    { country: 'Germany', visitors: 1654, flag: '🇩🇪' },
-    { country: 'Japan', visitors: 1432, flag: '🇯🇵' }
+  const funnelData = [
+    { stage: 'Visitors', count: 12370, percentage: 100 },
+    { stage: 'Engaged (Liftlio: 85%)', count: 8450, percentage: 68.3 },
+    { stage: 'Intent (Liftlio: 72%)', count: 4820, percentage: 39 },
+    { stage: 'Converted (Liftlio: 68%)', count: 624, percentage: 5.04 }
   ];
 
-  const topPages = [
-    { page: '/home', views: 15420, avgTime: '2:34' },
-    { page: '/pricing', views: 8930, avgTime: '3:45' },
-    { page: '/features', views: 7650, avgTime: '4:12' },
-    { page: '/blog', views: 6820, avgTime: '5:23' },
-    { page: '/contact', views: 4410, avgTime: '1:45' }
+  const journeySteps = [
+    { icon: '🏠', label: 'Visit', count: 12370 },
+    { icon: '🔍', label: 'Explore', count: 8920 },
+    { icon: '🛒', label: 'Add Cart', count: 3450 },
+    { icon: '💳', label: 'Checkout', count: 1280 },
+    { icon: '✅', label: 'Purchase', count: 624 }
   ];
 
   return (
-    <>
+    <ThemeProvider theme={darkTheme}>
       <GlobalStyle />
       <PageContainer>
         <Hero>
@@ -368,12 +399,12 @@ export default function AnalyticsShowcase() {
           </Badge>
           
           <MainTitle>
-            Real-Time Analytics That Actually Matter
+            See How Liftlio Drives 4X More Conversions
           </MainTitle>
           
           <Subtitle>
-            Track visitors, conversions, and engagement without cookies or compromising privacy. 
-            Powerful analytics included in every Liftlio plan - no extra cost.
+            Our AI-powered organic traffic doesn't just bring visitors - it brings buyers. 
+            Watch how Liftlio outperforms traditional marketing channels.
           </Subtitle>
           
           <CTAButton
@@ -387,7 +418,7 @@ export default function AnalyticsShowcase() {
         </Hero>
 
         <DemoSection>
-          <SectionTitle>See Your Data Come to Life</SectionTitle>
+          <SectionTitle>Real-Time Performance Metrics</SectionTitle>
           
           <StatsGrid>
             <StatCard
@@ -413,7 +444,7 @@ export default function AnalyticsShowcase() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <StatValue>{formatDuration(avgDuration)}</StatValue>
+              <StatValue>{Math.floor(avgDuration / 60)}m {avgDuration % 60}s</StatValue>
               <StatLabel>Avg. Duration</StatLabel>
             </StatCard>
             
@@ -427,41 +458,106 @@ export default function AnalyticsShowcase() {
             </StatCard>
           </StatsGrid>
 
-          <GlobeWrapper>
-            <div style={{ 
-              position: 'absolute', 
-              top: '20px', 
-              left: '20px', 
-              zIndex: 10,
-              background: 'rgba(0,0,0,0.7)',
-              padding: '12px 20px',
-              borderRadius: '8px',
-              border: '1px solid rgba(139, 92, 246, 0.3)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <LiveDot />
-                <span style={{ color: '#fff', fontWeight: 600 }}>{currentLocations.length} Active Locations</span>
-              </div>
-            </div>
-            <GlobeVisualizationPro 
-              ref={globeRef}
-              isDemo={true}
-            />
-          </GlobeWrapper>
+          {/* Globe Section com Tabs */}
+          <GlobeSection>
+            <TabsContainer>
+              <Tab active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>
+                <FaGlobe style={{ marginRight: '8px' }} />
+                Live Traffic
+              </Tab>
+              <Tab active={activeTab === 'journey'} onClick={() => setActiveTab('journey')}>
+                <FaRoute style={{ marginRight: '8px' }} />
+                User Journey
+              </Tab>
+              <Tab active={activeTab === 'conversions'} onClick={() => setActiveTab('conversions')}>
+                <FaFunnelDollar style={{ marginRight: '8px' }} />
+                Conversion Funnel
+              </Tab>
+            </TabsContainer>
 
+            {activeTab === 'overview' && (
+              <div>
+                <div style={{ 
+                  position: 'absolute', 
+                  top: '80px', 
+                  left: '20px', 
+                  zIndex: 10,
+                  background: 'rgba(0,0,0,0.7)',
+                  padding: '12px 20px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(139, 92, 246, 0.3)'
+                }}>
+                  <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '8px' }}>Active Now</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <LiveDot />
+                    <span style={{ color: '#fff', fontWeight: 600, fontSize: '18px' }}>
+                      {liveVisitors} visitors from 47 countries
+                    </span>
+                  </div>
+                </div>
+                <GlobeDemo />
+              </div>
+            )}
+
+            {activeTab === 'journey' && (
+              <JourneyContainer>
+                {journeySteps.map((step, index) => (
+                  <JourneyStep key={index} active={index <= 2}>
+                    <JourneyIcon>{step.icon}</JourneyIcon>
+                    <JourneyLabel>{step.label}</JourneyLabel>
+                    <div style={{ fontSize: '12px', marginTop: '4px', color: '#10b981' }}>
+                      {step.count.toLocaleString()}
+                    </div>
+                  </JourneyStep>
+                ))}
+              </JourneyContainer>
+            )}
+
+            {activeTab === 'conversions' && (
+              <ConversionFunnel>
+                {funnelData.map((step, index) => (
+                  <FunnelStep key={index} width={100 - (index * 20)}>
+                    <FunnelLabel>
+                      <span>{step.stage}</span>
+                      <span>{step.count.toLocaleString()} ({step.percentage}%)</span>
+                    </FunnelLabel>
+                  </FunnelStep>
+                ))}
+                <div style={{ 
+                  marginTop: '30px', 
+                  padding: '20px', 
+                  background: 'rgba(139, 92, 246, 0.1)',
+                  borderRadius: '12px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '24px', fontWeight: '700', color: '#8b5cf6' }}>
+                    🚀 Liftlio drives 68% of all conversions
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#9ca3af', marginTop: '8px' }}>
+                    While representing only 44% of traffic
+                  </div>
+                </div>
+              </ConversionFunnel>
+            )}
+          </GlobeSection>
+
+          {/* Traffic Sources Comparison */}
           <ChartsGrid>
             <ChartCard>
-              <ChartTitle>📈 Today's Traffic Flow</ChartTitle>
-              <ResponsiveContainer width="100%" height={250}>
-                <AreaChart data={trafficData}>
+              <ChartTitle>
+                <FaChartLine />
+                Traffic Sources Performance
+              </ChartTitle>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={trafficSourceData}>
                   <defs>
-                    <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                    <linearGradient id="liftlioGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.2}/>
                     </linearGradient>
-                    <linearGradient id="colorPageviews" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#a78bfa" stopOpacity={0}/>
+                    <linearGradient id="paidGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#fb923c" stopOpacity={0.6}/>
+                      <stop offset="95%" stopColor="#fb923c" stopOpacity={0.1}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
@@ -476,60 +572,64 @@ export default function AnalyticsShowcase() {
                   />
                   <Area 
                     type="monotone" 
-                    dataKey="pageviews" 
-                    stroke="#a78bfa" 
+                    dataKey="liftlio" 
+                    stackId="1"
+                    stroke="#8b5cf6" 
                     fillOpacity={1} 
-                    fill="url(#colorPageviews)"
+                    fill="url(#liftlioGradient)"
                     strokeWidth={2}
+                    name="Liftlio Organic"
                   />
                   <Area 
                     type="monotone" 
-                    dataKey="visitors" 
-                    stroke="#8b5cf6" 
+                    dataKey="paid" 
+                    stackId="1"
+                    stroke="#fb923c" 
                     fillOpacity={1} 
-                    fill="url(#colorVisitors)"
-                    strokeWidth={2}
+                    fill="url(#paidGradient)"
+                    name="Paid Ads"
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="social" 
+                    stackId="1"
+                    stroke="#3b82f6" 
+                    fillOpacity={0.3} 
+                    fill="#3b82f6"
+                    name="Social"
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="direct" 
+                    stackId="1"
+                    stroke="#6b7280" 
+                    fillOpacity={0.2} 
+                    fill="#6b7280"
+                    name="Direct"
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              <div style={{ 
+                marginTop: '20px', 
+                padding: '15px', 
+                background: 'rgba(139, 92, 246, 0.1)',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}>
+                <strong style={{ color: '#8b5cf6' }}>Liftlio Organic</strong> consistently outperforms 
+                all other channels combined, delivering high-intent traffic that converts.
+              </div>
             </ChartCard>
 
             <ChartCard>
-              <ChartTitle>🌐 Traffic Sources</ChartTitle>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={sourceData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={5}
-                    dataKey="value"
-                    label={({ name, value }) => `${value}%`}
-                  >
-                    {sourceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(0,0,0,0.9)', 
-                      border: '1px solid #8b5cf6',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            <ChartCard>
-              <ChartTitle>📱 Device Distribution</ChartTitle>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={deviceData}>
+              <ChartTitle>
+                <FaExchangeAlt />
+                Conversion Rate by Source
+              </ChartTitle>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={conversionBySource}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="name" stroke="#9ca3af" />
+                  <XAxis dataKey="source" stroke="#9ca3af" />
                   <YAxis stroke="#9ca3af" />
                   <Tooltip 
                     contentStyle={{ 
@@ -537,55 +637,36 @@ export default function AnalyticsShowcase() {
                       border: '1px solid #8b5cf6',
                       borderRadius: '8px'
                     }}
-                    formatter={(value) => `${value}%`}
+                    formatter={(value: any, name: string) => {
+                      if (name === 'rate') return `${value}%`;
+                      return value;
+                    }}
                   />
-                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                    {deviceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                  <Bar dataKey="rate" fill="#8b5cf6" radius={[8, 8, 0, 0]}>
+                    {conversionBySource.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.source === 'Liftlio' ? '#8b5cf6' : '#6b7280'} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            </ChartCard>
-
-            <ChartCard>
-              <ChartTitle>🌍 Top Countries</ChartTitle>
-              <div style={{ padding: '10px 0' }}>
-                {countryData.map((country, index) => (
-                  <div key={index} style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '12px 0',
-                    borderBottom: index < countryData.length - 1 ? '1px solid rgba(139, 92, 246, 0.1)' : 'none'
+              <div style={{ 
+                marginTop: '20px',
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '10px',
+                fontSize: '12px'
+              }}>
+                {conversionBySource.map((source, index) => (
+                  <div key={index} style={{ 
+                    padding: '10px',
+                    background: source.source === 'Liftlio' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255,255,255,0.05)',
+                    borderRadius: '6px'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <span style={{ fontSize: '24px' }}>{country.flag}</span>
-                      <span style={{ color: '#fff', fontWeight: 500 }}>{country.country}</span>
+                    <div style={{ color: source.source === 'Liftlio' ? '#8b5cf6' : '#9ca3af', fontWeight: 600 }}>
+                      {source.source}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                      <div style={{
-                        width: '100px',
-                        height: '8px',
-                        background: 'rgba(255,255,255,0.1)',
-                        borderRadius: '4px',
-                        overflow: 'hidden'
-                      }}>
-                        <div style={{
-                          width: `${(country.visitors / countryData[0].visitors) * 100}%`,
-                          height: '100%',
-                          background: 'linear-gradient(90deg, #8b5cf6, #a78bfa)',
-                          borderRadius: '4px'
-                        }} />
-                      </div>
-                      <span style={{ 
-                        color: '#8b5cf6', 
-                        fontWeight: 600,
-                        minWidth: '50px',
-                        textAlign: 'right'
-                      }}>
-                        {country.visitors.toLocaleString()}
-                      </span>
+                    <div style={{ color: '#fff', fontSize: '14px', marginTop: '4px' }}>
+                      {source.conversions} conversions
                     </div>
                   </div>
                 ))}
@@ -593,185 +674,61 @@ export default function AnalyticsShowcase() {
             </ChartCard>
           </ChartsGrid>
 
-          {/* Top Pages Section */}
-          <div style={{ marginBottom: '60px' }}>
-            <SectionTitle>Most Visited Pages</SectionTitle>
-            <ChartCard style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '2px solid rgba(139, 92, 246, 0.3)' }}>
-                      <th style={{ 
-                        textAlign: 'left', 
-                        padding: '12px', 
-                        color: '#9ca3af',
-                        fontWeight: 600,
-                        fontSize: '14px'
-                      }}>
-                        Page
-                      </th>
-                      <th style={{ 
-                        textAlign: 'center', 
-                        padding: '12px', 
-                        color: '#9ca3af',
-                        fontWeight: 600,
-                        fontSize: '14px'
-                      }}>
-                        Views
-                      </th>
-                      <th style={{ 
-                        textAlign: 'center', 
-                        padding: '12px', 
-                        color: '#9ca3af',
-                        fontWeight: 600,
-                        fontSize: '14px'
-                      }}>
-                        Avg. Time
-                      </th>
-                      <th style={{ 
-                        textAlign: 'right', 
-                        padding: '12px', 
-                        color: '#9ca3af',
-                        fontWeight: 600,
-                        fontSize: '14px'
-                      }}>
-                        Trend
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {topPages.map((page, index) => (
-                      <tr key={index} style={{ 
-                        borderBottom: '1px solid rgba(139, 92, 246, 0.1)',
-                        transition: 'background 0.2s',
-                        cursor: 'pointer'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(139, 92, 246, 0.05)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                      >
-                        <td style={{ padding: '16px 12px', color: '#fff' }}>
-                          <span style={{ fontSize: '15px', fontWeight: 500 }}>{page.page}</span>
-                        </td>
-                        <td style={{ padding: '16px 12px', textAlign: 'center' }}>
-                          <span style={{ 
-                            color: '#8b5cf6', 
-                            fontWeight: 600,
-                            fontSize: '16px'
-                          }}>
-                            {page.views.toLocaleString()}
-                          </span>
-                        </td>
-                        <td style={{ padding: '16px 12px', textAlign: 'center', color: '#9ca3af' }}>
-                          {page.avgTime}
-                        </td>
-                        <td style={{ padding: '16px 12px', textAlign: 'right' }}>
-                          <span style={{ 
-                            color: '#10b981',
-                            fontSize: '14px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-end',
-                            gap: '4px'
-                          }}>
-                            ↑ {Math.floor(Math.random() * 30 + 5)}%
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          {/* Why Liftlio Converts Better */}
+          <div style={{ 
+            marginTop: '60px',
+            padding: '40px',
+            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05))',
+            borderRadius: '24px',
+            border: '1px solid rgba(139, 92, 246, 0.3)',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ fontSize: '32px', marginBottom: '20px', color: '#fff' }}>
+              Why Liftlio Traffic Converts 4X Better
+            </h3>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '30px',
+              marginTop: '40px'
+            }}>
+              <div>
+                <div style={{ fontSize: '48px', marginBottom: '10px' }}>🎯</div>
+                <div style={{ fontSize: '18px', fontWeight: 600, color: '#8b5cf6' }}>High Intent</div>
+                <div style={{ fontSize: '14px', color: '#9ca3af', marginTop: '8px' }}>
+                  Users searching for solutions, not randomly browsing
+                </div>
               </div>
-            </ChartCard>
+              <div>
+                <div style={{ fontSize: '48px', marginBottom: '10px' }}>🤝</div>
+                <div style={{ fontSize: '18px', fontWeight: 600, color: '#8b5cf6' }}>Trust Signals</div>
+                <div style={{ fontSize: '14px', color: '#9ca3af', marginTop: '8px' }}>
+                  Organic recommendations from trusted sources
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '48px', marginBottom: '10px' }}>📈</div>
+                <div style={{ fontSize: '18px', fontWeight: 600, color: '#8b5cf6' }}>Compound Growth</div>
+                <div style={{ fontSize: '14px', color: '#9ca3af', marginTop: '8px' }}>
+                  Content stays forever, traffic grows over time
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '48px', marginBottom: '10px' }}>💰</div>
+                <div style={{ fontSize: '18px', fontWeight: 600, color: '#8b5cf6' }}>Zero Ad Spend</div>
+                <div style={{ fontSize: '14px', color: '#9ca3af', marginTop: '8px' }}>
+                  No cost per click, pure profit margins
+                </div>
+              </div>
+            </div>
           </div>
-
-          <FeatureList>
-            <FeatureItem
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <FeatureIcon>🔒</FeatureIcon>
-              <FeatureContent>
-                <FeatureTitle>Privacy-First Approach</FeatureTitle>
-                <FeatureDescription>
-                  No cookies, no personal data. GDPR, CCPA, and PECR compliant by default.
-                </FeatureDescription>
-              </FeatureContent>
-            </FeatureItem>
-
-            <FeatureItem
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <FeatureIcon>⚡</FeatureIcon>
-              <FeatureContent>
-                <FeatureTitle>Real-Time Updates</FeatureTitle>
-                <FeatureDescription>
-                  See visitor activity as it happens with instant data streaming.
-                </FeatureDescription>
-              </FeatureContent>
-            </FeatureItem>
-
-            <FeatureItem
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <FeatureIcon>🚀</FeatureIcon>
-              <FeatureContent>
-                <FeatureTitle>Lightning Fast</FeatureTitle>
-                <FeatureDescription>
-                  Less than 1KB tracking script that won't slow down your site.
-                </FeatureDescription>
-              </FeatureContent>
-            </FeatureItem>
-
-            <FeatureItem
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <FeatureIcon>🎯</FeatureIcon>
-              <FeatureContent>
-                <FeatureTitle>Custom Events</FeatureTitle>
-                <FeatureDescription>
-                  Track any interaction with flexible event tracking and goals.
-                </FeatureDescription>
-              </FeatureContent>
-            </FeatureItem>
-
-            <FeatureItem
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <FeatureIcon>📊</FeatureIcon>
-              <FeatureContent>
-                <FeatureTitle>Actionable Insights</FeatureTitle>
-                <FeatureDescription>
-                  Understand user behavior with detailed metrics and funnels.
-                </FeatureDescription>
-              </FeatureContent>
-            </FeatureItem>
-
-            <FeatureItem
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 }}
-            >
-              <FeatureIcon>🤖</FeatureIcon>
-              <FeatureContent>
-                <FeatureTitle>AI-Powered Analysis</FeatureTitle>
-                <FeatureDescription>
-                  Get smart recommendations to improve engagement and conversions.
-                </FeatureDescription>
-              </FeatureContent>
-            </FeatureItem>
-          </FeatureList>
         </DemoSection>
 
-        <Footer>
+        <footer style={{ 
+          padding: '60px 20px',
+          textAlign: 'center',
+          borderTop: '1px solid rgba(139, 92, 246, 0.1)'
+        }}>
           <CTAButton
             href="https://liftlio.com/signup"
             as={motion.a}
@@ -784,8 +741,8 @@ export default function AnalyticsShowcase() {
           <p style={{ marginTop: '24px', color: '#6b7280', fontSize: '14px' }}>
             No credit card required • 14-day free trial • Cancel anytime
           </p>
-        </Footer>
+        </footer>
       </PageContainer>
-    </>
+    </ThemeProvider>
   );
 }
