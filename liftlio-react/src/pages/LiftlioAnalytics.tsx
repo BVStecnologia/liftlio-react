@@ -19,6 +19,17 @@ const GlobeContainer = styled.div`
   border-radius: 24px;
   margin-bottom: 32px;
   overflow: hidden;
+  
+  @media (max-width: 768px) {
+    height: 400px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+  }
+  
+  @media (max-width: 480px) {
+    height: 350px;
+    border-radius: 12px;
+  }
 `;
 
 // Wrapper do Globo
@@ -32,6 +43,8 @@ const GlobeWrapper = styled.div`
   
   canvas {
     outline: none !important;
+    max-width: 100%;
+    touch-action: pan-y pinch-zoom;
   }
 `;
 
@@ -49,6 +62,29 @@ const StatsOverlay = styled(motion.div)`
   min-width: 260px;
   max-width: 320px;
   z-index: 10;
+  
+  @media (max-width: 768px) {
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    max-width: none;
+    padding: 20px;
+    min-width: auto;
+    max-height: calc(100% - 40px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  @media (max-width: 480px) {
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    padding: 16px;
+    max-height: calc(100% - 32px);
+  }
 `;
 
 const LiveBadge = styled.div`
@@ -143,6 +179,28 @@ const ActionButton = styled.button<{ $primary?: boolean }>`
 const LocationsSection = styled.div`
   padding-top: 20px;
   border-top: 1px solid rgba(139, 92, 246, 0.2);
+  
+  @media (max-width: 768px) {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 8px;
+    
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: rgba(139, 92, 246, 0.1);
+      border-radius: 2px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(139, 92, 246, 0.5);
+      border-radius: 2px;
+    }
+  }
 `;
 
 const LocationItem = styled.div`
@@ -292,6 +350,10 @@ const TitleOverlay = styled.div`
   right: 40px;
   text-align: right;
   z-index: 10;
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const TitleContainer = styled.div`
@@ -302,17 +364,6 @@ const TitleContainer = styled.div`
   margin-bottom: 8px;
 `;
 
-const TitleIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-`;
 
 const Title = styled.h2`
   color: white;
@@ -334,6 +385,13 @@ const StatsSection = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
+  
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 0 16px;
+  }
 `;
 
 const StatCard = styled(motion.div)`
@@ -405,6 +463,16 @@ const ChartsGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  @media (max-width: 640px) {
+    gap: 16px;
+    margin-bottom: 24px;
+  }
 `;
 
 const ChartCard = styled(motion.div)`
@@ -587,7 +655,15 @@ const LiftlioAnalytics: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ 
+      padding: '20px',
+      paddingBottom: '40px',
+      minHeight: '100vh',
+      overflowX: 'hidden',
+      overflowY: 'auto',
+      WebkitOverflowScrolling: 'touch',
+      position: 'relative'
+    }}>
       <GlobeContainer>
         <GlobeWrapper>
           <Globe
@@ -757,8 +833,10 @@ const LiftlioAnalytics: React.FC = () => {
         {/* Título do lado direito */}
         <TitleOverlay>
           <TitleContainer>
-            <TitleIcon>🌍</TitleIcon>
-            <Title>Live Global Traffic</Title>
+            <div>
+              <div style={{ fontSize: '14px', color: '#8b5cf6', fontWeight: '600', letterSpacing: '2px', marginBottom: '4px' }}>LIFTLIO ANALYTICS</div>
+              <Title>Live Global Traffic</Title>
+            </div>
           </TitleContainer>
           <Subtitle>Real-time visitor activity from around the world</Subtitle>
         </TitleOverlay>
