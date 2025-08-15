@@ -10,6 +10,217 @@ import {
   CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
+// Header Styles
+const Header = styled.header`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 20px 0;
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid #27272a;
+  transition: all 0.3s;
+`;
+
+const HeaderContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const Logo = styled.a`
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #f3f4f6;
+  
+  svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+  }
+`;
+
+const LogoText = styled.span`
+  background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+`;
+
+const AnalyticsText = styled.span`
+  color: #818cf8;
+  font-size: 20px;
+  font-weight: 500;
+  margin-left: 8px;
+  opacity: 0.9;
+`;
+
+const BetaBadge = styled.span`
+  display: inline-block;
+  background: rgba(129, 140, 248, 0.1);
+  border: 1px solid rgba(129, 140, 248, 0.2);
+  color: #818cf8;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-left: 10px;
+  transition: all 0.3s;
+`;
+
+const Nav = styled.nav`
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const NavLink = styled.a`
+  color: #a1a1aa;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s;
+  
+  &:hover {
+    color: #818cf8;
+  }
+`;
+
+const NavButtons = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+const SignInButton = styled.a`
+  background: transparent;
+  color: #fff;
+  border: 1px solid #27272a;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-block;
+  
+  &:hover {
+    background: #18181b;
+    border-color: #818cf8;
+    color: #818cf8;
+  }
+`;
+
+// Footer Styles
+const Footer = styled.footer`
+  background: #0a0a0a;
+  border-top: 1px solid #27272a;
+  padding: 60px 0 40px;
+  margin-top: 80px;
+`;
+
+const FooterContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+`;
+
+const FooterContent = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 40px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+`;
+
+const FooterBrand = styled.div`
+  max-width: 300px;
+`;
+
+const FooterLogo = styled.div`
+  font-size: 24px;
+  font-weight: 900;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+  }
+`;
+
+const FooterDescription = styled.p`
+  color: #a1a1aa;
+  line-height: 1.6;
+`;
+
+const FooterColumn = styled.div`
+  h3 {
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #fff;
+  }
+`;
+
+const FooterLinks = styled.ul`
+  list-style: none;
+  padding: 0;
+  
+  li {
+    margin-bottom: 8px;
+  }
+  
+  a {
+    color: #a1a1aa;
+    text-decoration: none;
+    display: block;
+    padding: 4px 0;
+    transition: color 0.3s;
+    
+    &:hover {
+      color: #818cf8;
+    }
+  }
+`;
+
+const FooterBottom = styled.div`
+  text-align: center;
+  padding-top: 40px;
+  border-top: 1px solid #27272a;
+  color: #a1a1aa;
+`;
+
+// Main Container with padding for fixed header
+const MainContainer = styled.div`
+  padding-top: 80px;
+  min-height: 100vh;
+  background: #0a0a0a;
+`;
+
 // Container principal - igual ao original
 const GlobeContainer = styled.div`
   position: relative;
@@ -589,10 +800,10 @@ const LiftlioAnalytics: React.FC = () => {
   ];
 
   const trafficSourcesData = [
-    { name: 'Liftlio Organic', value: 45, color: '#8b5cf6' },
-    { name: 'Social Media', value: 25, color: '#3b82f6' },
-    { name: 'Direct', value: 20, color: '#10b981' },
-    { name: 'Referral', value: 10, color: '#f59e0b' },
+    { name: 'Liftlio', value: 90, color: '#8b5cf6' },
+    { name: 'Social Media', value: 4, color: '#3b82f6' },
+    { name: 'Direct', value: 3, color: '#10b981' },
+    { name: 'Referral', value: 3, color: '#f59e0b' },
   ];
 
   const devicesData = [
@@ -655,16 +866,43 @@ const LiftlioAnalytics: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ 
-      padding: '20px',
-      paddingBottom: '40px',
-      minHeight: '100vh',
-      overflowX: 'hidden',
-      overflowY: 'auto',
-      WebkitOverflowScrolling: 'touch',
-      position: 'relative'
-    }}>
-      <GlobeContainer>
+    <>
+      {/* Header */}
+      <Header>
+        <HeaderContainer>
+          <Logo href="/">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            <LogoText>LIFTLIO</LogoText>
+            <AnalyticsText>Analytics</AnalyticsText>
+            <BetaBadge>Beta</BetaBadge>
+          </Logo>
+          
+          <Nav>
+            <NavLink href="#features">Features</NavLink>
+            <NavLink href="#pricing">Pricing</NavLink>
+            <NavLink href="#testimonials">Testimonials</NavLink>
+            
+            <NavButtons>
+              <SignInButton href="/login">Sign In</SignInButton>
+            </NavButtons>
+          </Nav>
+        </HeaderContainer>
+      </Header>
+
+      {/* Main Content */}
+      <MainContainer>
+        <div style={{ 
+          padding: '20px',
+          paddingBottom: '40px',
+          minHeight: '100vh',
+          overflowX: 'hidden',
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          position: 'relative'
+        }}>
+          <GlobeContainer>
         <GlobeWrapper>
           <Globe
             ref={globeRef}
@@ -1161,7 +1399,60 @@ const LiftlioAnalytics: React.FC = () => {
           </div>
         </ChartCard>
       </ChartsGrid>
-    </div>
+        </div>
+      </MainContainer>
+
+      {/* Footer */}
+      <Footer>
+        <FooterContainer>
+          <FooterContent>
+            <FooterBrand>
+              <FooterLogo>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{display: 'inline-block', verticalAlign: 'middle', marginRight: '8px'}}>
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                <LogoText>LIFTLIO</LogoText>
+                <BetaBadge>Beta</BetaBadge>
+              </FooterLogo>
+              <FooterDescription>
+                AI-powered platform to scale word-of-mouth recommendations without paying for ads.
+              </FooterDescription>
+            </FooterBrand>
+            
+            <FooterColumn>
+              <h3>Product</h3>
+              <FooterLinks>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#api">API Documentation</a></li>
+              </FooterLinks>
+            </FooterColumn>
+            
+            <FooterColumn>
+              <h3>Company</h3>
+              <FooterLinks>
+                <li><a href="/about">About</a></li>
+                <li><a href="/blog">Blog</a></li>
+                <li><a href="/careers">Careers</a></li>
+              </FooterLinks>
+            </FooterColumn>
+            
+            <FooterColumn>
+              <h3>Legal</h3>
+              <FooterLinks>
+                <li><a href="/privacy">Privacy Policy</a></li>
+                <li><a href="/terms">Terms of Service</a></li>
+                <li><a href="/security">Security</a></li>
+              </FooterLinks>
+            </FooterColumn>
+          </FooterContent>
+          
+          <FooterBottom>
+            © 2024 Liftlio. All rights reserved.
+          </FooterBottom>
+        </FooterContainer>
+      </Footer>
+    </>
   );
 };
 
