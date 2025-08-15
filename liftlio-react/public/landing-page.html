@@ -191,7 +191,9 @@
         .btn-login:hover{background:var(--color-card-bg);border-color:var(--color-primary);color:var(--color-primary)}
         
         /* Mobile Menu */
-        .mobile-menu-button{display:none;background:transparent;border:none;color:var(--color-text-primary);font-size:24px;cursor:pointer;padding:8px;margin-left:16px}
+        .mobile-nav-container{display:none}
+        .mobile-menu-button{background:rgba(99,102,241, 0.1);border:1px solid var(--color-primary);color:var(--color-primary);font-size:24px;cursor:pointer;padding:8px;border-radius:8px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;transition:all 0.3s}
+        .mobile-menu-button:hover{background:var(--color-primary);color:white}
         .mobile-menu-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;z-index:999}
         .mobile-menu-overlay.open{opacity:1;visibility:visible}
         .mobile-menu{display:none;position:fixed;top:0;right:0;width:280px;height:100vh;background:var(--color-card-bg);box-shadow:-2px 0 8px rgba(0,0,0,.1);transform:translateX(100%);transition:transform .3s;z-index:1000;padding:20px}
@@ -356,7 +358,7 @@
             .header-content{padding:0}
             .logo{font-size:24px}
             .nav{display:none}
-            .mobile-menu-button{display:block}
+            .mobile-nav-container{display:block}
             .mobile-menu-overlay,.mobile-menu{display:block}
             .hero-section{padding:100px 20px 60px;margin-top:20px}
             .hero-content{padding:0 16px}
@@ -536,9 +538,11 @@
                     </div>
                 </nav>
                 
-                <button class="mobile-menu-button btn-icon" onclick="toggleMobileMenu(true)" aria-label="Open menu">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                </button>
+                <div class="mobile-nav-container">
+                    <button class="mobile-menu-button btn-icon" onclick="toggleMobileMenu(true)" aria-label="Open menu">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
