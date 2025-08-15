@@ -742,6 +742,8 @@ const GlobeVisualizationPro = forwardRef<GlobeVisualizationHandle, GlobeVisualiz
             });
 
           if (journeyStats && !journeyError) {
+            console.log('🛤️ Journey data received:', journeyStats);
+            
             // Agrupar por estágio e somar visitantes
             const stageMap = new Map();
             journeyStats.forEach((item: any) => {
@@ -770,7 +772,10 @@ const GlobeVisualizationPro = forwardRef<GlobeVisualizationHandle, GlobeVisualiz
               .map(stage => stageMap.get(stage))
               .filter(Boolean);
             
+            console.log('🎯 Journey stages processed:', orderedJourney);
             setJourneyData(orderedJourney);
+          } else {
+            console.log('⚠️ Journey data error:', journeyError);
           }
         }
         
@@ -933,6 +938,12 @@ const GlobeVisualizationPro = forwardRef<GlobeVisualizationHandle, GlobeVisualiz
     fetchVisitorDataRef.current = fetchVisitorData;
   }, [fetchVisitorData]);
 
+  // Atualizar dados quando mudar de aba
+  useEffect(() => {
+    console.log('📑 Tab changed to:', activeTab);
+    fetchVisitorData();
+  }, [activeTab, fetchVisitorData]);
+
   // SOLUTION 3: Multiple trigger mechanisms
   // useEffect separado para responder ao trigger externo
   useEffect(() => {
@@ -1058,9 +1069,14 @@ const GlobeVisualizationPro = forwardRef<GlobeVisualizationHandle, GlobeVisualiz
           <StatNumber>{visitors}</StatNumber>
           <StatLabel>
             {visitors > 0 ? 'Active Visitors' : 'No Active Visitors'}
-            {visitors === 0 && <div style={{ fontSize: '11px', marginTop: '4px', opacity: 0.7 }}>
+            <div style={{ 
+              fontSize: '11px', 
+              marginTop: '4px', 
+              opacity: 0.7,
+              color: 'rgba(139, 92, 246, 0.8)'
+            }}>
               Last 30 minutes
-            </div>}
+            </div>
           </StatLabel>
         </MainStat>
 
