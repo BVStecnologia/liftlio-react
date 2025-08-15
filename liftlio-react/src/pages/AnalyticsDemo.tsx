@@ -128,7 +128,7 @@ const Header = styled.div`
 const Title = styled.h1`
   font-size: 1.8rem;
   font-weight: 600;
-  color: ${props => props.theme.colors.text.primary};
+  color: ${props => '#ffffff'};
   margin: 0;
   display: flex;
   align-items: center;
@@ -136,7 +136,7 @@ const Title = styled.h1`
 
   svg {
     font-size: 1.5rem;
-    color: ${props => props.theme.colors.primary};
+    color: ${props => '#8b5cf6'};
   }
 `;
 
@@ -149,17 +149,17 @@ const FilterGroup = styled.div`
 const FilterButton = styled.button<{ active?: boolean }>`
   padding: 10px 20px;
   border: 1px solid ${props => props.active 
-    ? props.theme.colors.primary 
-    : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.border};
+    ? '#8b5cf6' 
+    : true ? 'rgba(255, 255, 255, 0.2)' : '#2a2a2a'};
   background: ${props => {
     if (props.active) {
-      return props.theme.colors.primary;
+      return '#8b5cf6';
     }
-    return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'transparent';
+    return true ? 'rgba(255, 255, 255, 0.05)' : 'transparent';
   }};
   color: ${props => props.active 
     ? 'white' 
-    : props.theme.colors.text.primary};
+    : '#ffffff'};
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
@@ -167,8 +167,8 @@ const FilterButton = styled.button<{ active?: boolean }>`
 
   &:hover {
     background: ${props => props.active 
-      ? props.theme.colors.primaryDark 
-      : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'};
+      ? '#7c3aed'
+      : 'rgba(255, 255, 255, 0.1)'};
   }
 `;
 
@@ -188,14 +188,14 @@ const MetricsGrid = styled.div`
 `;
 
 const MetricCard = styled(motion.div)<{ trend?: 'up' | 'down' | 'neutral' }>`
-  background: ${props => props.theme.name === 'dark' 
+  background: ${props => true 
     ? props.theme.colors.bg.secondary 
     : props.theme.colors.background};
   border-radius: 12px;
   padding: 20px;
-  border: 1px solid ${props => props.theme.name === 'dark' 
+  border: 1px solid ${props => true 
     ? 'rgba(255, 255, 255, 0.1)' 
-    : props.theme.colors.border};
+    : '#2a2a2a'};
   position: relative;
   overflow: hidden;
   transition: transform 0.3s ease;
@@ -223,7 +223,7 @@ const MetricHeader = styled.div`
 `;
 
 const MetricTitle = styled.div`
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => '#9ca3af'};
   font-size: 13px;
   font-weight: 500;
   text-transform: none;
@@ -237,7 +237,7 @@ const MetricIcon = styled.div<{ color?: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${props => props.color || props.theme.colors.primary};
+  background: ${props => props.color || '#8b5cf6'};
   
   svg {
     font-size: 24px;
@@ -248,7 +248,7 @@ const MetricIcon = styled.div<{ color?: string }>`
 const MetricValue = styled.div`
   font-size: 28px;
   font-weight: 700;
-  color: ${props => props.theme.colors.text.primary};
+  color: ${props => '#ffffff'};
   margin-bottom: 4px;
 `;
 
@@ -266,7 +266,7 @@ const MetricChange = styled.div<{ positive?: boolean }>`
 `;
 
 const MetricDescription = styled.div`
-  color: ${props => props.theme.colors.text.muted};
+  color: ${props => '#6b7280'};
   font-size: 13px;
   margin-top: 4px;
 `;
@@ -294,9 +294,9 @@ const ChartLegend = styled.div`
   gap: 24px;
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid ${props => props.theme.name === 'dark' 
+  border-top: 1px solid ${props => true 
     ? 'rgba(255, 255, 255, 0.1)' 
-    : props.theme.colors.border};
+    : '#2a2a2a'};
 `;
 
 const LegendItem = styled.div`
@@ -304,7 +304,7 @@ const LegendItem = styled.div`
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => '#9ca3af'};
 `;
 
 const LegendDot = styled.div<{ color: string }>`
@@ -315,14 +315,14 @@ const LegendDot = styled.div<{ color: string }>`
 `;
 
 const ChartCard = styled(motion.div)`
-  background: ${props => props.theme.name === 'dark' 
+  background: ${props => true 
     ? props.theme.colors.bg.secondary 
     : props.theme.colors.background};
   border-radius: 16px;
   padding: 24px;
-  border: 1px solid ${props => props.theme.name === 'dark' 
+  border: 1px solid ${props => true 
     ? 'rgba(255, 255, 255, 0.1)' 
-    : props.theme.colors.border};
+    : '#2a2a2a'};
 `;
 
 const ChartHeader = styled.div`
@@ -379,13 +379,13 @@ const DemoIndicator = styled.span`
 const ChartTitle = styled.h3`
   font-size: 18px;
   font-weight: 700;
-  color: ${props => props.theme.colors.text};
+  color: ${props => '#ffffff'};
   display: flex;
   align-items: center;
   gap: 8px;
 
   svg {
-    color: ${props => props.theme.colors.primary};
+    color: ${props => '#8b5cf6'};
   }
 `;
 
@@ -397,14 +397,14 @@ const ChartOptions = styled.div`
 const ChartOption = styled.button<{ active?: boolean }>`
   padding: 6px 12px;
   border: 1px solid ${props => props.active 
-    ? props.theme.colors.primary 
-    : props.theme.colors.border};
+    ? '#8b5cf6' 
+    : '#2a2a2a'};
   background: ${props => props.active 
-    ? props.theme.colors.primary 
+    ? '#8b5cf6' 
     : props.theme.colors.background};
   color: ${props => props.active 
     ? 'white' 
-    : props.theme.colors.textSecondary};
+    : '#ffffff'Secondary};
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
@@ -412,7 +412,7 @@ const ChartOption = styled.button<{ active?: boolean }>`
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: ${props => props.theme.colors.primary};
+    border-color: ${props => '#8b5cf6'};
   }
 `;
 
@@ -459,12 +459,12 @@ const InsightText = styled.p`
 `;
 
 const TagImplementation = styled.div`
-  background: ${props => props.theme.name === 'dark' 
+  background: ${props => true 
     ? props.theme.colors.bg.secondary 
     : props.theme.colors.background};
-  border: 1px solid ${props => props.theme.name === 'dark' 
+  border: 1px solid ${props => true 
     ? 'rgba(255, 255, 255, 0.1)' 
-    : props.theme.colors.border};
+    : '#2a2a2a'};
   border-radius: 16px;
   padding: 32px;
   margin-top: 32px;
@@ -473,7 +473,7 @@ const TagImplementation = styled.div`
 const TagTitle = styled.h3<{ clickable?: boolean }>`
   font-size: 20px;
   font-weight: 700;
-  color: ${props => props.theme.colors.text.primary};
+  color: ${props => '#ffffff'};
   margin-bottom: ${props => props.clickable ? '0' : '24px'};
   display: flex;
   align-items: center;
@@ -486,12 +486,12 @@ const TagTitle = styled.h3<{ clickable?: boolean }>`
   
   ${props => props.clickable && `
     &:hover {
-      color: ${props.theme.colors.primary};
+      color: ${'#8b5cf6'};
     }
   `}
 
   svg {
-    color: ${props => props.theme.colors.primary};
+    color: ${props => '#8b5cf6'};
     font-size: 24px;
   }
 `;
@@ -509,7 +509,7 @@ const CollapseIcon = styled.span<{ collapsed: boolean }>`
   align-items: center;
   transition: transform 0.3s ease;
   transform: ${props => props.collapsed ? 'rotate(0deg)' : 'rotate(180deg)'};
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => '#9ca3af'};
 `;
 
 const ImplementationSteps = styled.div`
@@ -527,7 +527,7 @@ const StepNumber = styled.div`
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: ${props => props.theme.colors.primary};
+  background: ${props => '#8b5cf6'};
   color: white;
   display: flex;
   align-items: center;
@@ -543,12 +543,12 @@ const StepContent = styled.div`
 const StepTitle = styled.h4`
   font-size: 16px;
   font-weight: 600;
-  color: ${props => props.theme.colors.text.primary};
+  color: ${props => '#ffffff'};
   margin-bottom: 8px;
 `;
 
 const StepDescription = styled.p`
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => '#9ca3af'};
   font-size: 14px;
   line-height: 1.6;
 `;
@@ -559,18 +559,12 @@ const CodeContainer = styled.div`
 `;
 
 const CodeBlock = styled.pre`
-  background: ${props => props.theme.name === 'dark' 
-    ? 'rgba(0, 0, 0, 0.5)' 
-    : '#1e293b'};
-  color: ${props => props.theme.name === 'dark' 
-    ? '#a0aec0' 
-    : '#e2e8f0'};
+  background: rgba(0, 0, 0, 0.5);
+  color: #a0aec0;
   padding: 20px;
   padding-right: 60px;
   border-radius: 12px;
-  border: 1px solid ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.1)' 
-    : 'transparent'};
+  border: 1px solid rgba(255, 255, 255, 0.1);
   overflow-x: auto;
   font-family: 'Fira Code', 'Courier New', monospace;
   font-size: 13px;
@@ -581,7 +575,7 @@ const CopyButton = styled.button`
   position: absolute;
   top: 12px;
   right: 12px;
-  background: ${props => props.theme.colors.primary};
+  background: ${props => '#8b5cf6'};
   color: white;
   border: none;
   border-radius: 8px;
@@ -595,7 +589,7 @@ const CopyButton = styled.button`
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${props => props.theme.colors.primaryDark};
+    background: ${props => '#8b5cf6'Dark};
     transform: translateY(-1px);
   }
 
@@ -626,7 +620,7 @@ const NoDataAlert = styled(motion.div)`
   background: linear-gradient(135deg, 
     rgba(139, 92, 246, 0.1) 0%, 
     rgba(168, 85, 247, 0.1) 100%);
-  border: 2px dashed ${props => props.theme.colors.primary};
+  border: 2px dashed ${props => '#8b5cf6'};
   border-radius: 16px;
   padding: 40px;
   text-align: center;
@@ -665,20 +659,20 @@ const DemoDataBadge = styled.div`
 
 const AlertIcon = styled.div`
   font-size: 48px;
-  color: ${props => props.theme.colors.primary};
+  color: ${props => '#8b5cf6'};
   margin-bottom: 16px;
 `;
 
 const AlertTitle = styled.h2`
   font-size: 24px;
   font-weight: 700;
-  color: ${props => props.theme.colors.text.primary};
+  color: ${props => '#ffffff'};
   margin-bottom: 12px;
 `;
 
 const AlertText = styled.p`
   font-size: 16px;
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => '#9ca3af'};
   margin-bottom: 24px;
   max-width: 600px;
   margin-left: auto;
@@ -687,7 +681,7 @@ const AlertText = styled.p`
 `;
 
 const AlertButton = styled.button`
-  background: ${props => props.theme.colors.primary};
+  background: ${props => '#8b5cf6'};
   color: white;
   border: none;
   border-radius: 8px;
@@ -701,7 +695,7 @@ const AlertButton = styled.button`
   gap: 8px;
 
   &:hover {
-    background: ${props => props.theme.colors.primaryDark};
+    background: ${props => '#8b5cf6'Dark};
     transform: translateY(-2px);
   }
 
@@ -712,12 +706,12 @@ const AlertButton = styled.button`
 
 // Novos componentes para seção avançada
 const AdvancedSection = styled.div`
-  background: ${props => props.theme.name === 'dark' 
+  background: ${props => true 
     ? props.theme.colors.bg.secondary 
     : props.theme.colors.background};
-  border: 1px solid ${props => props.theme.name === 'dark' 
+  border: 1px solid ${props => true 
     ? 'rgba(255, 255, 255, 0.1)' 
-    : props.theme.colors.border};
+    : '#2a2a2a'};
   border-radius: 16px;
   padding: 32px;
   margin-top: 32px;
@@ -726,20 +720,20 @@ const AdvancedSection = styled.div`
 const AdvancedTitle = styled.h3`
   font-size: 20px;
   font-weight: 700;
-  color: ${props => props.theme.colors.text.primary};
+  color: ${props => '#ffffff'};
   margin-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 12px;
 
   svg {
-    color: ${props => props.theme.colors.primary};
+    color: ${props => '#8b5cf6'};
     font-size: 24px;
   }
 `;
 
 const AdvancedSubtitle = styled.p`
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => '#9ca3af'};
   font-size: 14px;
   margin-bottom: 24px;
   line-height: 1.6;
@@ -752,10 +746,10 @@ const AccordionContainer = styled.div`
 `;
 
 const AccordionItem = styled.div`
-  background: ${props => props.theme.name === 'dark'
+  background: ${props => true
     ? 'rgba(139, 92, 246, 0.05)'
     : 'rgba(139, 92, 246, 0.03)'};
-  border: 1px solid ${props => props.theme.name === 'dark'
+  border: 1px solid ${props => true
     ? 'rgba(139, 92, 246, 0.2)'
     : 'rgba(139, 92, 246, 0.15)'};
   border-radius: 12px;
@@ -763,7 +757,7 @@ const AccordionItem = styled.div`
   transition: all 0.3s ease;
 
   &:hover {
-    border-color: ${props => props.theme.colors.primary};
+    border-color: ${props => '#8b5cf6'};
     box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
   }
 `;
@@ -780,7 +774,7 @@ const AccordionHeader = styled.button<{ isOpen?: boolean }>`
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${props => props.theme.name === 'dark'
+    background: ${props => true
       ? 'rgba(139, 92, 246, 0.08)'
       : 'rgba(139, 92, 246, 0.05)'};
   }
@@ -792,17 +786,17 @@ const AccordionTitle = styled.div`
   gap: 12px;
   font-size: 16px;
   font-weight: 600;
-  color: ${props => props.theme.colors.text.primary};
+  color: ${props => '#ffffff'};
   text-align: left;
 
   svg {
-    color: ${props => props.theme.colors.primary};
+    color: ${props => '#8b5cf6'};
     font-size: 20px;
   }
 `;
 
 const AccordionIcon = styled.div<{ $isOpen?: boolean }>`
-  color: ${props => props.theme.colors.primary};
+  color: ${props => '#8b5cf6'};
   transition: transform 0.3s ease;
   transform: ${props => props.$isOpen ? 'rotate(180deg)' : 'rotate(0)'};
   font-size: 20px;
@@ -819,26 +813,26 @@ const EventExample = styled.div`
 const EventTitle = styled.h5`
   font-size: 14px;
   font-weight: 600;
-  color: ${props => props.theme.colors.text.primary};
+  color: ${props => '#ffffff'};
   margin-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
 
   svg {
-    color: ${props => props.theme.colors.primary};
+    color: ${props => '#8b5cf6'};
   }
 `;
 
 const EventDescription = styled.p`
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => '#9ca3af'};
   font-size: 13px;
   line-height: 1.6;
   margin-bottom: 12px;
 `;
 
 const EventCode = styled.div`
-  background: ${props => props.theme.name === 'dark' 
+  background: ${props => true 
     ? 'rgba(0, 0, 0, 0.5)' 
     : '#1e293b'};
   color: #e2e8f0;
@@ -864,14 +858,14 @@ const TabButtons = styled.div`
 const TabButton = styled.button<{ active?: boolean }>`
   padding: 8px 16px;
   border: 1px solid ${props => props.active 
-    ? props.theme.colors.primary 
-    : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.border};
+    ? '#8b5cf6' 
+    : true ? 'rgba(255, 255, 255, 0.2)' : '#2a2a2a'};
   background: ${props => props.active 
-    ? props.theme.colors.primary 
+    ? '#8b5cf6' 
     : 'transparent'};
   color: ${props => props.active 
     ? 'white' 
-    : props.theme.colors.text.primary};
+    : '#ffffff'};
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
@@ -880,18 +874,18 @@ const TabButton = styled.button<{ active?: boolean }>`
 
   &:hover {
     background: ${props => props.active 
-      ? props.theme.colors.primaryDark 
-      : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'};
+      ? '#8b5cf6'Dark 
+      : true ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'};
   }
 `;
 
 const TabContent = styled(motion.div)`
   padding: 20px;
-  background: ${props => props.theme.name === 'dark'
+  background: ${props => true
     ? 'rgba(0, 0, 0, 0.3)'
     : 'rgba(0, 0, 0, 0.02)'};
   border-radius: 12px;
-  border: 1px solid ${props => props.theme.name === 'dark'
+  border: 1px solid ${props => true
     ? 'rgba(255, 255, 255, 0.05)'
     : 'rgba(0, 0, 0, 0.05)'};
 `;
@@ -904,7 +898,7 @@ const HelpTooltip = styled.div`
   cursor: help;
   
   svg {
-    color: ${props => props.theme.colors.primary};
+    color: ${props => '#8b5cf6'};
     opacity: 0.7;
     font-size: 16px;
     transition: opacity 0.2s;
@@ -920,10 +914,10 @@ const TooltipContent = styled.div`
   bottom: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%);
-  background: ${props => props.theme.name === 'dark' 
+  background: ${props => true 
     ? 'rgba(17, 24, 39, 0.98)' 
     : 'rgba(255, 255, 255, 0.98)'};
-  color: ${props => props.theme.colors.text.primary};
+  color: ${props => '#ffffff'};
   padding: 12px 16px;
   border-radius: 8px;
   font-size: 13px;
@@ -932,7 +926,7 @@ const TooltipContent = styled.div`
   max-width: 350px;
   white-space: normal;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  border: 1px solid ${props => props.theme.name === 'dark'
+  border: 1px solid ${props => true
     ? 'rgba(139, 92, 246, 0.3)'
     : 'rgba(139, 92, 246, 0.2)'};
   z-index: 99999;
@@ -948,7 +942,7 @@ const TooltipContent = styled.div`
     left: 50%;
     transform: translateX(-50%);
     border: 6px solid transparent;
-    border-top-color: ${props => props.theme.name === 'dark' 
+    border-top-color: ${props => true 
       ? 'rgba(17, 24, 39, 0.98)' 
       : 'rgba(255, 255, 255, 0.98)'};
   }
@@ -969,16 +963,16 @@ const VerifiedBadge = styled.span<{ $verified: boolean }>`
   font-size: 11px;
   font-weight: 500;
   background: ${props => props.$verified
-    ? props.theme.name === 'dark'
+    ? true
       ? 'rgba(139, 92, 246, 0.15)'
       : 'rgba(139, 92, 246, 0.1)'
-    : props.theme.name === 'dark'
+    : true
       ? 'rgba(107, 114, 128, 0.15)'
       : 'rgba(107, 114, 128, 0.1)'
   };
   color: ${props => props.$verified 
     ? '#8b5cf6'
-    : props.theme.colors.text.secondary
+    : '#9ca3af'
   };
   border: 1px solid ${props => props.$verified
     ? 'rgba(139, 92, 246, 0.2)'
@@ -992,18 +986,18 @@ const VerifiedBadge = styled.span<{ $verified: boolean }>`
 
 const TagStatusCard = styled.div<{ $connected: boolean }>`
   background: ${props => props.$connected
-    ? props.theme.name === 'dark' 
+    ? true 
       ? 'rgba(139, 92, 246, 0.03)'
       : 'rgba(139, 92, 246, 0.02)'
-    : props.theme.name === 'dark'
+    : true
       ? 'rgba(107, 114, 128, 0.05)'
       : 'rgba(107, 114, 128, 0.03)'
   };
   border: 1px solid ${props => props.$connected 
-    ? props.theme.name === 'dark'
+    ? true
       ? 'rgba(139, 92, 246, 0.2)'
       : 'rgba(139, 92, 246, 0.15)'
-    : props.theme.name === 'dark'
+    : true
       ? 'rgba(107, 114, 128, 0.2)'
       : 'rgba(107, 114, 128, 0.15)'
   };
@@ -1027,10 +1021,10 @@ const TagStatusIcon = styled.div<{ $connected: boolean }>`
   height: 48px;
   border-radius: 12px;
   background: ${props => props.$connected 
-    ? props.theme.name === 'dark'
+    ? true
       ? 'rgba(139, 92, 246, 0.15)'
       : 'rgba(139, 92, 246, 0.1)'
-    : props.theme.name === 'dark'
+    : true
       ? 'rgba(107, 114, 128, 0.15)'
       : 'rgba(107, 114, 128, 0.1)'
   };
@@ -1060,7 +1054,7 @@ const TagStatusTitle = styled.h3<{ $connected: boolean }>`
 `;
 
 const TagStatusDescription = styled.p`
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => '#9ca3af'};
   font-size: 14px;
   margin: 0;
 `;
@@ -1078,12 +1072,12 @@ const TagMetric = styled.div`
 const TagMetricValue = styled.div`
   font-size: 24px;
   font-weight: 700;
-  color: ${props => props.theme.colors.primary};
+  color: ${props => '#8b5cf6'};
 `;
 
 const TagMetricLabel = styled.div`
   font-size: 12px;
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => '#9ca3af'};
   margin-top: 2px;
 `;
 
@@ -1091,7 +1085,7 @@ const ImportantNote = styled.div`
   background: linear-gradient(135deg, 
     rgba(139, 92, 246, 0.1) 0%, 
     rgba(168, 85, 247, 0.1) 100%);
-  border: 2px solid ${props => props.theme.colors.primary};
+  border: 2px solid ${props => '#8b5cf6'};
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 24px;
@@ -1100,7 +1094,7 @@ const ImportantNote = styled.div`
   gap: 12px;
   
   svg {
-    color: ${props => props.theme.colors.primary};
+    color: ${props => '#8b5cf6'};
     font-size: 24px;
     flex-shrink: 0;
     margin-top: 2px;
@@ -1112,23 +1106,23 @@ const NoteContent = styled.div`
 `;
 
 const NoteTitle = styled.h4`
-  color: ${props => props.theme.colors.text.primary};
+  color: ${props => '#ffffff'};
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 8px;
 `;
 
 const NoteText = styled.p`
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => '#9ca3af'};
   font-size: 14px;
   line-height: 1.6;
   margin: 0;
   
   code {
-    background: ${props => props.theme.name === 'dark'
+    background: ${props => true
       ? 'rgba(139, 92, 246, 0.2)'
       : 'rgba(139, 92, 246, 0.1)'};
-    color: ${props => props.theme.colors.primary};
+    color: ${props => '#8b5cf6'};
     padding: 2px 6px;
     border-radius: 4px;
     font-family: 'Fira Code', monospace;
@@ -1349,6 +1343,96 @@ const AnalyticsDemo: React.FC = () => {
     checkVerifiedEvents(); // Verificar eventos implementados
   }, [currentProject]);
   
+  const generateDemoData = () => {
+    console.log('🎯 generateDemoData CALLED!');
+    // Generate realistic demo data for all charts
+    const now = new Date();
+    const demoTraffic = [];
+    
+    // Generate 30 days of traffic data with realistic growth pattern
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      const baseVisitors = 150 + Math.floor(Math.random() * 50);
+      const growth = Math.floor((30 - i) * 2); // Gradual growth
+      const dailyVariation = Math.floor(Math.random() * 30) - 15; // Daily variation
+      
+      demoTraffic.push({
+        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        visitors: Math.max(50, baseVisitors + growth + dailyVariation),
+        pageViews: Math.max(100, (baseVisitors + growth + dailyVariation) * 2.5),
+        sessions: Math.max(80, (baseVisitors + growth + dailyVariation) * 1.8)
+      });
+    }
+    
+    setTrafficData(demoTraffic);
+    console.log('📊 Traffic data set:', demoTraffic.length, 'days');
+    
+    // Realistic traffic sources - Liftlio generates the search traffic
+    setSourceData([
+      { name: 'Liftlio', value: 45, color: '#8b5cf6' },
+      { name: 'Direct', value: 30, color: '#a855f7' },
+      { name: 'Social Media', value: 15, color: '#c084fc' },
+      { name: 'Referral', value: 7, color: '#d8b4fe' },
+      { name: 'Others', value: 3, color: '#e9d5ff' }
+    ]);
+    
+    // Realistic device distribution
+    setDeviceData([
+      { name: 'Desktop', users: 580, sessions: 1450, percentage: 55, color: '#8b5cf6' },
+      { name: 'Mobile', users: 380, sessions: 720, percentage: 35, color: '#a855f7' },
+      { name: 'Tablet', users: 120, sessions: 180, percentage: 10, color: '#c084fc' }
+    ]);
+    
+    // Realistic growth data - últimos 6 meses
+    const growth = [];
+    for (let i = 5; i >= 0; i--) {
+      const monthDate = new Date();
+      monthDate.setMonth(monthDate.getMonth() - i);
+      const monthName = monthDate.toLocaleDateString('en-US', { month: 'short' });
+      
+      growth.push({
+        month: monthName,
+        crescimento: 100 + ((5-i) * 35) + Math.floor(Math.random() * 20),
+        meta: 100 + ((5-i) * 30)
+      });
+    }
+    setGrowthData(growth);
+    console.log('📊 Demo growth data set:', growth);
+    
+    // Set realistic metrics
+    setMetricsData({
+      organicTraffic: 12500,
+      uniqueUsers: 3247,
+      conversionRate: 12.5,
+      avgTime: 165, // 2m 45s in seconds
+      organicChange: 24.7,
+      usersChange: 12.5,
+      conversionChange: 8.3,
+      timeChange: -5.2
+    });
+    
+    // Set demo data for conversion charts
+    setFunnelData([
+      { name: 'Visited', value: 1000, percentage: '100%' },
+      { name: 'Engaged', value: 450, percentage: '45%' },
+      { name: 'Converted', value: 120, percentage: '12%' }
+    ]);
+    
+    setQualityData([
+      { metric: 'Time on Page', value: 75 },
+      { metric: 'Scroll Depth', value: 82 },
+      { metric: 'Interactions', value: 68 },
+      { metric: 'Pages/Session', value: 71 },
+      { metric: 'Return Rate', value: 35 }
+    ]);
+    
+    setReturnRateData([
+      { name: 'New Visitors', value: 65, color: '#8b5cf6' },
+      { name: 'Returning', value: 35, color: '#c084fc' }
+    ]);
+  };
+
   // Função para buscar dados de analytics - USANDO DADOS DEMO  
   const fetchAnalyticsData = async () => {
     // Para demo, sempre gera dados demo
@@ -1466,99 +1550,8 @@ const AnalyticsDemo: React.FC = () => {
         setLoading(false);
       }
     */
-  };
-    
-    const generateDemoData = () => {
-      console.log('🎯 generateDemoData CALLED!');
-      // Generate realistic demo data for all charts
-      const now = new Date();
-      const demoTraffic = [];
-      
-      // Generate 30 days of traffic data with realistic growth pattern
-      for (let i = 29; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-        const baseVisitors = 150 + Math.floor(Math.random() * 50);
-        const growth = Math.floor((30 - i) * 2); // Gradual growth
-        const dailyVariation = Math.floor(Math.random() * 30) - 15; // Daily variation
-        
-        demoTraffic.push({
-          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          visitors: Math.max(50, baseVisitors + growth + dailyVariation),
-          pageViews: Math.max(100, (baseVisitors + growth + dailyVariation) * 2.5),
-          sessions: Math.max(80, (baseVisitors + growth + dailyVariation) * 1.8)
-        });
-      }
-      
-      setTrafficData(demoTraffic);
-      console.log('📊 Traffic data set:', demoTraffic.length, 'days');
-      
-      // Realistic traffic sources - Liftlio generates the search traffic
-      setSourceData([
-        { name: 'Liftlio', value: 45, color: '#8b5cf6' },
-        { name: 'Direct', value: 30, color: '#a855f7' },
-        { name: 'Social Media', value: 15, color: '#c084fc' },
-        { name: 'Referral', value: 7, color: '#d8b4fe' },
-        { name: 'Others', value: 3, color: '#e9d5ff' }
-      ]);
-      
-      // Realistic device distribution
-      setDeviceData([
-        { name: 'Desktop', users: 580, sessions: 1450, percentage: 55, color: '#8b5cf6' },
-        { name: 'Mobile', users: 380, sessions: 720, percentage: 35, color: '#a855f7' },
-        { name: 'Tablet', users: 120, sessions: 180, percentage: 10, color: '#c084fc' }
-      ]);
-      
-      // Realistic growth data - últimos 6 meses
-      const growth = [];
-      for (let i = 5; i >= 0; i--) {
-        const monthDate = new Date();
-        monthDate.setMonth(monthDate.getMonth() - i);
-        const monthName = monthDate.toLocaleDateString('en-US', { month: 'short' });
-        
-        growth.push({
-          month: monthName,
-          crescimento: 100 + ((5-i) * 35) + Math.floor(Math.random() * 20),
-          meta: 100 + ((5-i) * 30)
-        });
-      }
-      setGrowthData(growth);
-      console.log('📊 Demo growth data set:', growth);
-      
-      // Set realistic metrics
-      setMetricsData({
-        organicTraffic: 12500,
-        uniqueUsers: 3247,
-        conversionRate: 12.5,
-        avgTime: 165, // 2m 45s in seconds
-        organicChange: 24.7,
-        usersChange: 12.5,
-        conversionChange: 8.3,
-        timeChange: -5.2
-      });
-      
-      // Set demo data for conversion charts
-      setFunnelData([
-        { name: 'Visited', value: 1000, percentage: '100%' },
-        { name: 'Engaged', value: 450, percentage: '45%' },
-        { name: 'Converted', value: 120, percentage: '12%' }
-      ]);
-      
-      setQualityData([
-        { metric: 'Time on Page', value: 75 },
-        { metric: 'Scroll Depth', value: 82 },
-        { metric: 'Interactions', value: 68 },
-        { metric: 'Pages/Session', value: 71 },
-        { metric: 'Return Rate', value: 35 }
-      ]);
-      
-      setReturnRateData([
-        { name: 'New Visitors', value: 65, color: '#8b5cf6' },
-        { name: 'Returning', value: 35, color: '#c084fc' }
-      ]);
-    };
-    
-    const processAnalyticsData = (data: any[]) => {
+  
+  const processAnalyticsData = (data: any[]) => {
       // Process real data from database
       setAnalyticsData(data);
       
