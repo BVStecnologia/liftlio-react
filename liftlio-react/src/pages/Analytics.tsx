@@ -1832,25 +1832,31 @@ const Analytics: React.FC = () => {
       // Calcular funil de engajamento baseado em visitantes únicos
       const uniqueVisitors = new Set(analyticsData.map(d => d.visitor_id)).size;
       
-      // Visitantes engajados: aqueles com alto scroll, tempo ou qualquer click
+      // Visitantes engajados: aqueles com alto scroll, tempo, clicks ou ações de e-commerce
       const engagedVisitorIds = new Set(
         analyticsData.filter(d => 
           (d.scroll_depth && d.scroll_depth > 50) || 
           (d.time_on_page && d.time_on_page > 30) ||
-          d.event_type === 'click'
+          d.event_type === 'click' ||
+          d.event_type === 'add_to_cart' ||
+          d.event_type === 'video_play' ||
+          d.event_type === 'form_submit' ||
+          d.event_type === 'checkout_started'
         ).map(d => d.visitor_id)
       );
       const engagedVisitors = engagedVisitorIds.size;
       
-      // Visitantes convertidos: aqueles que clicaram em CTAs específicos
+      // Visitantes convertidos: aqueles que fizeram purchase OU clicaram em CTAs específicos
       const convertedVisitorIds = new Set(
         analyticsData.filter(d => 
-          d.click_target && (
+          d.event_type === 'purchase' || // Incluir compras diretas
+          d.event_type === 'checkout_started' || // Incluir início de checkout
+          (d.click_target && (
             d.click_target.toLowerCase().includes('signup') ||
             d.click_target.toLowerCase().includes('start') ||
             d.click_target.toLowerCase().includes('buy') ||
             d.click_target.toLowerCase().includes('contact')
-          )
+          ))
         ).map(d => d.visitor_id)
       );
       const convertedVisitors = convertedVisitorIds.size;
@@ -2085,23 +2091,6 @@ const Analytics: React.FC = () => {
                 </div>
               </div>
               
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ 
-                  fontSize: '18px', 
-                  fontWeight: 700,
-                  color: '#8b5cf6'
-                }}>
-                  {Object.values(verifiedEvents).filter(v => v).length}/5
-                </div>
-                <div style={{ 
-                  fontSize: '10px', 
-                  color: theme.colors.text.secondary,
-                  opacity: 0.7,
-                  marginTop: '2px'
-                }}>
-                  Events Verified
-                </div>
-              </div>
             </div>
           </div>
         </TagStatusCard>
