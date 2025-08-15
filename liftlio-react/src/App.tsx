@@ -10,6 +10,7 @@ import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ProjectProvider, useProject } from './context/ProjectContext';
 import { LoadingProvider, useGlobalLoading } from './context/LoadingContext';
+import { RealtimeProvider } from './context/RealtimeProvider';
 import { ExtensionWarning } from './components/ExtensionWarning';
 import GlobalLoader from './components/GlobalLoader';
 import { IconComponent } from './utils/IconHelper';
@@ -627,7 +628,9 @@ function App() {
             <LoadingProvider>
               <AuthProvider>
                 <ProjectProvider>
-                  <AppContent />
+                  <RealtimeProvider>
+                    <AppContent />
+                  </RealtimeProvider>
                 </ProjectProvider>
               </AuthProvider>
             </LoadingProvider>

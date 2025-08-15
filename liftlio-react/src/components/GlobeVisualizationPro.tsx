@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback, useImperativeHandle, forwardRef } from 'react';
 import Globe from 'react-globe.gl';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,6 +6,30 @@ import * as FaIcons from 'react-icons/fa';
 import { FaRoute, FaShoppingCart, FaCreditCard, FaCheckCircle, FaHome, FaSearch, FaMapMarkedAlt, FaBolt } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import * as THREE from 'three';
+
+// SOLUTION 4: Global Event Emitter for cross-component communication
+class GlobeEventEmitter extends EventTarget {
+  private static instance: GlobeEventEmitter;
+  
+  private constructor() {
+    super();
+  }
+  
+  static getInstance(): GlobeEventEmitter {
+    if (!GlobeEventEmitter.instance) {
+      GlobeEventEmitter.instance = new GlobeEventEmitter();
+    }
+    return GlobeEventEmitter.instance;
+  }
+  
+  emitRefresh() {
+    console.log('🚀 GlobeEventEmitter: Emitting refresh event');
+    this.dispatchEvent(new CustomEvent('globe-refresh', { detail: { timestamp: Date.now() } }));
+  }
+}
+
+// Export singleton instance
+export const globeEventEmitter = GlobeEventEmitter.getInstance();
 
 // Container principal
 const GlobeContainer = styled.div`
@@ -490,6 +514,13 @@ const NotificationText = styled.div`
 interface GlobeVisualizationProProps {
   projectId: number;
   supabase: any;
+  refreshTrigger?: number;
+}
+
+// SOLUTION 6: Expose imperative handle for parent control
+export interface GlobeVisualizationHandle {
+  refresh: () => void;
+  forceUpdate: () => void;
 }
 
 interface VisitorLocation {
@@ -510,12 +541,45 @@ interface Arc {
   color: string;
 }
 
-const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId, supabase }) => {
+const GlobeVisualizationPro = forwardRef<GlobeVisualizationHandle, GlobeVisualizationProProps>(
+  ({ projectId, supabase, refreshTrigger }, ref) => {
   const globeEl = useRef<any>(null);
   const [visitors, setVisitors] = useState(0);
   const [locations, setLocations] = useState<VisitorLocation[]>([]);
   const [arcs, setArcs] = useState<Arc[]>([]);
+  const [refreshInterval, setRefreshInterval] = useState(5000); // 5 segundos
+  
+  // SOLUTION: Force update counter to ensure Globe re-renders
+  const [forceUpdateKey, setForceUpdateKey] = useState(0);
   const [activeVisitors, setActiveVisitors] = useState<any[]>([]);
+  
+  // SOLUTION 9: Use ref to avoid stale closure in callbacks
+  const fetchVisitorDataRef = useRef<(() => Promise<void>) | null>(null);
+  
+  // SOLUTION 6: Expose imperative methods to parent
+  useImperativeHandle(ref, () => ({
+    refresh: () => {
+      console.log('💪 Imperative refresh called from parent!');
+      if (fetchVisitorDataRef.current) {
+        fetchVisitorDataRef.current();
+      }
+      // setForceUpdateKey(prev => prev + 1); // Removido para evitar loop
+    },
+    forceUpdate: () => {
+      console.log('⚡ Force update called from parent!');
+      // setForceUpdateKey(prev => prev + 1); // Removido para evitar loop
+      // Force immediate data fetch
+      if (fetchVisitorDataRef.current) {
+        fetchVisitorDataRef.current();
+      }
+      // Also trigger globe ref update if available - with safety check
+      if (globeEl.current && typeof globeEl.current.pointsData === 'function') {
+        globeEl.current.pointsData([...locations]);
+      } else if (globeEl.current) {
+        console.log('⚠️ pointsData method not available on globe ref');
+      }
+    }
+  }), [locations]); // Include locations in deps
   const [globeReady, setGlobeReady] = useState(false);
   const [journeyData, setJourneyData] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'live' | 'journey'>('live');
@@ -642,10 +706,16 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
     };
   }, []);
 
-  // Fetch de dados com otimização de performance E REALTIME
-  useEffect(() => {
-    const fetchVisitorData = async () => {
-      if (!projectId) return;
+  // Função de fetch movida para fora para ser acessível no realtime
+  const fetchVisitorData = useCallback(async () => {
+    console.log('🎯 Globe fetchVisitorData called!', {
+      projectId,
+      isPageVisible,
+      timestamp: new Date().toLocaleTimeString(),
+      caller: new Error().stack?.split('\n')[2]?.trim() // Para ver de onde foi chamado
+    });
+    
+    if (!projectId) return;
       
       // Performance optimization: não buscar se página não estiver visível
       if (!isPageVisible) {
@@ -809,6 +879,17 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
           });
 
           setLocations(locationsArray);
+          
+          // SOLUTION 1: Imperative update through globe ref - with safety check
+          if (globeEl.current && typeof globeEl.current.pointsData === 'function') {
+            console.log('🎯 Imperative update: Setting points data directly on globe');
+            globeEl.current.pointsData(locationsArray);
+          } else if (globeEl.current) {
+            console.log('⚠️ Globe ref exists but pointsData method not available');
+          }
+          
+          // SOLUTION 2: Force component key update
+          // setForceUpdateKey(prev => prev + 1); // Removido para evitar loop
 
           // Criar arcos de conexão entre localizações
           if (locationsArray.length > 1) {
@@ -830,75 +911,125 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
           setLocations([]);
           setActiveVisitors([]);
           setArcs([]);
+          
+          // SOLUTION: Clear globe data imperatively - with safety check
+          if (globeEl.current) {
+            if (typeof globeEl.current.pointsData === 'function') {
+              globeEl.current.pointsData([]);
+            }
+            if (typeof globeEl.current.arcsData === 'function') {
+              globeEl.current.arcsData([]);
+            }
+          }
+          // setForceUpdateKey(prev => prev + 1); // Removido para evitar loop
         }
-      } catch (error) {
-        console.error('Error fetching visitor data:', error);
+    } catch (error) {
+      console.error('Error fetching visitor data:', error);
+    }
+  }, [projectId, isPageVisible, activeTab, supabase, cityCoordinates]);
+  
+  // Assign the function to ref to avoid stale closures
+  useEffect(() => {
+    fetchVisitorDataRef.current = fetchVisitorData;
+  }, [fetchVisitorData]);
+
+  // SOLUTION 3: Multiple trigger mechanisms
+  // useEffect separado para responder ao trigger externo
+  useEffect(() => {
+    console.log('👀 Globe: refreshTrigger useEffect executed. Value:', refreshTrigger);
+    if (refreshTrigger && refreshTrigger > 0) {
+      console.log('🔄 Globe: External refresh trigger received!', refreshTrigger);
+      
+      // SOLUTION: Multiple force update strategies
+      // 1. Call fetch immediately
+      fetchVisitorData();
+      
+      // 2. Force update the key
+      // setForceUpdateKey(prev => prev + 1); // Removido para evitar loop
+      
+      // 3. Reset interval to trigger immediate fetch
+      setRefreshInterval(100); // Very short interval
+      setTimeout(() => setRefreshInterval(5000), 200); // Reset back after fetch
+    }
+  }, [refreshTrigger]); // Remove fetchVisitorData from deps to avoid stale closure
+
+  // SOLUTION 5: Event listener for global refresh events
+  useEffect(() => {
+    const handleGlobeRefresh = (event: Event) => {
+      console.log('📡 Globe: Received global refresh event', (event as CustomEvent).detail);
+      fetchVisitorData();
+      // setForceUpdateKey(prev => prev + 1); // Removido para evitar loop
+    };
+    
+    globeEventEmitter.addEventListener('globe-refresh', handleGlobeRefresh);
+    
+    return () => {
+      globeEventEmitter.removeEventListener('globe-refresh', handleGlobeRefresh);
+    };
+  }, []); // Empty deps to setup once
+  
+  // SOLUTION 8: Window custom event listener as fallback
+  useEffect(() => {
+    const handleWindowGlobeUpdate = (event: Event) => {
+      console.log('🪟 Globe: Received window custom event', (event as CustomEvent).detail);
+      fetchVisitorData();
+      // setForceUpdateKey(prev => prev + 1); // Removido para evitar loop
+      // Force immediate globe update - with safety check
+      if (globeEl.current) {
+        const newData = [...locations];
+        if (typeof globeEl.current.pointsData === 'function') {
+          globeEl.current.pointsData(newData);
+        }
+        if (typeof globeEl.current.arcsData === 'function') {
+          globeEl.current.arcsData([...arcs]);
+        }
       }
     };
-
+    
+    window.addEventListener('globe-force-update', handleWindowGlobeUpdate);
+    
+    return () => {
+      window.removeEventListener('globe-force-update', handleWindowGlobeUpdate);
+    };
+  }, [locations, arcs]); // Include data deps
+  
+  // useEffect para buscar dados iniciais
+  useEffect(() => {
     // Buscar imediatamente ao montar o componente
+    console.log('🚀 Globe: Initial fetch on mount/dependencies change');
     fetchVisitorData();
+  }, [projectId, fetchVisitorData]);
+  
+  // useEffect separado para o interval
+  useEffect(() => {
+    // Só criar interval se tiver projectId
+    if (!projectId) return;
     
-    // REALTIME SUBSCRIPTION - Apenas quando a página está visível
-    let realtimeChannel: any = null;
+    console.log(`⏰ Globe: Setting up interval (${refreshInterval}ms)`);
     
-    if (isPageVisible && projectId) {
-      console.log('🔴 LIVE: Subscribing to realtime events for project', projectId);
-      
-      // Criar canal de realtime para novos eventos
-      realtimeChannel = supabase
-        .channel(`analytics-project-${projectId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'analytics',
-            filter: `project_id=eq.${projectId}`
-          },
-          (payload: any) => {
-            console.log('🆕 REALTIME: New visitor detected!', payload.new);
-            console.log('📍 Visitor details:', {
-              visitor_id: payload.new.visitor_id,
-              country: payload.new.country,
-              created_at: payload.new.created_at
-            });
-            
-            // Buscar dados atualizados imediatamente quando novo evento chegar
-            fetchVisitorData();
-          }
-        )
-        .subscribe((status: string) => {
-          console.log('📡 Realtime subscription status:', status);
-          if (status === 'SUBSCRIBED') {
-            console.log('✅ Successfully subscribed to realtime updates!');
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('❌ Realtime channel error!');
-          } else if (status === 'TIMED_OUT') {
-            console.error('⏱️ Realtime connection timed out!');
-          }
-        });
-    }
-    
-    // Atualizar a cada 30 segundos como fallback (caso realtime falhe)
     const interval = setInterval(() => {
       if (isPageVisible) {
-        console.log('🔄 Periodic refresh (fallback)');
+        console.log(`🔄 Globe: Periodic refresh (${refreshInterval}ms)`);
         fetchVisitorData();
       }
-    }, 30000);
+    }, refreshInterval);
     
-    // Cleanup: desconectar realtime e limpar interval
+    // Cleanup: limpar interval
     return () => {
-      if (realtimeChannel) {
-        console.log('🔌 Unsubscribing from realtime');
-        supabase.removeChannel(realtimeChannel);
-      }
+      console.log('🛑 Globe: Clearing interval');
       clearInterval(interval);
     };
-  }, [projectId, supabase, isPageVisible, activeTab]);
+  }, [refreshInterval, isPageVisible, fetchVisitorData, projectId]);
 
   // HTML customizado para os pontos - removido por incompatibilidade de tipos
+
+  // Log para debug de re-render
+  console.log('🔄 Globe Component Rendering:', {
+    visitors,
+    locationsCount: locations.length,
+    locations: locations.slice(0, 3), // Primeiras 3 para não poluir console
+    timestamp: new Date().toLocaleTimeString()
+  });
 
   return (
     <GlobeContainer>
@@ -1135,7 +1266,8 @@ const GlobeVisualizationPro: React.FC<GlobeVisualizationProProps> = ({ projectId
       {/* Removido toast de notificação - agora mostra visitantes ativos no StatsOverlay */}
     </GlobeContainer>
   );
-};
+});
 
-export { GlobeVisualizationPro };
+GlobeVisualizationPro.displayName = 'GlobeVisualizationPro';
+
 export default GlobeVisualizationPro;

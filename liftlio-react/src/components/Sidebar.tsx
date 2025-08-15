@@ -9,6 +9,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useRealtime } from '../context/RealtimeProvider';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -1325,19 +1326,36 @@ const NotificationDot = styled.div`
 
 const NotificationTooltip = styled.div`
   position: absolute;
-  right: -180px;
+  right: -190px;
   top: 50%;
   transform: translateY(-50%);
-  background: ${props => props.theme.name === 'dark' ? '#1f2937' : '#ffffff'};
-  border: 1px solid ${props => props.theme.colors.border};
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 12px;
+  background: ${props => props.theme.name === 'dark' 
+    ? 'linear-gradient(135deg, #1f2937 0%, #111827 100%)' 
+    : 'linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%)'};
+  border: 1.5px solid ${props => props.theme.name === 'dark' ? '#f97316' : '#fb923c'};
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.2);
   z-index: 1000;
   pointer-events: none;
   color: ${props => props.theme.colors.text.primary};
+  
+  /* Add arrow pointing to the button */
+  &::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+    width: 12px;
+    height: 12px;
+    background: ${props => props.theme.name === 'dark' ? '#1f2937' : '#ffffff'};
+    border-left: 1.5px solid ${props => props.theme.name === 'dark' ? '#f97316' : '#fb923c'};
+    border-bottom: 1.5px solid ${props => props.theme.name === 'dark' ? '#f97316' : '#fb923c'};
+  }
 `;
 
 
@@ -1346,6 +1364,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
   const { theme } = useTheme();
   const { t, language } = useLanguage();
   const { user, signOut } = useAuth();
+  const { emitter: realtimeEmitter, isConnected } = useRealtime();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [isCollapsedLocal, setIsCollapsedLocal] = useState(isCollapsedProp);
   const [hasAnalyticsData, setHasAnalyticsData] = useState(false);
@@ -1398,7 +1417,49 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
     };
     
     checkAnalyticsData();
-  }, [currentProject]);
+    
+    // Use centralized provider if connected, otherwise create own subscription
+    if (isConnected && realtimeEmitter) {
+      console.log('✅ Sidebar using centralized RealtimeProvider');
+      
+      const handleAnalyticsUpdate = () => {
+        console.log('📊 Sidebar: Analytics data received via provider');
+        setHasAnalyticsData(true);
+      };
+      
+      realtimeEmitter.addEventListener('analytics-insert', handleAnalyticsUpdate);
+      realtimeEmitter.addEventListener('new-analytics-data', handleAnalyticsUpdate);
+      
+      return () => {
+        realtimeEmitter.removeEventListener('analytics-insert', handleAnalyticsUpdate);
+        realtimeEmitter.removeEventListener('new-analytics-data', handleAnalyticsUpdate);
+      };
+    } else {
+      // FALLBACK: Create own subscription if provider not connected
+      console.log('⚠️ Sidebar creating own realtime subscription');
+      
+      const channel = supabase
+        .channel('sidebar-analytics')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'analytics',
+            filter: `project_id=eq.${currentProject?.id}`
+          },
+          (payload) => {
+            console.log('Analytics data received in sidebar (direct):', payload);
+            setHasAnalyticsData(true); // Update immediately when data arrives
+          }
+        )
+        .subscribe();
+      
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [currentProject, supabase, isConnected, realtimeEmitter]);
   
   // Initial insights to show while loading
   const defaultInsights = [

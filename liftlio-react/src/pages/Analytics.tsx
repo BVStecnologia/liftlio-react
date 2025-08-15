@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { 
   LineChart, Line, AreaChart, Area, BarChart, Bar,
@@ -14,7 +14,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useProject } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
-import GlobeVisualizationPro from '../components/GlobeVisualizationPro';
+import GlobeVisualizationPro, { globeEventEmitter, GlobeVisualizationHandle } from '../components/GlobeVisualizationPro';
+import { useRealtime } from '../context/RealtimeProvider';
 
 // Animações adicionais
 const shimmer = keyframes`
@@ -1068,10 +1069,14 @@ const NoteText = styled.p`
 `;
 
 const Analytics: React.FC = () => {
+  // SOLUTION 7: Direct ref to Globe component for imperative control
+  const globeRef = useRef<GlobeVisualizationHandle>(null);
+  
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('wordpress');
   const { currentProject } = useProject();
   const { theme } = useTheme();
+  const { emitter: realtimeEmitter, isConnected } = useRealtime();
   
   // Estados para os novos gráficos de conversão - com dados demo iniciais
   const [funnelData, setFunnelData] = useState([
@@ -1094,6 +1099,7 @@ const Analytics: React.FC = () => {
   ]);
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('7d');
   const [analyticsData, setAnalyticsData] = useState<any[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [analyticsScript, setAnalyticsScript] = useState<string>('');
   const [trafficData, setTrafficData] = useState<any[]>([]);
   const [sourceData, setSourceData] = useState<any[]>([]);
@@ -1366,6 +1372,10 @@ const Analytics: React.FC = () => {
           }
           
           processAnalyticsData(analytics);
+          
+          // IMPORTANTE: Trigger Globe refresh aqui!
+          console.log('🎯 Triggering Globe refresh after data fetch');
+          setRefreshTrigger(prev => prev + 1);
         }
       } catch (error) {
         console.error('Error fetching analytics:', error);
@@ -1375,7 +1385,7 @@ const Analytics: React.FC = () => {
       } finally {
         setLoading(false);
       }
-  }, [currentProject, period, theme, chartColors.primary, checkVerifiedEvents]);
+  }, [currentProject, period, theme, chartColors.primary, checkVerifiedEvents, setRefreshTrigger]);
     
     const generateDemoData = () => {
       console.log('🎯 generateDemoData CALLED!');
@@ -1688,11 +1698,62 @@ const Analytics: React.FC = () => {
   useEffect(() => {
     fetchAnalyticsData();
     
-    // REALTIME SUBSCRIPTION - Atualizar TODOS os componentes quando novo evento chegar
+    // REALTIME SUBSCRIPTION - Usando Provider Centralizado primeiro
+    // Se o provider estiver conectado, usar ele. Senão, criar subscription própria
+    
+    if (currentProject?.id && isConnected && realtimeEmitter) {
+      console.log('✅ Using centralized RealtimeProvider for Analytics');
+      
+      const handleRealtimeUpdate = (event: any) => {
+        console.log('🔥 REALTIME EVENT via Provider - Updating ALL components!', event.detail);
+        
+        // Recarregar TODOS os dados quando novo evento chegar
+        fetchAnalyticsData();
+        
+        // Incrementar refreshTrigger para atualizar o Globe
+        console.log('🌍 Incrementing refreshTrigger for Globe update');
+        setRefreshTrigger(prev => {
+          console.log('📈 refreshTrigger changing from', prev, 'to', prev + 1);
+          return prev + 1;
+        });
+        
+        // SOLUTION: Multiple force update mechanisms
+        // 1. Emit global event to force Globe update
+        console.log('📡 Emitting global globe refresh event');
+        globeEventEmitter.emitRefresh();
+        
+        // 2. Call imperative refresh method
+        if (globeRef.current) {
+          console.log('💪 Calling imperative Globe refresh');
+          globeRef.current.forceUpdate();
+        }
+        
+        // 3. Dispatch window custom event as fallback
+        console.log('🪟 Dispatching window custom event');
+        window.dispatchEvent(new CustomEvent('globe-force-update', { 
+          detail: { timestamp: Date.now(), source: 'realtime-provider' } 
+        }));
+        
+        // Forçar atualização dos componentes
+        checkVerifiedEvents();
+      };
+      
+      // Listen to provider events
+      realtimeEmitter.addEventListener('analytics-insert', handleRealtimeUpdate);
+      realtimeEmitter.addEventListener('analytics-update', handleRealtimeUpdate);
+      
+      // Cleanup listener on unmount
+      return () => {
+        realtimeEmitter.removeEventListener('analytics-insert', handleRealtimeUpdate);
+        realtimeEmitter.removeEventListener('analytics-update', handleRealtimeUpdate);
+      };
+    }
+    
+    // FALLBACK: Se o provider não estiver conectado, usar subscription própria
     let realtimeChannel: any = null;
     
-    if (currentProject?.id) {
-      console.log('📡 Setting up REALTIME for Analytics page - Project:', currentProject.id);
+    if (currentProject?.id && !isConnected) {
+      console.log('⚠️ RealtimeProvider not connected, creating own subscription for Analytics');
       
       realtimeChannel = supabase
         .channel(`analytics-page-${currentProject.id}`)
@@ -1709,6 +1770,30 @@ const Analytics: React.FC = () => {
             
             // Recarregar TODOS os dados quando novo evento chegar
             fetchAnalyticsData();
+            
+            // Incrementar refreshTrigger para atualizar o Globe
+            console.log('🌍 Incrementing refreshTrigger for Globe update');
+            setRefreshTrigger(prev => {
+              console.log('📈 refreshTrigger changing from', prev, 'to', prev + 1);
+              return prev + 1;
+            });
+            
+            // SOLUTION: Multiple force update mechanisms
+            // 1. Emit global event to force Globe update
+            console.log('📡 Emitting global globe refresh event');
+            globeEventEmitter.emitRefresh();
+            
+            // 2. Call imperative refresh method
+            if (globeRef.current) {
+              console.log('💪 Calling imperative Globe refresh');
+              globeRef.current.forceUpdate();
+            }
+            
+            // 3. Dispatch window custom event as fallback
+            console.log('🪟 Dispatching window custom event');
+            window.dispatchEvent(new CustomEvent('globe-force-update', { 
+              detail: { timestamp: Date.now(), source: 'realtime' } 
+            }));
             
             // Forçar atualização dos componentes
             checkVerifiedEvents();
@@ -1908,8 +1993,10 @@ const Analytics: React.FC = () => {
 
       {/* Globo 3D de visitantes online */}
       <GlobeVisualizationPro
+        ref={globeRef}
         projectId={Number(currentProject?.id) || 0} 
-        supabase={supabase} 
+        supabase={supabase}
+        refreshTrigger={refreshTrigger}
       />
 
       {/* Tag Connection Status - Compact version below globe */}
