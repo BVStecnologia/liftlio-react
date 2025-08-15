@@ -1,12 +1,23 @@
-import React, { useEffect, useRef, useState } from 'react';
-import Globe from 'react-globe.gl';
+import React, { useEffect, useRef, useState, Suspense, lazy } from 'react';
 import styled from 'styled-components';
+import GlobeFallback from './GlobeFallback';
+import GlobeErrorBoundary from './GlobeErrorBoundary';
+
+// Lazy load do Globe para evitar erros de carregamento
+const Globe = lazy(() => import('react-globe.gl').catch(() => {
+  // Se falhar ao carregar, retorna um componente vazio
+  return { default: () => <GlobeFallback /> };
+}));
 
 const GlobeWrapper = styled.div`
   width: 100%;
   height: 550px;
   position: relative;
   cursor: grab;
+  background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.05) 0%, transparent 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   
   &:active {
     cursor: grabbing;
@@ -42,7 +53,7 @@ const DEMO_LOCATIONS: LocationData[] = [
 ];
 
 export default function GlobeDemo() {
-  const globeEl = useRef<any>();
+  const globeEl = useRef<any>(null);
   const [locations, setLocations] = useState(DEMO_LOCATIONS);
   const [arcs, setArcs] = useState<any[]>([]);
 
@@ -66,7 +77,7 @@ export default function GlobeDemo() {
             startLng: DEMO_LOCATIONS[startIdx].lng,
             endLat: DEMO_LOCATIONS[endIdx].lat,
             endLng: DEMO_LOCATIONS[endIdx].lng,
-            color: ['#8b5cf6', '#a78bfa', '#c4b5fd'][Math.floor(Math.random() * 3)]
+            color: ['#ff00ff', '#00ffff', '#ffff00', '#ff00aa'][Math.floor(Math.random() * 4)]
           });
         }
       }
@@ -113,9 +124,11 @@ export default function GlobeDemo() {
 
   return (
     <GlobeWrapper>
-      <Globe
-        ref={globeEl}
-        globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
+      <GlobeErrorBoundary>
+        <Suspense fallback={<GlobeFallback />}>
+          <Globe
+          ref={globeEl}
+        globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
         bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
         backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
         
@@ -123,9 +136,9 @@ export default function GlobeDemo() {
         pointsData={locations}
         pointLat="lat"
         pointLng="lng"
-        pointColor={() => '#8b5cf6'}
-        pointAltitude={0.01}
-        pointRadius={d => (d as LocationData).size || 0.5}
+        pointColor={() => '#ff00ff'}
+        pointAltitude={0.02}
+        pointRadius={d => (d as LocationData).size || 0.8}
         pointLabel={d => `
           <div style="
             background: rgba(0,0,0,0.8);
@@ -150,14 +163,16 @@ export default function GlobeDemo() {
         arcStroke={0.5}
         
         // Atmosphere
-        atmosphereColor="#8b5cf6"
-        atmosphereAltitude={0.1}
+        atmosphereColor="#ff00ff"
+        atmosphereAltitude={0.15}
         
         // Controls
         enablePointerInteraction={true}
         width={undefined}
         height={undefined}
       />
+        </Suspense>
+      </GlobeErrorBoundary>
     </GlobeWrapper>
   );
 }

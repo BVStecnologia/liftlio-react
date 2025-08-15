@@ -24,7 +24,7 @@ const LoginPage = lazy(() => import('./pages/LoginPage'));
 const LandingPageHTML = lazy(() => import('./pages/LandingPageHTML'));
 const Overview = lazy(() => import('./pages/Overview'));
 const Analytics = lazy(() => import('./pages/Analytics'));
-const AnalyticsShowcase = lazy(() => import('./pages/AnalyticsShowcase'));
+const AnalyticsDemo = lazy(() => import('./pages/AnalyticsDemo'));
 const Monitoring = lazy(() => import('./pages/Monitoring'));
 const Mentions = lazy(() => import('./pages/Mentions'));
 const Settings = lazy(() => import('./pages/Settings'));
@@ -566,7 +566,7 @@ const AppContent: React.FC = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/analytics-demo" element={<AnalyticsShowcase />} />
+          <Route path="/analytics-demo" element={<AnalyticsDemo />} />
           
           {/* Páginas institucionais */}
           <Route path="/about" element={<About />} />
