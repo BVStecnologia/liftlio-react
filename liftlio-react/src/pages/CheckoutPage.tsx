@@ -672,6 +672,12 @@ const CheckoutPage: React.FC = () => {
                       {feature}
                     </PlanFeature>
                   ))}
+                  <PlanFeature>
+                    {renderIcon(FaIcons.FaCheck)}
+                    <span style={{ fontWeight: 600, color: theme.colors.primary }}>
+                      Liftlio Analytics included
+                    </span>
+                  </PlanFeature>
                 </PlanFeatures>
               </PlanCard>
             ))}

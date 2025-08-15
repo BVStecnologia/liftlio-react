@@ -3,6 +3,7 @@ import Globe from 'react-globe.gl';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import * as FaIcons from 'react-icons/fa';
+import { FaTimesCircle, FaCheckCircle, FaArrowDown, FaCircle, FaVideo, FaUserPlus, FaBookOpen, FaCode, FaMousePointer, FaChartLine, FaCog } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { 
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -219,6 +220,89 @@ const MainContainer = styled.div`
   padding-top: 80px;
   min-height: 100vh;
   background: #0a0a0a;
+`;
+
+// Hero Section Styles
+const HeroSection = styled.section`
+  padding: 60px 20px;
+  text-align: center;
+  background: linear-gradient(135deg, #0a0a0a 0%, #18181b 100%);
+  border-bottom: 1px solid #27272a;
+`;
+
+const HeroContainer = styled.div`
+  max-width: 900px;
+  margin: 0 auto;
+`;
+
+const HeroBadge = styled.div`
+  display: inline-block;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.1));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #a855f7;
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+`;
+
+const HeroHeadline = styled.h1`
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  
+  @media (max-width: 768px) {
+    font-size: 32px;
+  }
+`;
+
+const HeroSubheadline = styled.p`
+  font-size: 18px;
+  color: #a1a1aa;
+  line-height: 1.6;
+  max-width: 700px;
+  margin: 0 auto 32px;
+  
+  @media (max-width: 768px) {
+    font-size: 16px;
+  }
+`;
+
+const HeroHighlight = styled.span`
+  color: #8b5cf6;
+  font-weight: 600;
+`;
+
+const ScrollIndicator = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 14px;
+  margin-top: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  
+  &:hover {
+    color: #8b5cf6;
+    transform: translateY(2px);
+  }
+  
+  svg {
+    animation: bounce 2s infinite;
+  }
+  
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(4px); }
+  }
 `;
 
 // Container principal - igual ao original
@@ -753,6 +837,326 @@ const ChartTitle = styled.div`
   }
 `;
 
+// Comparison Section Styles
+const ComparisonSection = styled.section`
+  padding: 80px 20px;
+  background: #0a0a0a;
+  border-top: 1px solid #27272a;
+`;
+
+const ComparisonContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+`;
+
+const ComparisonTitle = styled.h2`
+  font-size: 36px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 48px;
+  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  
+  @media (max-width: 768px) {
+    font-size: 28px;
+  }
+`;
+
+const ComparisonGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 32px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ComparisonCard = styled.div`
+  background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(37, 37, 37, 0.95));
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  border-radius: 20px;
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #8b5cf6, #a855f7);
+  }
+`;
+
+const ComparisonIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 16px;
+  text-align: center;
+`;
+
+const ComparisonCardTitle = styled.h3`
+  font-size: 24px;
+  font-weight: 600;
+  color: white;
+  text-align: center;
+  margin-bottom: 24px;
+`;
+
+const ComparisonList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const ComparisonItem = styled.div<{ isGood?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: ${props => props.isGood ? '#10b981' : '#ef4444'};
+  font-size: 14px;
+  
+  svg {
+    flex-shrink: 0;
+  }
+`;
+
+// Events Section Styles
+const EventsSection = styled.section`
+  padding: 60px 20px;
+  background: #0a0a0a;
+  border-top: 1px solid #27272a;
+`;
+
+const EventsContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+`;
+
+const EventsTitle = styled.h2`
+  font-size: 32px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+`;
+
+const EventsSubtitle = styled.p`
+  font-size: 16px;
+  color: #a1a1aa;
+  text-align: center;
+  margin-bottom: 48px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
+const EventsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+`;
+
+const EventCategory = styled.div`
+  background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(37, 37, 37, 0.95));
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    border-color: rgba(139, 92, 246, 0.3);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.1);
+  }
+`;
+
+const EventCategoryIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.1));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 16px;
+  color: #8b5cf6;
+`;
+
+const EventCategoryTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 12px;
+`;
+
+const EventsList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+`;
+
+const EventItem = styled.li`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  color: #a1a1aa;
+  font-size: 13px;
+  
+  svg {
+    color: #10b981;
+    font-size: 10px;
+  }
+`;
+
+// Setup Section Styles
+const SetupSection = styled.section`
+  padding: 80px 20px;
+  background: linear-gradient(135deg, #0a0a0a 0%, #18181b 100%);
+  border-top: 1px solid #27272a;
+`;
+
+const SetupContainer = styled.div`
+  max-width: 1000px;
+  margin: 0 auto;
+`;
+
+const SetupTitle = styled.h2`
+  font-size: 36px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+`;
+
+const SetupSubtitle = styled.p`
+  font-size: 18px;
+  color: #a1a1aa;
+  text-align: center;
+  margin-bottom: 48px;
+`;
+
+const SetupSteps = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin-bottom: 64px;
+  
+  @media (max-width: 968px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const SetupStep = styled.div`
+  text-align: center;
+`;
+
+const SetupStepNumber = styled.div`
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  margin: 0 auto 16px;
+`;
+
+const SetupStepTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 12px;
+`;
+
+const SetupStepDescription = styled.p`
+  font-size: 14px;
+  color: #a1a1aa;
+  line-height: 1.6;
+`;
+
+const CodeBlock = styled.div`
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 12px;
+  color: #8b5cf6;
+  white-space: pre-wrap;
+  word-break: break-all;
+`;
+
+const CopyButton = styled.button`
+  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  }
+`;
+
+const CTABox = styled.div`
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(168, 85, 247, 0.05));
+  border: 2px solid rgba(139, 92, 246, 0.3);
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+`;
+
+const CTATitle = styled.h3`
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: white;
+  
+  span {
+    color: #8b5cf6;
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+`;
+
+const CTAButton = styled.a`
+  display: inline-block;
+  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+  color: white;
+  padding: 16px 48px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s;
+  cursor: pointer;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+  }
+`;
+
 // Funnel Component
 const FunnelBar = styled.div<{ width: string }>`
   background: linear-gradient(135deg, #8b5cf6, #a855f7);
@@ -925,10 +1329,6 @@ const LiftlioAnalytics: React.FC = () => {
           </Logo>
           
           <Nav>
-            <NavLink href="#features">Features</NavLink>
-            <NavLink href="#pricing">Pricing</NavLink>
-            <NavLink href="#testimonials">Testimonials</NavLink>
-            
             <NavButtons>
               <SignInButton href="/login">Sign In</SignInButton>
             </NavButtons>
@@ -938,6 +1338,31 @@ const LiftlioAnalytics: React.FC = () => {
 
       {/* Main Content */}
       <MainContainer>
+        {/* Hero Section */}
+        <HeroSection>
+          <HeroContainer>
+            <HeroBadge>Analytics Included</HeroBadge>
+            
+            <HeroHeadline>
+              Track Every Video Mention Impact.
+              <br />
+              Measure Real Organic Demand.
+            </HeroHeadline>
+            
+            <HeroSubheadline>
+              Our advanced analytics dashboard helps you understand exactly how video mentions 
+              drive traffic and conversions. <HeroHighlight>Every Liftlio plan includes this 
+              powerful analytics suite</HeroHighlight> so you can see the real impact of organic 
+              recommendations versus traditional advertising.
+            </HeroSubheadline>
+            
+            <ScrollIndicator onClick={() => window.scrollTo({ top: 600, behavior: 'smooth' })}>
+              <span>View Live Analytics Demo</span>
+              <IconComponent icon={FaIcons.FaArrowDown} />
+            </ScrollIndicator>
+          </HeroContainer>
+        </HeroSection>
+
         <div style={{ 
           padding: '20px',
           paddingBottom: '40px',
@@ -1215,7 +1640,7 @@ const LiftlioAnalytics: React.FC = () => {
               Conversion Rate by Traffic Source
             </ChartTitle>
             <p style={{ color: '#94a3b8', marginBottom: '16px', fontSize: '13px' }}>
-              Outperforming paid ads with organic traffic
+              Real data from Liftlio customers - comparing different traffic sources
             </p>
             
             <ResponsiveContainer width="100%" height={220}>
@@ -1312,7 +1737,7 @@ const LiftlioAnalytics: React.FC = () => {
               textAlign: 'center'
             }}>
               <div style={{ color: '#8b5cf6', fontSize: '11px', fontWeight: '600' }}>
-                💡 Organic traffic converts 7.7x better
+                💡 Notice the conversion difference
               </div>
             </div>
           </ConversionMetricsBox>
@@ -1564,6 +1989,401 @@ const LiftlioAnalytics: React.FC = () => {
         </ChartCard>
       </ChartsGrid>
         </div>
+
+        {/* Comparison Section */}
+        <ComparisonSection>
+          <ComparisonContainer>
+            <ComparisonTitle>Why Liftlio Analytics is Different</ComparisonTitle>
+            
+            <ComparisonGrid>
+              {/* Card 1 - Focus on Conversion */}
+              <ComparisonCard>
+                <ComparisonIcon>🎯</ComparisonIcon>
+                <ComparisonCardTitle>Conversion-Focused</ComparisonCardTitle>
+                <ComparisonList>
+                  <ComparisonItem isGood>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    Shows what actually converts to sales
+                  </ComparisonItem>
+                  <ComparisonItem isGood>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    Transparent ROI from each video mention
+                  </ComparisonItem>
+                  <ComparisonItem isGood>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    AI-powered insights on what works
+                  </ComparisonItem>
+                  <ComparisonItem>
+                    <IconComponent icon={FaIcons.FaTimesCircle} />
+                    GA4: Overwhelming metrics that don't matter
+                  </ComparisonItem>
+                  <ComparisonItem>
+                    <IconComponent icon={FaIcons.FaTimesCircle} />
+                    Others: Can't connect views to revenue
+                  </ComparisonItem>
+                </ComparisonList>
+              </ComparisonCard>
+
+              {/* Card 2 - Instant Setup */}
+              <ComparisonCard>
+                <ComparisonIcon>⚡</ComparisonIcon>
+                <ComparisonCardTitle>Instant Setup</ComparisonCardTitle>
+                <ComparisonList>
+                  <ComparisonItem isGood>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    1-click installation, zero configuration
+                  </ComparisonItem>
+                  <ComparisonItem isGood>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    No developer needed, works instantly
+                  </ComparisonItem>
+                  <ComparisonItem isGood>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    Real-time data from second one
+                  </ComparisonItem>
+                  <ComparisonItem>
+                    <IconComponent icon={FaIcons.FaTimesCircle} />
+                    GA4: Requires technical expertise
+                  </ComparisonItem>
+                  <ComparisonItem>
+                    <IconComponent icon={FaIcons.FaTimesCircle} />
+                    Others: Days or weeks to configure
+                  </ComparisonItem>
+                </ComparisonList>
+              </ComparisonCard>
+
+              {/* Card 3 - Privacy First */}
+              <ComparisonCard>
+                <ComparisonIcon>🔒</ComparisonIcon>
+                <ComparisonCardTitle>Privacy-First Approach</ComparisonCardTitle>
+                <ComparisonList>
+                  <ComparisonItem isGood>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    Cookieless tracking technology
+                  </ComparisonItem>
+                  <ComparisonItem isGood>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    GDPR/LGPD compliant by default
+                  </ComparisonItem>
+                  <ComparisonItem isGood>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    No annoying cookie banners needed
+                  </ComparisonItem>
+                  <ComparisonItem>
+                    <IconComponent icon={FaIcons.FaTimesCircle} />
+                    Others: Invasive cookies everywhere
+                  </ComparisonItem>
+                  <ComparisonItem>
+                    <IconComponent icon={FaIcons.FaTimesCircle} />
+                    Competitors: Complex compliance setup
+                  </ComparisonItem>
+                </ComparisonList>
+              </ComparisonCard>
+            </ComparisonGrid>
+          </ComparisonContainer>
+        </ComparisonSection>
+
+        {/* Events Section - Real Events from Documentation */}
+        <EventsSection>
+          <EventsContainer>
+            <EventsTitle>Track Everything That Matters</EventsTitle>
+            <EventsSubtitle>
+              Simple event tracking with just one line of code. 
+              Here are the actual events you can implement on your website.
+            </EventsSubtitle>
+            
+            <EventsGrid>
+              {/* E-commerce Tracking */}
+              <EventCategory>
+                <EventCategoryIcon>
+                  <IconComponent icon={FaIcons.FaShoppingCart} />
+                </EventCategoryIcon>
+                <EventCategoryTitle>E-commerce Tracking</EventCategoryTitle>
+                <EventsList>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>add_to_cart</strong> - Track cart additions
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>checkout_start</strong> - Track checkout begins
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>purchase</strong> - Track completed orders
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>product_view</strong> - Track product views
+                  </EventItem>
+                </EventsList>
+              </EventCategory>
+
+              {/* User Engagement */}
+              <EventCategory>
+                <EventCategoryIcon>
+                  <IconComponent icon={FaIcons.FaMousePointer} />
+                </EventCategoryIcon>
+                <EventCategoryTitle>User Engagement</EventCategoryTitle>
+                <EventsList>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>form_submit</strong> - Form submissions
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>video_play</strong> - Video interactions
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>download</strong> - File downloads
+                  </EventItem>
+                </EventsList>
+              </EventCategory>
+
+              {/* Video Mention Tracking */}
+              <EventCategory>
+                <EventCategoryIcon>
+                  <IconComponent icon={FaIcons.FaVideo} />
+                </EventCategoryIcon>
+                <EventCategoryTitle>Video Mention Tracking</EventCategoryTitle>
+                <EventsList>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>utm_source</strong> - Channel tracking
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>utm_content</strong> - Video ID tracking
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>utm_medium</strong> - Medium type
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>Attribution</strong> - First & last touch
+                  </EventItem>
+                </EventsList>
+              </EventCategory>
+
+              {/* Platform Integration */}
+              <EventCategory>
+                <EventCategoryIcon>
+                  <IconComponent icon={FaIcons.FaCode} />
+                </EventCategoryIcon>
+                <EventCategoryTitle>Platform Integration</EventCategoryTitle>
+                <EventsList>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>WordPress</strong> - WooCommerce ready
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>React/Next.js</strong> - Hooks support
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>Shopify</strong> - Liquid templates
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>HTML</strong> - Pure JavaScript
+                  </EventItem>
+                </EventsList>
+              </EventCategory>
+
+              {/* Automatic Tracking */}
+              <EventCategory>
+                <EventCategoryIcon>
+                  <IconComponent icon={FaIcons.FaChartLine} />
+                </EventCategoryIcon>
+                <EventCategoryTitle>Automatic Tracking</EventCategoryTitle>
+                <EventsList>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>Page Views</strong> - All pages
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>Sessions</strong> - User sessions
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>Referrers</strong> - Traffic sources
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>Device Info</strong> - Browser, OS
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>Geography</strong> - Country, city
+                  </EventItem>
+                </EventsList>
+              </EventCategory>
+
+              {/* Custom Events */}
+              <EventCategory>
+                <EventCategoryIcon>
+                  <IconComponent icon={FaIcons.FaCog} />
+                </EventCategoryIcon>
+                <EventCategoryTitle>Custom Events</EventCategoryTitle>
+                <EventsList>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>Any event</strong> - Track anything
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>Server-side</strong> - Backend API
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>Batch events</strong> - Multiple at once
+                  </EventItem>
+                  <EventItem>
+                    <IconComponent icon={FaIcons.FaCheckCircle} />
+                    <strong>Custom props</strong> - Any data
+                  </EventItem>
+                </EventsList>
+              </EventCategory>
+            </EventsGrid>
+
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '32px', 
+              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(168, 85, 247, 0.05))',
+              border: '1px solid rgba(139, 92, 246, 0.2)',
+              borderRadius: '16px',
+              marginTop: '40px'
+            }}>
+              <p style={{ color: '#8b5cf6', fontSize: '18px', fontWeight: '600', marginBottom: '12px' }}>
+                Simple Implementation Example
+              </p>
+              <div style={{ 
+                background: 'rgba(0,0,0,0.5)', 
+                padding: '16px', 
+                borderRadius: '8px',
+                fontFamily: 'monospace',
+                fontSize: '14px',
+                color: '#e2e8f0',
+                textAlign: 'left',
+                maxWidth: '600px',
+                margin: '0 auto'
+              }}>
+                <div style={{ marginBottom: '8px' }}>
+                  <span style={{ color: '#a855f7' }}>// Track when user adds to cart</span>
+                </div>
+                <div style={{ marginBottom: '12px' }}>
+                  liftlio.trackEvent(<span style={{ color: '#10b981' }}>'add_to_cart'</span>, {`{`}<br/>
+                  &nbsp;&nbsp;product_id: <span style={{ color: '#f59e0b' }}>'SKU-123'</span>,<br/>
+                  &nbsp;&nbsp;price: <span style={{ color: '#3b82f6' }}>99.90</span>,<br/>
+                  &nbsp;&nbsp;quantity: <span style={{ color: '#3b82f6' }}>1</span><br/>
+                  {`}`});
+                </div>
+                <div style={{ marginBottom: '8px' }}>
+                  <span style={{ color: '#a855f7' }}>// Track successful purchase</span>
+                </div>
+                <div>
+                  liftlio.trackPurchase(<span style={{ color: '#10b981' }}>'ORDER-456'</span>, <span style={{ color: '#3b82f6' }}>299.80</span>, items);
+                </div>
+              </div>
+            </div>
+          </EventsContainer>
+        </EventsSection>
+
+        {/* Setup Section */}
+        <SetupSection>
+          <SetupContainer>
+            <SetupTitle>Set Up in 60 Seconds</SetupTitle>
+            <SetupSubtitle>No code. No developer. No headaches.</SetupSubtitle>
+            
+            <SetupSteps>
+              <SetupStep>
+                <SetupStepNumber>1</SetupStepNumber>
+                <SetupStepTitle>Copy Your Pixel</SetupStepTitle>
+                <CodeBlock>
+{`<script src="https://track.liftlio.com/t.js" 
+        data-id="your-project-id"></script>`}
+                </CodeBlock>
+                <CopyButton onClick={() => {
+                  navigator.clipboard.writeText(`<script src="https://track.liftlio.com/t.js" data-id="your-project-id"></script>`);
+                }}>
+                  Copy Code
+                </CopyButton>
+              </SetupStep>
+
+              <SetupStep>
+                <SetupStepNumber>2</SetupStepNumber>
+                <SetupStepTitle>Paste on Your Site</SetupStepTitle>
+                <SetupStepDescription>
+                  Add before the {`</head>`} tag or use Google Tag Manager.
+                  Works with any website, platform, or framework.
+                </SetupStepDescription>
+              </SetupStep>
+
+              <SetupStep>
+                <SetupStepNumber>3</SetupStepNumber>
+                <SetupStepTitle>Start Tracking</SetupStepTitle>
+                <SetupStepDescription>
+                  That's it! You're now tracking every visitor, conversion, and ROI metric in real-time.
+                </SetupStepDescription>
+                <div style={{ marginTop: '16px', color: '#10b981', fontWeight: '600' }}>
+                  <IconComponent icon={FaIcons.FaCircle} style={{ fontSize: '8px', marginRight: '8px' }} />
+                  Live and tracking
+                </div>
+              </SetupStep>
+            </SetupSteps>
+
+            <CTABox>
+              <CTATitle>
+                Premium analytics worth <span>$497/month</span>
+                <br />
+                <HeroHighlight style={{ fontSize: '32px' }}>Included in all Liftlio plans</HeroHighlight>
+              </CTATitle>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                gap: '40px', 
+                margin: '32px 0',
+                flexWrap: 'wrap'
+              }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '24px', fontWeight: '700', color: '#8b5cf6' }}>Starter</div>
+                  <div style={{ fontSize: '32px', fontWeight: '900', color: 'white' }}>$49<span style={{ fontSize: '16px', color: '#a1a1aa' }}>/mo</span></div>
+                </div>
+                <div style={{ textAlign: 'center', position: 'relative' }}>
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: '-10px', 
+                    left: '50%', 
+                    transform: 'translateX(-50%)',
+                    background: 'linear-gradient(135deg, #8b5cf6, #a855f7)',
+                    color: 'white',
+                    padding: '2px 8px',
+                    borderRadius: '100px',
+                    fontSize: '10px',
+                    fontWeight: '600',
+                    whiteSpace: 'nowrap'
+                  }}>MOST POPULAR</div>
+                  <div style={{ fontSize: '24px', fontWeight: '700', color: '#8b5cf6', marginTop: '8px' }}>Growth</div>
+                  <div style={{ fontSize: '32px', fontWeight: '900', color: 'white' }}>$99<span style={{ fontSize: '16px', color: '#a1a1aa' }}>/mo</span></div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '24px', fontWeight: '700', color: '#8b5cf6' }}>Scale</div>
+                  <div style={{ fontSize: '32px', fontWeight: '900', color: 'white' }}>$199<span style={{ fontSize: '16px', color: '#a1a1aa' }}>/mo</span></div>
+                </div>
+              </div>
+              <p style={{ color: '#a1a1aa', marginBottom: '24px', fontSize: '14px' }}>
+                All plans include: Video mentions • Analytics • AI insights • Support
+              </p>
+              <CTAButton href="/checkout">
+                Choose Your Plan →
+              </CTAButton>
+            </CTABox>
+          </SetupContainer>
+        </SetupSection>
       </MainContainer>
 
       {/* Footer */}
