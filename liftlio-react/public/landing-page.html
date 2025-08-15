@@ -22,7 +22,7 @@
             });
         }
     </script>
-    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     
     <!-- SEO Meta Tags -->
@@ -167,10 +167,16 @@
         }
         
         @media(max-width:380px){
-            .logo{font-size:16px}
-            .logo-text{display:none}
-            .beta-badge{position:absolute;top:-8px;right:-8px;font-size:9px;padding:1px 4px}
-            .logo{position:relative}
+            .header{padding:10px 12px !important}
+            .logo{font-size:16px !important;position:relative}
+            .logo-text{font-size:14px !important}
+            .beta-badge{font-size:8px !important;padding:1px 4px !important;margin-left:4px}
+            .mobile-menu-button{min-width:36px !important;min-height:36px !important;padding:4px !important}
+        }
+        
+        @media(max-width:350px){
+            .logo-text{display:none !important}
+            .beta-badge{position:absolute !important;top:-6px;right:-6px;font-size:8px !important}
         }
         
         /* Animations */
