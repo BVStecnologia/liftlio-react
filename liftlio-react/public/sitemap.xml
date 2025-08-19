@@ -8,10 +8,10 @@
     <priority>1.0</priority>
   </url>
   
-  <!-- Landing page HTML (para melhor indexação) -->
+  <!-- Analytics page -->
   <url>
-    <loc>https://liftlio.com/landing-page.html</loc>
-    <lastmod>2025-07-05</lastmod>
+    <loc>https://liftlio.com/liftlio-analytics</loc>
+    <lastmod>2025-08-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
