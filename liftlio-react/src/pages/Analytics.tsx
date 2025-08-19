@@ -210,6 +210,35 @@ const ChartSection = styled.div`
   margin-bottom: 32px;
 `;
 
+const SectionHeader = styled.div`
+  text-align: center;
+  margin-bottom: 48px;
+  padding: 0 20px;
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 36px;
+  font-weight: 700;
+  color: ${props => props.theme.colors.text};
+  margin-bottom: 16px;
+  
+  @media (max-width: 768px) {
+    font-size: 28px;
+  }
+`;
+
+const SectionDescription = styled.p`
+  font-size: 18px;
+  line-height: 1.6;
+  color: ${props => props.theme.colors.textSecondary};
+  max-width: 800px;
+  margin: 0 auto;
+  
+  @media (max-width: 768px) {
+    font-size: 16px;
+  }
+`;
+
 const SecondaryChartsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1255,20 +1284,9 @@ const Analytics: React.FC = () => {
         .eq('id', currentProject.id)
         .single();
       
-      if (data?.analytics_script) {
-        setAnalyticsScript(data.analytics_script);
-      } else {
-        // Generate default script if not exists
-        const defaultScript = `<!-- Liftlio Analytics -->
-<script>
-  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://analytics.liftlio.com/tag.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','${currentProject.id}');
-</script>`;
-        setAnalyticsScript(defaultScript);
-      }
+      // Always use DEMO ID to prevent real tracking from example code
+      const demoScript = `<script async src="https://track.liftlio.com/t.js" data-id="DEMO"></script>`;
+      setAnalyticsScript(demoScript);
     };
     
     fetchProjectScript();
@@ -2209,6 +2227,14 @@ const Analytics: React.FC = () => {
         ))}
       </MetricsGrid>
 
+      <SectionHeader>
+        <SectionTitle>All the Data You Need To Grow Your Business</SectionTitle>
+        <SectionDescription>
+          Track visitor behavior, monitor conversion rates, and gain actionable insights with Liftlio's comprehensive analytics dashboard. 
+          Make data-driven decisions with real-time metrics that help you understand your audience and optimize your business performance.
+        </SectionDescription>
+      </SectionHeader>
+
       <ChartSection>
         <ChartCard
           initial={{ opacity: 0, y: 20 }}
@@ -2738,9 +2764,9 @@ const Analytics: React.FC = () => {
           <Step>
             <StepNumber>1</StepNumber>
             <StepContent>
-              <StepTitle>Copy the tracking code</StepTitle>
+              <StepTitle>Get your tracking code</StepTitle>
               <StepDescription>
-                Click the "Copy Code" button below to copy your unique Liftlio tracking script to your clipboard.
+                After signing up, you'll receive your unique Liftlio tracking code with detailed instructions.
               </StepDescription>
             </StepContent>
           </Step>
@@ -2779,24 +2805,9 @@ const Analytics: React.FC = () => {
           </Step>
         </ImplementationSteps>
 
-        <CodeContainer>
-          <CodeBlock>{analyticsScript || 'Loading...'}</CodeBlock>
-          <CopyButton onClick={handleCopyCode}>
-            {copied ? (
-              <>
-                <IconComponent icon={FaIcons.FaCheck} />
-                Copied!
-              </>
-            ) : (
-              <>
-                <IconComponent icon={FaIcons.FaCopy} />
-                Copy Code
-              </>
-            )}
-          </CopyButton>
-        </CodeContainer>
+        {/* Código removido para simplificar a experiência do usuário - será fornecido após o cadastro */}
         
-        {copied && (
+        {false && (
           <SuccessMessage>
             <IconComponent icon={FaIcons.FaCheckCircle} />
             Code copied successfully! Now paste it into your website's HTML.
@@ -2877,7 +2888,7 @@ const Analytics: React.FC = () => {
               installed on your website:
               <br/><br/>
               <code style={{ background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '4px', display: 'block' }}>
-                {analyticsScript || `<script async src="https://track.liftlio.com/t.js" data-id="${currentProject?.id || 'YOUR_PROJECT_ID'}"></script>`}
+                {analyticsScript || `<script async src="https://track.liftlio.com/t.js" data-id="DEMO"></script>`}
               </code>
               <br/>
               This tag creates the <code>window.liftlio</code> object that all these events depend on. 

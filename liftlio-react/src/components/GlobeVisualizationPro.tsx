@@ -637,7 +637,65 @@ const GlobeVisualizationPro = forwardRef<GlobeVisualizationHandle, GlobeVisualiz
 
   // Configuração inicial do globo
   useEffect(() => {
+    console.log('🎯 useEffect do globo executado', { 
+      hasGlobeEl: !!globeEl.current, 
+      globeReady 
+    });
+    
+    // Tentar desabilitar zoom múltiplas vezes com delay
+    const disableZoom = () => {
+      if (globeEl.current) {
+        console.log('🔧 Tentando desabilitar zoom...');
+        
+        try {
+          // Método 1: Via controls()
+          if (globeEl.current.controls && typeof globeEl.current.controls === 'function') {
+            const controls = globeEl.current.controls();
+            controls.enableZoom = false;
+            controls.enablePan = true; // Manter pan habilitado
+            controls.autoRotate = false;
+            console.log('✅ Zoom desabilitado via controls()');
+          }
+          
+          // Método 2: Via camera()
+          if (globeEl.current.camera && typeof globeEl.current.camera === 'function') {
+            const camera = globeEl.current.camera();
+            if (camera && camera.userData) {
+              camera.userData.noZoom = true;
+              console.log('✅ Flag noZoom adicionada à camera');
+            }
+          }
+          
+          // Método 3: Via renderer para interceptar eventos
+          if (globeEl.current.renderer && typeof globeEl.current.renderer === 'function') {
+            const renderer = globeEl.current.renderer();
+            if (renderer && renderer.domElement) {
+              // Remover listener de wheel
+              renderer.domElement.addEventListener('wheel', (e: WheelEvent) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+              }, { passive: false, capture: true });
+              console.log('✅ Event listener de wheel bloqueado');
+            }
+          }
+        } catch (error) {
+          console.warn('⚠️ Erro ao desabilitar zoom:', error);
+        }
+      }
+    };
+    
+    // Executar imediatamente
+    disableZoom();
+    
+    // Executar com delays para garantir que o globo esteja totalmente carregado
+    setTimeout(disableZoom, 100);
+    setTimeout(disableZoom, 500);
+    setTimeout(disableZoom, 1000);
+    setTimeout(disableZoom, 2000);
+    
     if (globeEl.current && !globeReady) {
+
       // Tentar adicionar iluminação customizada se o método scene estiver disponível
       try {
         if (globeEl.current.scene && typeof globeEl.current.scene === 'function') {

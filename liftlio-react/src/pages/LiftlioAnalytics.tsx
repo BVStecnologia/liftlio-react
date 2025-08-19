@@ -1283,7 +1283,7 @@ const LiftlioAnalytics: React.FC = () => {
     if (globeRef.current) {
       globeRef.current.controls().autoRotate = true;
       globeRef.current.controls().autoRotateSpeed = 0.5;
-      globeRef.current.controls().enableZoom = true;
+      globeRef.current.controls().enableZoom = false; // Desabilitado para melhor UX durante scroll
     }
     
     // Animação de jornada - rotaciona entre diferentes conjuntos de arcos
@@ -2259,35 +2259,48 @@ const LiftlioAnalytics: React.FC = () => {
               marginTop: '40px'
             }}>
               <p style={{ color: '#8b5cf6', fontSize: '18px', fontWeight: '600', marginBottom: '12px' }}>
-                Simple Implementation Example
+                Getting Started is Simple
               </p>
               <div style={{ 
-                background: 'rgba(0,0,0,0.5)', 
-                padding: '16px', 
-                borderRadius: '8px',
-                fontFamily: 'monospace',
-                fontSize: '14px',
-                color: '#e2e8f0',
-                textAlign: 'left',
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.05))', 
+                padding: '24px', 
+                borderRadius: '12px',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
                 maxWidth: '600px',
                 margin: '0 auto'
               }}>
-                <div style={{ marginBottom: '8px' }}>
-                  <span style={{ color: '#a855f7' }}>// Track when user adds to cart</span>
-                </div>
-                <div style={{ marginBottom: '12px' }}>
-                  liftlio.trackEvent(<span style={{ color: '#10b981' }}>'add_to_cart'</span>, {`{`}<br/>
-                  &nbsp;&nbsp;product_id: <span style={{ color: '#f59e0b' }}>'SKU-123'</span>,<br/>
-                  &nbsp;&nbsp;price: <span style={{ color: '#3b82f6' }}>99.90</span>,<br/>
-                  &nbsp;&nbsp;quantity: <span style={{ color: '#3b82f6' }}>1</span><br/>
-                  {`}`});
-                </div>
-                <div style={{ marginBottom: '8px' }}>
-                  <span style={{ color: '#a855f7' }}>// Track successful purchase</span>
-                </div>
-                <div>
-                  liftlio.trackPurchase(<span style={{ color: '#10b981' }}>'ORDER-456'</span>, <span style={{ color: '#3b82f6' }}>299.80</span>, items);
-                </div>
+                <p style={{ 
+                  fontSize: '16px', 
+                  lineHeight: '1.6', 
+                  color: '#94a3b8',
+                  marginBottom: '16px',
+                  textAlign: 'left'
+                }}>
+                  After signing up, you'll receive:
+                </p>
+                <ul style={{ 
+                  listStyle: 'none', 
+                  padding: 0,
+                  margin: 0,
+                  textAlign: 'left'
+                }}>
+                  <li style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', color: '#cbd5e1' }}>
+                    <IconComponent icon={FaIcons.FaCheck} style={{ color: '#10b981', marginRight: '12px', minWidth: '20px' }} />
+                    Your unique tracking code
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', color: '#cbd5e1' }}>
+                    <IconComponent icon={FaIcons.FaCheck} style={{ color: '#10b981', marginRight: '12px', minWidth: '20px' }} />
+                    Step-by-step implementation guide
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', color: '#cbd5e1' }}>
+                    <IconComponent icon={FaIcons.FaCheck} style={{ color: '#10b981', marginRight: '12px', minWidth: '20px' }} />
+                    24/7 support to help you get started
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', color: '#cbd5e1' }}>
+                    <IconComponent icon={FaIcons.FaCheck} style={{ color: '#10b981', marginRight: '12px', minWidth: '20px' }} />
+                    Access to all tracking features immediately
+                  </li>
+                </ul>
               </div>
             </div>
           </EventsContainer>
@@ -2302,16 +2315,16 @@ const LiftlioAnalytics: React.FC = () => {
             <SetupSteps>
               <SetupStep>
                 <SetupStepNumber>1</SetupStepNumber>
-                <SetupStepTitle>Copy Your Pixel</SetupStepTitle>
-                <CodeBlock>
-{`<script src="https://track.liftlio.com/t.js" 
-        data-id="your-project-id"></script>`}
-                </CodeBlock>
-                <CopyButton onClick={() => {
-                  navigator.clipboard.writeText(`<script src="https://track.liftlio.com/t.js" data-id="your-project-id"></script>`);
+                <SetupStepTitle>Sign Up & Get Your Code</SetupStepTitle>
+                <p style={{ 
+                  color: '#94a3b8', 
+                  fontSize: '15px', 
+                  lineHeight: '1.6',
+                  marginTop: '12px'
                 }}>
-                  Copy Code
-                </CopyButton>
+                  Create your free account and instantly receive your personalized tracking code.
+                  We'll guide you through every step.
+                </p>
               </SetupStep>
 
               <SetupStep>
