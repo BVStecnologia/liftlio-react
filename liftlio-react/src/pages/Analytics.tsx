@@ -1278,20 +1278,15 @@ const Analytics: React.FC = () => {
     const fetchProjectScript = async () => {
       if (!currentProject?.id) return;
       
-      const { data, error } = await supabase
-        .from('Projeto')
-        .select('analytics_script')
-        .eq('id', currentProject.id)
-        .single();
-      
-      // Always use DEMO ID to prevent real tracking from example code
-      const demoScript = `<script async src="https://track.liftlio.com/t.js" data-id="DEMO"></script>`;
-      setAnalyticsScript(demoScript);
+      // If hasData is true, show real project ID, otherwise show DEMO
+      const scriptId = hasData ? currentProject.id : 'DEMO';
+      const script = `<script async src="https://track.liftlio.com/t.js" data-id="${scriptId}"></script>`;
+      setAnalyticsScript(script);
     };
     
     fetchProjectScript();
     checkVerifiedEvents(); // Verificar eventos implementados
-  }, [currentProject]);
+  }, [currentProject, hasData]);
   
   // Função para buscar dados de analytics - movida para fora para ser reutilizável
   const fetchAnalyticsData = useCallback(async () => {
@@ -2226,14 +2221,6 @@ const Analytics: React.FC = () => {
           </MetricCard>
         ))}
       </MetricsGrid>
-
-      <SectionHeader>
-        <SectionTitle>All the Data You Need To Grow Your Business</SectionTitle>
-        <SectionDescription>
-          Track visitor behavior, monitor conversion rates, and gain actionable insights with Liftlio's comprehensive analytics dashboard. 
-          Make data-driven decisions with real-time metrics that help you understand your audience and optimize your business performance.
-        </SectionDescription>
-      </SectionHeader>
 
       <ChartSection>
         <ChartCard
