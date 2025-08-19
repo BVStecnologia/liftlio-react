@@ -2003,6 +2003,7 @@ const Analytics: React.FC = () => {
         projectId={Number(currentProject?.id) || 0} 
         supabase={supabase}
         refreshTrigger={refreshTrigger}
+        enableZoom={false}  // Desabilitado para melhor UX durante scroll
       />
 
       {/* Tag Connection Status - Compact version below globe */}

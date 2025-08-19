@@ -515,6 +515,7 @@ interface GlobeVisualizationProProps {
   projectId: number;
   supabase: any;
   refreshTrigger?: number;
+  enableZoom?: boolean;  // Opcional, padrão true
 }
 
 // SOLUTION 6: Expose imperative handle for parent control
@@ -542,7 +543,7 @@ interface Arc {
 }
 
 const GlobeVisualizationPro = forwardRef<GlobeVisualizationHandle, GlobeVisualizationProProps>(
-  ({ projectId, supabase, refreshTrigger }, ref) => {
+  ({ projectId, supabase, refreshTrigger, enableZoom = true }, ref) => {
   const globeEl = useRef<any>(null);
   const [visitors, setVisitors] = useState(0);
   const [locations, setLocations] = useState<VisitorLocation[]>([]);
@@ -660,6 +661,7 @@ const GlobeVisualizationPro = forwardRef<GlobeVisualizationHandle, GlobeVisualiz
           if (controls) {
             controls.autoRotate = true;
             controls.autoRotateSpeed = 0.5;
+            controls.enableZoom = enableZoom;  // Controla zoom baseado na prop
           }
         }
       } catch (error) {
