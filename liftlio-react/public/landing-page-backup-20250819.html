@@ -197,6 +197,10 @@
         @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
         
         /* Hide scrollbars for carousels */
+        #trending-topics-container::-webkit-scrollbar,
+        #declining-topics-container::-webkit-scrollbar {
+            display: none;
+        }
         @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
         
@@ -322,6 +326,8 @@
         /* Testimonials */
         .testimonials-section{background:var(--color-testimonials-bg)}
         .testimonials-carousel{position:relative;max-width:100%;margin:0 auto;overflow:hidden}
+        .testimonials-track{display:flex;gap:32px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:20px}
+        .testimonials-track::-webkit-scrollbar{display:none}
         .testimonial-card{background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:32px;flex:0 0 380px;transition:all 0.3s;cursor:pointer}
         .testimonial-card:hover{transform:translateY(-8px);border-color:var(--color-primary);box-shadow:0 20px 40px var(--color-shadow-medium)}
         .stars{color:#fbbf24;margin-bottom:16px;font-size:18px}
@@ -394,6 +400,7 @@
             .section-title{font-size:36px}
             .features-grid{grid-template-columns:1fr}
             .breakthrough-features{grid-template-columns:1fr}
+            .testimonials-track{overflow-x:auto;-webkit-overflow-scrolling:touch}
         }
         
         @media(max-width:640px){
@@ -404,6 +411,8 @@
         .spinner{width:40px;height:40px;border:4px solid var(--color-border-light);border-top-color:var(--color-primary);border-radius:50%;animation:spin 1s linear infinite}
         
         /* Hide scrollbar for carousels */
+        #trending-topics-container::-webkit-scrollbar,
+        #declining-topics-container::-webkit-scrollbar {display:none}
         
         /* Mobile optimizations for PageSpeed 100 */
         @media(max-width:768px){
@@ -542,6 +551,9 @@
                     <a href="#pricing" class="nav-link">
                         Pricing
                     </a>
+                    <a href="#testimonials" class="nav-link">
+                        Testimonials
+                    </a>
                     
                     <div class="nav-buttons">
                         <button class="btn-icon" onclick="toggleTheme()" aria-label="Toggle theme">
@@ -586,6 +598,9 @@
             </a>
             <a href="#pricing" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
                 Pricing
+            </a>
+            <a href="#testimonials" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
+                Testimonials
             </a>
         </nav>
         
@@ -1024,6 +1039,362 @@
                             <p style="font-size: 14px; color: var(--color-text-secondary); margin: 0;">
                                 Understand how people feel about your brand
                             </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Trending Topics Section -->
+    <section class="section" style="background:var(--color-features-bg)">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">
+                    </span>
+                    Discover <span class="gradient-text">Trending Topics</span>
+                </h2>
+                <p class="section-description">
+                    Real-time trends from the <strong>last 30 days</strong> on YouTube
+                </p>
+            </div>
+            
+            <div id="trending-topics-container" style="display:flex;gap:24px;margin-top:48px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:20px">
+                <!-- Loading state -->
+                <div id="trending-loading" style="width:100%;text-align:center;padding:40px">
+                    <div class="spinner" style="margin:0 auto 20px"></div>
+                    <p style="color:var(--color-text-secondary)">
+                        Loading real-time trends...
+                    </p>
+                </div>
+                
+                <!-- Static cards will be replaced by dynamic content -->
+                <!-- Trending Card 1 -->
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                                YouTube Brand Mentions
+                            </h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">
+                                Video Analytics
+                            </p>
+                        </div>
+                        <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            +892%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="url(#gradient1)" stroke-width="2" points="0,50 40,45 80,35 120,20 160,10 200,5" />
+                            <defs>
+                                <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.5" />
+                                    <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>147K</strong></span>
+                        <span style="color:#16a34a;font-weight:600">
+                            Exploding
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Trending Card 2 -->
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                                AI Video Intelligence
+                            </h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">
+                                Artificial Intelligence
+                            </p>
+                        </div>
+                        <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            +1,245%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="url(#gradient2)" stroke-width="2" points="0,55 40,50 80,40 120,25 160,15 200,5" />
+                            <defs>
+                                <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.5" />
+                                    <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>289K</strong></span>
+                        <span style="color:#16a34a;font-weight:600">
+                            Exploding
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Trending Card 3 -->
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                                Influencer Lead Gen
+                            </h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">
+                                Influencer Marketing
+                            </p>
+                        </div>
+                        <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            +567%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="url(#gradient3)" stroke-width="2" points="0,45 40,40 80,30 120,15 160,8 200,3" />
+                            <defs>
+                                <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.5" />
+                                    <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>92K</strong></span>
+                        <span style="color:#16a34a;font-weight:600">
+                            Exploding
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Declining Topics Section -->
+    <section class="section" style="background:var(--color-background)">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">
+                    </span>
+                    Topics in <span style="color:#ef4444">Decline</span>
+                </h2>
+                <p class="section-description">
+                    Avoid investing in trends that are losing momentum
+                </p>
+            </div>
+            
+            <div id="declining-topics-container" style="display:flex;gap:24px;margin-top:48px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:20px">
+                <!-- Loading state -->
+                <div id="declining-loading" style="width:100%;text-align:center;padding:40px">
+                    <div class="spinner" style="margin:0 auto 20px"></div>
+                    <p style="color:var(--color-text-secondary)">
+                        Loading declining trends...
+                    </p>
+                </div>
+                
+                <!-- Static cards will be replaced by dynamic content -->
+                <!-- Declining Card 1 -->
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                                Traditional Paid Ads
+                            </h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">
+                                Digital Advertising
+                            </p>
+                        </div>
+                        <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            -67%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="#dc2626" stroke-width="2" points="0,10 40,15 80,25 120,35 160,45 200,55" />
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>432K</strong></span>
+                        <span style="color:#b91c1c;font-weight:700">
+                            Declining
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Declining Card 2 -->
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                                Interruption Marketing
+                            </h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">
+                                Old Strategies
+                            </p>
+                        </div>
+                        <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            -45%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="#dc2626" stroke-width="2" points="0,5 40,10 80,20 120,30 160,40 200,50" />
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>189K</strong></span>
+                        <span style="color:#b91c1c;font-weight:700">
+                            Declining
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Declining Card 3 -->
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">
+                                Comment Spam
+                            </h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">
+                                Obsolete Tactics
+                            </p>
+                        </div>
+                        <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            -89%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="#dc2626" stroke-width="2" points="0,15 40,20 80,30 120,40 160,50 200,58" />
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>67K</strong></span>
+                        <span style="color:#b91c1c;font-weight:700">
+                            Declining
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Testimonials Section -->
+    <section class="section testimonials-section" id="testimonials">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">
+                    </span>
+                    What Our <span class="gradient-text">Customers Say</span>
+                </h2>
+                <p class="section-description">
+                    See how companies are transforming mentions into growth
+                </p>
+            </div>
+            
+            <div class="testimonials-carousel">
+                <div class="testimonials-track" id="testimonials-track">
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            "Liftlio revolutionized our marketing strategy. We can identify and convert leads that previously went unnoticed."
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    Sarah Johnson
+                                </div>
+                                <div class="author-role">CMO, TechStart</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            "Real-time sentiment analysis helped us prevent several crises and improve our customer service."
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    Michael Chen
+                                </div>
+                                <div class="author-role">CEO, E-commerce Plus</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            "Incredible ROI! In just 3 months, Liftlio paid for itself with the new customers we gained."
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    Jessica Miller
+                                </div>
+                                <div class="author-role">
+                                    Sales Director
+                                    , SaaS Co
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            "We reduced our CAC by 70% after implementing Liftlio. Organic recommendations are much more effective."
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    David Williams
+                                </div>
+                                <div class="author-role">Head of Growth, FinTech Pro</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            "The platform is intuitive and the results are impressive. Our team loves working with Liftlio."
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    Emily Anderson
+                                </div>
+                                <div class="author-role">Marketing Manager, EdTech Solutions</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="testimonial-card">
+                        <div class="stars">★★★★★</div>
+                        <p class="testimonial-text">
+                            "The support is exceptional and the technology is cutting-edge. I recommend it to any company seeking organic growth."
+                        </p>
+                        <div class="testimonial-author">
+                            <div class="author-avatar"></div>
+                            <div>
+                                <div class="author-name">
+                                    Robert Taylor
+                                </div>
+                                <div class="author-role">VP Marketing, CloudTech</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1474,8 +1845,8 @@
             `;
         }
         
-        // Removed fetchTrendingTopics - no longer needed
-        /*async function fetchTrendingTopics() {
+        // Fetch trending topics from Supabase
+        async function fetchTrendingTopics() {
             const container = document.getElementById('trending-topics-container');
             const loadingEl = document.getElementById('trending-loading');
             
@@ -1544,10 +1915,10 @@
                     card.style.display = '';
                 });
             }
-        }*/
+        }
         
-        // Create declining topic card - removed
-        /*function createDecliningCard(trend, index) {
+        // Create declining topic card
+        function createDecliningCard(trend, index) {
             const lang = document.documentElement.getAttribute('data-lang');
             const category = categoryMap[trend.category] || trend.category;
             const declinePercentage = Math.abs(parseFloat(trend.growth));
@@ -1647,10 +2018,10 @@
                 // Remove loading and keep static content
                 if (loadingEl) loadingEl.remove();
             }
-        }*/
+        }
         
-        // Auto-scroll carousel - removed (was for testimonials/trends)
-        /*function startAutoScroll(containerId) {
+        // Auto-scroll carousel
+        function startAutoScroll(containerId) {
             const container = document.getElementById(containerId);
             if (!container) return;
             
@@ -1688,7 +2059,7 @@
                     intervalId = setInterval(scroll, 30);
                 }
             });
-        }*/
+        }
         
         // Tooltip functions
         let tooltipTimeout;
@@ -2002,6 +2373,15 @@
         
         // Initialize on page load
         window.addEventListener('load', function() {
+            console.log('Page loaded, starting trends search...');
+            
+            // Verificar se os containers existem
+            const trendingContainer = document.getElementById('trending-topics-container');
+            const decliningContainer = document.getElementById('declining-topics-container');
+            
+            console.log('Container trending:', trendingContainer);
+            console.log('Container declining:', decliningContainer);
+            
             // Add enter key support for URL input
             document.getElementById('website-url').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
@@ -2010,6 +2390,17 @@
                 }
             });
             
+            // Fetch real data after a short delay
+            setTimeout(() => {
+                fetchTrendingTopics().then(() => {
+                    startAutoScroll('trending-topics-container');
+                });
+                fetchDecliningTopics().then(() => {
+                    startAutoScroll('declining-topics-container');
+                });
+                // Start auto-scroll for testimonials
+                startAutoScroll('testimonials-track');
+            }, 1000);
             
             // Initialize particles effect
             initParticles();
