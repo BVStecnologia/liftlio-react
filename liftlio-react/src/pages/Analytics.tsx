@@ -1412,13 +1412,11 @@ const Analytics: React.FC = () => {
       setTrafficData(demoTraffic);
       console.log('📊 Traffic data set:', demoTraffic.length, 'days');
       
-      // Realistic traffic sources - Liftlio generates the search traffic
+      // Simplified traffic sources - Only Liftlio, Direct, Paid
       setSourceData([
-        { name: 'Liftlio', value: 45, color: '#8b5cf6' },
-        { name: 'Direct', value: 30, color: '#a855f7' },
-        { name: 'Social Media', value: 15, color: '#c084fc' },
-        { name: 'Referral', value: 7, color: '#d8b4fe' },
-        { name: 'Others', value: 3, color: '#e9d5ff' }
+        { name: 'Liftlio', value: 68, color: '#8b5cf6' },  // Agrupa todo tráfego orgânico/busca/social
+        { name: 'Direct', value: 20, color: '#a855f7' },   
+        { name: 'Paid', value: 12, color: '#c084fc' }      // Tráfego pago
       ]);
       
       // Realistic device distribution
@@ -1557,16 +1555,19 @@ const Analytics: React.FC = () => {
         if (dayName && trafficByDay.has(dayName)) {
           const dayData = trafficByDay.get(dayName);
           
-          // Categorize traffic source based on actual database fields
+          // Categorize traffic source - Simplificado: Liftlio, Direct, Paid (ads), Social (mantém para o gráfico)
           const referrer = event.referrer || '';
           const utmMedium = event.utm_medium || '';
           const utmSource = event.utm_source || '';
-          const isOrganic = event.is_organic === true;
           
-          // Categorize into 4 groups for the Traffic Growth chart
-          if (isOrganic || referrer.toLowerCase().includes('liftlio') || utmSource === 'liftlio') {
-            dayData.liftlio++;
-          } else if (utmMedium === 'cpc' || utmMedium === 'cpm' || utmMedium === 'cpv') {
+          // Categorização simplificada para Traffic Growth
+          if (!referrer && !utmMedium && !utmSource) {
+            // Completamente vazio = Direct
+            dayData.direct++;
+          } else if (utmMedium === 'cpc' || utmMedium === 'cpm' || utmMedium === 'cpv' ||
+                     utmSource === 'google_ads' || utmSource === 'facebook_ads' ||
+                     referrer.toLowerCase().includes('ads')) {
+            // Paid traffic
             dayData.ads++;
           } else if (utmMedium === 'social' || 
                      referrer.toLowerCase().includes('facebook') || 
@@ -1577,34 +1578,30 @@ const Analytics: React.FC = () => {
                      referrer.toLowerCase().includes('reddit') ||
                      referrer.toLowerCase().includes('tiktok') ||
                      referrer.toLowerCase().includes('pinterest')) {
+            // Social ainda separado para o gráfico de crescimento
             dayData.social++;
           } else {
-            dayData.direct++;
+            // Todo o resto (incluindo orgânico, busca, etc) vai para Liftlio
+            dayData.liftlio++;
           }
         }
         
-        // Count sources - group all search traffic as Liftlio
+        // Count sources - Simplificado: Liftlio, Direct, Paid
         let sourceName = event.custom_data?.traffic_source || event.referrer || 'Direct';
         
-        // Group all search/organic traffic as Liftlio
-        if (event.is_organic === true || 
-            sourceName.toLowerCase().includes('google') ||
-            sourceName.toLowerCase().includes('bing') ||
-            sourceName.toLowerCase().includes('yahoo') ||
-            sourceName.toLowerCase().includes('duckduckgo') ||
-            sourceName.toLowerCase().includes('search') ||
-            sourceName.toLowerCase().includes('liftlio')) {
-          sourceName = 'Liftlio';
-        } else if (sourceName.toLowerCase().includes('facebook') || 
-                   sourceName.toLowerCase().includes('instagram') ||
-                   sourceName.toLowerCase().includes('twitter') ||
-                   sourceName.toLowerCase().includes('linkedin')) {
-          sourceName = 'Social Media';
-        } else if (sourceName.toLowerCase().includes('ads') ||
-                   event.custom_data?.utm_params?.utm_medium === 'cpc') {
-          sourceName = 'Paid Ads';
-        } else if (sourceName === '' || sourceName === null) {
+        // Categorização simplificada
+        if (sourceName === '' || sourceName === null || sourceName === 'Direct') {
           sourceName = 'Direct';
+        } else if (sourceName.toLowerCase().includes('ads') ||
+                   event.custom_data?.utm_params?.utm_medium === 'cpc' ||
+                   event.custom_data?.utm_params?.utm_medium === 'cpm' ||
+                   event.custom_data?.utm_params?.utm_medium === 'cpv' ||
+                   event.custom_data?.utm_params?.utm_source === 'google_ads' ||
+                   event.custom_data?.utm_params?.utm_source === 'facebook_ads') {
+          sourceName = 'Paid';
+        } else {
+          // Tudo que não é Direct ou Paid é agrupado como Liftlio
+          sourceName = 'Liftlio';
         }
         
         sourceCount.set(sourceName, (sourceCount.get(sourceName) || 0) + 1);
