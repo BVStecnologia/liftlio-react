@@ -7,25 +7,26 @@
     <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/logo192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     
-    <!-- Preconnect to external domains -->
+    <!-- Preconnect to external domains for faster connection -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://suqjifkhmekcdflwowiw.supabase.co">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://track.liftlio.com">
     
     <!-- Preload critical fonts with high priority -->
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7SUc.woff2" fetchpriority="high">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa2JL7SUc.woff2" fetchpriority="high">
     
     <!-- Preload hero images for LCP with high priority - Mobile First -->
-    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark-mobile.jpg" type="image/jpeg" media="(max-width: 768px)" fetchpriority="high">
+    <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark-mobile-576.jpg" type="image/jpeg" media="(max-width: 768px)" fetchpriority="high">
     <link rel="preload" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark.jpg" type="image/jpeg" media="(min-width: 769px)" fetchpriority="high">
     
     <!-- Prefetch desktop images -->
     <link rel="prefetch" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-dark.webp" type="image/webp">
     <link rel="prefetch" as="image" href="%PUBLIC_URL%/imagens/dashboard-hero-light.webp" type="image/webp">
     
-    <!-- DNS Prefetch for performance -->
-    <link rel="dns-prefetch" href="https://suqjifkhmekcdflwowiw.supabase.co">
+    <!-- DNS Prefetch já incluído via preconnect acima -->
     <meta name="theme-color" content="#282c34" />
     <meta
       name="description"

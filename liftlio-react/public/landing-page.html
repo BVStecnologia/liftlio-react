@@ -76,6 +76,8 @@
     <!-- Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://track.liftlio.com">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -91,8 +93,8 @@
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
     </noscript>
     
-    <!-- Three.js para efeito de ondas -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Three.js carregado de forma assíncrona para não bloquear renderização -->
+    <script async defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <!-- Mobile Improvements CSS -->
     <link rel="preload" href="mobile-improvements.css" as="style">
@@ -2326,10 +2328,16 @@
             });
         }
         
-        // Hero 3D Particles - Exatamente como no landing-page-simple
-        (function() {
+        // Hero 3D Particles - Carrega apenas quando THREE.js estiver disponível
+        function initThreeJS() {
             const heroSection = document.getElementById('hero-section');
-            if (!heroSection || typeof THREE === 'undefined') return;
+            if (!heroSection || typeof THREE === 'undefined') {
+                // Se THREE ainda não carregou, tenta novamente depois
+                if (typeof THREE === 'undefined') {
+                    setTimeout(initThreeJS, 100);
+                }
+                return;
+            }
             
             // Criar container para o efeito
             const hero3dContainer = document.createElement('div');
@@ -2418,7 +2426,14 @@
                 camera.updateProjectionMatrix();
                 renderer.setSize(heroSection.offsetWidth, heroSection.offsetHeight);
             });
-        })();
+        }
+        
+        // Inicializa three.js quando carregar ou após DOM estar pronto
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initThreeJS);
+        } else {
+            initThreeJS();
+        }
     </script>
 </body>
 </html>
