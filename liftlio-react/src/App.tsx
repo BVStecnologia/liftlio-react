@@ -41,7 +41,7 @@ const Sidebar = lazy(() => import('./components/Sidebar'));
 const Header = lazy(() => import('./components/Header'));
 const SubscriptionWarningBanner = lazy(() => import('./components/SubscriptionWarningBanner'));
 const ProcessingWrapper = lazy(() => import('./components/ProcessingWrapper'));
-const UrlDataTest = lazy(() => import('./components/UrlDataTest'));
+// const UrlDataTest = lazy(() => import('./components/UrlDataTest')); // Removido - componente de teste
 const SubscriptionGate = lazy(() => import('./components/SubscriptionGate'));
 const FloatingAgent = lazy(() => import('./components/FloatingAgent'));
 
@@ -841,7 +841,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
                 <Route path="/settings" element={<SubscriptionGate><Settings /></SubscriptionGate>} />
                 <Route path="/billing" element={<SubscriptionGate><Billing /></SubscriptionGate>} />
                 <Route path="/integrations" element={<SubscriptionGate><ProcessingWrapper><Integrations /></ProcessingWrapper></SubscriptionGate>} />
-                <Route path="/url-test" element={<SubscriptionGate><UrlDataTest /></SubscriptionGate>} />
+                {/* <Route path="/url-test" element={<SubscriptionGate><UrlDataTest /></SubscriptionGate>} /> */}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </ContentWrapper>

@@ -5,30 +5,35 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-<script>
-const VERSION = 'v2.0.2';
-const lastVersion = localStorage.getItem('liftlio-version');
-if (lastVersion && lastVersion !== VERSION) {
-localStorage.setItem('liftlio-version', VERSION);
-location.reload(true);
-}
-localStorage.setItem('liftlio-version', VERSION);
-if (window.location.protocol === 'file:') {
-window.addEventListener('DOMContentLoaded', function() {
-document.querySelectorAll('img[src^="/"], source[srcset*="/imagens"]').forEach(function(el) {
-if (el.src) {
-el.src = el.src.replace(/^\
-}
-if (el.srcset) {
-el.srcset = el.srcset.replace(/\/imagens\
-}
-});
-document.querySelectorAll('link[href^="/"]').forEach(function(el) {
-el.href = el.href.replace(/^\
-});
-});
-}
-</script>
+    <script>
+        // Force cache refresh with version - v2.0.2
+        const VERSION = 'v2.0.2';
+        const lastVersion = localStorage.getItem('liftlio-version');
+        if (lastVersion && lastVersion !== VERSION) {
+            localStorage.setItem('liftlio-version', VERSION);
+            location.reload(true);
+        }
+        localStorage.setItem('liftlio-version', VERSION);
+        
+        // Ajustar caminhos para desenvolvimento local
+        if (window.location.protocol === 'file:') {
+            window.addEventListener('DOMContentLoaded', function() {
+                // Ajustar todas as imagens
+                document.querySelectorAll('img[src^="/"], source[srcset*="/imagens"]').forEach(function(el) {
+                    if (el.src) {
+                        el.src = el.src.replace(/^\//, './');
+                    }
+                    if (el.srcset) {
+                        el.srcset = el.srcset.replace(/\/imagens\//g, './imagens/');
+                    }
+                });
+                // Ajustar links de preload
+                document.querySelectorAll('link[href^="/"]').forEach(function(el) {
+                    el.href = el.href.replace(/^\//, './');
+                });
+            });
+        }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     
@@ -78,22 +83,22 @@ el.href = el.href.replace(/^\
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     
-    <!-- Preload hero image for better LCP - Mobile First with proper hints -->
-    <link rel="preload" as="image" type="image/jpeg" href="imagens/dashboard-hero-dark-mobile-400.jpg" media="(max-width: 480px)" fetchpriority="high">
-    <link rel="preload" as="image" type="image/jpeg" href="imagens/dashboard-hero-dark-mobile-576.jpg" media="(min-width: 481px) and (max-width: 768px)" fetchpriority="high">
-    <link rel="preload" as="image" type="image/jpeg" href="imagens/dashboard-hero-dark.jpg" media="(min-width: 769px)" fetchpriority="high">
+    <!-- Preload hero image for better LCP - Mobile First -->
+    <link rel="preload" as="image" type="image/jpeg" href="imagens/dashboard-hero-dark-mobile-576.jpg" media="(max-width: 768px)" fetchpriority="high">
+    <link rel="preload" as="image" href="imagens/dashboard-hero-dark.jpg" media="(min-width: 769px)" fetchpriority="high">
     
-    <!-- Fonts - Otimizado: apenas pesos usados -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <!-- Fonts - Async loading to eliminate render-blocking -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
     </noscript>
     
-    <!-- Three.js removido - não é usado na landing page -->
+    <!-- Three.js carregado de forma assíncrona para não bloquear renderização -->
+    <script async defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <!-- Mobile Improvements CSS -->
-    <link rel="preload" href="mobile-improvements.min.css" as="style">
-    <link rel="stylesheet" href="mobile-improvements.min.css" media="(max-width: 768px)">
+    <link rel="preload" href="mobile-improvements.css" as="style">
+    <link rel="stylesheet" href="mobile-improvements.css" media="(max-width: 768px)">
     
     <!-- Inline CSS - All page styles -->
     <style>
@@ -467,13 +472,14 @@ el.href = el.href.replace(/^\
     </style>
     
     <!-- Set theme only -->
-<script>
-(function(){
-const t=localStorage.getItem('theme')||'dark';
-document.documentElement.setAttribute('data-theme',t);
-document.documentElement.setAttribute('data-lang','en');
-})();
-</script>
+    <script>
+        (function(){
+            const t=localStorage.getItem('theme')||'dark';
+            document.documentElement.setAttribute('data-theme',t);
+            document.documentElement.setAttribute('data-lang','en');
+            // Keep lang consistent as 'en' - don't change to en-US
+        })();
+    </script>
     
     
     <!-- JSON-LD Schema.org -->
@@ -610,20 +616,22 @@ document.documentElement.setAttribute('data-lang','en');
                 <div class="hero-visual">
                     <div class="dashboard-preview">
                         <picture>
-                            <!-- Imagens otimizadas por tamanho de tela -->
-                            <source media="(max-width: 480px)" 
-                                    srcset="imagens/dashboard-hero-dark-mobile-400.jpg 400w">
-                            <source media="(max-width: 768px)" 
+                            <!-- WebP para navegadores modernos -->
+                            <source type="image/webp" media="(max-width: 768px)" 
                                     srcset="imagens/dashboard-hero-dark-mobile-576.jpg 576w">
+                            <source type="image/webp" media="(min-width: 769px)" 
+                                    srcset="imagens/dashboard-hero-dark.jpg 1536w">
+                            <!-- JPG fallback -->
+                            <source media="(max-width: 768px)" 
+                                    srcset="imagens/dashboard-hero-dark-mobile-optimized.jpg 768w">
                             <source media="(min-width: 769px)" 
                                     srcset="imagens/dashboard-hero-dark.jpg 1536w">
                             <img id="dashboard-image" 
-                                 src="imagens/dashboard-hero-dark-mobile-400.jpg" 
+                                 src="imagens/dashboard-hero-dark.jpg" 
                                  alt="Liftlio Dashboard"
                                  width="768"
                                  height="512"
                                  loading="eager"
-                                 decoding="async"
                                  fetchpriority="high"
                                  style="width:100%;height:auto;display:block">
                         </picture>
@@ -1244,873 +1252,1188 @@ document.documentElement.setAttribute('data-lang','en');
     </footer>
     
     <!-- JavaScript -->
-<script>
-window.addEventListener('scroll', function() {
-const header = document.getElementById('header');
-if (window.scrollY > 50) {
-header.classList.add('scrolled');
-} else {
-header.classList.remove('scrolled');
-}
-});
-function toggleTheme() {
-const currentTheme = document.documentElement.getAttribute('data-theme');
-const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-document.documentElement.setAttribute('data-theme', newTheme);
-localStorage.setItem('theme', newTheme);
-document.querySelectorAll('.theme-icon-light').forEach(el => {
-el.style.display = newTheme === 'light' ? 'block' : 'none';
-});
-document.querySelectorAll('.theme-icon-dark').forEach(el => {
-el.style.display = newTheme === 'dark' ? 'block' : 'none';
-});
-const dashboardImg = document.getElementById('dashboard-image');
-if (dashboardImg) {
-updateDashboardImage(newTheme);
-}
-}
-function updateDashboardImage(theme) {
-const dashboardImg = document.getElementById('dashboard-image');
-const picture = dashboardImg?.closest('picture');
-if (!dashboardImg || !picture) return;
-const isLocal = window.location.protocol === 'file:';
-const isMobile = window.innerWidth <= 768;
-const sources = picture.querySelectorAll('source');
-sources.forEach(source => {
-const media = source.getAttribute('media');
-const type = source.getAttribute('type');
-const isDesktop = media && media.includes('min-width: 769px');
-const isWebP = type === 'image/webp';
-const basePath = 'imagens/';
-if (isDesktop) {
-const srcset = `${basePath}dashboard-hero-${theme}.jpg 1536w`;
-source.setAttribute('srcset', isLocal ? srcset + ', ' + srcset : srcset);
-} else {
-const filename = isWebP
-? `dashboard-hero-${theme}-mobile-optimized.webp`
-: `dashboard-hero-${theme}-mobile-optimized.jpg`;
-const srcset = `${basePath}${filename} 768w`;
-source.setAttribute('srcset', isLocal ? srcset + ', ' + srcset : srcset);
-}
-});
-dashboardImg.src = isLocal
-? `imagens/dashboard-hero-${theme}.jpg`
-: `/imagens/dashboard-hero-${theme}.jpg`;
-}
-function navigateToPage(path) {
-const isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost';
-if (isLocal) {
-window.location.href = 'http:
-} else {
-window.location.href = path;
-}
-}
-function toggleMobileMenu(open) {
-const menu = document.querySelector('.mobile-menu');
-const overlay = document.querySelector('.mobile-menu-overlay');
-if (open) {
-menu.classList.add('open');
-overlay.classList.add('open');
-document.body.style.overflow = 'hidden';
-} else {
-menu.classList.remove('open');
-overlay.classList.remove('open');
-document.body.style.overflow = '';
-}
-}
-const currentTheme = document.documentElement.getAttribute('data-theme');
-document.querySelectorAll('.theme-icon-light').forEach(el => {
-el.style.display = currentTheme === 'light' ? 'block' : 'none';
-});
-document.querySelectorAll('.theme-icon-dark').forEach(el => {
-el.style.display = currentTheme === 'dark' ? 'block' : 'none';
-});
-updateDashboardImage(currentTheme);
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-anchor.addEventListener('click', function(e) {
-e.preventDefault();
-const target = document.querySelector(this.getAttribute('href'));
-if (target) {
-const headerHeight = document.querySelector('.header').offsetHeight;
-const targetPosition = target.offsetTop - headerHeight - 20;
-window.scrollTo({
-top: targetPosition,
-behavior: 'smooth'
-});
-}
-});
-});
-const SUPABASE_URL = 'https:
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I';
-const categoryMap = {
-'TECHNOLOGY': 'Technology',
-'GAMING': 'Gaming',
-'MUSIC': 'Music',
-'LIFESTYLE': 'Lifestyle',
-'ENTERTAINMENT': 'Entertainment',
-'EDUCATION': 'Education',
-'BUSINESS': 'Business',
-'EMERGING TRENDS': 'Emerging Trends'
-};
-function formatVolume(volume) {
-if (volume >= 1000000) {
-return (volume / 1000000).toFixed(1) + 'M';
-} else if (volume >= 1000) {
-return (volume / 1000).toFixed(0) + 'K';
-}
-return volume.toString();
-}
-function generateChartPoints(growthPercentage) {
-const growth = parseFloat(growthPercentage);
-if (growth > 1000) {
-return "0,55 40,50 80,40 120,25 160,15 200,5";
-} else if (growth > 500) {
-return "0,50 40,45 80,35 120,20 160,10 200,5";
-} else {
-return "0,45 40,40 80,30 120,20 160,15 200,10";
-}
-}
-function createTrendingCard(trend, index) {
-const category = categoryMap[trend.category] || trend.category;
-return `
-<div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s;animation:fadeIn 0.5s ease-in-out ${index * 0.1}s both">
-<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
-<div>
-<h3 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h3>
-<p style="font-size:14px;color:var(--color-text-secondary)">${category.en}</p>
-</div>
-<div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
-+${trend.growth}%
-</div>
-</div>
-<div style="height:60px;margin:16px 0">
-<svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
-<polyline fill="none" stroke="url(#trend-gradient-${index})" stroke-width="2" points="${generateChartPoints(trend.growth)}" />
-<defs>
-<linearGradient id="trend-gradient-${index}" x1="0%" y1="0%" x2="100%" y2="0%">
-<stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.5" />
-<stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
-</linearGradient>
-</defs>
-</svg>
-</div>
-<div style="display:flex;justify-content:space-between;font-size:14px">
-<span style="color:var(--color-text-secondary)">Volume: <strong>${formatVolume(trend.volume)}</strong></span>
-<span style="color:#16a34a;font-weight:600">
-Exploding
-</span>
-</div>
-</div>
-`;
-}
-/*async function fetchTrendingTopics() {
-const container = document.getElementById('trending-topics-container');
-const loadingEl = document.getElementById('trending-loading');
-console.log('Starting trends search...');
-try {
-const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_youtube_trends`, {
-method: 'POST',
-headers: {
-'Content-Type': 'application/json',
-'apikey': SUPABASE_ANON_KEY,
-'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-},
-body: JSON.stringify({})
-});
-if (!response.ok) {
-throw new Error(`HTTP error! status: ${response.status}`);
-}
-const data = await response.json();
-console.log('Dados recebidos:', data);
-const risingTrends = (data || [])
-.filter(trend => parseFloat(trend.growth) > 0)
-.sort((a, b) => parseFloat(b.growth) - parseFloat(a.growth))
-.slice(0, 10);
-console.log('Filtered trends:', risingTrends);
-if (loadingEl) loadingEl.style.display = 'none';
-const existingCards = container.querySelectorAll('div[style*="flex:0 0 340px"]');
-existingCards.forEach(card => card.remove());
-if (risingTrends.length > 0) {
-risingTrends.forEach((trend, index) => {
-const cardHTML = createTrendingCard(trend, index);
-console.log(`Card ${index} HTML:`, cardHTML);
-container.innerHTML += cardHTML;
-});
-console.log('Container after adding cards:', container.innerHTML);
-} else {
-container.innerHTML = `
-<div style="width:100%;text-align:center;padding:40px">
-<p style="color:var(--color-text-secondary)">
-No trends available at the moment
-</p>
-</div>
-`;
-}
-} catch (error) {
-console.error('Error fetching trends:', error);
-if (loadingEl) {
-loadingEl.style.display = 'none';
-}
-const staticCards = container.querySelectorAll('div[style*="flex:0 0 340px"]');
-staticCards.forEach(card => {
-card.style.display = '';
-});
-}
-}*/
-/*function createDecliningCard(trend, index) {
-const lang = document.documentElement.getAttribute('data-lang');
-const category = categoryMap[trend.category] || trend.category;
-const declinePercentage = Math.abs(parseFloat(trend.growth));
-return `
-<div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s;animation:fadeIn 0.5s ease-in-out ${index * 0.1}s both">
-<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
-<div>
-<h3 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h3>
-<p style="font-size:14px;color:var(--color-text-secondary)">${category.en}</p>
-</div>
-<div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
--${declinePercentage}%
-</div>
-</div>
-<div style="height:60px;margin:16px 0">
-<svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
-<polyline fill="none" stroke="#dc2626" stroke-width="2" points="${generateDecliningChartPoints(declinePercentage)}" />
-</svg>
-</div>
-<div style="display:flex;justify-content:space-between;font-size:14px">
-<span style="color:var(--color-text-secondary)">Volume: <strong>${formatVolume(trend.volume)}</strong></span>
-<span style="color:#b91c1c;font-weight:700">
-Declining
-</span>
-</div>
-</div>
-`;
-}
-function generateDecliningChartPoints(declinePercentage) {
-if (declinePercentage > 70) {
-return "0,10 40,15 80,25 120,35 160,45 200,55";
-} else if (declinePercentage > 40) {
-return "0,15 40,20 80,30 120,40 160,45 200,50";
-} else {
-return "0,20 40,25 80,30 120,35 160,40 200,45";
-}
-}
-// Função removida - não utilizada na landing page*/
-/*function startAutoScroll(containerId) {
-const container = document.getElementById(containerId);
-if (!container) return;
-let scrollAmount = 0;
-let scrollDirection = 1;
-let intervalId = null;
-const scroll = () => {
-if (container.scrollWidth <= container.clientWidth) return;
-scrollAmount += scrollDirection * 1;
-container.scrollLeft = scrollAmount;
-if (scrollAmount >= container.scrollWidth - container.clientWidth) {
-scrollDirection = -1;
-} else if (scrollAmount <= 0) {
-scrollDirection = 1;
-}
-};
-intervalId = setInterval(scroll, 30);
-container.addEventListener('mouseenter', () => {
-if (intervalId) {
-clearInterval(intervalId);
-intervalId = null;
-}
-});
-container.addEventListener('mouseleave', () => {
-if (!intervalId) {
-intervalId = setInterval(scroll, 30);
-}
-});
-}*/
-let tooltipTimeout;
-function showTooltip() {
-clearTimeout(tooltipTimeout);
-document.getElementById('url-tooltip').classList.add('show');
-}
-function hideTooltip() {
-tooltipTimeout = setTimeout(() => {
-document.getElementById('url-tooltip').classList.remove('show');
-}, 200);
-}
-function toggleTooltip() {
-const tooltip = document.getElementById('url-tooltip');
-tooltip.classList.toggle('show');
-}
-const loadingSteps = [
-{ text: "Reading your website content...", icon: "🔍" },
-{ text: "Understanding your product...", icon: "🧠" },
-{ text: "Analyzing your market niche...", icon: "📊" },
-{ text: "Searching YouTube discussions...", icon: "🎬" },
-{ text: "Finding potential customers...", icon: "👥" },
-{ text: "Identifying pain points...", icon: "💬" },
-{ text: "Generating personalized response...", icon: "🤖" },
-{ text: "Finalizing simulation...", icon: "✨" }
-];
-function normalizeUrl(inputUrl) {
-let normalizedUrl = inputUrl.trim();
-if (!normalizedUrl.match(/^https?:\/\
-normalizedUrl = 'https:
-}
-return normalizedUrl;
-}
-function validateUrl(inputUrl) {
-try {
-const urlObj = new URL(inputUrl);
-return urlObj.hostname.includes('.');
-} catch {
-return false;
-}
-}
-async function analyzeWebsite() {
-const lang = document.documentElement.getAttribute('data-lang');
-const urlInput = document.getElementById('website-url');
-const url = urlInput.value.trim();
-const errorDiv = document.getElementById('error-message');
-const loadingContainer = document.getElementById('loading-container');
-const resultsContainer = document.getElementById('results-container');
-const analyzeBtn = document.getElementById('analyze-btn');
-errorDiv.style.display = 'none';
-resultsContainer.style.display = 'none';
-resultsContainer.innerHTML = '';
-urlInput.classList.remove('error');
-if (!url) {
-errorDiv.textContent = 'Please enter a URL';
-errorDiv.style.display = 'block';
-urlInput.classList.add('error');
-return;
-}
-const normalizedUrl = normalizeUrl(url);
-if (!validateUrl(normalizedUrl)) {
-errorDiv.textContent = 'Please enter a valid URL (e.g., https:
-errorDiv.style.display = 'block';
-urlInput.classList.add('error');
-return;
-}
-analyzeBtn.disabled = true;
-urlInput.disabled = true;
-loadingContainer.style.display = 'block';
-let currentStep = 0;
-const steps = loadingSteps;
-const totalSteps = steps.length;
-const minStepTime = 800;
-const maxStepTime = 1500;
-const updateLoadingStep = () => {
-const step = steps[currentStep];
-document.getElementById('loading-icon').textContent = step.icon;
-document.getElementById('loading-text').innerHTML = `
-<span style="margin-right:8px">${step.icon}</span>${step.text}
-`;
-document.getElementById('loading-progress').style.width =
-`${((currentStep + 1) / totalSteps) * 100}%`;
-};
-updateLoadingStep();
-const stepInterval = setInterval(() => {
-if (currentStep < totalSteps - 1) {
-currentStep++;
-updateLoadingStep();
-}
-}, Math.floor(Math.random() * (maxStepTime - minStepTime) + minStepTime));
-try {
-let clientIP = '127.0.0.1';
-try {
-if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-try {
-const ipResponse = await fetch('https:
-const ipData = await ipResponse.json();
-clientIP = ipData.ip;
-} catch {
-const ipResponse = await fetch('https:
-const ipData = await ipResponse.json();
-clientIP = ipData.ip;
-}
-}
-} catch (error) {
-console.error('Error getting IP:', error);
-errorDiv.textContent = 'Unable to detect your IP address. Please try again later.';
-errorDiv.style.display = 'block';
-loadingContainer.style.display = 'none';
-analyzeBtn.disabled = false;
-urlInput.disabled = false;
-clearInterval(stepInterval);
-return;
-}
-const requestBody = {
-url: normalizedUrl,
-language: lang
-};
-if (clientIP) {
-requestBody.ip = clientIP;
-}
-const startTime = Date.now();
-const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-url`, {
-method: 'POST',
-headers: {
-'Content-Type': 'application/json',
-'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-},
-body: JSON.stringify(requestBody)
-});
-const elapsedTime = Date.now() - startTime;
-const minimumLoadingTime = totalSteps * minStepTime;
-if (elapsedTime < minimumLoadingTime) {
-await new Promise(resolve =>
-setTimeout(resolve, minimumLoadingTime - elapsedTime)
-);
-}
-for (let i = currentStep; i < totalSteps; i++) {
-currentStep = i;
-updateLoadingStep();
-await new Promise(resolve => setTimeout(resolve, 200));
-}
-clearInterval(stepInterval);
-const data = await response.json();
-if (response.ok && data.success && data.simulation) {
-displayResults(data.simulation, lang);
-} else {
-let errorMessage = 'Error generating simulation. Please try again.';
-if (response.status === 429 || data.error?.includes('limit')) {
-errorMessage = "You've reached the limit of 3 analyses per day. Try again tomorrow!";
-} else if (data.error?.includes('fetch') || data.error?.includes('Jina')) {
-errorMessage = 'Unable to access this website. Please check the URL and try again.';
-}
-errorDiv.textContent = errorMessage;
-errorDiv.style.display = 'block';
-}
-} catch (error) {
-console.error('Error:', error);
-errorDiv.textContent = 'Error connecting to server. Please try again.';
-errorDiv.style.display = 'block';
-clearInterval(stepInterval);
-} finally {
-loadingContainer.style.display = 'none';
-analyzeBtn.disabled = false;
-urlInput.disabled = false;
-}
-}
-function displayResults(simulation, lang) {
-const resultsContainer = document.getElementById('results-container');
-resultsContainer.style.display = 'block';
-const formatNumber = (num) => {
-return new Intl.NumberFormat('en-US').format(num);
-};
-resultsContainer.innerHTML = `
-<!-- Video Found Card -->
-<div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;margin-bottom:24px;text-align:left">
-<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-<div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">🎬</div>
-<h3 style="font-size:18px;font-weight:700;margin:0">
-Video Found
-</h3>
-</div>
-<div style="font-size:16px;font-weight:600;margin-bottom:12px">${simulation.video.title}</div>
-<div style="display:flex;gap:16px;font-size:14px;color:var(--color-text-secondary)">
-<span>${formatNumber(simulation.video.views)} views</span>
-<span>${formatNumber(simulation.video.comments)} comments</span>
-<span>${simulation.video.category}</span>
-</div>
-</div>
-<!-- Lead Comment Card -->
-<div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;margin-bottom:24px;text-align:left">
-<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-<div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">👤</div>
-<h3 style="font-size:18px;font-weight:700;margin:0">
-Potential Customer Comment
-</h3>
-</div>
-<div style="font-size:16px;line-height:1.6;padding:16px;background:var(--color-background);border-radius:8px;margin-bottom:12px">
-"${simulation.lead_comment.text}"
-</div>
-<div style="display:flex;gap:24px;margin-top:12px">
-<div style="display:flex;align-items:center;gap:8px">
-<span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
-Lead Score:
-</span>
-<span style="font-size:14px;font-weight:600;color:var(--color-primary)">${simulation.lead_comment.lead_score}/10</span>
-</div>
-<div style="display:flex;align-items:center;gap:8px">
-<span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
-Sentiment:
-</span>
-<span style="font-size:14px;font-weight:600;color:var(--color-primary)">
-${simulation.lead_comment.sentiment}
-</span>
-</div>
-</div>
-${simulation.lead_comment.justification ?
-`<div style="font-size:13px;color:var(--color-text-secondary);font-style:italic;margin-top:8px">
-${simulation.lead_comment.justification}
-</div>` : ''}
-</div>
-<!-- Liftlio Response Card -->
-<div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;text-align:left">
-<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-<div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">🤖</div>
-<h3 style="font-size:18px;font-weight:700;margin:0">
-Liftlio's Response
-</h3>
-</div>
-<div style="font-size:16px;line-height:1.6;padding:16px;background:var(--color-background);border-radius:8px;margin-bottom:12px;border-left:4px solid var(--color-primary)">
-${simulation.liftlio_response.message}
-</div>
-<div style="display:flex;gap:24px;margin-top:12px">
-<div style="display:flex;align-items:center;gap:8px">
-<span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
-Sentiment:
-</span>
-<span style="font-size:14px;font-weight:600;color:var(--color-primary)">
-${Math.round(simulation.liftlio_response.sentiment_score * 100)}%
-</span>
-</div>
-<div style="display:flex;align-items:center;gap:8px">
-<span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
-Relevance:
-</span>
-<span style="font-size:14px;font-weight:600;color:var(--color-primary)">
-${Math.round(simulation.liftlio_response.relevance_score * 100)}%
-</span>
-</div>
-</div>
-${simulation.liftlio_response.justification ?
-`<div style="font-size:13px;color:var(--color-text-secondary);font-style:italic;margin-top:8px">
-${simulation.liftlio_response.justification}
-</div>` : ''}
-</div>
-`;
-}
-window.addEventListener('load', function() {
-document.getElementById('website-url').addEventListener('keypress', function(e) {
-if (e.key === 'Enter') {
-e.preventDefault();
-analyzeWebsite();
-}
-});
-initParticles();
-});
-function initParticles() {
-const canvas = document.getElementById('particles-canvas');
-if (!canvas) return;
-const ctx = canvas.getContext('2d');
-let animationId;
-let time = 0;
-let nodes = [];
-let energyPulses = [];
-let gridNetwork = [];
-function resizeCanvas() {
-const heroSection = canvas.closest('.hero-section');
-if (heroSection) {
-canvas.width = heroSection.offsetWidth;
-canvas.height = heroSection.offsetHeight;
-}
-}
-class NetworkNode {
-constructor(x, y, type = 'relay') {
-this.x = x;
-this.y = y;
-this.type = type;
-this.energy = 0;
-this.maxEnergy = 1;
-this.connections = [];
-this.pulsePhase = Math.random() * Math.PI * 2;
-this.active = false;
-this.growthFactor = 0;
-}
-update() {
-this.energy *= 0.95;
-this.pulsePhase += 0.05;
-if (this.type === 'growth' && this.active) {
-this.growthFactor = Math.min(1, this.growthFactor + 0.01);
-}
-if (this.type === 'source') {
-this.energy = 0.5 + Math.sin(this.pulsePhase) * 0.3;
-}
-}
-draw() {
-const pulse = Math.sin(this.pulsePhase) * 0.2 + 0.8;
-let radius = 1;
-let opacity = 0.03;
-if (this.type === 'source') {
-radius = 2 * pulse;
-opacity = 0.08;
-} else if (this.type === 'growth') {
-radius = 1.5 + this.growthFactor * 2;
-opacity = 0.05 * this.growthFactor;
-}
-if (this.energy > 0.01) {
-ctx.beginPath();
-ctx.arc(this.x, this.y, radius + this.energy * 10, 0, Math.PI * 2);
-const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, radius + this.energy * 10);
-gradient.addColorStop(0, `rgba(129, 140, 248, ${this.energy * 0.15})`);
-gradient.addColorStop(1, 'rgba(129, 140, 248, 0)');
-ctx.fillStyle = gradient;
-ctx.fill();
-}
-ctx.beginPath();
-ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
-ctx.fillStyle = `rgba(129, 140, 248, ${opacity + this.energy * 0.1})`;
-ctx.fill();
-if (this.type === 'growth' && this.growthFactor > 0) {
-ctx.beginPath();
-ctx.arc(this.x, this.y, radius + 5 * this.growthFactor, 0, Math.PI * 2);
-ctx.strokeStyle = `rgba(244, 114, 182, ${0.03 * this.growthFactor})`;
-ctx.lineWidth = 0.5;
-ctx.stroke();
-}
-}
-}
-class EnergyPulse {
-constructor(startNode, endNode) {
-this.start = startNode;
-this.end = endNode;
-this.progress = 0;
-this.speed = 0.01;
-this.energy = 0.5;
-this.trail = [];
-this.maxTrailLength = 15;
-}
-update() {
-this.progress += this.speed;
-const x = this.start.x + (this.end.x - this.start.x) * this.progress;
-const y = this.start.y + (this.end.y - this.start.y) * this.progress;
-this.trail.push({ x, y });
-if (this.trail.length > this.maxTrailLength) {
-this.trail.shift();
-}
-if (this.progress >= 1) {
-this.end.energy = Math.min(this.end.maxEnergy, this.end.energy + this.energy);
-if (this.end.type === 'growth') {
-this.end.active = true;
-}
-if (this.end.type === 'relay' && this.end.energy > 0.3) {
-this.end.connections.forEach(connection => {
-if (Math.random() < 0.5) {
-energyPulses.push(new EnergyPulse(this.end, connection));
-}
-});
-}
-return false;
-}
-return true;
-}
-draw() {
-if (this.trail.length > 1) {
-ctx.beginPath();
-this.trail.forEach((point, i) => {
-if (i === 0) ctx.moveTo(point.x, point.y);
-else ctx.lineTo(point.x, point.y);
-});
-const gradient = ctx.createLinearGradient(
-this.trail[0].x, this.trail[0].y,
-this.trail[this.trail.length - 1].x, this.trail[this.trail.length - 1].y
-);
-gradient.addColorStop(0, 'rgba(129, 140, 248, 0)');
-gradient.addColorStop(1, 'rgba(129, 140, 248, 0.2)');
-ctx.strokeStyle = gradient;
-ctx.lineWidth = 1;
-ctx.stroke();
-}
-if (this.trail.length > 0) {
-const head = this.trail[this.trail.length - 1];
-ctx.beginPath();
-ctx.arc(head.x, head.y, 2, 0, Math.PI * 2);
-ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-ctx.fill();
-}
-}
-}
-function createNetwork() {
-nodes = [];
-gridNetwork = [];
-const spacing = 100;
-const cols = Math.ceil(canvas.width / spacing) + 1;
-const rows = Math.ceil(canvas.height / spacing) + 1;
-for (let i = 0; i < cols; i++) {
-for (let j = 0; j < rows; j++) {
-const x = i * spacing;
-const y = j * spacing;
-const offsetX = (Math.random() - 0.5) * 30;
-const offsetY = (Math.random() - 0.5) * 30;
-let type = 'relay';
-if (Math.random() < 0.05) {
-type = 'source';
-}
-else if (Math.random() < 0.1) {
-type = 'growth';
-}
-const node = new NetworkNode(x + offsetX, y + offsetY, type);
-nodes.push(node);
-if (!gridNetwork[i]) gridNetwork[i] = [];
-gridNetwork[i][j] = node;
-}
-}
-for (let i = 0; i < cols; i++) {
-for (let j = 0; j < rows; j++) {
-const node = gridNetwork[i][j];
-const neighbors = [
-[i + 1, j],
-[i, j + 1],
-[i + 1, j + 1],
-[i - 1, j + 1]
-];
-neighbors.forEach(([ni, nj]) => {
-if (ni >= 0 && ni < cols && nj >= 0 && nj < rows) {
-const neighbor = gridNetwork[ni][nj];
-if (neighbor) {
-node.connections.push(neighbor);
-}
-}
-});
-}
-}
-}
-function drawConnections() {
-ctx.strokeStyle = 'rgba(129, 140, 248, 0.02)';
-ctx.lineWidth = 0.5;
-nodes.forEach(node => {
-node.connections.forEach(connection => {
-if (node.energy > 0.1 || connection.energy > 0.1) {
-ctx.beginPath();
-ctx.moveTo(node.x, node.y);
-ctx.lineTo(connection.x, connection.y);
-ctx.stroke();
-}
-});
-});
-}
-function animate() {
-ctx.clearRect(0, 0, canvas.width, canvas.height);
-time++;
-drawConnections();
-nodes.forEach(node => {
-node.update();
-node.draw();
-});
-if (time % 120 === 0) {
-nodes.filter(n => n.type === 'source').forEach(source => {
-source.connections.forEach(connection => {
-if (Math.random() < 0.2) {
-energyPulses.push(new EnergyPulse(source, connection));
-}
-});
-});
-}
-energyPulses = energyPulses.filter(pulse => {
-const alive = pulse.update();
-if (alive) pulse.draw();
-return alive;
-});
-animationId = requestAnimationFrame(animate);
-}
-function checkThemeAndAnimate() {
-const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-if (isDarkMode && !animationId) {
-resizeCanvas();
-createNetwork();
-animate();
-} else if (!isDarkMode && animationId) {
-cancelAnimationFrame(animationId);
-animationId = null;
-ctx.clearRect(0, 0, canvas.width, canvas.height);
-nodes = [];
-energyPulses = [];
-}
-}
-resizeCanvas();
-checkThemeAndAnimate();
-window.addEventListener('resize', () => {
-resizeCanvas();
-if (animationId) {
-createNetwork();
-}
-});
-const observer = new MutationObserver(() => {
-checkThemeAndAnimate();
-});
-observer.observe(document.documentElement, {
-attributes: true,
-attributeFilter: ['data-theme']
-});
-}
-function initThreeJS() {
-const heroSection = document.getElementById('hero-section');
-if (!heroSection || typeof THREE === 'undefined') {
-if (typeof THREE === 'undefined') {
-setTimeout(initThreeJS, 100);
-}
-return;
-}
-const hero3dContainer = document.createElement('div');
-hero3dContainer.id = 'hero-3d';
-hero3dContainer.style.cssText = `
-position: absolute;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-z-index: 1;
-pointer-events: none;
-`;
-const heroBackground = heroSection.querySelector('.hero-background');
-if (heroBackground) {
-heroBackground.insertAdjacentElement('afterend', hero3dContainer);
-} else {
-heroSection.insertBefore(hero3dContainer, heroSection.firstChild);
-}
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, heroSection.offsetWidth / heroSection.offsetHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-renderer.setSize(heroSection.offsetWidth, heroSection.offsetHeight);
-hero3dContainer.appendChild(renderer.domElement);
-const waveGeometry = new THREE.BufferGeometry();
-const waveCount = 10000;
-const wavePositions = new Float32Array(waveCount * 3);
-for (let i = 0; i < waveCount; i++) {
-const x = (Math.random() - 0.5) * 50;
-const z = (Math.random() - 0.5) * 50;
-const y = Math.sin(x * 0.1) * Math.cos(z * 0.1) * 2;
-wavePositions[i * 3] = x;
-wavePositions[i * 3 + 1] = y;
-wavePositions[i * 3 + 2] = z;
-}
-waveGeometry.setAttribute('position', new THREE.BufferAttribute(wavePositions, 3));
-const waveMaterial = new THREE.PointsMaterial({
-size: 0.08,
-color: '#6366f1',
-transparent: true,
-opacity: 0.35,
-blending: THREE.AdditiveBlending
-});
-const waveMesh = new THREE.Points(waveGeometry, waveMaterial);
-scene.add(waveMesh);
-camera.position.set(0, 10, 20);
-camera.lookAt(0, 0, 0);
-function animateHero() {
-requestAnimationFrame(animateHero);
-const positions = waveGeometry.attributes.position.array;
-const time = Date.now() * 0.0003;
-for (let i = 0; i < waveCount; i++) {
-const x = positions[i * 3];
-const z = positions[i * 3 + 2];
-positions[i * 3 + 1] = Math.sin(x * 0.1 + time) * Math.cos(z * 0.1 + time) * 2;
-}
-waveGeometry.attributes.position.needsUpdate = true;
-waveMesh.rotation.y += 0.0002;
-renderer.render(scene, camera);
-}
-animateHero();
-window.addEventListener('resize', () => {
-camera.aspect = heroSection.offsetWidth / heroSection.offsetHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(heroSection.offsetWidth, heroSection.offsetHeight);
-});
-}
-if (document.readyState === 'loading') {
-document.addEventListener('DOMContentLoaded', initThreeJS);
-} else {
-initThreeJS();
-}
-</script>
+    <script>
+        // Scroll handler
+        window.addEventListener('scroll', function() {
+            const header = document.getElementById('header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+        
+        // Theme toggle
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Update theme icons
+            document.querySelectorAll('.theme-icon-light').forEach(el => {
+                el.style.display = newTheme === 'light' ? 'block' : 'none';
+            });
+            document.querySelectorAll('.theme-icon-dark').forEach(el => {
+                el.style.display = newTheme === 'dark' ? 'block' : 'none';
+            });
+            
+            // Update dashboard image
+            const dashboardImg = document.getElementById('dashboard-image');
+            if (dashboardImg) {
+                updateDashboardImage(newTheme);
+            }
+        }
+        
+        // Update dashboard image for theme changes
+        function updateDashboardImage(theme) {
+            const dashboardImg = document.getElementById('dashboard-image');
+            const picture = dashboardImg?.closest('picture');
+            if (!dashboardImg || !picture) return;
+            
+            const isLocal = window.location.protocol === 'file:';
+            const isMobile = window.innerWidth <= 768;
+            
+            // Update all source elements
+            const sources = picture.querySelectorAll('source');
+            sources.forEach(source => {
+                const media = source.getAttribute('media');
+                const type = source.getAttribute('type');
+                const isDesktop = media && media.includes('min-width: 769px');
+                const isWebP = type === 'image/webp';
+                const basePath = 'imagens/';
+                
+                if (isDesktop) {
+                    const srcset = `${basePath}dashboard-hero-${theme}.jpg 1536w`;
+                    source.setAttribute('srcset', isLocal ? srcset + ', ' + srcset : srcset);
+                } else {
+                    const filename = isWebP 
+                        ? `dashboard-hero-${theme}-mobile-optimized.webp`
+                        : `dashboard-hero-${theme}-mobile-optimized.jpg`;
+                    const srcset = `${basePath}${filename} 768w`;
+                    source.setAttribute('srcset', isLocal ? srcset + ', ' + srcset : srcset);
+                }
+            });
+            
+            // Update img fallback
+            dashboardImg.src = isLocal 
+                ? `imagens/dashboard-hero-${theme}.jpg`
+                : `/imagens/dashboard-hero-${theme}.jpg`;
+        }
+        
+        // Navigate to React app pages
+        function navigateToPage(path) {
+            const isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost';
+            
+            if (isLocal) {
+                // Local: redirect to localhost:3000
+                window.location.href = 'http://localhost:3000' + path;
+            } else {
+                // Production: try to navigate directly
+                // Nginx should handle the route and serve the React app
+                window.location.href = path;
+            }
+        }
+        
+        // Mobile menu toggle
+        function toggleMobileMenu(open) {
+            const menu = document.querySelector('.mobile-menu');
+            const overlay = document.querySelector('.mobile-menu-overlay');
+            
+            if (open) {
+                menu.classList.add('open');
+                overlay.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            } else {
+                menu.classList.remove('open');
+                overlay.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        }
+        
+        // Initialize theme icons
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        document.querySelectorAll('.theme-icon-light').forEach(el => {
+            el.style.display = currentTheme === 'light' ? 'block' : 'none';
+        });
+        document.querySelectorAll('.theme-icon-dark').forEach(el => {
+            el.style.display = currentTheme === 'dark' ? 'block' : 'none';
+        });
+        
+        // Initialize dashboard image based on current theme and environment
+        updateDashboardImage(currentTheme);
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    const headerHeight = document.querySelector('.header').offsetHeight;
+                    const targetPosition = target.offsetTop - headerHeight - 20;
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // Supabase configuration
+        const SUPABASE_URL = 'https://suqjifkhmekcdflwowiw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I';
+        
+        // Category translations
+        const categoryMap = {
+            'TECHNOLOGY': 'Technology',
+            'GAMING': 'Gaming',
+            'MUSIC': 'Music',
+            'LIFESTYLE': 'Lifestyle',
+            'ENTERTAINMENT': 'Entertainment',
+            'EDUCATION': 'Education',
+            'BUSINESS': 'Business',
+            'EMERGING TRENDS': 'Emerging Trends'
+        };
+        
+        // Format volume to K/M
+        function formatVolume(volume) {
+            if (volume >= 1000000) {
+                return (volume / 1000000).toFixed(1) + 'M';
+            } else if (volume >= 1000) {
+                return (volume / 1000).toFixed(0) + 'K';
+            }
+            return volume.toString();
+        }
+        
+        // Generate chart points for SVG
+        function generateChartPoints(growthPercentage) {
+            const growth = parseFloat(growthPercentage);
+            if (growth > 1000) {
+                // Exponential growth
+                return "0,55 40,50 80,40 120,25 160,15 200,5";
+            } else if (growth > 500) {
+                // Strong growth
+                return "0,50 40,45 80,35 120,20 160,10 200,5";
+            } else {
+                // Moderate growth
+                return "0,45 40,40 80,30 120,20 160,15 200,10";
+            }
+        }
+        
+        // Create trending topic card
+        function createTrendingCard(trend, index) {
+            const category = categoryMap[trend.category] || trend.category;
+            
+            return `
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s;animation:fadeIn 0.5s ease-in-out ${index * 0.1}s both">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">${category.en}</p>
+                        </div>
+                        <div style="background:rgba(34,197,94,0.2);color:#16a34a;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            +${trend.growth}%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="url(#trend-gradient-${index})" stroke-width="2" points="${generateChartPoints(trend.growth)}" />
+                            <defs>
+                                <linearGradient id="trend-gradient-${index}" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.5" />
+                                    <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>${formatVolume(trend.volume)}</strong></span>
+                        <span style="color:#16a34a;font-weight:600">
+                            Exploding
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Removed fetchTrendingTopics - no longer needed
+        /*async function fetchTrendingTopics() {
+            const container = document.getElementById('trending-topics-container');
+            const loadingEl = document.getElementById('trending-loading');
+            
+            console.log('Starting trends search...');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_youtube_trends`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Dados recebidos:', data);
+                
+                // Filter and sort trends (only positive growth)
+                const risingTrends = (data || [])
+                    .filter(trend => parseFloat(trend.growth) > 0)
+                    .sort((a, b) => parseFloat(b.growth) - parseFloat(a.growth))
+                    .slice(0, 10); // Show top 10 trends
+                
+                console.log('Filtered trends:', risingTrends);
+                
+                // Hide loading first
+                if (loadingEl) loadingEl.style.display = 'none';
+                
+                // Clear only the cards, not the loading element
+                const existingCards = container.querySelectorAll('div[style*="flex:0 0 340px"]');
+                existingCards.forEach(card => card.remove());
+                
+                if (risingTrends.length > 0) {
+                    // Add trend cards
+                    risingTrends.forEach((trend, index) => {
+                        const cardHTML = createTrendingCard(trend, index);
+                        console.log(`Card ${index} HTML:`, cardHTML);
+                        container.innerHTML += cardHTML;
+                    });
+                    console.log('Container after adding cards:', container.innerHTML);
+                } else {
+                    // Show fallback content if no data
+                    container.innerHTML = `
+                        <div style="width:100%;text-align:center;padding:40px">
+                            <p style="color:var(--color-text-secondary)">
+                                No trends available at the moment
+                            </p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error fetching trends:', error);
+                // Remove loading only, don't clear container
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
+                // Show static cards that are already in HTML
+                const staticCards = container.querySelectorAll('div[style*="flex:0 0 340px"]');
+                staticCards.forEach(card => {
+                    card.style.display = '';
+                });
+            }
+        }*/
+        
+        // Create declining topic card - removed
+        /*function createDecliningCard(trend, index) {
+            const lang = document.documentElement.getAttribute('data-lang');
+            const category = categoryMap[trend.category] || trend.category;
+            const declinePercentage = Math.abs(parseFloat(trend.growth));
+            
+            return `
+                <div style="flex:0 0 340px;background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.3s;animation:fadeIn 0.5s ease-in-out ${index * 0.1}s both">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:600;margin-bottom:4px">${trend.topic}</h3>
+                            <p style="font-size:14px;color:var(--color-text-secondary)">${category.en}</p>
+                        </div>
+                        <div style="background:rgba(220,38,38,0.15);color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:600">
+                            -${declinePercentage}%
+                        </div>
+                    </div>
+                    <div style="height:60px;margin:16px 0">
+                        <svg width="100%" height="100%" viewBox="0 0 200 60" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="#dc2626" stroke-width="2" points="${generateDecliningChartPoints(declinePercentage)}" />
+                        </svg>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:14px">
+                        <span style="color:var(--color-text-secondary)">Volume: <strong>${formatVolume(trend.volume)}</strong></span>
+                        <span style="color:#b91c1c;font-weight:700">
+                            Declining
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Generate declining chart points
+        function generateDecliningChartPoints(declinePercentage) {
+            if (declinePercentage > 70) {
+                // Steep decline
+                return "0,10 40,15 80,25 120,35 160,45 200,55";
+            } else if (declinePercentage > 40) {
+                // Moderate decline
+                return "0,15 40,20 80,30 120,40 160,45 200,50";
+            } else {
+                // Gradual decline
+                return "0,20 40,25 80,30 120,35 160,40 200,45";
+            }
+        }
+        
+        // Fetch declining topics from Supabase
+        async function fetchDecliningTopics() {
+            const container = document.getElementById('declining-topics-container');
+            const loadingEl = document.getElementById('declining-loading');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_youtube_trends`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Filter and sort declining trends (negative growth)
+                const decliningTrends = (data || [])
+                    .filter(trend => parseFloat(trend.growth) < 0)
+                    .sort((a, b) => parseFloat(a.growth) - parseFloat(b.growth))
+                    .slice(0, 6); // Show top 6 declining trends
+                
+                // Hide loading first
+                if (loadingEl) loadingEl.style.display = 'none';
+                
+                // Clear only the cards, not the loading element
+                const existingCards = container.querySelectorAll('div[style*="flex:0 0 340px"]');
+                existingCards.forEach(card => card.remove());
+                
+                if (decliningTrends.length > 0) {
+                    // Add trend cards
+                    decliningTrends.forEach((trend, index) => {
+                        container.innerHTML += createDecliningCard(trend, index);
+                    });
+                } else {
+                    // Show fallback content if no data
+                    container.innerHTML = `
+                        <div style="width:100%;text-align:center;padding:40px">
+                            <p style="color:var(--color-text-secondary)">
+                                No declining trends at the moment
+                            </p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error fetching declining trends:', error);
+                // Remove loading and keep static content
+                if (loadingEl) loadingEl.remove();
+            }
+        }*/
+        
+        // Auto-scroll carousel - removed (was for testimonials/trends)
+        /*function startAutoScroll(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            let scrollAmount = 0;
+            let scrollDirection = 1;
+            let intervalId = null;
+            
+            const scroll = () => {
+                if (container.scrollWidth <= container.clientWidth) return;
+                
+                scrollAmount += scrollDirection * 1;
+                container.scrollLeft = scrollAmount;
+                
+                // Reverse direction at ends
+                if (scrollAmount >= container.scrollWidth - container.clientWidth) {
+                    scrollDirection = -1;
+                } else if (scrollAmount <= 0) {
+                    scrollDirection = 1;
+                }
+            };
+            
+            // Start scrolling
+            intervalId = setInterval(scroll, 30);
+            
+            // Pause on hover
+            container.addEventListener('mouseenter', () => {
+                if (intervalId) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                }
+            });
+            
+            container.addEventListener('mouseleave', () => {
+                if (!intervalId) {
+                    intervalId = setInterval(scroll, 30);
+                }
+            });
+        }*/
+        
+        // Tooltip functions
+        let tooltipTimeout;
+        function showTooltip() {
+            clearTimeout(tooltipTimeout);
+            document.getElementById('url-tooltip').classList.add('show');
+        }
+        
+        function hideTooltip() {
+            tooltipTimeout = setTimeout(() => {
+                document.getElementById('url-tooltip').classList.remove('show');
+            }, 200);
+        }
+        
+        function toggleTooltip() {
+            const tooltip = document.getElementById('url-tooltip');
+            tooltip.classList.toggle('show');
+        }
+        
+        // Loading steps for analyze function - English only
+        const loadingSteps = [
+            { text: "Reading your website content...", icon: "🔍" },
+            { text: "Understanding your product...", icon: "🧠" },
+            { text: "Analyzing your market niche...", icon: "📊" },
+            { text: "Searching YouTube discussions...", icon: "🎬" },
+            { text: "Finding potential customers...", icon: "👥" },
+            { text: "Identifying pain points...", icon: "💬" },
+            { text: "Generating personalized response...", icon: "🤖" },
+            { text: "Finalizing simulation...", icon: "✨" }
+        ];
+        
+        // Normalize URL function
+        function normalizeUrl(inputUrl) {
+            let normalizedUrl = inputUrl.trim();
+            if (!normalizedUrl.match(/^https?:\/\//i)) {
+                normalizedUrl = 'https://' + normalizedUrl;
+            }
+            return normalizedUrl;
+        }
+        
+        // Validate URL function
+        function validateUrl(inputUrl) {
+            try {
+                const urlObj = new URL(inputUrl);
+                return urlObj.hostname.includes('.');
+            } catch {
+                return false;
+            }
+        }
+        
+        // Analyze website function
+        async function analyzeWebsite() {
+            const lang = document.documentElement.getAttribute('data-lang');
+            const urlInput = document.getElementById('website-url');
+            const url = urlInput.value.trim();
+            const errorDiv = document.getElementById('error-message');
+            const loadingContainer = document.getElementById('loading-container');
+            const resultsContainer = document.getElementById('results-container');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            
+            // Reset states
+            errorDiv.style.display = 'none';
+            resultsContainer.style.display = 'none';
+            resultsContainer.innerHTML = '';
+            urlInput.classList.remove('error');
+            
+            if (!url) {
+                errorDiv.textContent = 'Please enter a URL';
+                errorDiv.style.display = 'block';
+                urlInput.classList.add('error');
+                return;
+            }
+            
+            // Normalize and validate URL
+            const normalizedUrl = normalizeUrl(url);
+            if (!validateUrl(normalizedUrl)) {
+                errorDiv.textContent = 'Please enter a valid URL (e.g., https://example.com)';
+                errorDiv.style.display = 'block';
+                urlInput.classList.add('error');
+                return;
+            }
+            
+            // Start loading
+            analyzeBtn.disabled = true;
+            urlInput.disabled = true;
+            loadingContainer.style.display = 'block';
+            
+            // Animate loading steps
+            let currentStep = 0;
+            const steps = loadingSteps;
+            const totalSteps = steps.length;
+            const minStepTime = 800;
+            const maxStepTime = 1500;
+            
+            const updateLoadingStep = () => {
+                const step = steps[currentStep];
+                document.getElementById('loading-icon').textContent = step.icon;
+                document.getElementById('loading-text').innerHTML = `
+                    <span style="margin-right:8px">${step.icon}</span>${step.text}
+                `;
+                document.getElementById('loading-progress').style.width = 
+                    `${((currentStep + 1) / totalSteps) * 100}%`;
+            };
+            
+            updateLoadingStep();
+            
+            const stepInterval = setInterval(() => {
+                if (currentStep < totalSteps - 1) {
+                    currentStep++;
+                    updateLoadingStep();
+                }
+            }, Math.floor(Math.random() * (maxStepTime - minStepTime) + minStepTime));
+            
+            try {
+                // Detect client IP
+                let clientIP = '127.0.0.1'; // Default for development
+                
+                try {
+                    // In production, try to get public IP
+                    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                        try {
+                            // Option 1: api.ipify.org
+                            const ipResponse = await fetch('https://api.ipify.org?format=json');
+                            const ipData = await ipResponse.json();
+                            clientIP = ipData.ip;
+                        } catch {
+                            // Option 2: Fallback to ipapi.co
+                            const ipResponse = await fetch('https://ipapi.co/json/');
+                            const ipData = await ipResponse.json();
+                            clientIP = ipData.ip;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error getting IP:', error);
+                    // If both fail, show error to user
+                    errorDiv.textContent = 'Unable to detect your IP address. Please try again later.';
+                    errorDiv.style.display = 'block';
+                    loadingContainer.style.display = 'none';
+                    analyzeBtn.disabled = false;
+                    urlInput.disabled = false;
+                    clearInterval(stepInterval);
+                    return;
+                }
+                
+                // Build request body
+                const requestBody = {
+                    url: normalizedUrl,
+                    language: lang
+                };
+                
+                // Only add IP if we got it
+                if (clientIP) {
+                    requestBody.ip = clientIP;
+                }
+                
+                // Call the edge function
+                const startTime = Date.now();
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-url`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                // Ensure minimum loading time
+                const elapsedTime = Date.now() - startTime;
+                const minimumLoadingTime = totalSteps * minStepTime;
+                
+                if (elapsedTime < minimumLoadingTime) {
+                    await new Promise(resolve => 
+                        setTimeout(resolve, minimumLoadingTime - elapsedTime)
+                    );
+                }
+                
+                // Complete remaining steps
+                for (let i = currentStep; i < totalSteps; i++) {
+                    currentStep = i;
+                    updateLoadingStep();
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+                
+                clearInterval(stepInterval);
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success && data.simulation) {
+                    // Display results
+                    displayResults(data.simulation, lang);
+                } else {
+                    // Handle errors
+                    let errorMessage = 'Error generating simulation. Please try again.';
+                    
+                    if (response.status === 429 || data.error?.includes('limit')) {
+                        errorMessage = "You've reached the limit of 3 analyses per day. Try again tomorrow!";
+                    } else if (data.error?.includes('fetch') || data.error?.includes('Jina')) {
+                        errorMessage = 'Unable to access this website. Please check the URL and try again.';
+                    }
+                    
+                    errorDiv.textContent = errorMessage;
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorDiv.textContent = 'Error connecting to server. Please try again.';
+                errorDiv.style.display = 'block';
+                clearInterval(stepInterval);
+            } finally {
+                loadingContainer.style.display = 'none';
+                analyzeBtn.disabled = false;
+                urlInput.disabled = false;
+            }
+        }
+        
+        // Display results function
+        function displayResults(simulation, lang) {
+            const resultsContainer = document.getElementById('results-container');
+            resultsContainer.style.display = 'block';
+            
+            const formatNumber = (num) => {
+                return new Intl.NumberFormat('en-US').format(num);
+            };
+            
+            resultsContainer.innerHTML = `
+                <!-- Video Found Card -->
+                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;margin-bottom:24px;text-align:left">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                        <div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">🎬</div>
+                        <h3 style="font-size:18px;font-weight:700;margin:0">
+                            Video Found
+                        </h3>
+                    </div>
+                    <div style="font-size:16px;font-weight:600;margin-bottom:12px">${simulation.video.title}</div>
+                    <div style="display:flex;gap:16px;font-size:14px;color:var(--color-text-secondary)">
+                        <span>${formatNumber(simulation.video.views)} views</span>
+                        <span>${formatNumber(simulation.video.comments)} comments</span>
+                        <span>${simulation.video.category}</span>
+                    </div>
+                </div>
+                
+                <!-- Lead Comment Card -->
+                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;margin-bottom:24px;text-align:left">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                        <div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">👤</div>
+                        <h3 style="font-size:18px;font-weight:700;margin:0">
+                            Potential Customer Comment
+                        </h3>
+                    </div>
+                    <div style="font-size:16px;line-height:1.6;padding:16px;background:var(--color-background);border-radius:8px;margin-bottom:12px">
+                        "${simulation.lead_comment.text}"
+                    </div>
+                    <div style="display:flex;gap:24px;margin-top:12px">
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
+                                Lead Score:
+                            </span>
+                            <span style="font-size:14px;font-weight:600;color:var(--color-primary)">${simulation.lead_comment.lead_score}/10</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
+                                Sentiment:
+                            </span>
+                            <span style="font-size:14px;font-weight:600;color:var(--color-primary)">
+                                ${simulation.lead_comment.sentiment}
+                            </span>
+                        </div>
+                    </div>
+                    ${simulation.lead_comment.justification ? 
+                        `<div style="font-size:13px;color:var(--color-text-secondary);font-style:italic;margin-top:8px">
+                            ${simulation.lead_comment.justification}
+                        </div>` : ''}
+                </div>
+                
+                <!-- Liftlio Response Card -->
+                <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:24px;text-align:left">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                        <div style="width:40px;height:40px;background:var(--gradient-landing);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px">🤖</div>
+                        <h3 style="font-size:18px;font-weight:700;margin:0">
+                            Liftlio's Response
+                        </h3>
+                    </div>
+                    <div style="font-size:16px;line-height:1.6;padding:16px;background:var(--color-background);border-radius:8px;margin-bottom:12px;border-left:4px solid var(--color-primary)">
+                        ${simulation.liftlio_response.message}
+                    </div>
+                    <div style="display:flex;gap:24px;margin-top:12px">
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
+                                Sentiment:
+                            </span>
+                            <span style="font-size:14px;font-weight:600;color:var(--color-primary)">
+                                ${Math.round(simulation.liftlio_response.sentiment_score * 100)}%
+                            </span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:12px;color:var(--color-text-secondary);text-transform:uppercase">
+                                Relevance:
+                            </span>
+                            <span style="font-size:14px;font-weight:600;color:var(--color-primary)">
+                                ${Math.round(simulation.liftlio_response.relevance_score * 100)}%
+                            </span>
+                        </div>
+                    </div>
+                    ${simulation.liftlio_response.justification ? 
+                        `<div style="font-size:13px;color:var(--color-text-secondary);font-style:italic;margin-top:8px">
+                            ${simulation.liftlio_response.justification}
+                        </div>` : ''}
+                </div>
+            `;
+        }
+        
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            // Add enter key support for URL input
+            document.getElementById('website-url').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    analyzeWebsite();
+                }
+            });
+            
+            
+            // Initialize particles effect
+            initParticles();
+        });
+        
+        // Energy Network Transmission Effect
+        function initParticles() {
+            const canvas = document.getElementById('particles-canvas');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            let animationId;
+            let time = 0;
+            let nodes = [];
+            let energyPulses = [];
+            let gridNetwork = [];
+            
+            // Set canvas size
+            function resizeCanvas() {
+                const heroSection = canvas.closest('.hero-section');
+                if (heroSection) {
+                    canvas.width = heroSection.offsetWidth;
+                    canvas.height = heroSection.offsetHeight;
+                }
+            }
+            
+            // Network node class
+            class NetworkNode {
+                constructor(x, y, type = 'relay') {
+                    this.x = x;
+                    this.y = y;
+                    this.type = type; // 'source', 'relay', 'growth'
+                    this.energy = 0;
+                    this.maxEnergy = 1;
+                    this.connections = [];
+                    this.pulsePhase = Math.random() * Math.PI * 2;
+                    this.active = false;
+                    this.growthFactor = 0;
+                }
+                
+                update() {
+                    // Energy decay
+                    this.energy *= 0.95;
+                    
+                    // Pulse animation
+                    this.pulsePhase += 0.05;
+                    
+                    // Growth nodes expand over time
+                    if (this.type === 'growth' && this.active) {
+                        this.growthFactor = Math.min(1, this.growthFactor + 0.01);
+                    }
+                    
+                    // Source nodes generate energy
+                    if (this.type === 'source') {
+                        this.energy = 0.5 + Math.sin(this.pulsePhase) * 0.3;
+                    }
+                }
+                
+                draw() {
+                    const pulse = Math.sin(this.pulsePhase) * 0.2 + 0.8;
+                    let radius = 1;
+                    let opacity = 0.03;
+                    
+                    if (this.type === 'source') {
+                        radius = 2 * pulse;
+                        opacity = 0.08;
+                    } else if (this.type === 'growth') {
+                        radius = 1.5 + this.growthFactor * 2;
+                        opacity = 0.05 * this.growthFactor;
+                    }
+                    
+                    // Node glow based on energy
+                    if (this.energy > 0.01) {
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, radius + this.energy * 10, 0, Math.PI * 2);
+                        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, radius + this.energy * 10);
+                        gradient.addColorStop(0, `rgba(129, 140, 248, ${this.energy * 0.15})`);
+                        gradient.addColorStop(1, 'rgba(129, 140, 248, 0)');
+                        ctx.fillStyle = gradient;
+                        ctx.fill();
+                    }
+                    
+                    // Node core
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(129, 140, 248, ${opacity + this.energy * 0.1})`;
+                    ctx.fill();
+                    
+                    // Growth indicator
+                    if (this.type === 'growth' && this.growthFactor > 0) {
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, radius + 5 * this.growthFactor, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(244, 114, 182, ${0.03 * this.growthFactor})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            // Energy pulse class
+            class EnergyPulse {
+                constructor(startNode, endNode) {
+                    this.start = startNode;
+                    this.end = endNode;
+                    this.progress = 0;
+                    this.speed = 0.01;
+                    this.energy = 0.5;
+                    this.trail = [];
+                    this.maxTrailLength = 15;
+                }
+                
+                update() {
+                    this.progress += this.speed;
+                    
+                    // Calculate current position
+                    const x = this.start.x + (this.end.x - this.start.x) * this.progress;
+                    const y = this.start.y + (this.end.y - this.start.y) * this.progress;
+                    
+                    // Add to trail
+                    this.trail.push({ x, y });
+                    if (this.trail.length > this.maxTrailLength) {
+                        this.trail.shift();
+                    }
+                    
+                    // Transfer energy when reaching destination
+                    if (this.progress >= 1) {
+                        this.end.energy = Math.min(this.end.maxEnergy, this.end.energy + this.energy);
+                        
+                        // Activate growth nodes
+                        if (this.end.type === 'growth') {
+                            this.end.active = true;
+                        }
+                        
+                        // Create new pulses from relay nodes
+                        if (this.end.type === 'relay' && this.end.energy > 0.3) {
+                            this.end.connections.forEach(connection => {
+                                if (Math.random() < 0.5) {
+                                    energyPulses.push(new EnergyPulse(this.end, connection));
+                                }
+                            });
+                        }
+                        
+                        return false;
+                    }
+                    
+                    return true;
+                }
+                
+                draw() {
+                    // Draw trail
+                    if (this.trail.length > 1) {
+                        ctx.beginPath();
+                        this.trail.forEach((point, i) => {
+                            if (i === 0) ctx.moveTo(point.x, point.y);
+                            else ctx.lineTo(point.x, point.y);
+                        });
+                        
+                        const gradient = ctx.createLinearGradient(
+                            this.trail[0].x, this.trail[0].y,
+                            this.trail[this.trail.length - 1].x, this.trail[this.trail.length - 1].y
+                        );
+                        gradient.addColorStop(0, 'rgba(129, 140, 248, 0)');
+                        gradient.addColorStop(1, 'rgba(129, 140, 248, 0.2)');
+                        ctx.strokeStyle = gradient;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                    
+                    // Draw pulse head
+                    if (this.trail.length > 0) {
+                        const head = this.trail[this.trail.length - 1];
+                        ctx.beginPath();
+                        ctx.arc(head.x, head.y, 2, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                        ctx.fill();
+                    }
+                }
+            }
+            
+            // Create network grid
+            function createNetwork() {
+                nodes = [];
+                gridNetwork = [];
+                
+                const spacing = 100;
+                const cols = Math.ceil(canvas.width / spacing) + 1;
+                const rows = Math.ceil(canvas.height / spacing) + 1;
+                
+                // Create grid nodes
+                for (let i = 0; i < cols; i++) {
+                    for (let j = 0; j < rows; j++) {
+                        const x = i * spacing;
+                        const y = j * spacing;
+                        
+                        // Add some randomness to position
+                        const offsetX = (Math.random() - 0.5) * 30;
+                        const offsetY = (Math.random() - 0.5) * 30;
+                        
+                        let type = 'relay';
+                        
+                        // Create some source nodes
+                        if (Math.random() < 0.05) {
+                            type = 'source';
+                        }
+                        // Create growth nodes for scaling effect
+                        else if (Math.random() < 0.1) {
+                            type = 'growth';
+                        }
+                        
+                        const node = new NetworkNode(x + offsetX, y + offsetY, type);
+                        nodes.push(node);
+                        
+                        if (!gridNetwork[i]) gridNetwork[i] = [];
+                        gridNetwork[i][j] = node;
+                    }
+                }
+                
+                // Create connections
+                for (let i = 0; i < cols; i++) {
+                    for (let j = 0; j < rows; j++) {
+                        const node = gridNetwork[i][j];
+                        
+                        // Connect to neighbors
+                        const neighbors = [
+                            [i + 1, j],
+                            [i, j + 1],
+                            [i + 1, j + 1],
+                            [i - 1, j + 1]
+                        ];
+                        
+                        neighbors.forEach(([ni, nj]) => {
+                            if (ni >= 0 && ni < cols && nj >= 0 && nj < rows) {
+                                const neighbor = gridNetwork[ni][nj];
+                                if (neighbor) {
+                                    node.connections.push(neighbor);
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+            
+            // Draw network connections
+            function drawConnections() {
+                ctx.strokeStyle = 'rgba(129, 140, 248, 0.02)';
+                ctx.lineWidth = 0.5;
+                
+                nodes.forEach(node => {
+                    node.connections.forEach(connection => {
+                        // Only draw if there's energy flow
+                        if (node.energy > 0.1 || connection.energy > 0.1) {
+                            ctx.beginPath();
+                            ctx.moveTo(node.x, node.y);
+                            ctx.lineTo(connection.x, connection.y);
+                            ctx.stroke();
+                        }
+                    });
+                });
+            }
+            
+            // Animation loop
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Update time
+                time++;
+                
+                // Draw connections first (background)
+                drawConnections();
+                
+                // Update and draw nodes
+                nodes.forEach(node => {
+                    node.update();
+                    node.draw();
+                });
+                
+                // Create new pulses from source nodes
+                if (time % 120 === 0) {
+                    nodes.filter(n => n.type === 'source').forEach(source => {
+                        source.connections.forEach(connection => {
+                            if (Math.random() < 0.2) {
+                                energyPulses.push(new EnergyPulse(source, connection));
+                            }
+                        });
+                    });
+                }
+                
+                // Update and draw energy pulses
+                energyPulses = energyPulses.filter(pulse => {
+                    const alive = pulse.update();
+                    if (alive) pulse.draw();
+                    return alive;
+                });
+                
+                animationId = requestAnimationFrame(animate);
+            }
+            
+            // Start animation only in dark mode
+            function checkThemeAndAnimate() {
+                const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (isDarkMode && !animationId) {
+                    resizeCanvas();
+                    createNetwork();
+                    animate();
+                } else if (!isDarkMode && animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    nodes = [];
+                    energyPulses = [];
+                }
+            }
+            
+            // Initial setup
+            resizeCanvas();
+            checkThemeAndAnimate();
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                if (animationId) {
+                    createNetwork();
+                }
+            });
+            
+            // Watch for theme changes
+            const observer = new MutationObserver(() => {
+                checkThemeAndAnimate();
+            });
+            
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['data-theme']
+            });
+        }
+        
+        // Hero 3D Particles - Carrega apenas quando THREE.js estiver disponível
+        function initThreeJS() {
+            const heroSection = document.getElementById('hero-section');
+            if (!heroSection || typeof THREE === 'undefined') {
+                // Se THREE ainda não carregou, tenta novamente depois
+                if (typeof THREE === 'undefined') {
+                    setTimeout(initThreeJS, 100);
+                }
+                return;
+            }
+            
+            // Criar container para o efeito
+            const hero3dContainer = document.createElement('div');
+            hero3dContainer.id = 'hero-3d';
+            hero3dContainer.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 1;
+                pointer-events: none;
+            `;
+            
+            // Inserir no hero section
+            const heroBackground = heroSection.querySelector('.hero-background');
+            if (heroBackground) {
+                heroBackground.insertAdjacentElement('afterend', hero3dContainer);
+            } else {
+                heroSection.insertBefore(hero3dContainer, heroSection.firstChild);
+            }
+            
+            // Setup Three.js
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, heroSection.offsetWidth / heroSection.offsetHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            
+            renderer.setSize(heroSection.offsetWidth, heroSection.offsetHeight);
+            hero3dContainer.appendChild(renderer.domElement);
+            
+            // Create wave of particles
+            const waveGeometry = new THREE.BufferGeometry();
+            const waveCount = 10000;
+            const wavePositions = new Float32Array(waveCount * 3);
+            
+            for (let i = 0; i < waveCount; i++) {
+                const x = (Math.random() - 0.5) * 50;
+                const z = (Math.random() - 0.5) * 50;
+                const y = Math.sin(x * 0.1) * Math.cos(z * 0.1) * 2;
+                
+                wavePositions[i * 3] = x;
+                wavePositions[i * 3 + 1] = y;
+                wavePositions[i * 3 + 2] = z;
+            }
+            
+            waveGeometry.setAttribute('position', new THREE.BufferAttribute(wavePositions, 3));
+            
+            const waveMaterial = new THREE.PointsMaterial({
+                size: 0.08, // Slightly smaller particles
+                color: '#6366f1',
+                transparent: true,
+                opacity: 0.35, // Opacidade reduzida de 0.6 para 0.35
+                blending: THREE.AdditiveBlending
+            });
+            
+            const waveMesh = new THREE.Points(waveGeometry, waveMaterial);
+            scene.add(waveMesh);
+            
+            camera.position.set(0, 10, 20);
+            camera.lookAt(0, 0, 0);
+            
+            function animateHero() {
+                requestAnimationFrame(animateHero);
+                
+                // Animate wave - slower movement like a galaxy
+                const positions = waveGeometry.attributes.position.array;
+                const time = Date.now() * 0.0003; // 3x mais lento
+                
+                for (let i = 0; i < waveCount; i++) {
+                    const x = positions[i * 3];
+                    const z = positions[i * 3 + 2];
+                    positions[i * 3 + 1] = Math.sin(x * 0.1 + time) * Math.cos(z * 0.1 + time) * 2;
+                }
+                
+                waveGeometry.attributes.position.needsUpdate = true;
+                waveMesh.rotation.y += 0.0002; // 5x slower rotation, like a galaxy
+                
+                renderer.render(scene, camera);
+            }
+            
+            animateHero();
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                camera.aspect = heroSection.offsetWidth / heroSection.offsetHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(heroSection.offsetWidth, heroSection.offsetHeight);
+            });
+        }
+        
+        // Inicializa three.js quando carregar ou após DOM estar pronto
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initThreeJS);
+        } else {
+            initThreeJS();
+        }
+    </script>
 </body>
 </html>
