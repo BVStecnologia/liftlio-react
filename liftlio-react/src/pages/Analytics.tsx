@@ -1115,6 +1115,7 @@ const Analytics: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [hasData, setHasData] = useState(false);
+  const [dataChecked, setDataChecked] = useState(false); // Novo estado para saber se já verificamos
   const [showGuide, setShowGuide] = useState(false);
   const [metricsData, setMetricsData] = useState({
     organicTraffic: 0,
@@ -1195,7 +1196,8 @@ const Analytics: React.FC = () => {
           totalEvents24h: allEvents24h.length,
           pageviews24h: pageviews
         });
-        setHasData(true);
+        setHasData(true); // Tag conectada = tem dados reais
+        setDataChecked(true); // Marcar que verificamos
         // Não colapsar automaticamente - deixar o usuário controlar o estado
       } else {
         setTagStatus({
@@ -1282,6 +1284,7 @@ const Analytics: React.FC = () => {
         // Se não há projeto, mostrar dados demo
         console.log('⚠️ No project ID, generating demo data...');
         setHasData(false);
+        setDataChecked(true); // Marcar que verificamos
         generateDemoData();
         setLoading(false);
         return;
@@ -1320,10 +1323,10 @@ const Analytics: React.FC = () => {
         // Process data for charts (agora sempre processa pois a função SQL já retorna demo se necessário)
         if (analytics && analytics.length > 0) {
           console.log('✅ Processing data (real or demo from SQL)...');
-          // Verifica se são dados demo baseado no visitor_id ou custom_data
-          // Dados reais têm visitor_id como 'v_xxx' ou similares, demo tem 'visitor_'
-          const isDemo = analytics[0]?.visitor_id?.startsWith('visitor_') || 
-                         analytics[0]?.custom_data?.demo === true;
+          // Verifica se são dados demo verificando a flag demo no custom_data
+          // A função SQL get_analytics_with_demo_fallback marca dados demo com custom_data.demo = true
+          const isDemo = analytics[0]?.custom_data?.demo === true || 
+                         analytics[0]?.custom_data?.demo === 'true';
           
           console.log('📊 Data type detection:', {
             firstVisitorId: analytics[0]?.visitor_id,
@@ -1333,6 +1336,7 @@ const Analytics: React.FC = () => {
           });
           
           setHasData(!isDemo);
+          setDataChecked(true); // Marcar que já verificamos o tipo de dados
           
           // Se são dados demo, usar valores demo bonitos ao invés de calcular
           if (isDemo) {
@@ -1380,6 +1384,7 @@ const Analytics: React.FC = () => {
       } catch (error) {
         console.error('Error fetching analytics:', error);
         setHasData(false);
+        setDataChecked(true); // Marcar que verificamos mesmo com erro
         // Set realistic demo data even on error
         generateDemoData();
       } finally {
@@ -2094,7 +2099,7 @@ const Analytics: React.FC = () => {
         </TagStatusCard>
       )}
 
-      {!hasData && (
+      {dataChecked && !hasData && (
         <>
           <DemoDataBadge>
             <IconComponent icon={FaIcons.FaInfoCircle} />
@@ -2125,7 +2130,7 @@ const Analytics: React.FC = () => {
         </>
       )}
 
-      {hasData && (
+      {dataChecked && hasData && (
         <InsightCard
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -2172,7 +2177,7 @@ const Analytics: React.FC = () => {
               <div>
                 <MetricTitle>
                   {metric.title}
-                  {!hasData && (
+                  {dataChecked && !hasData && (
                     <span 
                       title="Real data will appear once the tracking tag is installed"
                       style={{ 
@@ -2217,7 +2222,7 @@ const Analytics: React.FC = () => {
             <ChartTitle>
               <IconComponent icon={FaIcons.FaChartLine} /> Traffic Growth
             </ChartTitle>
-            {!hasData && <DemoIndicator>Demo Data</DemoIndicator>}
+            {dataChecked && !hasData && <DemoIndicator>Demo Data</DemoIndicator>}
           </ChartHeader>
           <ResponsiveContainer width="100%" height={400}>
             <AreaChart data={trafficData} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
@@ -2353,7 +2358,7 @@ const Analytics: React.FC = () => {
             <ChartTitle>
               <IconComponent icon={FaIcons.FaChartPie} /> Traffic Sources
             </ChartTitle>
-            {!hasData && <DemoIndicator>Demo</DemoIndicator>}
+            {dataChecked && !hasData && <DemoIndicator>Demo</DemoIndicator>}
           </ChartHeader>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
@@ -2393,7 +2398,7 @@ const Analytics: React.FC = () => {
             <ChartTitle>
               <IconComponent icon={FaIcons.FaChartBar} /> Growth vs Target
             </ChartTitle>
-            {!hasData && <DemoIndicator>Demo</DemoIndicator>}
+            {dataChecked && !hasData && <DemoIndicator>Demo</DemoIndicator>}
           </ChartHeader>
           <ResponsiveContainer width="100%" height={250}>
             <ComposedChart data={growthData}>
@@ -2443,7 +2448,7 @@ const Analytics: React.FC = () => {
             <ChartTitle>
               <IconComponent icon={FaIcons.FaMobile} /> Devices
             </ChartTitle>
-            {!hasData && <DemoIndicator>Demo</DemoIndicator>}
+            {dataChecked && !hasData && <DemoIndicator>Demo</DemoIndicator>}
           </ChartHeader>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={deviceData}>
@@ -2504,7 +2509,7 @@ const Analytics: React.FC = () => {
                 <IconComponent icon={FaIcons.FaFilter} style={{ color: chartColors.primary }} />
                 Engagement Funnel
               </ChartTitle>
-              {!hasData && <DemoIndicator>Demo</DemoIndicator>}
+              {dataChecked && !hasData && <DemoIndicator>Demo</DemoIndicator>}
             </ChartHeader>
             <div style={{ padding: '20px 10px', height: '250px' }}>
               {funnelData.map((item, index) => {
@@ -2588,7 +2593,7 @@ const Analytics: React.FC = () => {
                 <IconComponent icon={FaIcons.FaTachometerAlt} style={{ color: chartColors.primary }} />
                 Visit Quality Score
               </ChartTitle>
-              {!hasData && <DemoIndicator>Demo</DemoIndicator>}
+              {dataChecked && !hasData && <DemoIndicator>Demo</DemoIndicator>}
             </ChartHeader>
             <ResponsiveContainer width="100%" height={250}>
               <RadarChart data={qualityData}>
@@ -2632,7 +2637,7 @@ const Analytics: React.FC = () => {
                 <IconComponent icon={FaIcons.FaUserClock} style={{ color: chartColors.primary }} />
                 Return Rate
               </ChartTitle>
-              {!hasData && <DemoIndicator>Demo</DemoIndicator>}
+              {dataChecked && !hasData && <DemoIndicator>Demo</DemoIndicator>}
             </ChartHeader>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>

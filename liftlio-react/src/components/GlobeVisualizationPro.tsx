@@ -940,11 +940,11 @@ const GlobeVisualizationPro = forwardRef<GlobeVisualizationHandle, GlobeVisualiz
     fetchVisitorDataRef.current = fetchVisitorData;
   }, [fetchVisitorData]);
 
-  // Atualizar dados quando mudar de aba
+  // Atualizar dados quando mudar de aba - REMOVIDO fetchVisitorData para evitar loop
   useEffect(() => {
     console.log('📑 Tab changed to:', activeTab);
-    fetchVisitorData();
-  }, [activeTab, fetchVisitorData]);
+    // Não chamar fetchVisitorData aqui - já é chamado pelos outros mecanismos
+  }, [activeTab]);
 
   // SOLUTION 3: Multiple trigger mechanisms
   // useEffect separado para responder ao trigger externo
