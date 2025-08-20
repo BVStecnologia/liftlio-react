@@ -190,36 +190,6 @@
             color: rgba(255, 255, 255, 0.7);
         }
         
-        /* Language toggle */
-        .lang-toggle {
-            position: fixed;
-            bottom: 32px;
-            right: 32px;
-            display: flex;
-            gap: 8px;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 50px;
-            padding: 4px;
-        }
-        
-        .lang-btn {
-            padding: 8px 16px;
-            background: transparent;
-            border: none;
-            color: rgba(255, 255, 255, 0.6);
-            cursor: pointer;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .lang-btn.active {
-            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
-            color: white;
-        }
-        
         /* Footer */
         footer {
             text-align: center;
@@ -250,28 +220,6 @@
             .values-grid {
                 grid-template-columns: 1fr;
             }
-            
-            .lang-toggle {
-                bottom: 24px;
-                right: 24px;
-            }
-        }
-        
-        /* Hide Portuguese content by default */
-        [lang="pt"] {
-            display: none;
-        }
-        
-        html[data-lang="pt"] [lang="en"] {
-            display: none;
-        }
-        
-        html[data-lang="pt"] [lang="pt"] {
-            display: block;
-        }
-        
-        html[data-lang="pt"] .values-grid[lang="pt"] {
-            display: grid;
         }
     </style>
 </head>
@@ -281,8 +229,7 @@
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M11 1L4 8l7 7" stroke="currentColor" stroke-width="2" fill="none"/>
             </svg>
-            <span lang="en">Back</span>
-            <span lang="pt">Voltar</span>
+            Back
         </a>
         <div class="logo">
             <span class="logo-icon"></span>
@@ -291,139 +238,53 @@
     </header>
     
     <main>
-        <!-- English Content -->
-        <div lang="en">
-            <h1>About Liftlio</h1>
-            
-            <section>
-                <h2>Our Mission</h2>
-                <p>We believe in democratizing digital marketing. While traditional advertising platforms charge exorbitant prices for fleeting visibility, we've pioneered a revolutionary approach that creates lasting value through intelligent organic engagement.</p>
-            </section>
-            
-            <section>
-                <h2>Our Story</h2>
-                <p>Born from the frustration of burning through advertising budgets with diminishing returns, Liftlio emerged as the answer to a simple question: What if every marketing dollar spent created permanent value instead of temporary visibility?</p>
-                <p>Our founding team, composed of seasoned digital marketers and AI engineers, recognized that genuine engagement creates exponentially more value than paid impressions. By combining cutting-edge AI with deep understanding of social dynamics, we've created a platform that doesn't just find customers – it builds lasting relationships.</p>
-            </section>
-            
-            <section>
-                <h2>Our Values</h2>
-                <div class="values-grid">
-                    <div class="value-card">
-                        <div class="value-icon">💡</div>
-                        <div class="value-title">Innovation First</div>
-                        <div class="value-description">We constantly push boundaries to deliver solutions that didn't exist yesterday.</div>
-                    </div>
-                    <div class="value-card">
-                        <div class="value-icon">👥</div>
-                        <div class="value-title">Authentic Engagement</div>
-                        <div class="value-description">Real connections beat artificial metrics every time.</div>
-                    </div>
-                    <div class="value-card">
-                        <div class="value-icon">📈</div>
-                        <div class="value-title">Measurable Impact</div>
-                        <div class="value-description">Every action we take is designed to deliver tangible, lasting results.</div>
-                    </div>
-                    <div class="value-card">
-                        <div class="value-icon">🚀</div>
-                        <div class="value-title">Client Success</div>
-                        <div class="value-description">Your growth is our growth. We succeed when you succeed.</div>
-                    </div>
-                </div>
-            </section>
-            
-            <section>
-                <h2>The Technology</h2>
-                <p>Powered by advanced AI and real-time monitoring systems, Liftlio operates 24/7 to ensure no opportunity is missed. Our proprietary algorithms understand context, sentiment, and timing to create engagement that feels natural because it is natural – just intelligently amplified.</p>
-            </section>
-        </div>
+        <h1>About Liftlio</h1>
         
-        <!-- Portuguese Content -->
-        <div lang="pt">
-            <h1>Sobre o Liftlio</h1>
-            
-            <section>
-                <h2>Nossa Missão</h2>
-                <p>Acreditamos em democratizar o marketing digital. Enquanto plataformas tradicionais de publicidade cobram preços exorbitantes por visibilidade temporária, nós pioneiramos uma abordagem revolucionária que cria valor duradouro através de engajamento orgânico inteligente.</p>
-            </section>
-            
-            <section>
-                <h2>Nossa História</h2>
-                <p>Nascido da frustração de queimar orçamentos de publicidade com retornos decrescentes, o Liftlio surgiu como resposta a uma pergunta simples: E se cada real gasto em marketing criasse valor permanente em vez de visibilidade temporária?</p>
-                <p>Nossa equipe fundadora, composta por veteranos do marketing digital e engenheiros de IA, reconheceu que engajamento genuíno cria exponencialmente mais valor que impressões pagas. Combinando IA de ponta com profundo entendimento de dinâmicas sociais, criamos uma plataforma que não apenas encontra clientes – ela constrói relacionamentos duradouros.</p>
-            </section>
-            
-            <section>
-                <h2>Nossos Valores</h2>
-                <div class="values-grid" lang="pt">
-                    <div class="value-card">
-                        <div class="value-icon">💡</div>
-                        <div class="value-title">Inovação em Primeiro Lugar</div>
-                        <div class="value-description">Constantemente ultrapassamos limites para entregar soluções que não existiam ontem.</div>
-                    </div>
-                    <div class="value-card">
-                        <div class="value-icon">👥</div>
-                        <div class="value-title">Engajamento Autêntico</div>
-                        <div class="value-description">Conexões reais superam métricas artificiais sempre.</div>
-                    </div>
-                    <div class="value-card">
-                        <div class="value-icon">📈</div>
-                        <div class="value-title">Impacto Mensurável</div>
-                        <div class="value-description">Cada ação que tomamos é projetada para entregar resultados tangíveis e duradouros.</div>
-                    </div>
-                    <div class="value-card">
-                        <div class="value-icon">🚀</div>
-                        <div class="value-title">Sucesso do Cliente</div>
-                        <div class="value-description">Seu crescimento é nosso crescimento. Nós prosperamos quando você prospera.</div>
-                    </div>
+        <section>
+            <h2>Our Mission</h2>
+            <p>We believe in democratizing digital marketing. While traditional advertising platforms charge exorbitant prices for fleeting visibility, we've pioneered a revolutionary approach that creates lasting value through intelligent organic engagement.</p>
+        </section>
+        
+        <section>
+            <h2>Our Story</h2>
+            <p>Born from the frustration of burning through advertising budgets with diminishing returns, Liftlio emerged as the answer to a simple question: What if every marketing dollar spent created permanent value instead of temporary visibility?</p>
+            <p>Our founding team, composed of seasoned digital marketers and AI engineers, recognized that genuine engagement creates exponentially more value than paid impressions. By combining cutting-edge AI with deep understanding of social dynamics, we've created a platform that doesn't just find customers – it builds lasting relationships.</p>
+        </section>
+        
+        <section>
+            <h2>Our Values</h2>
+            <div class="values-grid">
+                <div class="value-card">
+                    <div class="value-icon">💡</div>
+                    <div class="value-title">Innovation First</div>
+                    <div class="value-description">We constantly push boundaries to deliver solutions that didn't exist yesterday.</div>
                 </div>
-            </section>
-            
-            <section>
-                <h2>A Tecnologia</h2>
-                <p>Alimentado por IA avançada e sistemas de monitoramento em tempo real, o Liftlio opera 24/7 para garantir que nenhuma oportunidade seja perdida. Nossos algoritmos proprietários entendem contexto, sentimento e timing para criar engajamento que parece natural porque é natural – apenas inteligentemente amplificado.</p>
-            </section>
-        </div>
+                <div class="value-card">
+                    <div class="value-icon">👥</div>
+                    <div class="value-title">Authentic Engagement</div>
+                    <div class="value-description">Real connections beat artificial metrics every time.</div>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">📈</div>
+                    <div class="value-title">Measurable Impact</div>
+                    <div class="value-description">Every action we take is designed to deliver tangible, lasting results.</div>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">🚀</div>
+                    <div class="value-title">Client Success</div>
+                    <div class="value-description">Your growth is our growth. We succeed when you succeed.</div>
+                </div>
+            </div>
+        </section>
+        
+        <section>
+            <h2>The Technology</h2>
+            <p>Powered by advanced AI and real-time monitoring systems, Liftlio operates 24/7 to ensure no opportunity is missed. Our proprietary algorithms understand context, sentiment, and timing to create engagement that feels natural because it is natural – just intelligently amplified.</p>
+        </section>
     </main>
     
     <footer>
-        <p lang="en">© 2025 Liftlio. All rights reserved.</p>
-        <p lang="pt">© 2025 Liftlio. Todos os direitos reservados.</p>
+        <p>© 2025 Liftlio. All rights reserved.</p>
     </footer>
-    
-    <!-- Language Toggle -->
-    <div class="lang-toggle">
-        <button class="lang-btn active" onclick="setLanguage('en')">EN</button>
-        <button class="lang-btn" onclick="setLanguage('pt')">PT</button>
-    </div>
-    
-    <script>
-        // Language toggle functionality
-        function setLanguage(lang) {
-            document.documentElement.setAttribute('data-lang', lang);
-            document.documentElement.setAttribute('lang', lang);
-            
-            // Update button states
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // Save preference
-            localStorage.setItem('preferredLanguage', lang);
-        }
-        
-        // Load saved language preference
-        const savedLang = localStorage.getItem('preferredLanguage') || 'en';
-        document.documentElement.setAttribute('data-lang', savedLang);
-        document.documentElement.setAttribute('lang', savedLang);
-        document.querySelectorAll('.lang-btn').forEach(btn => {
-            if (btn.textContent.toLowerCase() === savedLang) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-    </script>
 </body>
 </html>

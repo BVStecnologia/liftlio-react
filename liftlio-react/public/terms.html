@@ -183,36 +183,6 @@
             font-weight: bold;
         }
         
-        /* Language toggle */
-        .lang-toggle {
-            position: fixed;
-            bottom: 32px;
-            right: 32px;
-            display: flex;
-            gap: 8px;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 50px;
-            padding: 4px;
-        }
-        
-        .lang-btn {
-            padding: 8px 16px;
-            background: transparent;
-            border: none;
-            color: rgba(255, 255, 255, 0.6);
-            cursor: pointer;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .lang-btn.active {
-            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
-            color: white;
-        }
-        
         /* Footer */
         footer {
             text-align: center;
@@ -239,24 +209,6 @@
             main {
                 padding: 60px 24px;
             }
-            
-            .lang-toggle {
-                bottom: 24px;
-                right: 24px;
-            }
-        }
-        
-        /* Hide Portuguese content by default */
-        [lang="pt"] {
-            display: none;
-        }
-        
-        html[data-lang="pt"] [lang="en"] {
-            display: none;
-        }
-        
-        html[data-lang="pt"] [lang="pt"] {
-            display: block;
         }
     </style>
 </head>
@@ -266,8 +218,7 @@
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M11 1L4 8l7 7" stroke="currentColor" stroke-width="2" fill="none"/>
             </svg>
-            <span lang="en">Back</span>
-            <span lang="pt">Voltar</span>
+            Back
         </a>
         <div class="logo">
             <span class="logo-icon"></span>
@@ -276,227 +227,97 @@
     </header>
     
     <main>
-        <!-- English Content -->
-        <div lang="en">
-            <h1>Terms of Service</h1>
-            <p class="last-updated">Last updated: January 2024</p>
-            
-            <section>
-                <h2>
-                    <span class="section-icon">📄</span>
-                    The Agreement
-                </h2>
-                <p>By using Liftlio, you're entering a partnership designed for mutual success. These terms ensure we can deliver exceptional value while protecting both parties.</p>
-            </section>
-            
-            <section>
-                <h2>Our Service</h2>
-                <p>Liftlio provides intelligent YouTube monitoring and engagement automation that:</p>
-                <ul>
-                    <li>Monitors channels relevant to your business 24/7</li>
-                    <li>Identifies opportunities for organic engagement</li>
-                    <li>Generates authentic, valuable comments</li>
-                    <li>Tracks performance and delivers insights</li>
-                </ul>
-                <p><span class="highlight">We guarantee authentic engagement that adds value. We never spam, mislead, or violate platform policies.</span></p>
-            </section>
-            
-            <section>
-                <h2>
-                    <span class="section-icon">🤝</span>
-                    Your Responsibilities
-                </h2>
-                <p>To ensure success for everyone:</p>
-                <ul>
-                    <li>Provide accurate business information</li>
-                    <li>Use Liftlio for legitimate business purposes only</li>
-                    <li>Respect YouTube's terms of service</li>
-                    <li>Maintain confidentiality of your account credentials</li>
-                    <li>Review and approve content before publishing</li>
-                </ul>
-            </section>
-            
-            <section>
-                <h2>
-                    <span class="section-icon">⚖️</span>
-                    Fair Pricing
-                </h2>
-                <p>Our pricing is transparent and value-based:</p>
-                <ul>
-                    <li>Billed monthly based on your selected plan</li>
-                    <li>No hidden fees or surprise charges</li>
-                    <li>Cancel anytime with no penalties</li>
-                    <li>Unused credits don't roll over to next month</li>
-                </ul>
-            </section>
-            
-            <section>
-                <h2>Intellectual Property</h2>
-                <p>Clear ownership rules:</p>
-                <ul>
-                    <li>You own all content about your business</li>
-                    <li>We own the Liftlio platform and technology</li>
-                    <li>Generated content becomes your property once published</li>
-                    <li>You grant us license to use your content for service delivery</li>
-                </ul>
-            </section>
-            
-            <section>
-                <h2>
-                    <span class="section-icon">⚠️</span>
-                    Limitations
-                </h2>
-                <p>Important boundaries:</p>
-                <ul>
-                    <li>We don't guarantee specific results (though we have a great track record)</li>
-                    <li>We're not responsible for YouTube's actions or policy changes</li>
-                    <li>Our liability is limited to the amount you've paid us</li>
-                    <li>We can't control how viewers respond to your content</li>
-                </ul>
-            </section>
-            
-            <section>
-                <h2>Termination</h2>
-                <p>Either party can end this agreement:</p>
-                <ul>
-                    <li>You can cancel anytime from your dashboard</li>
-                    <li>We may terminate for terms violations with notice</li>
-                    <li>Your data remains accessible for 30 days post-termination</li>
-                    <li>Refunds are prorated for unused time in current period</li>
-                </ul>
-            </section>
-        </div>
+        <h1>Terms of Service</h1>
+        <p class="last-updated">Last updated: January 2024</p>
         
-        <!-- Portuguese Content -->
-        <div lang="pt">
-            <h1>Termos de Serviço</h1>
-            <p class="last-updated">Última atualização: Janeiro 2024</p>
-            
-            <section>
-                <h2>
-                    <span class="section-icon">📄</span>
-                    O Acordo
-                </h2>
-                <p>Ao usar o Liftlio, você está entrando em uma parceria projetada para o sucesso mútuo. Estes termos garantem que possamos entregar valor excepcional enquanto protegemos ambas as partes.</p>
-            </section>
-            
-            <section>
-                <h2>Nosso Serviço</h2>
-                <p>O Liftlio fornece monitoramento inteligente do YouTube e automação de engajamento que:</p>
-                <ul>
-                    <li>Monitora canais relevantes para seu negócio 24/7</li>
-                    <li>Identifica oportunidades de engajamento orgânico</li>
-                    <li>Gera comentários autênticos e valiosos</li>
-                    <li>Rastreia desempenho e entrega insights</li>
-                </ul>
-                <p><span class="highlight">Garantimos engajamento autêntico que agrega valor. Nunca fazemos spam, enganamos ou violamos políticas da plataforma.</span></p>
-            </section>
-            
-            <section>
-                <h2>
-                    <span class="section-icon">🤝</span>
-                    Suas Responsabilidades
-                </h2>
-                <p>Para garantir sucesso para todos:</p>
-                <ul>
-                    <li>Fornecer informações comerciais precisas</li>
-                    <li>Usar o Liftlio apenas para fins comerciais legítimos</li>
-                    <li>Respeitar os termos de serviço do YouTube</li>
-                    <li>Manter a confidencialidade de suas credenciais</li>
-                    <li>Revisar e aprovar conteúdo antes de publicar</li>
-                </ul>
-            </section>
-            
-            <section>
-                <h2>
-                    <span class="section-icon">⚖️</span>
-                    Preços Justos
-                </h2>
-                <p>Nossos preços são transparentes e baseados em valor:</p>
-                <ul>
-                    <li>Cobrado mensalmente com base no plano selecionado</li>
-                    <li>Sem taxas ocultas ou cobranças surpresa</li>
-                    <li>Cancele a qualquer momento sem penalidades</li>
-                    <li>Créditos não utilizados não acumulam para o próximo mês</li>
-                </ul>
-            </section>
-            
-            <section>
-                <h2>Propriedade Intelectual</h2>
-                <p>Regras claras de propriedade:</p>
-                <ul>
-                    <li>Você possui todo conteúdo sobre seu negócio</li>
-                    <li>Nós possuímos a plataforma e tecnologia Liftlio</li>
-                    <li>Conteúdo gerado torna-se sua propriedade após publicação</li>
-                    <li>Você nos concede licença para usar seu conteúdo na entrega do serviço</li>
-                </ul>
-            </section>
-            
-            <section>
-                <h2>
-                    <span class="section-icon">⚠️</span>
-                    Limitações
-                </h2>
-                <p>Limites importantes:</p>
-                <ul>
-                    <li>Não garantimos resultados específicos (embora tenhamos ótimo histórico)</li>
-                    <li>Não somos responsáveis por ações ou mudanças de política do YouTube</li>
-                    <li>Nossa responsabilidade limita-se ao valor que você nos pagou</li>
-                    <li>Não podemos controlar como espectadores respondem ao seu conteúdo</li>
-                </ul>
-            </section>
-            
-            <section>
-                <h2>Rescisão</h2>
-                <p>Qualquer parte pode encerrar este acordo:</p>
-                <ul>
-                    <li>Você pode cancelar a qualquer momento pelo dashboard</li>
-                    <li>Podemos rescindir por violações dos termos com aviso</li>
-                    <li>Seus dados permanecem acessíveis por 30 dias após rescisão</li>
-                    <li>Reembolsos são proporcionais ao tempo não usado no período atual</li>
-                </ul>
-            </section>
-        </div>
+        <section>
+            <h2>
+                <span class="section-icon">📄</span>
+                The Agreement
+            </h2>
+            <p>By using Liftlio, you're entering a partnership designed for mutual success. These terms ensure we can deliver exceptional value while protecting both parties.</p>
+        </section>
+        
+        <section>
+            <h2>Our Service</h2>
+            <p>Liftlio provides intelligent YouTube monitoring and engagement automation that:</p>
+            <ul>
+                <li>Monitors channels relevant to your business 24/7</li>
+                <li>Identifies opportunities for organic engagement</li>
+                <li>Generates authentic, valuable comments</li>
+                <li>Tracks performance and delivers insights</li>
+            </ul>
+            <p><span class="highlight">We guarantee authentic engagement that adds value. We never spam, mislead, or violate platform policies.</span></p>
+        </section>
+        
+        <section>
+            <h2>
+                <span class="section-icon">🤝</span>
+                Your Responsibilities
+            </h2>
+            <p>To ensure success for everyone:</p>
+            <ul>
+                <li>Provide accurate business information</li>
+                <li>Use Liftlio for legitimate business purposes only</li>
+                <li>Respect YouTube's terms of service</li>
+                <li>Maintain confidentiality of your account credentials</li>
+                <li>Review and approve content before publishing</li>
+            </ul>
+        </section>
+        
+        <section>
+            <h2>
+                <span class="section-icon">⚖️</span>
+                Fair Pricing
+            </h2>
+            <p>Our pricing is transparent and value-based:</p>
+            <ul>
+                <li>Billed monthly based on your selected plan</li>
+                <li>No hidden fees or surprise charges</li>
+                <li>Cancel anytime with no penalties</li>
+                <li>Unused credits don't roll over to next month</li>
+            </ul>
+        </section>
+        
+        <section>
+            <h2>Intellectual Property</h2>
+            <p>Clear ownership rules:</p>
+            <ul>
+                <li>You own all content about your business</li>
+                <li>We own the Liftlio platform and technology</li>
+                <li>Generated content becomes your property once published</li>
+                <li>You grant us license to use your content for service delivery</li>
+            </ul>
+        </section>
+        
+        <section>
+            <h2>
+                <span class="section-icon">⚠️</span>
+                Limitations
+            </h2>
+            <p>Important boundaries:</p>
+            <ul>
+                <li>We don't guarantee specific results (though we have a great track record)</li>
+                <li>We're not responsible for YouTube's actions or policy changes</li>
+                <li>Our liability is limited to the amount you've paid us</li>
+                <li>We can't control how viewers respond to your content</li>
+            </ul>
+        </section>
+        
+        <section>
+            <h2>Termination</h2>
+            <p>Either party can end this agreement:</p>
+            <ul>
+                <li>You can cancel anytime from your dashboard</li>
+                <li>We may terminate for terms violations with notice</li>
+                <li>Your data remains accessible for 30 days post-termination</li>
+                <li>Refunds are prorated for unused time in current period</li>
+            </ul>
+        </section>
     </main>
     
     <footer>
-        <p lang="en">© 2025 Liftlio. All rights reserved.</p>
-        <p lang="pt">© 2025 Liftlio. Todos os direitos reservados.</p>
+        <p>© 2025 Liftlio. All rights reserved.</p>
     </footer>
-    
-    <!-- Language Toggle -->
-    <div class="lang-toggle">
-        <button class="lang-btn active" onclick="setLanguage('en')">EN</button>
-        <button class="lang-btn" onclick="setLanguage('pt')">PT</button>
-    </div>
-    
-    <script>
-        // Language toggle functionality
-        function setLanguage(lang) {
-            document.documentElement.setAttribute('data-lang', lang);
-            document.documentElement.setAttribute('lang', lang);
-            
-            // Update button states
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // Save preference
-            localStorage.setItem('preferredLanguage', lang);
-        }
-        
-        // Load saved language preference
-        const savedLang = localStorage.getItem('preferredLanguage') || 'en';
-        document.documentElement.setAttribute('data-lang', savedLang);
-        document.documentElement.setAttribute('lang', savedLang);
-        document.querySelectorAll('.lang-btn').forEach(btn => {
-            if (btn.textContent.toLowerCase() === savedLang) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-    </script>
 </body>
 </html>
