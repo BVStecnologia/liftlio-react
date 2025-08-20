@@ -31,9 +31,7 @@ const Billing = lazy(() => import('./pages/Billing'));
 const Integrations = lazy(() => import('./pages/Integrations'));
 const ProjectCreationPage = lazy(() => import('./pages/ProjectCreationPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
-const About = lazy(() => import('./pages/About'));
-const Privacy = lazy(() => import('./pages/Privacy'));
-const Terms = lazy(() => import('./pages/Terms'));
+// About, Privacy, Terms agora são servidas como HTML estático da pasta public
 const Security = lazy(() => import('./pages/Security'));
 
 // Lazy load heavy components
@@ -78,6 +76,29 @@ const ContentWrapper = styled.div`
     padding: 12px 8px;
   }
 `;
+
+// Componente para redirecionar para arquivos HTML estáticos na pasta public
+const StaticRedirect: React.FC<{ to: string }> = ({ to }) => {
+  React.useEffect(() => {
+    // Usar window.location.href para fazer um redirecionamento completo
+    // Isso garante que o arquivo HTML estático seja servido corretamente
+    window.location.href = to;
+  }, [to]);
+  
+  // Mostrar um loading breve enquanto redireciona
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      background: '#0a0a0a',
+      color: '#ffffff'
+    }}>
+      <div>Redirecting...</div>
+    </div>
+  );
+};
 
 const FloatingMenuButton = styled.button`
   display: none;
@@ -567,10 +588,10 @@ const AppContent: React.FC = () => {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/liftlio-analytics" element={<LiftlioAnalytics />} />
           
-          {/* Páginas institucionais */}
-          <Route path="/about" element={<About />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
+          {/* Páginas institucionais - Redirecionamento para HTML estático */}
+          <Route path="/about" element={<StaticRedirect to="/about.html" />} />
+          <Route path="/privacy" element={<StaticRedirect to="/privacy.html" />} />
+          <Route path="/terms" element={<StaticRedirect to="/terms.html" />} />
           <Route path="/security" element={<Security />} />
           
           {/* Rota removida: Analytics Showcase (não utilizada) */}
