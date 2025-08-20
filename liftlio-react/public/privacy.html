@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Liftlio</title>
+    <meta name="description" content="Liftlio Privacy Policy - Learn how we protect your data and respect your privacy while delivering exceptional AI-powered marketing services.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://liftlio.com/privacy">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Privacy Policy - Liftlio">
+    <meta property="og:description" content="Your data is your business asset, not ours. Learn about our commitment to privacy and data protection.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://liftlio.com/privacy">
+    
+    <!-- Schema.org markup -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Privacy Policy",
+      "description": "Liftlio Privacy Policy",
+      "url": "https://liftlio.com/privacy",
+      "inLanguage": "en",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Liftlio",
+        "url": "https://liftlio.com"
+      }
+    }
+    </script>
+    
+    <style>
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* Base styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        header {
+            padding: 20px 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .back-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .back-button:hover {
+            color: #8b5cf6;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 24px;
+            font-weight: 900;
+            color: #8b5cf6;
+            letter-spacing: -0.5px;
+        }
+        
+        .logo-icon {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+            border-radius: 6px;
+        }
+        
+        /* Content */
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 80px 32px;
+        }
+        
+        h1 {
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        
+        .last-updated {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 48px;
+        }
+        
+        section {
+            margin-bottom: 48px;
+        }
+        
+        h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .section-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        p {
+            font-size: 16px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 16px;
+        }
+        
+        ul {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+        
+        li {
+            font-size: 16px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+            list-style: none;
+            position: relative;
+            padding-left: 24px;
+        }
+        
+        li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #8b5cf6;
+            font-weight: bold;
+        }
+        
+        /* Language toggle */
+        .lang-toggle {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            display: flex;
+            gap: 8px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 50px;
+            padding: 4px;
+        }
+        
+        .lang-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .lang-btn.active {
+            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+            color: white;
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 48px 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            header {
+                padding: 20px 24px;
+            }
+            
+            h1 {
+                font-size: 36px;
+            }
+            
+            h2 {
+                font-size: 24px;
+            }
+            
+            main {
+                padding: 60px 24px;
+            }
+            
+            .lang-toggle {
+                bottom: 24px;
+                right: 24px;
+            }
+        }
+        
+        /* Hide Portuguese content by default */
+        [lang="pt"] {
+            display: none;
+        }
+        
+        html[data-lang="pt"] [lang="en"] {
+            display: none;
+        }
+        
+        html[data-lang="pt"] [lang="pt"] {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/" class="back-button">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M11 1L4 8l7 7" stroke="currentColor" stroke-width="2" fill="none"/>
+            </svg>
+            <span lang="en">Back</span>
+            <span lang="pt">Voltar</span>
+        </a>
+        <div class="logo">
+            <span class="logo-icon"></span>
+            LIFTLIO
+        </div>
+    </header>
+    
+    <main>
+        <!-- English Content -->
+        <div lang="en">
+            <h1>Privacy Policy</h1>
+            <p class="last-updated">Last updated: January 2024</p>
+            
+            <section>
+                <h2>
+                    <span class="section-icon">🛡️</span>
+                    Our Commitment
+                </h2>
+                <p>At Liftlio, we operate with a fundamental principle: your data is your business asset, not ours. We've built our entire infrastructure around protecting your privacy while delivering exceptional value.</p>
+            </section>
+            
+            <section>
+                <h2>
+                    <span class="section-icon">📊</span>
+                    Data We Collect
+                </h2>
+                <p>We collect only what's essential to deliver our service:</p>
+                <ul>
+                    <li>Account information (email, company name) for authentication</li>
+                    <li>YouTube channel preferences for monitoring</li>
+                    <li>Performance metrics to improve our service</li>
+                    <li>Usage patterns to enhance user experience</li>
+                </ul>
+            </section>
+            
+            <section>
+                <h2>
+                    <span class="section-icon">🔐</span>
+                    How We Use Your Data
+                </h2>
+                <p>Your data powers your success, nothing more:</p>
+                <ul>
+                    <li>Monitoring relevant YouTube channels based on your preferences</li>
+                    <li>Generating intelligent responses to identified opportunities</li>
+                    <li>Providing analytics and insights about your performance</li>
+                    <li>Improving our AI algorithms (anonymized and aggregated only)</li>
+                </ul>
+            </section>
+            
+            <section>
+                <h2>
+                    <span class="section-icon">🔒</span>
+                    Data Security
+                </h2>
+                <p>We employ bank-level security measures:</p>
+                <ul>
+                    <li>End-to-end encryption for all data transmission</li>
+                    <li>Encrypted storage with regular security audits</li>
+                    <li>Limited access controls with detailed audit logs</li>
+                    <li>Regular penetration testing and vulnerability assessments</li>
+                </ul>
+            </section>
+            
+            <section>
+                <h2>Your Rights</h2>
+                <p>You maintain complete control over your data:</p>
+                <ul>
+                    <li>Access all your data anytime through your dashboard</li>
+                    <li>Export your data in standard formats</li>
+                    <li>Delete your account and all associated data instantly</li>
+                    <li>Opt-out of any non-essential data processing</li>
+                </ul>
+            </section>
+            
+            <section>
+                <h2>Data Sharing</h2>
+                <p>We never sell, rent, or trade your data. Period. We share data only when:</p>
+                <ul>
+                    <li>You explicitly request us to (e.g., integrations)</li>
+                    <li>Required by law (with notification unless legally prohibited)</li>
+                    <li>Necessary to protect rights, safety, or property</li>
+                </ul>
+            </section>
+        </div>
+        
+        <!-- Portuguese Content -->
+        <div lang="pt">
+            <h1>Política de Privacidade</h1>
+            <p class="last-updated">Última atualização: Janeiro 2024</p>
+            
+            <section>
+                <h2>
+                    <span class="section-icon">🛡️</span>
+                    Nosso Compromisso
+                </h2>
+                <p>No Liftlio, operamos com um princípio fundamental: seus dados são seu ativo empresarial, não nosso. Construímos toda nossa infraestrutura para proteger sua privacidade enquanto entregamos valor excepcional.</p>
+            </section>
+            
+            <section>
+                <h2>
+                    <span class="section-icon">📊</span>
+                    Dados que Coletamos
+                </h2>
+                <p>Coletamos apenas o essencial para entregar nosso serviço:</p>
+                <ul>
+                    <li>Informações de conta (email, nome da empresa) para autenticação</li>
+                    <li>Preferências de canais do YouTube para monitoramento</li>
+                    <li>Métricas de desempenho para melhorar nosso serviço</li>
+                    <li>Padrões de uso para aprimorar a experiência do usuário</li>
+                </ul>
+            </section>
+            
+            <section>
+                <h2>
+                    <span class="section-icon">🔐</span>
+                    Como Usamos Seus Dados
+                </h2>
+                <p>Seus dados impulsionam seu sucesso, nada mais:</p>
+                <ul>
+                    <li>Monitorar canais relevantes do YouTube baseado em suas preferências</li>
+                    <li>Gerar respostas inteligentes para oportunidades identificadas</li>
+                    <li>Fornecer análises e insights sobre seu desempenho</li>
+                    <li>Melhorar nossos algoritmos de IA (apenas anonimizados e agregados)</li>
+                </ul>
+            </section>
+            
+            <section>
+                <h2>
+                    <span class="section-icon">🔒</span>
+                    Segurança dos Dados
+                </h2>
+                <p>Empregamos medidas de segurança de nível bancário:</p>
+                <ul>
+                    <li>Criptografia ponta a ponta para toda transmissão de dados</li>
+                    <li>Armazenamento criptografado com auditorias regulares</li>
+                    <li>Controles de acesso limitados com logs detalhados</li>
+                    <li>Testes de penetração e avaliações de vulnerabilidade regulares</li>
+                </ul>
+            </section>
+            
+            <section>
+                <h2>Seus Direitos</h2>
+                <p>Você mantém controle total sobre seus dados:</p>
+                <ul>
+                    <li>Acesse todos seus dados a qualquer momento pelo dashboard</li>
+                    <li>Exporte seus dados em formatos padrão</li>
+                    <li>Delete sua conta e todos os dados associados instantaneamente</li>
+                    <li>Opte por não participar de processamento não essencial</li>
+                </ul>
+            </section>
+            
+            <section>
+                <h2>Compartilhamento de Dados</h2>
+                <p>Nunca vendemos, alugamos ou negociamos seus dados. Ponto. Compartilhamos dados apenas quando:</p>
+                <ul>
+                    <li>Você solicita explicitamente (ex: integrações)</li>
+                    <li>Exigido por lei (com notificação, exceto se proibido legalmente)</li>
+                    <li>Necessário para proteger direitos, segurança ou propriedade</li>
+                </ul>
+            </section>
+        </div>
+    </main>
+    
+    <footer>
+        <p lang="en">© 2025 Liftlio. All rights reserved.</p>
+        <p lang="pt">© 2025 Liftlio. Todos os direitos reservados.</p>
+    </footer>
+    
+    <!-- Language Toggle -->
+    <div class="lang-toggle">
+        <button class="lang-btn active" onclick="setLanguage('en')">EN</button>
+        <button class="lang-btn" onclick="setLanguage('pt')">PT</button>
+    </div>
+    
+    <script>
+        // Language toggle functionality
+        function setLanguage(lang) {
+            document.documentElement.setAttribute('data-lang', lang);
+            document.documentElement.setAttribute('lang', lang);
+            
+            // Update button states
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Save preference
+            localStorage.setItem('preferredLanguage', lang);
+        }
+        
+        // Load saved language preference
+        const savedLang = localStorage.getItem('preferredLanguage') || 'en';
+        document.documentElement.setAttribute('data-lang', savedLang);
+        document.documentElement.setAttribute('lang', savedLang);
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            if (btn.textContent.toLowerCase() === savedLang) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
