@@ -16,8 +16,7 @@ import GlobalLoader from './components/GlobalLoader';
 import { IconComponent } from './utils/IconHelper';
 import { FaBars } from 'react-icons/fa';
 import ErrorBoundary from './components/ErrorBoundary';
-import { PostHogProvider } from './lib/posthog';
-import { PostHogTest } from './components/PostHogTest';
+// PostHog removed for performance optimization
 
 // Lazy load all pages
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -590,7 +589,7 @@ const AppContent: React.FC = () => {
 
 // Main App component with all providers
 function App() {
-  // PostHog is now initialized via PostHogProvider
+  // Analytics removed for performance optimization
 
   // PREVENÇÃO DE RECARREGAMENTO AO MUDAR DE ABA
   // Este código impede que o Supabase recarregue a página quando você sai e volta
@@ -622,8 +621,7 @@ function App() {
   
   return (
     <ErrorBoundary>
-      <PostHogProvider>
-        <PostHogTest />
+      {/* PostHog removed for performance */}
         <ThemeProvider>
           <LanguageProvider>
             <GlobalStyle />
@@ -638,7 +636,6 @@ function App() {
             </LoadingProvider>
           </LanguageProvider>
         </ThemeProvider>
-      </PostHogProvider>
     </ErrorBoundary>
   );
 }
