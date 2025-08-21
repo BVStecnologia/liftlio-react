@@ -1329,8 +1329,13 @@ el.style.display = currentTheme === 'dark' ? 'block' : 'none';
 updateDashboardImage(currentTheme);
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 anchor.addEventListener('click', function(e) {
+// Ignora links com apenas '#' ou que têm onclick handlers
+const href = this.getAttribute('href');
+if (href === '#' || this.hasAttribute('onclick')) {
+return; // Deixa o onclick handler executar
+}
 e.preventDefault();
-const target = document.querySelector(this.getAttribute('href'));
+const target = document.querySelector(href);
 if (target) {
 const headerHeight = document.querySelector('.header').offsetHeight;
 const targetPosition = target.offsetTop - headerHeight - 20;
