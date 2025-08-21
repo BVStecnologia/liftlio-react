@@ -1303,7 +1303,8 @@ const isLocal = window.location.protocol === 'file:' || window.location.hostname
 if (isLocal) {
 window.location.href = 'http://localhost:3000' + path;
 } else {
-window.location.href = path;
+// Em produção, usar URL absoluta
+window.location.href = window.location.origin + path;
 }
 }
 function toggleMobileMenu(open) {
