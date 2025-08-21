@@ -17,14 +17,14 @@ if (window.location.protocol === 'file:') {
 window.addEventListener('DOMContentLoaded', function() {
 document.querySelectorAll('img[src^="/"], source[srcset*="/imagens"]').forEach(function(el) {
 if (el.src) {
-el.src = el.src.replace(/^\
+el.src = el.src.replace(/^\//, '');
 }
 if (el.srcset) {
-el.srcset = el.srcset.replace(/\/imagens\
+el.srcset = el.srcset.replace(/\/imagens\//g, 'imagens/');
 }
 });
 document.querySelectorAll('link[href^="/"]').forEach(function(el) {
-el.href = el.href.replace(/^\
+el.href = el.href.replace(/^\//, '');
 });
 });
 }
@@ -1301,7 +1301,7 @@ dashboardImg.src = isLocal
 function navigateToPage(path) {
 const isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost';
 if (isLocal) {
-window.location.href = 'http:
+window.location.href = 'http://localhost:3000' + path;
 } else {
 window.location.href = path;
 }
@@ -1341,7 +1341,7 @@ behavior: 'smooth'
 }
 });
 });
-const SUPABASE_URL = 'https:
+const SUPABASE_URL = 'https://suqjifkhmekcdflwowiw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I';
 const categoryMap = {
 'TECHNOLOGY': 'Technology',
@@ -1552,8 +1552,8 @@ const loadingSteps = [
 ];
 function normalizeUrl(inputUrl) {
 let normalizedUrl = inputUrl.trim();
-if (!normalizedUrl.match(/^https?:\/\
-normalizedUrl = 'https:
+if (!normalizedUrl.match(/^https?:\/\//)) {
+normalizedUrl = 'https://' + normalizedUrl;
 }
 return normalizedUrl;
 }
@@ -1585,7 +1585,7 @@ return;
 }
 const normalizedUrl = normalizeUrl(url);
 if (!validateUrl(normalizedUrl)) {
-errorDiv.textContent = 'Please enter a valid URL (e.g., https:
+errorDiv.textContent = 'Please enter a valid URL (e.g., https://example.com)';
 errorDiv.style.display = 'block';
 urlInput.classList.add('error');
 return;
@@ -1619,11 +1619,11 @@ let clientIP = '127.0.0.1';
 try {
 if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
 try {
-const ipResponse = await fetch('https:
+const ipResponse = await fetch('https://api.ipify.org?format=json');
 const ipData = await ipResponse.json();
 clientIP = ipData.ip;
 } catch {
-const ipResponse = await fetch('https:
+const ipResponse = await fetch('https://api.ipify.org?format=json');
 const ipData = await ipResponse.json();
 clientIP = ipData.ip;
 }
