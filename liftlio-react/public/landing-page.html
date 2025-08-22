@@ -601,9 +601,9 @@ document.documentElement.setAttribute('data-lang','en');
                     </p>
                     
                     <div class="cta-buttons">
-                        <a href="#" onclick="navigateToPage('/checkout'); return false;" class="btn-primary">
+                        <a href="#ai-demo" class="btn-primary">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path><path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z"></path></svg>
-                            Start Growing Today
+                            Try It Now - Free Demo
                         </a>
                     </div>
                 </div>
@@ -630,6 +630,64 @@ document.documentElement.setAttribute('data-lang','en');
                         </picture>
                     </div>
                     
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Interactive Proof Section - MOVED HERE FOR BETTER ENGAGEMENT -->
+    <section class="interactive-proof" id="ai-demo">
+        <div class="container">
+            <div class="proof-container">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        See Liftlio in action with your product
+                    </h2>
+                    <p class="section-description">
+                        Free trial. No signup. See a real simulation now.
+                    </p>
+                </div>
+                
+                <div class="proof-form" id="proof-form">
+                    <div style="position:relative;width:100%">
+                        <input type="url" id="website-url" class="url-input" style="padding-right:48px" placeholder="Enter your website URL...">
+                        <div class="url-tooltip-icon" onclick="toggleTooltip()" onmouseenter="showTooltip()" onmouseleave="hideTooltip()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                        <div class="url-tooltip" id="url-tooltip">
+                            For best results, use a page with detailed content about your product or service. Landing pages with clear value propositions work best!
+                        </div>
+                    </div>
+                    <button class="btn-primary" style="width:100%" onclick="analyzeWebsite()" id="analyze-btn">
+                        Show Me How Liftlio Works
+                    </button>
+                    
+                    <div id="error-message" style="display:none;color:#ef4444;margin-top:16px;padding:16px;background:rgba(239,68,68,0.1);border-radius:8px"></div>
+                    
+                    <!-- Loading State -->
+                    <div id="loading-container" style="display:none;margin-top:40px">
+                        <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:48px;text-align:center;position:relative">
+                            <div style="display:flex;justify-content:center;gap:16px;margin-bottom:32px">
+                                <div class="loading-dot" style="animation-delay:0s"></div>
+                                <div class="loading-dot" style="animation-delay:0.2s"></div>
+                                <div class="loading-dot" style="animation-delay:0.4s"></div>
+                            </div>
+                            <div id="loading-icon" style="font-size:48px;color:var(--color-primary);margin-bottom:24px">🔍</div>
+                            <div style="width:100%;max-width:400px;height:6px;background:var(--color-border-light);border-radius:3px;margin:0 auto 20px;overflow:hidden">
+                                <div id="loading-progress" style="height:100%;background:var(--gradient-landing);width:0%;transition:width 0.8s ease-out"></div>
+                            </div>
+                            <p id="loading-text" style="font-size:18px;color:var(--color-text-primary)">
+                                Reading your website content...
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Container -->
+                    <div id="results-container" style="display:none;margin-top:40px"></div>
                 </div>
             </div>
         </div>
@@ -830,64 +888,6 @@ document.documentElement.setAttribute('data-lang','en');
                     <p class="process-description">
                         The more videos commented, the greater your brand's authority and visibility in the niche
                     </p>
-                </div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Interactive Proof Section -->
-    <section class="interactive-proof">
-        <div class="container">
-            <div class="proof-container">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        See Liftlio in action with your product
-                    </h2>
-                    <p class="section-description">
-                        Free trial. No signup. See a real simulation now.
-                    </p>
-                </div>
-                
-                <div class="proof-form" id="proof-form">
-                    <div style="position:relative;width:100%">
-                        <input type="url" id="website-url" class="url-input" style="padding-right:48px" placeholder="Enter your website URL...">
-                        <div class="url-tooltip-icon" onclick="toggleTooltip()" onmouseenter="showTooltip()" onmouseleave="hideTooltip()">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="16" x2="12" y2="12"></line>
-                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                            </svg>
-                        </div>
-                        <div class="url-tooltip" id="url-tooltip">
-                            For best results, use a page with detailed content about your product or service. Landing pages with clear value propositions work best!
-                        </div>
-                    </div>
-                    <button class="btn-primary" style="width:100%" onclick="analyzeWebsite()" id="analyze-btn">
-                        Show Me How Liftlio Works
-                    </button>
-                    
-                    <div id="error-message" style="display:none;color:#ef4444;margin-top:16px;padding:16px;background:rgba(239,68,68,0.1);border-radius:8px"></div>
-                    
-                    <!-- Loading State -->
-                    <div id="loading-container" style="display:none;margin-top:40px">
-                        <div style="background:var(--color-card-bg);border:1px solid var(--color-border-light);border-radius:16px;padding:48px;text-align:center;position:relative">
-                            <div style="display:flex;justify-content:center;gap:16px;margin-bottom:32px">
-                                <div class="loading-dot" style="animation-delay:0s"></div>
-                                <div class="loading-dot" style="animation-delay:0.2s"></div>
-                                <div class="loading-dot" style="animation-delay:0.4s"></div>
-                            </div>
-                            <div id="loading-icon" style="font-size:48px;color:var(--color-primary);margin-bottom:24px">🔍</div>
-                            <div style="width:100%;max-width:400px;height:6px;background:var(--color-border-light);border-radius:3px;margin:0 auto 20px;overflow:hidden">
-                                <div id="loading-progress" style="height:100%;background:var(--gradient-landing);width:0%;transition:width 0.8s ease-out"></div>
-                            </div>
-                            <p id="loading-text" style="font-size:18px;color:var(--color-text-primary)">
-                                Reading your website content...
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <!-- Results Container -->
-                    <div id="results-container" style="display:none;margin-top:40px"></div>
                 </div>
             </div>
         </div>
