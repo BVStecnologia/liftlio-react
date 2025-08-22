@@ -1548,7 +1548,7 @@ const Analytics: React.FC = () => {
         const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
         last7Days.push(dayName);
         dateToKey.set(dateKey, dayName);
-        trafficByDay.set(dayName, { liftlio: 0, ads: 0, social: 0, direct: 0 });
+        trafficByDay.set(dayName, { liftlio: 0, ads: 0, direct: 0 });
       }
       
       // Process each event
@@ -1565,7 +1565,7 @@ const Analytics: React.FC = () => {
           const utmMedium = event.utm_medium || '';
           const utmSource = event.utm_source || '';
           
-          // Categorização simplificada para Traffic Growth
+          // Categorização simplificada: Apenas Liftlio, Direct e Paid
           if (!referrer && !utmMedium && !utmSource) {
             // Completamente vazio = Direct
             dayData.direct++;
@@ -1574,19 +1574,8 @@ const Analytics: React.FC = () => {
                      referrer.toLowerCase().includes('ads')) {
             // Paid traffic
             dayData.ads++;
-          } else if (utmMedium === 'social' || 
-                     referrer.toLowerCase().includes('facebook') || 
-                     referrer.toLowerCase().includes('instagram') || 
-                     referrer.toLowerCase().includes('twitter') || 
-                     referrer.toLowerCase().includes('linkedin') ||
-                     referrer.toLowerCase().includes('youtube') ||
-                     referrer.toLowerCase().includes('reddit') ||
-                     referrer.toLowerCase().includes('tiktok') ||
-                     referrer.toLowerCase().includes('pinterest')) {
-            // Social ainda separado para o gráfico de crescimento
-            dayData.social++;
           } else {
-            // Todo o resto (incluindo orgânico, busca, etc) vai para Liftlio
+            // Todo o resto (orgânico, social, busca, etc) agrupado como Liftlio
             dayData.liftlio++;
           }
         }
@@ -1626,7 +1615,7 @@ const Analytics: React.FC = () => {
       
       // Convert to chart format
       const traffic = last7Days.map(day => {
-        const data = trafficByDay.get(day) || { liftlio: 0, ads: 0, social: 0, direct: 0 };
+        const data = trafficByDay.get(day) || { liftlio: 0, ads: 0, direct: 0 };
         return {
           date: day,
           ...data
@@ -2294,17 +2283,6 @@ const Analytics: React.FC = () => {
               />
               <Area 
                 type="monotone" 
-                dataKey="social" 
-                stackId="1"
-                stroke="transparent" 
-                fillOpacity={1} 
-                fill="url(#colorSocial)" 
-                strokeWidth={0}
-                name="Social Media"
-                animationDuration={1500}
-              />
-              <Area 
-                type="monotone" 
                 dataKey="ads" 
                 stackId="1"
                 stroke="transparent" 
@@ -2322,7 +2300,7 @@ const Analytics: React.FC = () => {
                 fillOpacity={1} 
                 fill="url(#colorLiftlio)" 
                 strokeWidth={2}
-                name="Liftlio Organic"
+                name="Liftlio"
                 animationDuration={1500}
               />
             </AreaChart>
@@ -2330,15 +2308,11 @@ const Analytics: React.FC = () => {
           <ChartLegend>
             <LegendItem>
               <LegendDot color="#8b5cf6" />
-              <span><strong>Liftlio Organic</strong> - SEO optimized traffic</span>
+              <span><strong>Liftlio</strong> - Organic & Social traffic</span>
             </LegendItem>
             <LegendItem>
               <LegendDot color="#fb923c" />
-              <span><strong>Paid Ads</strong> - Sponsored Traffic</span>
-            </LegendItem>
-            <LegendItem>
-              <LegendDot color="#3b82f6" />
-              <span><strong>Social Media</strong> - Social networks</span>
+              <span><strong>Paid Ads</strong> - Sponsored traffic</span>
             </LegendItem>
             <LegendItem>
               <LegendDot color="#e9d5ff" />
