@@ -1,0 +1,20 @@
+# YouTube Search Engine - Dependencies
+# Python 3.9+
+
+# Core
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+httpx==0.28.1
+python-dotenv==1.0.1
+
+# YouTube API
+google-api-python-client==2.155.0
+google-auth==2.38.0
+google-auth-httplib2==0.2.0
+
+# Claude AI
+anthropic==0.42.0
+
+# Utils
+pydantic==2.10.4
+python-multipart==0.0.19
