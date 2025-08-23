@@ -3,6 +3,63 @@ import { useProject } from '../context/ProjectContext';
 import { useGlobalLoading } from '../context/LoadingContext';
 import { supabase } from '../lib/supabaseClient';
 
+// Componente para mostrar cada etapa do processo
+const ProcessStep: React.FC<{
+  number: number;
+  label: string;
+  active?: boolean;
+  completed?: boolean;
+}> = ({ number, label, active, completed }) => {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      marginBottom: '20px',
+      opacity: completed || active ? 1 : 0.5
+    }}>
+      <div style={{
+        width: '32px',
+        height: '32px',
+        borderRadius: '50%',
+        background: completed ? 'linear-gradient(135deg, #8b5cf6, #a855f7)' : 
+                    active ? 'rgba(139, 92, 246, 0.2)' : 
+                    'rgba(255, 255, 255, 0.1)',
+        border: active ? '2px solid #8b5cf6' : 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: '12px',
+        fontSize: '14px',
+        fontWeight: 'bold',
+        color: completed || active ? '#fff' : 'rgba(255, 255, 255, 0.5)',
+        transition: 'all 0.3s ease',
+        boxShadow: active ? '0 0 20px rgba(139, 92, 246, 0.4)' : 
+                   completed ? '0 0 10px rgba(168, 85, 247, 0.3)' : 'none'
+      }}>
+        {completed ? '✓' : number}
+      </div>
+      <div style={{
+        flex: 1,
+        fontSize: '14px',
+        color: completed || active ? '#fff' : 'rgba(255, 255, 255, 0.5)',
+        fontWeight: active ? '500' : 'normal'
+      }}>
+        {label}
+        {active && (
+          <span style={{
+            marginLeft: '8px',
+            fontSize: '12px',
+            color: '#a855f7',
+            animation: 'pulse 1.5s ease-in-out infinite'
+          }}>
+            Processing...
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
 interface ProcessingWrapperProps {
   children: React.ReactNode;
 }
@@ -105,7 +162,7 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
         } else {
           console.log(`Projeto ${projectId} ainda em processamento ou sem dados (status=${status}, hasMensagens=${hasMessages})`);
           setShowProcessing(true);
-          showGlobalLoader('Processing project', 'Setting up your workspace');
+          hideGlobalLoader(); // Esconder o loader global pois vamos mostrar o componente visual
           
           // Continuar verificando enquanto não estiver pronto, com intervalo mais curto
           const checkAgainTimeout = setTimeout(verifyProjectState, 3000);
@@ -123,8 +180,186 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
     };
   }, [currentProject, checkForMessages, checkProjectStatus, showGlobalLoader, hideGlobalLoader]);
   
-  // Since we're using global loader, always return children
-  // The global loader will be shown/hidden based on the state
+  // Se está processando, mostrar componente visual bonito
+  if (showProcessing && !isCheckingInitial) {
+    // Converter status string para número
+    const statusNum = parseInt(currentProject?.status || '0', 10);
+    
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '70vh',
+        padding: '40px 20px',
+        position: 'relative'
+      }}>
+        {/* Background gradient effect */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '600px',
+          height: '600px',
+          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%)',
+          pointerEvents: 'none',
+          animation: 'pulse 3s ease-in-out infinite'
+        }} />
+        
+        <h2 style={{ 
+          marginBottom: '40px', 
+          color: '#fff',
+          fontSize: '28px',
+          fontWeight: '600',
+          background: 'linear-gradient(135deg, #8b5cf6, #a855f7)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          textAlign: 'center'
+        }}>
+          Setting Up Your Project
+        </h2>
+        
+        {/* Container do progresso */}
+        <div style={{
+          width: '100%',
+          maxWidth: '500px',
+          background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(168, 85, 247, 0.05))',
+          borderRadius: '16px',
+          padding: '35px',
+          boxShadow: '0 8px 32px rgba(139, 92, 246, 0.15)',
+          border: '1px solid rgba(139, 92, 246, 0.2)',
+          backdropFilter: 'blur(10px)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Etapas do processo */}
+          <div style={{ marginBottom: '30px' }}>
+            <ProcessStep 
+              number={1} 
+              label="Creating project structure" 
+              active={statusNum === 1}
+              completed={statusNum > 1}
+            />
+            <ProcessStep 
+              number={2} 
+              label="Connecting to YouTube API" 
+              active={statusNum === 2}
+              completed={statusNum > 2}
+            />
+            <ProcessStep 
+              number={3} 
+              label="Searching for relevant videos" 
+              active={statusNum === 3}
+              completed={statusNum > 3}
+            />
+            <ProcessStep 
+              number={4} 
+              label="Analyzing mentions and comments" 
+              active={statusNum === 4}
+              completed={statusNum > 4}
+            />
+            <ProcessStep 
+              number={5} 
+              label="Processing sentiment analysis" 
+              active={statusNum === 5}
+              completed={statusNum > 5}
+            />
+            <ProcessStep 
+              number={6} 
+              label="Finalizing dashboard data" 
+              active={statusNum === 6 && !hasMensagens}
+              completed={statusNum === 6 && hasMensagens}
+            />
+          </div>
+          
+          {/* Barra de progresso animada */}
+          <div style={{
+            width: '100%',
+            height: '10px',
+            background: 'rgba(139, 92, 246, 0.1)',
+            borderRadius: '20px',
+            overflow: 'hidden',
+            position: 'relative',
+            marginTop: '10px'
+          }}>
+            <div style={{
+              height: '100%',
+              width: `${(statusNum / 6) * 100}%`,
+              background: 'linear-gradient(90deg, #8b5cf6 0%, #a855f7 50%, #d946ef 100%)',
+              borderRadius: '20px',
+              animation: 'shimmer 2s ease-in-out infinite',
+              backgroundSize: '200% 100%',
+              boxShadow: '0 0 20px rgba(139, 92, 246, 0.5)',
+              transition: 'width 0.5s ease'
+            }} />
+          </div>
+          
+          {/* Mensagem de status */}
+          <div style={{
+            textAlign: 'center',
+            marginTop: '25px',
+            fontSize: '14px',
+            color: 'rgba(255, 255, 255, 0.8)',
+            fontWeight: '500'
+          }}>
+            {statusNum < 3 ? '🚀 Initializing your project...' :
+             statusNum === 3 ? '🔍 Searching YouTube for relevant discussions...' :
+             statusNum === 4 ? '💬 Analyzing comments and mentions...' :
+             statusNum === 5 ? '🤖 Processing sentiment analysis with AI...' :
+             '✨ Preparing your dashboard...'}
+          </div>
+          
+          {/* Mensagem informativa */}
+          <div style={{
+            textAlign: 'center',
+            marginTop: '10px',
+            fontSize: '12px',
+            color: 'rgba(168, 85, 247, 0.7)',
+            fontStyle: 'italic'
+          }}>
+            First-time setup takes a bit longer • Next time will be instant
+          </div>
+        </div>
+        
+        {/* Dica adicional */}
+        <div style={{
+          marginTop: '30px',
+          padding: '15px 20px',
+          background: 'rgba(139, 92, 246, 0.1)',
+          borderRadius: '10px',
+          border: '1px solid rgba(139, 92, 246, 0.2)',
+          maxWidth: '500px',
+          textAlign: 'center'
+        }}>
+          <p style={{
+            fontSize: '13px',
+            color: 'rgba(255, 255, 255, 0.7)',
+            margin: 0
+          }}>
+            💡 <strong>Pro tip:</strong> We're scanning millions of YouTube videos to find mentions of your brand. 
+            The more specific your keywords, the better the results!
+          </p>
+        </div>
+        
+        {/* CSS para animações */}
+        <style>{`
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+          
+          @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.05); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+  
+  // Se não está processando ou ainda está verificando, mostrar children
   return <>{children}</>;
 };
 
