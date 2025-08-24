@@ -240,6 +240,8 @@ const getThemeBackground = (): string => {
 
 // Componente OAuthHandler para processar códigos de autorização do YouTube em qualquer rota
 const OAuthHandler = () => {
+  const { hideGlobalLoader } = useGlobalLoading();
+  
   useEffect(() => {
     // Log imediato para debug
     console.log('[OAuthHandler] Iniciando verificação OAuth');
@@ -496,6 +498,8 @@ const OAuthHandler = () => {
             // Aguardar um momento para garantir que o token foi salvo e a sessão esteja disponível
             // Em produção, pode haver mais latência, então aumentamos o delay
             setTimeout(() => {
+              // Remover o loading global antes de redirecionar
+              hideGlobalLoader();
               // Adicionar um parâmetro especial na URL para indicar que acabamos de processar OAuth
               // Isso ajudará o ProtectedLayout a saber que deve aguardar a sessão carregar
               window.location.replace('/dashboard?oauth_completed=true');
@@ -505,6 +509,8 @@ const OAuthHandler = () => {
           }
         } catch (error) {
           console.error('Erro ao processar o código de autorização do YouTube:', error);
+          // Remover o loading global em caso de erro também
+          hideGlobalLoader();
           alert(`Erro ao conectar ao YouTube: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
         }
       }
@@ -512,7 +518,7 @@ const OAuthHandler = () => {
     
     // Executar verificação
     checkForYouTubeOAuth();
-  }, []);
+  }, [hideGlobalLoader]);
   
   return null; // Este componente não renderiza nada
 };
@@ -724,11 +730,12 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   const hasOAuthCode = urlParams.get('code') !== null;
   const hasOAuthState = urlParams.get('state') !== null;
   
-  // Se temos código OAuth na URL, NÃO redirecionar - deixar o OAuthHandler processar
+  // Se temos código OAuth na URL, mostrar loading mas continuar renderizando
+  // para que o OAuthHandler possa processar e remover o loading
   if (hasOAuthCode && hasOAuthState) {
     console.log('[ProtectedLayout] OAuth em andamento, aguardando processamento...');
     showGlobalLoader('Processing', 'Connecting to YouTube');
-    return null;
+    // Removido return null - permitir que o componente continue renderizando
   }
   
   // Redirecionar para a página inicial (login) se não estiver autenticado
