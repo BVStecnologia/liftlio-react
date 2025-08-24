@@ -8,11 +8,11 @@ import asyncio
 import json
 from typing import Dict, List
 from datetime import datetime, timedelta
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-import httpx
-from anthropic import Anthropic
-from dotenv import load_dotenv
+from googleapiclient.discovery import build # type: ignore
+from googleapiclient.errors import HttpError # type: ignore
+import httpx # type: ignore
+from anthropic import Anthropic # type: ignore
+from dotenv import load_dotenv # type: ignore
 import os
 
 load_dotenv()

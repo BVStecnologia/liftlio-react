@@ -74,7 +74,6 @@ Servidor/
 | Portainer | 9000 | ✅ Ativo | Gerenciador de containers |
 | n8n | 5678 | ✅ Ativo | Automação com MCP nodes |
 | Langflow | 7860 | ✅ Ativo | Flow builder para LLMs |
-| MCP Trello | 5173 | ✅ Ativo | Integração com Trello API |
 | MCP Gmail | 3000 | ✅ Ativo | Email via Gmail OAuth2 |
 | Glances | 61208 | ✅ Ativo | Monitor de sistema |
 
