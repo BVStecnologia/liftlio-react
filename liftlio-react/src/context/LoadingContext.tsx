@@ -16,6 +16,13 @@ export const LoadingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [loadingSubMessage, setLoadingSubMessage] = useState('Please wait');
 
   const showGlobalLoader = useCallback((message = 'Loading', subMessage = 'Please wait') => {
+    // DEBUG: Log para rastrear quem está chamando showGlobalLoader
+    console.error('[GlobalLoader] showGlobalLoader chamado:', {
+      message,
+      subMessage,
+      stackTrace: new Error().stack
+    });
+    
     setLoadingMessage(message);
     setLoadingSubMessage(subMessage);
     setIsGlobalLoading(true);

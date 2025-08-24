@@ -62,13 +62,14 @@ const ProcessStep: React.FC<{
 
 interface ProcessingWrapperProps {
   children: React.ReactNode;
+  onCheckingStateChange?: (isChecking: boolean) => void;
 }
 
 /**
  * Wrapper component that conditionally shows a processing indicator
  * when a project is in initial processing state with no messages yet.
  */
-const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
+const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheckingStateChange }) => {
   const { currentProject, isInitialProcessing } = useProject();
   const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
   const [showProcessing, setShowProcessing] = useState(false);
@@ -127,14 +128,25 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
 
   // Efeito principal para verificação completa do estado
   useEffect(() => {
+    // Resetar estados quando projeto mudar
+    let checkAgainTimeout: NodeJS.Timeout | null = null;
+    
     if (currentProject?.id) {
       console.log(`Novo projeto selecionado (${currentProject.id}), iniciando verificação...`);
+      
+      // IMPORTANTE: Resetar TODOS os estados ao trocar de projeto
       setIsCheckingInitial(true); // Começar em estado de verificação
       setVerifiedReady(false);
       setShowProcessing(false); // NÃO mostrar processamento até confirmar que precisa
+      setHasMensagens(false); // Resetar estado de mensagens
       
-      // Show global loader while checking initial state
-      showGlobalLoader('Loading', 'Checking project status');
+      // Notificar o parent que estamos verificando
+      if (onCheckingStateChange) {
+        onCheckingStateChange(true);
+      }
+      
+      // SEMPRE esconder o GlobalLoader - deixar o ProcessingWrapper gerenciar a visualização
+      hideGlobalLoader();
       
       // Função de verificação completa
       const verifyProjectState = async () => {
@@ -154,6 +166,11 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
         // Após primeira verificação, desativar checking inicial
         setIsCheckingInitial(false);
         
+        // Notificar o parent que terminamos de verificar
+        if (onCheckingStateChange) {
+          onCheckingStateChange(false);
+        }
+        
         if (!shouldShowProcessing) {
           console.log(`Projeto ${projectId} está pronto para exibição (status=${status}, hasMensagens=${hasMessages})`);
           setShowProcessing(false);
@@ -162,28 +179,53 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
         } else {
           console.log(`Projeto ${projectId} ainda em processamento ou sem dados (status=${status}, hasMensagens=${hasMessages})`);
           setShowProcessing(true);
-          hideGlobalLoader(); // Esconder o loader global pois vamos mostrar o componente visual
+          hideGlobalLoader(); // SEMPRE esconder o loader global pois vamos mostrar o componente visual
           
           // Continuar verificando enquanto não estiver pronto, com intervalo mais curto
-          const checkAgainTimeout = setTimeout(verifyProjectState, 3000);
-          return () => clearTimeout(checkAgainTimeout);
+          checkAgainTimeout = setTimeout(verifyProjectState, 3000);
         }
       };
       
-      // Iniciar verificação
-      verifyProjectState();
+      // Iniciar verificação com pequeno delay para evitar race conditions
+      setTimeout(verifyProjectState, 50);
     }
     
-    // Cleanup function to hide loader when unmounting
+    // Cleanup function to hide loader when unmounting ou mudando de projeto
     return () => {
+      if (checkAgainTimeout) {
+        clearTimeout(checkAgainTimeout);
+      }
       hideGlobalLoader();
+      // Notificar o parent que não estamos mais verificando
+      if (onCheckingStateChange) {
+        onCheckingStateChange(false);
+      }
     };
-  }, [currentProject, checkForMessages, checkProjectStatus, showGlobalLoader, hideGlobalLoader]);
+  }, [currentProject?.id, checkForMessages, checkProjectStatus, hideGlobalLoader, onCheckingStateChange]); // Dependências necessárias
   
   // Se está processando, mostrar componente visual bonito
-  if (showProcessing && !isCheckingInitial) {
-    // Converter status string para número
-    const statusNum = parseInt(currentProject?.status || '0', 10);
+  const statusNum = parseInt(currentProject?.status || '0', 10);
+  
+  // Sempre esconder GlobalLoader quando este componente está ativo
+  React.useEffect(() => {
+    if (statusNum <= 5 || showProcessing) {
+      console.log('[ProcessingWrapper] Escondendo GlobalLoader pois projeto está em processamento');
+      hideGlobalLoader();
+    }
+  }, [statusNum, showProcessing, hideGlobalLoader]);
+  
+  // Garantir que o GlobalLoader está escondido durante a verificação inicial
+  React.useEffect(() => {
+    if (isCheckingInitial) {
+      hideGlobalLoader();
+    }
+  }, [isCheckingInitial, hideGlobalLoader]);
+  
+  // SEMPRE mostrar 6 etapas se status <= 5 OU se showProcessing está ativo
+  // Isso cobre dois casos:
+  // 1. Projeto novo com status <= 5
+  // 2. Projeto com status 6 mas ainda sem mensagens
+  if (statusNum <= 5 || (showProcessing && !isCheckingInitial)) {
     
     return (
       <div style={{
@@ -193,7 +235,8 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
         justifyContent: 'center',
         minHeight: '70vh',
         padding: '40px 20px',
-        position: 'relative'
+        position: 'relative',
+        zIndex: 10000  // Maior que o GlobalLoader (9999) para garantir que sempre fique por cima
       }}>
         {/* Background gradient effect */}
         <div style={{
@@ -359,7 +402,13 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children }) => {
     );
   }
   
-  // Se não está processando ou ainda está verificando, mostrar children
+  // IMPORTANTE: Durante verificação inicial, retornar null para evitar que Dashboard seja renderizado
+  // Isso previne que useDashboardData seja chamado e mostre outro loader
+  if (isCheckingInitial) {
+    return null;
+  }
+  
+  // Só mostrar children quando verificação terminou
   return <>{children}</>;
 };
 

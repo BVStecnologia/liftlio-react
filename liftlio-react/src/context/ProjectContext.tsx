@@ -447,6 +447,10 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
     try {
       console.log("Iniciando processo de atualização do projeto atual no Supabase");
       
+      // IMPORTANTE: Resetar estado de processamento ANTES de trocar de projeto
+      // Isso evita que o estado antigo interfira no novo projeto
+      setIsInitialProcessing(false);
+      
       // PRIMEIRO: Atualizar no banco de dados que este é o projeto ativo
       const atualizadoNoBanco = await updateProjectIndex(project);
       
@@ -455,8 +459,14 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
         console.log("Atualização confirmada no Supabase, atualizando estado local");
         setCurrentProject(project);
         
-        // Verificar estado de processamento
-        checkProjectProcessingState(project.id);
+        // Limpar qualquer cache relacionado ao projeto anterior
+        // Isso garante que não haja interferência entre projetos
+        sessionStorage.removeItem('lastProjectId');
+        sessionStorage.setItem('lastProjectId', project.id.toString());
+        
+        // Verificar estado de processamento do NOVO projeto
+        // Isso irá atualizar isInitialProcessing corretamente
+        await checkProjectProcessingState(project.id);
         
         // A verificação de integração do YouTube agora é feita no componente Header
         // e usa chave de API em vez da função RPC
@@ -474,6 +484,10 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
           // Se nunca completou, verificar estado normalmente
           await determineOnboardingState(project.id);
         }
+        
+        // Forçar re-renderização dos componentes dependentes
+        // Pequeno delay para garantir que todos os estados foram atualizados
+        await new Promise(resolve => setTimeout(resolve, 100));
       } else {
         console.error("Falha ao atualizar o projeto no Supabase");
       }

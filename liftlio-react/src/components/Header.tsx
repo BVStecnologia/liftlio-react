@@ -32,7 +32,7 @@ const HeaderContainer = styled.header`
   color: ${props => props.theme.components.header.text};
   position: sticky;
   top: 0;
-  z-index: 900;
+  z-index: 10002; /* Maior que ProcessingWrapper (10000) para garantir que o Header e seus filhos fiquem acima */
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 
@@ -247,7 +247,7 @@ const PopupMenu = styled.div`
   background-color: ${props => props.theme.components.modal.bg};
   border-radius: ${props => props.theme.radius.md};
   box-shadow: ${props => props.theme.shadows.lg};
-  z-index: ${props => props.theme.zIndices.dropdown};
+  z-index: 10003; /* Garantir que todos os popups fiquem acima do ProcessingWrapper */
   overflow: hidden;
   margin-top: 8px;
   border: 1px solid ${props => props.theme.colors.border.primary};
@@ -1012,7 +1012,7 @@ const ProjectsDropdown = styled.div`
   position: absolute;
   top: 100%;
   left: 0;
-  z-index: ${props => props.theme.zIndices.dropdown};
+  z-index: 10003; /* Garantir que fique acima de todos os elementos, incluindo ProcessingWrapper */
   width: 280px;
   background-color: ${props => props.theme.components.modal.bg};
   border-radius: ${props => props.theme.radius.md};
@@ -1361,17 +1361,16 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       
       const projectHasIntegrations = integrations && integrations.length > 0;
       
-      // Sempre recarregar a página para garantir que todos os dados sejam atualizados
-      console.log("Recarregando página para atualizar dados do projeto");
+      // NÃO recarregar a página - deixar o React gerenciar a atualização
+      console.log("Projeto selecionado, atualizando interface sem reload");
       
-      // Se o projeto tem integrações e estamos na página de criação, ir para o dashboard
+      // Se o projeto tem integrações e estamos na página de criação, navegar para o dashboard
       if (projectHasIntegrations && window.location.pathname === '/create-project') {
-        console.log("Projeto tem integrações, redirecionando para o dashboard");
-        window.location.href = '/dashboard';
-      } else {
-        // Caso contrário, apenas recarregar a página atual
-        window.location.reload();
+        console.log("Projeto tem integrações, navegando para o dashboard");
+        // Usar navigate do React Router em vez de window.location
+        navigate('/dashboard');
       }
+      // REMOVIDO: window.location.reload() que estava causando o bug do GlobalLoader
     } catch (error) {
       console.error("Erro ao selecionar projeto:", error);
       alert("Ocorreu um erro ao selecionar o projeto. Por favor, tente novamente.");
