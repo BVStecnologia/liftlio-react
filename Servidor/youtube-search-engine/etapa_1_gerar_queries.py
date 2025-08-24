@@ -53,10 +53,21 @@ class DebugSearchEngineOtimizado:
                     )
                     result = response.json()
                     if isinstance(result, list) and len(result) > 0:
-                        data = result[0]
+                        raw_data = result[0]
                     else:
-                        data = result
-                    print("⚠️ Usando função get_projeto_data (sem descrição completa)")
+                        raw_data = result
+                    
+                    # MAPEAMENTO CORRETO DOS CAMPOS
+                    data = {
+                        'scanner_id': scanner_id,
+                        'palavra_chave': raw_data.get('palavra_chave', ''),
+                        'projeto_id': raw_data.get('projeto_id'),
+                        'descricao_projeto': raw_data.get('descricao_projeto', ''),
+                        'regiao': raw_data.get('pais', 'BR'),  # MAPEAR pais -> regiao
+                        'videos_excluidos': raw_data.get('ids_negativos', ''),  # MAPEAR ids_negativos -> videos_excluidos
+                        'nome_empresa': raw_data.get('nome_empresa', '')
+                    }
+                    print("⚠️ Usando função get_projeto_data com mapeamento correto")
                 
                 # Buscar descrição se não veio
                 if not data.get('descricao_projeto'):
@@ -234,7 +245,7 @@ async def main():
     print("\n🚀 DEBUG ETAPA 1 - COMPARAÇÃO DE PROMPTS")
     print("="*80)
     
-    scanner_id = 469
+    scanner_id = 468  # Testando scanner 468
     debug = DebugSearchEngineOtimizado()
     
     # ETAPA 1: Buscar dados do projeto

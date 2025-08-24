@@ -26,7 +26,7 @@ class Etapa2BuscarYouTube:
         self.claude = Anthropic(api_key=os.getenv("CLAUDE_API_KEY"))
     
     async def get_project_data(self, scanner_id: int) -> Dict:
-        """Busca dados básicos do projeto (reutilizado da etapa 1)"""
+        """Busca dados básicos do projeto com mapeamento correto"""
         headers = {
             "apikey": self.supabase_key,
             "Authorization": f"Bearer {self.supabase_key}",
@@ -41,8 +41,19 @@ class Etapa2BuscarYouTube:
             )
             result = response.json()
             if isinstance(result, list) and len(result) > 0:
-                return result[0]
-            return result
+                raw_data = result[0]
+            else:
+                raw_data = result
+            
+            # MAPEAMENTO CORRETO DOS CAMPOS
+            return {
+                'scanner_id': scanner_id,
+                'palavra_chave': raw_data.get('palavra_chave', ''),
+                'projeto_id': raw_data.get('projeto_id'),
+                'descricao_projeto': raw_data.get('descricao_projeto', ''),
+                'regiao': raw_data.get('pais', 'BR'),  # MAPEAR pais -> regiao
+                'videos_excluidos': raw_data.get('ids_negativos', ''),  # MAPEAR ids_negativos -> videos_excluidos
+            }
     
     async def generate_optimized_queries(self, project_data: Dict) -> List[str]:
         """Gera queries otimizadas (prompt V2)"""
@@ -82,7 +93,7 @@ Gere 5 queries SIMPLES e EFETIVAS. Retorne APENAS as queries, uma por linha."""
         queries_text = response.content[0].text.strip()
         return [q.strip() for q in queries_text.split('\n') if q.strip()][:5]
     
-    async def search_youtube(self, queries: List[str], excluded_ids: str = "", days_back: int = 90) -> Dict:
+    async def search_youtube(self, queries: List[str], excluded_ids: str = "", days_back: int = 90, region: str = "BR") -> Dict:
         """Busca vídeos no YouTube com cada query"""
         print(f"\n{'='*80}")
         print(f"🔍 BUSCANDO VÍDEOS NO YOUTUBE")
@@ -95,7 +106,7 @@ Gere 5 queries SIMPLES e EFETIVAS. Retorne APENAS as queries, uma por linha."""
         print(f"📅 Período: Últimos {days_back} dias")
         print(f"🚫 IDs excluídos: {len(excluded_list)}")
         print(f"📊 Máximo: 15 vídeos por query")
-        print(f"🌍 Região: BR (prioridade para conteúdo brasileiro)\n")
+        print(f"🌍 Região: {region} ({'conteúdo brasileiro' if region == 'BR' else 'conteúdo americano'})\n")
         
         all_videos = {}
         videos_by_query = {}
@@ -114,8 +125,8 @@ Gere 5 queries SIMPLES e EFETIVAS. Retorne APENAS as queries, uma por linha."""
                     maxResults=30,  # Aumentado para filtrar melhor
                     order='relevance',
                     publishedAfter=published_after,
-                    regionCode='BR',
-                    relevanceLanguage='pt'
+                    regionCode=region,  # USAR REGIÃO DINÂMICA
+                    relevanceLanguage='pt' if region == 'BR' else 'en'  # IDIOMA BASEADO NA REGIÃO
                 ).execute()
                 
                 videos_found = []
@@ -261,6 +272,7 @@ async def main():
     print("\n📋 Buscando dados do projeto...")
     project_data = await etapa2.get_project_data(scanner_id)
     print(f"  ✅ Projeto: {project_data.get('palavra_chave', 'N/A')}")
+    print(f"  ✅ Região: {project_data.get('regiao', 'BR')}")
     print(f"  ✅ IDs excluídos: {len(project_data.get('videos_excluidos', '').split(',')) if project_data.get('videos_excluidos') else 0}")
     
     # Gerar queries otimizadas
@@ -272,7 +284,8 @@ async def main():
     
     # Buscar vídeos
     excluded_ids = project_data.get('videos_excluidos', '')
-    search_results = await etapa2.search_youtube(queries, excluded_ids)
+    region = project_data.get('regiao', 'BR')
+    search_results = await etapa2.search_youtube(queries, excluded_ids, region=region)
     
     # Analisar resultados
     final_results = etapa2.analyze_results(search_results)

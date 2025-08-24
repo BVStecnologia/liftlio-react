@@ -58,26 +58,59 @@ class YouTubeSearchEngineV5:
             )
             result = response.json()
             
-            # Debug logging
-            print(f"📊 Resposta do Supabase para scanner_id {scanner_id}:")
-            print(f"   Tipo: {type(result)}")
-            if isinstance(result, list):
-                print(f"   Lista com {len(result)} items")
-                if len(result) > 0:
-                    print(f"   Primeiro item: {list(result[0].keys()) if isinstance(result[0], dict) else type(result[0])}")
-            
-            # Tratamento robusto da resposta
             if isinstance(result, list) and len(result) > 0:
-                return result[0]
+                data = result[0]
             elif isinstance(result, dict):
-                return result
+                data = result
             else:
                 raise ValueError(f"Resposta inesperada do Supabase: {type(result)} - {str(result)[:200]}")
+            
+            # MAPEAMENTO CORRETO DOS CAMPOS DO BANCO
+            return {
+                'scanner_id': scanner_id,
+                'palavra_chave': data.get('palavra_chave', ''),
+                'projeto_id': data.get('projeto_id'),
+                'descricao_projeto': data.get('descricao_projeto', ''),
+                'regiao': data.get('pais', 'BR'),  # MAPEAR pais -> regiao
+                'videos_excluidos': data.get('ids_negativos', ''),  # MAPEAR ids_negativos -> videos_excluidos
+                'palavras_negativas': data.get('palavras_negativas', '')
+            }
     
     async def generate_optimized_queries(self, project_data: Dict) -> List[str]:
-        """Gera queries otimizadas com Claude"""
+        """Gera queries otimizadas com Claude adaptadas à região"""
         palavra_chave = project_data.get('palavra_chave', '')
         descricao = project_data.get('descricao_projeto', '')
+        region = project_data.get('regiao', 'BR')
+        
+        # Adaptar prompt baseado na região
+        if region == 'BR':
+            regional_context = """
+MERCADO: Brasil 🇧🇷
+
+ESTRATÉGIA PARA YOUTUBE BRASILEIRO:
+- Query 1: Adicione "brasil" ou "brasileiro" ao termo principal
+- Query 2: Use "como criar" ou "como fazer" + termo
+- Query 3: Use apenas o termo principal simples
+- Query 4: Termo + palavra comum BR (venda, criação, ovos)
+- Query 5: Variação ou característica + termo"""
+        elif region == 'US':
+            regional_context = """
+MARKET: United States 🇺🇸
+
+US YOUTUBE SEARCH STRATEGY:
+- Query 1: Main term + common modifier (chickens, puppies, etc)
+- Query 2: "How to" + action + term
+- Query 3: Term + "guide" or "tips"
+- Query 4: "Best" + term or term + "for sale"
+- Query 5: Term + specific trait (giant, pure, etc)"""
+        else:
+            regional_context = """
+MARKET: International
+
+UNIVERSAL STRATEGY:
+- Keep queries simple and universal
+- Focus on main keywords
+- Avoid regional specific terms"""
         
         prompt = f"""Você é um especialista em pesquisa no YouTube. Analise o produto/serviço e gere queries de busca OTIMIZADAS.
 
@@ -86,19 +119,13 @@ PRODUTO/SERVIÇO: {palavra_chave}
 CONTEXTO:
 {descricao[:500] if descricao else 'Produto/serviço relacionado a ' + palavra_chave}...
 
-REGRAS IMPORTANTES:
-1. NÃO seja muito específico (evite combinar muitos termos)
-2. Use a palavra-chave principal de forma simples
-3. Queries devem ter 2-4 palavras no máximo
-4. Foque em termos que pessoas REALMENTE pesquisam
-5. Balance entre específico e genérico
+{regional_context}
 
-ESTRATÉGIA:
-- Query 1: Palavra-chave principal + termo genérico
-- Query 2: Como + ação + palavra-chave
-- Query 3: Palavra-chave + característica
-- Query 4: Palavra-chave + intenção comercial
-- Query 5: Variação ou tipo específico
+REGRAS IMPORTANTES:
+1. Máximo 2-4 palavras por query
+2. Use termos que pessoas REALMENTE pesquisam neste mercado
+3. Adapte ao contexto regional acima
+4. Balance entre específico e genérico
 
 Gere 5 queries SIMPLES e EFETIVAS. Retorne APENAS as queries, uma por linha."""
 
@@ -112,85 +139,76 @@ Gere 5 queries SIMPLES e EFETIVAS. Retorne APENAS as queries, uma por linha."""
         queries_text = response.content[0].text.strip()
         return [q.strip() for q in queries_text.split('\n') if q.strip()][:5]
     
-    async def search_youtube(self, queries: List[str], excluded_ids: str = "", days_back: int = 90) -> Dict:
+    async def search_youtube(self, query: str, project_data: Dict) -> List[Dict]:
         """Busca vídeos no YouTube com filtro regional melhorado"""
+        days_back = 90
         published_after = (datetime.now() - timedelta(days=days_back)).isoformat() + 'Z'
+        excluded_ids = project_data.get('videos_excluidos', '')
         excluded_list = excluded_ids.split(',') if excluded_ids else []
+        region = project_data.get('regiao', 'BR')
         
-        all_videos = {}
-        videos_by_query = {}
+        videos_found = []
         
-        for query in queries:
-            try:
-                # Buscar 30 vídeos para ter mais opções
-                search_response = self.youtube.search().list(
-                    q=query,
-                    part='snippet',
-                    type='video',
-                    maxResults=30,
-                    order='relevance',
-                    publishedAfter=published_after,
-                    regionCode='BR',
-                    relevanceLanguage='pt'
-                ).execute()
+        try:
+            # Buscar 30 vídeos para ter mais opções
+            search_response = self.youtube.search().list(
+                q=query,
+                part='snippet',
+                type='video',
+                maxResults=30,
+                order='relevance',
+                publishedAfter=published_after,
+                regionCode=region,  # USAR REGIÃO DINÂMICA
+                relevanceLanguage='pt' if region == 'BR' else 'en'  # IDIOMA BASEADO NA REGIÃO
+            ).execute()
+            
+            for item in search_response.get('items', []):
+                video_id = item['id']['videoId']
                 
-                videos_found = []
+                # Pular se está na lista de excluídos
+                if video_id in excluded_list:
+                    continue
                 
-                for item in search_response.get('items', []):
-                    video_id = item['id']['videoId']
-                    
-                    # Pular se já processado ou duplicado
-                    if video_id in excluded_list or video_id in all_videos:
-                        continue
-                    
-                    title = item['snippet']['title']
-                    description = item['snippet'].get('description', '')
-                    channel = item['snippet']['channelTitle']
-                    
-                    # Filtro regional mais inteligente
-                    title_lower = title.lower()
-                    desc_lower = description.lower()
-                    
-                    # Detectar múltiplos indicadores asiáticos
-                    asian_specific = ['anakan', 'mantap', 'betul', 'ayam', 'nih', 'keren', 'siap', 'umur']
-                    asian_count = sum(1 for ind in asian_specific if ind in title_lower or ind in desc_lower)
-                    
-                    # Detectar português
-                    portuguese = ['brasil', 'português', 'como', 'para', 'você', 'criar', 'venda', 'comprar', 'fazenda', 'granja', 'criação', 'galo', 'combatente']
-                    has_portuguese = any(ind in title_lower or ind in desc_lower or ind in channel.lower() for ind in portuguese)
-                    
-                    # Rejeitar APENAS se tiver 3+ indicadores asiáticos E nenhum português
-                    if asian_count >= 3 and not has_portuguese:
-                        continue
-                    
-                    video_data = {
-                        'id': video_id,
-                        'title': title,
-                        'channel': channel,
-                        'channel_id': item['snippet']['channelId'],
-                        'description': description,
-                        'published': item['snippet']['publishedAt'],
-                        'query': query
-                    }
-                    
-                    all_videos[video_id] = video_data
-                    videos_found.append(video_data)
-                    
-                    # Limitar a 15 vídeos por query
-                    if len(videos_found) >= 15:
-                        break
+                title = item['snippet']['title']
+                description = item['snippet'].get('description', '')
+                channel = item['snippet']['channelTitle']
                 
-                videos_by_query[query] = videos_found
+                # Filtro regional mais inteligente
+                title_lower = title.lower()
+                desc_lower = description.lower()
+                
+                # Detectar múltiplos indicadores asiáticos
+                asian_specific = ['anakan', 'mantap', 'betul', 'ayam', 'nih', 'keren', 'siap', 'umur']
+                asian_count = sum(1 for ind in asian_specific if ind in title_lower or ind in desc_lower)
+                
+                # Detectar português
+                portuguese = ['brasil', 'português', 'como', 'para', 'você', 'criar', 'venda', 'comprar', 'fazenda', 'granja', 'criação', 'galo', 'combatente']
+                has_portuguese = any(ind in title_lower or ind in desc_lower or ind in channel.lower() for ind in portuguese)
+                
+                # Rejeitar APENAS se tiver 3+ indicadores asiáticos E nenhum português
+                if asian_count >= 3 and not has_portuguese:
+                    continue
+                
+                video_data = {
+                    'id': video_id,
+                    'title': title,
+                    'channel': channel,
+                    'channel_id': item['snippet']['channelId'],
+                    'description': description,
+                    'published': item['snippet']['publishedAt'],
+                    'query': query
+                }
+                
+                videos_found.append(video_data)
+                
+                # Limitar a 15 vídeos por query
+                if len(videos_found) >= 15:
+                    break
                     
-            except Exception as e:
-                print(f"Erro na busca: {e}")
-                videos_by_query[query] = []
+        except Exception as e:
+            print(f"Erro na busca para query '{query}': {e}")
         
-        return {
-            'all_videos': all_videos,
-            'videos_by_query': videos_by_query,
-            'total_found': len(all_videos)
-        }
+        return videos_found
     
     def parse_duration(self, duration: str) -> int:
         """Converte duração ISO 8601 para segundos"""
@@ -334,7 +352,7 @@ Gere 5 queries SIMPLES e EFETIVAS. Retorne APENAS as queries, uma por linha."""
         except Exception:
             return []
     
-    async def analyze_with_claude(self, videos: List[Dict]) -> List[str]:
+    async def analyze_with_claude(self, videos: List[Dict], project_data: Dict) -> List[str]:
         """Claude analisa e seleciona os 3 melhores vídeos"""
         if len(videos) <= 3:
             return [v['id'] for v in videos]
@@ -361,11 +379,18 @@ Amostras de comentários:
 """
             videos_info.append(info)
         
-        prompt = f"""Analise os vídeos e selecione os 3 MELHORES.
+        palavra_chave = project_data.get('palavra_chave', '')
+        descricao = project_data.get('descricao_projeto', '')
+        
+        prompt = f"""Analise os vídeos e selecione os 3 MELHORES para o projeto:
+
+PROJETO:
+- Palavra-chave: {palavra_chave}
+- Descrição: {descricao[:500]}
 
 CRITÉRIOS (em ordem de importância):
-1. LOCALIZAÇÃO: Priorize vídeos brasileiros/portugueses
-2. RELEVÂNCIA: Deve ser sobre o tema específico
+1. RELEVÂNCIA: Deve ser ESPECIFICAMENTE sobre "{palavra_chave}"
+2. LOCALIZAÇÃO: Priorize vídeos brasileiros/portugueses
 3. INTENÇÃO COMERCIAL: Comentários indicam interesse em comprar/criar
 4. ENGAJAMENTO: Taxa de engajamento alta
 
@@ -419,11 +444,18 @@ Retorne APENAS os 3 IDs dos melhores vídeos, um por linha."""
         
         # Etapa 3: Buscar vídeos
         print("\n🔍 [Etapa 3/5] Buscando vídeos no YouTube...")
-        excluded_ids = project_data.get('videos_excluidos', '')
-        search_results = await self.search_youtube(queries, excluded_ids)
-        print(f"   ✅ {search_results['total_found']} vídeos encontrados")
+        region = project_data.get('regiao', 'BR')
+        print(f"   📍 Região: {region}")
         
-        if search_results['total_found'] == 0:
+        all_videos = []
+        for query in queries:
+            videos = await self.search_youtube(query, project_data)
+            all_videos.extend(videos)
+            print(f"   • Query '{query}': {len(videos)} vídeos")
+        
+        print(f"   ✅ Total: {len(all_videos)} vídeos encontrados")
+        
+        if len(all_videos) == 0:
             return {
                 'success': False,
                 'message': 'Nenhum vídeo encontrado',
@@ -431,7 +463,7 @@ Retorne APENAS os 3 IDs dos melhores vídeos, um por linha."""
             }
         
         # Buscar detalhes
-        videos = list(search_results['all_videos'].values())
+        videos = all_videos
         video_ids = [v['id'] for v in videos]
         channel_ids = list(set([v['channel_id'] for v in videos if 'channel_id' in v]))
         
@@ -456,7 +488,7 @@ Retorne APENAS os 3 IDs dos melhores vídeos, um por linha."""
         
         # Etapa 5: Seleção final com Claude
         print("\n🤖 [Etapa 5/5] Seleção final com IA...")
-        selected_ids = await self.analyze_with_claude(filtered_videos)
+        selected_ids = await self.analyze_with_claude(filtered_videos, project_data)
         
         # Preparar resultado
         selected_videos = []

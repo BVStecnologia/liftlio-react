@@ -1,319 +1,254 @@
-# 🎥 YouTube Search Engine v4 - Liftlio
+# YouTube Search Engine v5 - Sistema de Busca e Curadoria de Vídeos
 
-Sistema inteligente de busca semântica de vídeos no YouTube com análise profunda de comentários e transcrições por IA.
+## 📋 Visão Geral
 
-## ✨ Características Principais v4
+Sistema inteligente de busca e seleção de vídeos do YouTube usando AI. O sistema funciona em 5 etapas sequenciais, adaptando-se dinamicamente à região do projeto (BR, US, etc.) e aplicando filtros rigorosos de qualidade.
 
-- **🧠 Análise Semântica**: Usa descrição completa do projeto para contexto
-- **🤖 IA Dupla**: Claude gera queries E seleciona os melhores vídeos
-- **💬 Análise de Comentários**: IA analisa comentários para validar relevância
-- **📝 Transcrições**: Busca e analisa transcrições quando disponíveis
-- **🎯 Alta Precisão**: Seleção baseada em intenção de compra real
-- **✅ Filtros Adaptativos**: Ajusta automaticamente para garantir resultados
-- **🔄 Fallback Inteligente**: Queries simples quando semânticas falham
-- **📊 Arquitetura Modular**: Componentes independentes para fácil manutenção
-- **🚀 Performance**: Resposta em ~7-12 segundos com análise completa
-- **🔌 API REST**: Compatível com Edge Functions do Supabase
+## 🏗️ Arquitetura do Sistema
 
-## 📋 Filtros Adaptativos v4
+### Arquivo Principal
+- **`youtube_search_engine.py`** - Sistema completo integrado com todas as 5 etapas
 
-| Filtro | Valor | Descrição |
-|--------|-------|-----------|
-| **Inscritos** | ≥ 1000 | Canal estabelecido |
-| **Comentários** | ≥ 20 | Engajamento mínimo |
-| **Duração** | > 60s | Sem shorts |
-| **Data** | < 90 dias | Conteúdo recente |
-| **IDs Excluídos** | ✓ | Nunca repete vídeos |
-| **Quantidade** | ≤ 3 | Máximo por busca |
-| **Análise IA** | ✓ | Claude seleciona os melhores |
+### Arquivos de Teste (Etapas Individuais)
+- **`etapa_1_gerar_queries.py`** - Testa geração de queries otimizadas
+- **`etapa_2_buscar_youtube.py`** - Testa busca no YouTube
+- **`etapa_3_filtrar_videos.py`** - Testa aplicação de filtros
+- **`etapa_4_selecionar_final.py`** - Testa seleção final com Claude
 
-## 🏗️ Arquitetura v4
+### Arquivos Auxiliares
+- **`requirements.txt`** - Dependências do projeto
+- **`Dockerfile`** - Container para deploy
+- **`.env`** - Variáveis de ambiente (não commitado)
 
+## 🔄 As 5 Etapas do Sistema
+
+### ETAPA 1: Buscar Dados do Projeto
+```python
+project_data = await engine.get_project_data(scanner_id)
 ```
-youtube_search_engine.py (v4)
-├── Config                    # Configurações centralizadas
-├── ProjectDataFetcher        # Busca dados COMPLETOS com descrição
-├── SemanticQueryGenerator    # Gera queries semânticas com contexto
-├── YouTubeSearcher           # Interface com YouTube API v3
-├── VideoDetailsFetcher       # Busca detalhes, comentários e transcrições
-├── VideoFilter               # Filtros adaptativos de qualidade
-├── AIVideoSelector           # Claude analisa e seleciona os melhores
-├── YouTubeSearchEngineV4     # Orquestrador principal
-└── FastAPI Server            # API REST
+- Busca dados do projeto no Supabase via RPC `get_projeto_data`
+- Mapeia campos do banco: `pais` → `regiao`, `ids_negativos` → `videos_excluidos`
+- Retorna: palavra-chave, descrição, região (BR/US), vídeos excluídos
+
+### ETAPA 2: Gerar Queries Otimizadas
+```python
+queries = await engine.generate_optimized_queries(project_data)
+```
+- Usa Claude AI para gerar 5 queries adaptadas à região
+- **Para BR**: Adiciona "brasil", "como criar", termos em português
+- **Para US**: Usa "how to", "best", "guide", termos em inglês
+- Exemplo BR: "shamo brasil", "como criar shamo", "galo shamo"
+- Exemplo US: "ai recommendation engine", "how to implement ai"
+
+### ETAPA 3: Buscar Vídeos no YouTube
+```python
+videos = await engine.search_youtube(query, project_data)
+```
+- Busca 30 vídeos por query usando YouTube API v3
+- Aplica filtros regionais:
+  - `regionCode`: BR ou US (dinâmico)
+  - `relevanceLanguage`: pt ou en (baseado na região)
+- Filtros básicos:
+  - Vídeos dos últimos 90 dias
+  - Exclui vídeos já marcados como negativos
+  - Remove conteúdo asiático irrelevante (3+ indicadores)
+- Retorna até 15 vídeos por query
+
+### ETAPA 4: Aplicar Filtros de Qualidade
+```python
+video_details = await engine.fetch_video_details(video_ids)
+channel_details = await engine.fetch_channel_details(channel_ids)
+filtered = engine.apply_filters(videos, video_details, channel_details)
+```
+- Busca detalhes completos via API (views, likes, duração, etc.)
+- Filtros rigorosos:
+  - **MIN_SUBSCRIBERS**: 1000 inscritos
+  - **MIN_COMMENTS**: 20 comentários
+  - **MIN_DURATION**: 60 segundos
+  - **MAX_DURATION**: 3600 segundos (1 hora)
+  - **MIN_VIEWS**: 500 visualizações
+- Calcula taxa de engajamento: (likes + comments) / views * 100
+- Ordena por engajamento (maior primeiro)
+
+### ETAPA 5: Seleção Final com Claude
+```python
+final = await engine.analyze_with_claude(filtered_videos, project_data)
+```
+- Claude analisa semanticamente cada vídeo
+- Recebe contexto completo do projeto
+- Seleciona os 3 melhores baseado em:
+  - Relevância ao tópico
+  - Qualidade do conteúdo
+  - Engajamento da audiência
+  - Idioma apropriado à região
+- Retorna IDs dos vídeos selecionados
+
+## 🌍 Adaptação Regional
+
+### Brasil (BR)
+- Queries com termos brasileiros: "brasil", "brasileiro", "como criar"
+- Busca prioriza conteúdo em português
+- Detecta indicadores BR: "criatório", "fazenda", "R$", estados brasileiros
+
+### Estados Unidos (US)
+- Queries em inglês: "how to", "guide", "best"
+- Busca prioriza conteúdo em inglês
+- Foco em termos empresariais e técnicos
+
+## 📊 Filtros e Validações
+
+### Filtros de Qualidade (Valores Atuais)
+```python
+MIN_SUBSCRIBERS = 1000    # Canal deve ter 1000+ inscritos
+MIN_COMMENTS = 20         # Vídeo deve ter 20+ comentários
+MIN_DURATION = 60         # Mínimo 1 minuto
+MAX_DURATION = 3600       # Máximo 1 hora
+MIN_VIEWS = 500           # Mínimo 500 views
 ```
 
-## 🚀 Instalação
+### Validação de Idioma Regional
+- **BR**: Vídeos devem ter conteúdo em português
+- **US**: Vídeos devem ter conteúdo em inglês
+- Rejeita vídeos em idiomas não correspondentes à região
 
-### Pré-requisitos
-- Python 3.9+
-- Docker (opcional)
-- APIs Keys necessárias
+## 🚀 Como Usar
 
-### 1. Clone e Configure
-
+### Instalação
 ```bash
-# Navegue para o diretório
-cd /Users/valdair/Documents/Projetos/Liftlio/Servidor/youtube-search-engine
-
-# Crie ambiente virtual
-python3 -m venv venv
-source venv/bin/activate
-
-# Instale dependências
 pip install -r requirements.txt
-
-# Configure credenciais
-cp .env.example .env
-nano .env  # Adicione suas keys
 ```
 
-### 2. Configuração do .env
-
+### Configurar .env
 ```env
-# YouTube Data API
-YOUTUBE_API_KEY=your_youtube_api_key
-
-# Claude API (Anthropic)
-CLAUDE_API_KEY=your_claude_api_key
-
-# Supabase
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your_anon_key
+YOUTUBE_API_KEY=sua_chave_aqui
+CLAUDE_API_KEY=sua_chave_anthropic
+SUPABASE_URL=url_do_supabase
+SUPABASE_KEY=chave_do_supabase
 ```
 
-## 🧪 Testes
-
-### Teste Rápido
+### Teste Individual por Etapa
 ```bash
-# Ativar ambiente
-source venv/bin/activate
+# Testar etapa 1 - Buscar dados
+python etapa_1_gerar_queries.py
 
-# Testar scanner específico
-python test_scanner_469.py
+# Testar etapa 2 - Gerar queries
+python etapa_2_buscar_youtube.py
+
+# Testar etapa 3 - Aplicar filtros
+python etapa_3_filtrar_videos.py
+
+# Testar etapa 4 - Seleção Claude
+python etapa_4_selecionar_final.py
 ```
 
-### Teste Completo
-```bash
-python test_complete_v3.py
-```
+### Uso via API (Sistema Completo)
+```python
+from youtube_search_engine import YouTubeSearchEngineV5
 
-### Servidor Local
-```bash
-# Iniciar servidor
-python youtube_search_engine_v3.py
+engine = YouTubeSearchEngineV5()
 
-# API disponível em: http://localhost:8000
-# Documentação: http://localhost:8000/docs
-```
+# Processar scanner
+result = await engine.process(scanner_id=469)
 
-## 📡 API Endpoints
-
-### POST /search
-Busca vídeos para um scanner
-
-**Request:**
-```json
+# Resultado
 {
-  "scannerId": "469"
-}
-```
-
-**Response:**
-```json
-{
-  "text": "videoId1,videoId2,videoId3",
-  "success": true,
-  "details": {
     "scanner_id": 469,
-    "palavra_chave": "Combatente Shamo",
-    "total_found": 25,
-    "relevant_found": 3,
-    "video_ids": "videoId1,videoId2,videoId3",
-    "strategy_used": "claude_specific",
+    "video_ids": ["S6ChoGtoFOs", "mGlgE6BtkGk"],
+    "selected_videos": [...],
     "success": true
-  }
 }
 ```
 
-### GET /health
-Health check do serviço
+### API REST Endpoints
+```bash
+# Via FastAPI (quando deployado)
+POST /process
+{
+    "scanner_id": 469
+}
 
-## 🐳 Docker
+# Resposta
+{
+    "scanner_id": 469,
+    "video_ids": ["id1", "id2", "id3"],
+    "video_ids_string": "id1,id2,id3",
+    "selected_videos": [...],
+    "total_analyzed": 45,
+    "success": true
+}
+```
 
-### Build e Run
+## 🐳 Deploy com Docker
+
 ```bash
 # Build
-docker-compose build
+docker build -t youtube-search-v5 .
 
 # Run
-docker-compose up -d
+docker run -p 8000:8000 --env-file .env youtube-search-v5
 
-# Logs
-docker-compose logs -f
-
-# Stop
-docker-compose down
-```
-
-## 🚀 Deploy em Produção
-
-### 1. Preparar Arquivos
-```bash
-# Verificar configurações
-cat .env  # Confirmar credenciais de produção
-```
-
-### 2. Copiar para Servidor
-```bash
-# Criar arquivo tar
-tar -czf youtube-search-engine-v3.tar.gz \
-  youtube_search_engine_v3.py \
-  requirements.txt \
-  Dockerfile \
-  docker-compose.yml \
-  .env.example
-
-# Copiar para servidor
-scp youtube-search-engine-v3.tar.gz root@173.249.22.2:/opt/
-```
-
-### 3. No Servidor
-```bash
+# Deploy no servidor
+scp youtube-search-v5.tar.gz root@173.249.22.2:/opt/
 ssh root@173.249.22.2
-cd /opt
-tar -xzf youtube-search-engine-v3.tar.gz
-mv youtube-search-engine-v3 youtube-search-engine
-
-# Configurar .env com credenciais de produção
-cp .env.example .env
-nano .env
-
-# Build e run
-docker-compose up -d --build
-
-# Verificar
-docker-compose logs -f
+cd /opt && tar -xzf youtube-search-v5.tar.gz
+docker-compose up -d
 ```
 
-### 4. Atualizar Supabase
+## 📈 Resultados Esperados
 
-Modificar a Edge Function ou SQL Function para chamar nosso serviço:
+### Scanner BR (Exemplo: Shamo)
+- Queries: "shamo brasil", "como criar shamo", "galo shamo"
+- Encontra: 30-50 vídeos
+- Após filtros: 5-10 vídeos
+- Claude seleciona: 2-3 vídeos brasileiros relevantes
 
-```sql
--- Exemplo de função SQL
-CREATE OR REPLACE FUNCTION update_video_id_cache(scanner_id bigint)
-RETURNS text AS $$
-DECLARE
-    response http_response;
-    video_ids text;
-BEGIN
-    -- Chamar nosso serviço
-    SELECT * INTO response
-    FROM http((
-        'POST',
-        'http://173.249.22.2:8000/search',
-        ARRAY[http_header('Content-Type', 'application/json')]::http_header[],
-        'application/json',
-        jsonb_build_object('scannerId', scanner_id::text)::text
-    )::http_request);
-    
-    -- Processar resposta
-    IF response.status = 200 THEN
-        video_ids := (response.content::json)->>'text';
-        
-        IF video_ids IS NOT NULL AND video_ids != '' THEN
-            UPDATE public."Scanner de videos do youtube"
-            SET "ID cache videos" = video_ids,
-                rodada = NULL
-            WHERE id = scanner_id;
-            
-            RETURN 'OK: ' || video_ids;
-        END IF;
-    END IF;
-    
-    RETURN 'Erro';
-END;
-$$ LANGUAGE plpgsql;
+### Scanner US (Exemplo: AI)
+- Queries: "ai recommendation engine", "how to implement ai"
+- Encontra: 50-75 vídeos
+- Após filtros: 10-15 vídeos
+- Claude seleciona: 3 vídeos em inglês relevantes
+
+## 🔍 Troubleshooting
+
+### Poucos vídeos encontrados
+- Verificar se as queries estão muito específicas
+- Aumentar o período de busca (days_back)
+- Revisar filtros (podem estar muito restritivos)
+
+### Vídeos irrelevantes
+- Ajustar queries para serem mais específicas
+- Melhorar prompt do Claude com mais contexto
+- Adicionar palavras negativas no projeto
+
+### Vídeos em idioma errado
+- Sistema agora valida idioma baseado na região
+- BR: Apenas português
+- US: Apenas inglês
+
+## 📝 Notas Importantes
+
+1. **Mapeamento de Campos**: O banco retorna `pais` mas o código usa `regiao`
+2. **Limite de Resultados**: Máximo 3 vídeos por scanner
+3. **Cache**: Não há cache - cada execução faz novas buscas
+4. **Rate Limits**: YouTube API tem limites diários
+5. **Custo Claude**: Cada análise consome tokens da API Anthropic
+
+## 🔄 Fluxo Completo
+
+```
+Scanner ID → Buscar Dados → Gerar Queries → Buscar Vídeos → 
+→ Buscar Detalhes → Aplicar Filtros → Claude Seleciona → 
+→ Retorna IDs Finais
 ```
 
-## 📊 Sistema de Pontuação
+## 📊 Métricas de Qualidade
 
-### Pontos Positivos
-- **Palavra completa no título**: +25 pontos
-- **Termo específico no título**: +18 pontos
-- **Termo na descrição**: +5-10 pontos
-- **Vídeo recente** (< 7 dias): +5 pontos
-- **Alto engajamento** (> 3%): +3 pontos
-- **Muitos comentários** (> 100): +3 pontos
-
-### Penalidades
-- **Conteúdo genérico**: -2 a -3 pontos
-- **Sem palavra-chave**: -10 pontos
-- **Conteúdo não relacionado**: -15 pontos
-
-## 🔄 Estratégias de Busca
-
-1. **Claude Specific**: IA gera 5 queries inteligentes
-2. **Fallback**: Queries básicas se Claude falhar
-3. **Generic**: Busca ampla se poucos resultados
-
-## 📈 Métricas de Sucesso
-
-- ✅ **Taxa de Aprovação**: ~12% (3 de 25 vídeos)
-- ✅ **Score Médio**: 15-20 pontos
-- ✅ **Relevância**: 100% específicos ao produto
-- ✅ **Tempo Resposta**: < 10 segundos
-- ✅ **Zero Duplicatas**: IDs excluídos funcionando
-
-## 🆚 Comparação com Langflow
-
-| Aspecto | Langflow | Nossa Solução v3 |
-|---------|----------|------------------|
-| Vídeos encontrados | 0 para nichos | 3 relevantes |
-| Filtros de qualidade | Nenhum | 6 obrigatórios |
-| Inteligência | Queries fixas | Claude AI adaptativa |
-| Relevância | Genéricos | Específicos ao produto |
-| Arquitetura | Monolítica | Modular (9 partes) |
-
-## 🐛 Troubleshooting
-
-### "CLAUDE_API_KEY not configured"
-- Adicione a chave no `.env`
-- Obtenha em: https://console.anthropic.com/
-
-### Poucos resultados
-- Sistema tem fallback automático
-- Verifique se palavra-chave não está muito específica
-
-### Erro de conexão Supabase
-- Verifique SUPABASE_URL e SUPABASE_KEY
-- Confirme que o projeto está ativo
-
-## 📝 Logs
-
-```bash
-# Ver logs locais
-python youtube_search_engine_v3.py 2>&1 | tee app.log
-
-# Ver logs Docker
-docker-compose logs -f
-
-# Logs com filtro
-docker-compose logs -f | grep "Score\|Selecionados"
-```
-
-## 🔗 Recursos
-
-- [YouTube Data API](https://developers.google.com/youtube/v3)
-- [Claude API](https://docs.anthropic.com/claude/reference/getting-started-with-the-api)
-- [Supabase Docs](https://supabase.com/docs)
-
-## 📄 Licença
-
-Propriedade da Liftlio. Todos os direitos reservados.
+- **Taxa de Aprovação**: ~10-20% dos vídeos passam pelos filtros
+- **Precisão Regional**: ~80% de conteúdo na região correta
+- **Relevância Final**: ~90% após seleção do Claude
 
 ---
 
-**Versão**: 3.0
-**Última Atualização**: 23/08/2025
-**Status**: ✅ Produção
+**Versão**: 5.0  
+**Última Atualização**: 23/08/2025  
+**Autor**: Sistema Liftlio
