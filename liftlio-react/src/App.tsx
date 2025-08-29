@@ -678,9 +678,17 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   
   // Estado para controlar se o ProcessingWrapper está verificando
   const [isProcessingWrapperChecking, setIsProcessingWrapperChecking] = useState(false);
+  // NOVO: Flag para prevenir múltiplas chamadas do GlobalLoader
+  const [globalLoaderControlled, setGlobalLoaderControlled] = useState(false);
   
   // Effect para mostrar loading global até TUDO estar pronto
   useEffect(() => {
+    // IMPORTANTE: Se ProcessingWrapper está no controle, não interferir
+    if (globalLoaderControlled) {
+      console.log('[GlobalLoader Control] ProcessingWrapper está no controle, ProtectedLayout não interfere');
+      return;
+    }
+    
     // Debug para entender o que está travando
     console.log('[DEBUG CRÍTICO] ProtectedLayout Loading State:', {
       loading,
@@ -691,32 +699,28 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
       currentProject: currentProject?.id,
       projectStatus: currentProject?.status,
       isProcessingWrapperChecking,
+      globalLoaderControlled,
       timestamp: new Date().toISOString()
     });
     
     // IMPORTANTE: Se já está pronto, NÃO mostrar GlobalLoader
     if (isPageReady) {
-      console.log('[DEBUG CRÍTICO] Página já está pronta, não mostrar GlobalLoader');
+      console.log('[DEBUG CRÍTICO] Página já está pronta, garantindo que GlobalLoader está escondido');
       hideGlobalLoader();
       return;
     }
     
-    // IMPORTANTE: Se o projeto tem status <= 5, NÃO mostrar GlobalLoader
-    // Deixar o ProcessingWrapper cuidar disso
+    // IMPORTANTE: Se o projeto tem status <= 5 ou 6 sem mensagens, delegar para ProcessingWrapper
     const projectStatus = parseInt(currentProject?.status || '0', 10);
-    if (currentProject && projectStatus <= 5) {
-      console.log('[DEBUG CRÍTICO] Projeto com status <= 5, delegando para ProcessingWrapper');
-      // Marcar como pronto imediatamente para projetos em processamento
+    if (currentProject && (projectStatus <= 5 || isProcessingWrapperChecking)) {
+      console.log('[DEBUG CRÍTICO] Projeto em processamento ou verificação, delegando para ProcessingWrapper');
+      // Marcar que ProcessingWrapper está no controle
+      setGlobalLoaderControlled(true);
+      // Garantir que GlobalLoader está escondido
+      hideGlobalLoader();
+      // Marcar como pronto para não interferir
       setIsInitializing(false);
       setIsPageReady(true);
-      hideGlobalLoader();
-      return;
-    }
-    
-    // NÃO mostrar loading se ProcessingWrapper está lidando com isso
-    if (isProcessingWrapperChecking) {
-      console.log('[DEBUG CRÍTICO] ProcessingWrapper está verificando, não mostrar GlobalLoader');
-      hideGlobalLoader();
       return;
     }
     
@@ -732,18 +736,21 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
       // Marcar como pronto rapidamente
       setIsInitializing(false);
       setIsPageReady(true);
+      // Resetar controle do ProcessingWrapper
+      setGlobalLoaderControlled(false);
       return;
     }
     
     // Só mostrar loading INICIAL quando realmente necessário (primeira carga)
-    // IMPORTANTE: Verificar isPageReady para evitar mostrar loader após carregamento inicial
-    if (!isPageReady && !lastProjectId && (loading || !onboardingReady || isLoading)) {
+    // E APENAS se ProcessingWrapper não está no controle
+    if (!isPageReady && !lastProjectId && !globalLoaderControlled && (loading || !onboardingReady || isLoading)) {
       console.log('[DEBUG CRÍTICO] MOSTRANDO GLOBALLOADER INICIAL - Condições:', {
         loading,
         onboardingReady,
         isLoading,
         isPageReady,
-        lastProjectId
+        lastProjectId,
+        globalLoaderControlled
       });
       showGlobalLoader('Loading', 'Preparing your workspace');
     } else if (isPageReady || (!loading && onboardingReady && !isLoading)) {
@@ -751,7 +758,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
       // IMPORTANTE: Esconder o loader quando as condições não forem mais verdadeiras
       hideGlobalLoader();
     }
-  }, [loading, onboardingReady, isLoading, isPageReady, showGlobalLoader, hideGlobalLoader, currentProject, isProcessingWrapperChecking]);
+  }, [loading, onboardingReady, isLoading, isPageReady, showGlobalLoader, hideGlobalLoader, currentProject, isProcessingWrapperChecking, globalLoaderControlled]);
   
   // Effect para garantir que mostramos loading até tudo estar pronto
   useEffect(() => {
@@ -759,10 +766,10 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     const urlParams = new URLSearchParams(window.location.search);
     const oauthCompleted = urlParams.get('oauth_completed') === 'true';
     
-    // IMPORTANTE: Se o projeto tem status <= 5, pular toda a lógica de loading
+    // IMPORTANTE: Se o projeto tem status <= 5 OU ProcessingWrapper está no controle
     const projectStatus = parseInt(currentProject?.status || '0', 10);
-    if (currentProject && projectStatus <= 5) {
-      console.log('Projeto em processamento, pulando lógica de loading');
+    if (currentProject && (projectStatus <= 5 || globalLoaderControlled)) {
+      console.log('Projeto em processamento ou ProcessingWrapper no controle, pulando lógica de loading');
       setIsInitializing(false);
       setIsPageReady(true);
       hideGlobalLoader();
@@ -775,6 +782,8 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     // NÃO processar se ProcessingWrapper está verificando
     if (isProcessingWrapperChecking) {
       console.log('ProcessingWrapper está verificando, aguardando...');
+      // Garantir que GlobalLoader está escondido durante verificação
+      hideGlobalLoader();
       return;
     }
     
@@ -783,21 +792,23 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
       loading,
       onboardingReady,
       isLoading,
+      globalLoaderControlled,
       shouldHideLoader: !loading && onboardingReady && !isLoading
     });
     
     // Só remover o loading quando TODAS as condições estiverem resolvidas
     if (!loading && onboardingReady && !isLoading) {
-      console.log('ProtectedLayout: Condições satisfeitas, removendo loader em', oauthCompleted ? 3000 : 1500, 'ms');
-      // Delay maior para garantir que tudo está carregado, especialmente após OAuth
-      // Se acabamos de completar OAuth, aguardar mais tempo para garantir que a sessão carregue
-      const delay = oauthCompleted ? 3000 : 1500;
+      console.log('ProtectedLayout: Condições satisfeitas, removendo loader em', oauthCompleted ? 3000 : 500, 'ms');
+      // Delay reduzido para evitar travamento
+      const delay = oauthCompleted ? 3000 : 500;
       const timer = setTimeout(() => {
-        console.log('ProtectedLayout: Removendo GlobalLoader');
+        console.log('ProtectedLayout: Removendo GlobalLoader definitivamente');
         setIsInitializing(false);
         setIsPageReady(true);
-        // Só esconder o loading global quando tudo estiver pronto
+        // Garantir que o loader está escondido
         hideGlobalLoader();
+        // Resetar controle se necessário
+        setGlobalLoaderControlled(false);
         // Limpar o parâmetro oauth_completed da URL
         if (oauthCompleted) {
           window.history.replaceState({}, document.title, window.location.pathname);
@@ -805,7 +816,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
       }, delay);
       return () => clearTimeout(timer);
     }
-  }, [loading, onboardingReady, isLoading, hideGlobalLoader, currentProject, isProcessingWrapperChecking]);
+  }, [loading, onboardingReady, isLoading, hideGlobalLoader, currentProject, isProcessingWrapperChecking, globalLoaderControlled]);
   
   // Verificar se temos um destino pós-OAuth pendente
   useEffect(() => {
@@ -818,20 +829,77 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     }
   }, [user, loading, isLoading, navigate]);
   
-  // Não renderizar nada até estar pronto (loading global está sendo mostrado)
-  if (loading || !onboardingReady || isLoading || isInitializing || !isPageReady) {
-    return null;
-  }
+  // Verificação simplificada de integrações usando useMemo para evitar re-cálculos
+  // IMPORTANTE: Mover hooks ANTES de qualquer return condicional
+  const projectHasIntegrations = React.useMemo(() => {
+    if (!currentProject) return false;
+    
+    // projectIntegrations já vem filtrado do contexto para o projeto atual
+    // Só precisamos verificar se tem alguma integração
+    return projectIntegrations.length > 0;
+  }, [currentProject, projectIntegrations]);
+  
+  // Função helper para determinar o tipo de layout a mostrar
+  const getLayoutType = React.useCallback(() => {
+    // Ordem de prioridade clara:
+    if (loading || !onboardingReady || isLoading) return 'loading';
+    if (!user) return 'login';
+    if (!hasProjects) return 'create-project';
+    
+    // IMPORTANTE: Verificar status do projeto ANTES de verificar integração
+    // Projetos em processamento (status 0-5) devem ir direto pro dashboard
+    // para que o ProcessingWrapper possa mostrar as 6 etapas
+    const projectStatus = parseInt(currentProject?.status || '0', 10);
+    if (currentProject && projectStatus <= 5) {
+      console.log('[getLayoutType] Projeto em processamento (status:', projectStatus, '), indo para dashboard');
+      return 'dashboard'; // ProcessingWrapper vai cuidar da visualização
+    }
+    
+    // Projeto com status > 5 mas sem integrações
+    if (currentProject && !projectHasIntegrations) {
+      console.log('[getLayoutType] Projeto sem integrações, indo para setup');
+      return 'integration-setup';
+    }
+    
+    // Verificar onboarding
+    if (isOnboarding) {
+      console.log('[getLayoutType] Em onboarding');
+      return 'onboarding';
+    }
+    
+    // Caso padrão: dashboard
+    return 'dashboard';
+  }, [
+    loading,
+    onboardingReady,
+    isLoading,
+    user,
+    hasProjects,
+    currentProject,
+    projectHasIntegrations,
+    isOnboarding
+  ]);
+  
+  // Verificar se projeto está em processamento ANTES de decidir se retorna null
+  const currentProjectStatus = parseInt(currentProject?.status || '0', 10);
+  const isProjectProcessing = currentProject && currentProjectStatus <= 5;
   
   // Verificar se há parâmetros OAuth na URL antes de redirecionar
   const urlParams = new URLSearchParams(window.location.search);
   const hasOAuthCode = urlParams.get('code') !== null;
   const hasOAuthState = urlParams.get('state') !== null;
   
-  // CORREÇÃO: NÃO mostrar GlobalLoader se o projeto está em processamento
-  // Pois o ProcessingWrapper já está cuidando disso
-  const projectStatus = parseInt(currentProject?.status || '0', 10);
-  const isProjectProcessing = currentProject && projectStatus <= 5;
+  // Não renderizar nada até estar pronto, EXCETO para projetos em processamento
+  // Projetos em processamento devem renderizar o dashboard para que o ProcessingWrapper funcione
+  if (!isProjectProcessing && (loading || !onboardingReady || isLoading || isInitializing || !isPageReady)) {
+    console.log('[ProtectedLayout] Aguardando carregamento (não é projeto em processamento)');
+    return null;
+  }
+  
+  // Se é projeto em processamento, permitir renderização mesmo durante loading
+  if (isProjectProcessing) {
+    console.log('[ProtectedLayout] Projeto em processamento detectado, permitindo renderização');
+  }
   
   // Se temos código OAuth na URL, mostrar loading mas continuar renderizando
   // para que o OAuthHandler possa processar e remover o loading
@@ -866,22 +934,27 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     );
   }
   
-  // Nova condição: se o projeto atual não tem integrações configuradas
-  // redirecionar para a página de criação de projeto
-  const currentProjectHasIntegrations = currentProject && projectIntegrations.some(
-    integration => integration['PROJETO id'] === currentProject.id
-  );
+  const layoutType = getLayoutType();
   
-  if (currentProject && !currentProjectHasIntegrations) {
-    console.log('Projeto atual não tem integrações, redirecionando para criação de projeto');
+  // Log para debug simplificado
+  console.log('Layout Decision:', {
+    type: layoutType,
+    projectId: currentProject?.id,
+    hasIntegrations: projectHasIntegrations,
+    integrationCount: projectIntegrations.length
+  });
+  
+  // Renderizar layout baseado no tipo determinado
+  if (layoutType === 'integration-setup') {
     return (
       <AppContainer>
-        <MainContent>
+        {/* SEM SIDEBAR - projeto sem integração não mostra menu lateral */}
+        <MainContent style={{ width: '100%' }}>
           <Header toggleSidebar={toggleSidebar} />
           <ContentWrapper>
             <Routes>
-              <Route path="*" element={<Navigate to="/create-project" replace />} />
-              <Route path="/create-project" element={<SubscriptionGate><ProjectCreationPage /></SubscriptionGate>} />
+              <Route path="*" element={<Navigate to="/integrations" replace />} />
+              <Route path="/integrations" element={<SubscriptionGate><Integrations /></SubscriptionGate>} />
             </Routes>
           </ContentWrapper>
         </MainContent>
@@ -889,8 +962,8 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     );
   }
   
-  // Para o onboarding, esconder completamente a sidebar e qualquer outro componente de layout
-  if (isOnboarding) {
+  // Layout de onboarding - esconder completamente a sidebar
+  if (layoutType === 'onboarding') {
     return (
       <Routes>
         <Route path="*" element={

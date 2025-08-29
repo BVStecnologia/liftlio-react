@@ -139,6 +139,21 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
   // Verificar se o projeto tem mensagens e configurar isInitialProcessing
   useEffect(() => {
     if (currentProject?.id) {
+      // Limpar cache antigo quando trocar de projeto
+      const cacheKey = `project_cache_${currentProject.id}`;
+      const cachedData = sessionStorage.getItem(cacheKey);
+      const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
+      
+      // Invalidar cache se for mais antigo que 30 segundos
+      if (cacheTime) {
+        const timeDiff = Date.now() - parseInt(cacheTime);
+        if (timeDiff > 30000) {
+          console.log(`[ProjectContext] Invalidando cache antigo para projeto ${currentProject.id}`);
+          sessionStorage.removeItem(cacheKey);
+          sessionStorage.removeItem(`${cacheKey}_time`);
+        }
+      }
+      
       // Verificação inicial
       checkProjectProcessingState(currentProject.id);
       
@@ -148,14 +163,18 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       // Verificar novamente a cada 5 segundos para projetos em processamento
       const intervalId = setInterval(() => {
         if (currentProject?.id) {
-          checkProjectProcessingState(currentProject.id);
+          const status = parseInt(currentProject.status || '6', 10);
+          // Só verificar se está em processamento (status <= 6)
+          if (status <= 6) {
+            checkProjectProcessingState(currentProject.id);
+          }
         }
       }, 5000);
       
       // Limpar o intervalo quando o componente for desmontado ou o projeto mudar
       return () => clearInterval(intervalId);
     }
-  }, [currentProject]);
+  }, [currentProject?.id]); // Mudado para depender apenas do ID
   
   // Função para verificar e atualizar o fuso horário do projeto
   const checkAndUpdateTimezone = async (project: Project) => {
@@ -193,6 +212,19 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
   // Função para verificar o estado de processamento do projeto
   const checkProjectProcessingState = async (projectId: string | number) => {
     try {
+      // Usar cache para evitar múltiplas chamadas simultâneas
+      const cacheKey = `project_state_${projectId}`;
+      const lastCheck = sessionStorage.getItem(`${cacheKey}_checking`);
+      
+      // Se já está verificando, não fazer nova verificação
+      if (lastCheck && (Date.now() - parseInt(lastCheck)) < 1000) {
+        console.log(`[ProjectContext] Verificação em andamento para projeto ${projectId}, pulando`);
+        return;
+      }
+      
+      // Marcar que estamos verificando
+      sessionStorage.setItem(`${cacheKey}_checking`, Date.now().toString());
+      
       // 1. Verificar se o projeto tem status entre 0 e 5
       const { data: projectData, error: projectError } = await supabase
         .from('Projeto')
@@ -202,38 +234,53 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
         
       if (projectError) {
         console.error("Erro ao verificar status do projeto:", projectError);
+        sessionStorage.removeItem(`${cacheKey}_checking`);
         return;
       }
       
       const projectStatus = parseInt(projectData?.status || '6', 10);
-      const isProcessing = projectStatus >= 0 && projectStatus < 6;
+      const isProcessing = projectStatus >= 0 && projectStatus <= 5;
       
-      // 2. Verificar se o projeto tem mensagens
-      const { data: mensagens, error: mensagensError } = await supabase
-        .from('Mensagens')
-        .select('id')
-        .eq('project_id', projectId)
-        .limit(1);
+      // 2. Verificar se o projeto tem mensagens (só se status >= 6)
+      let hasMensagens = false;
+      if (projectStatus >= 6) {
+        const { data: mensagens, error: mensagensError } = await supabase
+          .from('Mensagens')
+          .select('id')
+          .eq('project_id', projectId)
+          .limit(1);
+          
+        if (mensagensError) {
+          console.error("Erro ao verificar mensagens do projeto:", mensagensError);
+          sessionStorage.removeItem(`${cacheKey}_checking`);
+          return;
+        }
         
-      if (mensagensError) {
-        console.error("Erro ao verificar mensagens do projeto:", mensagensError);
-        return;
+        hasMensagens = mensagens && mensagens.length > 0;
       }
       
-      const hasMensagens = mensagens && mensagens.length > 0;
+      // 3. Definir isInitialProcessing: verdadeiro se estiver processando OU (status=6 E não tiver mensagens)
+      const shouldBeProcessing = isProcessing || (projectStatus === 6 && !hasMensagens);
       
-      // 3. Definir isInitialProcessing: verdadeiro se estiver processando OU não tiver mensagens
-      const shouldBeProcessing = isProcessing || !hasMensagens;
-      
+      // Só atualizar se mudou
       if (shouldBeProcessing !== isInitialProcessing) {
-        console.log(`Atualizando estado de processamento para projeto ${projectId}: ${shouldBeProcessing}`);
+        console.log(`[ProjectContext] Atualizando estado de processamento para projeto ${projectId}: ${shouldBeProcessing}`);
         setIsInitialProcessing(shouldBeProcessing);
       }
       
-      console.log(`Projeto ${projectId}: status=${projectStatus}, hasMensagens=${hasMensagens}, isInitialProcessing=${shouldBeProcessing}`);
+      console.log(`[ProjectContext] Projeto ${projectId}: status=${projectStatus}, hasMensagens=${hasMensagens}, isInitialProcessing=${shouldBeProcessing}`);
+      
+      // Limpar flag de verificação
+      sessionStorage.removeItem(`${cacheKey}_checking`);
+      
+      // Salvar resultado no cache
+      sessionStorage.setItem(cacheKey, JSON.stringify({ status: projectStatus, hasMensagens, shouldBeProcessing }));
+      sessionStorage.setItem(`${cacheKey}_time`, Date.now().toString());
       
     } catch (error) {
       console.error("Erro ao verificar estado de processamento do projeto:", error);
+      const cacheKey = `project_state_${projectId}`;
+      sessionStorage.removeItem(`${cacheKey}_checking`);
     }
   };
   

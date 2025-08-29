@@ -76,6 +76,7 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheck
   const [verifiedReady, setVerifiedReady] = useState(false);
   const [hasMensagens, setHasMensagens] = useState(false);
   const [isCheckingInitial, setIsCheckingInitial] = useState(true); // Novo estado para verificação inicial
+  const [lastCheckedProjectId, setLastCheckedProjectId] = useState<string | number | null>(null); // Para evitar verificações duplicadas
   
   // Verifica diretamente se existem mensagens para o projeto
   const checkForMessages = useCallback(async (projectId: string | number) => {
@@ -130,15 +131,23 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheck
   useEffect(() => {
     // Resetar estados quando projeto mudar
     let checkAgainTimeout: NodeJS.Timeout | null = null;
+    let isMounted = true; // Para evitar updates após unmount
     
     if (currentProject?.id) {
-      console.log(`Novo projeto selecionado (${currentProject.id}), iniciando verificação...`);
+      // Evitar verificação duplicada para o mesmo projeto
+      if (lastCheckedProjectId === currentProject.id && verifiedReady) {
+        console.log(`Projeto ${currentProject.id} já foi verificado, pulando verificação duplicada`);
+        return;
+      }
+      
+      console.log(`[ProcessingWrapper] Novo projeto selecionado (${currentProject.id}), iniciando verificação...`);
       
       // IMPORTANTE: Resetar TODOS os estados ao trocar de projeto
       setIsCheckingInitial(true); // Começar em estado de verificação
       setVerifiedReady(false);
       setShowProcessing(false); // NÃO mostrar processamento até confirmar que precisa
       setHasMensagens(false); // Resetar estado de mensagens
+      setLastCheckedProjectId(currentProject.id); // Marcar projeto como verificado
       
       // Notificar o parent que estamos verificando
       if (onCheckingStateChange) {
@@ -150,18 +159,24 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheck
       
       // Função de verificação completa
       const verifyProjectState = async () => {
-        if (!currentProject) return;
+        if (!currentProject || !isMounted) return;
         
         const projectId = currentProject.id;
         const status = await checkProjectStatus(projectId);
         const hasMessages = await checkForMessages(projectId);
         
-        // Regras de decisão simples:
-        // 1. Se status < 6: mostrar processamento
-        // 2. Se status >= 6 E NÃO tem mensagens: mostrar processamento
-        // 3. Se status >= 6 E tem mensagens: mostrar dashboard
+        // Se componente foi desmontado, não fazer nada
+        if (!isMounted) return;
         
-        const shouldShowProcessing = status < 6 || (status >= 6 && !hasMessages);
+        // Regras de decisão simples:
+        // 1. Se status <= 5: SEMPRE mostrar processamento
+        // 2. Se status == 6 E NÃO tem mensagens: mostrar processamento
+        // 3. Se status == 6 E tem mensagens: mostrar dashboard
+        // 4. Se status > 6: sempre mostrar dashboard
+        
+        const shouldShowProcessing = status <= 5 || (status === 6 && !hasMessages);
+        
+        console.log(`[ProcessingWrapper] Decisão para projeto ${projectId}: status=${status}, hasMensagens=${hasMessages}, shouldShowProcessing=${shouldShowProcessing}`);
         
         // Após primeira verificação, desativar checking inicial
         setIsCheckingInitial(false);
@@ -172,26 +187,29 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheck
         }
         
         if (!shouldShowProcessing) {
-          console.log(`Projeto ${projectId} está pronto para exibição (status=${status}, hasMensagens=${hasMessages})`);
+          console.log(`[ProcessingWrapper] Projeto ${projectId} está pronto para exibição`);
           setShowProcessing(false);
           setVerifiedReady(true);
-          hideGlobalLoader(); // Hide global loader when ready
+          hideGlobalLoader(); // Garantir que está escondido
         } else {
-          console.log(`Projeto ${projectId} ainda em processamento ou sem dados (status=${status}, hasMensagens=${hasMessages})`);
+          console.log(`[ProcessingWrapper] Projeto ${projectId} ainda em processamento`);
           setShowProcessing(true);
           hideGlobalLoader(); // SEMPRE esconder o loader global pois vamos mostrar o componente visual
           
-          // Continuar verificando enquanto não estiver pronto, com intervalo mais curto
-          checkAgainTimeout = setTimeout(verifyProjectState, 3000);
+          // Continuar verificando enquanto não estiver pronto
+          if (isMounted) {
+            checkAgainTimeout = setTimeout(verifyProjectState, 3000);
+          }
         }
       };
       
-      // Iniciar verificação com pequeno delay para evitar race conditions
-      setTimeout(verifyProjectState, 50);
+      // Iniciar verificação imediatamente
+      verifyProjectState();
     }
     
     // Cleanup function to hide loader when unmounting ou mudando de projeto
     return () => {
+      isMounted = false;
       if (checkAgainTimeout) {
         clearTimeout(checkAgainTimeout);
       }
@@ -201,7 +219,7 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheck
         onCheckingStateChange(false);
       }
     };
-  }, [currentProject?.id, checkForMessages, checkProjectStatus, hideGlobalLoader, onCheckingStateChange]); // Dependências necessárias
+  }, [currentProject?.id, checkForMessages, checkProjectStatus, hideGlobalLoader, onCheckingStateChange]); // Removido lastCheckedProjectId e verifiedReady das deps para evitar loops
   
   // Se está processando, mostrar componente visual bonito
   const statusNum = parseInt(currentProject?.status || '0', 10);
