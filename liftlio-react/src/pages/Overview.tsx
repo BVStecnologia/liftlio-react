@@ -2166,7 +2166,7 @@ const Overview: React.FC = () => {
     align-items: center;
     font-size: 14px;
     font-weight: 600;
-    color: #424242;
+    color: ${props => props.theme.colors.text.primary};
     
     span {
       margin-left: 6px;
@@ -2278,7 +2278,7 @@ const Overview: React.FC = () => {
     align-items: center;
     font-size: 14px;
     font-weight: 600;
-    color: #424242;
+    color: ${props => props.theme.colors.text.primary};
     border-left: 3px solid #1976D2;
     animation: ${DealPulse} 3s ease-in-out infinite;
     z-index: 10;
