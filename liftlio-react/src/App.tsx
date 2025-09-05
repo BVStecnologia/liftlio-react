@@ -1,6 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import debugLogger from './debugLogger';
 import styled, { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import GlobalStyle from './styles/GlobalStyle';
 import { GlobalThemeStyles, useGlobalTheme } from './styles/GlobalThemeSystem';
@@ -539,7 +538,7 @@ const AppContent: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // DEBUG: Log para rastrear quando AppContent é renderizado
-  debugLogger.log('[AppContent] Current URL: ' + window.location.pathname);
+  console.log('[AppContent] Current URL: ' + window.location.pathname);
   
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -646,7 +645,7 @@ const AppContent: React.FC = () => {
 
 // Main App component with all providers
 function App() {
-  debugLogger.log('[App] Starting with path: ' + window.location.pathname);
+  console.log('[App] Starting with path: ' + window.location.pathname);
   // Analytics removed for performance optimization
 
   // PREVENÇÃO DE RECARREGAMENTO AO MUDAR DE ABA
@@ -955,7 +954,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   
   // Se é uma rota pública, não processar com ProtectedLayout
   if (isPublicRoute) {
-    debugLogger.log('[ProtectedLayout] Route is public, returning null');
+    console.log('[ProtectedLayout] Route is public, returning null');
     return null;
   }
   if (hasOAuthCode && hasOAuthState && !isProjectProcessing && !isPublicRoute) {
@@ -967,7 +966,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   // Redirecionar para a página inicial (login) se não estiver autenticado
   // MAS NÃO redirecionar se é uma rota pública
   if (!user && !isPublicRoute) {
-    debugLogger.log('[ProtectedLayout] No user and not public route, redirecting to landing-page.html');
+    console.log('[ProtectedLayout] No user and not public route, redirecting to landing-page.html');
     // Adicionar delay para capturar logs
     setTimeout(() => {
       window.location.href = '/landing-page.html';
@@ -1107,7 +1106,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
                 {/* <Route path="/url-test" element={<SubscriptionGate><UrlDataTest /></SubscriptionGate>} /> */}
                 {/* Removed duplicate trends and analytics routes - they are defined as public routes */}
                 <Route path="*" element={(() => {
-                  debugLogger.log(`[ProtectedLayout Internal Catch-all] Redirecting ${window.location.pathname} to /dashboard`);
+                  console.log(`[ProtectedLayout Internal Catch-all] Redirecting ${window.location.pathname} to /dashboard`);
                   return <Navigate to="/dashboard" replace />;
                 })()} />
               </Routes>
