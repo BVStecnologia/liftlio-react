@@ -1,0 +1,78 @@
+/* OVERRIDE CRÍTICO - FORÇA CORES CORRETAS */
+* {
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html, body, #root {
+  background: #0a0a0a !important;
+  background-color: #0a0a0a !important;
+  background-image: none !important;
+  filter: none !important;
+}
+
+/* Remove QUALQUER gradiente verde/turquesa */
+.gradient-text,
+.logo,
+.primary-button,
+[class*="gradient"],
+[class*="Gradient"] {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%) !important;
+  background-image: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%) !important;
+}
+
+/* Força texto gradiente roxo */
+.gradient-text,
+.logo {
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Força botões roxos */
+.primary-button,
+button[class*="primary"],
+button[class*="Primary"],
+a[class*="SignIn"],
+a[class*="sign-in"] {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Remove qualquer cor verde/turquesa específica */
+[style*="#00b4ff"],
+[style*="#80ffdb"],
+[style*="rgb(0, 180, 255)"],
+[style*="rgb(128, 255, 219)"] {
+  background: #8b5cf6 !important;
+  background-color: #8b5cf6 !important;
+  background-image: none !important;
+}
+
+/* Força background escuro em containers principais */
+[class*="PageContainer"],
+[class*="page-container"],
+[class*="MainContainer"],
+[class*="main-container"],
+main,
+section {
+  background: #0a0a0a !important;
+  background-color: #0a0a0a !important;
+}
+
+/* Força cards com background escuro */
+[class*="Card"],
+[class*="card"] {
+  background: rgba(24, 24, 27, 0.8) !important;
+  background-color: rgba(24, 24, 27, 0.8) !important;
+}
+
+/* Força badges roxos */
+[class*="Badge"],
+[class*="badge"],
+[class*="Status"],
+[class*="status"] {
+  background: rgba(139, 92, 246, 0.2) !important;
+  color: #a855f7 !important;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}

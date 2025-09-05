@@ -40,7 +40,7 @@ h1 {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #00b4ff 0%, #80ffdb 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -70,14 +70,14 @@ header {
   font-size: 24px;
   font-weight: 900;
   letter-spacing: -1px;
-  background: linear-gradient(135deg, #00b4ff 0%, #80ffdb 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 /* Buttons */
 .primary-button {
-  background: linear-gradient(135deg, #00b4ff 0%, #80ffdb 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
   color: #000;
   border: none;
   padding: 16px 32px;

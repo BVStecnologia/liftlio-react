@@ -355,7 +355,7 @@ export const darkTheme: GlobalTheme = {
     input: {
       bg: '#242424',
       border: 'rgba(255, 255, 255, 0.2)',
-      borderFocus: '#00F5FF',
+      borderFocus: '#8b5cf6',
       text: '#FFFFFF',
       placeholder: 'rgba(255, 255, 255, 0.5)',
       disabled: '#1A1A1A'
@@ -363,15 +363,15 @@ export const darkTheme: GlobalTheme = {
     
     button: {
       primary: {
-        bg: '#00F5FF',
-        text: '#0A0A0A',
+        bg: '#8b5cf6',
+        text: '#FFFFFF',
         border: 'transparent',
-        hover: '#00C4CC',
-        disabled: 'rgba(0, 245, 255, 0.3)'
+        hover: '#7c3aed',
+        disabled: 'rgba(139, 92, 246, 0.3)'
       },
       secondary: {
         bg: 'transparent',
-        text: '#00F5FF',
+        text: '#a855f7',
         border: 'rgba(255, 255, 255, 0.2)',
         hover: 'rgba(255, 255, 255, 0.08)',
         disabled: 'rgba(255, 255, 255, 0.05)'

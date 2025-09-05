@@ -192,9 +192,9 @@ export function extendTheme(baseTheme: GlobalTheme): ExtendedTheme {
       info_light: baseTheme.colors.status.infoBg,
       
       // Accent colors (mantém compatibilidade sem conflitar com accent object)
-      ACCENT_LIGHT: isLight ? 'rgba(45, 62, 80, 0.1)' : 'rgba(0, 245, 255, 0.1)',
-      dominant_light: isLight ? 'rgba(45, 62, 80, 0.08)' : 'rgba(0, 245, 255, 0.08)',
-      dominant_lighter: isLight ? 'rgba(45, 62, 80, 0.04)' : 'rgba(0, 245, 255, 0.04)',
+      ACCENT_LIGHT: isLight ? 'rgba(45, 62, 80, 0.1)' : 'rgba(139, 92, 246, 0.1)',
+      dominant_light: isLight ? 'rgba(45, 62, 80, 0.08)' : 'rgba(139, 92, 246, 0.08)',
+      dominant_lighter: isLight ? 'rgba(45, 62, 80, 0.04)' : 'rgba(139, 92, 246, 0.04)',
       
       // Sentiment
       sentiment: {
@@ -207,13 +207,13 @@ export function extendTheme(baseTheme: GlobalTheme): ExtendedTheme {
       gradient: {
         primary: isLight 
           ? 'linear-gradient(135deg, #2d3e50 0%, #34495e 100%)'
-          : 'linear-gradient(135deg, #00F5FF 0%, #FF00FF 100%)',
+          : 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)',
         secondary: isLight
-          ? 'linear-gradient(135deg, #0095FF 0%, #00F5FF 100%)'
-          : 'linear-gradient(135deg, #FF00FF 0%, #00FF00 100%)',
+          ? 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)'
+          : 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
         accent: isLight
           ? 'linear-gradient(135deg, #6B00CC 0%, #8B33FF 100%)'
-          : 'linear-gradient(135deg, #00F5FF 0%, #00C4CC 100%)',
+          : 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
         success: 'linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%)',
         warning: 'linear-gradient(135deg, #FFAA15 0%, #FFBB33 100%)',
         error: 'linear-gradient(135deg, #e74c3c 0%, #e57373 100%)',
@@ -227,13 +227,13 @@ export function extendTheme(baseTheme: GlobalTheme): ExtendedTheme {
           : 'linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.04) 100%)',
         landing: isLight
           ? 'linear-gradient(135deg, #2d3e50 0%, #0095FF 100%)'
-          : 'linear-gradient(135deg, #00F5FF 0%, #FF00FF 100%)'
+          : 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)'
       },
       
       // Chart colors
       chart: [
-        '#0095FF',
-        '#00F5FF',
+        '#8b5cf6',
+        '#a855f7',
         '#FF00FF',
         '#00FF00',
         '#FFAA15',
@@ -252,13 +252,13 @@ export function extendTheme(baseTheme: GlobalTheme): ExtendedTheme {
       borderLight: baseTheme.colors.border.secondary,
       badgeBg: isLight
         ? 'rgba(0, 149, 255, 0.1)'
-        : 'rgba(0, 245, 255, 0.1)',
+        : 'rgba(139, 92, 246, 0.1)',
       badgeBorder: isLight
         ? 'rgba(0, 149, 255, 0.2)'
-        : 'rgba(0, 245, 255, 0.2)',
+        : 'rgba(139, 92, 246, 0.2)',
       primaryAlpha: isLight
         ? 'rgba(45, 62, 80, 0.1)'
-        : 'rgba(0, 245, 255, 0.1)',
+        : 'rgba(139, 92, 246, 0.1)',
       secondaryAlpha: isLight
         ? 'rgba(0, 149, 255, 0.1)'
         : 'rgba(255, 0, 255, 0.1)',
@@ -280,7 +280,7 @@ export function extendTheme(baseTheme: GlobalTheme): ExtendedTheme {
       testimonialsBg: baseTheme.colors.bg.tertiary,
       ctaBg: isLight
         ? 'linear-gradient(135deg, #2d3e50 0%, #34495e 100%)'
-        : 'linear-gradient(135deg, #00F5FF 0%, #00C4CC 100%)',
+        : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
       footerBg: isLight ? '#2d3e50' : '#0A0A0A'
     },
     
@@ -298,7 +298,7 @@ export function extendTheme(baseTheme: GlobalTheme): ExtendedTheme {
         : '0 4px 12px rgba(255, 255, 255, 0.08)',
       glow: isLight
         ? '0 0 20px rgba(0, 149, 255, 0.3)'
-        : '0 0 20px rgba(0, 245, 255, 0.3)',
+        : '0 0 20px rgba(139, 92, 246, 0.3)',
       glass: isLight
         ? 'inset 0 2px 4px rgba(255, 255, 255, 0.1)'
         : 'inset 0 2px 4px rgba(255, 255, 255, 0.05)',

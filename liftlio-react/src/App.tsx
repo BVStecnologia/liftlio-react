@@ -1,5 +1,6 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import debugLogger from './debugLogger';
 import styled, { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import GlobalStyle from './styles/GlobalStyle';
 import { GlobalThemeStyles, useGlobalTheme } from './styles/GlobalThemeSystem';
@@ -24,6 +25,7 @@ const LandingPageHTML = lazy(() => import('./pages/LandingPageHTML'));
 const Overview = lazy(() => import('./pages/Overview'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const LiftlioAnalytics = lazy(() => import('./pages/LiftlioAnalytics'));
+const LiftlioTrends = lazy(() => import('./pages/LiftlioTrends'));
 const Monitoring = lazy(() => import('./pages/Monitoring'));
 const Mentions = lazy(() => import('./pages/Mentions'));
 const Settings = lazy(() => import('./pages/Settings'));
@@ -241,8 +243,16 @@ const getThemeBackground = (): string => {
 // Componente OAuthHandler para processar códigos de autorização do YouTube em qualquer rota
 const OAuthHandler = () => {
   const { hideGlobalLoader } = useGlobalLoading();
+  const location = useLocation();
   
   useEffect(() => {
+    // IMPORTANTE: Não processar OAuth em rotas públicas
+    const publicRoutes = ['/trends', '/liftlio-analytics', '/about', '/privacy', '/terms', '/security'];
+    if (publicRoutes.includes(location.pathname)) {
+      console.log('[OAuthHandler] Skipping OAuth check on public route:', location.pathname);
+      return;
+    }
+    
     // Log imediato para debug
     console.log('[OAuthHandler] Iniciando verificação OAuth');
     console.log('[OAuthHandler] URL atual:', window.location.href);
@@ -518,7 +528,7 @@ const OAuthHandler = () => {
     
     // Executar verificação
     checkForYouTubeOAuth();
-  }, [hideGlobalLoader]);
+  }, [hideGlobalLoader, location.pathname]);
   
   return null; // Este componente não renderiza nada
 };
@@ -527,6 +537,9 @@ const OAuthHandler = () => {
 const AppContent: React.FC = () => {
   const { isGlobalLoading, loadingMessage, loadingSubMessage } = useGlobalLoading();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // DEBUG: Log para rastrear quando AppContent é renderizado
+  debugLogger.log('[AppContent] Current URL: ' + window.location.pathname);
   
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -586,13 +599,15 @@ const AppContent: React.FC = () => {
         <ExtensionWarning />
         {/* Adicionar OAuthHandler para processar códigos do YouTube em qualquer rota */}
         <OAuthHandler />
-        <Routes>
+        <Suspense fallback={<GlobalLoader message="Loading" subMessage="Please wait..." />}>
+          <Routes>
           {/* Landing page como ponto de entrada principal */}
           <Route path="/" element={<LandingPageHTML />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/liftlio-analytics" element={<LiftlioAnalytics />} />
+          <Route path="/trends" element={<LiftlioTrends />} />
           
           {/* Páginas institucionais - Redirecionamento para HTML estático */}
           <Route path="/about" element={<StaticRedirect to="/about.html" />} />
@@ -602,13 +617,28 @@ const AppContent: React.FC = () => {
           
           {/* Rota removida: Analytics Showcase (não utilizada) */}
           
-          <Route path="/*" element={
-            <ProtectedLayout 
-              sidebarOpen={sidebarOpen} 
-              toggleSidebar={toggleSidebar}
-            />
+          
+          {/* Rotas protegidas - definir cada uma explicitamente */}
+          <Route path="/dashboard" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
+          <Route path="/overview/*" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
+          <Route path="/integrations" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
+          <Route path="/videos/*" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
+          <Route path="/create-project" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
+          <Route path="/settings" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
+          <Route path="/subscription" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
+          <Route path="/analytics" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
+          <Route path="/monitoring" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
+          <Route path="/mentions" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
+          <Route path="/billing" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
+          
+          {/* DEBUG: Catch-all para ver rotas não capturadas */}
+          <Route path="*" element={
+            <div>
+              <h1>404 - Route not found: {window.location.pathname}</h1>
+            </div>
           } />
         </Routes>
+        </Suspense>
       </Router>
     </>
   );
@@ -616,6 +646,7 @@ const AppContent: React.FC = () => {
 
 // Main App component with all providers
 function App() {
+  debugLogger.log('[App] Starting with path: ' + window.location.pathname);
   // Analytics removed for performance optimization
 
   // PREVENÇÃO DE RECARREGAMENTO AO MUDAR DE ABA
@@ -667,6 +698,22 @@ function App() {
   );
 }
 
+// Novo wrapper que decide se usa ProtectedLayout ou não
+const ProtectedRouteWrapper = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean, toggleSidebar: () => void }) => {
+  const location = useLocation();
+  
+  // Rotas que devem ser renderizadas SEM o ProtectedLayout
+  const publicPaths = ['/trends', '/liftlio-analytics', '/about', '/privacy', '/terms', '/security'];
+  
+  // Se for rota pública, retorna null (deixa a rota pública renderizar)
+  if (publicPaths.includes(location.pathname)) {
+    return null;
+  }
+  
+  // Senão, usa o ProtectedLayout
+  return <ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />;
+};
+
 // Componente de layout protegido
 const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean, toggleSidebar: () => void }) => {
   const { user, loading } = useAuth();
@@ -675,6 +722,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   const [isInitializing, setIsInitializing] = useState(true);
   const [isPageReady, setIsPageReady] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Estado para controlar se o ProcessingWrapper está verificando
   const [isProcessingWrapperChecking, setIsProcessingWrapperChecking] = useState(false);
@@ -901,20 +949,30 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     console.log('[ProtectedLayout] Projeto em processamento detectado, permitindo renderização');
   }
   
-  // Se temos código OAuth na URL, mostrar loading mas continuar renderizando
-  // para que o OAuthHandler possa processar e remover o loading
-  // MAS NÃO mostrar se o projeto está em processamento
-  if (hasOAuthCode && hasOAuthState && !isProjectProcessing) {
+  // VERIFICAÇÃO DE ROTAS PÚBLICAS - APÓS TODOS OS HOOKS
+  const publicRoutes = ['/trends', '/liftlio-analytics', '/about', '/privacy', '/terms', '/security'];
+  const isPublicRoute = publicRoutes.includes(location.pathname);
+  
+  // Se é uma rota pública, não processar com ProtectedLayout
+  if (isPublicRoute) {
+    debugLogger.log('[ProtectedLayout] Route is public, returning null');
+    return null;
+  }
+  if (hasOAuthCode && hasOAuthState && !isProjectProcessing && !isPublicRoute) {
     console.log('[ProtectedLayout] OAuth em andamento, aguardando processamento...');
     showGlobalLoader('Processing', 'Connecting to YouTube');
     // Removido return null - permitir que o componente continue renderizando
   }
   
   // Redirecionar para a página inicial (login) se não estiver autenticado
-  if (!user) {
-    // Redirecionar diretamente para a landing page HTML
-    window.location.href = '/landing-page.html';
-    return null;
+  // MAS NÃO redirecionar se é uma rota pública
+  if (!user && !isPublicRoute) {
+    debugLogger.log('[ProtectedLayout] No user and not public route, redirecting to landing-page.html');
+    // Adicionar delay para capturar logs
+    setTimeout(() => {
+      window.location.href = '/landing-page.html';
+    }, 1000);
+    return <div>Redirecting to login...</div>;
   }
   
   // Se chegou aqui, o usuário está autenticado e o carregamento foi concluído
@@ -1047,7 +1105,11 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
                 <Route path="/billing" element={<SubscriptionGate><Billing /></SubscriptionGate>} />
                 <Route path="/integrations" element={<SubscriptionGate><ProcessingWrapper onCheckingStateChange={setIsProcessingWrapperChecking}><Integrations /></ProcessingWrapper></SubscriptionGate>} />
                 {/* <Route path="/url-test" element={<SubscriptionGate><UrlDataTest /></SubscriptionGate>} /> */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                {/* Removed duplicate trends and analytics routes - they are defined as public routes */}
+                <Route path="*" element={(() => {
+                  debugLogger.log(`[ProtectedLayout Internal Catch-all] Redirecting ${window.location.pathname} to /dashboard`);
+                  return <Navigate to="/dashboard" replace />;
+                })()} />
               </Routes>
             </ContentWrapper>
           </MainContent>
