@@ -1329,6 +1329,27 @@ const LiftlioAnalytics: React.FC = () => {
           </Logo>
           
           <Nav>
+            <NavLink href="/trends" style={{ 
+              color: '#818cf8', 
+              marginRight: '20px',
+              fontSize: '16px',
+              position: 'relative'
+            }}>
+              Trends
+              <span style={{
+                position: 'absolute',
+                top: '-8px',
+                right: '-28px',
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)',
+                color: 'white',
+                fontSize: '9px',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                fontWeight: '700',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>NEW</span>
+            </NavLink>
             <NavButtons>
               <SignInButton href="/login">Sign In</SignInButton>
             </NavButtons>

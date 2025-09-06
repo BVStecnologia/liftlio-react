@@ -50,12 +50,52 @@
     
     <!-- Add support for Supabase authentication redirects -->
     <script>
-      // Register Service Worker for performance
+      // AGGRESSIVE Service Worker cleanup for development
+      // This ensures NO caching issues during development
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('%PUBLIC_URL%/service-worker.js')
-            .then(registration => console.log('SW registered'))
-            .catch(err => console.log('SW registration failed'));
+          // Check if we're in development mode
+          const isDevelopment = window.location.hostname === 'localhost' || 
+                                window.location.hostname === '127.0.0.1' ||
+                                window.location.hostname.includes('192.168.') ||
+                                window.location.hostname.includes('172.') ||
+                                window.location.hostname.includes('10.');
+          
+          if (isDevelopment) {
+            // FORCE unregister ALL service workers in development
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+              console.log(`[DEV] Found ${registrations.length} service workers to unregister`);
+              for(let registration of registrations) {
+                registration.unregister().then(() => {
+                  console.log('[DEV] Service worker unregistered:', registration.scope);
+                });
+              }
+            });
+            
+            // Also clear ALL caches in development
+            if ('caches' in window) {
+              caches.keys().then(function(names) {
+                console.log(`[DEV] Found ${names.length} caches to clear`);
+                for (let name of names) {
+                  caches.delete(name).then(() => {
+                    console.log('[DEV] Cache cleared:', name);
+                  });
+                }
+              });
+            }
+            
+            // Prevent ANY new service worker registrations in development
+            const originalRegister = navigator.serviceWorker.register;
+            navigator.serviceWorker.register = function() {
+              console.warn('[DEV] Blocked service worker registration attempt');
+              return Promise.reject(new Error('Service workers disabled in development'));
+            };
+          } else {
+            // Only register in production (liftlio.com)
+            navigator.serviceWorker.register('%PUBLIC_URL%/service-worker.js')
+              .then(registration => console.log('SW registered for production'))
+              .catch(err => console.log('SW registration failed'));
+          }
         });
       }
       

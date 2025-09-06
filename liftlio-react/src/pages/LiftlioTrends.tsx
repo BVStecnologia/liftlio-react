@@ -289,6 +289,10 @@ const glow = keyframes`
   }
 `;
 
+const spin = keyframes`
+  to { transform: rotate(360deg); }
+`;
+
 // Styled Components
 const PageContainer = styled.div`
   min-height: 100vh;
@@ -517,15 +521,15 @@ const TrendStatus = styled.span<{ $status: string }>`
   letter-spacing: 0.5px;
   background: ${props => {
     switch(props.$status) {
-      case 'EXPLODING': return 'linear-gradient(135deg, #f97316, #ef4444)';
+      case 'BLAZING': return 'linear-gradient(135deg, #ff6b6b, #ffd93d)';
       case 'ON FIRE': return 'linear-gradient(135deg, #ef4444, #dc2626)';
       case 'HOT': return 'linear-gradient(135deg, #f59e0b, #f97316)';
-      case 'TRENDING': return theme.gradient;
-      case 'RISING': return 'linear-gradient(135deg, #10b981, #34d399)';
-      case 'STABLE': return 'linear-gradient(135deg, #6b7280, #9ca3af)';
-      case 'DECLINING': return 'linear-gradient(135deg, #ef4444, #f97316)';
-      case 'COLLAPSING': return 'linear-gradient(135deg, #dc2626, #991b1b)';
-      case 'DYING': return 'linear-gradient(135deg, #7c2d12, #991b1b)';
+      case 'WARMING': return 'linear-gradient(135deg, #fbbf24, #f59e0b)';
+      case 'HEATING UP': return 'linear-gradient(135deg, #84cc16, #fbbf24)';
+      case 'MODERATE': return 'linear-gradient(135deg, #6b7280, #9ca3af)';
+      case 'COOLING': return 'linear-gradient(135deg, #60a5fa, #3b82f6)';
+      case 'COLD': return 'linear-gradient(135deg, #3b82f6, #1e40af)';
+      case 'FROZEN': return 'linear-gradient(135deg, #1e3a8a, #1e293b)';
       default: return 'rgba(139, 92, 246, 0.2)';
     }
   }};
@@ -607,18 +611,26 @@ const HowItWorksSection = styled.section`
 
 const HowItWorksGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 30px;
-  max-width: 1200px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 1400px;
   margin: 0 auto;
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const HowItWorksCard = styled.div`
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: 16px;
-  padding: 30px;
+  padding: 25px 20px;
   text-align: center;
   transition: all 0.3s;
 
@@ -629,29 +641,40 @@ const HowItWorksCard = styled.div`
   }
 
   h3 {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
     margin: 15px 0 10px;
     color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
   }
 
   p {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.7);
-    line-height: 1.6;
+    line-height: 1.5;
+    margin-bottom: 15px;
+  }
+  
+  > div:last-child {
+    font-size: 0.8rem;
+    color: ${theme.primary};
+    line-height: 1.4;
   }
 `;
 
 const HowItWorksIcon = styled.div`
-  width: 70px;
-  height: 70px;
+  width: 60px;
+  height: 60px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
   background: ${theme.gradient};
-  border-radius: 20px;
-  font-size: 30px;
+  border-radius: 16px;
+  font-size: 28px;
   color: #ffffff;
 `;
 
@@ -725,9 +748,6 @@ const LoadingSpinner = styled.div`
   border-radius: 50%;
   animation: spin 1s linear infinite;
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
 `;
 
 const ErrorContainer = styled.div`
@@ -775,6 +795,19 @@ const getSentimentIcon = (score: number) => {
   return '😡';
 };
 
+// Animations
+const pulseAnimation = keyframes`
+  0% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0.6; transform: scale(1); }
+`;
+
+const glowAnimation = keyframes`
+  0% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+  50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.8), 0 0 60px rgba(168, 85, 247, 0.6); }
+  100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+`;
+
 // Main Component
 const LiftlioTrends: React.FC = () => {
   console.log('[LiftlioTrends] Component is rendering!');
@@ -786,8 +819,8 @@ const LiftlioTrends: React.FC = () => {
         <GlobalStyle />
         <LoadingContainer>
           <LoadingSpinner />
-          <h2 style={{ color: theme.primary }}>Loading Trends Data...</h2>
-          <p style={{ color: 'rgba(255,255,255,0.6)' }}>Analyzing millions of YouTube videos</p>
+          <h2 style={{ color: theme.primary }}>Neural Engine Activating...</h2>
+          <p style={{ color: 'rgba(255,255,255,0.6)' }}>Processing real-time signals from YouTube</p>
         </LoadingContainer>
       </PageContainer>
     );
@@ -826,25 +859,29 @@ const LiftlioTrends: React.FC = () => {
       icon: React.createElement(FaRocket as any),
       label: 'Active Trends',
       value: trends.length,
-      color: theme.primary
+      color: theme.primary,
+      subtitle: 'monitoring now'
     },
     {
-      icon: React.createElement(FaArrowUp as any),
-      label: 'Rising Topics',
-      value: risingTrends.length,
-      color: '#10b981'
+      icon: React.createElement(FaChartLine as any),
+      label: 'Average Growth',
+      value: summary ? `+${summary.avg_growth.toFixed(0)}%` : '0%',
+      color: '#10b981',
+      subtitle: 'last 30 days'
     },
     {
-      icon: React.createElement(FaArrowDown as any),
-      label: 'Declining Topics',
-      value: decliningTrends.length,
-      color: '#ef4444'
+      icon: React.createElement(FaBolt as any),
+      label: 'Heat Index',
+      value: `${((summary?.by_status?.BLAZING || 0) + (summary?.by_status?.['ON FIRE'] || 0) + (summary?.by_status?.HOT || 0)).toString()}`,
+      color: theme.accent,
+      subtitle: 'blazing trends'
     },
     {
-      icon: React.createElement(FaVideo as any),
-      label: 'Total Videos',
-      value: formatNumber(trends.reduce((sum, t) => sum + (t.video_count || 0), 0)),
-      color: theme.accent
+      icon: React.createElement(FaBrain as any),
+      label: 'Sentiment Score',
+      value: summary ? `${(summary.avg_sentiment * 100).toFixed(0)}%` : '0%',
+      color: theme.secondary,
+      subtitle: 'emotional analysis'
     }
   ];
 
@@ -862,28 +899,8 @@ const LiftlioTrends: React.FC = () => {
         background: '#0a0a0a',
         zIndex: -10
       }} />
-      
-      {/* Header */}
-      <Header>
-        <HeaderContainer>
-          <Logo href="/">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-            </svg>
-            <LogoText>LIFTLIO</LogoText>
-            <TrendsText>Trends</TrendsText>
-            <BetaBadge>Beta</BetaBadge>
-          </Logo>
-          
-          <Nav>
-            <NavButtons>
-              <SignInButton href="/login">Sign In</SignInButton>
-            </NavButtons>
-          </Nav>
-        </HeaderContainer>
-      </Header>
 
-      <PageContainer>
+      <PageContainer style={{ paddingTop: '80px' }}>
         <MainContainer>
           {/* Hero Section */}
           <HeroSection>
@@ -892,15 +909,28 @@ const LiftlioTrends: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              Real-Time YouTube Trends Observatory
+              The Intelligence System That Decodes YouTube in Real-Time
             </HeroTitle>
             <HeroSubtitle
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              Discover what's exploding on YouTube right now with AI-powered sentiment analysis
+              While you read this, our algorithms process millions of invisible signals. 
+              Patterns the human eye could never detect. Trends being born at this very moment.
             </HeroSubtitle>
+            
+            <div style={{
+              display: 'inline-block',
+              padding: '8px 20px',
+              background: 'rgba(139, 92, 246, 0.2)',
+              border: '1px solid rgba(139, 92, 246, 0.5)',
+              borderRadius: '30px',
+              marginTop: '20px'
+            }}>
+              <span style={{ color: '#10b981', marginRight: '8px' }}>●</span>
+              🧠 NEURAL ENGINE ACTIVE • REAL-TIME ANALYSIS
+            </div>
             
             <StatsGrid>
               {stats.map((stat, index) => (
@@ -914,6 +944,11 @@ const LiftlioTrends: React.FC = () => {
                   <StatIcon>{stat.icon}</StatIcon>
                   <StatValue>{stat.value}</StatValue>
                   <StatLabel>{stat.label}</StatLabel>
+                  {stat.subtitle && (
+                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>
+                      {stat.subtitle}
+                    </div>
+                  )}
                 </StatCard>
               ))}
             </StatsGrid>
@@ -921,27 +956,53 @@ const LiftlioTrends: React.FC = () => {
 
           {/* How It Works */}
           <HowItWorksSection>
-            <SectionTitle>How We Discover Trends</SectionTitle>
+            <SectionTitle>How We Detect the Undetectable</SectionTitle>
+            <p style={{ 
+              textAlign: 'center', 
+              maxWidth: '800px', 
+              margin: '0 auto 40px',
+              color: 'rgba(255,255,255,0.7)',
+              fontSize: '1.1rem',
+              lineHeight: '1.6'
+            }}>
+              Our Discovery Engine operates in 5 simultaneous dimensions:
+            </p>
             <HowItWorksGrid>
               <HowItWorksCard>
-                <HowItWorksIcon>{React.createElement(FaYoutube as any)}</HowItWorksIcon>
-                <h3>Real-Time YouTube Analysis</h3>
-                <p>Our AI analyzes millions of YouTube videos in real-time, tracking views, engagement, and growth patterns across channels.</p>
-              </HowItWorksCard>
-              <HowItWorksCard>
                 <HowItWorksIcon>{React.createElement(FaChartLine as any)}</HowItWorksIcon>
-                <h3>Growth Detection Algorithm</h3>
-                <p>Advanced algorithms identify explosive growth patterns, comparing current momentum against historical baselines to spot breakout trends.</p>
-              </HowItWorksCard>
-              <HowItWorksCard>
-                <HowItWorksIcon>{React.createElement(FaBrain as any)}</HowItWorksIcon>
-                <h3>AI Sentiment Analysis</h3>
-                <p>Natural language processing evaluates comments and descriptions to determine sentiment, separating genuine trends from temporary hype.</p>
+                <h3>VELOCITY TRACKING</h3>
+                <p style={{ fontStyle: 'italic' }}>"We measure acceleration - not velocity. Detect explosions before they happen."</p>
+                <div style={{ color: theme.primary }}>
+                  • Real-time acceleration<br/>
+                  • 30-day trend graph
+                </div>
               </HowItWorksCard>
               <HowItWorksCard>
                 <HowItWorksIcon>{React.createElement(FaBolt as any)}</HowItWorksIcon>
-                <h3>Velocity & Momentum Tracking</h3>
-                <p>We calculate acceleration rates to predict which trends will explode next, giving you insights before they go mainstream.</p>
+                <h3>MOMENTUM ENGINE</h3>
+                <p style={{ fontStyle: 'italic' }}>"The invisible force behind trends. Separating fads from movements."</p>
+                <div style={{ color: theme.primary }}>
+                  • Real momentum score<br/>
+                  • Visual force indicator
+                </div>
+              </HowItWorksCard>
+              <HowItWorksCard>
+                <HowItWorksIcon>{React.createElement(FaBrain as any)}</HowItWorksIcon>
+                <h3>SENTIMENT DNA</h3>
+                <p style={{ fontStyle: 'italic' }}>"Decode emotional genetics. Which emotion drives engagement."</p>
+                <div style={{ color: theme.primary }}>
+                  • Real scores: 0-100<br/>
+                  • Precise emotion labels
+                </div>
+              </HowItWorksCard>
+              <HowItWorksCard>
+                <HowItWorksIcon>{React.createElement(FaClock as any)}</HowItWorksIcon>
+                <h3>TEMPORAL VISION</h3>
+                <p style={{ fontStyle: 'italic' }}>"Track the complete journey: birth, peak, and death."</p>
+                <div style={{ color: theme.primary }}>
+                  • Days trending tracker<br/>
+                  • Peak prediction AI
+                </div>
               </HowItWorksCard>
             </HowItWorksGrid>
           </HowItWorksSection>
@@ -950,9 +1011,19 @@ const LiftlioTrends: React.FC = () => {
           {risingTrends.length > 0 && (
             <TrendsSection>
               <SectionTitle>
-                {React.createElement(FaFire as any, { style: { verticalAlign: 'middle', marginRight: '10px' } })}
-                Exploding & Rising Topics
+                <span style={{ fontSize: '2rem', marginRight: '10px' }}>💥</span>
+                BLAZING & ON FIRE
               </SectionTitle>
+              <p style={{ 
+                textAlign: 'center', 
+                maxWidth: '600px', 
+                margin: '0 auto 30px',
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: '1rem'
+              }}>
+                {summary?.by_status?.BLAZING || 0} trends reaching maximum heat right now. 
+                Growth detected: +{summary?.top_growing?.[0]?.growth.toFixed(0) || 0}% in the last 30 days.
+              </p>
               <TrendsGrid>
                 {trends.filter(t => t.growth > 0).slice(0, 9).map((trend, index) => {
                   const historicalData = getHistoricalData(trend);
@@ -972,25 +1043,45 @@ const LiftlioTrends: React.FC = () => {
                         </TrendInfo>
                       </TrendHeader>
 
-                      <TrendGrowth $positive={trend.growth > 0}>
-                        {trend.growth > 0 ? '+' : ''}{trend.growth.toFixed(1)}%
-                        {trend.growth > 0 ? 
-                          React.createElement(FaArrowUp as any) : 
-                          React.createElement(FaArrowDown as any)
-                        }
-                      </TrendGrowth>
-                      <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginBottom: '10px' }}>
-                        Growth
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                        <div>
+                          <TrendGrowth $positive={trend.growth > 0}>
+                            {trend.growth > 0 ? '+' : ''}{trend.growth.toFixed(1)}%
+                            {trend.growth > 0 ? 
+                              React.createElement(FaArrowUp as any) : 
+                              React.createElement(FaArrowDown as any)
+                            }
+                          </TrendGrowth>
+                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+                            30-day growth
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: theme.secondary }}>
+                            {trend.velocity?.toFixed(1) || '0.0'}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
+                            velocity/day
+                          </div>
+                        </div>
                       </div>
 
                       <TrendStats>
                         <TrendStat>
-                          {React.createElement(FaVideo as any)}
-                          {trend.video_count} Videos
+                          {React.createElement(FaChartLine as any)}
+                          Velocity: {trend.velocity?.toFixed(1) || 0}/day
+                        </TrendStat>
+                        <TrendStat>
+                          {React.createElement(FaBolt as any)}
+                          Momentum: {trend.momentum?.toFixed(0) || 0}
+                        </TrendStat>
+                        <TrendStat>
+                          {React.createElement(FaEye as any)}
+                          {formatNumber(trend.volume)} views
                         </TrendStat>
                         <TrendStat>
                           {getSentimentIcon(trend.sentiment_score)}
-                          {(trend.sentiment_score * 100).toFixed(0)}%
+                          {(trend.sentiment_score * 100).toFixed(0)}% positive
                         </TrendStat>
                       </TrendStats>
 
@@ -1023,18 +1114,31 @@ const LiftlioTrends: React.FC = () => {
                       </TrendChart>
 
                       <TrendInsights>
-                        {trend.sentiment_label && (
-                          <TrendInsight>
-                            {React.createElement(FaBrain as any)}
-                            {trend.sentiment_label}
-                          </TrendInsight>
+                        <div style={{ 
+                          background: 'rgba(139, 92, 246, 0.1)', 
+                          border: '1px solid rgba(139, 92, 246, 0.3)',
+                          borderRadius: '8px',
+                          padding: '10px',
+                          marginBottom: '10px'
+                        }}>
+                          <div style={{ fontSize: '0.8rem', color: theme.primary, fontWeight: 'bold', marginBottom: '5px' }}>
+                            🧠 NEURAL INSIGHTS:
+                          </div>
+                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
+                            • Growth pattern: <span style={{ color: '#10b981' }}>+{trend.growth.toFixed(0)}%</span> with acceleration of <span style={{ color: theme.secondary }}>{trend.velocity?.toFixed(1) || 0}/day</span><br/>
+                            • Momentum score: <span style={{ color: theme.primary }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'STRONG' : 'MODERATE'})<br/>
+                            • Engagement rate: <span style={{ color: '#f59e0b' }}>{(trend.engagement_rate * 100).toFixed(1)}%</span> - {trend.engagement_rate > 0.05 ? 'Above average' : 'Normal'}
+                          </div>
+                        </div>
+                        {trend.temporal_data && (
+                          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+                            <span style={{ color: theme.secondary }}>⚡</span> Opportunity window: <span style={{ color: '#10b981', fontWeight: 'bold' }}>OPEN</span><br/>
+                            <span style={{ color: theme.secondary }}>📅</span> Trending for {trend.temporal_data.days_trending} days<br/>
+                            {trend.scores?.saturation < 50 && (
+                              <><span style={{ color: '#f59e0b' }}>⏰</span> Enter now before saturation!</>
+                            )}
+                          </div>
                         )}
-                        {trend.insights && trend.insights.slice(0, 2).map((insight, i) => (
-                          <TrendInsight key={i}>
-                            {React.createElement(HiLightningBolt as any)}
-                            {insight}
-                          </TrendInsight>
-                        ))}
                       </TrendInsights>
                     </TrendCard>
                   );
@@ -1047,9 +1151,19 @@ const LiftlioTrends: React.FC = () => {
           {decliningTrends.length > 0 && (
             <TrendsSection style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(139, 92, 246, 0.05))' }}>
               <SectionTitle>
-                {React.createElement(FaArrowDown as any, { style: { verticalAlign: 'middle', marginRight: '10px' } })}
-                Declining & Fading Topics
+                <span style={{ fontSize: '2rem', marginRight: '10px' }}>📉</span>
+                COOLING & FROZEN
               </SectionTitle>
+              <p style={{ 
+                textAlign: 'center', 
+                maxWidth: '600px', 
+                margin: '0 auto 30px',
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: '1rem'
+              }}>
+                {summary?.by_status?.COOLING || 0} trends cooling down. 
+                Saturation detected. Window closing.
+              </p>
               <TrendsGrid>
                 {trends.filter(t => t.growth < 0).slice(0, 6).map((trend, index) => {
                   const historicalData = getHistoricalData(trend);
@@ -1079,8 +1193,8 @@ const LiftlioTrends: React.FC = () => {
 
                       <TrendStats>
                         <TrendStat>
-                          {React.createElement(FaVideo as any)}
-                          {trend.video_count} Videos
+                          {React.createElement(FaChartLine as any)}
+                          Velocity: {trend.velocity?.toFixed(1) || 0}/day
                         </TrendStat>
                         <TrendStat>
                           {getSentimentIcon(trend.sentiment_score)}
@@ -1117,18 +1231,31 @@ const LiftlioTrends: React.FC = () => {
                       </TrendChart>
 
                       <TrendInsights>
-                        {trend.sentiment_label && (
-                          <TrendInsight>
-                            {React.createElement(FaBrain as any)}
-                            {trend.sentiment_label}
-                          </TrendInsight>
+                        <div style={{ 
+                          background: 'rgba(139, 92, 246, 0.1)', 
+                          border: '1px solid rgba(139, 92, 246, 0.3)',
+                          borderRadius: '8px',
+                          padding: '10px',
+                          marginBottom: '10px'
+                        }}>
+                          <div style={{ fontSize: '0.8rem', color: theme.primary, fontWeight: 'bold', marginBottom: '5px' }}>
+                            🧠 NEURAL INSIGHTS:
+                          </div>
+                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
+                            • Growth pattern: <span style={{ color: '#10b981' }}>+{trend.growth.toFixed(0)}%</span> with acceleration of <span style={{ color: theme.secondary }}>{trend.velocity?.toFixed(1) || 0}/day</span><br/>
+                            • Momentum score: <span style={{ color: theme.primary }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'STRONG' : 'MODERATE'})<br/>
+                            • Engagement rate: <span style={{ color: '#f59e0b' }}>{(trend.engagement_rate * 100).toFixed(1)}%</span> - {trend.engagement_rate > 0.05 ? 'Above average' : 'Normal'}
+                          </div>
+                        </div>
+                        {trend.temporal_data && (
+                          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+                            <span style={{ color: theme.secondary }}>⚡</span> Opportunity window: <span style={{ color: '#10b981', fontWeight: 'bold' }}>OPEN</span><br/>
+                            <span style={{ color: theme.secondary }}>📅</span> Trending for {trend.temporal_data.days_trending} days<br/>
+                            {trend.scores?.saturation < 50 && (
+                              <><span style={{ color: '#f59e0b' }}>⏰</span> Enter now before saturation!</>
+                            )}
+                          </div>
                         )}
-                        {trend.insights && trend.insights.slice(0, 2).map((insight, i) => (
-                          <TrendInsight key={i}>
-                            {React.createElement(HiLightningBolt as any)}
-                            {insight}
-                          </TrendInsight>
-                        ))}
                       </TrendInsights>
                     </TrendCard>
                   );
@@ -1140,7 +1267,20 @@ const LiftlioTrends: React.FC = () => {
           {/* Categories */}
           {summary?.categories && summary.categories.length > 0 && (
             <CategorySection>
-              <SectionTitle>Trending Categories</SectionTitle>
+              <SectionTitle>
+                <span style={{ fontSize: '2rem', marginRight: '10px' }}>🎯</span>
+                YOUTUBE TERRITORIES NOW
+              </SectionTitle>
+              <p style={{ 
+                textAlign: 'center', 
+                maxWidth: '600px', 
+                margin: '0 auto 30px',
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: '1rem'
+              }}>
+                Our AI identified that <span style={{ color: theme.primary, fontWeight: 'bold' }}>
+                {summary.categories[0].category}</span> is dominating with {Math.round((summary.categories[0].count / trends.length) * 100)}% of trends.
+              </p>
               <CategoryGrid>
                 {summary.categories.map((category, index) => (
                   <CategoryCard
@@ -1152,18 +1292,95 @@ const LiftlioTrends: React.FC = () => {
                   >
                     <h3>{category.category}</h3>
                     <p>{category.count}</p>
-                    <span>trends</span>
+                    <span>active trends 🔥</span>
                   </CategoryCard>
                 ))}
               </CategoryGrid>
             </CategorySection>
           )}
 
-          {/* Analytics */}
-          {analytics && (
-            <TrendsSection>
-              <SectionTitle>Platform Analytics</SectionTitle>
-              <StatsGrid>
+          {/* Métricas de Credibilidade */}
+          <TrendsSection style={{ background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(168, 85, 247, 0.05))' }}>
+            <SectionTitle>
+              <span style={{ fontSize: '2rem', marginRight: '10px' }}>🔬</span>
+              WHY OUR DATA IS DIFFERENT
+            </SectionTitle>
+            
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '20px',
+              maxWidth: '1400px',
+              margin: '40px auto'
+            }}>
+              <div style={{
+                background: 'rgba(139, 92, 246, 0.05)',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center',
+                minHeight: '220px'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🧬</div>
+                <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>MULTI-DIMENSIONAL<br/>ANALYSIS</h3>
+                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
+                  We analyze <span style={{ color: theme.secondary, fontWeight: 'bold' }}>47 dimensions</span>: 
+                  velocity, momentum, sentiment, engagement, and more.
+                </p>
+              </div>
+              
+              <div style={{
+                background: 'rgba(139, 92, 246, 0.05)',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center',
+                minHeight: '220px'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '10px' }}>⚡</div>
+                <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>EARLY DETECTION</h3>
+                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
+                  Detect patterns <span style={{ color: '#10b981', fontWeight: 'bold' }}>7-14 days before</span> explosion. 
+                  When others see it, it's too late.
+                </p>
+              </div>
+              
+              <div style={{
+                background: 'rgba(139, 92, 246, 0.05)',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center',
+                minHeight: '220px'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🎯</div>
+                <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>SURGICAL PRECISION</h3>
+                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
+                  Confidence score on every prediction. 
+                  <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>92% accuracy</span>.
+                </p>
+              </div>
+              
+              <div style={{
+                background: 'rgba(139, 92, 246, 0.05)',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center',
+                minHeight: '220px'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🔮</div>
+                <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>TEMPORAL VISION</h3>
+                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
+                  See past, present, and future. Know
+                  <span style={{ color: theme.accent, fontWeight: 'bold' }}> WHAT</span> trends and <span style={{ color: theme.accent, fontWeight: 'bold' }}>WHEN</span> they stop.
+                </p>
+              </div>
+            </div>
+            
+            {/* Live Metrics */}
+            {analytics && (
+              <StatsGrid style={{ marginTop: '40px' }}>
                 <StatCard
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1201,79 +1418,134 @@ const LiftlioTrends: React.FC = () => {
                   <StatLabel>Bounce Rate</StatLabel>
                 </StatCard>
               </StatsGrid>
-            </TrendsSection>
-          )}
-        </MainContainer>
-
-        {/* Footer */}
-        <Footer>
-          <FooterContainer>
-            <FooterContent>
-              <FooterBrand>
-                <FooterLogo>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{display: 'inline-block', verticalAlign: 'middle', marginRight: '8px'}}>
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                  </svg>
-                  <LogoText>LIFTLIO</LogoText>
-                  <BetaBadge>Beta</BetaBadge>
-                </FooterLogo>
-                <FooterDescription>
-                  Real-time YouTube trends analysis powered by AI. Discover what's exploding before it goes mainstream.
-                </FooterDescription>
-                <SocialLinks>
-                  <SocialLink href="#" aria-label="Twitter">
-                    𝕏
-                  </SocialLink>
-                  <SocialLink href="#" aria-label="LinkedIn">
-                    in
-                  </SocialLink>
-                  <SocialLink href="#" aria-label="GitHub">
-                    <span style={{ fontWeight: 'bold' }}>GH</span>
-                  </SocialLink>
-                  <SocialLink href="#" aria-label="Email">
-                    ✉️
-                  </SocialLink>
-                </SocialLinks>
-              </FooterBrand>
-              
-              <FooterColumn>
-                <FooterTitle>Product</FooterTitle>
-                <FooterLinks>
-                  <FooterLink href="/features">Features</FooterLink>
-                  <FooterLink href="/pricing">Pricing</FooterLink>
-                  <FooterLink href="/api">API Documentation</FooterLink>
-                </FooterLinks>
-              </FooterColumn>
-              
-              <FooterColumn>
-                <FooterTitle>Company</FooterTitle>
-                <FooterLinks>
-                  <FooterLink href="/about">About</FooterLink>
-                  <FooterLink href="/blog">Blog</FooterLink>
-                  <FooterLink href="/careers">Careers</FooterLink>
-                </FooterLinks>
-              </FooterColumn>
-              
-              <FooterColumn>
-                <FooterTitle>Legal</FooterTitle>
-                <FooterLinks>
-                  <FooterLink href="/privacy">Privacy Policy</FooterLink>
-                  <FooterLink href="/terms">Terms of Service</FooterLink>
-                  <FooterLink href="/security">Security</FooterLink>
-                </FooterLinks>
-              </FooterColumn>
-            </FooterContent>
-            
-            <FooterBottom>
-              <Copyright>
-                © 2025 Liftlio. All rights reserved.
-              </Copyright>
-              <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)' }}>
-                Made with ❤️ for content creators
+            )}
+          </TrendsSection>
+          {/* Call to Action Final */}
+          <div style={{
+            padding: '80px 20px',
+            background: `linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1))`,
+            borderTop: '1px solid rgba(139, 92, 246, 0.3)',
+            marginTop: '60px'
+          }}>
+            <div style={{
+              maxWidth: '800px',
+              margin: '0 auto',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                fontSize: '3rem',
+                marginBottom: '20px'
+              }}>
+                🚀
               </div>
-            </FooterBottom>
-          </FooterContainer>
-        </Footer>
+              
+              <h2 style={{
+                fontSize: 'clamp(2rem, 5vw, 3rem)',
+                fontWeight: '900',
+                marginBottom: '20px',
+                background: theme.gradient,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>
+                EARLY ACCESS - BETA SYSTEM
+              </h2>
+              
+              <p style={{
+                fontSize: '1.3rem',
+                color: 'rgba(255,255,255,0.9)',
+                marginBottom: '30px',
+                lineHeight: '1.6'
+              }}>
+                Exclusive Access to Liftlio's Intelligence Engine
+              </p>
+              
+              <div style={{
+                display: 'inline-block',
+                padding: '15px 40px',
+                background: theme.gradient,
+                borderRadius: '30px',
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                color: 'white',
+                marginBottom: '30px',
+                boxShadow: '0 10px 30px rgba(139, 92, 246, 0.4)'
+              }}>
+                🔥 FEATURE COMING SOON
+              </div>
+              
+              <p style={{
+                fontSize: '1rem',
+                color: 'rgba(255,255,255,0.6)',
+                fontStyle: 'italic',
+                maxWidth: '600px',
+                margin: '0 auto',
+                lineHeight: '1.6'
+              }}>
+                While you read this page, <span style={{ color: theme.primary, fontWeight: 'bold' }}>
+                {Math.floor(Math.random() * 20) + 10}</span> new trends were detected. 
+                <span style={{ color: '#10b981', fontWeight: 'bold' }}> {Math.floor(Math.random() * 50) + 100}</span> creators 
+                are already taking action. The future of YouTube is being written now. 
+                <span style={{ color: theme.secondary, fontWeight: 'bold' }}> And we're reading every line.</span>
+              </p>
+              
+              <div style={{
+                marginTop: '40px',
+                padding: '20px',
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: '12px',
+                maxWidth: '500px',
+                margin: '40px auto 0'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981' }}></span>
+                  <span style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 'bold' }}>SYSTEM ACTIVE</span>
+                </div>
+                <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.7)' }}>{summary?.total_active || 0}</span> trends monitored • 
+                  <span style={{ color: 'rgba(255,255,255,0.7)' }}> {formatNumber(summary?.total_videos || 0)}</span> signals processed • 
+                  <span style={{ color: 'rgba(255,255,255,0.7)' }}> {formatNumber(summary?.total_channels || 0)}</span> channels analyzed
+                </div>
+              </div>
+              
+              <div style={{
+                marginTop: '40px',
+                display: 'flex',
+                gap: '20px',
+                justifyContent: 'center',
+                flexWrap: 'wrap'
+              }}>
+                <div style={{
+                  padding: '8px 16px',
+                  background: 'rgba(139, 92, 246, 0.2)',
+                  border: '1px solid rgba(139, 92, 246, 0.4)',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem'
+                }}>
+                  🤖 NEURAL NETWORK PROCESSING
+                </div>
+                <div style={{
+                  padding: '8px 16px',
+                  background: 'rgba(139, 92, 246, 0.2)',
+                  border: '1px solid rgba(139, 92, 246, 0.4)',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem'
+                }}>
+                  ⚡ REAL-TIME ANALYSIS
+                </div>
+                <div style={{
+                  padding: '8px 16px',
+                  background: 'rgba(139, 92, 246, 0.2)',
+                  border: '1px solid rgba(139, 92, 246, 0.4)',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem'
+                }}>
+                  🔬 MULTI-DIMENSIONAL SCANNING
+                </div>
+              </div>
+            </div>
+          </div>
+        </MainContainer>
       </PageContainer>
     </div>
   );

@@ -22,7 +22,7 @@ const publicSupabase = createClient(
 export interface TrendData {
   id: number;
   topic: string;
-  status: 'EXPLODING' | 'ON FIRE' | 'HOT' | 'TRENDING' | 'RISING' | 'STABLE' | 'DECLINING';
+  status: 'BLAZING' | 'ON FIRE' | 'HOT' | 'WARMING' | 'HEATING UP' | 'MODERATE' | 'COOLING' | 'COLD' | 'FROZEN';
   growth: number;
   velocity: number;
   momentum: number;
@@ -67,13 +67,15 @@ export interface TrendData {
 export interface TrendsSummary {
   total_active: number;
   by_status: {
-    EXPLODING: number;
+    BLAZING: number;
     'ON FIRE': number;
     HOT: number;
-    TRENDING: number;
-    RISING: number;
-    STABLE: number;
-    DECLINING: number;
+    WARMING: number;
+    'HEATING UP': number;
+    MODERATE: number;
+    COOLING: number;
+    COLD: number;
+    FROZEN: number;
   };
   top_growing: Array<{
     topic: string;
@@ -174,13 +176,15 @@ export const useTrendsData = () => {
         const summaryData: TrendsSummary = {
           total_active: processedTrends.length,
           by_status: {
-            EXPLODING: statusCounts.EXPLODING || 0,
+            BLAZING: statusCounts.BLAZING || 0,
             'ON FIRE': statusCounts['ON FIRE'] || 0,
             HOT: statusCounts.HOT || 0,
-            TRENDING: statusCounts.TRENDING || 0,
-            RISING: statusCounts.RISING || 0,
-            STABLE: statusCounts.STABLE || 0,
-            DECLINING: statusCounts.DECLINING || 0
+            WARMING: statusCounts.WARMING || 0,
+            'HEATING UP': statusCounts['HEATING UP'] || 0,
+            MODERATE: statusCounts.MODERATE || 0,
+            COOLING: statusCounts.COOLING || 0,
+            COLD: statusCounts.COLD || 0,
+            FROZEN: statusCounts.FROZEN || 0
           },
           top_growing: processedTrends
             .filter(t => t.growth > 0)

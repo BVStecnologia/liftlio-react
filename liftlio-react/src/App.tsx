@@ -25,6 +25,7 @@ const Overview = lazy(() => import('./pages/Overview'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const LiftlioAnalytics = lazy(() => import('./pages/LiftlioAnalytics'));
 const LiftlioTrends = lazy(() => import('./pages/LiftlioTrends'));
+const PublicLayout = lazy(() => import('./components/PublicLayout'));
 const Monitoring = lazy(() => import('./pages/Monitoring'));
 const Mentions = lazy(() => import('./pages/Mentions'));
 const Settings = lazy(() => import('./pages/Settings'));
@@ -600,13 +601,13 @@ const AppContent: React.FC = () => {
         <OAuthHandler />
         <Suspense fallback={<GlobalLoader message="Loading" subMessage="Please wait..." />}>
           <Routes>
-          {/* Landing page como ponto de entrada principal */}
-          <Route path="/" element={<LandingPageHTML />} />
+          {/* Landing page como ponto de entrada principal - força nova renderização */}
+          <Route path="/" element={<LandingPageHTML key="landing-home" />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/liftlio-analytics" element={<LiftlioAnalytics />} />
-          <Route path="/trends" element={<LiftlioTrends />} />
+          <Route path="/trends" element={<PublicLayout><LiftlioTrends /></PublicLayout>} />
           
           {/* Páginas institucionais - Redirecionamento para HTML estático */}
           <Route path="/about" element={<StaticRedirect to="/about.html" />} />
@@ -1095,7 +1096,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
             <SubscriptionWarningBanner />
             <ContentWrapper>
               <Routes>
-                <Route path="/" element={<SubscriptionGate><ProcessingWrapper onCheckingStateChange={setIsProcessingWrapperChecking}><Overview /></ProcessingWrapper></SubscriptionGate>} />
+                {/* Removida rota "/" duplicada - já definida nas rotas públicas */}
                 <Route path="/dashboard" element={<SubscriptionGate><ProcessingWrapper onCheckingStateChange={setIsProcessingWrapperChecking}><Overview /></ProcessingWrapper></SubscriptionGate>} />
                 <Route path="/analytics" element={<SubscriptionGate><Analytics /></SubscriptionGate>} />
                 <Route path="/monitoring" element={<SubscriptionGate><ProcessingWrapper onCheckingStateChange={setIsProcessingWrapperChecking}><Monitoring /></ProcessingWrapper></SubscriptionGate>} />

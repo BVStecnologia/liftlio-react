@@ -1,66 +1,33 @@
-// Service Worker for Liftlio - Performance Optimization v2
-const CACHE_NAME = 'liftlio-v2';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/landing-page.html',
-  '/mobile-improvements.min.css',
-  '/imagens/dashboard-hero-dark-mobile-400.jpg',
-  '/imagens/dashboard-hero-dark-mobile-576.jpg',
-  '/imagens/dashboard-hero-dark.jpg'
-];
+// Development Service Worker - Cleans up old caches and unregisters itself
+// This file exists to help transition from the old caching service worker
 
-// Install event - cache resources
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
-  );
+// Delete all caches
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
-// Activate event - clean old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
+      // Delete all caches
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
+          console.log('Deleting cache:', cacheName);
+          return caches.delete(cacheName);
         })
       );
+    }).then(() => {
+      // Take control of all pages immediately
+      return self.clients.claim();
+    }).then(() => {
+      // Unregister this service worker after cleaning up
+      console.log('Cleaning up: Service worker will unregister itself');
+      return self.registration.unregister();
     })
   );
-  self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-
-        return fetch(event.request).then(response => {
-          // Check if valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // Clone the response
-          const responseToCache = response.clone();
-
-          caches.open(CACHE_NAME)
-            .then(cache => {
-              cache.put(event.request, responseToCache);
-            });
-
-          return response;
-        });
-      })
-  );
+// Don't handle any fetch events - let everything go to network
+self.addEventListener('fetch', () => {
+  // Do nothing - let the browser handle all requests normally
 });
