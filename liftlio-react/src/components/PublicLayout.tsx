@@ -1,8 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
-import { IconComponent } from '../utils/IconHelper';
-import { FaTwitter, FaLinkedin, FaGithub, FaEnvelope } from 'react-icons/fa';
 
 const LayoutContainer = styled.div`
   min-height: 100vh;
@@ -103,19 +101,38 @@ const Footer = styled.footer`
 `;
 
 const FooterContent = styled.div`
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
-`;
-
-const FooterGrid = styled.div`
+  padding: 0 20px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: 48px;
-  margin-bottom: 48px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
 `;
 
-const FooterSection = styled.div`
+const FooterBrand = styled.div`
+  max-width: 300px;
+`;
+
+const FooterLogo = styled.div`
+  font-size: 24px;
+  font-weight: 900;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+`;
+
+const FooterDescription = styled.p`
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  line-height: 1.6;
+`;
+
+const FooterColumn = styled.div`
   h3 {
     color: #8b5cf6;
     font-size: 14px;
@@ -124,12 +141,12 @@ const FooterSection = styled.div`
     letter-spacing: 1px;
     margin-bottom: 16px;
   }
+`;
 
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
+const FooterLinks = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
 
   li {
     margin-bottom: 12px;
@@ -147,17 +164,14 @@ const FooterSection = styled.div`
   }
 `;
 
-const FooterBottom = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 24px;
-  border-top: 1px solid rgba(139, 92, 246, 0.1);
 
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 16px;
-  }
+const FooterBottom = styled.div`
+  max-width: 1200px;
+  margin: 60px auto 0;
+  padding-top: 32px;
+  border-top: 1px solid rgba(139, 92, 246, 0.1);
+  text-align: center;
+  color: rgba(255, 255, 255, 0.4);
 `;
 
 const Copyright = styled.p`
@@ -166,20 +180,6 @@ const Copyright = styled.p`
   margin: 0;
 `;
 
-const SocialLinks = styled.div`
-  display: flex;
-  gap: 20px;
-
-  a {
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 20px;
-    transition: color 0.3s ease;
-
-    &:hover {
-      color: #8b5cf6;
-    }
-  }
-`;
 
 interface PublicLayoutProps {
   children: React.ReactNode;
@@ -229,93 +229,71 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
 
       <Footer>
         <FooterContent>
-          <FooterGrid>
-            <FooterSection>
-              <h3>Product</h3>
-              <ul>
-                <li><Link to="/liftlio-analytics">Analytics</Link></li>
-                <li><Link to="/trends">YouTube Trends</Link></li>
-                <li><Link to="/#features">Features</Link></li>
-                <li><Link to="/#pricing">Pricing</Link></li>
-              </ul>
-            </FooterSection>
-
-            <FooterSection>
-              <h3>Company</h3>
-              <ul>
-                <li><Link to="/about">About Us</Link></li>
-                <li><a href="https://blog.liftlio.com" target="_blank" rel="noopener noreferrer">Blog</a></li>
-                <li><Link to="/privacy">Privacy Policy</Link></li>
-                <li><Link to="/terms">Terms of Service</Link></li>
-              </ul>
-            </FooterSection>
-
-            <FooterSection>
-              <h3>Support</h3>
-              <ul>
-                <li><a href="mailto:support@liftlio.com">Contact Us</a></li>
-                <li><a href="https://docs.liftlio.com" target="_blank" rel="noopener noreferrer">Documentation</a></li>
-                <li><Link to="/security">Security</Link></li>
-              </ul>
-            </FooterSection>
-
-            <FooterSection>
-              <h3>Stay Updated</h3>
-              <p style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '14px', marginBottom: '16px' }}>
-                Get the latest trends and insights delivered to your inbox.
-              </p>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <input 
-                  type="email" 
-                  placeholder="Enter your email"
-                  style={{
-                    background: 'rgba(139, 92, 246, 0.1)',
-                    border: '1px solid rgba(139, 92, 246, 0.3)',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    color: 'white',
-                    flex: 1,
-                    fontSize: '14px'
-                  }}
-                />
-                <button
-                  style={{
-                    background: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '8px 16px',
-                    color: 'white',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    fontSize: '14px'
-                  }}
-                >
-                  Subscribe
-                </button>
-              </div>
-            </FooterSection>
-          </FooterGrid>
-
-          <FooterBottom>
-            <Copyright>
-              © 2025 Liftlio. All rights reserved.
-            </Copyright>
-            <SocialLinks>
-              <a href="https://twitter.com/liftlio" target="_blank" rel="noopener noreferrer">
-                <IconComponent icon={FaTwitter} />
-              </a>
-              <a href="https://linkedin.com/company/liftlio" target="_blank" rel="noopener noreferrer">
-                <IconComponent icon={FaLinkedin} />
-              </a>
-              <a href="https://github.com/liftlio" target="_blank" rel="noopener noreferrer">
-                <IconComponent icon={FaGithub} />
-              </a>
-              <a href="mailto:contact@liftlio.com">
-                <IconComponent icon={FaEnvelope} />
-              </a>
-            </SocialLinks>
-          </FooterBottom>
+          <FooterBrand>
+            <FooterLogo>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{display: 'inline-block', verticalAlign: 'middle', marginRight: '8px'}}>
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              <span style={{ 
+                background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontWeight: '900'
+              }}>LIFTLIO</span>
+              <span style={{
+                display: 'inline-block',
+                background: 'rgba(129, 140, 248, 0.1)',
+                border: '1px solid rgba(129, 140, 248, 0.2)',
+                color: '#818cf8',
+                padding: '3px 10px',
+                borderRadius: '100px',
+                fontSize: '11px',
+                fontWeight: '600',
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+                marginLeft: '10px',
+                transition: 'all 0.3s'
+              }}>Beta</span>
+            </FooterLogo>
+            <FooterDescription>
+              AI-powered platform to scale word-of-mouth recommendations without paying for ads.
+            </FooterDescription>
+          </FooterBrand>
+          
+          <FooterColumn>
+            <h3>Product</h3>
+            <FooterLinks>
+              <li><a href="#features">Features</a></li>
+              <li><a href="#pricing">Pricing</a></li>
+              <li><a href="#api">API Documentation</a></li>
+            </FooterLinks>
+          </FooterColumn>
+          
+          <FooterColumn>
+            <h3>Company</h3>
+            <FooterLinks>
+              <li><a href="/about">About</a></li>
+              <li><a href="/blog">Blog</a></li>
+              <li><a href="/careers">Careers</a></li>
+            </FooterLinks>
+          </FooterColumn>
+          
+          <FooterColumn>
+            <h3>Legal</h3>
+            <FooterLinks>
+              <li><a href="/privacy">Privacy Policy</a></li>
+              <li><a href="/terms">Terms of Service</a></li>
+              <li><a href="/security">Security</a></li>
+            </FooterLinks>
+          </FooterColumn>
         </FooterContent>
+        
+        <FooterBottom>
+          <Copyright>
+            © 2024 Liftlio. All rights reserved.
+          </Copyright>
+        </FooterBottom>
       </Footer>
     </LayoutContainer>
   );

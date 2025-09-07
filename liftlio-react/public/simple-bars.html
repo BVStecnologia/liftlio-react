@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple 3D Bars Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0a0a;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        
+        // Bars array
+        const bars = [];
+        const numBars = 20;
+        
+        // Initialize bars
+        for (let i = 0; i < numBars; i++) {
+            bars.push({
+                x: (canvas.width / numBars) * i + 20,
+                height: Math.random() * 200 + 50,
+                targetHeight: Math.random() * 200 + 50,
+                color: `hsl(${250 + i * 5}, 70%, 60%)`,
+                speed: 0.02 + Math.random() * 0.03
+            });
+        }
+        
+        // Animation
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = 'rgba(10, 10, 10, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw bars
+            bars.forEach((bar, i) => {
+                // Update height
+                bar.height += (bar.targetHeight - bar.height) * bar.speed;
+                
+                // New target when close
+                if (Math.abs(bar.height - bar.targetHeight) < 1) {
+                    bar.targetHeight = Math.random() * 200 + 50;
+                }
+                
+                // Draw bar
+                const barWidth = (canvas.width / numBars) * 0.7;
+                const x = bar.x;
+                const y = canvas.height - 100;
+                
+                // Create gradient
+                const gradient = ctx.createLinearGradient(x, y, x, y - bar.height);
+                gradient.addColorStop(0, bar.color);
+                gradient.addColorStop(1, `hsl(${250 + i * 5}, 70%, 80%)`);
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, y - bar.height, barWidth, bar.height);
+                
+                // Top cap
+                ctx.fillStyle = `hsl(${250 + i * 5}, 70%, 85%)`;
+                ctx.fillRect(x, y - bar.height - 3, barWidth, 3);
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>

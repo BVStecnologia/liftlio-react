@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import styled, { keyframes, createGlobalStyle } from 'styled-components';
 import { motion } from 'framer-motion';
 import { 
@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fa';
 import { HiLightningBolt, HiFire } from 'react-icons/hi';
 import { useTrendsData } from '../hooks/useTrendsData';
+import AnimatedBars3D from '../components/AnimatedBars3D';
 
 // Global Styles
 const GlobalStyle = createGlobalStyle`
@@ -333,12 +334,27 @@ const MainContainer = styled.main`
   min-height: calc(100vh - 80px);
 `;
 
+const BackgroundCanvas = styled.canvas`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 100%;
+  min-height: 100%;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+  display: block;
+`;
+
 const HeroSection = styled.section`
   padding: 100px 60px 60px;
   text-align: center;
   position: relative;
   background: linear-gradient(180deg, rgba(139, 92, 246, 0.05) 0%, transparent 100%);
   width: 100%;
+  overflow: hidden;
 
   @media (max-width: 1200px) {
     padding: 100px 40px 60px;
@@ -347,6 +363,11 @@ const HeroSection = styled.section`
   @media (max-width: 768px) {
     padding: 80px 20px 40px;
   }
+`;
+
+const HeroContent = styled.div`
+  position: relative;
+  z-index: 1;
 `;
 
 const HeroTitle = styled(motion.h1)`
@@ -361,6 +382,8 @@ const HeroTitle = styled(motion.h1)`
   animation: ${gradientShift} 12s ease infinite;
   line-height: 1.2;
   padding: 0 20px;
+  position: relative;
+  z-index: 2;
 `;
 
 const HeroSubtitle = styled(motion.p)`
@@ -368,6 +391,8 @@ const HeroSubtitle = styled(motion.p)`
   color: rgba(255, 255, 255, 0.7);
   max-width: 700px;
   margin: 0 auto 40px;
+  position: relative;
+  z-index: 2;
 `;
 
 const StatsGrid = styled.div`
@@ -904,21 +929,23 @@ const LiftlioTrends: React.FC = () => {
         <MainContainer>
           {/* Hero Section */}
           <HeroSection>
-            <HeroTitle
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              The Intelligence System That Decodes YouTube in Real-Time
-            </HeroTitle>
-            <HeroSubtitle
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              While you read this, our algorithms process millions of invisible signals. 
-              Patterns the human eye could never detect. Trends being born at this very moment.
-            </HeroSubtitle>
+            <AnimatedBars3D />
+            <HeroContent>
+              <HeroTitle
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+              >
+                The Intelligence System That Decodes YouTube in Real-Time
+              </HeroTitle>
+              <HeroSubtitle
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                While you read this, our algorithms process millions of invisible signals. 
+                Patterns the human eye could never detect. Trends being born at this very moment.
+              </HeroSubtitle>
             
             <div style={{
               display: 'inline-block',
@@ -952,6 +979,7 @@ const LiftlioTrends: React.FC = () => {
                 </StatCard>
               ))}
             </StatsGrid>
+            </HeroContent>
           </HeroSection>
 
           {/* How It Works */}
