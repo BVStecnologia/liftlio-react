@@ -45,8 +45,17 @@
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://liftlio.com/" />
     
+    <!-- Cache Busting for CSS -->
+    <script>
+      // Add version query parameter to prevent caching issues
+      window.APP_VERSION = 'v2.1.0-' + Date.now();
+    </script>
+    
     <!-- Trends Override CSS - FORÇA CORES CORRETAS -->
-    <link rel="stylesheet" href="%PUBLIC_URL%/trends-override.css">
+    <link rel="stylesheet" href="%PUBLIC_URL%/trends-override.css?v=2.1.0">
+    
+    <!-- Cache Control Script -->
+    <script src="%PUBLIC_URL%/cache-control.js?v=2.1.0"></script>
     
     <!-- Add support for Supabase authentication redirects -->
     <script>
