@@ -40,7 +40,8 @@
       "Bash(/tmp/verify_langflow.sh:*)",
       "Bash(git log:*)",
       "WebSearch",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   },

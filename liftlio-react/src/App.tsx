@@ -618,25 +618,8 @@ const AppContent: React.FC = () => {
           {/* Rota removida: Analytics Showcase (não utilizada) */}
           
           
-          {/* Rotas protegidas - definir cada uma explicitamente */}
-          <Route path="/dashboard" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
-          <Route path="/overview/*" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
-          <Route path="/integrations" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
-          <Route path="/videos/*" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
-          <Route path="/create-project" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
-          <Route path="/settings" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
-          <Route path="/subscription" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
-          <Route path="/analytics" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
-          <Route path="/monitoring" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
-          <Route path="/mentions" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
-          <Route path="/billing" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
-          
-          {/* DEBUG: Catch-all para ver rotas não capturadas */}
-          <Route path="*" element={
-            <div>
-              <h1>404 - Route not found: {window.location.pathname}</h1>
-            </div>
-          } />
+          {/* Rotas protegidas - usar apenas uma rota com wildcard pois ProtectedLayout tem rotas internas */}
+          <Route path="/*" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
         </Routes>
         </Suspense>
       </Router>
@@ -698,26 +681,11 @@ function App() {
   );
 }
 
-// Novo wrapper que decide se usa ProtectedLayout ou não
-const ProtectedRouteWrapper = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean, toggleSidebar: () => void }) => {
-  const location = useLocation();
-  
-  // Rotas que devem ser renderizadas SEM o ProtectedLayout
-  const publicPaths = ['/trends', '/liftlio-analytics', '/about', '/privacy', '/terms', '/security'];
-  
-  // Se for rota pública, retorna null (deixa a rota pública renderizar)
-  if (publicPaths.includes(location.pathname)) {
-    return null;
-  }
-  
-  // Senão, usa o ProtectedLayout
-  return <ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />;
-};
 
 // Componente de layout protegido
 const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean, toggleSidebar: () => void }) => {
   const { user, loading } = useAuth();
-  const { isOnboarding, onboardingReady, hasProjects, isLoading, projects, projectIntegrations, currentProject } = useProject();
+  const { isOnboarding, onboardingReady, hasProjects, isLoading, projectIntegrations, currentProject } = useProject();
   const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
   const [isInitializing, setIsInitializing] = useState(true);
   const [isPageReady, setIsPageReady] = useState(false);
