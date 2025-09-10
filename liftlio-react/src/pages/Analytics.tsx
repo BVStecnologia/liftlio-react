@@ -374,6 +374,35 @@ const InsightCard = styled(motion.div)`
   }
 `;
 
+// Estilos para o filtro de período
+const PeriodFilter = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+  padding: 16px;
+  background: ${props => props.theme.colors.bg.secondary};
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  align-items: center;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    padding: 12px;
+    gap: 8px;
+  }
+`;
+
+const FilterLabel = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.secondary};
+  margin-right: 8px;
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
 const InsightTitle = styled.h3`
   font-size: 20px;
   font-weight: 700;
@@ -1097,7 +1126,7 @@ const Analytics: React.FC = () => {
     { name: 'New Visitors', value: 65, color: '#8b5cf6' },
     { name: 'Returning', value: 35, color: '#c084fc' }
   ]);
-  const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('7d');
+  const [period, setPeriod] = useState<'7d' | '30d' | '90d' | '365d'>('30d'); // Mudado padrão para 30d e adicionado 365d
   const [analyticsData, setAnalyticsData] = useState<any[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [analyticsScript, setAnalyticsScript] = useState<string>('');
@@ -1116,6 +1145,7 @@ const Analytics: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [hasData, setHasData] = useState(false);
   const [dataChecked, setDataChecked] = useState(false); // Novo estado para saber se já verificamos
+  const [hasAnyDataInDatabase, setHasAnyDataInDatabase] = useState(false); // Novo: verifica se existe QUALQUER dado
   const [showGuide, setShowGuide] = useState(false);
   const [metricsData, setMetricsData] = useState({
     organicTraffic: 0,
@@ -1307,6 +1337,9 @@ const Analytics: React.FC = () => {
           case '90d':
             startDate.setDate(now.getDate() - 90);
             break;
+          case '365d':
+            startDate.setDate(now.getDate() - 365);
+            break;
         }
         
         // Fetch analytics data com fallback para demo
@@ -1496,9 +1529,11 @@ const Analytics: React.FC = () => {
         return date >= sixtyDaysAgo && date < thirtyDaysAgo;
       });
       
-      // Calculate organic traffic
-      const organicCount = currentPeriodData.filter(e => e.is_organic === true).length;
-      const previousOrganic = previousPeriodData.filter(e => e.is_organic === true).length;
+      // Calculate unique visitors for organic traffic
+      const organicVisitors = new Set(currentPeriodData.filter(e => e.is_organic === true).map(e => e.visitor_id));
+      const previousOrganicVisitors = new Set(previousPeriodData.filter(e => e.is_organic === true).map(e => e.visitor_id));
+      const organicCount = organicVisitors.size;
+      const previousOrganic = previousOrganicVisitors.size;
       const organicChange = previousOrganic > 0 
         ? ((organicCount - previousOrganic) / previousOrganic * 100) 
         : 100;
@@ -1510,11 +1545,13 @@ const Analytics: React.FC = () => {
         ? ((uniqueUsers - previousUsers) / previousUsers * 100)
         : 100;
       
-      // Calculate conversion rate (purchase events / total visitors)
-      const purchases = currentPeriodData.filter(e => 
-        e.event_type === 'purchase' || e.event_type === 'payment_success'
-      ).length;
-      const conversionRate = uniqueUsers > 0 ? (purchases / uniqueUsers * 100) : 0;
+      // Calculate conversion rate (unique visitors who made purchases / total unique visitors)
+      const purchaseVisitors = new Set(
+        currentPeriodData
+          .filter(e => e.event_type === 'purchase' || e.event_type === 'payment_success')
+          .map(e => e.visitor_id)
+      ).size;
+      const conversionRate = uniqueUsers > 0 ? (purchaseVisitors / uniqueUsers * 100) : 0;
       
       // Calculate average time (simulated - would need session duration tracking)
       const avgTimeSeconds = Math.floor(Math.random() * 180) + 120; // 2-5 minutes simulated
@@ -1530,120 +1567,173 @@ const Analytics: React.FC = () => {
         timeChange: Math.round(Math.random() * 30 - 10) // Round to avoid decimals
       });
       
-      // Process traffic data by day
-      const trafficByDay = new Map();
-      const sourceCount = new Map();
-      const deviceCount = new Map();
-      const dailyTotals = new Map();
+      // REFATORADO: Usar apenas visitantes únicos para consistência
       
-      // Get last 7 days with actual dates
-      const today = new Date();
-      const last7Days = [];
+      // Maps para rastrear visitantes únicos
+      const visitorSources = new Map(); // visitor_id -> primeira fonte de aquisição
+      const visitorDevices = new Map(); // visitor_id -> dispositivo principal
+      
+      // Determinar se deve agrupar por dia ou mês baseado no período
+      const shouldGroupByMonth = period === '90d' || period === '365d';
+      
+      const dates = [];
       const dateToKey = new Map();
+      const periodUniqueVisitors = new Map(); // date/month -> Set de visitor_ids
       
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-        const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
-        last7Days.push(dayName);
-        dateToKey.set(dateKey, dayName);
-        trafficByDay.set(dayName, { liftlio: 0, ads: 0, direct: 0 });
+      if (shouldGroupByMonth) {
+        // Para 90d e 365d, agrupar por mês
+        const monthsToShow = period === '90d' ? 3 : 12;
+        
+        for (let i = monthsToShow - 1; i >= 0; i--) {
+          const date = new Date();
+          date.setMonth(date.getMonth() - i);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          const formattedMonth = date.toLocaleDateString('en-US', { month: 'short', year: monthsToShow > 6 ? '2-digit' : undefined });
+          dates.push(formattedMonth);
+          dateToKey.set(monthKey, formattedMonth);
+          periodUniqueVisitors.set(formattedMonth, new Set());
+        }
+      } else {
+        // Para 7d e 30d, continuar mostrando por dia
+        const daysToShow = period === '7d' ? 7 : 30;
+        
+        for (let i = daysToShow - 1; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateKey = date.toISOString().split('T')[0];
+          const formattedDate = period === '7d'
+            ? date.toLocaleDateString('en-US', { weekday: 'short' })
+            : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          dates.push(formattedDate);
+          dateToKey.set(dateKey, formattedDate);
+          periodUniqueVisitors.set(formattedDate, new Set());
+        }
       }
       
-      // Process each event
+      // Função auxiliar para determinar fonte de tráfego
+      const determineSource = (event: any) => {
+        const referrer = event.referrer || '';
+        const utmMedium = event.utm_medium || event.custom_data?.utm_params?.utm_medium || '';
+        const utmSource = event.utm_source || event.custom_data?.utm_params?.utm_source || '';
+        
+        // Direct: sem referrer e sem UTM
+        if (!referrer && !utmMedium && !utmSource) {
+          return 'Direct';
+        }
+        
+        // Paid: qualquer tráfego pago
+        if (utmMedium === 'cpc' || utmMedium === 'cpm' || utmMedium === 'cpv' ||
+            utmSource === 'google_ads' || utmSource === 'facebook_ads' ||
+            referrer.toLowerCase().includes('ads')) {
+          return 'Paid';
+        }
+        
+        // Liftlio: todo o resto (orgânico, social, referral, etc)
+        return 'Liftlio';
+      };
+      
+      // Processar eventos para identificar visitantes únicos
       data.forEach((event: any) => {
-        const eventDate = new Date(event.created_at);
-        const eventDateKey = eventDate.toISOString().split('T')[0];
-        const dayName = dateToKey.get(eventDateKey);
+        const visitorId = event.visitor_id;
+        if (!visitorId) return; // Ignorar eventos sem visitor_id
         
-        if (dayName && trafficByDay.has(dayName)) {
-          const dayData = trafficByDay.get(dayName);
-          
-          // Categorize traffic source - Simplificado: Liftlio, Direct, Paid (ads), Social (mantém para o gráfico)
-          const referrer = event.referrer || '';
-          const utmMedium = event.utm_medium || '';
-          const utmSource = event.utm_source || '';
-          
-          // Categorização simplificada: Apenas Liftlio, Direct e Paid
-          if (!referrer && !utmMedium && !utmSource) {
-            // Completamente vazio = Direct
-            dayData.direct++;
-          } else if (utmMedium === 'cpc' || utmMedium === 'cpm' || utmMedium === 'cpv' ||
-                     utmSource === 'google_ads' || utmSource === 'facebook_ads' ||
-                     referrer.toLowerCase().includes('ads')) {
-            // Paid traffic
-            dayData.ads++;
-          } else {
-            // Todo o resto (orgânico, social, busca, etc) agrupado como Liftlio
-            dayData.liftlio++;
-          }
+        // Rastrear primeira fonte de aquisição do visitante
+        if (!visitorSources.has(visitorId)) {
+          visitorSources.set(visitorId, determineSource(event));
         }
         
-        // Count sources - Simplificado: Liftlio, Direct, Paid
-        let sourceName = event.custom_data?.traffic_source || event.referrer || 'Direct';
-        
-        // Categorização simplificada
-        if (sourceName === '' || sourceName === null || sourceName === 'Direct') {
-          sourceName = 'Direct';
-        } else if (sourceName.toLowerCase().includes('ads') ||
-                   event.custom_data?.utm_params?.utm_medium === 'cpc' ||
-                   event.custom_data?.utm_params?.utm_medium === 'cpm' ||
-                   event.custom_data?.utm_params?.utm_medium === 'cpv' ||
-                   event.custom_data?.utm_params?.utm_source === 'google_ads' ||
-                   event.custom_data?.utm_params?.utm_source === 'facebook_ads') {
-          sourceName = 'Paid';
-        } else {
-          // Tudo que não é Direct ou Paid é agrupado como Liftlio
-          sourceName = 'Liftlio';
-        }
-        
-        sourceCount.set(sourceName, (sourceCount.get(sourceName) || 0) + 1);
-        
-        // Count devices - normalize device types
+        // Rastrear dispositivo principal do visitante (usar o mais recente)
         const deviceType = event.device_type ? event.device_type.toLowerCase() : 'desktop';
         let deviceKey = 'Desktop';
         if (deviceType === 'mobile' || deviceType === 'smartphone' || deviceType === 'phone') {
           deviceKey = 'Mobile';
         } else if (deviceType === 'tablet' || deviceType === 'ipad') {
           deviceKey = 'Tablet';
-        } else if (deviceType === 'desktop' || deviceType === 'computer' || deviceType === 'pc') {
-          deviceKey = 'Desktop';
         }
-        deviceCount.set(deviceKey, (deviceCount.get(deviceKey) || 0) + 1);
+        visitorDevices.set(visitorId, deviceKey);
+        
+        // Rastrear visitantes únicos por dia ou mês
+        const eventDate = new Date(event.created_at);
+        let periodKey;
+        
+        if (shouldGroupByMonth) {
+          // Para agrupamento mensal, usar ano-mês como chave
+          periodKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
+        } else {
+          // Para agrupamento diário, usar data completa
+          periodKey = eventDate.toISOString().split('T')[0];
+        }
+        
+        const formattedPeriod = dateToKey.get(periodKey);
+        
+        if (formattedPeriod && periodUniqueVisitors.has(formattedPeriod)) {
+          periodUniqueVisitors.get(formattedPeriod).add(visitorId);
+        }
       });
       
-      // Convert to chart format
-      const traffic = last7Days.map(day => {
-        const data = trafficByDay.get(day) || { liftlio: 0, ads: 0, direct: 0 };
+      // Converter para formato do gráfico de tráfego (diário ou mensal)
+      const traffic = dates.map(date => {
+        const periodVisitors = periodUniqueVisitors.get(date) || new Set();
+        const periodVisitorIds = Array.from(periodVisitors);
+        
+        // Contar visitantes únicos por fonte para este período
+        let liftlio = 0, direct = 0, ads = 0;
+        
+        periodVisitorIds.forEach(visitorId => {
+          const source = visitorSources.get(visitorId);
+          if (source === 'Direct') direct++;
+          else if (source === 'Paid') ads++;
+          else liftlio++; // Default para Liftlio
+        });
+        
         return {
-          date: day,
-          ...data
+          date,
+          liftlio,
+          ads,
+          direct
         };
       });
       
-      // Process sources - top 5
-      const totalEvents = data.length;
-      const sourcesArray = Array.from(sourceCount.entries())
+      // Processar fontes de tráfego - baseado em visitantes únicos
+      const sourceStats = new Map();
+      sourceStats.set('Liftlio', 0);
+      sourceStats.set('Direct', 0);
+      sourceStats.set('Paid', 0);
+      
+      visitorSources.forEach(source => {
+        sourceStats.set(source, (sourceStats.get(source) || 0) + 1);
+      });
+      
+      const totalUniqueVisitors = visitorSources.size;
+      const sources = Array.from(sourceStats.entries())
+        .filter(([_, count]) => count > 0)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 5);
+        .map(([name, count], index) => ({
+          name,
+          value: count, // Valor absoluto de visitantes únicos
+          percentage: totalUniqueVisitors > 0 ? Math.round((count / totalUniqueVisitors) * 100) : 0,
+          color: ['#8b5cf6', '#a855f7', '#c084fc'][index]
+        }));
       
-      const sources = sourcesArray.map(([name, count], index) => ({
-        name: name.replace('Search', '').trim() || name,
-        value: Math.round((count / totalEvents) * 100),
-        color: ['#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe', '#e9d5ff'][index]
-      }));
+      // Processar dispositivos - baseado em visitantes únicos
+      const deviceStats = new Map();
+      deviceStats.set('Desktop', 0);
+      deviceStats.set('Mobile', 0);
+      deviceStats.set('Tablet', 0);
       
-      // Process devices - ensure all types are represented
-      const deviceTypes = ['Desktop', 'Mobile', 'Tablet'];
-      const devices = deviceTypes.map(device => ({
-        name: device,
-        users: deviceCount.get(device) || 0,
-        percentage: totalEvents > 0 ? Math.round(((deviceCount.get(device) || 0) / totalEvents) * 100) : 0,
-        color: device === 'Desktop' ? '#8b5cf6' : 
-               device === 'Mobile' ? '#a855f7' : 
-               '#c084fc'
-      }));
+      visitorDevices.forEach(device => {
+        deviceStats.set(device, (deviceStats.get(device) || 0) + 1);
+      });
+      
+      const devices = Array.from(deviceStats.entries())
+        .map(([device, count]) => ({
+          name: device,
+          users: count, // Visitantes únicos reais
+          percentage: totalUniqueVisitors > 0 ? Math.round((count / totalUniqueVisitors) * 100) : 0,
+          color: device === 'Desktop' ? '#8b5cf6' : 
+                 device === 'Mobile' ? '#a855f7' : 
+                 '#c084fc'
+        }));
       
       // Growth data - compare months
       const growth = [];
@@ -1684,6 +1774,28 @@ const Analytics: React.FC = () => {
     
     return () => clearInterval(interval);
   }, [currentProject, checkVerifiedEvents]);
+
+  // Verificar se existe QUALQUER dado no banco (independente do período)
+  useEffect(() => {
+    const checkIfAnyDataExists = async () => {
+      if (!currentProject?.id) return;
+      
+      try {
+        const { count } = await supabase
+          .from('analytics')
+          .select('*', { count: 'exact', head: true })
+          .eq('project_id', currentProject.id);
+        
+        console.log('📊 Total de registros no banco para o projeto:', count);
+        setHasAnyDataInDatabase((count || 0) > 0);
+      } catch (error) {
+        console.error('Erro ao verificar dados existentes:', error);
+        setHasAnyDataInDatabase(false);
+      }
+    };
+    
+    checkIfAnyDataExists();
+  }, [currentProject?.id]);
   
   // useEffect principal para buscar dados e configurar realtime
   useEffect(() => {
@@ -2092,30 +2204,34 @@ const Analytics: React.FC = () => {
         <>
           <DemoDataBadge>
             <IconComponent icon={FaIcons.FaInfoCircle} />
-            Demonstration Data - Install tracking tag to see real data
+            {hasAnyDataInDatabase 
+              ? `No data in selected period - Try expanding the date range`
+              : `Demonstration Data - Install tracking tag to see real data`}
           </DemoDataBadge>
           
-          <NoDataAlert
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <AlertIcon>
-              <IconComponent icon={FaIcons.FaChartLine} />
-            </AlertIcon>
-            <AlertTitle>Start Tracking Your Growth!</AlertTitle>
-            <AlertText>
-              Add the Liftlio tracking tag to your website to start measuring your organic traffic growth. 
-              Once installed, you'll see real-time analytics about your visitors, traffic sources, and conversion rates.
-            </AlertText>
-            <AlertButton onClick={() => {
-              const element = document.getElementById('implementation-guide');
-              element?.scrollIntoView({ behavior: 'smooth' });
-            }}>
-              <IconComponent icon={FaIcons.FaRocket} />
-              Install Tracking Tag
-            </AlertButton>
-          </NoDataAlert>
+          {!hasAnyDataInDatabase && (
+            <NoDataAlert
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <AlertIcon>
+                <IconComponent icon={FaIcons.FaChartLine} />
+              </AlertIcon>
+              <AlertTitle>Start Tracking Your Growth!</AlertTitle>
+              <AlertText>
+                Add the Liftlio tracking tag to your website to start measuring your organic traffic growth. 
+                Once installed, you'll see real-time analytics about your visitors, traffic sources, and conversion rates.
+              </AlertText>
+              <AlertButton onClick={() => {
+                const element = document.getElementById('implementation-guide');
+                element?.scrollIntoView({ behavior: 'smooth' });
+              }}>
+                <IconComponent icon={FaIcons.FaRocket} />
+                Install Tracking Tag
+              </AlertButton>
+            </NoDataAlert>
+          )}
         </>
       )}
 
@@ -2150,6 +2266,37 @@ const Analytics: React.FC = () => {
             )}
           </InsightText>
         </InsightCard>
+      )}
+
+      {/* Filtro de período - aparece sempre que há dados ou dados existem no banco */}
+      {dataChecked && (hasData || hasAnyDataInDatabase) && (
+        <PeriodFilter>
+          <FilterLabel>Period:</FilterLabel>
+          <FilterButton 
+            active={period === '7d'} 
+            onClick={() => setPeriod('7d')}
+          >
+            Last 7 days
+          </FilterButton>
+          <FilterButton 
+            active={period === '30d'} 
+            onClick={() => setPeriod('30d')}
+          >
+            Last 30 days
+          </FilterButton>
+          <FilterButton 
+            active={period === '90d'} 
+            onClick={() => setPeriod('90d')}
+          >
+            Last 3 months
+          </FilterButton>
+          <FilterButton 
+            active={period === '365d'} 
+            onClick={() => setPeriod('365d')}
+          >
+            Last year
+          </FilterButton>
+        </PeriodFilter>
       )}
 
       <MetricsGrid>
@@ -2209,7 +2356,12 @@ const Analytics: React.FC = () => {
         >
           <ChartHeader>
             <ChartTitle>
-              <IconComponent icon={FaIcons.FaChartLine} /> Traffic Growth
+              <IconComponent icon={FaIcons.FaChartLine} /> Traffic Growth {
+                period === '7d' ? '(Last 7 Days)' :
+                period === '30d' ? '(Last 30 Days)' :
+                period === '90d' ? '(Last 3 Months)' :
+                '(Last 12 Months)'
+              }
             </ChartTitle>
             {dataChecked && !hasData && <DemoIndicator>Demo Data</DemoIndicator>}
           </ChartHeader>
@@ -2341,7 +2493,7 @@ const Analytics: React.FC = () => {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, value }) => `${value}%`}
+                label={({ value }) => `${value}`}
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
@@ -2358,6 +2510,10 @@ const Analytics: React.FC = () => {
                   boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)',
                   color: theme.colors.text.primary
                 }}
+                formatter={(value: any, name: any, props: any) => [
+                  `${value} visitors (${props.payload.percentage}%)`,
+                  name
+                ]}
               />
             </PieChart>
           </ResponsiveContainer>
