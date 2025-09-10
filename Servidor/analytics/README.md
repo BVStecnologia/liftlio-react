@@ -10,7 +10,7 @@ Sistema de rastreamento de analytics para o Liftlio, com validação de projetos
 - **🖥️ Servidor Remoto**: 173.249.22.2 (VPS Linux)
 - **📂 Caminho no Servidor**: `/opt/liftlio-analytics/`
 - **🐳 Container Docker**: `liftlio-analytics-prod`
-- **🔧 Acesso SSH**: `ssh root@173.249.22.2`
+- **🔧 Acesso SSH**: `ssh -i ~/.ssh/contabo_key root@173.249.22.2`
 
 ### 🌐 URLs e Acessos:
 - **URL Pública**: https://track.liftlio.com (via Cloudflare Proxy)
@@ -51,18 +51,18 @@ Sistema de rastreamento de analytics para o Liftlio, com validação de projetos
 
 ### ⚠️ FLUXO CORRETO para atualizar o servidor:
 
-#### 🔑 CREDENCIAIS SSH (IMPORTANTE!)
-- **Senha SSH**: Está no arquivo `.env` local (`SSH_PASSWORD=Bvs20211993***`)
+#### 🔑 ACESSO SSH (IMPORTANTE!)
+- **Acesso SSH**: Apenas com chave (`~/.ssh/contabo_key`)
 - **Diretório no servidor**: `/opt/containers/liftlio-analytics` (NÃO é git repo!)
 - **Container Docker**: `liftlio-analytics-prod`
 
-#### Deploy Rápido (com sshpass):
+#### Deploy Rápido:
 ```bash
 # Copiar arquivo alterado
-SSHPASS='Bvs20211993***' sshpass -e scp t.js root@173.249.22.2:/opt/containers/liftlio-analytics/
+scp -i ~/.ssh/contabo_key t.js root@173.249.22.2:/opt/containers/liftlio-analytics/
 
 # Reiniciar container
-SSHPASS='Bvs20211993***' sshpass -e ssh root@173.249.22.2 "docker restart liftlio-analytics-prod"
+ssh -i ~/.ssh/contabo_key root@173.249.22.2 "docker restart liftlio-analytics-prod"
 ```
 
 #### Deploy Manual:
@@ -74,13 +74,11 @@ SSHPASS='Bvs20211993***' sshpass -e ssh root@173.249.22.2 "docker restart liftli
    ```
 3. **Copiar arquivos para o servidor**:
    ```bash
-   scp *.js *.json root@173.249.22.2:/opt/containers/liftlio-analytics/
-   # Senha: Bvs20211993***
+   scp -i ~/.ssh/contabo_key *.js *.json root@173.249.22.2:/opt/containers/liftlio-analytics/
    ```
 4. **Reiniciar container**:
    ```bash
-   ssh root@173.249.22.2
-   # Senha: Bvs20211993***
+   ssh -i ~/.ssh/contabo_key root@173.249.22.2
    docker restart liftlio-analytics-prod
    ```
 5. **Verificar logs**:

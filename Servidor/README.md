@@ -11,14 +11,13 @@
 4. **Antes de fazer commit, SEMPRE verifique se há senhas expostas**
 5. **O arquivo `.env` NUNCA deve ser commitado (já está no .gitignore)**
 
-**COMO USAR CREDENCIAIS:**
+**COMO ACESSAR O SERVIDOR:**
 ```bash
-# ✅ CORRETO - Usar variáveis do .env
-source "$(dirname "$0")/../../.env"
-sshpass -p "$SSH_PASSWORD" ssh $SSH_USER@$SSH_HOST
+# ✅ CORRETO - Usar chave SSH
+ssh -i ~/.ssh/contabo_key root@173.249.22.2
 
-# ❌ ERRADO - Senha hardcoded
-sshpass -p 'Bvs20211993***' ssh root@173.249.22.2
+# ❌ ERRADO - Tentar usar senha (não funciona mais!)
+sshpass -p 'qualquer_senha' ssh root@173.249.22.2
 ```
 
 **SE VOCÊ EXPOR UMA SENHA:**
@@ -32,7 +31,7 @@ sshpass -p 'Bvs20211993***' ssh root@173.249.22.2
 **IP**: 173.249.22.2  
 **Specs**: 6 CPU, 12GB RAM, 300GB SSD  
 **Sistema**: Ubuntu 24.04.2 LTS  
-**Credenciais SSH**: Ver arquivo `/Servidor/.env`  
+**Acesso SSH**: Apenas com chave privada (senha desabilitada)  
 
 ## 📁 Estrutura Organizada
 
@@ -136,10 +135,27 @@ http://173.249.22.2:5173
 
 ## 🔐 Segurança
 
-- Firewall configurado
-- Apenas portas necessárias abertas
-- Containers em redes isoladas
-- Credenciais em arquivos .env (não commitados)
+### Proteções Implementadas:
+- ✅ **Fail2ban ativo** - Bloqueia após 3 tentativas de login falhas
+- ✅ **Autenticação SSH apenas por chave** - Senha root desabilitada
+- ✅ **Firewall configurado** - Apenas portas necessárias abertas
+- ✅ **Containers isolados** - Cada serviço em sua própria rede
+- ✅ **Monitoramento ativo** - Glances para detectar anomalias
+
+### Como Acessar o Servidor:
+```bash
+# Acesso com chave SSH (única forma)
+ssh -i ~/.ssh/contabo_key root@173.249.22.2
+
+# Ou use o atalho configurado
+contabo
+```
+
+**⚠️ IMPORTANTE**: 
+- Chave privada em: `~/.ssh/contabo_key`
+- Backup no iCloud: `~/Library/Mobile Documents/com~apple~CloudDocs/Backup/SSH/`
+- NUNCA compartilhe a chave privada
+- Senha root está DESABILITADA
 
 ## 🔗 Links Importantes
 
@@ -156,4 +172,19 @@ http://173.249.22.2:5173
 
 ---
 
-**Última atualização**: 26/07/2025
+## 🛡️ Histórico de Segurança
+
+### Incidente de Setembro/2025:
+- **29/08**: Servidor comprometido via força bruta SSH
+- **Invasor**: Instalou minerador de criptomoedas (xmrig)
+- **Origem**: IP 189.4.106.111 (Brasil)
+- **Resolução**: 
+  - ✅ Minerador removido
+  - ✅ Backdoor SSH removido (chave "pi1@pi1")
+  - ✅ Senha desabilitada, apenas chave SSH
+  - ✅ Fail2ban instalado
+  - ✅ Servidor restaurado de backup limpo
+
+---
+
+**Última atualização**: 09/09/2025

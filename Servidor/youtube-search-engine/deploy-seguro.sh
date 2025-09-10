@@ -8,7 +8,7 @@ echo "🚀 Iniciando deploy do YouTube Search Engine v5..."
 # Configurações
 SERVER="173.249.22.2"
 REMOTE_DIR="/opt/containers/youtube-search-engine"
-SSH_PASS='Bvs20211993***'
+SSH_KEY="$HOME/.ssh/contabo_key"
 
 echo "📦 Preparando arquivos..."
 
@@ -23,7 +23,7 @@ tar -czf youtube-search-v5.tar.gz \
 echo "📤 Enviando para servidor..."
 
 # Copiar para servidor
-SSHPASS="$SSH_PASS" sshpass -e scp -o StrictHostKeyChecking=no \
+scp -i "$SSH_KEY" -o StrictHostKeyChecking=no \
   youtube-search-v5.tar.gz root@$SERVER:/tmp/
 
 echo "🔧 Configurando no servidor..."

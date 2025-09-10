@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# Carregar variáveis de ambiente
-source "$(dirname "$0")/../../.env"
+# Configuração
+SSH_KEY="$HOME/.ssh/contabo_key"
+SSH_HOST="173.249.22.2"
 
 echo "🚀 Criando container Docker do Gmail MCP no servidor"
 echo "=================================================="
 
-sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << 'EOF'
+ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@$SSH_HOST << 'EOF'
 
 # Parar e remover container antigo se existir
 docker stop gmail-mcp-new 2>/dev/null || true

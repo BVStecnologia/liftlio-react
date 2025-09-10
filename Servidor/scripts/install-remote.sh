@@ -3,8 +3,8 @@
 
 echo "🚀 Instalando MCP Inspector no servidor remoto..."
 
-# Executar tudo via SSH
-ssh root@173.249.22.2 << 'REMOTE_SCRIPT'
+# Executar tudo via SSH com chave
+ssh -i ~/.ssh/contabo_key root@173.249.22.2 << 'REMOTE_SCRIPT'
 
 echo "📦 Iniciando instalação no servidor..."
 
