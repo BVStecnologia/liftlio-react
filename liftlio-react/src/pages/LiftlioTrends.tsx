@@ -1084,21 +1084,25 @@ const LiftlioTrends: React.FC = () => {
                             30-day growth
                           </div>
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: theme.secondary }}>
-                            {trend.velocity?.toFixed(1) || '0.0'}
+                        {(trend.velocity !== undefined && trend.velocity !== null && trend.velocity !== 0) ? (
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: theme.secondary }}>
+                              {trend.velocity.toFixed(1)}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
+                              velocity/day
+                            </div>
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
-                            velocity/day
-                          </div>
-                        </div>
+                        ) : null}
                       </div>
 
                       <TrendStats>
-                        <TrendStat>
-                          {React.createElement(FaChartLine as any)}
-                          Velocity: {trend.velocity?.toFixed(1) || 0}/day
-                        </TrendStat>
+                        {(trend.velocity !== undefined && trend.velocity !== null && trend.velocity !== 0) ? (
+                          <TrendStat>
+                            {React.createElement(FaChartLine as any)}
+                            Velocity: {trend.velocity.toFixed(1)}/day
+                          </TrendStat>
+                        ) : null}
                         <TrendStat>
                           {React.createElement(FaBolt as any)}
                           Momentum: {trend.momentum?.toFixed(0) || 0}
@@ -1153,7 +1157,7 @@ const LiftlioTrends: React.FC = () => {
                             🧠 NEURAL INSIGHTS:
                           </div>
                           <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
-                            • Growth pattern: <span style={{ color: '#10b981' }}>+{trend.growth.toFixed(0)}%</span> with acceleration of <span style={{ color: theme.secondary }}>{trend.velocity?.toFixed(1) || 0}/day</span><br/>
+                            • Growth pattern: <span style={{ color: '#10b981' }}>+{trend.growth.toFixed(0)}%</span>{trend.velocity && trend.velocity !== 0 ? <> with acceleration of <span style={{ color: theme.secondary }}>{trend.velocity.toFixed(1)}/day</span></> : null}<br/>
                             • Momentum score: <span style={{ color: theme.primary }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'STRONG' : 'MODERATE'})<br/>
                             • Engagement rate: <span style={{ color: '#f59e0b' }}>{(trend.engagement_rate * 100).toFixed(1)}%</span> - {trend.engagement_rate > 0.05 ? 'Above average' : 'Normal'}
                           </div>
@@ -1220,10 +1224,12 @@ const LiftlioTrends: React.FC = () => {
                       </div>
 
                       <TrendStats>
-                        <TrendStat>
-                          {React.createElement(FaChartLine as any)}
-                          Velocity: {trend.velocity?.toFixed(1) || 0}/day
-                        </TrendStat>
+                        {(trend.velocity !== undefined && trend.velocity !== null && trend.velocity !== 0) ? (
+                          <TrendStat>
+                            {React.createElement(FaChartLine as any)}
+                            Velocity: {trend.velocity.toFixed(1)}/day
+                          </TrendStat>
+                        ) : null}
                         <TrendStat>
                           {getSentimentIcon(trend.sentiment_score)}
                           {(trend.sentiment_score * 100).toFixed(0)}%
@@ -1270,7 +1276,7 @@ const LiftlioTrends: React.FC = () => {
                             🧠 NEURAL INSIGHTS:
                           </div>
                           <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
-                            • Growth pattern: <span style={{ color: '#10b981' }}>+{trend.growth.toFixed(0)}%</span> with acceleration of <span style={{ color: theme.secondary }}>{trend.velocity?.toFixed(1) || 0}/day</span><br/>
+                            • Growth pattern: <span style={{ color: '#10b981' }}>+{trend.growth.toFixed(0)}%</span>{trend.velocity && trend.velocity !== 0 ? <> with acceleration of <span style={{ color: theme.secondary }}>{trend.velocity.toFixed(1)}/day</span></> : null}<br/>
                             • Momentum score: <span style={{ color: theme.primary }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'STRONG' : 'MODERATE'})<br/>
                             • Engagement rate: <span style={{ color: '#f59e0b' }}>{(trend.engagement_rate * 100).toFixed(1)}%</span> - {trend.engagement_rate > 0.05 ? 'Above average' : 'Normal'}
                           </div>
