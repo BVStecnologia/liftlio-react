@@ -50,22 +50,21 @@ RESPONSE=$(curl -s -X POST https://api.openai.com/v1/images/generations \
     \"prompt\": \"$PROMPT\",
     \"n\": 1,
     \"size\": \"$SIZE\",
-    \"quality\": \"$QUALITY\",
-    \"response_format\": \"b64_json\"
+    \"quality\": \"$QUALITY\"
   }")
 
-# Extract base64 data from response (gpt-image-1 returns b64_json)
-IMAGE_B64=$(echo "$RESPONSE" | grep -o '"b64_json":"[^"]*' | cut -d'"' -f4)
+# Extract URL from response (DALL-E returns URL)
+IMAGE_URL=$(echo "$RESPONSE" | grep -o '"url":"[^"]*' | cut -d'"' -f4)
 
-if [ -z "$IMAGE_B64" ]; then
+if [ -z "$IMAGE_URL" ]; then
     echo "Error: Failed to generate image"
     echo "Response: $RESPONSE"
     exit 1
 fi
 
-# Decode base64 and save image
-echo "Saving image..."
-echo "$IMAGE_B64" | base64 -d > "$OUTPUT_PATH"
+# Download image from URL
+echo "Downloading image..."
+curl -s "$IMAGE_URL" -o "$OUTPUT_PATH"
 
 if [ -f "$OUTPUT_PATH" ]; then
     echo "✅ Image saved to: $OUTPUT_PATH"
