@@ -46,29 +46,29 @@ RESPONSE=$(curl -s -X POST https://api.openai.com/v1/images/generations \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $API_KEY" \
   -d "{
-    \"model\": \"dall-e-3\",
+    \"model\": \"gpt-image-1\",
     \"prompt\": \"$PROMPT\",
     \"n\": 1,
     \"size\": \"$SIZE\",
-    \"quality\": \"$QUALITY\"
+    \"quality\": \"$QUALITY\",
+    \"response_format\": \"b64_json\"
   }")
 
-# Extract URL from response
-IMAGE_URL=$(echo "$RESPONSE" | grep -o '"url":"[^"]*' | grep -o 'http[^"]*' | head -1)
+# Extract base64 data from response (gpt-image-1 returns b64_json)
+IMAGE_B64=$(echo "$RESPONSE" | grep -o '"b64_json":"[^"]*' | cut -d'"' -f4)
 
-if [ -z "$IMAGE_URL" ]; then
+if [ -z "$IMAGE_B64" ]; then
     echo "Error: Failed to generate image"
     echo "Response: $RESPONSE"
     exit 1
 fi
 
-# Download the image
-echo "Downloading image..."
-curl -s "$IMAGE_URL" -o "$OUTPUT_PATH"
+# Decode base64 and save image
+echo "Saving image..."
+echo "$IMAGE_B64" | base64 -d > "$OUTPUT_PATH"
 
 if [ -f "$OUTPUT_PATH" ]; then
     echo "✅ Image saved to: $OUTPUT_PATH"
-    echo "Image URL: $IMAGE_URL"
     
     # Return the path for further processing
     echo "PATH:$OUTPUT_PATH"
