@@ -53,18 +53,27 @@ RESPONSE=$(curl -s -X POST https://api.openai.com/v1/images/generations \
     \"quality\": \"$QUALITY\"
   }")
 
-# Extract URL from response (DALL-E returns URL)
-IMAGE_URL=$(echo "$RESPONSE" | grep -o '"url":"[^"]*' | cut -d'"' -f4)
+# Check if response contains base64 data (gpt-image-1 format)
+B64_JSON=$(echo "$RESPONSE" | python3 -c "import sys, json; data = json.load(sys.stdin); print(data.get('data', [{}])[0].get('b64_json', ''))" 2>/dev/null)
 
-if [ -z "$IMAGE_URL" ]; then
-    echo "Error: Failed to generate image"
-    echo "Response: $RESPONSE"
-    exit 1
+if [ -n "$B64_JSON" ]; then
+    # Decode base64 image
+    echo "Decoding base64 image..."
+    echo "$B64_JSON" | base64 -d > "$OUTPUT_PATH"
+else
+    # Extract URL from response (fallback for URL-based response)
+    IMAGE_URL=$(echo "$RESPONSE" | python3 -c "import sys, json; data = json.load(sys.stdin); print(data.get('data', [{}])[0].get('url', ''))" 2>/dev/null)
+
+    if [ -n "$IMAGE_URL" ]; then
+        # Download image from URL
+        echo "Downloading image..."
+        curl -s "$IMAGE_URL" -o "$OUTPUT_PATH"
+    else
+        echo "Error: Failed to generate image"
+        echo "Response: $RESPONSE" | head -n 5
+        exit 1
+    fi
 fi
-
-# Download image from URL
-echo "Downloading image..."
-curl -s "$IMAGE_URL" -o "$OUTPUT_PATH"
 
 if [ -f "$OUTPUT_PATH" ]; then
     echo "✅ Image saved to: $OUTPUT_PATH"
