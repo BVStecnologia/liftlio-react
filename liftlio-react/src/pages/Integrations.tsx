@@ -9,6 +9,7 @@ import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
+import { useGlobalLoading } from '../context/LoadingContext';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabaseClient';
 import LoadingDataIndicator from '../components/LoadingDataIndicator';
 import { useNavigate } from 'react-router-dom';
@@ -693,6 +694,7 @@ const Integrations: React.FC = () => {
   const { currentProject } = useProject();
   const { t } = useLanguage();
   const { theme } = useTheme();
+  const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
@@ -711,7 +713,22 @@ const Integrations: React.FC = () => {
   const [showReuseModal, setShowReuseModal] = useState(false);
   const [availableIntegrations, setAvailableIntegrations] = useState<any[]>([]);
   const [selectedExistingIntegration, setSelectedExistingIntegration] = useState<string>('');
+
+  // Flag para controlar carregamento inicial
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [pageFullyLoaded, setPageFullyLoaded] = useState(false);
   
+  // Garantir que o loader é escondido quando a página está completamente carregada
+  useEffect(() => {
+    if (pageFullyLoaded && !isLoading) {
+      // Aguardar um pouco para garantir que a UI foi renderizada
+      const timer = setTimeout(() => {
+        hideGlobalLoader();
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [pageFullyLoaded, isLoading, hideGlobalLoader]);
+
   // Verificar que os URIs de redirecionamento estão corretamente configurados no startup
   useEffect(() => {
     // Detectar ambiente
@@ -729,7 +746,8 @@ const Integrations: React.FC = () => {
     
     // Carregamento de integrações é feito diretamente sem chamar a função RPC
     if (currentProject?.id) {
-      fetchIntegrations();
+      // Usar loader global na primeira carga
+      fetchIntegrations(true);
     }
   }, [currentProject?.id]);
 
@@ -772,9 +790,14 @@ const Integrations: React.FC = () => {
   }, [currentProject?.id]);
 
   // Fetch integrations from Supabase
-  const fetchIntegrations = async () => {
+  const fetchIntegrations = async (showLoader = false) => {
     if (!currentProject?.id) return;
-    
+
+    // Mostrar loader global apenas no carregamento inicial
+    if (showLoader && isInitialLoad) {
+      showGlobalLoader('Loading', 'Preparing your integrations');
+    }
+
     setIsLoading(true);
     try {
       // Buscar os dados atuais da integração
@@ -782,9 +805,9 @@ const Integrations: React.FC = () => {
         .from('Integrações')
         .select('*')
         .eq('PROJETO id', currentProject.id);
-        
+
       if (error) throw error;
-      
+
       // Map the integration data - o status já vem validado da função RPC
       const integrationData: Integration[] = (data || []).map((item: any) => ({
         id: item['Tipo de integração'] || '',
@@ -795,13 +818,27 @@ const Integrations: React.FC = () => {
         lastUpdated: item['Ultima atualização'] || null,
         failureCount: item['falhas_consecutivas'] || 0
       }));
-      
+
       setUserIntegrations(integrationData);
       console.log('Status das integrações carregado com sucesso.');
+
+      // Marcar que o carregamento inicial foi concluído
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+        setPageFullyLoaded(true);
+      }
     } catch (error) {
       console.error('Error fetching integrations:', error);
     } finally {
       setIsLoading(false);
+
+      // Esconder loader global apenas após garantir que tudo foi renderizado
+      if (showLoader && pageFullyLoaded) {
+        // Aguardar um tempo mínimo para evitar flicker
+        setTimeout(() => {
+          hideGlobalLoader();
+        }, 500);
+      }
     }
   };
   
