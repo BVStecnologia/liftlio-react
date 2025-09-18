@@ -1197,10 +1197,10 @@ const Integrations: React.FC = () => {
         setShowSuccessMessage(true);
         fetchIntegrations(); // Recarregar integrações
 
-        // Navegar para dashboard após 2 segundos
+        // Recarregar a página para mostrar a integração conectada
         setTimeout(() => {
-          navigate('/dashboard');
-        }, 2000);
+          window.location.reload();
+        }, 1000);
       } else {
         console.error('RPC returned failure:', data);
         // Traduzir mensagem de erro se vier em português
