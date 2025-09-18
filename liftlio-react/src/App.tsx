@@ -946,7 +946,8 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   // Se chegou aqui, o usuário está autenticado e o carregamento foi concluído
 
   // Redirecionar para a página de criação de projeto se o usuário não tiver projetos
-  if (!hasProjects) {
+  // MAS NÃO redirecionar se está carregando (pode ser uma troca de projeto)
+  if (!hasProjects && !isLoading) {
     return (
       <AppContainer>
         <MainContent>
