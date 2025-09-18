@@ -895,7 +895,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     projectHasIntegrations,
     isOnboarding
   ]);
-  
+
   // Verificar se projeto está em processamento ANTES de decidir se retorna null
   const currentProjectStatus = parseInt(currentProject?.status || '0', 10);
   const isProjectProcessing = currentProject && currentProjectStatus <= 5;

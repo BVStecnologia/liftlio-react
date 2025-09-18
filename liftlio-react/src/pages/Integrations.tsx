@@ -2,15 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import Card from '../components/Card';
 import { IconContext } from 'react-icons';
-import { FaYoutube, FaReddit, FaLinkedin, FaFacebook, FaTwitter, FaInstagram, 
-         FaPlug, FaCheck, FaExclamationTriangle, FaLock, FaShieldAlt, 
-         FaArrowRight, FaTimes, FaClock, FaInfoCircle } from 'react-icons/fa';
+import { FaYoutube, FaReddit, FaLinkedin, FaFacebook, FaTwitter, FaInstagram,
+         FaPlug, FaCheck, FaExclamationTriangle, FaLock, FaShieldAlt,
+         FaArrowRight, FaTimes, FaClock, FaInfoCircle, FaPlus } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabaseClient';
 import LoadingDataIndicator from '../components/LoadingDataIndicator';
+import { useNavigate } from 'react-router-dom';
 
 // Animations
 const fadeIn = keyframes`
@@ -692,6 +693,7 @@ const Integrations: React.FC = () => {
   const { currentProject } = useProject();
   const { t } = useLanguage();
   const { theme } = useTheme();
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -704,6 +706,11 @@ const Integrations: React.FC = () => {
   // Removemos o estado authWindow pois não vamos mais usar popup
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Estados para modal de reutilização do YouTube
+  const [showReuseModal, setShowReuseModal] = useState(false);
+  const [availableIntegrations, setAvailableIntegrations] = useState<any[]>([]);
+  const [selectedExistingIntegration, setSelectedExistingIntegration] = useState<string>('');
   
   // Verificar que os URIs de redirecionamento estão corretamente configurados no startup
   useEffect(() => {
@@ -939,7 +946,7 @@ const Integrations: React.FC = () => {
     return true;
   });
 
-  const handleConnect = (integration: any) => {
+  const handleConnect = async (integration: any) => {
     if (!currentProject?.id) {
       // Verificar se viemos do onboarding e tentar carregar o primeiro projeto disponível
       if (userIntegrations.length === 0) {
@@ -962,7 +969,69 @@ const Integrations: React.FC = () => {
       alert(`${integration.name} integration is coming soon!`);
       return;
     }
-    
+
+    // Se for YouTube, verificar se já tem integrações em outros projetos
+    if (integration.id === 'youtube') {
+      console.log('=== YouTube Integration Check ===');
+      console.log('Current Project ID:', currentProject?.id);
+
+      try {
+        // Obter o email do usuário autenticado
+        const { data: { user } } = await supabase.auth.getUser();
+        const userEmail = user?.email;
+
+        if (!userEmail) {
+          console.error('User email not found');
+        } else {
+          console.log('User email:', userEmail);
+
+          // Chamar a função passando o email como parâmetro
+          const { data: existingIntegrations, error } = await supabase
+            .rpc('check_user_youtube_integrations_by_email', {
+              p_user_email: userEmail
+            });
+
+          console.log('RPC Response:', {
+            data: existingIntegrations,
+            error: error,
+            dataLength: existingIntegrations?.length || 0
+          });
+
+          if (error) {
+            console.error('RPC Error:', error);
+          } else if (!existingIntegrations || existingIntegrations.length === 0) {
+            console.log('No existing YouTube integrations found for this user');
+          } else {
+            // Filtrar apenas integrações de OUTROS projetos (não do projeto atual)
+            const otherProjectIntegrations = existingIntegrations.filter(
+              (int: any) => int.project_id !== currentProject?.id
+            );
+
+            console.log('Other project integrations:', {
+              total: existingIntegrations.length,
+              fromOtherProjects: otherProjectIntegrations.length,
+              integrations: otherProjectIntegrations
+            });
+
+            if (otherProjectIntegrations.length > 0) {
+              console.log('Showing reuse modal with integrations:', otherProjectIntegrations);
+              // Tem integrações existentes em outros projetos - mostrar modal de reutilização
+              setAvailableIntegrations(otherProjectIntegrations);
+              setSelectedIntegration(integration);
+              setShowReuseModal(true);
+              return;
+            } else {
+              console.log('All integrations are from current project, proceeding with new OAuth');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking existing integrations:', error);
+      }
+
+      console.log('=== End YouTube Integration Check ===');
+    }
+
     setSelectedIntegration(integration);
     setModalOpen(true);
   };
@@ -995,6 +1064,60 @@ const Integrations: React.FC = () => {
     if (project?.id) {
       localStorage.setItem('currentProjectId', project.id.toString());
       window.location.reload(); // Recarregar a página para atualizar o contexto do projeto
+    }
+  };
+
+  // Função para reutilizar integração YouTube existente
+  const handleReuseIntegration = async () => {
+    if (selectedExistingIntegration === 'new') {
+      // Usuário escolheu conectar nova conta
+      setShowReuseModal(false);
+      setModalOpen(true);
+      return;
+    }
+
+    if (!selectedExistingIntegration || !currentProject?.id) {
+      alert('Please select an option');
+      return;
+    }
+
+    try {
+      // Obter o email do usuário autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      const userEmail = user?.email;
+
+      if (!userEmail) {
+        throw new Error('User email not found');
+      }
+
+      const { data, error } = await supabase.rpc('reuse_youtube_integration_by_email', {
+        p_user_email: userEmail,
+        p_new_project_id: currentProject.id,
+        p_source_integration_id: parseInt(selectedExistingIntegration)
+      });
+
+      if (error) throw error;
+
+      if (data && data[0]?.success) {
+        setShowReuseModal(false);
+        setShowSuccessMessage(true);
+        fetchIntegrations(); // Recarregar integrações
+
+        // Navegar para dashboard após 2 segundos
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+      } else {
+        // Traduzir mensagem de erro se vier em português
+        let errorMessage = data[0]?.message || 'Error reusing integration';
+        if (errorMessage.includes('não encontrado') || errorMessage.includes('não pertence')) {
+          errorMessage = 'Target project not found or does not belong to user';
+        }
+        alert(errorMessage);
+      }
+    } catch (error) {
+      console.error('Error reusing integration:', error);
+      alert('Error reusing YouTube integration');
     }
   };
 
@@ -1307,6 +1430,136 @@ const Integrations: React.FC = () => {
                 onClick={handleAuthorize}
               >
                 Authorize {renderIcon(FaLock)}
+              </ModalButton>
+            </ModalFooter>
+          </ModalContent>
+        </ModalOverlay>
+      )}
+
+      {/* Modal de Reutilização do YouTube */}
+      {showReuseModal && (
+        <ModalOverlay>
+          <ModalContent ref={modalRef}>
+            <ModalCloseButton onClick={() => {
+              setShowReuseModal(false);
+              setSelectedExistingIntegration('');
+            }}>
+              {renderIcon(FaTimes)}
+            </ModalCloseButton>
+
+            <ModalHeader>
+              <ModalIconWrapper bgColor="#FF0000">
+                {renderIcon(FaYoutube)}
+              </ModalIconWrapper>
+              <ModalTitle>YouTube Connection Options</ModalTitle>
+            </ModalHeader>
+
+            <ModalBody>
+              <ModalText>
+                We found existing YouTube connections in your other projects.
+                Would you like to use one of them?
+              </ModalText>
+
+              <div style={{ marginTop: '20px' }}>
+                <div style={{ marginBottom: '20px' }}>
+                  <strong style={{ fontSize: '14px', color: '#8b5cf6' }}>
+                    Choose an existing connection:
+                  </strong>
+                </div>
+
+                {availableIntegrations.map((integration) => (
+                  <div
+                    key={integration.integration_id}
+                    style={{
+                      padding: '15px',
+                      marginBottom: '10px',
+                      border: selectedExistingIntegration === integration.integration_id.toString()
+                        ? '2px solid #8b5cf6'
+                        : '1px solid rgba(139, 92, 246, 0.3)',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      backgroundColor: selectedExistingIntegration === integration.integration_id.toString()
+                        ? 'rgba(139, 92, 246, 0.1)'
+                        : 'transparent',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onClick={() => setSelectedExistingIntegration(integration.integration_id.toString())}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <input
+                        type="radio"
+                        name="integration-choice"
+                        checked={selectedExistingIntegration === integration.integration_id.toString()}
+                        onChange={() => setSelectedExistingIntegration(integration.integration_id.toString())}
+                        style={{ accentColor: '#8b5cf6' }}
+                      />
+                      <div>
+                        <div style={{ fontWeight: 'bold', fontSize: '14px' }}>
+                          {integration.project_name}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
+                          {integration.youtube_channel_name || integration.youtube_email || 'YouTube Account'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(139, 92, 246, 0.2)' }}>
+                  <div
+                    style={{
+                      padding: '15px',
+                      border: selectedExistingIntegration === 'new'
+                        ? '2px solid #8b5cf6'
+                        : '1px solid rgba(139, 92, 246, 0.3)',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      backgroundColor: selectedExistingIntegration === 'new'
+                        ? 'rgba(139, 92, 246, 0.1)'
+                        : 'transparent',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onClick={() => setSelectedExistingIntegration('new')}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <input
+                        type="radio"
+                        name="integration-choice"
+                        checked={selectedExistingIntegration === 'new'}
+                        onChange={() => setSelectedExistingIntegration('new')}
+                        style={{ accentColor: '#8b5cf6' }}
+                      />
+                      <div>
+                        <div style={{ fontWeight: 'bold', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          {renderIcon(FaPlus)} Connect a Different YouTube Account
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
+                          Authorize a new YouTube channel for this project
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ModalBody>
+
+            <ModalFooter>
+              <ModalButton
+                variant="secondary"
+                onClick={() => {
+                  setShowReuseModal(false);
+                  setSelectedExistingIntegration('');
+                }}
+              >
+                Cancel
+              </ModalButton>
+
+              <ModalButton
+                variant="primary"
+                disabled={!selectedExistingIntegration}
+                onClick={handleReuseIntegration}
+              >
+                Continue {renderIcon(FaCheck)}
               </ModalButton>
             </ModalFooter>
           </ModalContent>

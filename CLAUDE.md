@@ -114,12 +114,41 @@ await mcp__supabase__deploy_edge_function({
 });
 ```
 
-### Organização de Funções MCP
-**Após criar/modificar qualquer função, SEMPRE:**
-1. Salvar cópia em `/liftlio-react/AGENTE_LIFTLIO/MCP_Functions/`
-   - Edge Functions: `Edge_Functions/nome-funcao.ts`
-   - SQL Functions: `SQL_Functions/nome_funcao.sql`
-2. Atualizar documentação em `/AGENTE_LIFTLIO/5_Documentacao/INDICE_COMPLETO.md`
+### 🔴 REGRAS CRÍTICAS: Organização de Funções MCP
+
+**⚠️ OBRIGATÓRIO ao criar/modificar funções no Supabase:**
+
+1. **SEMPRE usar DROP FUNCTION IF EXISTS antes de CREATE**
+   ```sql
+   DROP FUNCTION IF EXISTS nome_funcao(parametros);
+   CREATE OR REPLACE FUNCTION nome_funcao(...)
+   ```
+
+2. **SEMPRE salvar cópia local IMEDIATAMENTE após criar/editar:**
+   - SQL Functions: `/liftlio-react/AGENTE_LIFTLIO/MCP_Functions/SQL_Functions/nome_funcao.sql`
+   - Edge Functions: `/liftlio-react/AGENTE_LIFTLIO/MCP_Functions/Edge_Functions/nome-funcao.ts`
+
+3. **NUNCA deixar funções duplicadas ou antigas no banco:**
+   - Remover versões antigas (ex: função sem parâmetro email quando criar com email)
+   - Manter apenas uma versão de cada função
+   - Usar nomes descritivos (ex: `check_user_youtube_integrations_by_email`)
+
+4. **SEMPRE sincronizar Supabase ↔ Local:**
+   - Após criar no Supabase → salvar localmente
+   - Após editar no Supabase → atualizar arquivo local
+   - Deletar funções não usadas do Supabase E dos arquivos locais
+
+5. **Padrão de documentação no arquivo:**
+   ```sql
+   -- =============================================
+   -- Função: nome_da_funcao
+   -- Descrição: O que ela faz
+   -- Criado: Data ISO
+   -- Atualizado: Mudanças importantes
+   -- =============================================
+   ```
+
+6. **Atualizar documentação:** `/AGENTE_LIFTLIO/5_Documentacao/INDICE_COMPLETO.md`
 
 ## Sistema de Agente AI (v68)
 **Localização**: `/liftlio-react/AGENTE_LIFTLIO/`

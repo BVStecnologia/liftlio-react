@@ -1352,48 +1352,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       await setCurrentProject(project);
       console.log("Projeto atualizado na interface");
 
-      // 1. Verificar se o projeto tem integrações ATIVAS
-      const { data: integrations } = await supabase
-        .from('Integrações')
-        .select('*')
-        .eq('PROJETO id', project.id)
-        .eq('ativo', true); // Apenas integrações ativas
-
-      const hasActiveIntegration = integrations && integrations.length > 0;
-      console.log(`Projeto ${project.id} tem integrações ativas:`, hasActiveIntegration);
-
-      // 2. Verificar se o projeto tem dados (mensagens)
-      const { data: messages } = await supabase
-        .from('Mensagens')
-        .select('id')
-        .eq('project_id', project.id)
-        .limit(1);
-
-      const hasData = messages && messages.length > 0;
-      console.log(`Projeto ${project.id} tem dados:`, hasData);
-
-      // 3. Determinar navegação baseada no estado do projeto
-      const currentPath = window.location.pathname;
-      console.log(`Navegação inteligente - Path atual: ${currentPath}`);
-
-      if (!hasActiveIntegration) {
-        // Sem integração ativa → Ir para Integrations
-        console.log("Navegando para /integrations (sem integração ativa)");
-        navigate('/integrations');
-      } else if (hasActiveIntegration && (hasData || parseInt(project.status || '0', 10) > 5)) {
-        // Com integração E (dados OU status > 5) → Dashboard
-        // Sidebar aparecerá automaticamente
-        console.log("Navegando para /dashboard (projeto com dados/processado)");
-        navigate('/dashboard');
-      } else if (hasActiveIntegration && !hasData) {
-        // Com integração mas sem dados ainda → Dashboard
-        // ProcessingWrapper cuidará da visualização
-        console.log("Navegando para /dashboard (aguardando dados)");
-        navigate('/dashboard');
-      }
-
-      // NÃO recarregar a página - deixar o React gerenciar a atualização
-      console.log("Navegação concluída sem reload");
+      // SOLUÇÃO SIMPLES: Recarregar a página após trocar o projeto
+      // Isso garante que tudo seja recalculado corretamente
+      console.log("Recarregando página após mudança de projeto");
+      window.location.reload();
     } catch (error) {
       console.error("Erro ao selecionar projeto:", error);
       alert("Ocorreu um erro ao selecionar o projeto. Por favor, tente novamente.");
