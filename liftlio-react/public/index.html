@@ -279,8 +279,8 @@ h1 {
 
 .gradient-text {
   background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
-  background-clip: text;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -310,10 +310,10 @@ header {
   font-weight: 900;
   letter-spacing: -1px;
   background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
-  background-clip: text;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
-}}
+}
 
 /* Buttons */
 .primary-button {
@@ -329,11 +329,11 @@ header {
   align-items: center;
   gap: 8px;
   transition: transform 0.2s;
-}}
+}
 
 .primary-button:active {
   transform: scale(0.95);
-}}
+}
 
 /* Hero Image Container */
 .dashboard-hero-image {
@@ -343,7 +343,7 @@ header {
   margin-top: 40px;
   border-radius: 12px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-}}
+}
 
 /* Mobile Optimizations */
 @media (max-width: 768px) {
@@ -355,30 +355,30 @@ header {
     box-shadow: none !important;
     animation: none !important;
     transition: none !important;
-  }}
+  }
   
   .hero-section {
     min-height: auto;
     padding: 80px 20px 40px;
-  }}
+  }
   
   h1 {
     font-size: 2rem;
-  }}
+  }
   
   .primary-button {
     padding: 14px 28px;
     font-size: 15px;
-  }}
+  }
   
   header {
     padding: 12px 16px;
-  }}
+  }
   
   .logo {
     font-size: 20px;
   }
-}}
+}
 
 /* Loading States */
 .loading-spinner {
@@ -388,12 +388,12 @@ header {
   border-top: 3px solid #fff;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
-}}
+}
 
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}}
+}
 
 /* Lazy Section Placeholder */
 .lazy-placeholder {
@@ -401,19 +401,19 @@ header {
   display: flex;
   align-items: center;
   justify-content: center;
-}}
+}
 
 /* Ensure images are visible immediately */
 img {
   display: block;
   max-width: 100%;
   height: auto;
-}}
+}
 
 /* Hide mobile menu by default */
 .mobile-menu {
   display: none;
-}}
+}
 
 /* Badge */
 .badge {
@@ -426,7 +426,7 @@ img {
   padding: 8px 20px;
   font-size: 14px;
   margin-bottom: 24px;
-}}
+}
 
 /* Description */
 .description {
@@ -434,25 +434,25 @@ img {
   line-height: 1.6;
   color: #a1a1a1;
   margin-bottom: 32px;
-}}
+}
 
 /* Navigation */
 .nav {
   display: flex;
   align-items: center;
   gap: 32px;
-}}
+}
 
 .nav-link {
   color: #a1a1a1;
   text-decoration: none;
   font-size: 16px;
   transition: color 0.2s;
-}}
+}
 
 .nav-link:hover {
   color: #fff;
-}}
+}
 
 /* Mobile menu button */
 .mobile-menu-button {
@@ -462,12 +462,12 @@ img {
   color: #fff;
   font-size: 24px;
   cursor: pointer;
-}}
+}
 
 @media (max-width: 768px) {
   .nav {
     display: none;
-  }}
+  }
   
   .mobile-menu-button {
     display: block;
@@ -493,4 +493,3 @@ img {
     -->
   </body>
 </html>
-

@@ -870,7 +870,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
       console.log('[getLayoutType] Projeto em processamento (status:', projectStatus, '), indo para dashboard');
       return 'dashboard'; // ProcessingWrapper vai cuidar da visualização
     }
-    
+
     // Projeto com status > 5 mas sem integrações
     if (currentProject && !projectHasIntegrations) {
       console.log('[getLayoutType] Projeto sem integrações, indo para setup');
@@ -899,28 +899,28 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   // Verificar se projeto está em processamento ANTES de decidir se retorna null
   const currentProjectStatus = parseInt(currentProject?.status || '0', 10);
   const isProjectProcessing = currentProject && currentProjectStatus <= 5;
-  
+
   // Verificar se há parâmetros OAuth na URL antes de redirecionar
   const urlParams = new URLSearchParams(window.location.search);
   const hasOAuthCode = urlParams.get('code') !== null;
   const hasOAuthState = urlParams.get('state') !== null;
-  
+
   // Não renderizar nada até estar pronto, EXCETO para projetos em processamento
   // Projetos em processamento devem renderizar o dashboard para que o ProcessingWrapper funcione
   if (!isProjectProcessing && (loading || !onboardingReady || isLoading || isInitializing || !isPageReady)) {
     console.log('[ProtectedLayout] Aguardando carregamento (não é projeto em processamento)');
     return null;
   }
-  
+
   // Se é projeto em processamento, permitir renderização mesmo durante loading
   if (isProjectProcessing) {
     console.log('[ProtectedLayout] Projeto em processamento detectado, permitindo renderização');
   }
-  
+
   // VERIFICAÇÃO DE ROTAS PÚBLICAS - APÓS TODOS OS HOOKS
   const publicRoutes = ['/trends', '/liftlio-analytics', '/about', '/privacy', '/terms', '/security'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
-  
+
   // Se é uma rota pública, não processar com ProtectedLayout
   if (isPublicRoute) {
     console.log('[ProtectedLayout] Route is public, returning null');
@@ -931,7 +931,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     showGlobalLoader('Processing', 'Connecting to YouTube');
     // Removido return null - permitir que o componente continue renderizando
   }
-  
+
   // Redirecionar para a página inicial (login) se não estiver autenticado
   // MAS NÃO redirecionar se é uma rota pública
   if (!user && !isPublicRoute) {
@@ -942,9 +942,9 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     }, 1000);
     return <div>Redirecting to login...</div>;
   }
-  
+
   // Se chegou aqui, o usuário está autenticado e o carregamento foi concluído
-  
+
   // Redirecionar para a página de criação de projeto se o usuário não tiver projetos
   if (!hasProjects) {
     return (
@@ -959,9 +959,9 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
       </AppContainer>
     );
   }
-  
+
   const layoutType = getLayoutType();
-  
+
   // Log para debug simplificado
   console.log('Layout Decision:', {
     type: layoutType,
@@ -1071,7 +1071,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
                 <Route path="/mentions" element={<SubscriptionGate><ProcessingWrapper onCheckingStateChange={setIsProcessingWrapperChecking}><Mentions /></ProcessingWrapper></SubscriptionGate>} />
                 <Route path="/settings" element={<SubscriptionGate><Settings /></SubscriptionGate>} />
                 <Route path="/billing" element={<SubscriptionGate><Billing /></SubscriptionGate>} />
-                <Route path="/integrations" element={<SubscriptionGate><ProcessingWrapper onCheckingStateChange={setIsProcessingWrapperChecking}><Integrations /></ProcessingWrapper></SubscriptionGate>} />
+                <Route path="/integrations" element={<SubscriptionGate><Integrations /></SubscriptionGate>} />
                 {/* <Route path="/url-test" element={<SubscriptionGate><UrlDataTest /></SubscriptionGate>} /> */}
                 {/* Removed duplicate trends and analytics routes - they are defined as public routes */}
                 <Route path="*" element={(() => {

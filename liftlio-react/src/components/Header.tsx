@@ -1363,7 +1363,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       
       // NÃO recarregar a página - deixar o React gerenciar a atualização
       console.log("Projeto selecionado, atualizando interface sem reload");
-      
+
+      // Determinar para onde navegar baseado no estado do projeto
+      const projectStatus = parseInt(project.status || '0', 10);
+
       // Se o projeto tem integrações e estamos na página de criação, navegar para o dashboard
       if (projectHasIntegrations && window.location.pathname === '/create-project') {
         console.log("Projeto tem integrações, navegando para o dashboard");
