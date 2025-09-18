@@ -1351,29 +1351,49 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       // Chamar a função para atualizar o projeto no Supabase PRIMEIRO
       await setCurrentProject(project);
       console.log("Projeto atualizado na interface");
-      
-      // Verificar se o projeto selecionado tem integrações
-      // Buscar integrações do projeto no Supabase
+
+      // 1. Verificar se o projeto tem integrações ATIVAS
       const { data: integrations } = await supabase
         .from('Integrações')
         .select('*')
-        .eq('PROJETO id', project.id);
-      
-      const projectHasIntegrations = integrations && integrations.length > 0;
-      
-      // NÃO recarregar a página - deixar o React gerenciar a atualização
-      console.log("Projeto selecionado, atualizando interface sem reload");
+        .eq('PROJETO id', project.id)
+        .eq('ativo', true); // Apenas integrações ativas
 
-      // Determinar para onde navegar baseado no estado do projeto
-      const projectStatus = parseInt(project.status || '0', 10);
+      const hasActiveIntegration = integrations && integrations.length > 0;
+      console.log(`Projeto ${project.id} tem integrações ativas:`, hasActiveIntegration);
 
-      // Se o projeto tem integrações e estamos na página de criação, navegar para o dashboard
-      if (projectHasIntegrations && window.location.pathname === '/create-project') {
-        console.log("Projeto tem integrações, navegando para o dashboard");
-        // Usar navigate do React Router em vez de window.location
+      // 2. Verificar se o projeto tem dados (mensagens)
+      const { data: messages } = await supabase
+        .from('Mensagens')
+        .select('id')
+        .eq('project_id', project.id)
+        .limit(1);
+
+      const hasData = messages && messages.length > 0;
+      console.log(`Projeto ${project.id} tem dados:`, hasData);
+
+      // 3. Determinar navegação baseada no estado do projeto
+      const currentPath = window.location.pathname;
+      console.log(`Navegação inteligente - Path atual: ${currentPath}`);
+
+      if (!hasActiveIntegration) {
+        // Sem integração ativa → Ir para Integrations
+        console.log("Navegando para /integrations (sem integração ativa)");
+        navigate('/integrations');
+      } else if (hasActiveIntegration && (hasData || parseInt(project.status || '0', 10) > 5)) {
+        // Com integração E (dados OU status > 5) → Dashboard
+        // Sidebar aparecerá automaticamente
+        console.log("Navegando para /dashboard (projeto com dados/processado)");
+        navigate('/dashboard');
+      } else if (hasActiveIntegration && !hasData) {
+        // Com integração mas sem dados ainda → Dashboard
+        // ProcessingWrapper cuidará da visualização
+        console.log("Navegando para /dashboard (aguardando dados)");
         navigate('/dashboard');
       }
-      // REMOVIDO: window.location.reload() que estava causando o bug do GlobalLoader
+
+      // NÃO recarregar a página - deixar o React gerenciar a atualização
+      console.log("Navegação concluída sem reload");
     } catch (error) {
       console.error("Erro ao selecionar projeto:", error);
       alert("Ocorreu um erro ao selecionar o projeto. Por favor, tente novamente.");
