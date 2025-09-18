@@ -2,7 +2,7 @@
 -- Função: reuse_youtube_integration_by_email
 -- Descrição: Reutiliza tokens OAuth do YouTube para novo projeto usando email
 -- Criado: 2025-01-18T18:00:00.000Z
--- Atualizado: Mensagens em inglês para consistência
+-- Atualizado: Corrigido campo "user" com aspas para evitar erro SQL
 -- =============================================
 
 CREATE OR REPLACE FUNCTION reuse_youtube_integration_by_email(
@@ -23,13 +23,13 @@ DECLARE
     v_new_integration_id BIGINT;
 BEGIN
     -- Verificar se a integração fonte existe e pertence ao usuário
-    SELECT i.*, p.user as project_owner
+    SELECT i.*, p."user" as project_owner
     INTO v_source_integration
     FROM "Integrações" i
     INNER JOIN "Projeto" p ON i."PROJETO id" = p.id
     WHERE
         i.id = p_source_integration_id
-        AND p.user = p_user_email
+        AND p."user" = p_user_email  -- IMPORTANTE: "user" com aspas
         AND i."Tipo de integração" = 'youtube'
         AND i.ativo = true;
 
@@ -45,7 +45,7 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM "Projeto"
         WHERE id = p_new_project_id
-        AND user = p_user_email
+        AND "user" = p_user_email  -- IMPORTANTE: "user" com aspas
     ) THEN
         RETURN QUERY SELECT
             false::boolean,
@@ -103,4 +103,4 @@ END;
 $$;
 
 COMMENT ON FUNCTION reuse_youtube_integration_by_email(TEXT, BIGINT, BIGINT) IS
-'Reutiliza uma integração YouTube existente para um novo projeto do mesmo usuário usando email - Mensagens em inglês';
+'Reutiliza uma integração YouTube existente para um novo projeto do mesmo usuário - Campo "user" deve ter aspas';

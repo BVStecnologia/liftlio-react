@@ -1015,8 +1015,79 @@ const Integrations: React.FC = () => {
 
             if (otherProjectIntegrations.length > 0) {
               console.log('Showing reuse modal with integrations:', otherProjectIntegrations);
+
+              // Atualizar informações do canal para integrações sem nome
+              const integrationsWithInfo = await Promise.all(
+                otherProjectIntegrations.map(async (int: any) => {
+                  // Se não tem nome do canal ou email, buscar via Edge Function
+                  if (!int.youtube_channel_name && !int.youtube_email) {
+                    console.log(`Fetching YouTube info for integration ${int.integration_id}`);
+                    try {
+                      const { data: channelInfo, error } = await supabase.functions.invoke('update-youtube-info', {
+                        body: { integration_id: int.integration_id },
+                        headers: {
+                          'Content-Type': 'application/json'
+                        }
+                      });
+
+                      if (error) {
+                        console.error(`Edge Function error for integration ${int.integration_id}:`, error);
+                        console.error('Error details:', {
+                          code: error.code,
+                          message: error.message,
+                          status: error.status
+                        });
+
+                        // Se for erro de token expirado, indicar isso
+                        if (error.message?.includes('401') || error.message?.includes('Failed to fetch')) {
+                          return {
+                            ...int,
+                            youtube_channel_name: `YouTube (Token Expired - ${int.project_name})`,
+                            youtube_email: null
+                          };
+                        }
+
+                        // Se houver erro, retornar com indicação do projeto pelo menos
+                        return {
+                          ...int,
+                          youtube_channel_name: `YouTube (${int.project_name})`,
+                          youtube_email: null
+                        };
+                      }
+
+                      if (channelInfo) {
+                        console.log(`Updated info for integration ${int.integration_id}:`, channelInfo);
+                        // Atualizar o objeto com as novas informações
+                        return {
+                          ...int,
+                          youtube_email: channelInfo.email || null,
+                          youtube_channel_name: channelInfo.channel_name || `YouTube (${int.project_name})`,
+                          youtube_channel_id: channelInfo.channel_id || null
+                        };
+                      }
+
+                      // Se não retornou dados, usar fallback
+                      return {
+                        ...int,
+                        youtube_channel_name: `YouTube (${int.project_name})`,
+                        youtube_email: null
+                      };
+                    } catch (error) {
+                      console.error(`Error fetching info for integration ${int.integration_id}:`, error);
+                      // Em caso de erro, mostrar ao menos o nome do projeto
+                      return {
+                        ...int,
+                        youtube_channel_name: `YouTube (${int.project_name})`,
+                        youtube_email: null
+                      };
+                    }
+                  }
+                  return int;
+                })
+              );
+
               // Tem integrações existentes em outros projetos - mostrar modal de reutilização
-              setAvailableIntegrations(otherProjectIntegrations);
+              setAvailableIntegrations(integrationsWithInfo);
               setSelectedIntegration(integration);
               setShowReuseModal(true);
               return;
@@ -1069,7 +1140,12 @@ const Integrations: React.FC = () => {
 
   // Função para reutilizar integração YouTube existente
   const handleReuseIntegration = async () => {
+    console.log('=== handleReuseIntegration START ===');
+    console.log('Selected integration:', selectedExistingIntegration);
+    console.log('Current project:', currentProject);
+
     if (selectedExistingIntegration === 'new') {
+      console.log('User chose to connect new account');
       // Usuário escolheu conectar nova conta
       setShowReuseModal(false);
       setModalOpen(true);
@@ -1077,6 +1153,7 @@ const Integrations: React.FC = () => {
     }
 
     if (!selectedExistingIntegration || !currentProject?.id) {
+      console.error('Missing selection or project ID');
       alert('Please select an option');
       return;
     }
@@ -1086,19 +1163,36 @@ const Integrations: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       const userEmail = user?.email;
 
+      console.log('User email:', userEmail);
+
       if (!userEmail) {
         throw new Error('User email not found');
       }
 
-      const { data, error } = await supabase.rpc('reuse_youtube_integration_by_email', {
+      const rpcParams = {
         p_user_email: userEmail,
         p_new_project_id: currentProject.id,
         p_source_integration_id: parseInt(selectedExistingIntegration)
+      };
+
+      console.log('RPC Parameters:', rpcParams);
+      console.log('RPC Parameter types:', {
+        p_user_email: typeof rpcParams.p_user_email,
+        p_new_project_id: typeof rpcParams.p_new_project_id,
+        p_source_integration_id: typeof rpcParams.p_source_integration_id
       });
 
-      if (error) throw error;
+      const { data, error } = await supabase.rpc('reuse_youtube_integration_by_email', rpcParams);
+
+      console.log('RPC Response:', { data, error });
+
+      if (error) {
+        console.error('RPC Error:', error);
+        throw error;
+      }
 
       if (data && data[0]?.success) {
+        console.log('Integration reused successfully!');
         setShowReuseModal(false);
         setShowSuccessMessage(true);
         fetchIntegrations(); // Recarregar integrações
@@ -1108,6 +1202,7 @@ const Integrations: React.FC = () => {
           navigate('/dashboard');
         }, 2000);
       } else {
+        console.error('RPC returned failure:', data);
         // Traduzir mensagem de erro se vier em português
         let errorMessage = data[0]?.message || 'Error reusing integration';
         if (errorMessage.includes('não encontrado') || errorMessage.includes('não pertence')) {
@@ -1119,6 +1214,8 @@ const Integrations: React.FC = () => {
       console.error('Error reusing integration:', error);
       alert('Error reusing YouTube integration');
     }
+
+    console.log('=== handleReuseIntegration END ===');
   };
 
   const handleAuthorize = () => {
