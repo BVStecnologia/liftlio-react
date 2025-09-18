@@ -862,19 +862,19 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     if (!user) return 'login';
     if (!hasProjects) return 'create-project';
     
-    // IMPORTANTE: Verificar status do projeto ANTES de verificar integração
-    // Projetos em processamento (status 0-5) devem ir direto pro dashboard
-    // para que o ProcessingWrapper possa mostrar as 6 etapas
+    // IMPORTANTE: Verificar integrações PRIMEIRO
+    // Projetos sem integração devem ir para setup, independente do status
+    if (currentProject && !projectHasIntegrations) {
+      console.log('[getLayoutType] Projeto sem integrações, indo para setup');
+      return 'integration-setup';
+    }
+
+    // Depois verificar status do projeto
+    // Projetos em processamento (status 0-5) vão pro dashboard
     const projectStatus = parseInt(currentProject?.status || '0', 10);
     if (currentProject && projectStatus <= 5) {
       console.log('[getLayoutType] Projeto em processamento (status:', projectStatus, '), indo para dashboard');
       return 'dashboard'; // ProcessingWrapper vai cuidar da visualização
-    }
-
-    // Projeto com status > 5 mas sem integrações
-    if (currentProject && !projectHasIntegrations) {
-      console.log('[getLayoutType] Projeto sem integrações, indo para setup');
-      return 'integration-setup';
     }
     
     // Verificar onboarding
