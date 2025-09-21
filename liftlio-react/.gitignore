@@ -25,6 +25,7 @@ liftlio_2/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.supabase
 
 # arquivos grandes
 *.dmg
