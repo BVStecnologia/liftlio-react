@@ -223,7 +223,16 @@ el.href = el.href.replace(/^\//, '');
         @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
         
         /* Header */
-        .header{position:fixed;top:0;left:0;right:0;z-index:1000;padding:20px 24px;padding-top:calc(20px + env(safe-area-inset-top));padding-left:calc(24px + env(safe-area-inset-left));padding-right:calc(24px + env(safe-area-inset-right));background:var(--color-header-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--color-border-light);transition:all .3s;width:100%;box-sizing:border-box;overflow:visible !important}
+        .header{position:fixed;top:0;left:0;right:0;z-index:1000;padding:20px 24px;background:var(--color-header-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--color-border-light);transition:all .3s;box-sizing:border-box;overflow:visible !important}
+
+        /* Progressive enhancement para dispositivos com safe area */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            .header {
+                padding-top: calc(20px + env(safe-area-inset-top));
+                padding-left: calc(24px + env(safe-area-inset-left));
+                padding-right: calc(24px + env(safe-area-inset-right));
+            }
+        }
         .header.scrolled{background:var(--color-header-bg-solid);backdrop-filter:blur(20px)}
         .header-content{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:1440px;margin:0 auto}
         .logo{font-size:28px;font-weight:900;letter-spacing:-1px;cursor:pointer;display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--color-text-primary);flex-shrink:0}
