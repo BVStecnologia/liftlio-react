@@ -1437,23 +1437,37 @@ const sources = picture.querySelectorAll('source');
 sources.forEach(source => {
 const media = source.getAttribute('media');
 const type = source.getAttribute('type');
-const isDesktop = media && media.includes('min-width: 769px');
-const isWebP = type === 'image/webp';
 const basePath = 'imagens/';
-if (isDesktop) {
-const srcset = `${basePath}dashboard-hero-${theme}.jpg 1536w`;
-source.setAttribute('srcset', isLocal ? srcset + ', ' + srcset : srcset);
-} else {
-const filename = isWebP
-? `dashboard-hero-${theme}-mobile-optimized.webp`
-: `dashboard-hero-${theme}-mobile-optimized.jpg`;
-const srcset = `${basePath}${filename} 768w`;
-source.setAttribute('srcset', isLocal ? srcset + ', ' + srcset : srcset);
+
+// Determinar o arquivo correto baseado no media query e tema
+if (media && media.includes('max-width: 480px')) {
+// Para telas pequenas (mobile até 480px)
+const filename = theme === 'dark'
+? `dashboard-hero-dark-mobile-400.jpg`
+: `dashboard-hero-light-mobile-optimized.jpg`;
+source.setAttribute('srcset', `${basePath}${filename} 400w`);
+} else if (media && media.includes('max-width: 768px')) {
+// Para tablets (481px até 768px)
+const filename = theme === 'dark'
+? `dashboard-hero-dark-mobile-576.jpg`
+: `dashboard-hero-light-mobile-optimized.jpg`;
+source.setAttribute('srcset', `${basePath}${filename} 576w`);
+} else if (media && media.includes('min-width: 769px')) {
+// Para desktop
+const filename = `dashboard-hero-${theme}.jpg`;
+source.setAttribute('srcset', `${basePath}${filename} 1536w`);
 }
 });
-dashboardImg.src = isLocal
-? `imagens/dashboard-hero-${theme}.jpg`
-: `/imagens/dashboard-hero-${theme}.jpg`;
+
+// Atualizar o src da imagem fallback
+if (isMobile) {
+const mobileFile = theme === 'dark'
+? 'dashboard-hero-dark-mobile-400.jpg'
+: 'dashboard-hero-light-mobile-optimized.jpg';
+dashboardImg.src = `${isLocal ? '' : '/'}imagens/${mobileFile}`;
+} else {
+dashboardImg.src = `${isLocal ? '' : '/'}imagens/dashboard-hero-${theme}.jpg`;
+}
 }
 function navigateToPage(path) {
 console.log('navigateToPage called with:', path);
