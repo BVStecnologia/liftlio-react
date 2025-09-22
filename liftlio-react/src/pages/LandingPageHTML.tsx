@@ -1,81 +1,77 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import OAuthProcessor from '../components/OAuthProcessor';
 
 const LandingPageHTML: React.FC = () => {
+  const [oauthParams, setOauthParams] = useState<{ code: string; state: string } | null>(null);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+
   useEffect(() => {
-    // IMPORTANTE: Verificar se tem parâmetros OAuth antes de redirecionar
+    // Verificar parâmetros OAuth imediatamente
     const urlParams = new URLSearchParams(window.location.search);
-    const hasOAuthCode = urlParams.get('code');
-    const hasOAuthState = urlParams.get('state');
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
 
     console.log('[LandingPageHTML] Verificando OAuth params:', {
-      hasCode: !!hasOAuthCode,
-      hasState: !!hasOAuthState,
+      hasCode: !!code,
+      hasState: !!state,
       fullURL: window.location.href
     });
 
-    // Se tem parâmetros OAuth, NÃO redirecionar - deixar o OAuthHandler processar
-    if (hasOAuthCode && hasOAuthState) {
-      console.log('[LandingPageHTML] OAuth detectado, aguardando processamento...');
-      console.log('[LandingPageHTML] Code:', hasOAuthCode?.substring(0, 20) + '...');
-      console.log('[LandingPageHTML] State (Project ID):', hasOAuthState);
-      // Não fazer nada - o OAuthHandler vai processar
-      return;
+    if (code && state) {
+      // OAuth detectado - processar com o componente dedicado
+      console.log('[LandingPageHTML] OAuth detectado, processando com OAuthProcessor');
+      setOauthParams({ code, state });
+
+      // Limpar URL para evitar reprocessamento em refresh
+      window.history.replaceState({}, document.title, '/');
+    } else {
+      // Sem OAuth - aguardar um pouco antes de redirecionar
+      // para garantir que não há race condition
+      console.log('[LandingPageHTML] Sem OAuth, aguardando antes de redirecionar...');
+      const timer = setTimeout(() => {
+        setShouldRedirect(true);
+      }, 500); // Aguardar 500ms antes de decidir redirecionar
+
+      return () => clearTimeout(timer);
     }
-
-    console.log('[LandingPageHTML] Sem OAuth, redirecionando para landing...');
-    // Só redirecionar para landing page HTML se NÃO for OAuth
-    window.location.href = '/landing-page.html';
   }, []);
-  
-  // Mostrar loading enquanto processa OAuth ou redireciona
-  const urlParams = new URLSearchParams(window.location.search);
-  const isOAuth = urlParams.get('code') && urlParams.get('state');
 
-  if (isOAuth) {
+  useEffect(() => {
+    if (shouldRedirect) {
+      console.log('[LandingPageHTML] Redirecionando para landing page...');
+      window.location.href = '/landing-page.html';
+    }
+  }, [shouldRedirect]);
+
+  // Se temos parâmetros OAuth, usar o OAuthProcessor
+  if (oauthParams) {
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        background: 'linear-gradient(135deg, #0a0a0b 0%, #1a1a1b 100%)',
-        color: '#fff'
-      }}>
-        <div style={{
-          padding: '40px',
-          borderRadius: '16px',
-          background: 'rgba(139, 92, 246, 0.1)',
-          border: '1px solid rgba(139, 92, 246, 0.3)',
-          textAlign: 'center'
-        }}>
-          <h2 style={{ marginBottom: '20px', color: '#8b5cf6' }}>
-            Connecting YouTube...
-          </h2>
-          <p style={{ marginBottom: '20px', opacity: 0.8 }}>
-            Please wait while we complete your YouTube integration.
-          </p>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            border: '3px solid rgba(139, 92, 246, 0.3)',
-            borderTopColor: '#8b5cf6',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto'
-          }} />
-        </div>
-        <style>{`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
+      <OAuthProcessor
+        code={oauthParams.code}
+        state={oauthParams.state}
+        onComplete={() => {
+          console.log('[LandingPageHTML] OAuth processado com sucesso');
+        }}
+        onError={(error) => {
+          console.error('[LandingPageHTML] Erro ao processar OAuth:', error);
+        }}
+      />
     );
   }
 
-  return <div>Redirecting...</div>;
+  // Enquanto decide se redireciona ou não
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      background: '#0a0a0b',
+      color: '#ffffff'
+    }}>
+      <div>Loading...</div>
+    </div>
+  );
 };
 
 export default LandingPageHTML;

@@ -739,16 +739,22 @@ const Integrations: React.FC = () => {
 
   // Verificar que os URIs de redirecionamento estão corretamente configurados no startup
   useEffect(() => {
-    // Detectar ambiente - IMPORTANTE: incluir liftlio.com também!
+    // Usar sempre a URL base atual sem path
+    // Isso garante consistência com o que o Google recebe
     const hostname = window.location.hostname;
-    const isProduction = hostname === 'liftlio.fly.dev' || hostname === 'liftlio.com';
-    const redirectUri = isProduction
-      ? `https://${hostname}`
-      : 'http://localhost:3000';
+    const protocol = window.location.protocol;
+    const port = window.location.port;
+
+    // Construir redirect URI baseado no ambiente atual
+    const redirectUri = port && port !== '80' && port !== '443'
+      ? `${protocol}//${hostname}:${port}`
+      : `${protocol}//${hostname}`;
       
     console.log('----------------------');
     console.log('CONFIGURAÇÃO OAUTH:');
-    console.log('Ambiente: ' + (isProduction ? 'Produção' : 'Desenvolvimento'));
+    console.log('Hostname: ' + hostname);
+    console.log('Protocol: ' + protocol);
+    console.log('Port: ' + (port || 'default'));
     console.log('URI de redirecionamento usado: ' + redirectUri);
     console.log('Certifique-se de que o URI acima está configurado no Google Cloud Console');
     console.log('----------------------');
@@ -866,17 +872,18 @@ const Integrations: React.FC = () => {
     // Use the redirect URI that is configured in Google Cloud
     // Importante: Este URI deve corresponder EXATAMENTE ao configurado no Google Cloud Console
 
-    // Determinar o URI de redirecionamento correto com base no ambiente
+    // Usar sempre a URL base atual sem path
+    // Isso garante consistência com o que o Google recebe
     const hostname = window.location.hostname;
-    const isProduction = hostname === 'liftlio.fly.dev' || hostname === 'liftlio.com';
-    const redirectUri = isProduction
-      ? `https://${hostname}`
-      : 'http://localhost:3000';
+    const protocol = window.location.protocol;
+    const port = window.location.port;
 
-    console.log('Ambiente detectado no iniciateOAuth:', isProduction ? 'Produção' : 'Desenvolvimento');
+    // Construir redirect URI baseado no ambiente atual
+    const redirectUri = port && port !== '80' && port !== '443'
+      ? `${protocol}//${hostname}:${port}`
+      : `${protocol}//${hostname}`;
 
-    // Log para debug - verificar o URI exato que estamos usando
-    console.log('Using redirect URI:', redirectUri);
+    console.log('Iniciando OAuth com redirect URI:', redirectUri);
 
     const scope = GOOGLE_SCOPES.join(' ');
 
