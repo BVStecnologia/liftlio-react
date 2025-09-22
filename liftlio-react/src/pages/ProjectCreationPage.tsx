@@ -196,6 +196,33 @@ const StepContent = styled.div`
   width: 100%;
 `;
 
+const LogoutButton = styled.button`
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 8px 16px;
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 100;
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: #8b5cf6;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 const ProjectCreationPage: React.FC = () => {
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -226,6 +253,15 @@ const ProjectCreationPage: React.FC = () => {
     }
   }, [currentProject, hasIntegrations, navigate]);
   
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
   const handleProjectCreated = async (project: any) => {
     try {
       if (!user) {
@@ -236,7 +272,7 @@ const ProjectCreationPage: React.FC = () => {
       const projectData = {
         "Project name": project.name,
         "description service": `Company or product name: ${project.company}\nAudience description: ${project.audience}`,
-        user: user.email,
+        "user": user.email,  // CORRIGIDO: adicionadas aspas para consistência
         "User id": user.id,
         "url service": project.link,
         "Keywords": project.keywords,
@@ -334,6 +370,11 @@ const ProjectCreationPage: React.FC = () => {
   // Render dentro de uma div comum
   return (
     <div style={{ width: '100%', padding: '20px' }}>
+      {/* Botão de Logout */}
+      <LogoutButton onClick={handleLogout}>
+        Logout
+      </LogoutButton>
+
       {/* Cabeçalho com indicadores de passo */}
       <div style={{ marginBottom: '40px', maxWidth: '700px', margin: '0 auto' }}>
         <StepIndicator>

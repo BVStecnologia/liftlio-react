@@ -189,24 +189,19 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: '100vh',
-          background: 'linear-gradient(135deg, #0a0a0b 0%, #1a1a1b 100%)',
+          minHeight: 'calc(100vh - 80px)',
           padding: '20px',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 10000
+          width: '100%'
         }}>
           <div style={{
-            background: 'rgba(26, 26, 26, 0.95)',
+            background: 'linear-gradient(135deg, rgba(26, 26, 26, 0.98) 0%, rgba(30, 30, 30, 0.95) 100%)',
             borderRadius: '20px',
             padding: '40px',
-            maxWidth: '500px',
+            maxWidth: '600px',
             width: '100%',
-            border: '1px solid rgba(139, 92, 246, 0.2)',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8)'
+            border: '1px solid rgba(139, 92, 246, 0.3)',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+            margin: '0 auto'
           }}>
             <h2 style={{
               fontSize: '24px',
