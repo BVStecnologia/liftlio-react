@@ -519,15 +519,28 @@ const OAuthHandler = () => {
           }
         } catch (error) {
           console.error('Erro ao processar o código de autorização do YouTube:', error);
+          console.error('Stack trace:', error instanceof Error ? error.stack : '');
+
           // Remover o loading global em caso de erro também
           hideGlobalLoader();
-          alert(`Erro ao conectar ao YouTube: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+
+          // Mostrar erro mais detalhado
+          const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+          alert(`Erro ao conectar ao YouTube: ${errorMessage}\n\nVerifique o console para mais detalhes.`);
+
+          // Limpar URL e redirecionar para integrations
+          window.history.replaceState({}, document.title, '/integrations');
+          window.location.href = '/integrations';
         }
       }
     };
     
-    // Executar verificação
-    checkForYouTubeOAuth();
+    // Executar verificação com pequeno delay para garantir que componentes estão montados
+    const timer = setTimeout(() => {
+      checkForYouTubeOAuth();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [hideGlobalLoader, location.pathname]);
   
   return null; // Este componente não renderiza nada
