@@ -739,10 +739,11 @@ const Integrations: React.FC = () => {
 
   // Verificar que os URIs de redirecionamento estão corretamente configurados no startup
   useEffect(() => {
-    // Detectar ambiente
-    const isProduction = window.location.hostname === 'liftlio.fly.dev';
-    const redirectUri = isProduction 
-      ? 'https://liftlio.fly.dev' 
+    // Detectar ambiente - IMPORTANTE: incluir liftlio.com também!
+    const hostname = window.location.hostname;
+    const isProduction = hostname === 'liftlio.fly.dev' || hostname === 'liftlio.com';
+    const redirectUri = isProduction
+      ? `https://${hostname}`
       : 'http://localhost:3000';
       
     console.log('----------------------');
