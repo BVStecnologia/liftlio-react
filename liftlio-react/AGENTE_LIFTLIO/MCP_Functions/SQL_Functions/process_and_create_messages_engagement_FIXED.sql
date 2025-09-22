@@ -431,7 +431,6 @@ $$;
 
 -- =============================================
 -- FUNÇÃO: process_and_create_messages_engagement
--- COM CHAMADA PARA agendar_postagens_diarias
 -- =============================================
 
 DROP FUNCTION IF EXISTS process_and_create_messages_engagement(INTEGER);
@@ -452,7 +451,6 @@ DECLARE
     v_total_messages INTEGER;
     v_product_mention_count INTEGER := 0;
     v_engagement_only_count INTEGER := 0;
-    v_posts_scheduled INTEGER := 0; -- NOVO: contador de posts agendados
 BEGIN
     v_start_time := clock_timestamp();
     RAISE NOTICE 'Iniciando processamento para projeto % em %', p_project_id, v_start_time;
@@ -585,44 +583,13 @@ BEGIN
         END IF;
     END LOOP;
 
-    -- =============================================
-    -- CORREÇÃO CRÍTICA: AGENDAR POSTAGENS
-    -- =============================================
-    IF v_count > 0 THEN
-        BEGIN
-            -- Chamar função de agendamento
-            SELECT agendar_postagens_diarias(p_project_id) INTO v_posts_scheduled;
-
-            IF v_posts_scheduled > 0 THEN
-                RAISE NOTICE '✅ SUCESSO: % postagens agendadas em Settings messages posts', v_posts_scheduled;
-
-                -- Adicionar informação ao retorno
-                RETURN QUERY SELECT
-                    NULL::BIGINT,
-                    'AGENDAMENTO'::TEXT,
-                    format('%s postagens agendadas com sucesso', v_posts_scheduled);
-            ELSE
-                RAISE WARNING '⚠️ ATENÇÃO: Nenhuma postagem foi agendada (projeto pode estar inativo)';
-            END IF;
-
-        EXCEPTION WHEN OTHERS THEN
-            RAISE WARNING '❌ ERRO ao agendar postagens: %', SQLERRM;
-            RETURN QUERY SELECT
-                NULL::BIGINT,
-                'ERRO_AGENDAMENTO'::TEXT,
-                'Erro ao agendar: ' || SQLERRM;
-        END;
-    END IF;
-    -- =============================================
-    -- FIM DA CORREÇÃO
-    -- =============================================
+    -- Removido agendamento automático conforme solicitado
 
     -- Estatísticas finais
     RAISE NOTICE 'Processamento concluído em % segundos.',
         EXTRACT(EPOCH FROM (clock_timestamp() - v_start_time));
     RAISE NOTICE 'Total: % mensagens (% com produto, % apenas engajamento)',
         v_count, v_product_mention_count, v_engagement_only_count;
-    RAISE NOTICE 'Postagens agendadas: %', v_posts_scheduled;
 
     -- Resumo se nenhuma mensagem foi processada
     IF v_count = 0 THEN
@@ -638,4 +605,4 @@ END;
 $$;
 
 COMMENT ON FUNCTION process_and_create_messages_engagement IS
-'VERSÃO CORRIGIDA: Processa comentários com Claude, cria mensagens E agenda postagens via Settings messages posts';
+'Processa comentários com Claude e cria mensagens com classificação tipo_resposta (produto/engajamento)';

@@ -77,6 +77,7 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheck
   const [hasMensagens, setHasMensagens] = useState(false);
   const [isCheckingInitial, setIsCheckingInitial] = useState(true); // Novo estado para verificação inicial
   const [lastCheckedProjectId, setLastCheckedProjectId] = useState<string | number | null>(null); // Para evitar verificações duplicadas
+  const [realtimeSubscription, setRealtimeSubscription] = useState<any>(null); // Para gerenciar inscrição realtime
   
   // Verifica diretamente se existem mensagens para o projeto
   const checkForMessages = useCallback(async (projectId: string | number) => {
@@ -127,35 +128,106 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheck
     }
   }, []);
 
+  // Função para configurar realtime subscriptions
+  const setupRealtimeSubscriptions = useCallback((projectId: string | number) => {
+    // Limpar inscrição anterior se existir
+    if (realtimeSubscription) {
+      console.log('[ProcessingWrapper] Removendo inscrição realtime anterior');
+      realtimeSubscription.unsubscribe();
+    }
+
+    console.log(`[ProcessingWrapper] Configurando realtime para projeto ${projectId}`);
+
+    // Criar canal para monitorar mudanças nas tabelas
+    const channel = supabase
+      .channel(`project-${projectId}-processing`)
+      // Monitorar mudanças no status do projeto
+      .on('postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'Projeto',
+          filter: `id=eq.${projectId}`
+        },
+        async (payload) => {
+          console.log('[ProcessingWrapper] Status do projeto atualizado via realtime:', payload);
+          const newStatus = parseInt(payload.new.status || '0', 10);
+
+          // Se status mudou para 6, verificar se tem mensagens
+          if (newStatus === 6) {
+            const hasMessages = await checkForMessages(projectId);
+            if (hasMessages) {
+              console.log('[ProcessingWrapper] Projeto pronto! Status=6 e tem mensagens');
+              setShowProcessing(false);
+              setVerifiedReady(true);
+            }
+          } else if (newStatus > 6) {
+            console.log('[ProcessingWrapper] Projeto definitivamente pronto! Status > 6');
+            setShowProcessing(false);
+            setVerifiedReady(true);
+          }
+        }
+      )
+      // Monitorar inserção de mensagens
+      .on('postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'Mensagens',
+          filter: `project_id=eq.${projectId}`
+        },
+        async (payload) => {
+          console.log('[ProcessingWrapper] Nova mensagem inserida via realtime:', payload);
+
+          // Verificar status do projeto
+          const status = await checkProjectStatus(projectId);
+
+          // Se status é 6 e agora tem mensagens, projeto está pronto
+          if (status === 6 && !hasMensagens) {
+            console.log('[ProcessingWrapper] Primeira mensagem detectada! Projeto agora está pronto');
+            setHasMensagens(true);
+            setShowProcessing(false);
+            setVerifiedReady(true);
+          }
+        }
+      )
+      .subscribe();
+
+    setRealtimeSubscription(channel);
+  }, [checkForMessages, checkProjectStatus, hasMensagens]);
+
   // Efeito principal para verificação completa do estado
   useEffect(() => {
     // Resetar estados quando projeto mudar
     let checkAgainTimeout: NodeJS.Timeout | null = null;
     let isMounted = true; // Para evitar updates após unmount
-    
+
     if (currentProject?.id) {
       // Evitar verificação duplicada para o mesmo projeto
       if (lastCheckedProjectId === currentProject.id && verifiedReady) {
         console.log(`Projeto ${currentProject.id} já foi verificado, pulando verificação duplicada`);
         return;
       }
-      
+
       console.log(`[ProcessingWrapper] Novo projeto selecionado (${currentProject.id}), iniciando verificação...`);
-      
+
       // IMPORTANTE: Resetar TODOS os estados ao trocar de projeto
       setIsCheckingInitial(true); // Começar em estado de verificação
       setVerifiedReady(false);
       setShowProcessing(false); // NÃO mostrar processamento até confirmar que precisa
       setHasMensagens(false); // Resetar estado de mensagens
       setLastCheckedProjectId(currentProject.id); // Marcar projeto como verificado
-      
+
       // Notificar o parent que estamos verificando
       if (onCheckingStateChange) {
         onCheckingStateChange(true);
       }
-      
+
       // SEMPRE esconder o GlobalLoader - deixar o ProcessingWrapper gerenciar a visualização
       hideGlobalLoader();
+
+      // Configurar realtime subscriptions para este projeto
+      setupRealtimeSubscriptions(currentProject.id);
       
       // Função de verificação completa
       const verifyProjectState = async () => {
@@ -213,13 +285,18 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheck
       if (checkAgainTimeout) {
         clearTimeout(checkAgainTimeout);
       }
+      // Limpar inscrição realtime
+      if (realtimeSubscription) {
+        console.log('[ProcessingWrapper] Limpando inscrição realtime');
+        realtimeSubscription.unsubscribe();
+      }
       hideGlobalLoader();
       // Notificar o parent que não estamos mais verificando
       if (onCheckingStateChange) {
         onCheckingStateChange(false);
       }
     };
-  }, [currentProject?.id, checkForMessages, checkProjectStatus, hideGlobalLoader, onCheckingStateChange]); // Removido lastCheckedProjectId e verifiedReady das deps para evitar loops
+  }, [currentProject?.id, checkForMessages, checkProjectStatus, hideGlobalLoader, onCheckingStateChange, setupRealtimeSubscriptions]); // Adicionado setupRealtimeSubscriptions
   
   // Se está processando, mostrar componente visual bonito
   const statusNum = parseInt(currentProject?.status || '0', 10);
