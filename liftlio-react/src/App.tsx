@@ -40,7 +40,7 @@ const Security = lazy(() => import('./pages/Security'));
 const Sidebar = lazy(() => import('./components/Sidebar'));
 const Header = lazy(() => import('./components/Header'));
 const SubscriptionWarningBanner = lazy(() => import('./components/SubscriptionWarningBanner'));
-const ProcessingWrapper = lazy(() => import('./components/ProcessingWrapper'));
+const ProcessingWrapper = lazy(() => import('./components/ProcessingWrapperSimplified'));
 // const UrlDataTest = lazy(() => import('./components/UrlDataTest')); // Removido - componente de teste
 const SubscriptionGate = lazy(() => import('./components/SubscriptionGate'));
 const FloatingAgent = lazy(() => import('./components/FloatingAgent'));
@@ -399,8 +399,6 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Estado para controlar se o ProcessingWrapper está verificando
-  const [isProcessingWrapperChecking, setIsProcessingWrapperChecking] = useState(false);
   // NOVO: Flag para prevenir múltiplas chamadas do GlobalLoader
   const [globalLoaderControlled, setGlobalLoaderControlled] = useState(false);
   
@@ -421,7 +419,6 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
       isPageReady,
       currentProject: currentProject?.id,
       projectStatus: currentProject?.status,
-      isProcessingWrapperChecking,
       globalLoaderControlled,
       timestamp: new Date().toISOString()
     });
@@ -435,8 +432,8 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
     
     // IMPORTANTE: Se o projeto tem status <= 5 ou 6 sem mensagens, delegar para ProcessingWrapper
     const projectStatus = parseInt(currentProject?.status || '0', 10);
-    if (currentProject && (projectStatus <= 5 || isProcessingWrapperChecking)) {
-      console.log('[DEBUG CRÍTICO] Projeto em processamento ou verificação, delegando para ProcessingWrapper');
+    if (currentProject && projectStatus <= 5) {
+      console.log('[DEBUG CRÍTICO] Projeto em processamento, delegando para ProcessingWrapper');
       // Marcar que ProcessingWrapper está no controle
       setGlobalLoaderControlled(true);
       // Garantir que GlobalLoader está escondido
@@ -481,7 +478,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
       // IMPORTANTE: Esconder o loader quando as condições não forem mais verdadeiras
       hideGlobalLoader();
     }
-  }, [loading, onboardingReady, isLoading, isPageReady, showGlobalLoader, hideGlobalLoader, currentProject, isProcessingWrapperChecking, globalLoaderControlled]);
+  }, [loading, onboardingReady, isLoading, isPageReady, showGlobalLoader, hideGlobalLoader, currentProject, globalLoaderControlled]);
   
   // Effect para garantir que mostramos loading até tudo estar pronto
   useEffect(() => {
@@ -502,13 +499,6 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
       return;
     }
     
-    // NÃO processar se ProcessingWrapper está verificando
-    if (isProcessingWrapperChecking) {
-      console.log('ProcessingWrapper está verificando, aguardando...');
-      // Garantir que GlobalLoader está escondido durante verificação
-      hideGlobalLoader();
-      return;
-    }
     
     // Debug
     console.log('ProtectedLayout Ready Check:', {
@@ -539,7 +529,7 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
       }, delay);
       return () => clearTimeout(timer);
     }
-  }, [loading, onboardingReady, isLoading, hideGlobalLoader, currentProject, isProcessingWrapperChecking, globalLoaderControlled]);
+  }, [loading, onboardingReady, isLoading, hideGlobalLoader, currentProject, globalLoaderControlled]);
   
   // Verificar se temos um destino pós-OAuth pendente
   useEffect(() => {
@@ -773,10 +763,10 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
             <ContentWrapper>
               <Routes>
                 {/* Removida rota "/" duplicada - já definida nas rotas públicas */}
-                <Route path="/dashboard" element={<SubscriptionGate><ProcessingWrapper onCheckingStateChange={setIsProcessingWrapperChecking}><Overview /></ProcessingWrapper></SubscriptionGate>} />
+                <Route path="/dashboard" element={<SubscriptionGate><ProcessingWrapper><Overview /></ProcessingWrapper></SubscriptionGate>} />
                 <Route path="/analytics" element={<SubscriptionGate><Analytics /></SubscriptionGate>} />
-                <Route path="/monitoring" element={<SubscriptionGate><ProcessingWrapper onCheckingStateChange={setIsProcessingWrapperChecking}><Monitoring /></ProcessingWrapper></SubscriptionGate>} />
-                <Route path="/mentions" element={<SubscriptionGate><ProcessingWrapper onCheckingStateChange={setIsProcessingWrapperChecking}><Mentions /></ProcessingWrapper></SubscriptionGate>} />
+                <Route path="/monitoring" element={<SubscriptionGate><ProcessingWrapper><Monitoring /></ProcessingWrapper></SubscriptionGate>} />
+                <Route path="/mentions" element={<SubscriptionGate><ProcessingWrapper><Mentions /></ProcessingWrapper></SubscriptionGate>} />
                 <Route path="/settings" element={<SubscriptionGate><Settings /></SubscriptionGate>} />
                 <Route path="/billing" element={<SubscriptionGate><Billing /></SubscriptionGate>} />
                 <Route path="/integrations" element={<SubscriptionGate><Integrations /></SubscriptionGate>} />

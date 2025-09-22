@@ -3042,18 +3042,7 @@ const Overview: React.FC = () => {
     </motion.div>
   ));
 
-  // Show skeleton loader while loading
-  if (loading && !statsData.reach.value && !hasProjects) {
-    return (
-      <PageContainer
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <SkeletonLoader />
-      </PageContainer>
-    );
-  }
+  // Removed skeleton loader - using global loading instead
 
   return (
     <PageContainer

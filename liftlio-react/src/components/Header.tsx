@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useGlobalLoading } from '../context/LoadingContext';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabaseClient';
 
 // Import the MobileNavToggle from App.tsx
@@ -1162,6 +1163,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const { currentProject, setCurrentProject, projects } = useProject();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
+  const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
   const navigate = useNavigate();
   const [currentLanguage, setCurrentLanguage] = useState(language.toUpperCase());
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -1340,27 +1342,43 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     if (sessionStorage.getItem(atualizacaoEmProgresso) === 'true') {
       console.log("Atualização de projeto já em andamento, aguardando...");
       await new Promise(resolve => setTimeout(resolve, 500));
+      return;
     }
-    
-    // Fechar dropdown antes de iniciar operação assíncrona
-    setShowProjectsDropdown(false);
-    
-    try {
-      console.log("Iniciando seleção de projeto:", project.id);
-      
-      // Chamar a função para atualizar o projeto no Supabase PRIMEIRO
-      await setCurrentProject(project);
-      console.log("Projeto atualizado na interface");
 
-      // SOLUÇÃO SIMPLES: Recarregar a página após trocar o projeto
-      // Isso garante que tudo seja recalculado corretamente
-      console.log("Recarregando página após mudança de projeto");
-      window.location.reload();
+    // Fechar dropdown imediatamente
+    setShowProjectsDropdown(false);
+
+    // Mostrar loading global ANTES de começar a mudança
+    showGlobalLoader('Switching Project', 'Loading project data...');
+
+    try {
+      // Marcar que estamos atualizando
+      sessionStorage.setItem(atualizacaoEmProgresso, 'true');
+      console.log("Iniciando seleção de projeto:", project.id);
+
+      // Atualizar o projeto no contexto e no Supabase
+      await setCurrentProject(project);
+      console.log("Projeto atualizado com sucesso");
+
+      // Aguardar um momento para garantir que o estado foi atualizado
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Navegar para overview do novo projeto (sem reload!)
+      navigate('/dashboard');
+
+      // Aguardar mais um pouco antes de esconder o loader
+      // para dar tempo dos dados carregarem
+      setTimeout(() => {
+        hideGlobalLoader();
+      }, 500);
+
     } catch (error) {
       console.error("Erro ao selecionar projeto:", error);
-      alert("Ocorreu um erro ao selecionar o projeto. Por favor, tente novamente.");
+      hideGlobalLoader();
+      alert("An error occurred while switching projects. Please try again.");
     } finally {
-      // Operação concluída
+      // Limpar flag de atualização
+      sessionStorage.removeItem(atualizacaoEmProgresso);
       console.log("Seleção de projeto concluída");
     }
   };

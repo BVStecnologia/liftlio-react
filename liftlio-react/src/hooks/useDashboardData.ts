@@ -91,7 +91,7 @@ export const useDashboardData = () => {
   const { currentProject } = useProject();
   const projectId = currentProject?.id;  // Extraindo o ID do projeto para fácil referência
   
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Inicia como false pois o loading global cuida disso
   const [error, setError] = useState<string | null>(null);
   
   // Dados para os cards

@@ -1,124 +1,140 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import ProcessingWrapper from '../components/ProcessingWrapper';
+import '@testing-library/jest-dom';
+import ProcessingWrapper from '../components/ProcessingWrapperSimplified';
+import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
 import { useGlobalLoading } from '../context/LoadingContext';
 import { supabase } from '../lib/supabaseClient';
 
 // Mock dependencies
+jest.mock('../context/AuthContext');
 jest.mock('../context/ProjectContext');
 jest.mock('../context/LoadingContext');
 jest.mock('../lib/supabaseClient');
 
-describe('ProcessingWrapper Race Condition Tests', () => {
+describe('ProcessingWrapperSimplified RPC Tests', () => {
   const mockHideGlobalLoader = jest.fn();
   const mockShowGlobalLoader = jest.fn();
-  const mockOnCheckingStateChange = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
+    (useAuth as jest.Mock).mockReturnValue({
+      user: { email: 'test@example.com' },
+    });
+
     (useGlobalLoading as jest.Mock).mockReturnValue({
       showGlobalLoader: mockShowGlobalLoader,
       hideGlobalLoader: mockHideGlobalLoader,
     });
   });
 
-  test('should notify parent when checking state changes', async () => {
-    // Setup mock project with status 0
+  test('should call RPC check_project_display_state with user email', async () => {
+    // Setup mock project
     (useProject as jest.Mock).mockReturnValue({
-      currentProject: { id: '1', status: '0' },
-      isInitialProcessing: false,
+      currentProject: { id: '1', status: '6' },
     });
 
-    // Mock Supabase responses
-    (supabase.from as jest.Mock).mockImplementation(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: { status: '0' }, error: null }),
-      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
-    }));
+    // Mock RPC response - dashboard state
+    const mockRpc = jest.fn().mockResolvedValue({
+      data: {
+        display_component: 'dashboard',
+        has_messages: true,
+        project_status: 6,
+        progress_percentage: 100,
+        processing_message: 'Dashboard disponível'
+      },
+      error: null
+    });
+
+    (supabase.rpc as jest.Mock) = mockRpc;
 
     render(
-      <ProcessingWrapper onCheckingStateChange={mockOnCheckingStateChange}>
+      <ProcessingWrapper>
         <div>Test Content</div>
       </ProcessingWrapper>
     );
 
-    // Should call onCheckingStateChange(true) when starting
+    // Should call RPC with user email
     await waitFor(() => {
-      expect(mockOnCheckingStateChange).toHaveBeenCalledWith(true);
+      expect(mockRpc).toHaveBeenCalledWith('check_project_display_state', {
+        p_user_email: 'test@example.com'
+      });
     });
 
-    // Should hide global loader when processing
+    // Should hide global loader after RPC call
     await waitFor(() => {
       expect(mockHideGlobalLoader).toHaveBeenCalled();
     });
+
+    // Should render children for dashboard state
+    expect(screen.getByText('Test Content')).toBeInTheDocument();
   });
 
-  test('should not show GlobalLoader for projects with status <= 5', async () => {
-    // Setup mock project with status 3
+  test('should show processing screen for status <= 6 without messages', async () => {
+    // Setup mock project
     (useProject as jest.Mock).mockReturnValue({
       currentProject: { id: '1', status: '3' },
-      isInitialProcessing: false,
     });
 
-    // Mock Supabase responses
-    (supabase.from as jest.Mock).mockImplementation(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: { status: '3' }, error: null }),
-      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
-    }));
+    // Mock RPC response - processing state
+    const mockRpc = jest.fn().mockResolvedValue({
+      data: {
+        display_component: 'setup_processing',
+        has_messages: false,
+        project_status: 3,
+        progress_percentage: 45,
+        processing_message: 'Processando métricas de engajamento...'
+      },
+      error: null
+    });
+
+    (supabase.rpc as jest.Mock) = mockRpc;
 
     render(
-      <ProcessingWrapper onCheckingStateChange={mockOnCheckingStateChange}>
+      <ProcessingWrapper>
         <div>Test Content</div>
       </ProcessingWrapper>
     );
 
-    // Should hide global loader
+    // Should call RPC
     await waitFor(() => {
-      expect(mockHideGlobalLoader).toHaveBeenCalled();
+      expect(mockRpc).toHaveBeenCalled();
     });
 
-    // Should never show global loader
-    expect(mockShowGlobalLoader).not.toHaveBeenCalled();
+    // Should show processing message
+    await waitFor(() => {
+      expect(screen.getByText(/Setting Up Your Project/i)).toBeInTheDocument();
+    });
   });
 
-  test('should handle race condition between checking and status update', async () => {
-    // Simulate a project that changes status during checking
-    let callCount = 0;
-    (useProject as jest.Mock).mockImplementation(() => {
-      callCount++;
-      if (callCount === 1) {
-        return { currentProject: { id: '1', status: '0' }, isInitialProcessing: false };
-      }
-      return { currentProject: { id: '1', status: '6' }, isInitialProcessing: false };
+  test('should handle RPC error gracefully', async () => {
+    // Setup mock project
+    (useProject as jest.Mock).mockReturnValue({
+      currentProject: { id: '1', status: '0' },
     });
 
-    // Mock Supabase responses
-    (supabase.from as jest.Mock).mockImplementation(() => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: { status: '6' }, error: null }),
-      limit: jest.fn().mockResolvedValue({ data: [{ id: 1 }], error: null }),
-    }));
+    // Mock RPC error
+    const mockRpc = jest.fn().mockResolvedValue({
+      data: null,
+      error: { message: 'RPC error' }
+    });
 
-    const { rerender } = render(
-      <ProcessingWrapper onCheckingStateChange={mockOnCheckingStateChange}>
+    (supabase.rpc as jest.Mock) = mockRpc;
+
+    render(
+      <ProcessingWrapper>
         <div>Test Content</div>
       </ProcessingWrapper>
     );
 
-    // Simulate re-render with updated status
-    rerender(
-      <ProcessingWrapper onCheckingStateChange={mockOnCheckingStateChange}>
-        <div>Test Content</div>
-      </ProcessingWrapper>
-    );
+    // Should call RPC
+    await waitFor(() => {
+      expect(mockRpc).toHaveBeenCalled();
+    });
 
-    // Should always hide global loader during transitions
+    // Should hide loader on error
     await waitFor(() => {
       expect(mockHideGlobalLoader).toHaveBeenCalled();
     });
