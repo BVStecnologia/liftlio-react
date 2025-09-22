@@ -37,6 +37,11 @@ const floatAnimation = keyframes`
   100% { transform: translateY(0px); }
 `;
 
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
 // Styles
 const PageTitle = styled.h1`
   font-size: ${props => props.theme.fontSizes['2xl']};
@@ -717,6 +722,9 @@ const Integrations: React.FC = () => {
   // Flag para controlar carregamento inicial
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [pageFullyLoaded, setPageFullyLoaded] = useState(false);
+
+  // Estado de loading para botão de conectar
+  const [isConnecting, setIsConnecting] = useState(false);
   
   // Garantir que o loader é escondido quando a página está completamente carregada
   useEffect(() => {
@@ -849,24 +857,28 @@ const Integrations: React.FC = () => {
       alert('Please select a project first');
       return;
     }
-    
+
+    // Mostrar loading na página
+    setIsConnecting(true);
+    showGlobalLoader();
+
     // Use the redirect URI that is configured in Google Cloud
     // Importante: Este URI deve corresponder EXATAMENTE ao configurado no Google Cloud Console
-    
+
     // Determinar o URI de redirecionamento correto com base no ambiente
     const hostname = window.location.hostname;
     const isProduction = hostname === 'liftlio.fly.dev' || hostname === 'liftlio.com';
-    const redirectUri = isProduction 
-      ? `https://${hostname}` 
+    const redirectUri = isProduction
+      ? `https://${hostname}`
       : 'http://localhost:3000';
-      
+
     console.log('Ambiente detectado no iniciateOAuth:', isProduction ? 'Produção' : 'Desenvolvimento');
-    
+
     // Log para debug - verificar o URI exato que estamos usando
     console.log('Using redirect URI:', redirectUri);
-    
+
     const scope = GOOGLE_SCOPES.join(' ');
-    
+
     const oauthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     oauthUrl.searchParams.append('client_id', GOOGLE_CLIENT_ID);
     oauthUrl.searchParams.append('redirect_uri', redirectUri);
@@ -1195,6 +1207,9 @@ const Integrations: React.FC = () => {
       return;
     }
 
+    // Ativar loading no botão
+    setIsConnecting(true);
+
     try {
       // Obter o email do usuário autenticado
       const { data: { user } } = await supabase.auth.getUser();
@@ -1234,10 +1249,10 @@ const Integrations: React.FC = () => {
         setShowSuccessMessage(true);
         fetchIntegrations(); // Recarregar integrações
 
-        // Recarregar a página para mostrar a integração conectada
+        // Redirecionar para overview após sucesso
         setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+          navigate('/overview');
+        }, 1500);
       } else {
         console.error('RPC returned failure:', data);
         // Traduzir mensagem de erro se vier em português
@@ -1246,10 +1261,12 @@ const Integrations: React.FC = () => {
           errorMessage = 'Target project not found or does not belong to user';
         }
         alert(errorMessage);
+        setIsConnecting(false);
       }
     } catch (error) {
       console.error('Error reusing integration:', error);
       alert('Error reusing YouTube integration');
+      setIsConnecting(false);
     }
 
     console.log('=== handleReuseIntegration END ===');
@@ -1690,10 +1707,27 @@ const Integrations: React.FC = () => {
 
               <ModalButton
                 variant="primary"
-                disabled={!selectedExistingIntegration}
+                disabled={!selectedExistingIntegration || isConnecting}
                 onClick={handleReuseIntegration}
+                style={{
+                  opacity: isConnecting ? 0.7 : 1,
+                  cursor: isConnecting ? 'wait' : 'pointer',
+                }}
               >
-                Continue {renderIcon(FaCheck)}
+                {isConnecting ? (
+                  <>
+                    <span style={{ marginRight: '8px' }}>Connecting...</span>
+                    <span style={{
+                      animation: `${spin} 1s linear infinite`,
+                      display: 'inline-block',
+                      lineHeight: 0
+                    }}>
+                      ⟳
+                    </span>
+                  </>
+                ) : (
+                  <>Continue {renderIcon(FaCheck)}</>
+                )}
               </ModalButton>
             </ModalFooter>
           </ModalContent>

@@ -392,7 +392,7 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheck
         position: 'relative',
         zIndex: 10000
       }}>
-        {/* Background gradient effect */}
+        {/* Background gradient effect - usando cores Liftlio */}
         <div style={{
           position: 'absolute',
           top: '50%',
@@ -400,7 +400,7 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheck
           transform: 'translate(-50%, -50%)',
           width: '600px',
           height: '600px',
-          background: 'radial-gradient(circle, rgba(255, 65, 54, 0.1) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%)',
           pointerEvents: 'none',
           animation: 'pulse 3s ease-in-out infinite'
         }} />
@@ -408,11 +408,11 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheck
         <div style={{
           width: '100%',
           maxWidth: '500px',
-          background: 'linear-gradient(135deg, rgba(255, 65, 54, 0.08), rgba(255, 65, 54, 0.05))',
+          background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(168, 85, 247, 0.05))',
           borderRadius: '16px',
           padding: '40px',
-          boxShadow: '0 8px 32px rgba(255, 65, 54, 0.15)',
-          border: '1px solid rgba(255, 65, 54, 0.2)',
+          boxShadow: '0 8px 32px rgba(139, 92, 246, 0.15)',
+          border: '1px solid rgba(139, 92, 246, 0.2)',
           backdropFilter: 'blur(10px)',
           textAlign: 'center'
         }}>
@@ -421,7 +421,7 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheck
             width: '80px',
             height: '80px',
             margin: '0 auto 24px',
-            background: 'rgba(255, 65, 54, 0.15)',
+            background: 'rgba(139, 92, 246, 0.15)',
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
@@ -450,75 +450,43 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheck
             you need to connect a YouTube channel to this project.
           </p>
 
-          {/* Action Buttons */}
-          <div style={{
-            display: 'flex',
-            gap: '12px',
-            flexDirection: 'column'
-          }}>
-            <button
-              onClick={() => navigate('/integrations')}
-              style={{
-                padding: '14px 24px',
-                background: 'linear-gradient(135deg, #ff4136 0%, #ff6b5e 100%)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '15px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(255, 65, 54, 0.3)',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 65, 54, 0.4)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 65, 54, 0.3)';
-              }}
-            >
-              Connect YouTube Channel
-            </button>
-
-            <button
-              onClick={() => navigate('/integrations')}
-              style={{
-                padding: '14px 24px',
-                background: 'transparent',
-                color: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: '400',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 65, 54, 0.5)';
-                e.currentTarget.style.color = '#fff';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
-              }}
-            >
-              Use Existing Connection
-            </button>
-          </div>
+          {/* Single Action Button */}
+          <button
+            onClick={() => navigate('/integrations')}
+            style={{
+              padding: '14px 32px',
+              background: 'linear-gradient(135deg, #8b5cf6, #a855f7)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '15px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.3)';
+            }}
+          >
+            Go to Integrations
+          </button>
         </div>
 
         {/* Helper Text */}
         <div style={{
           marginTop: '24px',
-          fontSize: '12px',
+          fontSize: '13px',
           color: 'rgba(255, 255, 255, 0.5)',
           textAlign: 'center',
           maxWidth: '400px'
         }}>
-          💡 Tip: You can reuse an existing YouTube connection from your other projects
-          to get started quickly.
+          💡 Tip: You can connect a new YouTube channel or reuse an existing connection
         </div>
       </div>
     );

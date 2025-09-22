@@ -501,10 +501,10 @@ const OAuthHandler = () => {
               console.error('Erro ao marcar integração como ativa:', updateError);
             }
             
-            // Redirecionar para o dashboard para que o usuário possa ver a animação de processamento
-            // Uma vez que o dashboard está envolvido pelo ProcessingWrapper, ele mostrará a tela de carregamento
-            console.log('Redirecionando para o dashboard para mostrar o processamento...');
-            
+            // Redirecionar para overview após integração bem-sucedida
+            // O ProcessingWrapper mostrará o progresso do processamento
+            console.log('Redirecionando para overview após integração bem-sucedida...');
+
             // Aguardar um momento para garantir que o token foi salvo e a sessão esteja disponível
             // Em produção, pode haver mais latência, então aumentamos o delay
             setTimeout(() => {
@@ -512,7 +512,7 @@ const OAuthHandler = () => {
               hideGlobalLoader();
               // Adicionar um parâmetro especial na URL para indicar que acabamos de processar OAuth
               // Isso ajudará o ProtectedLayout a saber que deve aguardar a sessão carregar
-              window.location.replace('/dashboard?oauth_completed=true');
+              window.location.replace('/overview?oauth_completed=true');
             }, 2500);
           } else {
             alert('Erro: Nenhum ID de projeto encontrado para associar a esta integração.');
