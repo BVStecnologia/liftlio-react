@@ -171,31 +171,79 @@ el.href = el.href.replace(/^\//, '');
         @media(max-width:480px){
             .container{padding:0 16px}
             .header{padding:12px 16px}
-            .header-content{justify-content:space-between;align-items:center}
-            .logo{font-size:18px;gap:4px;min-width:0}
-            .logo svg{width:20px;height:20px}
-            .beta-badge{font-size:10px;padding:2px 6px}
+            .header-content{
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:8px;
+            }
+            .logo{
+                font-size:18px;
+                gap:4px;
+                flex:1 1 auto;
+                min-width:0;
+                display:flex;
+                align-items:center;
+            }
+            .logo svg{width:20px;height:20px;flex-shrink:0}
+            .beta-badge{font-size:10px;padding:2px 6px;white-space:nowrap}
+            .logo-text{
+                overflow:hidden;
+                text-overflow:ellipsis;
+                white-space:nowrap;
+            }
             .btn-icon{min-width:40px;min-height:40px;padding:6px}
-            .mobile-menu-button{padding:6px;margin-left:8px}
-            .mobile-nav-container{flex-shrink:0}
+            .mobile-menu-button{
+                padding:6px;
+                margin-left:8px;
+                flex-shrink:0;
+            }
+            .mobile-nav-container{
+                flex:0 0 auto;
+                display:flex;
+                align-items:center;
+            }
             .hero-section{padding:80px 16px 40px}
             .hero-content{padding:0}
             .hero-title{font-size:32px;line-height:1.1}
             .hero-description{font-size:16px}
             .btn-primary{padding:16px 24px;font-size:15px}
         }
-        
+
         @media(max-width:380px){
             .header{padding:10px 12px !important}
-            .logo{font-size:16px !important;position:relative}
+            .header-content{gap:6px !important}
+            .logo{
+                font-size:16px !important;
+                gap:3px !important;
+            }
             .logo-text{font-size:14px !important}
-            .beta-badge{font-size:8px !important;padding:1px 4px !important;margin-left:4px}
-            .mobile-menu-button{min-width:36px !important;min-height:36px !important;padding:4px !important}
+            .beta-badge{
+                font-size:8px !important;
+                padding:1px 4px !important;
+                margin-left:4px;
+            }
+            .mobile-menu-button{
+                min-width:36px !important;
+                min-height:36px !important;
+                padding:4px !important;
+            }
         }
-        
+
         @media(max-width:350px){
-            .logo-text{display:none !important}
-            .beta-badge{position:absolute !important;top:-6px;right:-6px;font-size:8px !important}
+            .header-content{gap:4px !important}
+            .logo{gap:2px !important}
+            .logo-text{
+                font-size:13px !important;
+                max-width:80px;
+                overflow:hidden;
+                text-overflow:ellipsis;
+            }
+            .beta-badge{
+                font-size:7px !important;
+                padding:1px 3px !important;
+                margin-left:2px !important;
+            }
         }
         
         /* Animations */
@@ -385,10 +433,26 @@ el.href = el.href.replace(/^\//, '');
         
         @media(max-width:768px){
             .header{padding:16px 20px}
-            .header-content{padding:0;gap:12px}
-            .logo{font-size:24px;flex:1}
+            .header-content{
+                padding:0;
+                gap:12px;
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+            }
+            .logo{
+                font-size:24px;
+                flex:0 0 auto;
+                display:flex;
+                align-items:center;
+                gap:6px;
+            }
             .nav{display:none}
-            .mobile-nav-container{display:flex;align-items:center}
+            .mobile-nav-container{
+                display:flex;
+                align-items:center;
+                flex:0 0 auto;
+            }
             .mobile-menu-overlay,.mobile-menu{display:block}
             .hero-section{padding:100px 20px 60px;margin-top:20px}
             .hero-content{padding:0 16px}
