@@ -42,12 +42,16 @@ export const OAuthProcessor: React.FC<OAuthProcessorProps> = ({
         // Determinar o URI de redirecionamento correto
         const hostname = window.location.hostname;
         const protocol = window.location.protocol;
+        const port = window.location.port;
 
-        // Usar a URL base atual sem path
-        const redirectUri = `${protocol}//${hostname}`;
+        // Construir URI com porta quando necessário
+        const redirectUri = port && port !== '80' && port !== '443'
+          ? `${protocol}//${hostname}:${port}`
+          : `${protocol}//${hostname}`;
 
         console.log('[OAuthProcessor] Usando redirect URI:', redirectUri);
         console.log('[OAuthProcessor] Hostname:', hostname);
+        console.log('[OAuthProcessor] Port:', port || 'default');
 
         const tokenEndpoint = 'https://oauth2.googleapis.com/token';
         const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";

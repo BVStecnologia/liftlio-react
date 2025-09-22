@@ -303,12 +303,13 @@ const ProcessingWrapper: React.FC<ProcessingWrapperProps> = ({ children, onCheck
         if (!isMounted) return;
         
         // Regras de decisão simples:
-        // 1. Se status <= 5: SEMPRE mostrar processamento
-        // 2. Se status == 6 E NÃO tem mensagens: mostrar processamento
-        // 3. Se status == 6 E tem mensagens: mostrar dashboard
-        // 4. Se status > 6: sempre mostrar dashboard
-        
-        const shouldShowProcessing = status <= 5 || (status === 6 && !hasMessages);
+        // 1. Se TEM mensagens: NUNCA mostrar processamento (mostrar dashboard)
+        // 2. Se NÃO tem mensagens E status <= 5: mostrar processamento
+        // 3. Se NÃO tem mensagens E status == 6: mostrar processamento (aguardando primeiras mensagens)
+        // 4. Se NÃO tem mensagens E status > 6: mostrar dashboard (projeto processado mas sem dados)
+
+        // REGRA PRINCIPAL: Se tem mensagens, NUNCA mostrar processamento
+        const shouldShowProcessing = !hasMessages && status <= 6;
         
         console.log(`[ProcessingWrapper] Decisão para projeto ${projectId}: status=${status}, hasMensagens=${hasMessages}, shouldShowProcessing=${shouldShowProcessing}`);
         
