@@ -1929,25 +1929,79 @@ interface EditModalProps {
   isOpen: boolean;
   onClose: () => void;
   mention: MentionData | null;
-  onSave: (id: number, newText: string) => void;
+  onSave: (id: number, newText: string, responseType?: string | null) => void;
 }
 
 const EditResponseModal: React.FC<EditModalProps> = ({ isOpen, onClose, mention, onSave }) => {
   const [responseText, setResponseText] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationType, setGenerationType] = useState<'engagement' | 'product' | 'auto' | null>(null);
+  const [responseTypeToSave, setResponseTypeToSave] = useState<string | null>(null); // Novo state para guardar o tipo
   const theme = useTheme();
-  
+
   React.useEffect(() => {
     if (mention) {
       setResponseText(mention.response.text);
+      setResponseTypeToSave(null); // Resetar o tipo quando abrir o modal
     }
   }, [mention]);
-  
+
   if (!isOpen || !mention) return null;
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(mention.id, responseText);
+    onSave(mention.id, responseText, responseTypeToSave);
     onClose();
+  };
+
+  // Função para regenerar resposta
+  const handleRegenerate = async (type: 'engagement' | 'product' | 'auto') => {
+    if (!mention) return;
+
+    setIsGenerating(true);
+    setGenerationType(type);
+
+    try {
+      console.log(`Regenerando resposta tipo: ${type} para comentário ID: ${mention.id}`);
+
+      // Chamar a função RPC do Supabase
+      const { data, error } = await supabase.rpc('regenerate_single_comment_response', {
+        p_comment_cp_id: mention.id,
+        p_response_type: type,
+        p_custom_instruction: null
+      });
+
+      if (error) {
+        console.error('Erro ao regenerar resposta:', error);
+        alert('Error generating response. Please try again.');
+        return;
+      }
+
+      if (data && data.response) {
+        console.log('Resposta gerada:', data);
+        setResponseText(data.response);
+
+        // Guardar o tipo de resposta para usar ao salvar
+        if (data.tipo_resposta) {
+          setResponseTypeToSave(data.tipo_resposta);
+        }
+
+        // Mostrar tipo de resposta gerada
+        const typeMessage = data.tipo_resposta === 'produto'
+          ? ' (with product mention)'
+          : ' (engagement only)';
+        console.log(`Generated ${data.tipo_resposta} response${typeMessage}`);
+      } else if (data && data.error) {
+        console.error('Erro do servidor:', data.error);
+        alert(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Erro ao chamar função:', error);
+      alert('Unexpected error. Please try again.');
+    } finally {
+      setIsGenerating(false);
+      setGenerationType(null);
+    }
   };
   
   return (
@@ -1986,16 +2040,122 @@ const EditResponseModal: React.FC<EditModalProps> = ({ isOpen, onClose, mention,
           
           <FormGroup>
             <Label>Your Response</Label>
-            <TextArea 
-              value={responseText} 
+            <TextArea
+              value={responseText}
               onChange={(e) => setResponseText(e.target.value)}
               placeholder="Enter your response..."
+              disabled={isGenerating}
+              style={{
+                opacity: isGenerating ? 0.7 : 1,
+                cursor: isGenerating ? 'not-allowed' : 'text'
+              }}
             />
+
+            {/* Botões de Regeneração */}
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              marginTop: '12px',
+              flexWrap: 'wrap'
+            }}>
+              <Button
+                type="button"
+                onClick={() => handleRegenerate('engagement')}
+                disabled={isGenerating}
+                style={{
+                  flex: '1',
+                  minWidth: '140px',
+                  background: isGenerating && generationType === 'engagement'
+                    ? 'linear-gradient(135deg, #8b5cf6, #a855f7)'
+                    : 'transparent',
+                  border: theme.name === 'dark'
+                    ? '1px solid rgba(139, 92, 246, 0.3)'
+                    : '1px solid rgba(139, 92, 246, 0.2)',
+                  color: isGenerating && generationType === 'engagement'
+                    ? '#fff'
+                    : theme.name === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
+                  fontSize: '13px',
+                  padding: '8px 12px',
+                  opacity: isGenerating && generationType !== 'engagement' ? 0.5 : 1,
+                  transition: 'all 0.2s ease',
+                  cursor: isGenerating ? 'not-allowed' : 'pointer',
+                  borderRadius: '6px'
+                }}
+              >
+                {isGenerating && generationType === 'engagement' ? (
+                  <>⏳ Generating...</>
+                ) : (
+                  <>🤝 Generate Engagement</>
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                onClick={() => handleRegenerate('product')}
+                disabled={isGenerating}
+                style={{
+                  flex: '1',
+                  minWidth: '140px',
+                  background: isGenerating && generationType === 'product'
+                    ? 'linear-gradient(135deg, #8b5cf6, #a855f7)'
+                    : 'transparent',
+                  border: '1px solid #8b5cf6',
+                  color: isGenerating && generationType === 'product'
+                    ? '#fff'
+                    : '#8b5cf6',
+                  fontSize: '13px',
+                  padding: '8px 12px',
+                  opacity: isGenerating && generationType !== 'product' ? 0.5 : 1,
+                  transition: 'all 0.2s ease',
+                  cursor: isGenerating ? 'not-allowed' : 'pointer',
+                  borderRadius: '6px'
+                }}
+              >
+                {isGenerating && generationType === 'product' ? (
+                  <>⏳ Generating...</>
+                ) : (
+                  <>📢 Generate Mention</>
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                onClick={() => handleRegenerate('auto')}
+                disabled={isGenerating}
+                style={{
+                  flex: '1',
+                  minWidth: '140px',
+                  background: isGenerating && generationType === 'auto'
+                    ? 'linear-gradient(135deg, #8b5cf6, #a855f7)'
+                    : 'transparent',
+                  border: theme.name === 'dark'
+                    ? '1px solid rgba(168, 85, 247, 0.3)'
+                    : '1px solid rgba(168, 85, 247, 0.2)',
+                  color: isGenerating && generationType === 'auto'
+                    ? '#fff'
+                    : theme.name === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
+                  fontSize: '13px',
+                  padding: '8px 12px',
+                  opacity: isGenerating && generationType !== 'auto' ? 0.5 : 1,
+                  transition: 'all 0.2s ease',
+                  cursor: isGenerating ? 'not-allowed' : 'pointer',
+                  borderRadius: '6px'
+                }}
+              >
+                {isGenerating && generationType === 'auto' ? (
+                  <>⏳ Generating...</>
+                ) : (
+                  <>🎲 Auto Generate</>
+                )}
+              </Button>
+            </div>
           </FormGroup>
-          
+
           <ButtonGroup>
-            <Button type="button" onClick={onClose}>Cancel</Button>
-            <Button type="submit" variant="primary">Save Response</Button>
+            <Button type="button" onClick={onClose} disabled={isGenerating}>Cancel</Button>
+            <Button type="submit" variant="primary" disabled={isGenerating}>
+              {isGenerating ? 'Generating...' : 'Save Response'}
+            </Button>
           </ButtonGroup>
         </ResponseForm>
       </ModalContent>
@@ -2063,11 +2223,12 @@ const Mentions: React.FC = () => {
   }, [toast.visible]);
   
   // Usar o hook para obter dados dinâmicos baseados na aba ativa
-  const { 
-    loading, 
-    error, 
-    mentionsData: data, 
+  const {
+    loading,
+    error,
+    mentionsData: data,
     toggleFavorite: toggleFavoriteMention,
+    refetch, // Adicionar função de refetch
     pagination // Obter informações e funções de paginação
   } = useMentionsData(activeTab);
   
@@ -2334,10 +2495,92 @@ const Mentions: React.FC = () => {
     setEditModalOpen(true);
   };
   
-  const handleSaveResponse = (id: number, newText: string) => {
-    // Aqui seria implementada a lógica para atualizar a resposta no banco de dados
-    console.log(`Saving response for mention ID ${id}: ${newText}`);
-    // Por enquanto, não temos uma implementação completa para isso
+  const handleSaveResponse = async (commentId: number, newText: string, responseType?: string | null) => {
+    try {
+      console.log(`Salvando resposta para comentário ID ${commentId}`);
+
+      // 1. Buscar o msg_id correspondente ao comment_id
+      const { data: mentionData, error: fetchError } = await supabase
+        .from('mentions_overview')
+        .select('msg_id')
+        .eq('comment_id', commentId)
+        .single();
+
+      if (fetchError) {
+        console.error('Erro ao buscar msg_id:', fetchError);
+        setToast({
+          visible: true,
+          message: 'Error finding message to update',
+          success: false
+        });
+        return;
+      }
+
+      if (!mentionData?.msg_id) {
+        console.error('Nenhuma mensagem associada ao comentário');
+        setToast({
+          visible: true,
+          message: 'No message found for this comment',
+          success: false
+        });
+        return;
+      }
+
+      console.log(`Atualizando mensagem ID ${mentionData.msg_id} com novo texto`);
+
+      // 2. Preparar os dados para atualizar
+      const updateData: any = {
+        mensagem: newText
+      };
+
+      // Se tem um tipo de resposta para atualizar, inclui no update
+      if (responseType !== null && responseType !== undefined) {
+        updateData.tipo_resposta = responseType;
+        console.log(`Também atualizando tipo_resposta para: ${responseType}`);
+      }
+
+      // 3. Atualizar o texto da mensagem (e opcionalmente o tipo) na tabela Mensagens
+      const { error: updateError } = await supabase
+        .from('Mensagens')
+        .update(updateData)
+        .eq('id', mentionData.msg_id);
+
+      if (updateError) {
+        console.error('Erro ao atualizar mensagem:', updateError);
+        setToast({
+          visible: true,
+          message: 'Error updating response',
+          success: false
+        });
+        return;
+      }
+
+      // 3. Sucesso - mostrar feedback e fechar modal
+      console.log('Resposta atualizada com sucesso!');
+      setToast({
+        visible: true,
+        message: 'Response updated successfully!',
+        success: true
+      });
+
+      // Fechar o modal
+      setEditModalOpen(false);
+
+      // Atualizar os dados sem recarregar a página
+      if (refetch) {
+        setTimeout(() => {
+          refetch(); // Recarregar os dados
+        }, 500); // Pequeno delay para garantir que o banco foi atualizado
+      }
+
+    } catch (error) {
+      console.error('Erro ao salvar resposta:', error);
+      setToast({
+        visible: true,
+        message: 'Unexpected error updating response',
+        success: false
+      });
+    }
   };
   
   // Função para testar diretamente o Supabase

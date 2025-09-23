@@ -738,6 +738,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
     timeframe: currentTimeframe,
     setTimeframe,
     toggleFavorite,
+    refetch: fetchMentionsData, // Adicionar função de refetch
     // Adicionar informações e funções de paginação
     pagination: {
       currentPage,
