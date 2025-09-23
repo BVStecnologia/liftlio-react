@@ -176,6 +176,7 @@ const Content = styled.div`
 const Header = styled.div`
   text-align: center;
   margin-bottom: 60px;
+  position: relative;
 `;
 
 const Title = styled.h1`
@@ -426,16 +427,45 @@ const BackButton = styled.button`
   font-size: 16px;
   cursor: pointer;
   margin-bottom: 24px;
-  
+
   &:hover {
     text-decoration: underline;
+  }
+`;
+
+const LogoutButton = styled.button`
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: ${props => props.theme.colors.cardBg};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  border-radius: 8px;
+  padding: 10px 20px;
+  color: ${props => props.theme.colors.text.primary};
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: ${props => props.theme.colors.primaryAlpha};
+    border-color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.colors.primary};
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
   }
 `;
 
 const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, checkSubscription, subscription, checkingSubscription } = useAuth();
+  const { user, checkSubscription, subscription, checkingSubscription, signOut } = useAuth();
   const { theme } = useTheme();
   const t = translations.en; // Always use English
   
@@ -612,6 +642,11 @@ const CheckoutPage: React.FC = () => {
     // Redirecionar para o dashboard
     navigate('/dashboard');
   };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login');
+  };
   
   if (!user || checkingSubscription) {
     return (
@@ -632,6 +667,10 @@ const CheckoutPage: React.FC = () => {
     <Container>
       <Content>
         <Header>
+          <LogoutButton onClick={handleLogout}>
+            {renderIcon(FaIcons.FaSignOutAlt)}
+            Logout
+          </LogoutButton>
           <Title>{t.title}</Title>
           <Subtitle>{t.subtitle}</Subtitle>
         </Header>

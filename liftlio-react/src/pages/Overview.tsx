@@ -1740,12 +1740,12 @@ const Overview: React.FC = () => {
   useEffect(() => {
     getGreeting();
     fetchUserName();
-    
+
     // Atualizar o cumprimento a cada minuto para casos de transição entre períodos
     const intervalId = setInterval(() => {
       getGreeting();
     }, 60000);
-    
+
     return () => clearInterval(intervalId);
   }, []);
   
@@ -2328,7 +2328,7 @@ const Overview: React.FC = () => {
   ];
   
   // Estado para controlar o progresso de carregamento
-  const [loadProgress, setLoadProgress] = useState(0);
+  // const [loadProgress, setLoadProgress] = useState(0); // Removido - usando apenas loading global
   
   const sampleTrafficData = [
     { name: 'YouTube', value: 400, color: theme.colors.accent.primary },
@@ -2338,25 +2338,12 @@ const Overview: React.FC = () => {
     { name: 'Twitter', value: 100, color: theme.colors.status.info }
   ];
   
-  // Animação de progresso de carregamento
-  useEffect(() => {
-    if (loading) {
-      const interval = setInterval(() => {
-        setLoadProgress((prev) => {
-          const increment = 5 + Math.random() * 15; // Incremento entre 5 e 20
-          const next = prev + increment;
-          
-          // Não deixa o progresso passar de 95% durante o carregamento
-          return Math.min(next, 95);
-        });
-      }, 800);
-      
-      return () => clearInterval(interval);
-    } else {
-      // Quando o carregamento terminar, completa rapidamente até 100%
-      setLoadProgress(100);
-    }
-  }, [loading]);
+  // REMOVIDO: Sistema de loading local
+  // O Overview agora usa apenas o loading global gerenciado pelo Header
+  // Isso evita múltiplos loaders aparecendo ao trocar de projeto
+  // useEffect(() => {
+  //   if (loading) { ... }
+  // }, [loading]);
   
   // Renderização condicional com base no estado de onboarding
   // Se o usuário estiver em qualquer etapa do onboarding, apenas mostrar a EmptyState relevante
@@ -2894,44 +2881,10 @@ const Overview: React.FC = () => {
 
   // Se não houver projeto selecionado
   if (!currentProject) {
-    return (
-      <PageContainer>
-        <EmptyContainer>
-          
-          <EmptyIcon>
-            <IconComponent icon={FaIcons.FaProjectDiagram} />
-          </EmptyIcon>
-          
-          <EmptyTitle>No Project Selected</EmptyTitle>
-          <EmptyMessage>Select a project to view the dashboard data.</EmptyMessage>
-          
-          <EmptyButton 
-            onClick={() => {
-              console.log("Botão Create New Project clicado");
-              setShowProjectModal(true);
-            }}
-          >
-            <IconComponent icon={FaIcons.FaPlus} style={{ marginRight: '8px' }} />
-            Create New Project
-          </EmptyButton>
-          
-          {/* Pontos decorativos */}
-          {[...Array(20)].map((_, i) => (
-            <Dots
-              key={i}
-              style={getRandomDotPosition(i)}
-            />
-          ))}
-        </EmptyContainer>
-        
-        {/* Project Modal */}
-        <ProjectModal
-          isOpen={showProjectModal}
-          onClose={() => setShowProjectModal(false)}
-          onSave={handleAddProject}
-        />
-      </PageContainer>
-    );
+    // SEMPRE retornar null quando não há projeto
+    // Isso evita mostrar "No Project Selected" durante o carregamento inicial
+    // O ProcessingWrapper já cuida de mostrar o loading global
+    return null;
   }
   
   // Configuração dos cards com dados reais

@@ -90,6 +90,13 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
     }
 
     try {
+      // SEMPRE mostrar loading global no início (refresh da página ou primeira vez)
+      // Removido o check de sessionStorage para garantir que SEMPRE mostre o loading
+      if (isLoading) {
+        console.log('[ProcessingWrapper] Mostrando loading global');
+        showGlobalLoader('Loading Dashboard', 'Please wait...');
+      }
+
       console.log('[ProcessingWrapper] Chamando check_project_display_state...');
 
       const { data, error } = await supabase.rpc('check_project_display_state', {
@@ -127,9 +134,13 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
       console.error('[ProcessingWrapper] Erro:', err);
     } finally {
       setIsLoading(false);
-      hideGlobalLoader();
+      // SEMPRE esconder o loading quando terminar
+      setTimeout(() => {
+        console.log('[ProcessingWrapper] Escondendo loading global após carregar');
+        hideGlobalLoader();
+      }, 300);
     }
-  }, [user, hideGlobalLoader, pollingInterval]);
+  }, [user, pollingInterval, showGlobalLoader, hideGlobalLoader, isLoading]);
 
   // Effect principal - chama apenas UMA VEZ no início
   useEffect(() => {
@@ -145,12 +156,9 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
 
   // Renderização baseada no display_component
   if (isLoading) {
-    // Não mostrar loading aqui se já há um loading global ativo
-    // Isso evita múltiplos loadings durante mudança de projeto
-    const isProjectSwitching = sessionStorage.getItem('projeto_atualizando_' + currentProject?.id) === 'true';
-    if (!isProjectSwitching) {
-      showGlobalLoader('Checking project', 'Please wait while we check your project status...');
-    }
+    // REMOVIDO: Loading local do ProcessingWrapper
+    // O loading global já é gerenciado pelo Header ao trocar de projeto
+    // Apenas retornar null durante o carregamento inicial
     return null;
   }
 

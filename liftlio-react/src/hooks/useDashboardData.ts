@@ -91,7 +91,9 @@ export const useDashboardData = () => {
   const { currentProject } = useProject();
   const projectId = currentProject?.id;  // Extraindo o ID do projeto para fácil referência
   
-  const [loading, setLoading] = useState(false); // Inicia como false pois o loading global cuida disso
+  // REMOVIDO: Estado loading local - usando apenas loading global
+  // const [loading, setLoading] = useState(false);
+  const loading = false; // Sempre false - loading é gerenciado globalmente
   const [error, setError] = useState<string | null>(null);
   
   // Dados para os cards
@@ -137,7 +139,7 @@ export const useDashboardData = () => {
     }
     
     const fetchDashboardData = async () => {
-      setLoading(true);
+      // setLoading(true); // Removido - loading global
       setError(null);
       
       try {
@@ -608,7 +610,7 @@ export const useDashboardData = () => {
         console.error('Error fetching dashboard data:', err);
         setError(err.message);
       } finally {
-        setLoading(false);
+        // setLoading(false); // Removido - loading global
       }
     };
     

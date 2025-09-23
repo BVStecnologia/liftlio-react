@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, startTransition } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { COLORS, withOpacity } from '../styles/colors';
@@ -1191,6 +1191,13 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       setCurrentProject(projects[0]);
     }
   }, [currentProject, projects, setCurrentProject]);
+
+  // DEBUG: Monitorar mudanças no currentProject
+  useEffect(() => {
+    console.log("🔄 [Header] currentProject mudou para:", currentProject);
+    console.log("🔄 [Header] Nome do projeto:", currentProject?.["Project name"] || currentProject?.name);
+    console.log("🔄 [Header] ID do projeto:", currentProject?.id);
+  }, [currentProject]);
   
   // Verificar status do YouTube quando o projeto muda
   useEffect(() => {
@@ -1278,8 +1285,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       return;
     }
     
-    // Redirecionar para a página de integrações para que o usuário veja o modal
-    navigate('/integrations');
+    // Redirecionar para a página de integrações com transição suave
+    startTransition(() => {
+      navigate('/integrations');
+    });
   };
   
   // Estado para armazenar as notificações do Supabase
@@ -1354,23 +1363,28 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     try {
       // Marcar que estamos atualizando
       sessionStorage.setItem(atualizacaoEmProgresso, 'true');
-      console.log("Iniciando seleção de projeto:", project.id);
+      console.log("Iniciando seleção de projeto:", project.id, project);
+      console.log("Projeto atual ANTES da mudança:", currentProject);
+      console.log("Lista de projetos disponíveis:", projects);
 
       // Atualizar o projeto no contexto e no Supabase
       await setCurrentProject(project);
       console.log("Projeto atualizado com sucesso");
 
-      // Aguardar um momento para garantir que o estado foi atualizado
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Verificar após a mudança - IMPORTANTE: currentProject aqui ainda é o antigo!
+      // Porque setCurrentProject é assíncrono e o estado não atualiza imediatamente
+      console.log("Projeto atual logo após setCurrentProject:", currentProject);
+      console.log("Projeto que foi selecionado:", project);
 
-      // Navegar para overview do novo projeto (sem reload!)
-      navigate('/dashboard');
+      // Navegar para overview do novo projeto usando transição
+      // Isso evita múltiplos loadings durante navegação
+      startTransition(() => {
+        navigate('/dashboard');
+      });
 
-      // Aguardar mais um pouco antes de esconder o loader
-      // para dar tempo dos dados carregarem
-      setTimeout(() => {
-        hideGlobalLoader();
-      }, 500);
+      // Esconder o loader imediatamente após navegação
+      // Os dados já foram carregados pelo setCurrentProject
+      hideGlobalLoader();
 
     } catch (error) {
       console.error("Erro ao selecionar projeto:", error);
@@ -1393,6 +1407,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   
   const handleLogout = async () => {
     try {
+      // Limpar sessionStorage para que o loading apareça no próximo login
+      sessionStorage.clear();
+      sessionStorage.removeItem('initial_load_done');
       await signOut();
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
@@ -2017,14 +2034,18 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                   <p>{user?.email || ''}</p>
                 </UserInfo>
                 <PopupMenuItem onClick={() => {
-                  navigate('/settings', { state: { activeTab: 'account' } });
+                  startTransition(() => {
+                    navigate('/settings', { state: { activeTab: 'account' } });
+                  });
                   setShowUserMenu(false);
                 }}>
                   <IconComponent icon={FaIcons.FaUser} />
                   Profile
                 </PopupMenuItem>
                 <PopupMenuItem onClick={() => {
-                  navigate('/settings', { state: { activeTab: 'project' } });
+                  startTransition(() => {
+                    navigate('/settings', { state: { activeTab: 'project' } });
+                  });
                   setShowUserMenu(false);
                 }}>
                   <IconComponent icon={FaIcons.FaCog} />

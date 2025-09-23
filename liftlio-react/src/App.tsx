@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense, startTransition } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import styled, { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import GlobalStyle from './styles/GlobalStyle';
@@ -306,29 +306,59 @@ const AppContent: React.FC = () => {
       <Router>
         {/* Adicionar aviso de extensão para todos os usuários */}
         <ExtensionWarning />
-        <Suspense fallback={<GlobalLoader message="Loading" subMessage="Please wait..." />}>
-          <Routes>
+        <Routes>
           {/* Landing page como ponto de entrada principal - força nova renderização */}
-          <Route path="/" element={<LandingPageHTML key="landing-home" />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/liftlio-analytics" element={<LiftlioAnalytics />} />
-          <Route path="/trends" element={<PublicLayout><LiftlioTrends /></PublicLayout>} />
-          
+          <Route path="/" element={
+            <Suspense fallback={null}>
+              <LandingPageHTML key="landing-home" />
+            </Suspense>
+          } />
+          <Route path="/login" element={
+            <Suspense fallback={null}>
+              <LoginPage />
+            </Suspense>
+          } />
+          <Route path="/auth/callback" element={
+            <Suspense fallback={null}>
+              <AuthCallback />
+            </Suspense>
+          } />
+          <Route path="/checkout" element={
+            <Suspense fallback={null}>
+              <CheckoutPage />
+            </Suspense>
+          } />
+          <Route path="/liftlio-analytics" element={
+            <Suspense fallback={null}>
+              <LiftlioAnalytics />
+            </Suspense>
+          } />
+          <Route path="/trends" element={
+            <Suspense fallback={null}>
+              <PublicLayout><LiftlioTrends /></PublicLayout>
+            </Suspense>
+          } />
+
           {/* Páginas institucionais - Redirecionamento para HTML estático */}
           <Route path="/about" element={<StaticRedirect to="/about.html" />} />
           <Route path="/privacy" element={<StaticRedirect to="/privacy.html" />} />
           <Route path="/terms" element={<StaticRedirect to="/terms.html" />} />
-          <Route path="/security" element={<Security />} />
-          
+          <Route path="/security" element={
+            <Suspense fallback={null}>
+              <Security />
+            </Suspense>
+          } />
+
           {/* Rota removida: Analytics Showcase (não utilizada) */}
-          
-          
+
+
           {/* Rotas protegidas - usar apenas uma rota com wildcard pois ProtectedLayout tem rotas internas */}
-          <Route path="/*" element={<ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />} />
+          <Route path="/*" element={
+            <Suspense fallback={null}>
+              <ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+            </Suspense>
+          } />
         </Routes>
-        </Suspense>
       </Router>
     </>
   );
@@ -399,137 +429,45 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   const navigate = useNavigate();
   const location = useLocation();
   
-  // NOVO: Flag para prevenir múltiplas chamadas do GlobalLoader
-  const [globalLoaderControlled, setGlobalLoaderControlled] = useState(false);
+  // REMOVIDO: Toda lógica complexa de loading do ProtectedLayout
+  // O loading agora é controlado APENAS por:
+  // 1. ProcessingWrapper (refresh da página)
+  // 2. Header (mudança de projeto)
+
+  // Effect REMOVIDO - loading agora é controlado pelo ProcessingWrapper e Header
+  // Não fazemos nada aqui para evitar conflitos
   
-  // Effect para mostrar loading global até TUDO estar pronto
-  useEffect(() => {
-    // IMPORTANTE: Se ProcessingWrapper está no controle, não interferir
-    if (globalLoaderControlled) {
-      console.log('[GlobalLoader Control] ProcessingWrapper está no controle, ProtectedLayout não interfere');
-      return;
-    }
-    
-    // Debug para entender o que está travando
-    console.log('[DEBUG CRÍTICO] ProtectedLayout Loading State:', {
-      loading,
-      onboardingReady,
-      isLoading, 
-      isInitializing,
-      isPageReady,
-      currentProject: currentProject?.id,
-      projectStatus: currentProject?.status,
-      globalLoaderControlled,
-      timestamp: new Date().toISOString()
-    });
-    
-    // IMPORTANTE: Se já está pronto, NÃO mostrar GlobalLoader
-    if (isPageReady) {
-      console.log('[DEBUG CRÍTICO] Página já está pronta, garantindo que GlobalLoader está escondido');
-      hideGlobalLoader();
-      return;
-    }
-    
-    // IMPORTANTE: Se o projeto tem status <= 5 ou 6 sem mensagens, delegar para ProcessingWrapper
-    const projectStatus = parseInt(currentProject?.status || '0', 10);
-    if (currentProject && projectStatus <= 5) {
-      console.log('[DEBUG CRÍTICO] Projeto em processamento, delegando para ProcessingWrapper');
-      // Marcar que ProcessingWrapper está no controle
-      setGlobalLoaderControlled(true);
-      // Garantir que GlobalLoader está escondido
-      hideGlobalLoader();
-      // Marcar como pronto para não interferir
-      setIsInitializing(false);
-      setIsPageReady(true);
-      return;
-    }
-    
-    // NOVA VERIFICAÇÃO: Se estamos apenas trocando de projeto (não é carga inicial)
-    // Verificar se já temos um projeto anterior carregado
-    const lastProjectId = sessionStorage.getItem('lastProjectId');
-    const isProjectSwitch = lastProjectId && currentProject && lastProjectId !== currentProject.id.toString();
-    
-    if (isProjectSwitch) {
-      console.log('[DEBUG CRÍTICO] Detectada troca de projeto, NÃO mostrar GlobalLoader');
-      // Durante troca de projeto, não mostrar GlobalLoader
-      hideGlobalLoader();
-      // Marcar como pronto rapidamente
-      setIsInitializing(false);
-      setIsPageReady(true);
-      // Resetar controle do ProcessingWrapper
-      setGlobalLoaderControlled(false);
-      return;
-    }
-    
-    // Só mostrar loading INICIAL quando realmente necessário (primeira carga)
-    // E APENAS se ProcessingWrapper não está no controle
-    if (!isPageReady && !lastProjectId && !globalLoaderControlled && (loading || !onboardingReady || isLoading)) {
-      console.log('[DEBUG CRÍTICO] MOSTRANDO GLOBALLOADER INICIAL - Condições:', {
-        loading,
-        onboardingReady,
-        isLoading,
-        isPageReady,
-        lastProjectId,
-        globalLoaderControlled
-      });
-      showGlobalLoader('Loading', 'Preparing your workspace');
-    } else if (isPageReady || (!loading && onboardingReady && !isLoading)) {
-      console.log('[DEBUG CRÍTICO] ESCONDENDO GLOBALLOADER - Página pronta ou condições satisfeitas');
-      // IMPORTANTE: Esconder o loader quando as condições não forem mais verdadeiras
-      hideGlobalLoader();
-    }
-  }, [loading, onboardingReady, isLoading, isPageReady, showGlobalLoader, hideGlobalLoader, currentProject, globalLoaderControlled]);
-  
-  // Effect para garantir que mostramos loading até tudo estar pronto
+  // Effect simplificado - apenas marca como pronto quando tudo carrega
   useEffect(() => {
     // Verificar se acabamos de completar OAuth
     const urlParams = new URLSearchParams(window.location.search);
     const oauthCompleted = urlParams.get('oauth_completed') === 'true';
-    
-    // IMPORTANTE: Se o projeto tem status <= 5 OU ProcessingWrapper está no controle
+
+    // Projeto em processamento - deixar ProcessingWrapper cuidar
     const projectStatus = parseInt(currentProject?.status || '0', 10);
-    if (currentProject && (projectStatus <= 5 || globalLoaderControlled)) {
-      console.log('Projeto em processamento ou ProcessingWrapper no controle, pulando lógica de loading');
+    if (currentProject && projectStatus <= 5) {
+      console.log('Projeto em processamento, deixando ProcessingWrapper controlar');
       setIsInitializing(false);
       setIsPageReady(true);
-      hideGlobalLoader();
       if (oauthCompleted) {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
       return;
     }
-    
-    
-    // Debug
-    console.log('ProtectedLayout Ready Check:', {
-      loading,
-      onboardingReady,
-      isLoading,
-      globalLoaderControlled,
-      shouldHideLoader: !loading && onboardingReady && !isLoading
-    });
-    
-    // Só remover o loading quando TODAS as condições estiverem resolvidas
+
+    // Quando tudo estiver carregado, marcar como pronto
     if (!loading && onboardingReady && !isLoading) {
-      console.log('ProtectedLayout: Condições satisfeitas, removendo loader em', oauthCompleted ? 3000 : 500, 'ms');
-      // Delay reduzido para evitar travamento
-      const delay = oauthCompleted ? 3000 : 500;
-      const timer = setTimeout(() => {
-        console.log('ProtectedLayout: Removendo GlobalLoader definitivamente');
-        setIsInitializing(false);
-        setIsPageReady(true);
-        // Garantir que o loader está escondido
-        hideGlobalLoader();
-        // Resetar controle se necessário
-        setGlobalLoaderControlled(false);
-        // Limpar o parâmetro oauth_completed da URL
-        if (oauthCompleted) {
+      console.log('ProtectedLayout: Tudo carregado, marcando como pronto');
+      setIsInitializing(false);
+      setIsPageReady(true);
+      // Limpar o parâmetro oauth_completed da URL se existir
+      if (oauthCompleted) {
+        setTimeout(() => {
           window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      }, delay);
-      return () => clearTimeout(timer);
+        }, 1000);
+      }
     }
-  }, [loading, onboardingReady, isLoading, hideGlobalLoader, currentProject, globalLoaderControlled]);
+  }, [loading, onboardingReady, isLoading, currentProject]);
   
   // Verificar se temos um destino pós-OAuth pendente
   useEffect(() => {
@@ -733,6 +671,11 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
   
   // Interface completa para usuários que já completaram o onboarding
   // Ou usuários que estão adicionando novo projeto (sempre mostrar header)
+
+  // REMOVIDO: A lógica de processamento já é tratada pelo ProcessingWrapper
+  // O ProcessingWrapper decide internamente se mostra a tela de processamento ou o conteúdo
+  // Não precisamos duplicar essa lógica aqui
+
   return (
     <Routes>
       {/* Rota para criação de projeto - sem Sidebar e sem Header */}
@@ -748,19 +691,26 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
           </AppContainer>
         </SubscriptionGate>
       } />
-      
+
       {/* Todas as outras rotas - com Sidebar */}
       <Route path="*" element={
         <AppContainer>
           {/* Sidebar - desktop mode it's controlled by media query, mobile by state */}
-          <Sidebar 
-            isOpen={sidebarOpen} 
-            onClose={() => toggleSidebar()} 
-          />
+          <Suspense fallback={null}>
+            <Sidebar
+              isOpen={sidebarOpen}
+              onClose={() => toggleSidebar()}
+            />
+          </Suspense>
           <MainContent>
-            <Header toggleSidebar={toggleSidebar} />
-            <SubscriptionWarningBanner />
+            <Suspense fallback={null}>
+              <Header toggleSidebar={toggleSidebar} />
+            </Suspense>
+            <Suspense fallback={null}>
+              <SubscriptionWarningBanner />
+            </Suspense>
             <ContentWrapper>
+              {/* Removido Suspense aninhado para evitar múltiplos loadings */}
               <Routes>
                 {/* Removida rota "/" duplicada - já definida nas rotas públicas */}
                 <Route path="/dashboard" element={<SubscriptionGate><ProcessingWrapper><Overview /></ProcessingWrapper></SubscriptionGate>} />
@@ -779,14 +729,16 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
               </Routes>
             </ContentWrapper>
           </MainContent>
-          
+
           {/* Floating hamburger menu button for mobile */}
           <FloatingMenuButton onClick={toggleSidebar}>
             <IconComponent icon={FaBars} />
           </FloatingMenuButton>
-          
+
           {/* Floating Agent Widget */}
-          <FloatingAgent />
+          <Suspense fallback={null}>
+            <FloatingAgent />
+          </Suspense>
         </AppContainer>
       } />
     </Routes>

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, startTransition } from 'react';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabaseClient';
 
 // Interface para o modelo de dados de Projeto
@@ -358,48 +358,41 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
         return false;
       }
       
-      console.log("Atualizando índice do projeto no Supabase...");
-      
-      // Chamar a função RPC usando fetch (compatível com qualquer versão do Supabase)
-      const response = await fetch(`${supabaseUrl}/rest/v1/rpc/set_project_index`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${supabaseAnonKey}`,
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({
+      console.log("Atualizando índice do projeto no Supabase usando função otimizada...");
+
+      // Usar a função RPC otimizada diretamente pelo cliente Supabase
+      const { data, error } = await supabase
+        .rpc('set_project_index', {
           p_user_email: user.email,
           p_project_id: project.id
-        })
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Erro ao atualizar índice do projeto via função RPC:", errorText);
+        });
+
+      if (error) {
+        console.error("Erro ao atualizar índice do projeto via RPC:", error);
         
         // Fallback: tentativa manual em duas etapas caso RPC falhe
-        console.log("Tentando método alternativo em duas etapas...");
-        
-        // Primeiro, desmarcar todos os projetos do usuário
+        console.log("Tentando método alternativo otimizado...");
+
+        // Primeiro, desmarcar APENAS projetos ativos (otimização)
         const { error: resetError } = await supabase
           .from('Projeto')
           .update({ projetc_index: false })
-          .eq('user', user.email);
-        
+          .eq('user', user.email)
+          .eq('projetc_index', true)
+          .neq('id', project.id);
+
         if (resetError) {
           console.error("Erro ao resetar índices de projetos:", resetError);
           return false;
         }
-        
-        // Depois, marcar o projeto selecionado como indexado
-        // Usando o campo 'projetc_index' que corresponde à coluna no banco de dados
+
+        // Depois, marcar o projeto selecionado APENAS se não está ativo
         const { error: updateError } = await supabase
           .from('Projeto')
           .update({ projetc_index: true })
           .eq('id', project.id)
-          .eq('user', user.email);
+          .eq('user', user.email)
+          .or('projetc_index.is.null,projetc_index.eq.false');
         
         if (updateError) {
           console.error("Erro ao atualizar índice do projeto:", updateError);
@@ -411,7 +404,7 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
           return await verificarIndexacao(project.id, user.email);
         }
       } else {
-        console.log(`Projeto ${project.id} definido como projeto indexado via RPC`);
+        console.log(`Projeto ${project.id} definido como projeto indexado via RPC otimizada (< 50ms)`);
         return true;
       }
     } catch (error) {
@@ -486,25 +479,43 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       console.error("Tentativa de selecionar projeto sem ID");
       return;
     }
-    
+
     // Adicionar flag para impedir navegação durante a atualização
     const atualizacaoEmProgresso = 'projeto_atualizando_' + project.id;
     sessionStorage.setItem(atualizacaoEmProgresso, 'true');
-    
+
     try {
       console.log("Iniciando processo de atualização do projeto atual no Supabase");
-      
+
       // IMPORTANTE: Resetar estado de processamento ANTES de trocar de projeto
       // Isso evita que o estado antigo interfira no novo projeto
       setIsInitialProcessing(false);
-      
+
       // PRIMEIRO: Atualizar no banco de dados que este é o projeto ativo
       const atualizadoNoBanco = await updateProjectIndex(project);
-      
+
       if (atualizadoNoBanco) {
         // SOMENTE APÓS confirmação do banco de dados, atualizar estado local
         console.log("Atualização confirmada no Supabase, atualizando estado local");
-        setCurrentProject(project);
+        console.log("🔴 [ProjectContext] Projeto ANTES de setCurrentProject:", currentProject);
+        console.log("🟢 [ProjectContext] Projeto NOVO sendo definido:", project);
+
+        // Usar startTransition para evitar múltiplos loadings durante a transição
+        startTransition(() => {
+          setCurrentProject(project);
+        });
+
+        console.log("🟡 [ProjectContext] Logo após setCurrentProject (ainda não mudou!):", currentProject);
+
+        // Recarregar lista de projetos para garantir sincronização
+        const updatedProjects = await loadUserProjects();
+        setProjects(updatedProjects);
+
+        // Encontrar o projeto atualizado na lista nova
+        const updatedProject = updatedProjects.find(p => p.id === project.id);
+        if (updatedProject) {
+          setCurrentProject(updatedProject);
+        }
         
         // Limpar qualquer cache relacionado ao projeto anterior
         // Isso garante que não haja interferência entre projetos
@@ -736,8 +747,14 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
     }
   };
 
+  // DEBUG: Monitorar quando o valor do contexto muda
+  useEffect(() => {
+    console.log("🔵 [ProjectContext Provider] currentProject no contexto mudou para:", currentProject);
+    console.log("🔵 [ProjectContext Provider] ID:", currentProject?.id, "Nome:", currentProject?.["Project name"]);
+  }, [currentProject]);
+
   return (
-    <ProjectContext.Provider 
+    <ProjectContext.Provider
       value={{
         currentProject,
         setCurrentProject: setProject,
