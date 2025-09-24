@@ -167,9 +167,12 @@ await mcp__supabase__deploy_edge_function({
   - Completadas: `686b442bd7c4de1dbcb52ba8`
 
 ### 📸 REGRA: Imagens são OBRIGATÓRIAS
-```typescript
-// SEMPRE faça isso ao criar card:
-const card = await mcp__trello__add_card_to_list({...});
+```bash
+# Gerar imagem localmente SEMPRE com GPT-Image-1:
+/Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/gpt-image-1.sh "prompt" "1792x1024" "hd"
+# NOTA: GPT-Image-1 usa internamente dall-e-3 como modelo
+
+# Depois anexar ao card Trello:
 await mcp__trello__attach_image_to_card({
   cardId: card.id,
   imageUrl: "url_da_imagem"
