@@ -37,3 +37,4 @@ SELECT calculadora(10, '-', 5);  -- Retorna 5
 SELECT calculadora(10, '*', 5);  -- Retorna 50
 SELECT calculadora(10, '/', 5);  -- Retorna 2
 */
+OR REPLACE FUNCTION atualizar_canais_ativos(projeto_id_param bigint DEFAULT NULL)

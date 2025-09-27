@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # GPT-Image-1 Generator Script for Liftlio
-# Generates images using OpenAI API
-# IMPORTANT: Always use model "dall-e-3" (this is the actual model name for GPT-Image-1)
+# Generates images using OpenAI gpt-image-1 API
 
 # Check if required parameters are provided
 if [ "$#" -lt 1 ]; then
@@ -37,7 +36,7 @@ PROMPT_SLUG=$(echo "$PROMPT" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/_/g
 FILENAME="${FILENAME_BASE}_${PROMPT_SLUG}.png"
 OUTPUT_PATH="$OUTPUT_DIR/$FILENAME"
 
-echo "Generating image with GPT-Image-1 (dall-e-3)..."
+echo "Generating image with GPT-Image-1..."
 echo "Prompt: $PROMPT"
 echo "Size: $SIZE"
 echo "Quality: $QUALITY"
@@ -47,7 +46,7 @@ RESPONSE=$(curl -s -X POST https://api.openai.com/v1/images/generations \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $API_KEY" \
   -d "{
-    \"model\": \"dall-e-3\",
+    \"model\": \"gpt-image-1\",
     \"prompt\": \"$PROMPT\",
     \"n\": 1,
     \"size\": \"$SIZE\",
