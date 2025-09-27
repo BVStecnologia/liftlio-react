@@ -328,7 +328,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       const keywords = projectForm.keywords
         .split(',')
         .map(keyword => keyword.trim())
-        .filter(keyword => keyword !== '');
+        .filter(keyword => keyword !== '')
+        .slice(0, 5); // Limitar a no máximo 5 keywords
       setKeywordsArray(keywords);
     } else {
       setKeywordsArray([]);
@@ -362,11 +363,22 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Formulário enviado");
-    
-    // Verificar se todos os campos obrigatórios estão preenchidos, incluindo keywords
-    if (!projectForm.name || !projectForm.company || !projectForm.link || 
+
+    // Verificar se todos os campos obrigatórios estão preenchidos
+    if (!projectForm.name || !projectForm.company || !projectForm.link ||
         !projectForm.audience || keywordsArray.length === 0) {
-      alert('Por favor, preencha todos os campos obrigatórios e adicione pelo menos uma palavra-chave.');
+      alert('Please fill in all required fields and add at least 2 keywords.');
+      return;
+    }
+
+    // Validar número de keywords (mínimo 2, máximo 5)
+    if (keywordsArray.length < 2) {
+      alert('Please add at least 2 keywords for better targeting.');
+      return;
+    }
+
+    if (keywordsArray.length > 5) {
+      alert('Please use a maximum of 5 keywords to maintain focus.');
       return;
     }
     
@@ -735,7 +747,17 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
           
           <FormGroup>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Label htmlFor="keywords">Keywords (separated by commas)</Label>
+              <Label htmlFor="keywords">
+                Keywords (2-5 required) {keywordsArray.length > 0 && (
+                  <span style={{
+                    fontSize: '0.9em',
+                    color: keywordsArray.length < 2 || keywordsArray.length > 5 ? '#ef4444' : '#10b981',
+                    marginLeft: '8px'
+                  }}>
+                    [{keywordsArray.length}/5]
+                  </span>
+                )}
+              </Label>
               <GenerateButton
                 type="button"
                 variant="secondary"
@@ -761,7 +783,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                 name="keywords"
                 value={projectForm.keywords || ''}
                 onChange={handleChange}
-                placeholder="Keywords separated by commas (e.g. marketing, sales, product)"
+                placeholder="Enter 2-5 keywords separated by commas (e.g. marketing, sales, product)"
                 required
               />
               {isGeneratingKeywords && (
@@ -793,7 +815,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
             )}
             
             <InfoText>
-              Keywords will be generated based on your project information, focusing on high-purchase intent transactional terms that indicate users who are ready to buy.
+              Add 2-5 keywords for optimal targeting. Keywords should focus on high-purchase intent transactional terms that indicate users who are ready to buy.
             </InfoText>
           </FormGroup>
         

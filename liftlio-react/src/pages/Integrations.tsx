@@ -1323,10 +1323,16 @@ const Integrations: React.FC = () => {
     }
   };
   
+  // Não renderizar nada enquanto está carregando inicialmente
+  // Isso evita o "piscar" de componentes antes do loader aparecer
+  if (isLoading || isInitialLoad) {
+    return null;
+  }
+
   return (
     <IconContext.Provider value={{ className: 'react-icons' }}>
       <div>
-        {/* Removemos o indicador de carregamento durante autenticação do YouTube 
+        {/* Removemos o indicador de carregamento durante autenticação do YouTube
           para evitar problemas na renderização durante o redirecionamento OAuth */}
         
         {/* Mensagem de sucesso após integração */}

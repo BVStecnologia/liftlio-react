@@ -81,23 +81,23 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
   const [displayState, setDisplayState] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // Nova flag para controlar loading inicial
 
   // Função principal que chama o RPC
-  const checkProjectState = useCallback(async () => {
+  const checkProjectState = useCallback(async (isPolling: boolean = false) => {
     if (!user?.email) {
       setIsLoading(false);
       return;
     }
 
     try {
-      // SEMPRE mostrar loading global no início (refresh da página ou primeira vez)
-      // Removido o check de sessionStorage para garantir que SEMPRE mostre o loading
-      if (isLoading) {
-        console.log('[ProcessingWrapper] Mostrando loading global');
+      // Mostrar loading global APENAS na primeira carga, não no polling
+      if (isInitialLoad && !isPolling) {
+        console.log('[ProcessingWrapper] Mostrando loading global (primeira carga)');
         showGlobalLoader('Loading Dashboard', 'Please wait...');
       }
 
-      console.log('[ProcessingWrapper] Chamando check_project_display_state...');
+      console.log('[ProcessingWrapper] Chamando check_project_display_state...', { isPolling });
 
       const { data, error } = await supabase.rpc('check_project_display_state', {
         p_user_email: user.email
@@ -118,7 +118,7 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
         // Continua polling a cada 5 segundos
         if (!pollingInterval) {
           const interval = setInterval(() => {
-            checkProjectState();
+            checkProjectState(true); // Passa true para indicar que é polling
           }, 5000);
           setPollingInterval(interval);
         }
@@ -133,14 +133,18 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
     } catch (err) {
       console.error('[ProcessingWrapper] Erro:', err);
     } finally {
-      setIsLoading(false);
-      // SEMPRE esconder o loading quando terminar
-      setTimeout(() => {
-        console.log('[ProcessingWrapper] Escondendo loading global após carregar');
-        hideGlobalLoader();
-      }, 300);
+      // Só muda isLoading e esconde loader na primeira carga
+      if (isInitialLoad) {
+        setIsLoading(false);
+        setIsInitialLoad(false);
+        // Esconder o loading apenas após a primeira carga completa
+        setTimeout(() => {
+          console.log('[ProcessingWrapper] Escondendo loading global após primeira carga');
+          hideGlobalLoader();
+        }, 300);
+      }
     }
-  }, [user, pollingInterval, showGlobalLoader, hideGlobalLoader, isLoading]);
+  }, [user, pollingInterval, showGlobalLoader, hideGlobalLoader, isInitialLoad]);
 
   // Effect principal - chama apenas UMA VEZ no início
   useEffect(() => {
@@ -154,11 +158,9 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
     };
   }, [user?.email]);
 
-  // Renderização baseada no display_component
-  if (isLoading) {
-    // REMOVIDO: Loading local do ProcessingWrapper
-    // O loading global já é gerenciado pelo Header ao trocar de projeto
-    // Apenas retornar null durante o carregamento inicial
+  // SEMPRE retornar null enquanto está carregando para evitar "piscar" componentes
+  // Isso garante que nenhum conteúdo seja renderizado até sabermos o que mostrar
+  if (isLoading || !displayState) {
     return null;
   }
 

@@ -6,6 +6,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
+import { useGlobalLoading } from '../context/LoadingContext';
 import Integrations from './Integrations';
 
 // Reutilizar componentes de estilo da página de login
@@ -227,31 +228,40 @@ const ProjectCreationPage: React.FC = () => {
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [projectCreated, setProjectCreated] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true); // Novo estado para evitar "piscar"
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const { currentProject, hasIntegrations } = useProject();
-  
-  // Removido o useEffect que estava causando loop de recarregamento
-  
+  const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
+
   // Verificar apenas se o usuário está autenticado
   useEffect(() => {
     if (!loading && !user) {
       navigate('/');
     }
   }, [user, loading, navigate]);
-  
+
   // Verificar se o usuário já tem um projeto e integrações
   useEffect(() => {
+    // Aguardar o contexto carregar completamente
+    if (loading) return;
+
     if (currentProject) {
       setProjectCreated(true);
       setCurrentStep(2); // Avançar para a etapa de integrações
-      
+
       if (hasIntegrations) {
         // Se já tiver integrações, redirecionar para o dashboard
         navigate('/dashboard');
+        return; // Não remover o isInitializing para evitar piscar antes do redirect
       }
     }
-  }, [currentProject, hasIntegrations, navigate]);
+
+    // Só remover o loading após verificar tudo
+    setTimeout(() => {
+      setIsInitializing(false);
+    }, 100);
+  }, [currentProject, hasIntegrations, navigate, loading]);
   
   const handleLogout = async () => {
     try {
@@ -267,7 +277,11 @@ const ProjectCreationPage: React.FC = () => {
       if (!user) {
         throw new Error('User not authenticated');
       }
-      
+
+      // Mostrar loading global imediatamente ao criar projeto
+      showGlobalLoader('Creating Project', 'Setting up your new project...');
+      setIsInitializing(true);
+
       // A estrutura do projeto deve corresponder à da tabela Projeto no Supabase
       const projectData = {
         "Project name": project.name,
@@ -278,38 +292,42 @@ const ProjectCreationPage: React.FC = () => {
         "Keywords": project.keywords,
         "País": project.country === 'US' ? 'US' : 'BR' // Garantindo formato explícito
       };
-      
+
       console.log('Creating project with data:', projectData);
-      
+
       // Adicionando log detalhado para debug do campo país
       console.log('Valor do país recebido:', project.country);
       console.log('Valor do país após processamento:', projectData["País"]);
-      
+
       // Inserir o novo projeto no Supabase
       const { data, error } = await supabase
         .from('Projeto')
         .insert([projectData])
         .select();
-        
+
       // Logar a resposta do Supabase para verificar o que foi realmente salvo
       console.log('Resposta do Supabase após inserção:', { data, error });
-      
+
       if (error) throw error;
-      
-      // Atualizar o estado local
-      setProjectCreated(true);
-      setCurrentStep(2); // Avançar para a etapa de integrações
-      
+
       // Armazenar o ID do projeto criado no localStorage
       if (data && data[0]) {
         localStorage.setItem('currentProjectId', data[0].id.toString());
-        
+
+        // Aguardar um momento para garantir que o estado foi salvo
+        await new Promise(resolve => setTimeout(resolve, 500));
+
         // Recarregar a página para atualizar o contexto
+        // NOTA: Mantendo reload por enquanto mas com loading adequado
         window.location.reload();
       }
     } catch (error: any) {
       console.error('Error creating project:', error);
-      
+
+      // Esconder loader em caso de erro
+      hideGlobalLoader();
+      setIsInitializing(false);
+
       // Mostrar erro mais detalhado para diagnóstico
       if (error.message) {
         alert(`Error creating the project: ${error.message}. Please try again.`);
@@ -351,13 +369,10 @@ const ProjectCreationPage: React.FC = () => {
     }
   };
   
-  // Exibir tela de carregamento enquanto verifica a autenticação
-  if (loading) {
-    return (
-      <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
-        <p>Loading...</p>
-      </div>
-    );
+  // Exibir tela de carregamento enquanto verifica a autenticação e inicialização
+  // Isso evita o "piscar" de componentes antes de decidir o que mostrar
+  if (loading || isInitializing) {
+    return null; // Retorna null para deixar o loader global do ProcessingWrapper visível
   }
   
   // Redirecionar para a página inicial se não estiver autenticado
