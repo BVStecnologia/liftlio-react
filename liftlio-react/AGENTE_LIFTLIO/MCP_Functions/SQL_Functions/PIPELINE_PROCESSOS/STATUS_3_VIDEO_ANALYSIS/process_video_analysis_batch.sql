@@ -1,10 +1,10 @@
 -- =============================================
 -- Função: process_video_analysis_batch
--- Descrição: Processa análise de vídeos em lote
--- Criado: 2025-01-23
+-- Descrição: Processa análise de vídeos em batch e gerencia job agendado
+-- Dependência de: start_video_analysis_processing
+-- Status: Muda para 4 quando completo
+-- Criado: 2025-01-27
 -- =============================================
-
-DROP FUNCTION IF EXISTS public.process_video_analysis_batch(integer, integer);
 
 CREATE OR REPLACE FUNCTION public.process_video_analysis_batch(project_id integer, batch_size integer)
  RETURNS void
@@ -66,7 +66,7 @@ BEGIN
       PERFORM cron.unschedule('process_video_analysis_' || project_id::text);
     END IF;
 
-    -- Atualiza o status do projeto para 3 quando todos os vídeos foram analisados
+    -- Atualiza o status do projeto para 4 quando todos os vídeos foram analisados
     UPDATE public."Projeto"
     SET status = '4'
     WHERE id = project_id;
@@ -74,4 +74,4 @@ BEGIN
     RAISE NOTICE 'All videos processed for project ID: %', project_id;
   END IF;
 END;
-$function$;
+$function$
