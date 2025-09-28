@@ -14,9 +14,7 @@ import {
 
 const PageContainer = styled.div`
   min-height: 100vh;
-  background: ${props => props.theme.mode === 'dark'
-    ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
-    : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)'};
+  background: linear-gradient(135deg, #0a0a0b 0%, #1a1a2e 100%);
 `;
 
 const ContentWrapper = styled.div`
@@ -45,7 +43,7 @@ const Title = styled(motion.h1)`
 
 const Subtitle = styled(motion.p)`
   font-size: 1.2rem;
-  color: ${props => props.theme.mode === 'dark' ? '#94a3b8' : '#64748b'};
+  color: #94a3b8;
 `;
 
 const ContactGrid = styled.div`
@@ -56,15 +54,11 @@ const ContactGrid = styled.div`
 `;
 
 const ContactCard = styled(motion.div)`
-  background: ${props => props.theme.mode === 'dark'
-    ? 'rgba(30, 41, 59, 0.5)'
-    : 'rgba(255, 255, 255, 0.9)'};
+  background: rgba(30, 41, 59, 0.5);
   backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 30px;
-  border: 1px solid ${props => props.theme.mode === 'dark'
-    ? 'rgba(148, 163, 184, 0.1)'
-    : 'rgba(203, 213, 225, 0.3)'};
+  border: 1px solid rgba(148, 163, 184, 0.1);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
   position: relative;
@@ -90,14 +84,14 @@ const IconWrapper = styled.div`
 const CardTitle = styled.h3`
   font-size: 1.3rem;
   font-weight: 600;
-  color: ${props => props.theme.mode === 'dark' ? '#f1f5f9' : '#1e293b'};
+  color: #f1f5f9;
   margin-bottom: 15px;
 `;
 
 const CardContent = styled.div`
   font-size: 1rem;
   line-height: 1.6;
-  color: ${props => props.theme.mode === 'dark' ? '#cbd5e1' : '#64748b'};
+  color: #cbd5e1;
 `;
 
 const AddressLine = styled.p`
@@ -110,16 +104,14 @@ const CopyButton = styled.button`
   right: 20px;
   background: transparent;
   border: none;
-  color: ${props => props.theme.mode === 'dark' ? '#94a3b8' : '#64748b'};
+  color: #94a3b8;
   cursor: pointer;
   padding: 8px;
   border-radius: 8px;
   transition: all 0.3s ease;
 
   &:hover {
-    background: ${props => props.theme.mode === 'dark'
-      ? 'rgba(148, 163, 184, 0.1)'
-      : 'rgba(100, 116, 139, 0.1)'};
+    background: rgba(148, 163, 184, 0.1);
   }
 
   &.copied {
@@ -146,12 +138,8 @@ const LinkButton = styled.a`
 `;
 
 const TemporaryNotice = styled(motion.div)`
-  background: ${props => props.theme.mode === 'dark'
-    ? 'rgba(251, 146, 60, 0.1)'
-    : 'rgba(251, 146, 60, 0.05)'};
-  border: 1px solid ${props => props.theme.mode === 'dark'
-    ? 'rgba(251, 146, 60, 0.3)'
-    : 'rgba(251, 146, 60, 0.2)'};
+  background: rgba(251, 146, 60, 0.1);
+  border: 1px solid rgba(251, 146, 60, 0.3);
   border-radius: 12px;
   padding: 15px 20px;
   margin-top: 10px;
@@ -159,14 +147,12 @@ const TemporaryNotice = styled(motion.div)`
   align-items: center;
   gap: 10px;
   font-size: 0.9rem;
-  color: ${props => props.theme.mode === 'dark' ? '#fb923c' : '#ea580c'};
+  color: #fb923c;
 `;
 
 const EmailProtected = styled.span`
   font-family: 'Courier New', monospace;
-  background: ${props => props.theme.mode === 'dark'
-    ? 'rgba(148, 163, 184, 0.1)'
-    : 'rgba(100, 116, 139, 0.05)'};
+  background: rgba(148, 163, 184, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
 `;
