@@ -35,6 +35,8 @@ const ProjectCreationPage = lazy(() => import('./pages/ProjectCreationPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 // About, Privacy, Terms agora são servidas como HTML estático da pasta public
 const Security = lazy(() => import('./pages/Security'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
 
 // Lazy load heavy components
 const Sidebar = lazy(() => import('./components/Sidebar'));
@@ -339,8 +341,27 @@ const AppContent: React.FC = () => {
             </Suspense>
           } />
 
-          {/* Páginas institucionais - Redirecionamento para HTML estático */}
-          <Route path="/about" element={<StaticRedirect to="/about.html" />} />
+          {/* Páginas institucionais */}
+          <Route path="/sobre" element={
+            <Suspense fallback={null}>
+              <AboutPage />
+            </Suspense>
+          } />
+          <Route path="/about" element={
+            <Suspense fallback={null}>
+              <AboutPage />
+            </Suspense>
+          } />
+          <Route path="/contato" element={
+            <Suspense fallback={null}>
+              <ContactPage />
+            </Suspense>
+          } />
+          <Route path="/contact" element={
+            <Suspense fallback={null}>
+              <ContactPage />
+            </Suspense>
+          } />
           <Route path="/privacy" element={<StaticRedirect to="/privacy.html" />} />
           <Route path="/terms" element={<StaticRedirect to="/terms.html" />} />
           <Route path="/security" element={

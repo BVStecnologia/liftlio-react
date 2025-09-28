@@ -16,7 +16,8 @@
       "args": ["-y", "@delorenj/mcp-server-trello"],
       "env": {
         "TRELLO_API_KEY": "cd5eb5e1c094cadbfe965e8ab093f6d8",
-        "TRELLO_API_TOKEN": "ATTAef50e93c887e9e37c1c33ae7e8c4e23709795f860f6f42fa97e7bdbe964e0e1c5FC4F044"
+        "TRELLO_TOKEN": "ATTAef50e93c887e9e37c1c33ae7e8c4e23709795f860f6f42fa97e7bdbe964e0e1c5FC4F044",
+        "TRELLO_BOARD_ID": "686b43ced8d30f8eb12b9d12"
       }
     },
     "wordpress": {
@@ -31,10 +32,6 @@
     "playwright": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-playwright"]
-    },
-    "chrome": {
-      "command": "mcp-chrome-bridge",
-      "args": []
     }
   }
 }
