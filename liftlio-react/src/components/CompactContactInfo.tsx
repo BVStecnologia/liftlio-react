@@ -136,7 +136,7 @@ const CompactContactInfo: React.FC = () => {
           </IconWrapper>
           <ContactLabel>Email</ContactLabel>
           <ContactValue>
-            support [at] liftlio.com
+            <a href="mailto:support@liftlio.com">support@liftlio.com</a>
           </ContactValue>
         </ContactItem>
       </ContactGrid>
