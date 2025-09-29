@@ -352,6 +352,11 @@ const AppContent: React.FC = () => {
               <AboutPage />
             </Suspense>
           } />
+          <Route path="/about-old" element={
+            <Suspense fallback={null}>
+              <AboutPage />
+            </Suspense>
+          } />
           <Route path="/contato" element={
             <Suspense fallback={null}>
               <ContactPage />

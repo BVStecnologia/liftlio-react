@@ -1,74 +1,212 @@
 import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { useTheme } from '../context/ThemeContext';
 import {
+  Sparkles,
   TrendingUp,
-  Users,
-  BarChart3,
-  Zap,
-  Linkedin,
-  Globe,
+  ArrowUpRight,
   MessageCircle,
   Target,
-  Rocket,
-  Building2
+  Zap,
+  Github,
+  Linkedin,
+  Globe,
+  Activity
 } from 'lucide-react';
+
+// Import photos
+const stevePhoto = require('../assets/images/steve-photo.jpeg');
+const valdairPhoto = require('../assets/images/valdair-photo.jpeg');
 
 const PageContainer = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0a0b 0%, #1a1a2e 100%);
+  background: #0A0A0B;
+  color: white;
+  overflow-x: hidden;
 `;
 
-const ContentWrapper = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 80px 20px;
+const Navigation = styled.nav`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 20px 40px;
+  background: rgba(10, 10, 11, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;
 
-const HeroSection = styled.div`
-  text-align: center;
-  margin-bottom: 100px;
-`;
-
-const BadgeContainer = styled.div`
-  display: inline-flex;
+const Logo = styled.a`
+  font-size: 24px;
+  font-weight: 800;
+  color: white;
+  text-decoration: none;
+  display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 50px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  margin-bottom: 20px;
-`;
 
-const MainTitle = styled(motion.h1)`
-  font-size: 3.5rem;
-  font-weight: 800;
-  margin-bottom: 24px;
-  line-height: 1.1;
-  color: ${props => props.theme.mode === 'dark' ? '#ffffff' : '#1a1a2e'};
-
-  @media (max-width: 768px) {
-    font-size: 2.5rem;
+  span {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
   }
 `;
 
-const Subtitle = styled(motion.p)`
-  font-size: 1.4rem;
-  color: ${props => props.theme.mode === 'dark' ? '#94a3b8' : '#64748b'};
-  max-width: 800px;
-  margin: 0 auto 40px;
+const NavLinks = styled.div`
+  display: flex;
+  gap: 32px;
+  align-items: center;
+
+  a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 16px;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: white;
+    }
+  }
+`;
+
+const SignInButton = styled.a`
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: white;
+  padding: 10px 24px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
+  }
+`;
+
+const HeroSection = styled.section`
+  padding: 180px 40px 100px;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+`;
+
+const FutureBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(124, 58, 237, 0.1);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-size: 14px;
+  color: #a855f7;
+  margin-bottom: 32px;
+  font-weight: 600;
+`;
+
+const HeroTitle = styled(motion.h1)`
+  font-size: 72px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #a0a0a0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  span {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 48px;
+  }
+`;
+
+const HeroSubtitle = styled(motion.p)`
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 700px;
+  margin: 0 auto 48px;
   line-height: 1.6;
 `;
 
+const PowerStatement = styled(motion.div)`
+  max-width: 900px;
+  margin: 60px auto;
+  padding: 40px;
+  background: linear-gradient(135deg,
+    rgba(124, 58, 237, 0.08) 0%,
+    rgba(168, 85, 247, 0.04) 100%
+  );
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: 24px;
+  backdrop-filter: blur(40px);
+  text-align: center;
+
+  h3 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  p {
+    font-size: 18px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.8);
+  }
+`;
+
+const HeroCTAButton = styled.button`
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(124, 58, 237, 0.3);
+  }
+`;
+
+const StatsSection = styled.section`
+  padding: 60px 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+`;
+
 const StatsGrid = styled.div`
+  max-width: 1000px;
+  margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 30px;
-  margin: 60px 0;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 `;
 
 const StatCard = styled(motion.div)`
@@ -76,67 +214,55 @@ const StatCard = styled(motion.div)`
 `;
 
 const StatNumber = styled.div`
-  font-size: 2.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+  font-size: 36px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 8px;
 `;
 
 const StatLabel = styled.div`
-  font-size: 1rem;
-  color: ${props => props.theme.mode === 'dark' ? '#94a3b8' : '#64748b'};
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 `;
 
-const SectionContainer = styled.section`
-  margin: 100px 0;
-`;
-
-const SectionHeader = styled.div`
-  text-align: center;
-  margin-bottom: 60px;
-`;
-
-const SectionTitle = styled(motion.h2)`
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: ${props => props.theme.mode === 'dark' ? '#ffffff' : '#1a1a2e'};
-  margin-bottom: 20px;
-`;
-
-const SectionDescription = styled.p`
-  font-size: 1.2rem;
-  color: ${props => props.theme.mode === 'dark' ? '#94a3b8' : '#64748b'};
-  max-width: 700px;
+const FeaturesSection = styled.section`
+  padding: 100px 40px;
+  max-width: 1200px;
   margin: 0 auto;
 `;
 
-const ConceptGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 40px;
-  margin-top: 60px;
+const SectionTitle = styled(motion.h2)`
+  font-size: 48px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 60px;
+  background: linear-gradient(180deg, #ffffff 0%, #a0a0a0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 `;
 
-const ConceptCard = styled(motion.div)`
-  background: ${props => props.theme.mode === 'dark'
-    ? 'rgba(30, 41, 59, 0.5)'
-    : 'rgba(255, 255, 255, 0.9)'};
-  backdrop-filter: blur(10px);
+const FeaturesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 40px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FeatureCard = styled(motion.div)`
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 20px;
-  padding: 32px;
-  border: 1px solid ${props => props.theme.mode === 'dark'
-    ? 'rgba(148, 163, 184, 0.1)'
-    : 'rgba(203, 213, 225, 0.3)'};
+  padding: 40px;
   position: relative;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(139, 92, 246, 0.15);
-  }
+  transition: all 0.3s ease;
 
   &::before {
     content: '';
@@ -144,495 +270,395 @@ const ConceptCard = styled(motion.div)`
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #8b5cf6, #a855f7);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.3), transparent);
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(124, 58, 237, 0.2);
   }
 `;
 
-const IconBox = styled.div`
+const FeatureIcon = styled.div`
   width: 56px;
   height: 56px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
-  color: white;
+  margin-bottom: 24px;
+
+  svg {
+    width: 28px;
+    height: 28px;
+  }
 `;
 
-const ConceptTitle = styled.h3`
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: ${props => props.theme.mode === 'dark' ? '#f1f5f9' : '#1e293b'};
+const FeatureTitle = styled.h3`
+  font-size: 24px;
+  font-weight: 700;
   margin-bottom: 12px;
 `;
 
-const ConceptDescription = styled.p`
-  font-size: 1rem;
+const FeatureDescription = styled.p`
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.6);
   line-height: 1.6;
-  color: ${props => props.theme.mode === 'dark' ? '#cbd5e1' : '#64748b'};
 `;
 
-const GrowthSection = styled.div`
-  background: ${props => props.theme.mode === 'dark'
-    ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)'
-    : 'linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(168, 85, 247, 0.02) 100%)'};
-  border-radius: 24px;
-  padding: 60px 40px;
-  margin: 80px 0;
-  text-align: center;
-`;
-
-const GrowthTitle = styled.h2`
-  font-size: 2.2rem;
-  font-weight: 700;
-  margin-bottom: 30px;
-  background: linear-gradient(135deg, #8b5cf6, #a855f7);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-`;
-
-const GrowthMetrics = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 40px;
-  margin-top: 40px;
-`;
-
-const MetricItem = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-`;
-
-const MetricIcon = styled.div`
-  color: #8b5cf6;
-`;
-
-const MetricText = styled.div`
-  text-align: left;
-`;
-
-const MetricValue = styled.div`
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: ${props => props.theme.mode === 'dark' ? '#ffffff' : '#1a1a2e'};
-`;
-
-const MetricLabel = styled.div`
-  font-size: 0.9rem;
-  color: ${props => props.theme.mode === 'dark' ? '#94a3b8' : '#64748b'};
-`;
-
-const FoundersSection = styled.div`
-  margin: 100px 0;
+const FoundersSection = styled.section`
+  padding: 100px 40px;
+  max-width: 1000px;
+  margin: 0 auto;
 `;
 
 const FoundersGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 40px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 60px;
   margin-top: 60px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const FounderCard = styled(motion.div)`
-  background: ${props => props.theme.mode === 'dark'
-    ? 'rgba(30, 41, 59, 0.5)'
-    : 'rgba(255, 255, 255, 0.9)'};
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  padding: 32px;
-  border: 1px solid ${props => props.theme.mode === 'dark'
-    ? 'rgba(148, 163, 184, 0.1)'
-    : 'rgba(203, 213, 225, 0.3)'};
   text-align: center;
 `;
 
 const FounderImage = styled.img`
-  width: 120px;
-  height: 120px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
-  margin: 0 auto 20px;
-  border: 4px solid ${props => props.theme.mode === 'dark'
-    ? 'rgba(139, 92, 246, 0.2)'
-    : 'rgba(139, 92, 246, 0.1)'};
+  margin: 0 auto 24px;
+  border: 3px solid rgba(124, 58, 237, 0.3);
   object-fit: cover;
 `;
 
-const FounderImagePlaceholder = styled.div`
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  margin: 0 auto 20px;
-  background: linear-gradient(135deg, #8b5cf6, #a855f7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 2.5rem;
-  font-weight: 700;
-`;
-
 const FounderName = styled.h3`
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: ${props => props.theme.mode === 'dark' ? '#f1f5f9' : '#1e293b'};
+  font-size: 28px;
+  font-weight: 700;
   margin-bottom: 8px;
 `;
 
 const FounderRole = styled.div`
-  font-size: 1rem;
-  color: #8b5cf6;
-  font-weight: 500;
+  font-size: 16px;
+  color: #a855f7;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   margin-bottom: 20px;
+  font-weight: 600;
 `;
 
 const FounderBio = styled.p`
-  font-size: 0.95rem;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.6;
-  color: ${props => props.theme.mode === 'dark' ? '#cbd5e1' : '#64748b'};
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 `;
 
-const FounderLinks = styled.div`
+const SocialLinks = styled.div`
   display: flex;
   justify-content: center;
   gap: 16px;
 `;
 
 const SocialLink = styled.a`
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: ${props => props.theme.mode === 'dark'
-    ? 'rgba(139, 92, 246, 0.1)'
-    : 'rgba(139, 92, 246, 0.05)'};
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8b5cf6;
   transition: all 0.3s ease;
+  color: rgba(255, 255, 255, 0.7);
 
   &:hover {
-    background: linear-gradient(135deg, #8b5cf6, #a855f7);
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    border-color: transparent;
     color: white;
     transform: translateY(-2px);
   }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+`;
+
+const FooterSection = styled.footer`
+  padding: 80px 40px 40px;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+`;
+
+const FooterText = styled.p`
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
 `;
 
 const AboutPage: React.FC = () => {
-  // Import Steve's photo with require
-  const stevePhoto = require('../assets/images/steve-photo.jpeg');
-
   return (
     <PageContainer>
-      <ContentWrapper>
-        <HeroSection>
-          <BadgeContainer>
-            <Rocket size={16} />
-            <span>The Organic Growth Engine</span>
-          </BadgeContainer>
+      <Navigation>
+        <Logo href="/">
+          LIFTLIO
+          <span>BETA</span>
+        </Logo>
+        <NavLinks>
+          <a href="/analytics">Analytics</a>
+          <a href="/trends">Trends</a>
+          <SignInButton href="/login">
+            Sign In
+            <ArrowUpRight size={16} />
+          </SignInButton>
+        </NavLinks>
+      </Navigation>
 
-          <MainTitle
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            Building the Future of<br />
-            Organic Traffic Generation
-          </MainTitle>
+      <HeroSection>
+        <FutureBadge>
+          <Sparkles size={16} />
+          The Future of Organic Growth
+        </FutureBadge>
 
-          <Subtitle
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
-            Liftlio is an AI-powered organic traffic machine that compounds over time,
-            creating an unstoppable snowball effect of brand mentions and trust signals
-            across the web.
-          </Subtitle>
+        <HeroTitle
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+        >
+          Transform Your Brand<br />
+          Into <span>An Organic Machine</span>
+        </HeroTitle>
 
-          <StatsGrid>
-            <StatCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <StatNumber>∞</StatNumber>
-              <StatLabel>Compound Growth Effect</StatLabel>
-            </StatCard>
-            <StatCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <StatNumber>24/7</StatNumber>
-              <StatLabel>Autonomous Operation</StatLabel>
-            </StatCard>
-            <StatCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              <StatNumber>87%</StatNumber>
-              <StatLabel>Trust Over Ads</StatLabel>
-            </StatCard>
-            <StatCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-            >
-              <StatNumber>10x</StatNumber>
-              <StatLabel>ROI vs Traditional Ads</StatLabel>
-            </StatCard>
-          </StatsGrid>
-        </HeroSection>
+        <HeroSubtitle
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.1 }}
+        >
+          Build a self-reinforcing growth engine that compounds over time.
+          Every interaction becomes a permanent digital asset, creating an
+          unstoppable momentum for your brand.
+        </HeroSubtitle>
 
-        <SectionContainer>
-          <SectionHeader>
-            <SectionTitle
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              The Organic Traffic Machine Concept
-            </SectionTitle>
-            <SectionDescription>
-              Every interaction creates a permanent digital footprint that continues
-              generating value forever. Unlike ads that stop when you stop paying,
-              Liftlio builds lasting brand equity.
-            </SectionDescription>
-          </SectionHeader>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.3 }}
+        >
+          <HeroCTAButton onClick={() => window.location.href = '/'}>
+            Begin Your Transformation
+            <ArrowUpRight size={18} />
+          </HeroCTAButton>
+        </motion.div>
 
-          <ConceptGrid>
-            <ConceptCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              <IconBox>
-                <TrendingUp size={28} />
-              </IconBox>
-              <ConceptTitle>Cumulative Effect</ConceptTitle>
-              <ConceptDescription>
-                Every mention, comment, and recommendation adds to your brand's
-                digital footprint. These accumulate over time, creating an
-                ever-growing presence that compounds exponentially.
-              </ConceptDescription>
-            </ConceptCard>
-
-            <ConceptCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <IconBox>
-                <MessageCircle size={28} />
-              </IconBox>
-              <ConceptTitle>Perpetual Value</ConceptTitle>
-              <ConceptDescription>
-                Comments and recommendations from 6 months ago still drive
-                traffic today. Each piece of content becomes a permanent
-                asset that continues working for you 24/7.
-              </ConceptDescription>
-            </ConceptCard>
-
-            <ConceptCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <IconBox>
-                <Target size={28} />
-              </IconBox>
-              <ConceptTitle>Zero Decay Rate</ConceptTitle>
-              <ConceptDescription>
-                Unlike paid ads that disappear when you stop paying, organic
-                mentions remain forever. Your investment continues generating
-                returns indefinitely with no additional cost.
-              </ConceptDescription>
-            </ConceptCard>
-          </ConceptGrid>
-        </SectionContainer>
-
-        <GrowthSection>
-          <GrowthTitle>The Snowball Effect in Action</GrowthTitle>
-          <p style={{ fontSize: '1.1rem', color: '#64748b', maxWidth: '700px', margin: '0 auto' }}>
-            Watch how organic traffic compounds over time. Each month builds on the last,
-            creating unstoppable momentum for your brand.
+        <PowerStatement
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.5 }}
+        >
+          <h3>Automate the Manual. Master the Essential.</h3>
+          <p>
+            We automate repetitive human work with unique AI-powered tools.
+            While machines execute complex analysis, detect patterns, and optimize results 24/7,
+            you focus on what truly matters: strategic decisions that transform businesses.
+            Liftlio doesn't just automate - it builds lasting organic presence that outperforms any temporary paid ad.
           </p>
-          <GrowthMetrics>
-            <MetricItem>
-              <MetricIcon>
-                <BarChart3 size={40} />
-              </MetricIcon>
-              <MetricText>
-                <MetricValue>Month 1</MetricValue>
-                <MetricLabel>75 brand mentions</MetricLabel>
-              </MetricText>
-            </MetricItem>
-            <MetricItem>
-              <MetricIcon>
-                <BarChart3 size={40} />
-              </MetricIcon>
-              <MetricText>
-                <MetricValue>Month 6</MetricValue>
-                <MetricLabel>450 cumulative mentions</MetricLabel>
-              </MetricText>
-            </MetricItem>
-            <MetricItem>
-              <MetricIcon>
-                <BarChart3 size={40} />
-              </MetricIcon>
-              <MetricText>
-                <MetricValue>Month 12</MetricValue>
-                <MetricLabel>900+ active touchpoints</MetricLabel>
-              </MetricText>
-            </MetricItem>
-          </GrowthMetrics>
-        </GrowthSection>
+        </PowerStatement>
+      </HeroSection>
 
-        <FoundersSection>
-          <SectionHeader>
-            <SectionTitle
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              Meet the Founders
-            </SectionTitle>
-            <SectionDescription>
-              Building the future of AI-powered organic marketing
-            </SectionDescription>
-          </SectionHeader>
+      <StatsSection>
+        <StatsGrid>
+          <StatCard
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <StatNumber>∞</StatNumber>
+            <StatLabel>Compound Growth</StatLabel>
+          </StatCard>
+          <StatCard
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            viewport={{ once: true }}
+          >
+            <StatNumber>24/7</StatNumber>
+            <StatLabel>Always Active</StatLabel>
+          </StatCard>
+          <StatCard
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
+            <StatNumber>87%</StatNumber>
+            <StatLabel>Trust Over Ads</StatLabel>
+          </StatCard>
+          <StatCard
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            viewport={{ once: true }}
+          >
+            <StatNumber>10x</StatNumber>
+            <StatLabel>ROI Multiplier</StatLabel>
+          </StatCard>
+        </StatsGrid>
+      </StatsSection>
 
-          <FoundersGrid>
-            <FounderCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              <FounderImage src={stevePhoto} alt="Steven J. Wilson" />
-              <FounderName>Steven J. Wilson</FounderName>
-              <FounderRole>Co-Founder</FounderRole>
-              <FounderBio>
-                Certified leader in AI for Business from Wharton. Mentioned in Forbes
-                and Inc. Magazine for his insights on AI, he is experienced in building
-                successful, growth minded teams. Steven believes AI should do more than
-                automate; it should unlock new ways for businesses to acquire customers.
-              </FounderBio>
-              <FounderLinks>
-                <SocialLink
-                  href="https://www.linkedin.com/in/stevenjwilson1/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Linkedin size={20} />
-                </SocialLink>
-                <SocialLink
-                  href="https://stevenjwilson.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Globe size={20} />
-                </SocialLink>
-              </FounderLinks>
-            </FounderCard>
+      <FeaturesSection>
+        <SectionTitle
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+        >
+          The Machine at Work
+        </SectionTitle>
 
-            <FounderCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <FounderImagePlaceholder>V</FounderImagePlaceholder>
-              <FounderName>Valdair</FounderName>
-              <FounderRole>Co-Founder & CTO</FounderRole>
-              <FounderBio>
-                Technical visionary and full-stack architect behind Liftlio's AI infrastructure.
-                Expert in machine learning, natural language processing, and scalable systems.
-                Passionate about using technology to democratize access to powerful marketing tools.
-              </FounderBio>
-              <FounderLinks>
-                <SocialLink
-                  href="https://www.linkedin.com/in/valdair"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Linkedin size={20} />
-                </SocialLink>
-              </FounderLinks>
-            </FounderCard>
-          </FoundersGrid>
-        </FoundersSection>
+        <FeaturesGrid>
+          <FeatureCard
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <FeatureIcon>
+              <TrendingUp />
+            </FeatureIcon>
+            <FeatureTitle>Perpetual Value</FeatureTitle>
+            <FeatureDescription>
+              Every mention, comment, and recommendation becomes a permanent asset.
+              Content from months ago continues driving traffic today, creating
+              compounding returns without additional investment.
+            </FeatureDescription>
+          </FeatureCard>
 
-        <SectionContainer>
-          <SectionHeader>
-            <SectionTitle
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              Our Mission
-            </SectionTitle>
-            <SectionDescription>
-              To democratize organic growth by making AI-powered marketing accessible
-              to every business, regardless of size or budget.
-            </SectionDescription>
-          </SectionHeader>
+          <FeatureCard
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            viewport={{ once: true }}
+          >
+            <FeatureIcon>
+              <MessageCircle />
+            </FeatureIcon>
+            <FeatureTitle>Authentic Reach</FeatureTitle>
+            <FeatureDescription>
+              Build genuine connections through peer recommendations. Real people
+              sharing real experiences create trust that no amount of advertising
+              can replicate.
+            </FeatureDescription>
+          </FeatureCard>
 
-          <ConceptGrid>
-            <ConceptCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              <IconBox>
-                <Zap size={28} />
-              </IconBox>
-              <ConceptTitle>Instant Authority</ConceptTitle>
-              <ConceptDescription>
-                Build domain expertise and thought leadership through
-                consistent, valuable contributions across your industry's
-                digital ecosystem.
-              </ConceptDescription>
-            </ConceptCard>
+          <FeatureCard
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
+            <FeatureIcon>
+              <Target />
+            </FeatureIcon>
+            <FeatureTitle>Zero Decay Rate</FeatureTitle>
+            <FeatureDescription>
+              Unlike paid ads that vanish when budgets end, organic mentions
+              remain forever. Your growth engine continues accelerating with
+              no ongoing cost.
+            </FeatureDescription>
+          </FeatureCard>
 
-            <ConceptCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <IconBox>
-                <Users size={28} />
-              </IconBox>
-              <ConceptTitle>Trust at Scale</ConceptTitle>
-              <ConceptDescription>
-                Generate authentic peer recommendations that carry 10x
-                more weight than traditional advertising, building real
-                relationships with your audience.
-              </ConceptDescription>
-            </ConceptCard>
+          <FeatureCard
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            viewport={{ once: true }}
+          >
+            <FeatureIcon>
+              <Zap />
+            </FeatureIcon>
+            <FeatureTitle>Global Scale</FeatureTitle>
+            <FeatureDescription>
+              Reach audiences worldwide through natural language processing and
+              cultural adaptation. Your message resonates authentically across
+              any market.
+            </FeatureDescription>
+          </FeatureCard>
+        </FeaturesGrid>
+      </FeaturesSection>
 
-            <ConceptCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <IconBox>
-                <Building2 size={28} />
-              </IconBox>
-              <ConceptTitle>Sustainable Growth</ConceptTitle>
-              <ConceptDescription>
-                Create a self-reinforcing growth engine that becomes
-                stronger over time, reducing dependency on paid advertising
-                while increasing organic reach.
-              </ConceptDescription>
-            </ConceptCard>
-          </ConceptGrid>
-        </SectionContainer>
-      </ContentWrapper>
+      <FoundersSection>
+        <SectionTitle
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+        >
+          The Architects
+        </SectionTitle>
+
+        <FoundersGrid>
+          <FounderCard
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <FounderImage src={stevePhoto} />
+            <FounderName>Steven J. Wilson</FounderName>
+            <FounderRole>Co-Founder</FounderRole>
+            <FounderBio>
+              Certified leader in AI for Business from Wharton. Mentioned in Forbes and Inc. Magazine
+              for his insights on AI. Experienced in building successful, growth minded teams.
+              Believes AI should unlock new ways for businesses to acquire customers.
+            </FounderBio>
+            <SocialLinks>
+              <SocialLink href="https://www.linkedin.com/in/stevenjwilson1/" target="_blank" rel="noopener noreferrer">
+                <Linkedin />
+              </SocialLink>
+              <SocialLink href="https://stevenjwilson.com" target="_blank" rel="noopener noreferrer">
+                <Globe />
+              </SocialLink>
+            </SocialLinks>
+          </FounderCard>
+
+          <FounderCard
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            viewport={{ once: true }}
+          >
+            <FounderImage src={valdairPhoto} />
+            <FounderName>Valdair Demello</FounderName>
+            <FounderRole>Co-Founder & CTO</FounderRole>
+            <FounderBio>
+              Technical visionary and architect of Liftlio's AI infrastructure. Expert in machine learning,
+              natural language processing, and scalable cloud systems. Passionate about democratizing
+              access to AI-powered marketing tools and transforming how businesses grow globally.
+            </FounderBio>
+            <SocialLinks>
+              <SocialLink href="https://github.com/valdair" target="_blank" rel="noopener noreferrer">
+                <Github />
+              </SocialLink>
+              <SocialLink href="https://linkedin.com/in/valdair" target="_blank" rel="noopener noreferrer">
+                <Linkedin />
+              </SocialLink>
+            </SocialLinks>
+          </FounderCard>
+        </FoundersGrid>
+      </FoundersSection>
+
+      <FooterSection>
+        <FooterText>
+          © 2025 Liftlio · Building the Future of Organic Growth
+        </FooterText>
+      </FooterSection>
     </PageContainer>
   );
 };
