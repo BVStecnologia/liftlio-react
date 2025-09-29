@@ -28,6 +28,14 @@ const Navigation = styled.nav`
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  @media (max-width: 480px) {
+    padding: 15px 20px;
+  }
+
+  @media (max-width: 320px) {
+    padding: 12px 15px;
+  }
 `;
 
 const Logo = styled.a`
@@ -46,6 +54,19 @@ const Logo = styled.a`
     font-size: 12px;
     font-weight: 600;
   }
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
+
+  @media (max-width: 320px) {
+    font-size: 18px;
+
+    span {
+      font-size: 10px;
+      padding: 3px 6px;
+    }
+  }
 `;
 
 const NavLinks = styled.div`
@@ -61,6 +82,22 @@ const NavLinks = styled.div`
 
     &:hover {
       color: white;
+    }
+  }
+
+  @media (max-width: 768px) {
+    gap: 20px;
+
+    a {
+      font-size: 14px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    gap: 12px;
+
+    a:not(:last-child) {
+      display: none;
     }
   }
 `;
@@ -81,6 +118,22 @@ const SignInButton = styled.a`
     transform: translateY(-2px);
     box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
   }
+
+  @media (max-width: 480px) {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  @media (max-width: 320px) {
+    padding: 6px 12px;
+    font-size: 12px;
+    gap: 4px;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
 `;
 
 const ContactSection = styled.section`
@@ -91,6 +144,14 @@ const ContactSection = styled.section`
 
   @media (max-width: 768px) {
     padding: 120px 20px 60px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 100px 15px 40px;
+  }
+
+  @media (max-width: 320px) {
+    padding: 80px 10px 30px;
   }
 `;
 
@@ -127,6 +188,15 @@ const ContactTitle = styled(motion.h1)`
   @media (max-width: 768px) {
     font-size: 40px;
   }
+
+  @media (max-width: 480px) {
+    font-size: 32px;
+  }
+
+  @media (max-width: 320px) {
+    font-size: 26px;
+    margin-bottom: 16px;
+  }
 `;
 
 const ContactSubtitle = styled(motion.p)`
@@ -136,6 +206,17 @@ const ContactSubtitle = styled(motion.p)`
   margin: 0 auto 80px;
   line-height: 1.6;
   text-align: center;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+    margin: 0 auto 40px;
+  }
+
+  @media (max-width: 320px) {
+    font-size: 14px;
+    margin: 0 auto 30px;
+    padding: 0 10px;
+  }
 `;
 
 

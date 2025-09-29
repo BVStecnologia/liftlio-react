@@ -38,6 +38,14 @@ const Navigation = styled.nav`
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  @media (max-width: 480px) {
+    padding: 15px 20px;
+  }
+
+  @media (max-width: 320px) {
+    padding: 12px 15px;
+  }
 `;
 
 const Logo = styled.a`
@@ -56,6 +64,19 @@ const Logo = styled.a`
     font-size: 12px;
     font-weight: 600;
   }
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
+
+  @media (max-width: 320px) {
+    font-size: 18px;
+
+    span {
+      font-size: 10px;
+      padding: 3px 6px;
+    }
+  }
 `;
 
 const NavLinks = styled.div`
@@ -71,6 +92,22 @@ const NavLinks = styled.div`
 
     &:hover {
       color: white;
+    }
+  }
+
+  @media (max-width: 768px) {
+    gap: 20px;
+
+    a {
+      font-size: 14px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    gap: 12px;
+
+    a:not(:last-child) {
+      display: none;
     }
   }
 `;
@@ -91,6 +128,22 @@ const SignInButton = styled.a`
     transform: translateY(-2px);
     box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
   }
+
+  @media (max-width: 480px) {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  @media (max-width: 320px) {
+    padding: 6px 12px;
+    font-size: 12px;
+    gap: 4px;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
 `;
 
 const HeroSection = styled.section`
@@ -98,6 +151,18 @@ const HeroSection = styled.section`
   max-width: 1200px;
   margin: 0 auto;
   text-align: center;
+
+  @media (max-width: 768px) {
+    padding: 140px 20px 60px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 120px 15px 40px;
+  }
+
+  @media (max-width: 320px) {
+    padding: 100px 10px 30px;
+  }
 `;
 
 const FutureBadge = styled.div`
@@ -132,6 +197,15 @@ const HeroTitle = styled(motion.h1)`
   @media (max-width: 768px) {
     font-size: 48px;
   }
+
+  @media (max-width: 480px) {
+    font-size: 36px;
+  }
+
+  @media (max-width: 320px) {
+    font-size: 28px;
+    margin-bottom: 16px;
+  }
 `;
 
 const HeroSubtitle = styled(motion.p)`
@@ -140,6 +214,17 @@ const HeroSubtitle = styled(motion.p)`
   max-width: 700px;
   margin: 0 auto 48px;
   line-height: 1.6;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+    margin: 0 auto 32px;
+  }
+
+  @media (max-width: 320px) {
+    font-size: 14px;
+    margin: 0 auto 24px;
+    padding: 0 10px;
+  }
 `;
 
 const PowerStatement = styled(motion.div)`
@@ -169,6 +254,34 @@ const PowerStatement = styled(motion.div)`
     line-height: 1.7;
     color: rgba(255, 255, 255, 0.8);
   }
+
+  @media (max-width: 480px) {
+    padding: 30px 20px;
+    margin: 40px auto;
+
+    h3 {
+      font-size: 24px;
+    }
+
+    p {
+      font-size: 16px;
+    }
+  }
+
+  @media (max-width: 320px) {
+    padding: 20px 15px;
+    margin: 30px 10px;
+
+    h3 {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    p {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+  }
 `;
 
 const HeroCTAButton = styled.button`
@@ -189,12 +302,31 @@ const HeroCTAButton = styled.button`
     transform: translateY(-2px);
     box-shadow: 0 20px 40px rgba(124, 58, 237, 0.3);
   }
+
+  @media (max-width: 480px) {
+    padding: 12px 24px;
+    font-size: 16px;
+  }
+
+  @media (max-width: 320px) {
+    padding: 10px 20px;
+    font-size: 14px;
+    gap: 6px;
+  }
 `;
 
 const StatsSection = styled.section`
   padding: 60px 40px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+  @media (max-width: 480px) {
+    padding: 40px 20px;
+  }
+
+  @media (max-width: 320px) {
+    padding: 30px 15px;
+  }
 `;
 
 const StatsGrid = styled.div`
@@ -233,6 +365,18 @@ const FeaturesSection = styled.section`
   padding: 100px 40px;
   max-width: 1200px;
   margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: 60px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 40px 15px;
+  }
+
+  @media (max-width: 320px) {
+    padding: 30px 10px;
+  }
 `;
 
 const SectionTitle = styled(motion.h2)`
@@ -243,6 +387,21 @@ const SectionTitle = styled(motion.h2)`
   background: linear-gradient(180deg, #ffffff 0%, #a0a0a0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+
+  @media (max-width: 768px) {
+    font-size: 36px;
+    margin-bottom: 40px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 28px;
+    margin-bottom: 30px;
+  }
+
+  @media (max-width: 320px) {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
 `;
 
 const FeaturesGrid = styled.div`
@@ -278,6 +437,15 @@ const FeatureCard = styled(motion.div)`
     background: rgba(255, 255, 255, 0.03);
     border-color: rgba(124, 58, 237, 0.2);
   }
+
+  @media (max-width: 480px) {
+    padding: 25px;
+  }
+
+  @media (max-width: 320px) {
+    padding: 20px 15px;
+    border-radius: 15px;
+  }
 `;
 
 const FeatureIcon = styled.div`
@@ -312,6 +480,18 @@ const FoundersSection = styled.section`
   padding: 100px 40px;
   max-width: 1000px;
   margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: 60px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 40px 15px;
+  }
+
+  @media (max-width: 320px) {
+    padding: 30px 10px;
+  }
 `;
 
 const FoundersGrid = styled.div`
@@ -395,6 +575,14 @@ const FooterSection = styled.footer`
   padding: 80px 40px 40px;
   text-align: center;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
+
+  @media (max-width: 480px) {
+    padding: 40px 20px 20px;
+  }
+
+  @media (max-width: 320px) {
+    padding: 30px 15px 15px;
+  }
 `;
 
 const FooterText = styled.p`
