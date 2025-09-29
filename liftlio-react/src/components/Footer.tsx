@@ -154,6 +154,7 @@ const translations = {
       integrations: "Integrations",
       api: "API Documentation",
       about: "About",
+      contact: "Contact",
       privacy: "Privacy Policy",
       terms: "Terms of Service",
       security: "Security"
@@ -171,6 +172,7 @@ const translations = {
       integrations: "Integrações",
       api: "Documentação API",
       about: "Sobre",
+      contact: "Contato",
       privacy: "Política de Privacidade",
       terms: "Termos de Serviço",
       security: "Segurança"
@@ -214,6 +216,7 @@ const Footer: React.FC = () => {
           <FooterTitle>{t.company}</FooterTitle>
           <FooterLinks>
             <FooterLink><a href="/about">{t.links.about}</a></FooterLink>
+            <FooterLink><a href="/contact">{t.links.contact}</a></FooterLink>
           </FooterLinks>
         </FooterColumn>
         

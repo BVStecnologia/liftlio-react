@@ -2419,57 +2419,6 @@ const LiftlioAnalytics: React.FC = () => {
           </SetupContainer>
         </SetupSection>
       </MainContainer>
-
-      {/* Footer */}
-      <Footer>
-        <FooterContainer>
-          <FooterContent>
-            <FooterBrand>
-              <FooterLogo>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{display: 'inline-block', verticalAlign: 'middle', marginRight: '8px'}}>
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                </svg>
-                <LogoText>LIFTLIO</LogoText>
-                <BetaBadge>Beta</BetaBadge>
-              </FooterLogo>
-              <FooterDescription>
-                AI-powered platform to scale word-of-mouth recommendations without paying for ads.
-              </FooterDescription>
-            </FooterBrand>
-            
-            <FooterColumn>
-              <h3>Product</h3>
-              <FooterLinks>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#pricing">Pricing</a></li>
-                <li><a href="#api">API Documentation</a></li>
-              </FooterLinks>
-            </FooterColumn>
-            
-            <FooterColumn>
-              <h3>Company</h3>
-              <FooterLinks>
-                <li><a href="/about">About</a></li>
-                <li><a href="/blog">Blog</a></li>
-                <li><a href="/careers">Careers</a></li>
-              </FooterLinks>
-            </FooterColumn>
-            
-            <FooterColumn>
-              <h3>Legal</h3>
-              <FooterLinks>
-                <li><a href="/privacy">Privacy Policy</a></li>
-                <li><a href="/terms">Terms of Service</a></li>
-                <li><a href="/security">Security</a></li>
-              </FooterLinks>
-            </FooterColumn>
-          </FooterContent>
-          
-          <FooterBottom>
-            © 2024 Liftlio. All rights reserved.
-          </FooterBottom>
-        </FooterContainer>
-      </Footer>
     </>
   );
 };

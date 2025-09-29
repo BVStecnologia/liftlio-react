@@ -411,7 +411,8 @@ const AboutPage: React.FC = () => {
           <span>BETA</span>
         </Logo>
         <NavLinks>
-          <a href="/analytics">Analytics</a>
+          <a href="/contact">Contact</a>
+          <a href="/liftlio-analytics">Analytics</a>
           <a href="/trends">Trends</a>
           <SignInButton href="/login">
             Sign In
@@ -423,7 +424,7 @@ const AboutPage: React.FC = () => {
       <HeroSection>
         <FutureBadge>
           <Sparkles size={16} />
-          The Future of Organic Growth
+          About Liftlio
         </FutureBadge>
 
         <HeroTitle
@@ -431,8 +432,8 @@ const AboutPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1 }}
         >
-          Transform Your Brand<br />
-          Into <span>An Organic Machine</span>
+          We're Building the Future of<br />
+          <span>Organic Growth</span>
         </HeroTitle>
 
         <HeroSubtitle
@@ -440,9 +441,9 @@ const AboutPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.1 }}
         >
-          Build a self-reinforcing growth engine that compounds over time.
-          Every interaction becomes a permanent digital asset, creating an
-          unstoppable momentum for your brand.
+          Founded in 2025, Liftlio was born from a simple observation:
+          businesses spend billions on ads that disappear, while organic content
+          creates permanent value. We're here to change that equation.
         </HeroSubtitle>
 
         <motion.div
@@ -451,7 +452,7 @@ const AboutPage: React.FC = () => {
           transition={{ duration: 1, delay: 0.3 }}
         >
           <HeroCTAButton onClick={() => window.location.href = '/'}>
-            Begin Your Transformation
+            Start Growing Organically
             <ArrowUpRight size={18} />
           </HeroCTAButton>
         </motion.div>
@@ -461,12 +462,12 @@ const AboutPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.5 }}
         >
-          <h3>Automate the Manual. Master the Essential.</h3>
+          <h3>Our Mission</h3>
           <p>
-            We automate repetitive human work with unique AI-powered tools.
-            While machines execute complex analysis, detect patterns, and optimize results 24/7,
-            you focus on what truly matters: strategic decisions that transform businesses.
-            Liftlio doesn't just automate - it builds lasting organic presence that outperforms any temporary paid ad.
+            To democratize organic growth through AI automation.
+            We believe every business deserves to build lasting digital presence
+            without burning through advertising budgets. By automating content analysis
+            and optimization, we free entrepreneurs to focus on innovation and strategy.
           </p>
         </PowerStatement>
       </HeroSection>
@@ -519,7 +520,7 @@ const AboutPage: React.FC = () => {
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          The Machine at Work
+          Our Approach
         </SectionTitle>
 
         <FeaturesGrid>
@@ -600,7 +601,7 @@ const AboutPage: React.FC = () => {
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          The Architects
+          Our Founders
         </SectionTitle>
 
         <FoundersGrid>
@@ -638,15 +639,15 @@ const AboutPage: React.FC = () => {
             <FounderName>Valdair Demello</FounderName>
             <FounderRole>Co-Founder & CTO</FounderRole>
             <FounderBio>
-              Technical visionary and architect of Liftlio's AI infrastructure. Expert in machine learning,
-              natural language processing, and scalable cloud systems. Passionate about democratizing
-              access to AI-powered marketing tools and transforming how businesses grow globally.
+              Expert in machine learning, natural language processing, and scalable cloud systems.
+              Passionate about democratizing access to AI-powered marketing tools and transforming
+              how businesses grow globally.
             </FounderBio>
             <SocialLinks>
-              <SocialLink href="https://github.com/valdair" target="_blank" rel="noopener noreferrer">
+              <SocialLink href="https://github.com/BVStecnologia" target="_blank" rel="noopener noreferrer">
                 <Github />
               </SocialLink>
-              <SocialLink href="https://linkedin.com/in/valdair" target="_blank" rel="noopener noreferrer">
+              <SocialLink href="https://www.linkedin.com/in/valdair-demello" target="_blank" rel="noopener noreferrer">
                 <Linkedin />
               </SocialLink>
             </SocialLinks>
