@@ -4,34 +4,33 @@
       "command": "npx",
       "args": [
         "-y",
-        "@supabase/mcp-server-supabase",
-        "--project-ref=suqjifkhmekcdflwowiw"
-      ],
-      "env": {
-        "SUPABASE_ACCESS_TOKEN": "sbp_22c426d7fcfc7bdfb5972999ffea3e81dc0b03f2"
-      }
+        "@supabase/mcp-server-supabase@latest",
+        "--project-ref=suqjifkhmekcdflwowiw",
+        "--access-token=sbp_0b8789827f3a2ed426f7b4298923aa00e818c16b"
+      ]
     },
     "trello": {
       "command": "npx",
-      "args": ["-y", "@delorenj/mcp-server-trello"],
+      "args": [
+        "-y",
+        "@welt-studio/trello-mcp-server"
+      ],
       "env": {
-        "TRELLO_API_KEY": "cd5eb5e1c094cadbfe965e8ab093f6d8",
-        "TRELLO_TOKEN": "ATTAef50e93c887e9e37c1c33ae7e8c4e23709795f860f6f42fa97e7bdbe964e0e1c5FC4F044",
-        "TRELLO_BOARD_ID": "686b43ced8d30f8eb12b9d12"
+        "TRELLO_API_KEY": "3436c02dafd3cedc7015fd5e881a850c",
+        "TRELLO_TOKEN": "ATTA082e00f4ffc4f35a4b753c8c955d106a21a01c91c2213bc5c9fb3c128a0a8a9f0551C6F6"
       }
     },
     "wordpress": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-wordpress"],
+      "args": [
+        "-y",
+        "@instawp/mcp-wp@latest"
+      ],
       "env": {
-        "WORDPRESS_URL": "https://wordpress-1319296-5689133.cloudwaysapps.com",
+        "WORDPRESS_API_URL": "https://wordpress-1319296-5689133.cloudwaysapps.com",
         "WORDPRESS_USERNAME": "claude",
         "WORDPRESS_PASSWORD": "oC@5jqZc0Y*V!$Tr"
       }
-    },
-    "playwright": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-playwright"]
     }
   }
 }
