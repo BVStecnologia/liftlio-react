@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Globe from 'react-globe.gl';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import * as FaIcons from 'react-icons/fa';
 import { FaTimesCircle, FaCheckCircle, FaArrowDown, FaCircle, FaVideo, FaUserPlus, FaBookOpen, FaCode, FaMousePointer, FaChartLine, FaCog } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
@@ -1185,14 +1185,81 @@ const FunnelLabel = styled.div`
   margin-bottom: 8px;
 `;
 
+const ConversionToast = styled(motion.div)`
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 20px 24px;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(16, 185, 129, 0.3);
+  z-index: 1000;
+  min-width: 280px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  @media (max-width: 768px) {
+    bottom: 20px;
+    right: 20px;
+    left: 20px;
+    min-width: auto;
+  }
+`;
+
 const LiftlioAnalytics: React.FC = () => {
   const globeRef = useRef<any>(null);
-  const [liveVisitors] = useState(47);
+
+  // Sistema temporal com reset diário
+  const [liveVisitors, setLiveVisitors] = useState(() => {
+    const today = new Date().toDateString();
+    const stored = localStorage.getItem('liftlio_demo_analytics');
+
+    if (!stored) {
+      const data = {
+        date: today,
+        baseVisitors: 47,
+        startTime: Date.now()
+      };
+      localStorage.setItem('liftlio_demo_analytics', JSON.stringify(data));
+      return 47;
+    }
+
+    const data = JSON.parse(stored);
+
+    // Novo dia? Resetar!
+    if (data.date !== today) {
+      const newData = {
+        date: today,
+        baseVisitors: 47,
+        startTime: Date.now()
+      };
+      localStorage.setItem('liftlio_demo_analytics', JSON.stringify(newData));
+      return 47;
+    }
+
+    // Mesmo dia: incrementar baseado nas horas
+    const hoursElapsed = (Date.now() - data.startTime) / (1000 * 60 * 60);
+    const hour = new Date().getHours();
+
+    // Multiplicador por horário (pico comercial)
+    let multiplier = 1.0;
+    if (hour >= 9 && hour <= 18) multiplier = 1.5;
+    else if (hour >= 0 && hour <= 6) multiplier = 0.3;
+
+    const increment = Math.floor(hoursElapsed * 12 * multiplier);
+    return data.baseVisitors + increment;
+  });
+
   const [currentArcIndex, setCurrentArcIndex] = useState(0);
   const [activeView, setActiveView] = useState<'live' | 'journey'>('live');
+
+  // Toast de conversões
+  const [showConversionToast, setShowConversionToast] = useState(false);
+  const [conversionData, setConversionData] = useState({ name: '', source: '', value: '' });
   
-  // Dados demo realistas para o globo
-  const [points] = useState([
+  // Dados demo realistas para o globo (agora dinâmicos)
+  const initialPoints = [
     // Americas
     { lat: 40.7128, lng: -74.0060, size: 0.15, color: '#8b5cf6' }, // New York
     { lat: 34.0522, lng: -118.2437, size: 0.12, color: '#8b5cf6' }, // Los Angeles
@@ -1217,7 +1284,9 @@ const LiftlioAnalytics: React.FC = () => {
     // Oceania
     { lat: -33.8688, lng: 151.2093, size: 0.10, color: '#8b5cf6' }, // Sydney
     { lat: -37.8136, lng: 144.9631, size: 0.08, color: '#8b5cf6' }, // Melbourne
-  ]);
+  ];
+
+  const [points, setPoints] = useState(initialPoints);
 
   const [arcs, setArcs] = useState(() => {
     const allArcs = [
@@ -1237,8 +1306,8 @@ const LiftlioAnalytics: React.FC = () => {
     return allArcs.slice(0, 3);
   });
 
-  // Dados para os gráficos
-  const trafficGrowthData = [
+  // Dados para os gráficos (agora dinâmicos!)
+  const [trafficGrowthData, setTrafficGrowthData] = useState([
     { day: 'Mon', visitors: 1200 },
     { day: 'Tue', visitors: 1890 },
     { day: 'Wed', visitors: 2340 },
@@ -1246,7 +1315,13 @@ const LiftlioAnalytics: React.FC = () => {
     { day: 'Fri', visitors: 4780 },
     { day: 'Sat', visitors: 3900 },
     { day: 'Sun', visitors: 2800 },
-  ];
+  ]);
+
+  // Cards com números que variam sutilmente
+  const [organicTraffic, setOrganicTraffic] = useState(12847);
+  const [uniqueUsers, setUniqueUsers] = useState(8392);
+  const [conversionRate, setConversionRate] = useState(4.8);
+  const [avgTime, setAvgTime] = useState(222); // 3m 42s = 222 segundos
 
   const trafficSourcesData = [
     { name: 'Liftlio', value: 90, color: '#8b5cf6' },
@@ -1311,6 +1386,134 @@ const LiftlioAnalytics: React.FC = () => {
       });
     }, 3000);
     
+    return () => clearInterval(interval);
+  }, []);
+
+  // Incremento de visitantes em tempo real (a cada 45s)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLiveVisitors((prev: number) => prev + Math.floor(Math.random() * 2) + 1);
+    }, 45000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Novos pontos aparecem no globo (a cada 20s)
+  useEffect(() => {
+    const additionalCities = [
+      { lat: 55.7558, lng: 37.6173, name: 'Moscow' },
+      { lat: 39.9042, lng: 116.4074, name: 'Beijing' },
+      { lat: -34.6037, lng: -58.3816, name: 'Buenos Aires' },
+      { lat: 25.2048, lng: 55.2708, name: 'Dubai' },
+      { lat: -1.2921, lng: 36.8219, name: 'Nairobi' },
+      { lat: 13.7563, lng: 100.5018, name: 'Bangkok' },
+      { lat: -26.2041, lng: 28.0473, name: 'Johannesburg' },
+      { lat: 59.3293, lng: 18.0686, name: 'Stockholm' },
+      { lat: 50.1109, lng: 8.6821, name: 'Frankfurt' },
+      { lat: -22.9068, lng: -43.1729, name: 'Rio de Janeiro' },
+    ];
+
+    const interval = setInterval(() => {
+      const randomCity = additionalCities[Math.floor(Math.random() * additionalCities.length)];
+
+      setPoints(prev => {
+        const newPoint = {
+          lat: randomCity.lat,
+          lng: randomCity.lng,
+          size: 0.12,
+          color: '#8b5cf6',
+          timestamp: Date.now()
+        };
+
+        // Remove pontos antigos (>2 minutos)
+        const filtered = prev.filter((p: any) =>
+          !p.timestamp || Date.now() - p.timestamp < 120000
+        );
+
+        return [...filtered, newPoint];
+      });
+    }, 20000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Toast de conversões (a cada 1 minuto)
+  useEffect(() => {
+    const names = ['John D.', 'Sarah M.', 'Mike P.', 'Emma W.', 'David L.', 'Lisa K.', 'James R.', 'Amy T.'];
+    const sources = ['YouTube', 'Google Search'];
+    const values = ['$97', '$197', '$297', '$497', '$147'];
+
+    const interval = setInterval(() => {
+      setConversionData({
+        name: names[Math.floor(Math.random() * names.length)],
+        source: sources[Math.floor(Math.random() * sources.length)],
+        value: values[Math.floor(Math.random() * values.length)]
+      });
+
+      setShowConversionToast(true);
+      setTimeout(() => setShowConversionToast(false), 4000);
+    }, 60000);
+
+    // Primeira conversão após 10s
+    setTimeout(() => {
+      setConversionData({
+        name: names[0],
+        source: sources[0],
+        value: values[0]
+      });
+      setShowConversionToast(true);
+      setTimeout(() => setShowConversionToast(false), 4000);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Gráfico Traffic Growth - adiciona novo ponto a cada 2 minutos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      const timeLabel = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+      setTrafficGrowthData(prev => {
+        const newData = [...prev];
+        const lastValue = newData[newData.length - 1].visitors;
+        const increment = Math.floor(Math.random() * 150) + 80; // +80-230 visitantes
+
+        newData.push({
+          day: timeLabel,
+          visitors: lastValue + increment
+        });
+
+        // Manter apenas últimos 7 pontos
+        return newData.slice(-7);
+      });
+    }, 120000); // a cada 2 minutos
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Cards com números que variam sutilmente (a cada 90s)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Organic Traffic: +5-15
+      setOrganicTraffic(prev => prev + Math.floor(Math.random() * 11) + 5);
+
+      // Unique Users: +2-8
+      setUniqueUsers(prev => prev + Math.floor(Math.random() * 7) + 2);
+
+      // Conversion Rate: ±0.1%
+      setConversionRate(prev => {
+        const change = (Math.random() - 0.5) * 0.2;
+        return Math.max(4.5, Math.min(5.2, prev + change));
+      });
+
+      // Avg Time: ±2-5 segundos
+      setAvgTime(prev => {
+        const change = Math.floor(Math.random() * 8) - 3;
+        return Math.max(210, Math.min(240, prev + change));
+      });
+    }, 90000); // a cada 1min30s
+
     return () => clearInterval(interval);
   }, []);
 
@@ -1584,7 +1787,7 @@ const LiftlioAnalytics: React.FC = () => {
               <IconComponent icon={FaIcons.FaSearch} />
             </StatCardIcon>
           </StatCardHeader>
-          <StatCardValue>12,847</StatCardValue>
+          <StatCardValue>{organicTraffic.toLocaleString()}</StatCardValue>
           <StatCardChange $positive>
             <IconComponent icon={FaIcons.FaArrowUp} />
             +127.3% vs. last month
@@ -1602,7 +1805,7 @@ const LiftlioAnalytics: React.FC = () => {
               <IconComponent icon={FaIcons.FaUsers} />
             </StatCardIcon>
           </StatCardHeader>
-          <StatCardValue>8,392</StatCardValue>
+          <StatCardValue>{uniqueUsers.toLocaleString()}</StatCardValue>
           <StatCardChange $positive>
             <IconComponent icon={FaIcons.FaArrowUp} />
             +89.1% unique visitors
@@ -1620,7 +1823,7 @@ const LiftlioAnalytics: React.FC = () => {
               <IconComponent icon={FaIcons.FaRocket} />
             </StatCardIcon>
           </StatCardHeader>
-          <StatCardValue>4.8%</StatCardValue>
+          <StatCardValue>{conversionRate.toFixed(1)}%</StatCardValue>
           <StatCardChange $positive>
             <IconComponent icon={FaIcons.FaArrowUp} />
             +2.3% from organic traffic
@@ -1638,7 +1841,7 @@ const LiftlioAnalytics: React.FC = () => {
               <IconComponent icon={FaIcons.FaClock} />
             </StatCardIcon>
           </StatCardHeader>
-          <StatCardValue>3m 42s</StatCardValue>
+          <StatCardValue>{Math.floor(avgTime / 60)}m {avgTime % 60}s</StatCardValue>
           <StatCardChange $positive>
             <IconComponent icon={FaIcons.FaArrowUp} />
             +28s on page
@@ -1934,13 +2137,13 @@ const LiftlioAnalytics: React.FC = () => {
           </ChartTitle>
           <div>
             <FunnelLabel>Visited</FunnelLabel>
-            <FunnelBar width="100%">8,392 users (100%)</FunnelBar>
-            
+            <FunnelBar width="100%">{uniqueUsers.toLocaleString()} users (100%)</FunnelBar>
+
             <FunnelLabel>Engaged</FunnelLabel>
-            <FunnelBar width="75%">6,294 users (75%)</FunnelBar>
-            
+            <FunnelBar width="75%">{Math.floor(uniqueUsers * 0.75).toLocaleString()} users (75%)</FunnelBar>
+
             <FunnelLabel>Converted</FunnelLabel>
-            <FunnelBar width="30%">403 users (4.8%)</FunnelBar>
+            <FunnelBar width={`${Math.min(conversionRate * 6, 35)}%`}>{Math.floor(uniqueUsers * (conversionRate / 100)).toLocaleString()} users ({conversionRate.toFixed(1)}%)</FunnelBar>
           </div>
         </ChartCard>
 
@@ -2419,6 +2622,29 @@ const LiftlioAnalytics: React.FC = () => {
           </SetupContainer>
         </SetupSection>
       </MainContainer>
+
+      {/* Toast de Conversão */}
+      <AnimatePresence>
+        {showConversionToast && (
+          <ConversionToast
+            initial={{ opacity: 0, x: 100, scale: 0.8 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 100, scale: 0.8 }}
+            transition={{ type: 'spring', damping: 20 }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <div style={{ fontSize: '24px' }}>💰</div>
+              <div style={{ fontWeight: '700', fontSize: '16px' }}>New Conversion!</div>
+            </div>
+            <div style={{ fontSize: '14px', opacity: 0.9, marginBottom: '4px' }}>
+              {conversionData.name} purchased via {conversionData.source}
+            </div>
+            <div style={{ fontSize: '18px', fontWeight: '700', color: '#d1fae5' }}>
+              {conversionData.value}
+            </div>
+          </ConversionToast>
+        )}
+      </AnimatePresence>
     </>
   );
 };
