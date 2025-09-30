@@ -3,6 +3,7 @@
 -- Descrição: Processa vídeos em batch para buscar comentários
 -- Dependência de: start_video_processing
 -- Criado: 2025-01-27
+-- Atualizado: 2025-01-30 - Corrigido bug de loop STATUS 2 ↔ 3
 -- =============================================
 
 CREATE OR REPLACE FUNCTION public.process_videos_batch(project_id integer, batch_size integer)
@@ -53,10 +54,16 @@ BEGIN
       PERFORM cron.unschedule('process_videos_' || project_id::text);
     END IF;
 
-    -- Atualiza o status do projeto para 2 quando todos os comentários foram processados
-    UPDATE public."Projeto"
-    SET status = '2'
-    WHERE id = project_id;
+    -- ✅ CORREÇÃO (2025-01-30): Mantém status em '3'
+    -- BUG CORRIGIDO: Linha 58 estava revertendo para status='2', causando loop infinito
+    -- O status já foi corretamente definido para '3' pela função start_video_processing()
+    -- Não alteramos o status aqui para permitir que o pipeline avance para análise de vídeos
+
+    -- CÓDIGO REMOVIDO (causava o bug):
+    -- UPDATE public."Projeto"
+    -- SET status = '2'
+    -- WHERE id = project_id;
+
   END IF;
 END;
 $function$

@@ -1384,8 +1384,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
     { path: '/analytics', label: 'Analytics', icon: 'FaChartLine' },
     { path: '/mentions', label: t('nav.mentions'), icon: 'FaComments' },
     { path: '/monitoring', label: t('nav.monitoring'), icon: 'FaYoutube' },
-    { path: '/sobre', label: 'Sobre', icon: 'FaInfoCircle' },
-    { path: '/contato', label: 'Contato', icon: 'FaEnvelope' },
     { path: '/settings', label: t('nav.settings'), icon: 'FaCog' },
     { path: '/billing', label: 'Billing', icon: 'FaCreditCard' },
     { path: '/integrations', label: t('nav.integrations'), icon: 'FaPlug' }
