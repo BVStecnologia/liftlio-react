@@ -1217,15 +1217,47 @@ const formatTimeAgo = (dateString: string): string => {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
-  
+
   if (diffMins < 1) return 'Just now';
   if (diffMins < 60) return `${diffMins}m ago`;
-  
+
   const diffHours = Math.floor(diffMins / 60);
   if (diffHours < 24) return `${diffHours}h ago`;
-  
+
   const diffDays = Math.floor(diffHours / 24);
   return `${diffDays}d ago`;
+};
+
+// Function to format "Posted" timestamp (more verbose)
+const formatPostedTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+
+  if (diffMins < 1) return 'Posted just now';
+  if (diffMins < 60) {
+    const minutes = diffMins;
+    return minutes === 1 ? 'Posted 1 minute ago' : `Posted ${minutes} minutes ago`;
+  }
+
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) {
+    return diffHours === 1 ? 'Posted 1 hour ago' : `Posted ${diffHours} hours ago`;
+  }
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 30) {
+    return diffDays === 1 ? 'Posted 1 day ago' : `Posted ${diffDays} days ago`;
+  }
+
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths < 12) {
+    return diffMonths === 1 ? 'Posted 1 month ago' : `Posted ${diffMonths} months ago`;
+  }
+
+  const diffYears = Math.floor(diffMonths / 12);
+  return diffYears === 1 ? 'Posted 1 year ago' : `Posted ${diffYears} years ago`;
 };
 
 // Function to highlight product mentions in text
@@ -1718,7 +1750,7 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
                   </EngagementTitle>
                   <EngagementLabel>
                     <IconComponent icon={FaIcons.FaCheckCircle} />
-                    Posted
+                    {formatPostedTime(video.engaged_at)}
                   </EngagementLabel>
                 </EngagementHeader>
                 
