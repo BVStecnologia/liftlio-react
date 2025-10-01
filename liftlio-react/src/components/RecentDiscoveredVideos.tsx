@@ -40,6 +40,7 @@ interface RecentDiscoveredVideosProps {
   currentPage?: number;
   totalPages?: number;
   totalCount?: number;
+  itemsPerPage?: number;
   hasNextPage?: boolean;
   hasPrevPage?: boolean;
   onNextPage?: () => void;
@@ -103,6 +104,155 @@ const MOCK_DISCOVERED_VIDEOS: DiscoveredVideo[] = [
     projected_views: 5200
   }
 ];
+
+// Helper function to get YouTube video ID from thumbnail URL
+const getVideoIdFromThumbnail = (url: string): string => {
+  const match = url.match(/\/vi\/([^\/]+)\//);
+  return match ? match[1] : '';
+};
+
+// Helper function to get thumbnail URLs in order of quality (highest to lowest)
+const getThumbnailQualities = (url: string): string[] => {
+  const videoId = getVideoIdFromThumbnail(url);
+  if (!videoId) return [url];
+
+  return [
+    `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+    `https://img.youtube.com/vi/${videoId}/sddefault.jpg`,
+    `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+    `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
+  ];
+};
+
+// Component that tries to load thumbnail with fallback to lower qualities
+const ThumbnailWithFallback: React.FC<{ url: string }> = ({ url }) => {
+  const [currentUrl, setCurrentUrl] = useState('');
+  const [qualityIndex, setQualityIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const qualitiesRef = useRef<string[]>([]);
+  const attemptedRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    qualitiesRef.current = getThumbnailQualities(url);
+    attemptedRef.current.clear();
+    setQualityIndex(0);
+    setCurrentUrl(qualitiesRef.current[0]);
+    setIsLoading(true);
+    setHasError(false);
+    console.log('🔍 ThumbnailWithFallback: Starting with qualities:', qualitiesRef.current);
+  }, [url]);
+
+  const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const failedUrl = currentUrl;
+    attemptedRef.current.add(failedUrl);
+    const nextIndex = qualityIndex + 1;
+
+    console.log(`❌ ThumbnailWithFallback: Failed quality ${qualityIndex} (${failedUrl.split('/').pop()})`);
+    console.log(`   Attempting ${nextIndex}/${qualitiesRef.current.length - 1}`);
+
+    if (nextIndex < qualitiesRef.current.length) {
+      setQualityIndex(nextIndex);
+      setCurrentUrl(qualitiesRef.current[nextIndex]);
+      setIsLoading(true);
+    } else {
+      console.log('❌ ThumbnailWithFallback: All qualities exhausted');
+      setHasError(true);
+      setIsLoading(false);
+    }
+  };
+
+  const handleLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const img = e.currentTarget;
+    // Check if image actually loaded (some 404 pages return HTML)
+    if (img.naturalWidth === 0 || img.naturalHeight === 0) {
+      handleError(e);
+      return;
+    }
+
+    console.log(`✅ ThumbnailWithFallback: Success at quality ${qualityIndex} (${currentUrl.split('/').pop()})`);
+    setIsLoading(false);
+    setHasError(false);
+  };
+
+  if (!currentUrl) {
+    return (
+      <div style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(0, 0, 0, 0.2)',
+        color: '#666'
+      }}>
+        Loading...
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {isLoading && !hasError && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(30, 30, 35, 0.8)',
+          zIndex: 1
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '3px solid rgba(139, 92, 246, 0.3)',
+            borderTop: '3px solid #8B5CF6',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }} />
+        </div>
+      )}
+      {hasError && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(30, 30, 35, 0.8)',
+          color: '#888',
+          fontSize: '12px',
+          zIndex: 1
+        }}>
+          No thumbnail available
+        </div>
+      )}
+      <img
+        key={currentUrl}
+        src={currentUrl}
+        alt="Video thumbnail"
+        onError={handleError}
+        onLoad={handleLoad}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: 'center',
+          display: hasError ? 'none' : 'block',
+          opacity: isLoading ? 0 : 1,
+          transition: 'opacity 0.3s ease'
+        }}
+      />
+    </>
+  );
+};
 
 // Creative monitoring visualization component
 const MonitoringVisualization = styled.div`
@@ -188,15 +338,16 @@ const DiscoveredVideosContainer = styled(motion.div)`
   margin-bottom: 30px;
   position: relative;
   animation: fadeIn 0.6s ease-out;
-  background: ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.03)' 
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(20, 20, 25, 0.6)'
     : props.theme.colors.white};
-  padding: 24px;
-  border-radius: ${props => props.theme.radius.lg};
-  box-shadow: ${props => props.theme.name === 'dark' 
-    ? '0 3px 10px rgba(0, 0, 0, 0.3)' 
-    : '0 3px 10px rgba(0, 0, 0, 0.05)'};
-  
+  padding: 32px;
+  border-radius: 16px;
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.06)'
+    : 'rgba(0, 0, 0, 0.05)'};
+  box-shadow: none;
+
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -207,21 +358,24 @@ const DiscoveredVideosHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-  border-bottom: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
-  padding-bottom: 12px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.06)'
+    : 'rgba(0, 0, 0, 0.08)'};
+  padding-bottom: 16px;
 `;
 
 const DiscoveredVideosTitle = styled.h2`
-  font-size: ${props => props.theme.fontSizes.lg};
-  font-weight: ${props => props.theme.fontWeights.bold};
+  font-size: 18px;
+  font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
   display: flex;
   align-items: center;
-  
+  letter-spacing: -0.3px;
+
   svg {
     margin-right: 12px;
-    color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.name === 'dark' ? '#8B5CF6' : props.theme.colors.primary};
     font-size: 20px;
   }
 `;
@@ -282,71 +436,33 @@ const BinaryCodeBackground = styled.div`
 
 const TechMonitoringBanner = styled(motion.div)`
   position: relative;
-  background: linear-gradient(90deg, 
-    ${props => withOpacity(props.theme.colors.primary, 0.05)} 0%,
-    ${props => withOpacity(props.theme.colors.info, 0.1)} 50%,
-    ${props => withOpacity(props.theme.colors.primary, 0.05)} 100%
-  );
-  border-radius: ${props => props.theme.radius.md};
-  padding: 16px 16px;
-  margin-bottom: 16px;
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(25, 30, 38, 0.5)'
+    : 'rgba(248, 248, 250, 1)'};
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
   overflow: hidden;
-  border: 1px solid ${props => withOpacity(props.theme.colors.primary, 0.1)};
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(139, 92, 246, 0.15)'
+    : 'rgba(0, 0, 0, 0.06)'};
   display: flex;
   align-items: center;
-  min-height: 44px;
-  
-  // Tech pattern overlay
-  &:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-      radial-gradient(circle, ${props => withOpacity(props.theme.colors.primary, 0.1)} 1px, transparent 1px),
-      linear-gradient(90deg, ${props => withOpacity(props.theme.colors.primary, 0.05)} 1px, transparent 1px);
-    background-size: 20px 20px, 20px 20px;
-    pointer-events: none;
-    opacity: 0.4;
-  }
-  
-  // Scan line animation
-  &:after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, 
-      transparent 0%, 
-      ${props => withOpacity(props.theme.colors.info, 0.2)} 50%, 
-      transparent 100%);
-    opacity: 0.6;
-    width: 50%;
-    transform: skewX(-20deg);
-    animation: scanAnimation 3s ease-in-out infinite;
-  }
-  
-  @keyframes scanAnimation {
-    0% { transform: translateX(-100%) skewX(-20deg); }
-    100% { transform: translateX(200%) skewX(-20deg); }
-  }
+  min-height: 60px;
 `;
 
 const MonitoringStatusText = styled.div`
-  font-size: ${props => props.theme.fontSizes.sm};
-  font-weight: ${props => props.theme.fontWeights.medium};
-  color: ${props => props.theme.colors.text.primary};
+  font-size: 14px;
+  font-weight: 400;
+  color: ${props => props.theme.name === 'dark' ? '#999' : '#666'};
   margin-left: 16px;
   position: relative;
   z-index: 1;
-  
+  line-height: 1.6;
+
   span {
-    color: ${props => props.theme.colors.primary};
-    font-weight: ${props => props.theme.fontWeights.bold};
+    color: ${props => props.theme.colors.text.primary};
+    font-weight: 600;
   }
 `;
 
@@ -482,64 +598,27 @@ const VideoCardWrapper = styled(motion.div)`
 `;
 
 const VideoCard = styled(motion.div)`
-  background: ${props => props.theme.name === 'dark' 
-    ? 'rgba(45, 45, 55, 0.95)' 
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(30, 30, 35, 0.5)'
     : props.theme.colors.white};
-  border-radius: ${props => props.theme.radius.lg};
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: ${props => props.theme.name === 'dark'
-    ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-    : '0 4px 12px rgba(0, 0, 0, 0.05)'};
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: none;
+  transition: all 0.25s ease;
   cursor: pointer;
   position: relative;
   border: 1px solid ${props => props.theme.name === 'dark'
-    ? 'rgba(255, 255, 255, 0.1)'
-    : withOpacity(props.theme.colors.tertiary, 0.1)};
-  transform-style: preserve-3d;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: ${props => props.theme.name === 'dark'
-      ? 'radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 245, 255, 0.1), transparent 40%)'
-      : 'radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(107, 0, 204, 0.05), transparent 40%)'};
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-  }
-  
+    ? 'rgba(255, 255, 255, 0.08)'
+    : 'rgba(0, 0, 0, 0.08)'};
+
   &:hover {
-    transform: translateY(-5px) scale(1.02);
-    box-shadow: ${props => props.theme.name === 'dark'
-      ? '0 12px 32px rgba(0, 245, 255, 0.2)'
-      : '0 12px 32px rgba(107, 0, 204, 0.1)'};
+    transform: translateY(-4px);
     border-color: ${props => props.theme.name === 'dark'
-      ? 'rgba(0, 245, 255, 0.3)'
-      : 'rgba(107, 0, 204, 0.2)'};
-      
-    &::before {
-      opacity: 1;
-    }
-  }
-  
-  /* Subtle tech pattern */
-  &:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: linear-gradient(90deg, 
-      ${props => withOpacity(props.theme.colors.primary, 0.01)} 1px, 
-      transparent 1px),
-    linear-gradient(${props => withOpacity(props.theme.colors.primary, 0.01)} 1px, 
-      transparent 1px);
-    background-size: 20px 20px;
-    pointer-events: none;
-    opacity: 0.5;
+      ? 'rgba(139, 92, 246, 0.4)'
+      : 'rgba(139, 92, 246, 0.3)'};
+    box-shadow: ${props => props.theme.name === 'dark'
+      ? '0 8px 24px rgba(0, 0, 0, 0.4)'
+      : '0 8px 24px rgba(0, 0, 0, 0.08)'};
   }
 `;
 
@@ -549,16 +628,20 @@ const VideoHeader = styled.div`
   overflow: hidden;
 `;
 
-const VideoThumbnail = styled.div<{ image: string }>`
+const VideoThumbnail = styled.div`
+  position: relative;
   width: 100%;
   height: 100%;
-  background-image: url(${props => props.image});
-  background-size: cover;
-  background-position: center;
   transition: transform 0.4s ease;
-  
+  overflow: hidden;
+
   ${VideoCard}:hover & {
     transform: scale(1.05);
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 `;
 
@@ -577,45 +660,46 @@ const VideoOverlay = styled.div`
 
 const StatusBadge = styled.div`
   position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(25, 42, 70, 0.8);
-  backdrop-filter: blur(4px);
-  border-radius: 4px;
-  padding: 4px 8px;
+  top: 12px;
+  left: 12px;
+  background: rgba(16, 185, 129, 0.9);
+  backdrop-filter: blur(12px);
+  border-radius: 8px;
+  padding: 6px 10px;
   color: white;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 600;
   display: flex;
   align-items: center;
   z-index: 2;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+
   svg {
-    margin-right: 4px;
-    color: ${props => props.theme.colors.info};
-    font-size: 11px;
+    margin-right: 5px;
+    font-size: 12px;
   }
 `;
 
 const TimeBadge = styled.div`
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(25, 42, 70, 0.8);
-  backdrop-filter: blur(4px);
-  border-radius: 4px;
-  padding: 4px 8px;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  padding: 6px 10px;
   color: white;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 500;
   z-index: 2;
   display: flex;
   align-items: center;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  
+
   svg {
-    margin-right: 4px;
-    color: ${props => props.theme.colors.success};
-    font-size: 9px;
+    margin-right: 5px;
+    font-size: 10px;
   }
 `;
 
@@ -642,16 +726,23 @@ const VideoContent = styled.div`
 const ChannelInfo = styled.div`
   display: flex;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
 `;
 
-const ChannelImage = styled.div<{ image: string }>`
+const ChannelLeftInfo = styled.div`
+  display: flex;
+  align-items: center;
+  flex: 1;
+`;
+
+const ChannelImage = styled.div<{ $image: string }>`
   width: 36px;
   height: 36px;
   border-radius: 6px;
-  background-image: url(${props => props.image});
+  background-image: url(${props => props.$image});
   background-size: cover;
   background-position: center;
   margin-right: 12px;
@@ -664,6 +755,44 @@ const ChannelName = styled.div`
   font-size: ${props => props.theme.fontSizes.sm};
 `;
 
+const VisitCommentButton = styled.a`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(139, 92, 246, 0.12)'
+    : 'rgba(139, 92, 246, 0.08)'};
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(139, 92, 246, 0.3)'
+    : 'rgba(139, 92, 246, 0.2)'};
+  border-radius: 8px;
+  color: ${props => props.theme.name === 'dark' ? '#A78BFA' : '#8B5CF6'};
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  svg {
+    font-size: 12px;
+  }
+
+  &:hover {
+    background: ${props => props.theme.name === 'dark'
+      ? 'rgba(139, 92, 246, 0.2)'
+      : 'rgba(139, 92, 246, 0.15)'};
+    border-color: ${props => props.theme.name === 'dark'
+      ? 'rgba(139, 92, 246, 0.5)'
+      : 'rgba(139, 92, 246, 0.4)'};
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 const MetricsRow = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -673,40 +802,41 @@ const MetricsRow = styled.div`
 
 const MetricItem = styled.div`
   text-align: center;
-  padding: 8px 4px;
+  padding: 12px 8px;
   background: ${props => props.theme.name === 'dark'
-    ? 'rgba(255, 255, 255, 0.05)'
-    : withOpacity(props.theme.colors.background, 0.05)};
-  border-radius: ${props => props.theme.radius.md};
+    ? 'rgba(25, 25, 30, 0.5)'
+    : 'rgba(248, 248, 250, 1)'};
+  border-radius: 10px;
   border: 1px solid ${props => props.theme.name === 'dark'
-    ? 'rgba(255, 255, 255, 0.08)'
-    : withOpacity(props.theme.colors.tertiary, 0.1)};
+    ? 'rgba(255, 255, 255, 0.06)'
+    : 'rgba(0, 0, 0, 0.06)'};
 `;
 
 const MetricValue = styled.div`
-  font-size: ${props => props.theme.fontSizes.md};
-  font-weight: ${props => props.theme.fontWeights.bold};
-  color: ${props => props.theme.colors.primary};
+  font-size: 18px;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
   margin-bottom: 4px;
 `;
 
 const MetricLabel = styled.div`
   font-size: 10px;
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => props.theme.name === 'dark' ? '#888' : '#666'};
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-weight: 500;
 `;
 
 const EngagementSection = styled.div`
   background: ${props => props.theme.name === 'dark'
-    ? 'rgba(255, 255, 255, 0.03)'
-    : withOpacity(props.theme.colors.background, 0.03)};
-  border-radius: ${props => props.theme.radius.md};
-  padding: 12px;
+    ? 'rgba(25, 25, 30, 0.4)'
+    : 'rgba(248, 248, 250, 0.5)'};
+  border-radius: 10px;
+  padding: 14px;
   margin-bottom: 10px;
   border: 1px solid ${props => props.theme.name === 'dark'
-    ? 'rgba(255, 255, 255, 0.08)'
-    : withOpacity(props.theme.colors.tertiary, 0.1)};
+    ? 'rgba(255, 255, 255, 0.06)'
+    : 'rgba(0, 0, 0, 0.06)'};
 `;
 
 const EngagementHeader = styled.div`
@@ -749,17 +879,17 @@ const EngagementLabel = styled.div`
 `;
 
 const EngagementMessage = styled.div`
-  font-size: ${props => props.theme.fontSizes.xs};
-  color: ${props => props.theme.colors.text.primary};
-  line-height: 1.5;
-  padding: 10px;
-  background: ${props => props.theme.name === 'dark' 
-    ? 'rgba(20, 20, 25, 0.95)' 
+  font-size: 12px;
+  color: ${props => props.theme.name === 'dark' ? '#ccc' : '#444'};
+  line-height: 1.6;
+  padding: 12px;
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(20, 20, 25, 0.6)'
     : 'white'};
-  border-radius: ${props => props.theme.radius.sm};
+  border-radius: 8px;
   border: 1px solid ${props => props.theme.name === 'dark'
-    ? 'rgba(255, 255, 255, 0.15)'
-    : withOpacity(props.theme.colors.tertiary, 0.1)};
+    ? 'rgba(255, 255, 255, 0.06)'
+    : 'rgba(0, 0, 0, 0.06)'};
   height: 70px;
   overflow-y: auto;
   position: relative;
@@ -848,12 +978,10 @@ const VideoDetailHeader = styled.div`
   overflow: hidden;
 `;
 
-const VideoDetailThumbnail = styled.div<{ image: string }>`
+const VideoDetailThumbnail = styled.div`
   width: 100%;
   height: 100%;
-  background-image: url(${props => props.image});
-  background-size: cover;
-  background-position: center;
+  overflow: hidden;
 `;
 
 const VideoDetailOverlay = styled.div`
@@ -1244,6 +1372,7 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
   currentPage = 1,
   totalPages = 1,
   totalCount = 0,
+  itemsPerPage = 10,
   hasNextPage = false,
   hasPrevPage = false,
   onNextPage,
@@ -1370,6 +1499,13 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+
       <DiscoveredVideosHeader>
         <DiscoveredVideosTitle>
           <IconComponent icon={HiIcons.HiOutlineGlobe} />
@@ -1514,12 +1650,12 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
         >
           <VideosGrid>
             {videosToDisplay.map((video, index) => (
-              <VideoCardWrapper 
-                key={video.id}
+              <VideoCardWrapper
+                key={`video-${video.id}-${index}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ 
-                  delay: index * 0.1, 
+                transition={{
+                  delay: index * 0.1,
                   type: "spring",
                   stiffness: 100
                 }}
@@ -1531,12 +1667,10 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
                   layoutId={`video-card-${video.id}`}
                 >
                   <VideoHeader>
-              <VideoThumbnail image={video.thumbnailUrl} />
+              <VideoThumbnail>
+                <ThumbnailWithFallback url={video.thumbnailUrl} />
+              </VideoThumbnail>
               <VideoOverlay />
-              <StatusBadge>
-                <IconComponent icon={HiIcons.HiOutlineLightBulb} />
-                Discovered and Engaged
-              </StatusBadge>
               <TimeBadge>
                 <IconComponent icon={FaIcons.FaClock} />
                 {formatTimeAgo(video.discovered_at)}
@@ -1546,8 +1680,19 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
             
             <VideoContent>
               <ChannelInfo>
-                <ChannelImage image={video.channel_image} />
-                <ChannelName>{video.channel_name}</ChannelName>
+                <ChannelLeftInfo>
+                  <ChannelImage $image={video.channel_image} />
+                  <ChannelName>{video.channel_name}</ChannelName>
+                </ChannelLeftInfo>
+                <VisitCommentButton
+                  href={`https://www.youtube.com/watch?v=${video.video_id_youtube}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <IconComponent icon={FaIcons.FaExternalLinkAlt} />
+                  Visit
+                </VisitCommentButton>
               </ChannelInfo>
               
               <MetricsRow>
@@ -1605,8 +1750,8 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
       {totalCount > 0 && (
         <PaginationContainer>
           <PaginationInfo>
-            Showing <span>{Math.min((currentPage - 1) * 10 + 1, totalCount)}</span> to{' '}
-            <span>{Math.min(currentPage * 10, totalCount)}</span> of <span>{totalCount}</span> discovered videos
+            Showing <span>{Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)}</span> to{' '}
+            <span>{Math.min(currentPage * itemsPerPage, totalCount)}</span> of <span>{totalCount}</span> discovered videos
           </PaginationInfo>
           
           <PaginationControls>
@@ -1643,7 +1788,9 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
         >
           <VideoDetailContainer>
             <VideoDetailHeader>
-              <VideoDetailThumbnail image={selectedVideo.thumbnailUrl} />
+              <VideoDetailThumbnail>
+                <ThumbnailWithFallback url={selectedVideo.thumbnailUrl} />
+              </VideoDetailThumbnail>
               <VideoDetailOverlay />
               <VideoDetailTitle>{selectedVideo.nome_do_video}</VideoDetailTitle>
             </VideoDetailHeader>

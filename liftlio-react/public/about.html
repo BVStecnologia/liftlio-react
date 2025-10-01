@@ -3,45 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Liftlio - Revolutionizing Digital Marketing with AI</title>
-    <meta name="description" content="Learn about Liftlio's mission to democratize digital marketing through intelligent organic engagement. Our story, values, and cutting-edge AI technology.">
+    <title>About Liftlio - Building the Future of Organic Growth</title>
+    <meta name="description" content="Learn about Liftlio's mission to democratize organic growth through AI automation. Meet our founders and discover how we're revolutionizing digital marketing.">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://liftlio.com/about">
-    
+
     <!-- Favicon -->
-    <link rel="icon" href="/favicon.ico">
-    
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <!-- Open Graph -->
-    <meta property="og:title" content="About Liftlio - Revolutionizing Digital Marketing">
-    <meta property="og:description" content="Democratizing digital marketing through AI-powered organic engagement. Real connections, lasting value.">
+    <meta property="og:title" content="About Liftlio - Building the Future">
+    <meta property="og:description" content="Democratizing organic growth through AI automation. Real connections, lasting value.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://liftlio.com/about">
-    
-    <!-- Schema.org markup -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "AboutPage",
-      "name": "About Liftlio",
-      "description": "Learn about Liftlio's mission to democratize digital marketing",
-      "url": "https://liftlio.com/about",
-      "inLanguage": "en",
-      "isPartOf": {
-        "@type": "WebSite",
-        "name": "Liftlio",
-        "url": "https://liftlio.com"
-      },
-      "mainEntity": {
-        "@type": "Organization",
-        "name": "Liftlio",
-        "description": "AI-powered YouTube marketing platform",
-        "url": "https://liftlio.com",
-        "foundingDate": "2024",
-        "slogan": "Democratizing digital marketing through intelligent organic engagement"
-      }
-    }
-    </script>
-    
+
     <style>
         /* Reset */
         * {
@@ -49,242 +32,638 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         /* Base styles */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
-            background: #0a0a0a;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #0A0A0B;
             color: #ffffff;
             line-height: 1.6;
             min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-        
-        /* Header */
-        header {
-            padding: 20px 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(10, 10, 10, 0.95);
-            backdrop-filter: blur(10px);
-            position: sticky;
+
+        /* Navigation */
+        nav {
+            position: fixed;
             top: 0;
-            z-index: 100;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 20px 40px;
+            background: rgba(10, 10, 11, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        
-        .back-button {
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: white;
+            text-decoration: none;
             display: flex;
             align-items: center;
             gap: 8px;
-            background: none;
-            border: none;
-            color: #ffffff;
-            font-size: 16px;
-            cursor: pointer;
+        }
+
+        .logo .beta {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.7);
             text-decoration: none;
+            font-size: 16px;
             transition: color 0.3s ease;
         }
-        
-        .back-button:hover {
-            color: #8b5cf6;
+
+        .nav-links a:hover {
+            color: white;
         }
-        
-        .logo {
+
+        .sign-in-button {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 24px;
-            font-weight: 900;
-            color: #8b5cf6;
-            letter-spacing: -0.5px;
-        }
-        
-        .logo-icon {
-            display: inline-block;
-            width: 28px;
-            height: 28px;
-            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
-            border-radius: 6px;
-        }
-        
-        /* Content */
-        main {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 80px 32px;
-        }
-        
-        h1 {
-            font-size: 48px;
-            font-weight: 900;
-            margin-bottom: 48px;
-            background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            line-height: 1.2;
-        }
-        
-        section {
-            margin-bottom: 64px;
-        }
-        
-        h2 {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: #ffffff;
-        }
-        
-        p {
-            font-size: 18px;
-            line-height: 1.8;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 16px;
-        }
-        
-        /* Value cards grid */
-        .values-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 32px;
-            margin-top: 32px;
-        }
-        
-        .value-card {
-            padding: 24px;
-            background: rgba(139, 92, 246, 0.05);
-            border: 1px solid rgba(139, 92, 246, 0.2);
-            border-radius: 16px;
             transition: all 0.3s ease;
         }
-        
-        .value-card:hover {
-            background: rgba(139, 92, 246, 0.08);
-            border-color: rgba(139, 92, 246, 0.3);
+
+        .sign-in-button:hover {
             transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
         }
-        
-        .value-icon {
+
+        /* Hero Section */
+        .hero-section {
+            padding: 180px 40px 100px;
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .future-badge {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
-            border-radius: 12px;
-            font-size: 24px;
-            margin-bottom: 16px;
-        }
-        
-        .value-title {
-            font-size: 20px;
+            gap: 8px;
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 14px;
+            color: #a855f7;
+            margin-bottom: 32px;
             font-weight: 600;
-            margin-bottom: 8px;
-            color: #ffffff;
         }
-        
-        .value-description {
-            font-size: 16px;
+
+        .hero-title {
+            font-size: 72px;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            background: linear-gradient(180deg, #ffffff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-title .gradient {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            max-width: 700px;
+            margin: 0 auto 48px;
             line-height: 1.6;
-            color: rgba(255, 255, 255, 0.7);
         }
-        
+
+        .cta-button {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(124, 58, 237, 0.3);
+        }
+
+        /* Power Statement */
+        .power-statement {
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(168, 85, 247, 0.04) 100%);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 24px;
+            backdrop-filter: blur(40px);
+            text-align: center;
+        }
+
+        .power-statement h3 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .power-statement p {
+            font-size: 18px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Stats Section */
+        .stats-section {
+            padding: 60px 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stats-grid {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+        }
+
+        .stat-card {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Features Section */
+        .features-section {
+            padding: 100px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 48px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 60px;
+            background: linear-gradient(180deg, #ffffff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.3), transparent);
+        }
+
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(124, 58, 237, 0.2);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .feature-icon svg {
+            width: 28px;
+            height: 28px;
+            stroke: white;
+        }
+
+        .feature-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .feature-description {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+        }
+
+        /* Founders Section */
+        .founders-section {
+            padding: 100px 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .founders-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 60px;
+            margin-top: 60px;
+        }
+
+        .founder-card {
+            text-align: center;
+        }
+
+        .founder-image {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            margin: 0 auto 24px;
+            border: 3px solid rgba(124, 58, 237, 0.3);
+            object-fit: cover;
+            display: block;
+        }
+
+        .founder-name {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .founder-role {
+            font-size: 16px;
+            color: #a855f7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .founder-bio {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .social-link {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+        }
+
+        .social-link:hover {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            border-color: transparent;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .social-link svg {
+            width: 20px;
+            height: 20px;
+        }
+
         /* Footer */
         footer {
+            padding: 80px 40px 40px;
             text-align: center;
-            padding: 48px 32px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.6);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        footer p {
+            color: rgba(255, 255, 255, 0.4);
             font-size: 14px;
         }
-        
-        /* Mobile responsiveness */
+
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            header {
-                padding: 20px 24px;
+            nav {
+                padding: 15px 20px;
             }
-            
-            h1 {
+
+            .logo {
+                font-size: 20px;
+            }
+
+            .nav-links a:not(.sign-in-button) {
+                display: none;
+            }
+
+            .hero-section {
+                padding: 140px 20px 60px;
+            }
+
+            .hero-title {
+                font-size: 48px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .founders-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
                 font-size: 36px;
             }
-            
-            h2 {
-                font-size: 28px;
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 36px;
             }
-            
-            main {
-                padding: 60px 24px;
+
+            .hero-subtitle {
+                font-size: 16px;
             }
-            
-            .values-grid {
-                grid-template-columns: 1fr;
+
+            .cta-button {
+                padding: 12px 24px;
+                font-size: 16px;
+            }
+
+            .power-statement {
+                padding: 30px 20px;
+            }
+
+            .feature-card {
+                padding: 25px;
             }
         }
     </style>
 </head>
 <body>
-    <header>
-        <a href="/" class="back-button">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M11 1L4 8l7 7" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-            Back
-        </a>
-        <div class="logo">
-            <span class="logo-icon"></span>
+    <!-- Navigation -->
+    <nav>
+        <a href="/" class="logo">
             LIFTLIO
+            <span class="beta">BETA</span>
+        </a>
+        <div class="nav-links">
+            <a href="/contact">Contact</a>
+            <a href="/liftlio-analytics">Analytics</a>
+            <a href="/trends">Trends</a>
+            <a href="/login" class="sign-in-button">
+                Sign In
+                <i data-lucide="arrow-up-right" style="width: 16px; height: 16px;"></i>
+            </a>
         </div>
-    </header>
-    
-    <main>
-        <h1>About Liftlio</h1>
-        
-        <section>
-            <h2>Our Mission</h2>
-            <p>We believe in democratizing digital marketing. While traditional advertising platforms charge exorbitant prices for fleeting visibility, we've pioneered a revolutionary approach that creates lasting value through intelligent organic engagement.</p>
-        </section>
-        
-        <section>
-            <h2>Our Story</h2>
-            <p>Born from the frustration of burning through advertising budgets with diminishing returns, Liftlio emerged as the answer to a simple question: What if every marketing dollar spent created permanent value instead of temporary visibility?</p>
-            <p>Our founding team, composed of seasoned digital marketers and AI engineers, recognized that genuine engagement creates exponentially more value than paid impressions. By combining cutting-edge AI with deep understanding of social dynamics, we've created a platform that doesn't just find customers – it builds lasting relationships.</p>
-        </section>
-        
-        <section>
-            <h2>Our Values</h2>
-            <div class="values-grid">
-                <div class="value-card">
-                    <div class="value-icon">💡</div>
-                    <div class="value-title">Innovation First</div>
-                    <div class="value-description">We constantly push boundaries to deliver solutions that didn't exist yesterday.</div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="future-badge">
+            <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
+            About Liftlio
+        </div>
+
+        <h1 class="hero-title">
+            We're Building the Future of<br>
+            <span class="gradient">Organic Growth</span>
+        </h1>
+
+        <p class="hero-subtitle">
+            Founded in 2025, Liftlio was born from a simple observation:
+            businesses spend billions on ads that disappear, while organic content
+            creates permanent value. We're here to change that equation.
+        </p>
+
+        <a href="/" class="cta-button">
+            Start Growing Organically
+            <i data-lucide="arrow-up-right" style="width: 18px; height: 18px;"></i>
+        </a>
+
+        <div class="power-statement">
+            <h3>Our Mission</h3>
+            <p>
+                To democratize organic growth through AI automation.
+                We believe every business deserves to build lasting digital presence
+                without burning through advertising budgets. By automating content analysis
+                and optimization, we free entrepreneurs to focus on innovation and strategy.
+            </p>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">∞</div>
+                <div class="stat-label">Compound Growth</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Always Active</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">87%</div>
+                <div class="stat-label">Trust Over Ads</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">10x</div>
+                <div class="stat-label">ROI Multiplier</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <h2 class="section-title">Our Approach</h2>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i data-lucide="trending-up"></i>
                 </div>
-                <div class="value-card">
-                    <div class="value-icon">👥</div>
-                    <div class="value-title">Authentic Engagement</div>
-                    <div class="value-description">Real connections beat artificial metrics every time.</div>
+                <h3 class="feature-title">Perpetual Value</h3>
+                <p class="feature-description">
+                    Every mention, comment, and recommendation becomes a permanent asset.
+                    Content from months ago continues driving traffic today, creating
+                    compounding returns without additional investment.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i data-lucide="message-circle"></i>
                 </div>
-                <div class="value-card">
-                    <div class="value-icon">📈</div>
-                    <div class="value-title">Measurable Impact</div>
-                    <div class="value-description">Every action we take is designed to deliver tangible, lasting results.</div>
+                <h3 class="feature-title">Authentic Reach</h3>
+                <p class="feature-description">
+                    Build genuine connections through peer recommendations. Real people
+                    sharing real experiences create trust that no amount of advertising
+                    can replicate.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i data-lucide="target"></i>
                 </div>
-                <div class="value-card">
-                    <div class="value-icon">🚀</div>
-                    <div class="value-title">Client Success</div>
-                    <div class="value-description">Your growth is our growth. We succeed when you succeed.</div>
+                <h3 class="feature-title">Zero Decay Rate</h3>
+                <p class="feature-description">
+                    Unlike paid ads that vanish when budgets end, organic mentions
+                    remain forever. Your growth engine continues accelerating with
+                    no ongoing cost.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i data-lucide="zap"></i>
+                </div>
+                <h3 class="feature-title">Global Scale</h3>
+                <p class="feature-description">
+                    Reach audiences worldwide through natural language processing and
+                    cultural adaptation. Your message resonates authentically across
+                    any market.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Founders Section -->
+    <section class="founders-section">
+        <h2 class="section-title">Our Founders</h2>
+
+        <div class="founders-grid">
+            <div class="founder-card">
+                <img src="/assets/images/steve-photo.jpeg" alt="Steven J. Wilson" class="founder-image">
+                <h3 class="founder-name">Steven J. Wilson</h3>
+                <div class="founder-role">Co-Founder</div>
+                <p class="founder-bio">
+                    Certified leader in AI for Business from Wharton. Mentioned in Forbes and Inc. Magazine
+                    for his insights on AI. Experienced in building successful, growth minded teams.
+                    Believes AI should unlock new ways for businesses to acquire customers.
+                </p>
+                <div class="social-links">
+                    <a href="https://www.linkedin.com/in/stevenjwilson1/" target="_blank" rel="noopener noreferrer" class="social-link">
+                        <i data-lucide="linkedin"></i>
+                    </a>
+                    <a href="https://stevenjwilson.com" target="_blank" rel="noopener noreferrer" class="social-link">
+                        <i data-lucide="globe"></i>
+                    </a>
                 </div>
             </div>
-        </section>
-        
-        <section>
-            <h2>The Technology</h2>
-            <p>Powered by advanced AI and real-time monitoring systems, Liftlio operates 24/7 to ensure no opportunity is missed. Our proprietary algorithms understand context, sentiment, and timing to create engagement that feels natural because it is natural – just intelligently amplified.</p>
-        </section>
-    </main>
-    
+
+            <div class="founder-card">
+                <img src="/assets/images/valdair-photo.jpeg" alt="Valdair Demello" class="founder-image">
+                <h3 class="founder-name">Valdair Demello</h3>
+                <div class="founder-role">Co-Founder & CTO</div>
+                <p class="founder-bio">
+                    Expert in machine learning, natural language processing, and scalable cloud systems.
+                    Passionate about democratizing access to AI-powered marketing tools and transforming
+                    how businesses grow globally.
+                </p>
+                <div class="social-links">
+                    <a href="https://github.com/BVStecnologia" target="_blank" rel="noopener noreferrer" class="social-link">
+                        <i data-lucide="github"></i>
+                    </a>
+                    <a href="https://www.linkedin.com/in/valdair-demello" target="_blank" rel="noopener noreferrer" class="social-link">
+                        <i data-lucide="linkedin"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
     <footer>
-        <p>© 2025 Liftlio. All rights reserved.</p>
+        <p>© 2025 Liftlio · Building the Future of Organic Growth</p>
     </footer>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 </html>

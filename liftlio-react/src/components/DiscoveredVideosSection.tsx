@@ -54,14 +54,15 @@ const DiscoveredVideosSection: React.FC<DiscoveredVideosSectionProps> = ({
   // The RecentDiscoveredVideos component handles empty/null data
   // using mocked data internally
   return (
-    <RecentDiscoveredVideos 
-      data={videos} 
+    <RecentDiscoveredVideos
+      data={videos}
       projectId={projectId}
       loading={loading}
       // Pagination props
       currentPage={currentPage}
       totalPages={totalPages}
       totalCount={totalCount}
+      itemsPerPage={itemsPerPage}
       hasNextPage={hasNextPage}
       hasPrevPage={hasPrevPage}
       onNextPage={goToNextPage}

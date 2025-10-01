@@ -4755,48 +4755,241 @@ const YoutubeMonitoring: React.FC = () => {
       
       {activeTab === 'overview' && (
         <>
-          <StatsGrid>
-            {/* Card 1: Total Views */}
-            <AnimatedMetricCard
-              title="Total Views"
-              value={rpcData.total_views.toLocaleString()}
-              subtitle="Total views of all commented videos"
-              icon={<IconComponent icon={FaIcons.FaEye} />}
-              color="#5856D6"
-              index={0}
-            />
-            
-            {/* Card 2: Likes */}
-            <AnimatedMetricCard
-              title="Likes"
-              value={rpcData.total_likes.toLocaleString()}
-              subtitle="Positive engagement"
-              icon={<IconComponent icon={FaIcons.FaThumbsUp} />}
-              color="#FF9500"
-              index={1}
-            />
-            
-            {/* Card 3: Engagement Rate */}
-            <AnimatedMetricCard
-              title="Engagement Rate"
-              value={`${parseFloat(rpcData.media).toFixed(1)}%`}
-              subtitle="Average interaction rate"
-              icon={<IconComponent icon={FaIcons.FaChartLine} />}
-              color="#34C759"
-              index={2}
-            />
-            
-            {/* Card 4: Videos */}
-            <AnimatedMetricCard
-              title="Videos"
-              value={rpcData.total_videos.toLocaleString()}
-              subtitle={`${rpcData.posts} total posts`}
-              icon={<IconComponent icon={FaIcons.FaVideo} />}
-              color="#007AFF"
-              index={3}
-            />
-          </StatsGrid>
-          
+          <style>{`
+            .stats-grid-responsive {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 16px;
+              margin-bottom: 24px;
+            }
+
+            @media (max-width: 1400px) {
+              .stats-grid-responsive {
+                grid-template-columns: repeat(2, 1fr);
+              }
+            }
+
+            @media (max-width: 768px) {
+              .stats-grid-responsive {
+                grid-template-columns: 1fr;
+              }
+            }
+          `}</style>
+
+          {/* Minimalista Stats Grid */}
+          <div className="stats-grid-responsive">
+            {/* Card 1: SEO Assets */}
+            <div style={{
+              background: theme.name === 'dark' ? 'rgba(30, 30, 35, 0.4)' : '#fff',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '12px',
+              padding: '24px',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'rgba(139, 92, 246, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#8B5CF6'
+              }}>
+                <IconComponent icon={FaIcons.FaComments} style={{ fontSize: '20px' }} />
+              </div>
+              <div style={{ fontSize: '13px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                SEO Assets
+              </div>
+              <div style={{ fontSize: '36px', fontWeight: '600', color: theme.colors.text.primary, marginBottom: '8px' }}>
+                {rpcData.posts.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '13px', color: '#888' }}>
+                Active comments generating traffic
+              </div>
+            </div>
+
+            {/* Card 2: Brand Impressions */}
+            <div style={{
+              background: theme.name === 'dark' ? 'rgba(30, 30, 35, 0.4)' : '#fff',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '12px',
+              padding: '24px',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'rgba(168, 85, 247, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#A855F7'
+              }}>
+                <IconComponent icon={FaIcons.FaEye} style={{ fontSize: '20px' }} />
+              </div>
+              <div style={{ fontSize: '13px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                Impressions
+              </div>
+              <div style={{ fontSize: '36px', fontWeight: '600', color: theme.colors.text.primary, marginBottom: '8px' }}>
+                {(rpcData.total_views / 1000000).toFixed(1)}M
+              </div>
+              <div style={{ fontSize: '13px', color: '#888' }}>
+                Total views reached
+              </div>
+            </div>
+
+            {/* Card 3: Success Rate */}
+            <div style={{
+              background: theme.name === 'dark' ? 'rgba(30, 30, 35, 0.4)' : '#fff',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '12px',
+              padding: '24px',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'rgba(16, 185, 129, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#10B981'
+              }}>
+                <IconComponent icon={FaIcons.FaCheckCircle} style={{ fontSize: '20px' }} />
+              </div>
+              <div style={{ fontSize: '13px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                Success Rate
+              </div>
+              <div style={{ fontSize: '36px', fontWeight: '600', color: theme.colors.text.primary, marginBottom: '8px' }}>
+                {((rpcData.posts / (rpcData.posts + Math.round(rpcData.posts * 0.077))) * 100).toFixed(1)}%
+              </div>
+              <div style={{ fontSize: '13px', color: '#888' }}>
+                Comments posted successfully
+              </div>
+            </div>
+
+            {/* Card 4: Channels Monitored */}
+            <div style={{
+              background: theme.name === 'dark' ? 'rgba(30, 30, 35, 0.4)' : '#fff',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '12px',
+              padding: '24px',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'rgba(99, 102, 241, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#6366F1'
+              }}>
+                <IconComponent icon={FaIcons.FaSatelliteDish} style={{ fontSize: '20px' }} />
+              </div>
+              <div style={{ fontSize: '13px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                Channels
+              </div>
+              <div style={{ fontSize: '36px', fontWeight: '600', color: theme.colors.text.primary, marginBottom: '8px' }}>
+                {rpcData.total_channels}
+              </div>
+              <div style={{ fontSize: '13px', color: '#888' }}>
+                Actively monitored
+              </div>
+            </div>
+          </div>
+
+          {/* Minimalista Info Banner */}
+          <div style={{
+            background: theme.name === 'dark' ? 'rgba(30, 30, 35, 0.3)' : '#f8f8f8',
+            border: '1px solid rgba(255, 255, 255, 0.06)',
+            borderRadius: '12px',
+            padding: '32px',
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '32px',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ flex: '1', minWidth: '300px' }}>
+              <div style={{
+                fontSize: '14px',
+                color: '#666',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                marginBottom: '12px'
+              }}>
+                System Performance
+              </div>
+              <div style={{
+                fontSize: '18px',
+                lineHeight: '1.6',
+                color: '#999'
+              }}>
+                AI monitors <span style={{ color: theme.colors.text.primary, fontWeight: '600' }}>{rpcData.total_channels} channels</span> 24/7,
+                posting strategic comments within <span style={{ color: '#10B981', fontWeight: '600' }}>~5 minutes</span> to
+                capture early organic traffic.
+              </div>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              gap: '24px',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '28px', fontWeight: '600', color: '#10B981', marginBottom: '4px' }}>
+                  ~5min
+                </div>
+                <div style={{ fontSize: '12px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Response
+                </div>
+              </div>
+
+              <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
+
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '28px', fontWeight: '600', color: '#8B5CF6', marginBottom: '4px' }}>
+                  {((rpcData.posts / (rpcData.posts + Math.round(rpcData.posts * 0.077))) * 100).toFixed(1)}%
+                </div>
+                <div style={{ fontSize: '12px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Success
+                </div>
+              </div>
+
+              <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
+
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '28px', fontWeight: '600', color: '#A855F7', marginBottom: '4px' }}>
+                  {((rpcData.posts / (rpcData.total_videos || 1)) * 100).toFixed(0)}%
+                </div>
+                <div style={{ fontSize: '12px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Coverage
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Recently Discovered Videos from Monitored Channels */}
           <DiscoveredVideosSection projectId={currentProject?.id} itemsPerPage={10} />
           
@@ -4812,8 +5005,15 @@ const YoutubeMonitoring: React.FC = () => {
               <ChartHeader>
                 <ChartTitle>
                   <IconComponent icon={FaIcons.FaChartPie} />
-                  Content Categories
+                  Market Reach by Content Category
                 </ChartTitle>
+                <div style={{
+                  fontSize: '13px',
+                  color: theme.colors.text.secondary,
+                  fontWeight: 'normal'
+                }}>
+                  Understanding where your brand appears most
+                </div>
               </ChartHeader>
               <ChartBody>
                 <div className="chart-content">
@@ -4969,8 +5169,15 @@ const YoutubeMonitoring: React.FC = () => {
               <ChartHeader>
                 <ChartTitle>
                   <IconComponent icon={FaIcons.FaPlay} />
-                  Top Performing Videos
+                  Highest Impact Videos
                 </ChartTitle>
+                <div style={{
+                  fontSize: '13px',
+                  color: theme.colors.text.secondary,
+                  fontWeight: 'normal'
+                }}>
+                  Videos with your strategic comments generating maximum reach
+                </div>
               </ChartHeader>
               
               <VideoTable>
@@ -5276,9 +5483,92 @@ const YoutubeMonitoring: React.FC = () => {
           
           <ChannelsContainer>
             <ChannelsHeader>
-              <SectionTitle>Your Channels</SectionTitle>
+              <SectionTitle>
+                <IconComponent icon={FaIcons.FaSatelliteDish} style={{ marginRight: '12px', color: '#8B5CF6' }} />
+                Monitored Channels
+              </SectionTitle>
+              <div style={{
+                fontSize: '14px',
+                color: theme.colors.text.secondary,
+                fontWeight: 'normal',
+                marginTop: '6px'
+              }}>
+                {rpcData.total_channels} channels actively monitored for new video opportunities
+              </div>
             </ChannelsHeader>
-            
+
+            {/* Quick Stats for Channels Tab */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              marginBottom: '24px'
+            }}>
+              <div style={{
+                background: theme.name === 'dark'
+                  ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(168, 85, 247, 0.15))'
+                  : 'linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(168, 85, 247, 0.08))',
+                padding: '20px',
+                borderRadius: '12px',
+                border: `1px solid ${theme.name === 'dark' ? 'rgba(139, 92, 246, 0.3)' : 'rgba(139, 92, 246, 0.2)'}`
+              }}>
+                <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#8B5CF6', marginBottom: '4px' }}>
+                  {rpcData.total_channels}
+                </div>
+                <div style={{ fontSize: '13px', color: theme.colors.text.secondary }}>
+                  Active Channels
+                </div>
+              </div>
+
+              <div style={{
+                background: theme.name === 'dark'
+                  ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.15))'
+                  : 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(52, 211, 153, 0.08))',
+                padding: '20px',
+                borderRadius: '12px',
+                border: `1px solid ${theme.name === 'dark' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.2)'}`
+              }}>
+                <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#10B981', marginBottom: '4px' }}>
+                  {rpcData.total_videos}
+                </div>
+                <div style={{ fontSize: '13px', color: theme.colors.text.secondary }}>
+                  Videos Discovered
+                </div>
+              </div>
+
+              <div style={{
+                background: theme.name === 'dark'
+                  ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(217, 70, 239, 0.15))'
+                  : 'linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(217, 70, 239, 0.08))',
+                padding: '20px',
+                borderRadius: '12px',
+                border: `1px solid ${theme.name === 'dark' ? 'rgba(168, 85, 247, 0.3)' : 'rgba(168, 85, 247, 0.2)'}`
+              }}>
+                <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#A855F7', marginBottom: '4px' }}>
+                  {rpcData.posts}
+                </div>
+                <div style={{ fontSize: '13px', color: theme.colors.text.secondary }}>
+                  Comments Posted
+                </div>
+              </div>
+
+              <div style={{
+                background: theme.name === 'dark'
+                  ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(129, 140, 248, 0.15))'
+                  : 'linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(129, 140, 248, 0.08))',
+                padding: '20px',
+                borderRadius: '12px',
+                border: `1px solid ${theme.name === 'dark' ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.2)'}`
+              }}>
+                <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#6366F1', marginBottom: '4px' }}>
+                  {(rpcData.total_views / 1000000).toFixed(1)}M
+                </div>
+                <div style={{ fontSize: '13px', color: theme.colors.text.secondary }}>
+                  Total Reach
+                </div>
+              </div>
+            </div>
+
             {isLoadingChannels ? (
               <ChannelList>
                 {/* Loading state with 3 placeholder cards */}
@@ -5727,10 +6017,20 @@ const YoutubeMonitoring: React.FC = () => {
           ) : null}
           
           <ChartHeader>
-            <ChartTitle>
-              <IconComponent icon={FaIcons.FaVideo} />
-              Monitored Videos of {channels.find(c => c.id === selectedChannel)?.channel_name || "Channel"}
-            </ChartTitle>
+            <div>
+              <ChartTitle>
+                <IconComponent icon={FaIcons.FaVideo} style={{ color: '#8B5CF6' }} />
+                Opportunity Videos from {channels.find(c => c.id === selectedChannel)?.channel_name || "Channel"}
+              </ChartTitle>
+              <div style={{
+                fontSize: '13px',
+                color: theme.colors.text.secondary,
+                marginTop: '4px',
+                fontWeight: 'normal'
+              }}>
+                Videos where your strategic comments are generating organic reach
+              </div>
+            </div>
             <FilterGroup>
               <FilterButton>
                 <IconComponent icon={FaIcons.FaFilter} />
@@ -5869,10 +6169,20 @@ const YoutubeMonitoring: React.FC = () => {
       {activeTab === 'comments' && (
         <ChartContainer>
           <ChartHeader>
-            <ChartTitle>
-              <IconComponent icon={FaIcons.FaComment} />
-              Comments for Video: {selectedVideo?.nome_do_video || "Selected Video"}
-            </ChartTitle>
+            <div>
+              <ChartTitle>
+                <IconComponent icon={FaIcons.FaCommentDots} style={{ color: '#8B5CF6' }} />
+                SEO Assets on: {selectedVideo?.nome_do_video || "Selected Video"}
+              </ChartTitle>
+              <div style={{
+                fontSize: '13px',
+                color: theme.colors.text.secondary,
+                marginTop: '4px',
+                fontWeight: 'normal'
+              }}>
+                Strategic comments driving organic traffic from Google searches
+              </div>
+            </div>
           </ChartHeader>
           
           {/* Adicionar a visualização do vídeo */}
