@@ -335,23 +335,12 @@ const DataDot = styled(motion.div)<{ active: boolean }>`
 
 // Updated styles for the component with animations
 const DiscoveredVideosContainer = styled(motion.div)`
-  margin-bottom: 30px;
+  margin-bottom: 32px;
   position: relative;
-  animation: fadeIn 0.6s ease-out;
-  background: ${props => props.theme.name === 'dark'
-    ? 'rgba(20, 20, 25, 0.6)'
-    : props.theme.colors.white};
+  background: ${props => props.theme.name === 'dark' ? '#1A1A1A' : props.theme.colors.white};
   padding: 32px;
-  border-radius: 16px;
-  border: 1px solid ${props => props.theme.name === 'dark'
-    ? 'rgba(255, 255, 255, 0.06)'
-    : 'rgba(0, 0, 0, 0.05)'};
-  box-shadow: none;
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  border-radius: 8px;
+  border: none;
 `;
 
 const DiscoveredVideosHeader = styled.div`
@@ -381,25 +370,25 @@ const DiscoveredVideosTitle = styled.h2`
 `;
 
 const LiveTrackingBadge = styled.div`
-  background: ${props => withOpacity(props.theme.colors.info, 0.9)};
-  color: white;
+  background: transparent;
+  color: ${props => props.theme.name === 'dark' ? 'rgba(139, 92, 246, 0.8)' : props.theme.colors.primary};
+  border: none;
   font-size: 10px;
-  font-weight: ${props => props.theme.fontWeights.bold};
-  padding: 4px 10px;
-  border-radius: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 4px ${props => withOpacity(props.theme.colors.info, 0.2)};
-  
+  letter-spacing: 0.8px;
+
   svg {
     margin-right: 6px;
-    font-size: 9px;
-    animation: pulse 1.5s infinite;
+    font-size: 8px;
+    animation: pulse 2s infinite;
   }
-  
+
   @keyframes pulse {
-    0%, 100% { opacity: 0.7; }
+    0%, 100% { opacity: 0.5; }
     50% { opacity: 1; }
   }
 `;
@@ -437,92 +426,72 @@ const BinaryCodeBackground = styled.div`
 const TechMonitoringBanner = styled(motion.div)`
   position: relative;
   background: ${props => props.theme.name === 'dark'
-    ? 'rgba(25, 30, 38, 0.5)'
+    ? '#1A1A1A'
     : 'rgba(248, 248, 250, 1)'};
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 20px 24px;
   margin-bottom: 24px;
   overflow: hidden;
-  border: 1px solid ${props => props.theme.name === 'dark'
-    ? 'rgba(139, 92, 246, 0.15)'
-    : 'rgba(0, 0, 0, 0.06)'};
+  border: none;
   display: flex;
   align-items: center;
-  min-height: 60px;
+  justify-content: space-between;
+  gap: 24px;
 `;
 
 const MonitoringStatusText = styled.div`
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
-  color: ${props => props.theme.name === 'dark' ? '#999' : '#666'};
-  margin-left: 16px;
+  color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.5)' : '#666'};
   position: relative;
   z-index: 1;
   line-height: 1.6;
+  flex: 1;
 
   span {
     color: ${props => props.theme.colors.text.primary};
-    font-weight: 600;
+    font-weight: 500;
   }
 `;
 
 const DataMetricsRow = styled.div`
-  position: absolute;
-  bottom: 4px;
-  right: 16px;
   display: flex;
-  gap: 16px;
+  gap: 24px;
   z-index: 1;
-  font-size: 10px;
-  color: ${props => props.theme.colors.text.secondary};
+  font-size: 11px;
+  color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.4)' : props.theme.colors.text.secondary};
 `;
 
 const DataMetric = styled.div`
   display: flex;
   align-items: center;
-  
+  gap: 6px;
+
   span {
-    font-family: 'Courier New', monospace;
-    color: ${props => props.theme.colors.primary};
-    margin-left: 4px;
-    font-weight: ${props => props.theme.fontWeights.semiBold};
+    font-family: 'SF Mono', 'Courier New', monospace;
+    color: ${props => props.theme.colors.text.primary};
+    font-weight: 400;
+    font-size: 11px;
   }
-  
+
   svg {
-    color: ${props => props.theme.colors.info};
+    color: ${props => props.theme.name === 'dark' ? 'rgba(139, 92, 246, 0.6)' : props.theme.colors.primary};
     font-size: 10px;
-    margin-right: 4px;
   }
 `;
 
 const MonitoringIcon = styled(motion.div)`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: ${props => withOpacity(props.theme.colors.background, 0.9)};
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   z-index: 1;
-  box-shadow: 0 2px 8px ${props => withOpacity(props.theme.colors.primary, 0.2)};
-  
+
   svg {
-    color: ${props => props.theme.colors.primary};
-    font-size: 16px;
-    animation: rotateAnimation 4s linear infinite;
-  }
-  
-  &:before {
-    content: '';
-    position: absolute;
-    top: -4px;
-    left: -4px;
-    right: -4px;
-    bottom: -4px;
-    border-radius: 50%;
-    border: 2px solid ${props => withOpacity(props.theme.colors.primary, 0.3)};
-    animation: pulseRing 2s ease-out infinite;
+    color: ${props => props.theme.name === 'dark' ? 'rgba(139, 92, 246, 0.8)' : props.theme.colors.primary};
+    font-size: 14px;
   }
   
   @keyframes pulseRing {
@@ -538,18 +507,15 @@ const MonitoringIcon = styled(motion.div)`
 `;
 
 const DiscoveredVideoSubtitle = styled.div`
-  font-size: ${props => props.theme.fontSizes.sm};
-  color: ${props => props.theme.colors.text.secondary};
-  margin-bottom: 24px;
-  line-height: 1.6;
-  padding: 12px 16px;
-  background: ${props => withOpacity(props.theme.colors.background, 0.03)};
-  border-radius: ${props => props.theme.radius.md};
-  border-left: 3px solid ${props => props.theme.colors.primary};
-  
+  font-size: 13px;
+  color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.5)' : props.theme.colors.text.secondary};
+  margin-bottom: 32px;
+  line-height: 1.7;
+  max-width: 800px;
+
   span {
-    font-weight: ${props => props.theme.fontWeights.semiBold};
-    color: ${props => props.theme.colors.primary};
+    font-weight: 500;
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 
@@ -1551,106 +1517,33 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
       </DiscoveredVideosHeader>
       
       <TechMonitoringBanner
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, type: "spring" }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
       >
-        <MonitoringIcon
-          animate={{ 
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ 
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        >
-          <IconComponent icon={monitoringStatus.activeIcon} />
-        </MonitoringIcon>
-        <MonitoringStatusText>
-          <span>{monitoringStatus.activity}:</span> {monitoringStatus.message}
-        </MonitoringStatusText>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+          <MonitoringIcon>
+            <IconComponent icon={monitoringStatus.activeIcon} />
+          </MonitoringIcon>
+          <MonitoringStatusText>
+            <span>{monitoringStatus.activity}:</span> {monitoringStatus.message}
+          </MonitoringStatusText>
+        </div>
+
         <DataMetricsRow>
           <DataMetric>
             <IconComponent icon={FaIcons.FaSatelliteDish} />
-            CHANNELS: <span>{monitoringStatus.metrics.channels}</span>
+            <span>{monitoringStatus.metrics.channels}</span>
           </DataMetric>
           <DataMetric>
             <IconComponent icon={FaIcons.FaSearch} />
-            SCANS: <span>{monitoringStatus.metrics.scans}</span>
+            <span>{monitoringStatus.metrics.scans}</span>
           </DataMetric>
           <DataMetric>
             <IconComponent icon={FaIcons.FaVideo} />
-            VIDEOS: <span>{monitoringStatus.metrics.videos}</span>
+            <span>{monitoringStatus.metrics.videos}</span>
           </DataMetric>
         </DataMetricsRow>
-        
-        {/* Creative Monitoring Visualization */}
-        <MonitoringVisualization>
-          {/* Sound Wave Animation */}
-          <ScanningWave>
-            {[...Array(5)].map((_, i) => (
-              <WaveBar
-                key={i}
-                delay={i * 0.1}
-                animate={{
-                  height: [10, 25, 10],
-                  opacity: [0.5, 1, 0.5]
-                }}
-                transition={{
-                  duration: 1,
-                  delay: i * 0.1,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
-            ))}
-          </ScanningWave>
-          
-          {/* Radar Scanner */}
-          <RadarContainer>
-            <RadarSweep
-              animate={{ rotate: 360 }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "linear"
-              }}
-            />
-            <RadarRing size={40} />
-            <RadarRing 
-              size={30}
-              animate={{ opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-            <RadarRing 
-              size={20}
-              animate={{ opacity: [0.6, 0.3, 0.6] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          </RadarContainer>
-          
-          {/* Data Stream */}
-          <DataStream>
-            {[...Array(3)].map((_, i) => (
-              <DataDot
-                key={i}
-                active={monitoringStatus.activity === 'SCANNING'}
-                animate={{
-                  opacity: monitoringStatus.activity === 'SCANNING' ? [0.2, 1, 0.2] : 0.2,
-                  scale: monitoringStatus.activity === 'SCANNING' ? [1, 1.5, 1] : 1
-                }}
-                transition={{
-                  duration: 1.5,
-                  delay: i * 0.2,
-                  repeat: Infinity
-                }}
-              />
-            ))}
-          </DataStream>
-        </MonitoringVisualization>
-        
-        <BinaryCodeBackground />
       </TechMonitoringBanner>
       
       <DiscoveredVideoSubtitle>

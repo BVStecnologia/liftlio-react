@@ -58,33 +58,33 @@ const formatDateTime = (date: Date | string | number): string => {
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 };
 
-// Função para gerar paleta de cores baseada no tema
+// Função para gerar paleta de cores baseada no tema - Roxo Liftlio
 const getChartPalette = (isDarkTheme: boolean) => {
   if (isDarkTheme) {
     return [
-      '#6B8FBE', // Azul naval claro mais brilhante
-      '#5A7BA6', // Azul naval médio mais brilhante
-      '#4A6A91', // Azul naval escuro mais brilhante
-      '#3B5873', // Azul naval muito escuro mais brilhante
-      '#3BBEFF', // Azul info mais brilhante
-      '#66D66F', // Verde mais brilhante
-      '#FFB84D', // Laranja mais brilhante
-      '#FF6B6B', // Vermelho mais brilhante
-      '#B0BEC5', // Cinza mais claro
-      '#CFD8DC', // Cinza mais claro ainda
+      '#A78BFA', // Roxo claro
+      '#8B5CF6', // Roxo Liftlio principal
+      '#7C3AED', // Roxo médio
+      '#6D28D9', // Roxo escuro
+      '#5B21B6', // Roxo muito escuro
+      '#9333EA', // Roxo vibrante
+      '#C084FC', // Roxo suave
+      '#D8B4FE', // Roxo pastel
+      '#E9D5FF', // Roxo muito suave
+      '#F3E8FF', // Roxo quase branco
     ];
   }
   return [
-    '#4e6785', // Azul naval claro
-    '#34495e', // Azul naval médio
-    '#2d3e50', // Azul naval escuro
-    '#243444', // Azul naval muito escuro
-    '#00A9DB', // Azul info
-    '#4CAF50', // Verde
-    '#FFAA15', // Laranja
-    '#e74c3c', // Vermelho
-    '#8a969c', // Cinza
-    '#b5c2cb', // Cinza escuro
+    '#8B5CF6', // Roxo Liftlio principal
+    '#7C3AED', // Roxo médio
+    '#6D28D9', // Roxo escuro
+    '#5B21B6', // Roxo muito escuro
+    '#A78BFA', // Roxo claro
+    '#9333EA', // Roxo vibrante
+    '#C084FC', // Roxo suave
+    '#D8B4FE', // Roxo pastel
+    '#E9D5FF', // Roxo muito suave
+    '#F3E8FF', // Roxo quase branco
   ];
 };
 
@@ -292,81 +292,14 @@ const StatsGrid = styled.div`
 `;
 
 const StatCard = styled(motion.div)`
-  background: ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.03)' 
-    : 'white'};
-  padding: 16px;
-  border-radius: ${props => props.theme.radius.lg};
-  box-shadow: ${props => props.theme.shadows.sm};
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.1)' 
-    : 'rgba(0, 0, 0, 0.03)'};
-  position: relative;
-  overflow: hidden;
-  transform-style: preserve-3d;
-  perspective: 1000px;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: ${props => props.theme.name === 'dark'
-      ? 'radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 245, 255, 0.15), transparent 40%)'
-      : 'radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(107, 0, 204, 0.08), transparent 40%)'};
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-  }
-  
-  &:hover::before {
-    opacity: 1;
-  }
-  
-  &:hover {
-    transform: translateY(-4px) translateZ(10px);
-    box-shadow: ${props => props.theme.name === 'dark'
-      ? '0 12px 32px rgba(0, 245, 255, 0.2)'
-      : '0 12px 32px rgba(107, 0, 204, 0.15)'};
-    border-color: ${props => props.theme.name === 'dark'
-      ? 'rgba(0, 245, 255, 0.3)'
-      : 'rgba(107, 0, 204, 0.2)'};
-  }
+  background: ${props => props.theme.name === 'dark' ? '#1A1A1A' : 'white'};
+  padding: 24px;
+  border-radius: 8px;
+  border: none;
 `;
 
 const TopGradient = styled(motion.div)<{ color?: string }>`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, 
-    ${props => props.color || props.theme.colors.primary}88, 
-    ${props => props.color || props.theme.colors.primary}44
-  );
-  opacity: 0.9;
-  overflow: hidden;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.5),
-      transparent
-    );
-    animation: shimmer 3s infinite;
-  }
-  
-  @keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(200%); }
-  }
+  display: none;
 `;
 
 const StatCardHeader = styled.div`
@@ -498,191 +431,40 @@ const ChartRow = styled.div`
 `;
 
 const ChartContainer = styled.div`
-  background: ${props => props.theme.name === 'dark' 
-    ? 'linear-gradient(135deg, rgba(30,30,30,0.9), rgba(20,20,20,0.9))' 
-    : 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.8))'};
-  backdrop-filter: blur(10px);
-  border-radius: ${props => props.theme.radius.lg};
-  box-shadow: ${props => props.theme.name === 'dark' 
-    ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
-    : '0 8px 32px rgba(0, 0, 0, 0.08)'};
-  margin-bottom: 24px;
+  background: ${props => props.theme.name === 'dark' ? '#1A1A1A' : '#fff'};
+  border-radius: 8px;
+  margin-bottom: 32px;
   overflow: hidden;
-  border: 1px solid ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.1)' 
-    : 'rgba(255, 255, 255, 0.4)'};
-  position: relative;
-  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-  
-  /* Add subtle tech pattern in background */
-  &:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: radial-gradient(
-      rgba(0, 0, 0, 0.03) 1px,
-      transparent 1px
-    );
-    background-size: 20px 20px;
-    background-position: 0 0;
-    opacity: 0.5;
-    z-index: -1;
-    pointer-events: none;
-  }
-  
-  /* Add glowing highlight effect */
-  &:after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, 
-      transparent,
-      rgba(255, 255, 255, 0.8),
-      transparent
-    );
-  }
-  
-  &:hover {
-    box-shadow: 0 12px 42px rgba(0, 0, 0, 0.12);
-    transform: translateY(-4px);
-    border-color: rgba(255, 255, 255, 0.6);
-  }
+  border: none;
 `;
 
 const ChartHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  background: ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.05)' 
-    : 'rgba(245, 247, 250, 0.5)'};
-  border-bottom: 1px solid ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.1)' 
+  padding: 24px;
+  border-bottom: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.05)'
     : 'rgba(0, 0, 0, 0.05)'};
-  position: relative;
-  overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, 
-      ${props => props.theme.colors.primary}, 
-      ${props => withOpacity(props.theme.colors.primary, 0.4)}
-    );
-    opacity: 0.9;
-    box-shadow: 0 2px 8px ${props => withOpacity(props.theme.colors.primary, 0.3)};
-  }
-  
-  /* Add cybernetic dots pattern on the right */
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 120px;
-    height: 100%;
-    background-image: radial-gradient(
-      ${props => withOpacity(props.theme.colors.primary, 0.15)} 1px,
-      transparent 1px
-    );
-    background-size: 8px 8px;
-    opacity: 0.5;
-    pointer-events: none;
-  }
 `;
 
 const ChartTitle = styled.h3`
-  font-size: ${props => props.theme.fontSizes.lg};
+  font-size: 16px;
   margin: 0;
   display: flex;
   align-items: center;
   color: ${props => props.theme.colors.text.primary};
-  font-weight: ${props => props.theme.fontWeights.semiBold};
-  position: relative;
-  text-shadow: ${props => props.theme.name === 'dark' 
-    ? 'none' 
-    : '0 1px 1px rgba(255, 255, 255, 0.7)'};
-  
+  font-weight: 500;
+
   svg {
     margin-right: 12px;
-    color: ${props => props.theme.colors.text.primary};
-    font-size: 1.3em;
-    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.15));
-    transition: transform 0.3s ease;
-  }
-  
-  &:hover svg {
-    transform: scale(1.2) rotate(-5deg);
-  }
-  
-  /* Add slight highlight under text */
-  &:after {
-    content: '';
-    position: absolute;
-    bottom: -4px;
-    left: 0;
-    width: 40px;
-    height: 2px;
-    background: ${props => props.theme.colors.primary};
-    opacity: 0.7;
-    border-radius: 2px;
-    transition: width 0.3s ease;
-  }
-  
-  &:hover:after {
-    width: 80px;
+    color: ${props => props.theme.name === 'dark' ? 'rgba(139, 92, 246, 0.8)' : props.theme.colors.primary};
+    font-size: 18px;
   }
 `;
 
 const ChartBody = styled.div`
   padding: 24px;
-  position: relative;
-  overflow: hidden;
-  
-  /* Add subtle shine effect */
-  &:before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(
-      to right,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.3) 50%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    transform: rotate(30deg);
-    animation: shine 8s infinite linear;
-    pointer-events: none;
-    opacity: 0.3;
-    transition: opacity 0.3s ease;
-  }
-  
-  @keyframes shine {
-    0% {
-      transform: translateX(-100%) rotate(30deg);
-    }
-    100% {
-      transform: translateX(100%) rotate(30deg);
-    }
-  }
-  
-  &:hover:before {
-    opacity: 0.6;
-  }
 `;
 
 // Modern time selector
@@ -1224,43 +1006,11 @@ const StatusToggleButton = styled(ButtonUI)`
 const VideoTable = styled.div`
   width: 100%;
   border-collapse: collapse;
-  box-shadow: ${props => props.theme.name === 'dark' 
-    ? '0 8px 30px rgba(0, 0, 0, 0.3)' 
-    : '0 8px 30px rgba(0, 0, 0, 0.08)'};
-  border-radius: ${props => props.theme.radius.lg};
+  border-radius: 8px;
   overflow: hidden;
   margin-top: 24px;
-  position: relative;
-  background: ${props => props.theme.name === 'dark' 
-    ? 'linear-gradient(165deg, rgba(30, 30, 30, 0.9) 0%, rgba(25, 25, 25, 0.95) 50%, rgba(20, 20, 25, 0.85) 100%)' 
-    : 'linear-gradient(165deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.95) 50%, rgba(240, 245, 255, 0.85) 100%)'};
-  backdrop-filter: blur(5px);
-  border: 1px solid ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.1)' 
-    : 'rgba(255, 255, 255, 0.4)'};
-  
-  /* Add tech grid pattern overlay */
-  &:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: linear-gradient(
-      rgba(65, 88, 208, 0.02) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      rgba(65, 88, 208, 0.02) 1px,
-      transparent 1px
-    );
-    background-size: 20px 20px;
-    pointer-events: none;
-    opacity: 0.5;
-    z-index: 0;
-  }
+  background: ${props => props.theme.name === 'dark' ? '#1A1A1A' : '#fff'};
+  border: none;
 `;
 
 // Modern header for video table
@@ -1268,68 +1018,28 @@ const VideoTableHeader = styled.div`
   display: grid;
   grid-template-columns: minmax(400px, 3fr) 100px 100px 150px 100px;
   padding: 16px 24px;
-  background: ${props => props.theme.name === 'dark' 
-    ? 'linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))' 
-    : `linear-gradient(90deg, ${withOpacity(props.theme.colors.primary, 0.15)}, ${withOpacity(props.theme.colors.primary, 0.05)})`};
-  font-weight: ${props => props.theme.fontWeights.semiBold};
-  border-bottom: 1px solid ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.1)' 
-    : withOpacity(props.theme.colors.primary, 0.15)};
-  color: ${props => props.theme.colors.text.primary};
+  background: transparent;
+  font-weight: 500;
+  border-bottom: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.05)'
+    : 'rgba(0, 0, 0, 0.05)'};
+  color: ${props => props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.5)' : props.theme.colors.text.secondary};
   text-transform: uppercase;
-  font-size: ${props => props.theme.fontSizes.sm};
-  letter-spacing: 0.7px;
-  position: relative;
-  z-index: 1;
-  backdrop-filter: blur(4px);
-  
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      ${props => withOpacity(props.theme.colors.primary, 0.3)},
-      ${props => withOpacity(props.theme.colors.primary, 0.8)}, 
-      ${props => withOpacity(props.theme.colors.primary, 0.3)}
-    );
-  }
-  
+  font-size: 11px;
+  letter-spacing: 1px;
+
   > div {
     display: flex;
     align-items: center;
-    height: 100%;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
-    position: relative;
-    
+
     &:first-child {
       justify-content: flex-start;
       padding-left: 8px;
     }
-    
+
     &:not(:first-child) {
       justify-content: center;
       text-align: center;
-      position: relative;
-      
-      &::before {
-        content: '';
-        position: absolute;
-        left: -12px;
-        top: 50%;
-        transform: translateY(-50%);
-        height: 60%;
-        width: 1px;
-        background: linear-gradient(
-          to bottom,
-          transparent,
-          ${props => props.theme.colors.primary}40,
-          transparent
-        );
-      }
     }
   }
 `;
@@ -4776,214 +4486,247 @@ const YoutubeMonitoring: React.FC = () => {
             }
           `}</style>
 
-          {/* Minimalista Stats Grid */}
+          {/* Ultra Minimalista Stats Grid */}
           <div className="stats-grid-responsive">
             {/* Card 1: SEO Assets */}
             <div style={{
-              background: theme.name === 'dark' ? 'rgba(30, 30, 35, 0.4)' : '#fff',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '12px',
-              padding: '24px',
-              position: 'relative',
-              overflow: 'hidden'
+              background: theme.name === 'dark' ? '#1A1A1A' : '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '28px 24px',
+              position: 'relative'
             }}>
               <div style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
-                background: 'rgba(139, 92, 246, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#8B5CF6'
+                fontSize: '11px',
+                color: 'rgba(139, 92, 246, 0.7)',
+                textTransform: 'uppercase',
+                letterSpacing: '1.2px',
+                marginBottom: '12px',
+                fontWeight: '500'
               }}>
-                <IconComponent icon={FaIcons.FaComments} style={{ fontSize: '20px' }} />
-              </div>
-              <div style={{ fontSize: '13px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
                 SEO Assets
               </div>
-              <div style={{ fontSize: '36px', fontWeight: '600', color: theme.colors.text.primary, marginBottom: '8px' }}>
+              <div style={{
+                fontSize: '48px',
+                fontWeight: '300',
+                color: theme.colors.text.primary,
+                marginBottom: '4px',
+                letterSpacing: '-0.02em'
+              }}>
                 {rpcData.posts.toLocaleString()}
               </div>
-              <div style={{ fontSize: '13px', color: '#888' }}>
+              <div style={{
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.4)',
+                fontWeight: '400'
+              }}>
                 Active comments generating traffic
               </div>
             </div>
 
             {/* Card 2: Brand Impressions */}
             <div style={{
-              background: theme.name === 'dark' ? 'rgba(30, 30, 35, 0.4)' : '#fff',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '12px',
-              padding: '24px',
-              position: 'relative',
-              overflow: 'hidden'
+              background: theme.name === 'dark' ? '#1A1A1A' : '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '28px 24px',
+              position: 'relative'
             }}>
               <div style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
-                background: 'rgba(168, 85, 247, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#A855F7'
+                fontSize: '11px',
+                color: 'rgba(139, 92, 246, 0.7)',
+                textTransform: 'uppercase',
+                letterSpacing: '1.2px',
+                marginBottom: '12px',
+                fontWeight: '500'
               }}>
-                <IconComponent icon={FaIcons.FaEye} style={{ fontSize: '20px' }} />
-              </div>
-              <div style={{ fontSize: '13px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
                 Impressions
               </div>
-              <div style={{ fontSize: '36px', fontWeight: '600', color: theme.colors.text.primary, marginBottom: '8px' }}>
+              <div style={{
+                fontSize: '48px',
+                fontWeight: '300',
+                color: theme.colors.text.primary,
+                marginBottom: '4px',
+                letterSpacing: '-0.02em'
+              }}>
                 {(rpcData.total_views / 1000000).toFixed(1)}M
               </div>
-              <div style={{ fontSize: '13px', color: '#888' }}>
+              <div style={{
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.4)',
+                fontWeight: '400'
+              }}>
                 Total views reached
               </div>
             </div>
 
             {/* Card 3: Success Rate */}
             <div style={{
-              background: theme.name === 'dark' ? 'rgba(30, 30, 35, 0.4)' : '#fff',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '12px',
-              padding: '24px',
-              position: 'relative',
-              overflow: 'hidden'
+              background: theme.name === 'dark' ? '#1A1A1A' : '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '28px 24px',
+              position: 'relative'
             }}>
               <div style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
-                background: 'rgba(16, 185, 129, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#10B981'
+                fontSize: '11px',
+                color: 'rgba(139, 92, 246, 0.7)',
+                textTransform: 'uppercase',
+                letterSpacing: '1.2px',
+                marginBottom: '12px',
+                fontWeight: '500'
               }}>
-                <IconComponent icon={FaIcons.FaCheckCircle} style={{ fontSize: '20px' }} />
-              </div>
-              <div style={{ fontSize: '13px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
                 Success Rate
               </div>
-              <div style={{ fontSize: '36px', fontWeight: '600', color: theme.colors.text.primary, marginBottom: '8px' }}>
+              <div style={{
+                fontSize: '48px',
+                fontWeight: '300',
+                color: theme.colors.text.primary,
+                marginBottom: '4px',
+                letterSpacing: '-0.02em'
+              }}>
                 {((rpcData.posts / (rpcData.posts + Math.round(rpcData.posts * 0.077))) * 100).toFixed(1)}%
               </div>
-              <div style={{ fontSize: '13px', color: '#888' }}>
+              <div style={{
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.4)',
+                fontWeight: '400'
+              }}>
                 Comments posted successfully
               </div>
             </div>
 
             {/* Card 4: Channels Monitored */}
             <div style={{
-              background: theme.name === 'dark' ? 'rgba(30, 30, 35, 0.4)' : '#fff',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '12px',
-              padding: '24px',
-              position: 'relative',
-              overflow: 'hidden'
+              background: theme.name === 'dark' ? '#1A1A1A' : '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '28px 24px',
+              position: 'relative'
             }}>
               <div style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
-                background: 'rgba(99, 102, 241, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#6366F1'
+                fontSize: '11px',
+                color: 'rgba(139, 92, 246, 0.7)',
+                textTransform: 'uppercase',
+                letterSpacing: '1.2px',
+                marginBottom: '12px',
+                fontWeight: '500'
               }}>
-                <IconComponent icon={FaIcons.FaSatelliteDish} style={{ fontSize: '20px' }} />
-              </div>
-              <div style={{ fontSize: '13px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
                 Channels
               </div>
-              <div style={{ fontSize: '36px', fontWeight: '600', color: theme.colors.text.primary, marginBottom: '8px' }}>
+              <div style={{
+                fontSize: '48px',
+                fontWeight: '300',
+                color: theme.colors.text.primary,
+                marginBottom: '4px',
+                letterSpacing: '-0.02em'
+              }}>
                 {rpcData.total_channels}
               </div>
-              <div style={{ fontSize: '13px', color: '#888' }}>
+              <div style={{
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.4)',
+                fontWeight: '400'
+              }}>
                 Actively monitored
               </div>
             </div>
           </div>
 
-          {/* Minimalista Info Banner */}
+          {/* Ultra Minimalista System Performance */}
           <div style={{
-            background: theme.name === 'dark' ? 'rgba(30, 30, 35, 0.3)' : '#f8f8f8',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
-            borderRadius: '12px',
-            padding: '32px',
-            marginBottom: '24px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '32px',
-            flexWrap: 'wrap'
+            background: theme.name === 'dark' ? '#1A1A1A' : '#f8f8f8',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '40px',
+            marginBottom: '32px'
           }}>
-            <div style={{ flex: '1', minWidth: '300px' }}>
-              <div style={{
-                fontSize: '14px',
-                color: '#666',
-                textTransform: 'uppercase',
-                letterSpacing: '1px',
-                marginBottom: '12px'
-              }}>
-                System Performance
-              </div>
-              <div style={{
-                fontSize: '18px',
-                lineHeight: '1.6',
-                color: '#999'
-              }}>
-                AI monitors <span style={{ color: theme.colors.text.primary, fontWeight: '600' }}>{rpcData.total_channels} channels</span> 24/7,
-                posting strategic comments within <span style={{ color: '#10B981', fontWeight: '600' }}>~5 minutes</span> to
-                capture early organic traffic.
-              </div>
+            <div style={{
+              fontSize: '11px',
+              color: 'rgba(139, 92, 246, 0.7)',
+              textTransform: 'uppercase',
+              letterSpacing: '1.2px',
+              marginBottom: '20px',
+              fontWeight: '500'
+            }}>
+              System Performance
             </div>
 
             <div style={{
-              display: 'flex',
-              gap: '24px',
-              flexWrap: 'wrap'
+              fontSize: '15px',
+              lineHeight: '1.7',
+              color: 'rgba(255, 255, 255, 0.5)',
+              marginBottom: '32px',
+              maxWidth: '600px'
             }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '28px', fontWeight: '600', color: '#10B981', marginBottom: '4px' }}>
+              AI monitors <span style={{ color: theme.colors.text.primary, fontWeight: '500' }}>{rpcData.total_channels} channels</span> 24/7, posting strategic comments within ~5 minutes to capture early organic traffic.
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+              gap: '32px',
+              maxWidth: '600px'
+            }}>
+              <div>
+                <div style={{
+                  fontSize: '36px',
+                  fontWeight: '300',
+                  color: theme.colors.text.primary,
+                  marginBottom: '6px',
+                  letterSpacing: '-0.02em'
+                }}>
                   ~5min
                 </div>
-                <div style={{ fontSize: '12px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{
+                  fontSize: '11px',
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  fontWeight: '500'
+                }}>
                   Response
                 </div>
               </div>
 
-              <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
-
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '28px', fontWeight: '600', color: '#8B5CF6', marginBottom: '4px' }}>
+              <div>
+                <div style={{
+                  fontSize: '36px',
+                  fontWeight: '300',
+                  color: theme.colors.text.primary,
+                  marginBottom: '6px',
+                  letterSpacing: '-0.02em'
+                }}>
                   {((rpcData.posts / (rpcData.posts + Math.round(rpcData.posts * 0.077))) * 100).toFixed(1)}%
                 </div>
-                <div style={{ fontSize: '12px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{
+                  fontSize: '11px',
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  fontWeight: '500'
+                }}>
                   Success
                 </div>
               </div>
 
-              <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
-
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '28px', fontWeight: '600', color: '#A855F7', marginBottom: '4px' }}>
+              <div>
+                <div style={{
+                  fontSize: '36px',
+                  fontWeight: '300',
+                  color: theme.colors.text.primary,
+                  marginBottom: '6px',
+                  letterSpacing: '-0.02em'
+                }}>
                   {((rpcData.posts / (rpcData.total_videos || 1)) * 100).toFixed(0)}%
                 </div>
-                <div style={{ fontSize: '12px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{
+                  fontSize: '11px',
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  fontWeight: '500'
+                }}>
                   Coverage
                 </div>
               </div>
@@ -4995,22 +4738,18 @@ const YoutubeMonitoring: React.FC = () => {
           
           {/* Categorias de Conteúdo */}
           <ChartRow>
-            <ChartContainer 
+            <ChartContainer
               className="content-categories"
-              style={{
-                background: theme.name === 'dark' 
-                  ? 'linear-gradient(145deg, rgba(30, 30, 35, 0.95), rgba(35, 35, 40, 0.95))' 
-                  : undefined
-              }}>
+            >
               <ChartHeader>
                 <ChartTitle>
                   <IconComponent icon={FaIcons.FaChartPie} />
                   Market Reach by Content Category
                 </ChartTitle>
                 <div style={{
-                  fontSize: '13px',
-                  color: theme.colors.text.secondary,
-                  fontWeight: 'normal'
+                  fontSize: '12px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontWeight: '400'
                 }}>
                   Understanding where your brand appears most
                 </div>
@@ -5091,9 +4830,8 @@ const YoutubeMonitoring: React.FC = () => {
                       
                       return (
                         <div key={index} className="category-card" style={{
-                          background: theme.name === 'dark' ? 'rgba(40, 40, 45, 0.8)' : undefined,
-                          backdropFilter: theme.name === 'dark' ? 'blur(10px)' : undefined,
-                          border: theme.name === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : undefined
+                          background: theme.name === 'dark' ? '#1A1A1A' : undefined,
+                          border: 'none'
                         }}>
                           <div className="card-shine"></div>
                           <div className="rocket-particles"></div>
@@ -5172,9 +4910,9 @@ const YoutubeMonitoring: React.FC = () => {
                   Highest Impact Videos
                 </ChartTitle>
                 <div style={{
-                  fontSize: '13px',
-                  color: theme.colors.text.secondary,
-                  fontWeight: 'normal'
+                  fontSize: '12px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontWeight: '400'
                 }}>
                   Videos with your strategic comments generating maximum reach
                 </div>
@@ -5270,69 +5008,55 @@ const YoutubeMonitoring: React.FC = () => {
                         {video.commets || video.comments || '0'}
                       </VideoStat>
                       <VideoStat>
-                        <span style={{ 
-                          padding: '4px 10px', 
-                          background: 'linear-gradient(135deg, rgba(88, 86, 214, 0.08), rgba(88, 86, 214, 0.2))',
-                          border: '1px solid rgba(88, 86, 214, 0.2)',
-                          borderRadius: '12px', 
-                          fontSize: '12px',
-                          fontWeight: 'bold',
-                          color: '#5856D6',
+                        <span style={{
+                          padding: '4px 10px',
+                          background: 'rgba(139, 92, 246, 0.15)',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: '500',
+                          color: 'rgba(139, 92, 246, 0.9)',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           maxWidth: '120px',
-                          display: 'inline-block',
-                          boxShadow: '0 2px 4px rgba(88, 86, 214, 0.1)',
-                          transition: 'all 0.3s ease'
+                          display: 'inline-block'
                         }}>
                           {video.content_category || 'Uncategorized'}
                         </span>
                       </VideoStat>
                       <VideoStat data-value={
-                        video.relevance_score 
+                        video.relevance_score
                           ? (typeof video.relevance_score === 'number' ? video.relevance_score : parseFloat(String(video.relevance_score)) * 10).toFixed(1)
                           : 0
                       }>
-                        <span style={{ 
-                          padding: '4px 10px', 
-                          borderRadius: '12px', 
-                          fontSize: '12px',
-                          fontWeight: 'bold',
-                          background: typeof video.relevance_score === 'number' 
-                            ? (video.relevance_score >= 0.8 ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.2), rgba(76, 217, 100, 0.4))' 
-                              : video.relevance_score >= 0.6 ? 'linear-gradient(135deg, rgba(255, 204, 0, 0.2), rgba(255, 204, 0, 0.4))' 
-                              : 'linear-gradient(135deg, rgba(255, 45, 85, 0.2), rgba(255, 45, 85, 0.4))')
-                            : (parseFloat(String(video.relevance_score || '0')) >= 0.8 
-                              ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.2), rgba(76, 217, 100, 0.4))' 
-                              : parseFloat(String(video.relevance_score || '0')) >= 0.6 
-                              ? 'linear-gradient(135deg, rgba(255, 204, 0, 0.2), rgba(255, 204, 0, 0.4))' 
-                              : 'linear-gradient(135deg, rgba(255, 45, 85, 0.2), rgba(255, 45, 85, 0.4))'),
-                          border: typeof video.relevance_score === 'number'
-                            ? (video.relevance_score >= 0.8 ? '1px solid rgba(76, 217, 100, 0.4)' 
-                              : video.relevance_score >= 0.6 ? '1px solid rgba(255, 204, 0, 0.4)' 
-                              : '1px solid rgba(255, 45, 85, 0.4)')
-                            : (parseFloat(String(video.relevance_score || '0')) >= 0.8 
-                              ? '1px solid rgba(76, 217, 100, 0.4)' 
-                              : parseFloat(String(video.relevance_score || '0')) >= 0.6 
-                              ? '1px solid rgba(255, 204, 0, 0.4)' 
-                              : '1px solid rgba(255, 45, 85, 0.4)'),
+                        <span style={{
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: '500',
+                          background: typeof video.relevance_score === 'number'
+                            ? (video.relevance_score >= 0.8 ? 'rgba(139, 92, 246, 0.25)'
+                              : video.relevance_score >= 0.6 ? 'rgba(139, 92, 246, 0.18)'
+                              : 'rgba(139, 92, 246, 0.12)')
+                            : (parseFloat(String(video.relevance_score || '0')) >= 0.8
+                              ? 'rgba(139, 92, 246, 0.25)'
+                              : parseFloat(String(video.relevance_score || '0')) >= 0.6
+                              ? 'rgba(139, 92, 246, 0.18)'
+                              : 'rgba(139, 92, 246, 0.12)'),
+                          border: 'none',
                           color: typeof video.relevance_score === 'number'
-                            ? (video.relevance_score >= 0.6 ? '#333' : '#fff')
-                            : (parseFloat(String(video.relevance_score || '0')) >= 0.6 ? '#333' : '#fff'),
-                          boxShadow: typeof video.relevance_score === 'number'
-                            ? (video.relevance_score >= 0.8 ? '0 2px 6px rgba(76, 217, 100, 0.2)' 
-                              : video.relevance_score >= 0.6 ? '0 2px 6px rgba(255, 204, 0, 0.2)' 
-                              : '0 2px 6px rgba(255, 45, 85, 0.2)')
-                            : (parseFloat(String(video.relevance_score || '0')) >= 0.8 
-                              ? '0 2px 6px rgba(76, 217, 100, 0.2)' 
-                              : parseFloat(String(video.relevance_score || '0')) >= 0.6 
-                              ? '0 2px 6px rgba(255, 204, 0, 0.2)' 
-                              : '0 2px 6px rgba(255, 45, 85, 0.2)'),
-                          transition: 'all 0.3s ease'
+                            ? (video.relevance_score >= 0.8 ? 'rgba(139, 92, 246, 1)'
+                              : video.relevance_score >= 0.6 ? 'rgba(139, 92, 246, 0.9)'
+                              : 'rgba(139, 92, 246, 0.7)')
+                            : (parseFloat(String(video.relevance_score || '0')) >= 0.8
+                              ? 'rgba(139, 92, 246, 1)'
+                              : parseFloat(String(video.relevance_score || '0')) >= 0.6
+                              ? 'rgba(139, 92, 246, 0.9)'
+                              : 'rgba(139, 92, 246, 0.7)')
                         }}>
-                          {video.relevance_score 
-                            ? `${(typeof video.relevance_score === 'number' ? video.relevance_score : parseFloat(String(video.relevance_score)) * 10).toFixed(1)}/10` 
+                          {video.relevance_score
+                            ? `${(typeof video.relevance_score === 'number' ? video.relevance_score : parseFloat(String(video.relevance_score)) * 10).toFixed(1)}/10`
                             : 'N/A'}
                         </span>
                       </VideoStat>
