@@ -2,7 +2,7 @@
 -- Trigger: trigger_postar_comentario_youtube
 -- Descrição: Trigger que posta comentário no YouTube quando teste = TRUE
 -- Criado: 2025-01-23
--- Atualizado: 2025-01-23
+-- Atualizado: 2025-10-01 - Adiciona salvamento do youtube_comment_id
 -- =============================================
 
 DROP FUNCTION IF EXISTS trigger_postar_comentario_youtube() CASCADE;
@@ -36,10 +36,11 @@ BEGIN
 
             -- Verifica se a operação foi bem-sucedida
             IF (v_resultado->>'success')::BOOLEAN = TRUE THEN
-                -- Atualiza o status da mensagem para respondido = TRUE
+                -- Atualiza o status da mensagem para respondido = TRUE e salva comment ID
                 UPDATE public."Mensagens"
                 SET respondido = TRUE,
-                    teste = FALSE -- Reseta o campo teste após postar
+                    teste = FALSE, -- Reseta o campo teste após postar
+                    youtube_comment_id = v_resultado->'response'->>'id' -- Salva o ID do comentário do YouTube
                 WHERE id = NEW.id;
             END IF;
         END IF;
