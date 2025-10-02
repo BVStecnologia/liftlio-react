@@ -3,13 +3,14 @@ import Globe from 'react-globe.gl';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as FaIcons from 'react-icons/fa';
-import { FaTimesCircle, FaCheckCircle, FaArrowDown, FaCircle, FaVideo, FaUserPlus, FaBookOpen, FaCode, FaMousePointer, FaChartLine, FaCog } from 'react-icons/fa';
+import { FaTimesCircle, FaCheckCircle, FaArrowDown, FaCircle, FaVideo, FaUserPlus, FaBookOpen, FaCode, FaMousePointer, FaChartLine, FaCog, FaMapMarkerAlt } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
-import { 
+import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { supabase } from '../lib/supabaseClient';
 
 // Header Styles
 const Header = styled.header`
@@ -831,10 +832,71 @@ const ChartTitle = styled.div`
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 24px;
-  
+
   svg {
     color: #8b5cf6;
   }
+`;
+
+// Top Cities Styles
+const CitiesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const CityCard = styled.div`
+  background: rgba(139, 92, 246, 0.05);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.4);
+    transform: translateY(-2px);
+  }
+`;
+
+const CityName = styled.div`
+  color: #f3f4f6;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const CityCountry = styled.div`
+  color: #94a3b8;
+  font-size: 12px;
+  margin-bottom: 8px;
+`;
+
+const CityStats = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(139, 92, 246, 0.1);
+`;
+
+const CityVisits = styled.div`
+  color: #8b5cf6;
+  font-size: 18px;
+  font-weight: 700;
+`;
+
+const CityPercentage = styled.div`
+  color: #64748b;
+  font-size: 12px;
 `;
 
 // Comparison Section Styles
@@ -1323,6 +1385,17 @@ const LiftlioAnalytics: React.FC = () => {
   const [conversionRate, setConversionRate] = useState(4.8);
   const [avgTime, setAvgTime] = useState(222); // 3m 42s = 222 segundos
 
+  // Top Cities state
+  const [topCities, setTopCities] = useState<Array<{
+    city: string;
+    country: string;
+    visit_count: number;
+    unique_visitors: number;
+    percentage: number;
+  }>>([]);
+  const [showTopCities, setShowTopCities] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(true);
+
   const trafficSourcesData = [
     { name: 'Liftlio', value: 90, color: '#8b5cf6' },
     { name: 'Social Media', value: 4, color: '#3b82f6' },
@@ -1466,6 +1539,25 @@ const LiftlioAnalytics: React.FC = () => {
     }, 10000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Top Cities DEMO data (página pública)
+  useEffect(() => {
+    // Dados demo para a página pública
+    const demoCities = [
+      { city: 'New York', country: 'United States', visit_count: 342, unique_visitors: 127, percentage: 18.5 },
+      { city: 'London', country: 'United Kingdom', visit_count: 289, unique_visitors: 98, percentage: 15.6 },
+      { city: 'São Paulo', country: 'Brazil', visit_count: 234, unique_visitors: 82, percentage: 12.7 },
+      { city: 'Tokyo', country: 'Japan', visit_count: 198, unique_visitors: 71, percentage: 10.7 },
+      { city: 'Paris', country: 'France', visit_count: 176, unique_visitors: 64, percentage: 9.5 },
+      { city: 'Singapore', country: 'Singapore', visit_count: 145, unique_visitors: 53, percentage: 7.8 },
+      { city: 'Toronto', country: 'Canada', visit_count: 132, unique_visitors: 47, percentage: 7.1 },
+      { city: 'Sydney', country: 'Australia', visit_count: 119, unique_visitors: 41, percentage: 6.4 }
+    ];
+
+    setTopCities(demoCities);
+    setShowTopCities(true);
+    setLoadingCities(false);
   }, []);
 
   // Gráfico Traffic Growth - adiciona novo ponto a cada 2 minutos
@@ -1966,6 +2058,47 @@ const LiftlioAnalytics: React.FC = () => {
             </div>
           </ConversionMetricsBox>
         </ConversionChartLayout>
+      </ChartCard>
+
+      {/* Top Cities - Mostra sempre para debug */}
+      <ChartCard
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.45 }}
+        style={{ marginBottom: '32px' }}
+      >
+        <ChartTitle>
+          <IconComponent icon={FaIcons.FaMapMarkerAlt} />
+          Top Cities
+        </ChartTitle>
+        {loadingCities ? (
+          <div style={{ color: '#94a3b8', textAlign: 'center', padding: '40px' }}>
+            Loading cities...
+          </div>
+        ) : topCities.length > 0 ? (
+          <CitiesGrid>
+            {topCities.map((city, index) => (
+              <CityCard key={index}>
+                <CityName>
+                  <IconComponent icon={FaIcons.FaCircle} style={{ fontSize: '8px', color: '#8b5cf6' }} />
+                  {city.city}
+                </CityName>
+                <CityCountry>{city.country}</CityCountry>
+                <CityStats>
+                  <div>
+                    <CityVisits>{city.visit_count}</CityVisits>
+                    <div style={{ color: '#64748b', fontSize: '11px' }}>visits</div>
+                  </div>
+                  <CityPercentage>{city.percentage}%</CityPercentage>
+                </CityStats>
+              </CityCard>
+            ))}
+          </CitiesGrid>
+        ) : (
+          <div style={{ color: '#64748b', textAlign: 'center', padding: '40px' }}>
+            No city data available yet
+          </div>
+        )}
       </ChartCard>
 
       {/* Traffic Growth Chart */}

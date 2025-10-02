@@ -321,6 +321,67 @@ const ChartTitle = styled.h3`
   }
 `;
 
+// Top Cities Styles
+const CitiesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const CityCard = styled.div`
+  background: ${props => props.theme.name === 'dark' ? 'rgba(139, 92, 246, 0.05)' : 'rgba(139, 92, 246, 0.1)'};
+  border: 1px solid ${props => props.theme.colors.primary}33;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: ${props => props.theme.name === 'dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.15)'};
+    border-color: ${props => props.theme.colors.primary}66;
+    transform: translateY(-2px);
+  }
+`;
+
+const CityName = styled.div`
+  color: ${props => props.theme.colors.text};
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const CityCountry = styled.div`
+  color: ${props => props.theme.colors.textSecondary};
+  font-size: 12px;
+  margin-bottom: 8px;
+`;
+
+const CityStats = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid ${props => props.theme.colors.primary}1a;
+`;
+
+const CityVisits = styled.div`
+  color: ${props => props.theme.colors.primary};
+  font-size: 18px;
+  font-weight: 700;
+`;
+
+const CityPercentage = styled.div`
+  color: ${props => props.theme.colors.textSecondary};
+  font-size: 12px;
+`;
+
 const ChartOptions = styled.div`
   display: flex;
   gap: 8px;
@@ -1190,6 +1251,16 @@ const Analytics: React.FC = () => {
     totalEvents24h: 0,
     pageviews24h: 0
   });
+
+  // Estado para Top Cities
+  const [topCities, setTopCities] = useState<Array<{
+    city: string;
+    country: string;
+    visit_count: number;
+    unique_visitors: number;
+    percentage: number;
+  }>>([]);
+  const [loadingCities, setLoadingCities] = useState(true);
   
   // Cores dinâmicas baseadas no tema (usando paleta roxa do Liftlio)
   const chartColors = {
@@ -1796,7 +1867,38 @@ const Analytics: React.FC = () => {
     
     checkIfAnyDataExists();
   }, [currentProject?.id]);
-  
+
+  // Fetch Top Cities data
+  useEffect(() => {
+    const fetchTopCities = async () => {
+      if (!currentProject?.id) {
+        setLoadingCities(false);
+        return;
+      }
+
+      try {
+        setLoadingCities(true);
+        const { data, error } = await supabase
+          .rpc('get_top_cities_by_visits', {
+            p_project_id: currentProject.id,
+            p_limit: 8
+          });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          setTopCities(data);
+        }
+      } catch (error) {
+        console.error('Error fetching top cities:', error);
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+
+    fetchTopCities();
+  }, [currentProject?.id]);
+
   // useEffect principal para buscar dados e configurar realtime
   useEffect(() => {
     fetchAnalyticsData();
@@ -2473,6 +2575,47 @@ const Analytics: React.FC = () => {
           </ChartLegend>
         </ChartCard>
       </ChartSection>
+
+      {/* Top Cities - Only show if there's data */}
+      {topCities.length > 0 && (
+        <ChartSection>
+          <ChartCard
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+          >
+            <ChartHeader>
+              <ChartTitle>
+                <IconComponent icon={FaIcons.FaMapMarkerAlt} /> Top Cities by Visits
+              </ChartTitle>
+            </ChartHeader>
+            {loadingCities ? (
+              <div style={{ color: theme.colors.text.secondary, textAlign: 'center', padding: '40px' }}>
+                Loading cities...
+              </div>
+            ) : (
+              <CitiesGrid>
+                {topCities.map((city, index) => (
+                  <CityCard key={index}>
+                    <CityName>
+                      <IconComponent icon={FaIcons.FaCircle} style={{ fontSize: '8px', color: theme.colors.primary }} />
+                      {city.city}
+                    </CityName>
+                    <CityCountry>{city.country}</CityCountry>
+                    <CityStats>
+                      <div>
+                        <CityVisits>{city.visit_count}</CityVisits>
+                        <div style={{ color: theme.colors.text.secondary, fontSize: '11px' }}>visits</div>
+                      </div>
+                      <CityPercentage>{city.percentage}%</CityPercentage>
+                    </CityStats>
+                  </CityCard>
+                ))}
+              </CitiesGrid>
+            )}
+          </ChartCard>
+        </ChartSection>
+      )}
 
       <SecondaryChartsGrid>
         <ChartCard
