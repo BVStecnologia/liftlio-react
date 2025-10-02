@@ -52,6 +52,7 @@ const energyLineAnimation = keyframes`
 
 const SidebarContainer = styled.aside<{ isOpen: boolean; isCollapsed?: boolean }>`
   width: ${props => props.isCollapsed ? '80px' : '249px'};
+  min-width: ${props => props.isCollapsed ? '80px' : '249px'};
   height: 100%;
   background: ${props => props.theme.components.sidebar.bg};
   color: ${props => props.theme.components.sidebar.text};
@@ -62,7 +63,7 @@ const SidebarContainer = styled.aside<{ isOpen: boolean; isCollapsed?: boolean }
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   z-index: 1000; /* Higher z-index to appear above header */
   border-right: 1px solid ${props => props.theme.components.sidebar.border};
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   @media (min-width: 769px) {
     position: relative;
@@ -345,7 +346,7 @@ const BetaBadge = styled.span<{ isCollapsed?: boolean }>`
   ${props => props.isCollapsed && `
     position: absolute;
     top: -8px;
-    right: -10px;
+    right: 2px;
     font-size: 0.45rem;
     padding: 1px 3px;
   `}
@@ -476,10 +477,10 @@ const NavItem = styled(NavLink)<{ isCollapsed?: boolean }>`
   &.active {
     color: ${props => props.theme.components.sidebar.textActive};
     background: ${props => props.theme.components.sidebar.itemActive};
-    padding-left: 24px;
+    padding-left: ${props => props.isCollapsed ? '0' : '24px'};
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
                 inset 0 -1px 0 rgba(255, 255, 255, 0.05);
-    
+
     /* Ícone ativo */
     svg {
       transform: scale(1.1);
