@@ -285,9 +285,19 @@ const StatsGrid = styled.div`
   @media (max-width: 1200px) {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+  }
+
+  @media (max-width: 480px) {
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 320px) {
+    gap: 12px;
+    margin-bottom: 20px;
   }
 `;
 
@@ -1028,6 +1038,29 @@ const VideoTableHeader = styled.div`
   font-size: 11px;
   letter-spacing: 1px;
 
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr 80px 80px;
+    padding: 12px 8px;
+    font-size: 10px;
+    gap: 4px;
+
+    > div:nth-child(4),
+    > div:nth-child(5) {
+      display: none;
+    }
+  }
+
+  @media (max-width: 320px) {
+    grid-template-columns: 1fr 70px;
+    padding: 10px 6px;
+
+    > div:nth-child(3),
+    > div:nth-child(4),
+    > div:nth-child(5) {
+      display: none;
+    }
+  }
+
   > div {
     display: flex;
     align-items: center;
@@ -1147,14 +1180,36 @@ const VideoTableRow = styled.div`
   display: grid;
   grid-template-columns: minmax(400px, 3fr) 100px 100px 150px 100px;
   padding: 16px 24px;
-  border-bottom: 1px solid ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.1)' 
+  border-bottom: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.1)'
     : props.theme.colors.tertiary + '30'};
   align-items: center;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   cursor: pointer;
   z-index: 1;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr 80px 80px;
+    padding: 12px 8px;
+    gap: 4px;
+
+    > div:nth-child(4),
+    > div:nth-child(5) {
+      display: none;
+    }
+  }
+
+  @media (max-width: 320px) {
+    grid-template-columns: 1fr 70px;
+    padding: 10px 6px;
+
+    > div:nth-child(3),
+    > div:nth-child(4),
+    > div:nth-child(5) {
+      display: none;
+    }
+  }
   
   /* Add alternating row colors */
   &:nth-child(even) {

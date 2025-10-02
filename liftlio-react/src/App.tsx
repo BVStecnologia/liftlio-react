@@ -118,7 +118,7 @@ const FloatingMenuButton = styled.button`
   position: fixed;
   bottom: 20px;
   right: 20px;
-  z-index: 999;
+  z-index: 9999;
   overflow: hidden;
   transition: all 0.35s cubic-bezier(0.17, 0.67, 0.29, 0.96);
   isolation: isolate;
