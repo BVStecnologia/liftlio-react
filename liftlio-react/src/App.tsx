@@ -110,10 +110,12 @@ const FloatingMenuButton = styled.button`
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, ${props => props.theme.colors.primaryDark}, ${props => props.theme.colors.primary}); /* Accent color (10%) for button background */
-  color: ${props => props.theme.colors.secondary}; /* Secondary color (30%) for button icon */
+  background: ${props => props.theme.name === 'dark'
+    ? 'linear-gradient(135deg, #7C3AED, #8B5CF6)'
+    : 'linear-gradient(135deg, #8B5CF6, #A78BFA)'}; /* Cores roxas Liftlio */
+  color: #FFFFFF;
   border: none;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3),
               inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   position: fixed;
   bottom: 20px;
@@ -247,12 +249,25 @@ const getThemeBackground = (): string => {
 const AppContent: React.FC = () => {
   const { isGlobalLoading, loadingMessage, loadingSubMessage } = useGlobalLoading();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
+  const [agentOpen, setAgentOpen] = useState(false);
+
   // DEBUG: Log para rastrear quando AppContent é renderizado
   console.log('[AppContent] Current URL: ' + window.location.pathname);
-  
+
   const toggleSidebar = () => {
+    // Se agente estiver aberto em mobile, fecha o agente primeiro
+    if (window.innerWidth <= 768 && agentOpen) {
+      setAgentOpen(false);
+    }
     setSidebarOpen(!sidebarOpen);
+  };
+
+  const toggleAgent = () => {
+    setAgentOpen(!agentOpen);
+    // Close sidebar when opening agent on mobile
+    if (window.innerWidth <= 768 && !agentOpen) {
+      setSidebarOpen(false);
+    }
   };
 
   // Root-level authentication handling
@@ -366,7 +381,12 @@ const AppContent: React.FC = () => {
           {/* Rotas protegidas - usar apenas uma rota com wildcard pois ProtectedLayout tem rotas internas */}
           <Route path="/*" element={
             <Suspense fallback={null}>
-              <ProtectedLayout sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+              <ProtectedLayout
+                sidebarOpen={sidebarOpen}
+                toggleSidebar={toggleSidebar}
+                agentOpen={agentOpen}
+                toggleAgent={toggleAgent}
+              />
             </Suspense>
           } />
         </Routes>
@@ -431,7 +451,17 @@ function App() {
 
 
 // Componente de layout protegido
-const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean, toggleSidebar: () => void }) => {
+const ProtectedLayout = ({
+  sidebarOpen,
+  toggleSidebar,
+  agentOpen,
+  toggleAgent
+}: {
+  sidebarOpen: boolean;
+  toggleSidebar: () => void;
+  agentOpen: boolean;
+  toggleAgent: () => void;
+}) => {
   const { user, loading } = useAuth();
   const { isOnboarding, onboardingReady, hasProjects, isLoading, projectIntegrations, currentProject } = useProject();
   const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
@@ -711,6 +741,8 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
             <Sidebar
               isOpen={sidebarOpen}
               onClose={() => toggleSidebar()}
+              onOpenAgent={toggleAgent}
+              isAgentOpen={agentOpen}
             />
           </Suspense>
           <MainContent>
@@ -748,7 +780,10 @@ const ProtectedLayout = ({ sidebarOpen, toggleSidebar }: { sidebarOpen: boolean,
 
           {/* Floating Agent Widget */}
           <Suspense fallback={null}>
-            <FloatingAgent />
+            <FloatingAgent
+              externalIsOpen={agentOpen}
+              onExternalToggle={toggleAgent}
+            />
           </Suspense>
         </AppContainer>
       } />

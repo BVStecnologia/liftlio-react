@@ -16,6 +16,8 @@ interface SidebarProps {
   onClose?: () => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  onOpenAgent?: () => void;
+  isAgentOpen?: boolean;
 }
 
 const slideIn = keyframes`
@@ -508,6 +510,107 @@ const NavItem = styled(NavLink)<{ isCollapsed?: boolean }>`
   }
   
   /* Tooltip no modo colapsado */
+  ${props => props.isCollapsed && `
+    &:hover ${Tooltip} {
+      opacity: 1;
+    }
+  `}
+`;
+
+// NavActionButton - same styling as NavItem but for action buttons
+const NavActionButton = styled.button<{ isCollapsed?: boolean; mobileOnly?: boolean; isActive?: boolean }>`
+  display: ${props => props.mobileOnly ? 'none' : 'flex'};
+  align-items: center;
+  padding: ${props => props.isCollapsed ? '15px 0' : '15px 24px'};
+  justify-content: ${props => props.isCollapsed ? 'center' : 'flex-start'};
+  color: ${props => props.isActive ? props.theme.components.sidebar.textActive : props.theme.components.sidebar.text};
+  background: ${props => props.isActive ? props.theme.components.sidebar.itemActive : 'transparent'};
+  transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+  position: relative;
+  text-decoration: none;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  backface-visibility: hidden;
+  will-change: transform, opacity, background-color;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+
+  /* Remove estilos padrão de botão do navegador */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  /* Garantir que não tenha cor azul padrão */
+  &:focus {
+    outline: none;
+    color: ${props => props.isActive ? props.theme.components.sidebar.textActive : props.theme.components.sidebar.text};
+  }
+
+  @media (max-width: 768px) {
+    display: ${props => props.mobileOnly ? 'flex' : 'flex'};
+    padding: 16px 22px;
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 18px 24px;
+    font-size: 1.2rem;
+  }
+
+  @media (max-width: 400px) {
+    padding: 20px 26px;
+    font-size: 1.3rem;
+  }
+
+  &:hover {
+    color: ${props => props.theme.components.sidebar.textActive};
+    background: ${props => props.theme.components.sidebar.itemHover};
+
+    svg {
+      transform: scale(1.05);
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5) inset;
+  }
+
+  &:active {
+    transform: translateX(2px) translateZ(2px) scale(0.98);
+    transition: all 0.2s ease;
+  }
+
+  /* Estado ativo */
+  ${props => props.isActive && `
+    padding-left: ${props.isCollapsed ? '0' : '24px'};
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+
+    svg {
+      transform: scale(1.1);
+    }
+  `}
+
+  svg {
+    margin-right: 12px;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    color: inherit;
+  }
+
+  span {
+    position: relative;
+    transform: translateZ(3px);
+    transition: all 0.4s ease;
+    color: inherit;
+  }
+
   ${props => props.isCollapsed && `
     &:hover ${Tooltip} {
       opacity: 1;
@@ -1360,7 +1463,7 @@ const NotificationTooltip = styled.div`
 `;
 
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed: isCollapsedProp = false, onToggleCollapse }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed: isCollapsedProp = false, onToggleCollapse, onOpenAgent, isAgentOpen = false }) => {
   const { currentProject } = useProject();
   const { theme } = useTheme();
   const { t, language } = useLanguage();
@@ -1389,6 +1492,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
     { path: '/billing', label: 'Billing', icon: 'FaCreditCard' },
     { path: '/integrations', label: t('nav.integrations'), icon: 'FaPlug' }
   ];
+
+  // AI Assistant action item (mobile only)
+  const aiAssistantItem = {
+    action: 'openAgent',
+    label: 'AI Assistant',
+    icon: 'FaRobot',
+    mobileOnly: true
+  };
   
   // Claude Insights state
   const [currentInsight, setCurrentInsight] = useState(0);
@@ -1638,9 +1749,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
           
           <NavContainer>
             {navItems.map(item => (
-              <NavItem 
+              <NavItem
                 key={item.path}
-                to={item.path} 
+                to={item.path}
                 className={({ isActive }) => isActive ? 'active' : ''}
                 onMouseEnter={() => setHoveredItem(item.path)}
                 onMouseLeave={() => setHoveredItem(null)}
@@ -1661,7 +1772,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
                   {item.label}
                 </NavItemText>
                 {isCollapsed && <Tooltip>{item.label}</Tooltip>}
-                
+
                 {/* Show notification dot for Analytics when no data */}
                 {item.path === '/analytics' && !hasAnalyticsData && (
                   <>
@@ -1675,7 +1786,32 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
                 )}
               </NavItem>
             ))}
-            
+
+            {/* AI Assistant button (mobile only) */}
+            <NavActionButton
+              isCollapsed={isCollapsed}
+              mobileOnly={aiAssistantItem.mobileOnly}
+              isActive={isAgentOpen}
+              onClick={() => {
+                if (onOpenAgent) {
+                  onOpenAgent();
+                }
+              }}
+              onMouseEnter={() => setHoveredItem(aiAssistantItem.action)}
+              onMouseLeave={() => setHoveredItem(null)}
+              aria-label={aiAssistantItem.label}
+              title={isCollapsed ? aiAssistantItem.label : ''}
+              style={{ position: 'relative' }}
+            >
+              <NavItemIcon isCollapsed={isCollapsed}>
+                <IconComponent icon={FaIcons[aiAssistantItem.icon as keyof typeof FaIcons]} />
+              </NavItemIcon>
+              <NavItemText isCollapsed={isCollapsed}>
+                {isAgentOpen ? 'Fechar AI' : aiAssistantItem.label}
+              </NavItemText>
+              {isCollapsed && <Tooltip>{isAgentOpen ? 'Fechar AI' : aiAssistantItem.label}</Tooltip>}
+            </NavActionButton>
+
           </NavContainer>
           
           {/* User Section */}

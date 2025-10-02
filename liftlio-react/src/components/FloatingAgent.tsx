@@ -97,10 +97,7 @@ const FloatingButton = styled.button<{ hasNotification: boolean }>`
   }
 
   @media (max-width: 768px) {
-    bottom: 16px;
-    right: 16px;
-    width: 56px;
-    height: 56px;
+    display: none; /* Esconder em mobile - agente aparece no menu */
   }
 `;
 
@@ -383,12 +380,27 @@ interface ChatMessage {
 }
 
 // Componente Principal
-const FloatingAgent: React.FC = () => {
+interface FloatingAgentProps {
+  externalIsOpen?: boolean;
+  onExternalToggle?: () => void;
+}
+
+const FloatingAgent: React.FC<FloatingAgentProps> = ({ externalIsOpen, onExternalToggle }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { currentProject } = useProject();
   const { t } = useLanguage();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+  // Usar controle externo se fornecido, senão usar interno
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const toggleOpen = () => {
+    if (onExternalToggle) {
+      onExternalToggle();
+    } else {
+      setInternalIsOpen(!internalIsOpen);
+    }
+  };
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -603,7 +615,7 @@ const FloatingAgent: React.FC = () => {
   return (
     <>
       <FloatingButton 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleOpen}
         hasNotification={unreadCount > 0}
       >
         <IconComponent icon={isOpen ? FaIcons.FaTimes : FaIcons.FaComments} />
@@ -624,7 +636,7 @@ const FloatingAgent: React.FC = () => {
               Always here to help
             </AgentStatus>
           </AgentInfo>
-          <CloseButton onClick={() => setIsOpen(false)}>
+          <CloseButton onClick={toggleOpen}>
             <IconComponent icon={FaIcons.FaTimes} />
           </CloseButton>
         </ChatHeader>
