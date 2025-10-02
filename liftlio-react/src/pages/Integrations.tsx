@@ -693,6 +693,8 @@ interface Integration {
   expiresAt?: number;
   lastUpdated?: string;
   failureCount?: number; // Contador de falhas consecutivas
+  desativacao_motivo?: string; // Motivo da desativação/suspensão
+  desativacao_timestamp?: string; // Timestamp da desativação
 }
 
 const Integrations: React.FC = () => {
@@ -1073,9 +1075,28 @@ const Integrations: React.FC = () => {
             if (otherProjectIntegrations.length > 0) {
               console.log('Showing reuse modal with integrations:', otherProjectIntegrations);
 
+              // Filtrar integrações suspensas (is_active = false E tem desativacao_motivo)
+              const activeIntegrations = otherProjectIntegrations.filter(
+                (int: any) => int.is_active === true || !int.desativacao_motivo
+              );
+
+              console.log('Filtered active integrations:', {
+                total: otherProjectIntegrations.length,
+                active: activeIntegrations.length,
+                suspended: otherProjectIntegrations.length - activeIntegrations.length
+              });
+
+              if (activeIntegrations.length === 0) {
+                console.log('All integrations are suspended, proceeding with new OAuth');
+                // Não há integrações ativas para reutilizar, prosseguir com novo OAuth
+                setSelectedIntegration(integration);
+                setModalOpen(true);
+                return;
+              }
+
               // Atualizar informações do canal para integrações sem nome
               const integrationsWithInfo = await Promise.all(
-                otherProjectIntegrations.map(async (int: any) => {
+                activeIntegrations.map(async (int: any) => {
                   // Se não tem nome do canal ou email, buscar via Edge Function
                   if (!int.youtube_channel_name && !int.youtube_email) {
                     console.log(`Fetching YouTube info for integration ${int.integration_id}`);
@@ -1624,6 +1645,24 @@ const Integrations: React.FC = () => {
                 We found existing YouTube connections in your other projects.
                 Would you like to use one of them?
               </ModalText>
+
+              {/* Warning about suspended accounts */}
+              <div style={{
+                marginTop: '15px',
+                padding: '12px',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                border: '1px solid rgba(255, 193, 7, 0.3)',
+                borderRadius: '6px',
+                display: 'flex',
+                gap: '10px',
+                alignItems: 'flex-start'
+              }}>
+                <span style={{ color: '#FFC107', fontSize: '18px', marginTop: '2px' }}>⚠️</span>
+                <div style={{ fontSize: '13px', color: theme.name === 'dark' ? '#fff' : '#333', lineHeight: '1.5' }}>
+                  <strong>Note:</strong> Suspended or banned YouTube accounts are not shown in this list.
+                  If your account was suspended for spam, you'll need to connect a different YouTube account.
+                </div>
+              </div>
 
               <div style={{ marginTop: '20px' }}>
                 <div style={{ marginBottom: '20px' }}>

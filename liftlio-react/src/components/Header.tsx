@@ -1175,9 +1175,12 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const [youtubeStatus, setYoutubeStatus] = useState<{
     checked: boolean; // Se já verificamos o status
     connected: boolean; // Se está conectado
+    suspended: boolean; // Se a conta foi suspensa/banida
+    suspensionReason?: string; // Motivo da suspensão
   }>({
     checked: false,
-    connected: false
+    connected: false,
+    suspended: false
   });
   
   const projectsRef = useRef<HTMLDivElement>(null);
@@ -1219,7 +1222,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     } else {
       // Se não houver projeto selecionado, marcar como desconectado (não conectado)
       // Isso evita que a notificação de integração desconectada suma quando não há projeto selecionado
-      setYoutubeStatus({ checked: true, connected: false });
+      setYoutubeStatus({ checked: true, connected: false, suspended: false });
     }
   }, [currentProject]);
   
@@ -1241,12 +1244,12 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   // Função para verificar a conexão com YouTube usando verificação direta
   const checkYouTubeConnection = async () => {
     // Forçar o estado para "verificando" durante a consulta
-    setYoutubeStatus({ checked: false, connected: false });
-    
+    setYoutubeStatus({ checked: false, connected: false, suspended: false });
+
     try {
       if (!currentProject?.id) {
         console.log('Sem projeto selecionado, YouTube desconectado');
-        setYoutubeStatus({ checked: true, connected: false });
+        setYoutubeStatus({ checked: true, connected: false, suspended: false });
         return;
       }
       
@@ -1255,26 +1258,33 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       // Verificação direta da integração no banco de dados
       const { data, error } = await supabase
         .from('Integrações')
-        .select('ativo')
+        .select('ativo, desativacao_motivo, desativacao_timestamp')
         .eq('PROJETO id', currentProject.id)
         .eq('Tipo de integração', 'youtube')
         .single();
       
       if (error) {
         console.error('Erro ao verificar integração do YouTube:', error);
-        setYoutubeStatus({ checked: true, connected: false });
+        setYoutubeStatus({ checked: true, connected: false, suspended: false });
         return;
       }
-      
+
       // A integração está ativa se o campo ativo for true
       const isConnected = data?.ativo === true;
-      
-      console.log('Status da conexão YouTube:', isConnected ? 'Conectado' : 'Desconectado');
-      setYoutubeStatus({ checked: true, connected: isConnected });
+      // A integração está suspensa se não estiver ativa E tiver um motivo de desativação
+      const isSuspended = !isConnected && !!data?.desativacao_motivo;
+
+      console.log('Status da conexão YouTube:', isConnected ? 'Conectado' : isSuspended ? 'Suspensa' : 'Desconectado');
+      setYoutubeStatus({
+        checked: true,
+        connected: isConnected,
+        suspended: isSuspended,
+        suspensionReason: data?.desativacao_motivo
+      });
     } catch (error) {
       console.error("Erro ao verificar integração do YouTube:", error);
       console.log('YouTube desconectado (exceção na consulta)');
-      setYoutubeStatus({ checked: true, connected: false });
+      setYoutubeStatus({ checked: true, connected: false, suspended: false });
     }
   };
   
@@ -1801,23 +1811,30 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         </div>
         
         <RightSection>
-          {/* Aviso do YouTube quando verificação estiver completa E não estiver conectado */}
-          {/* Mostra o alerta para qualquer projeto, mesmo sem id, para projetos novos */}
+          {/* Aviso do YouTube baseado em 3 estados: Suspensa, Desconectada, Conectada */}
           {youtubeStatus.checked && !youtubeStatus.connected && (
-            <div 
+            <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                background: theme.name === 'dark' 
-                  ? 'linear-gradient(135deg, rgba(255, 80, 80, 0.15) 0%, rgba(255, 80, 80, 0.25) 100%)' 
-                  : 'linear-gradient(135deg, rgba(255, 0, 0, 0.08) 0%, rgba(255, 0, 0, 0.12) 100%)',
+                background: youtubeStatus.suspended
+                  ? theme.name === 'dark'
+                    ? 'linear-gradient(135deg, rgba(255, 100, 50, 0.15) 0%, rgba(255, 50, 50, 0.25) 100%)'
+                    : 'linear-gradient(135deg, rgba(255, 50, 0, 0.08) 0%, rgba(255, 0, 0, 0.12) 100%)'
+                  : theme.name === 'dark'
+                    ? 'linear-gradient(135deg, rgba(255, 80, 80, 0.15) 0%, rgba(255, 80, 80, 0.25) 100%)'
+                    : 'linear-gradient(135deg, rgba(255, 0, 0, 0.08) 0%, rgba(255, 0, 0, 0.12) 100%)',
                 padding: '6px 14px',
                 borderRadius: '8px',
                 marginRight: '15px',
                 cursor: 'pointer',
-                border: theme.name === 'dark' 
-                  ? '1px solid rgba(255, 80, 80, 0.4)' 
-                  : '1px solid rgba(255, 0, 0, 0.2)',
+                border: youtubeStatus.suspended
+                  ? theme.name === 'dark'
+                    ? '1px solid rgba(255, 50, 50, 0.5)'
+                    : '1px solid rgba(255, 0, 0, 0.3)'
+                  : theme.name === 'dark'
+                    ? '1px solid rgba(255, 80, 80, 0.4)'
+                    : '1px solid rgba(255, 0, 0, 0.2)',
                 transition: 'all 0.2s ease',
                 boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)',
                 position: 'relative',
@@ -1826,16 +1843,24 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
               }}
               onClick={handleYouTubeConnect}
               onMouseOver={(e) => {
-                e.currentTarget.style.background = theme.name === 'dark'
-                  ? 'linear-gradient(135deg, rgba(255, 80, 80, 0.25) 0%, rgba(255, 80, 80, 0.35) 100%)'
-                  : 'linear-gradient(135deg, rgba(255, 0, 0, 0.12) 0%, rgba(255, 0, 0, 0.18) 100%)';
+                e.currentTarget.style.background = youtubeStatus.suspended
+                  ? theme.name === 'dark'
+                    ? 'linear-gradient(135deg, rgba(255, 100, 50, 0.25) 0%, rgba(255, 50, 50, 0.35) 100%)'
+                    : 'linear-gradient(135deg, rgba(255, 50, 0, 0.12) 0%, rgba(255, 0, 0, 0.18) 100%)'
+                  : theme.name === 'dark'
+                    ? 'linear-gradient(135deg, rgba(255, 80, 80, 0.25) 0%, rgba(255, 80, 80, 0.35) 100%)'
+                    : 'linear-gradient(135deg, rgba(255, 0, 0, 0.12) 0%, rgba(255, 0, 0, 0.18) 100%)';
                 e.currentTarget.style.transform = 'translateY(-1px)';
                 e.currentTarget.style.boxShadow = '0 3px 8px rgba(0, 0, 0, 0.08)';
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.background = theme.name === 'dark'
-                  ? 'linear-gradient(135deg, rgba(255, 80, 80, 0.15) 0%, rgba(255, 80, 80, 0.25) 100%)'
-                  : 'linear-gradient(135deg, rgba(255, 0, 0, 0.08) 0%, rgba(255, 0, 0, 0.12) 100%)';
+                e.currentTarget.style.background = youtubeStatus.suspended
+                  ? theme.name === 'dark'
+                    ? 'linear-gradient(135deg, rgba(255, 100, 50, 0.15) 0%, rgba(255, 50, 50, 0.25) 100%)'
+                    : 'linear-gradient(135deg, rgba(255, 50, 0, 0.08) 0%, rgba(255, 0, 0, 0.12) 100%)'
+                  : theme.name === 'dark'
+                    ? 'linear-gradient(135deg, rgba(255, 80, 80, 0.15) 0%, rgba(255, 80, 80, 0.25) 100%)'
+                    : 'linear-gradient(135deg, rgba(255, 0, 0, 0.08) 0%, rgba(255, 0, 0, 0.12) 100%)';
                 e.currentTarget.style.transform = 'translateY(0)';
                 e.currentTarget.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.05)';
               }}
@@ -1868,27 +1893,44 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                   100% { transform: scale(1); }
                 }
               `}</style>
-              
-              <IconComponent icon={FaIcons.FaYoutube}
-                style={{ 
-                  color: '#FF0000', 
-                  marginRight: '8px',
-                  fontSize: '1.1rem',
-                  filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.1))',
-                  position: 'relative',
-                  zIndex: 2,
-                  animation: 'pulse 2s infinite'
-                }} 
-              />
-              <span style={{ 
-                fontSize: '0.85rem', 
+
+              {/* Ícone diferente para suspensa vs desconectada */}
+              {youtubeStatus.suspended ? (
+                <IconComponent icon={FaIcons.FaExclamationTriangle}
+                  style={{
+                    color: '#FF4444',
+                    marginRight: '8px',
+                    fontSize: '1.1rem',
+                    filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.1))',
+                    position: 'relative',
+                    zIndex: 2,
+                    animation: 'pulse 2s infinite'
+                  }}
+                />
+              ) : (
+                <IconComponent icon={FaIcons.FaYoutube}
+                  style={{
+                    color: '#FF0000',
+                    marginRight: '8px',
+                    fontSize: '1.1rem',
+                    filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.1))',
+                    position: 'relative',
+                    zIndex: 2,
+                    animation: 'pulse 2s infinite'
+                  }}
+                />
+              )}
+              <span style={{
+                fontSize: '0.85rem',
                 color: theme.name === 'dark' ? '#fff' : '#333',
                 fontWeight: 500,
                 position: 'relative',
                 zIndex: 2,
                 textShadow: theme.name === 'dark' ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'
               }}>
-                YouTube Disconnected - Click to Connect
+                {youtubeStatus.suspended
+                  ? 'YouTube Suspended - Click for Details'
+                  : 'YouTube Disconnected - Click to Connect'}
               </span>
             </div>
           )}
