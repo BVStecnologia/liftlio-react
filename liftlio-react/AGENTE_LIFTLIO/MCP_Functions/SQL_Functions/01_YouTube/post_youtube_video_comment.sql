@@ -1,6 +1,6 @@
 -- =============================================
--- Função: post_youtube_video_comment
--- Descrição: Posta um comentário em um vídeo do YouTube usando API v3, com logging de debug
+-- Funï¿½ï¿½o: post_youtube_video_comment
+-- Descriï¿½ï¿½o: Posta um comentï¿½rio em um vï¿½deo do YouTube usando API v3, com logging de debug
 -- Criado: 2024-01-24
 -- Atualizado: -
 -- =============================================
@@ -18,7 +18,7 @@ DECLARE
     user_info_response http_response;
     user_info JSONB;
 BEGIN
-    -- Obter o token do YouTube para o projeto específico
+    -- Obter o token do YouTube para o projeto especï¿½fico
     token := get_youtube_token(project_id);
 
     -- Verificar a qual conta este token pertence
@@ -33,11 +33,11 @@ BEGIN
         NULL
     )::http_request);
 
-    -- Log das informações do usuário
+    -- Log das informaï¿½ï¿½es do usuï¿½rio
     RAISE NOTICE 'Token: %', token;
     RAISE NOTICE 'User Info Response: %', user_info_response.content;
 
-    -- Construir o corpo da requisição para comentário no vídeo
+    -- Construir o corpo da requisiï¿½ï¿½o para comentï¿½rio no vï¿½deo
     request_body := jsonb_build_object(
         'snippet', jsonb_build_object(
             'videoId', video_id,
@@ -49,7 +49,7 @@ BEGIN
         )
     );
 
-    -- Fazer a chamada POST à API do YouTube
+    -- Fazer a chamada POST ï¿½ API do YouTube
     SELECT * INTO http_response
     FROM http((
         'POST',
@@ -62,8 +62,40 @@ BEGIN
         request_body::text
     )::http_request);
 
-    -- Se houver erro, retornar informações detalhadas
+    -- Se houver erro, retornar informaï¿½ï¿½es detalhadas
     IF http_response.status != 200 THEN
+
+        -- Detectar erros que indicam conta banida/suspensa e desativar integraÃ§Ã£o
+        IF http_response.status IN (403, 429, 400) THEN
+            DECLARE
+                motivo_desativacao TEXT;
+            BEGIN
+                -- Define o motivo baseado no cÃ³digo de erro
+                motivo_desativacao := CASE http_response.status
+                    WHEN 403 THEN '403 Forbidden: Conta banida, suspensa ou sem permissÃµes para comentar no YouTube'
+                    WHEN 429 THEN '429 Too Many Requests: Rate limit excedido - muitas requisiÃ§Ãµes ao YouTube'
+                    WHEN 400 THEN '400 Bad Request: Erro na requisiÃ§Ã£o ou conta sem permissÃµes adequadas'
+                    ELSE 'Erro desconhecido: ' || http_response.status
+                END;
+
+                -- Desativar integraÃ§Ã£o e salvar motivo
+                UPDATE "IntegraÃ§Ãµes" i
+                SET ativo = FALSE,
+                    desativacao_motivo = motivo_desativacao,
+                    desativacao_timestamp = CURRENT_TIMESTAMP
+                FROM "Projeto" p
+                WHERE p.id = project_id
+                  AND i.id = p."IntegraÃ§Ãµes";
+
+                -- Marcar projeto como integraÃ§Ã£o invÃ¡lida
+                UPDATE "Projeto"
+                SET integracao_valida = FALSE
+                WHERE id = project_id;
+
+                RAISE NOTICE 'IntegraÃ§Ã£o desativada para projeto % - Motivo: %', project_id, motivo_desativacao;
+            END;
+        END IF;
+
         RETURN jsonb_build_object(
             'error', true,
             'status', http_response.status,
@@ -74,7 +106,7 @@ BEGIN
         );
     END IF;
 
-    -- Retornar resposta com informações de debug
+    -- Retornar resposta com informaï¿½ï¿½es de debug
     RETURN jsonb_build_object(
         'success', true,
         'response', http_response.content::jsonb,
