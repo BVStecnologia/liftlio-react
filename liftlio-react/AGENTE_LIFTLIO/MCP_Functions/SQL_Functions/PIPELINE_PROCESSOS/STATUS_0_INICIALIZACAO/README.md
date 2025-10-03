@@ -303,7 +303,10 @@ LIMIT 10;
 
 ## 📁 ARQUIVOS RELACIONADOS
 
-- **SQL**: `atualizar_scanner_rodada.sql`
+### SQL Functions
+- `01_atualizar_scanner_rodada.sql` - Única função do STATUS_0 (inicializa scanners)
+
+### Conexões
 - **Disparado Por**: Trigger `schedule_process_project()` quando status='0'
 - **Dispara**: `process_next_project_scanner()` no STATUS 1
 

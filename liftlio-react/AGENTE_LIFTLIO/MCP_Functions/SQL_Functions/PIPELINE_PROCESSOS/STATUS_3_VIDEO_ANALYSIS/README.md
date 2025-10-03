@@ -21,31 +21,15 @@ Nesta etapa, cada vídeo é analisado pelo **Claude AI** para determinar:
 
 ---
 
-## 🎯 FUNÇÕES NESTE MÓDULO
+## 🎯 FUNÇÕES NESTE MÓDULO (ORDEM DE EXECUÇÃO)
 
-### 1. `start_video_analysis_processing(project_id integer, batch_size integer)`
-**Tipo**: Main Function
-**Retorno**: void
-**Responsabilidade**: Orquestrar processamento em batches
-
-### 2. `process_video_analysis_batch(project_id integer, batch_size integer)`
-**Tipo**: Main Function (recursiva)
-**Retorno**: void
-**Responsabilidade**: Processar batch e agendar próximo
-
-### 3. `update_video_analysis(video_id bigint)`
-**Tipo**: Helper Function
-**Retorno**: void
-**Responsabilidade**: Atualizar campos de análise do vídeo
-
-### 4. `analyze_video_with_claude(video_youtube_id text)` ⚡ Edge Function
-**Tipo**: Edge Function (Deno)
-**API**: Claude API (Anthropic)
-**Responsabilidade**: Análise AI completa do vídeo
-
-### 5. `claude_complete()`
-**Tipo**: API Wrapper
-**Responsabilidade**: Chamar Claude API
+| # | Função | Tipo | Descrição |
+|---|--------|------|-----------|
+| 01 | `start_video_analysis_processing()` | Main | Orquestrar processamento em batches |
+| 02 | `process_video_analysis_batch()` | Main (recursiva) | Processar batch e agendar próximo |
+| 03 | `update_video_analysis()` | Helper | Atualizar campos de análise do vídeo |
+| 04 | `analyze_video_with_claude()` | AI Analyzer | Análise AI completa do vídeo com Claude |
+| 05 | `get_video_data_for_analysis()` | Data Fetcher | Busca dados do vídeo + comentários para análise |
 
 ---
 
@@ -549,14 +533,16 @@ ORDER BY quantidade DESC;
 
 ## 📁 ARQUIVOS RELACIONADOS
 
-### SQL Functions
-- `start_video_analysis_processing.sql`
-- `process_video_analysis_batch.sql`
-- `update_video_analysis.sql`
+### SQL Functions (Numeradas por Ordem de Execução)
+- `01_start_video_analysis_processing.sql` - Função MÃE (inicia processo)
+- `02_process_video_analysis_batch.sql` - Batch processor recursivo
+- `03_update_video_analysis.sql` - Atualiza campos do vídeo
+- `04_analyze_video_with_claude.sql` - Análise AI com Claude
+- `05_get_video_data_for_analysis.sql` - Busca dados para análise
 
-### Edge Functions
-- `analyze-video-with-claude.ts`
-- `claude-complete.ts`
+### Funções Auxiliares Globais (ver STATUS_4)
+- `claude_complete()` - API wrapper para Claude (arquivo em STATUS_4/06)
+- `get_secret()` - Helper para buscar secrets (arquivo em STATUS_4/07)
 
 ---
 

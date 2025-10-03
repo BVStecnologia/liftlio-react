@@ -26,10 +26,10 @@ Nesta etapa, o pipeline processa **um scanner por vez**, buscando vídeos novos 
 **Retorno**: void
 **Responsabilidade**: Atualizar cache de IDs de vídeos
 
-### 3. `get_youtube_channel_videos()` ⚡ Edge Function
+### 3. `Retornar-Ids-do-youtube` ⚡ Edge Function
 **Tipo**: Edge Function (Deno)
-**API**: YouTube Data API v3
-**Responsabilidade**: Buscar vídeos do canal
+**Servidor**: Python YouTube Search Engine v5 (173.249.22.2:8000)
+**Responsabilidade**: Buscar e selecionar vídeos usando Claude AI para análise semântica
 
 ---
 
@@ -444,8 +444,14 @@ AND status = 'succeeded';
 
 ## 📁 ARQUIVOS RELACIONADOS
 
-- **SQL**: `process_next_project_scanner.sql`, `update_video_id_cache.sql`
-- **Edge Function**: `get-youtube-channel-videos.ts`
+### SQL Functions (Numeradas por Ordem de Execução)
+- `01_process_next_project_scanner.sql` - Função MÃE (processa scanner)
+- `02_update_video_id_cache.sql` - Atualiza cache de IDs
+
+### Edge Functions
+- `03_Edge_Function_Retornar-Ids-do-youtube.ts` - Busca vídeos via Python + Claude
+
+### Conexões
 - **Disparado Por**: Trigger quando status='1'
 - **Dispara**: `update_video_stats()` no STATUS 2
 

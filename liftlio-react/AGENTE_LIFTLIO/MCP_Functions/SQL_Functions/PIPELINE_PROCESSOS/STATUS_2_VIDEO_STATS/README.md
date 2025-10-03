@@ -29,23 +29,29 @@ Ambas as fases usam **batch processing** com **circuit breaker** para respeitar 
 
 ---
 
-## 🎯 FUNÇÕES NESTE MÓDULO
+## 🎯 FUNÇÕES NESTE MÓDULO (ORDEM DE EXECUÇÃO)
 
 ### FASE 1: VIDEO STATS
-| Função | Tipo | Descrição |
-|--------|------|-----------|
-| `update_video_stats()` | Main | Atualiza estatísticas em batches |
-| `call_youtube_edge_function()` | Helper | Wrapper para Edge Function |
-| `get_youtube_video_stats()` ⚡ | Edge Fn | Busca stats da API YouTube |
+| # | Função | Tipo | Descrição |
+|---|--------|------|-----------|
+| 01 | `update_video_stats()` | Main | Atualiza estatísticas em batches |
+| 02 | `call_youtube_edge_function()` | Helper | Wrapper para Edge Function "bright-function" |
 
 ### FASE 2: VIDEO COMMENTS
-| Função | Tipo | Descrição |
-|--------|------|-----------|
-| `start_video_processing()` | Main | Inicia processamento de comentários |
-| `process_videos_batch()` | Main | Processa vídeos em batches |
-| `process_pending_videos()` | Helper | Itera sobre vídeos pendentes |
-| `fetch_and_store_comments_for_video()` | Core | Busca e salva comentários |
-| `get_youtube_video_comments()` ⚡ | Edge Fn | Busca comentários da API YouTube |
+| # | Função | Tipo | Descrição |
+|---|--------|------|-----------|
+| 03 | `start_video_processing()` | Main | Inicia processamento de comentários |
+| 04 | `process_pending_videos()` | Helper | Itera sobre vídeos pendentes |
+| 05 | `process_videos_batch()` | Main | Processa vídeos em batches |
+| 06 | `fetch_and_store_comments_for_video()` | Core | Busca e salva comentários |
+| 07 | `get_youtube_video_comments()` | API Caller | Busca comentários da API YouTube via HTTP |
+| 08 | `bright-function` ⚡ Edge Function | Edge Fn | Busca estatísticas de vídeos do YouTube via API |
+
+### 📦 ARQUIVADAS (_Archived/)
+| Arquivo | Motivo |
+|---------|--------|
+| `get_youtube_video_stats.sql` | Não usada no fluxo atual |
+| `update_video_stats_safe.sql` | Duplicata de `01_update_video_stats.sql` |
 
 ---
 
@@ -522,19 +528,24 @@ WHERE id = {video_id};
 
 ## 📁 ARQUIVOS RELACIONADOS
 
-### SQL Functions
-- `update_video_stats.sql`
-- `call_youtube_edge_function.sql`
-- `start_video_processing.sql`
-- `process_videos_batch.sql` ⚠️ **BUG linha 58**
-- `process_pending_videos.sql`
-- `fetch_and_store_comments_for_video.sql`
+### SQL Functions (Numeradas por Ordem de Execução)
+- `01_update_video_stats.sql` - Função MÃE (Fase Stats)
+- `02_call_youtube_edge_function.sql` - Helper para Edge Function
+- `03_start_video_processing.sql` - Função MÃE (Fase Comments)
+- `04_process_pending_videos.sql` - Iterator de vídeos pendentes
+- `05_process_videos_batch.sql` - Batch processor ⚠️ **BUG linha 58**
+- `06_fetch_and_store_comments_for_video.sql` - Core function
+- `07_get_youtube_video_comments.sql` - API caller
 
 ### Edge Functions
-- `get-youtube-video-stats.ts`
-- `get-youtube-video-comments.ts`
+- `08_Edge_Function_bright-function.ts` - Busca stats do YouTube via API
+
+### Arquivadas (_Archived/)
+- `get_youtube_video_stats.sql` - Não usada
+- `update_video_stats_safe.sql` - Duplicata
 
 ### Documentação
+- `README.md` - Este arquivo
 - `../BUG_FIXES.md` - Detalhes completos do bug
 
 ---

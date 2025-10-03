@@ -21,31 +21,21 @@ Cada comentário recebe um **score de 0 a 10** e é classificado como lead ou n�
 
 ---
 
-## 🎯 FUNÇÕES NESTE MÓDULO
+## 🎯 FUNÇÕES NESTE MÓDULO (ORDEM DE EXECUÇÃO)
 
-### 1. `start_comment_analysis_processing(project_id integer, batch_size integer)`
-**Tipo**: Main Function
-**Retorno**: void
-**Responsabilidade**: Orquestrar processamento em batches
+| # | Função | Tipo | Descrição |
+|---|--------|------|-----------|
+| 01 | `start_comment_analysis_processing()` | Main | Orquestrar processamento em batches |
+| 02 | `process_comment_analysis_batch()` | Main (recursiva) | Processar batch e agendar próximo |
+| 03 | `contar_comentarios_analisados()` | Counter | Contar comentários analisados e pendentes |
+| 04 | `atualizar_comentarios_analisados()` | Helper | Atualizar campos de análise dos comentários |
+| 05 | `analisar_comentarios_com_claude()` | AI Analyzer | Análise PICS de leads com Claude AI |
 
-### 2. `process_comment_analysis_batch(project_id integer, batch_size integer)`
-**Tipo**: Main Function (recursiva)
-**Retorno**: void
-**Responsabilidade**: Processar batch e agendar próximo
-
-### 3. `atualizar_comentarios_analisados(comment_ids bigint[], analysis_results jsonb[])`
-**Tipo**: Helper Function
-**Retorno**: void
-**Responsabilidade**: Atualizar campos de análise em massa
-
-### 4. `analisar_comentarios_com_claude(comments jsonb)` ⚡ Edge Function
-**Tipo**: Edge Function (Deno)
-**API**: Claude API (Anthropic)
-**Responsabilidade**: Análise PICS em batch
-
-### 5. `claude_complete()`
-**Tipo**: API Wrapper
-**Responsabilidade**: Chamar Claude API
+### Funções Auxiliares Globais (usadas por múltiplos STATUS)
+| # | Função | Tipo | Descrição |
+|---|--------|------|-----------|
+| 06 | `claude_complete()` | API Wrapper | Chama Claude API da Anthropic |
+| 07 | `get_secret()` | Security Helper | Busca secrets do Supabase Vault |
 
 ---
 
@@ -502,15 +492,16 @@ LIMIT 20;
 
 ## 📁 ARQUIVOS RELACIONADOS
 
-### SQL Functions
-- `start_comment_analysis_processing.sql`
-- `process_comment_analysis_batch.sql`
-- `atualizar_comentarios_analisados.sql`
-- `contar_comentarios_analisados.sql` (helper)
+### SQL Functions (Numeradas por Ordem de Execução)
+- `01_start_comment_analysis_processing.sql` - Função MÃE (inicia processo)
+- `02_process_comment_analysis_batch.sql` - Batch processor recursivo
+- `03_contar_comentarios_analisados.sql` - Contador de comentários
+- `04_atualizar_comentarios_analisados.sql` - Atualiza análises
+- `05_analisar_comentarios_com_claude.sql` - Análise PICS com Claude AI
 
-### Edge Functions
-- `analisar-comentarios-com-claude.ts`
-- `claude-complete.ts`
+### Funções Auxiliares Globais
+- `06_claude_complete.sql` - API wrapper para Claude (usado também em STATUS_3)
+- `07_get_secret.sql` - Helper para buscar secrets do Vault
 
 ---
 

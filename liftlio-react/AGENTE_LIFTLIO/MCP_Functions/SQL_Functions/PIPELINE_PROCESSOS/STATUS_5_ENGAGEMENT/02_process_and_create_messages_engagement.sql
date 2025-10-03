@@ -1,7 +1,23 @@
 -- =============================================
 -- Função: process_and_create_messages_engagement
--- Descrição: Processa e cria mensagens de engajamento com Claude
+-- Tipo: Message Creator (wrapper + inserção)
+--
+-- Descrição:
+--   Wrapper que chama função 01 e insere mensagens na tabela Mensagens.
+--   Cria registros de mensagens de engagement baseados na análise do Claude.
+--
+-- Entrada:
+--   p_project_id INTEGER - ID do projeto
+--
+-- Saída:
+--   TABLE (message_id, cp_id, status)
+--
+-- Conexões:
+--   → Chamada por: 03_process_engagement_messages_batch (linha 53)
+--   → Chama: 01_process_engagement_comments_with_claude (linha 30)
+--
 -- Criado: 2025-01-23
+-- Atualizado: 2025-10-02 - Documentação completa e organização
 -- =============================================
 
 DROP FUNCTION IF EXISTS public.process_and_create_messages_engagement(integer);
