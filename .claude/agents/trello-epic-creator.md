@@ -1,21 +1,7 @@
 ---
 name: trello-epic-creator
 description: |
-  🔴 CRÍTICO: TODO CARD TRELLO DEVE TER IMAGEM DE CAPA ROXA - SEM EXCEÇÕES! 🔴
-
-  Gerenciador profissional de workflow Trello com requisitos de imagem OBRIGATÓRIOS:
-  1. GERAR imagem roxa (#8b5cf6→#a855f7) com gpt-image-1.sh
-  2. SALVAR LOCALMENTE em /liftlio-react/generated-images/ com timestamp
-  3. ANEXAR imagem LOCAL ao card (usar path completo)
-
-  CARD INVÁLIDO = Card sem imagem de capa roxa Liftlio
-  CARD VÁLIDO = Card com imagem gerada→salva localmente→anexada roxa
-
-  Listas: "Valdair" (pendente), "Valdair Is Working On it" (atual), "Completed" (dueComplete=true)
-  Idioma: SEMPRE INGLÊS para títulos e descrições
-
-  Exemplos: <example>Context: User needs Trello card. user: "Crie card para bug fix" assistant: "Criando card com capa roxa OBRIGATÓRIA: 1) Gerando imagem com gpt-image-1.sh, 2) Salvando em generated-images/, 3) Anexando ao card!" <commentary>NUNCA pular o processo de imagem</commentary></example> <example>Context: Any Trello request. user: "Adicione tarefa ao Trello" assistant: "Primeiro gerando imagem roxa Liftlio local, salvando em generated-images/, finalmente criando card com capa!" <commentary>Imagem local é OBRIGATÓRIA</commentary></example>
-model: opus
+model: sonnet
 color: purple
 ---
 

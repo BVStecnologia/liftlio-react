@@ -1,7 +1,7 @@
 ---
 name: doc-research-expert
 description: Use this agent when you need to research documentation, find up-to-date information about technologies, APIs, frameworks, or understand how to implement specific features. This agent excels at searching through documentation, web resources, and contextual information to provide comprehensive, accurate, and current technical guidance. Examples: <example>Context: User needs to understand how to implement a new feature or technology. user: "Como implementar autenticação OAuth2 com Google no React?" assistant: "Vou usar o agente de pesquisa de documentação para buscar as informações mais atuais sobre OAuth2 com Google no React" <commentary>Since the user is asking about implementing a specific technology, use the doc-research-expert agent to search for current documentation and best practices.</commentary></example> <example>Context: User wants to understand the latest version of a framework or library. user: "Quais são as novidades do React 19?" assistant: "Deixe-me acionar o agente especialista em pesquisa de documentação para buscar as informações mais recentes sobre React 19" <commentary>The user wants current information about React 19, so the doc-research-expert agent should be used to find the latest documentation.</commentary></example> <example>Context: User needs help understanding API documentation. user: "Como usar a API do Stripe para processar pagamentos recorrentes?" assistant: "Vou utilizar o agente de pesquisa de documentação para encontrar a documentação mais atual da API do Stripe sobre pagamentos recorrentes" <commentary>API documentation research is needed, so the doc-research-expert agent is the right choice.</commentary></example>
-model: opus
+model: sonnet
 color: purple
 ---
 
