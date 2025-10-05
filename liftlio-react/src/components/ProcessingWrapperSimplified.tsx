@@ -165,37 +165,43 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
 
     const currentComponent = displayState.display_component;
     const previousComponent = previousStateRef.current;
+    const refreshFlag = sessionStorage.getItem('dashboard_auto_refreshed');
+
+    console.log('[ProcessingWrapper] Estado atual:', {
+      previous: previousComponent,
+      current: currentComponent,
+      refreshFlag,
+      projectId: currentProject?.id
+    });
+
+    // Se já está no dashboard e flag está setada, significa que acabou de recarregar
+    // Limpar a flag para permitir futuros refreshes
+    if (currentComponent === 'dashboard' && refreshFlag === 'true') {
+      console.log('[ProcessingWrapper] Dashboard carregado após refresh, limpando flag');
+      sessionStorage.removeItem('dashboard_auto_refreshed');
+    }
 
     // Detectar transição de setup_processing → dashboard
     if (
       previousComponent === 'setup_processing' &&
       currentComponent === 'dashboard' &&
-      !sessionStorage.getItem('dashboard_auto_refreshed')
+      refreshFlag !== 'true'
     ) {
-      console.log('[ProcessingWrapper] Processamento concluído! Recarregando para carregar dados...');
+      console.log('[ProcessingWrapper] ✅ Processamento concluído! Recarregando em 1.5s para carregar dados...');
 
       // Marcar que já fez refresh para evitar loop
       sessionStorage.setItem('dashboard_auto_refreshed', 'true');
 
-      // Pequeno delay para garantir que dados foram salvos no banco
+      // Delay maior para garantir que dados foram salvos no banco
       setTimeout(() => {
+        console.log('[ProcessingWrapper] 🔄 Executando reload agora...');
         window.location.reload();
-      }, 800);
+      }, 1500);
     }
 
     // Atualizar referência para próxima verificação
     previousStateRef.current = currentComponent;
-  }, [displayState?.display_component]);
-
-  // Cleanup: limpar flag de refresh ao desmontar
-  useEffect(() => {
-    return () => {
-      // Limpar apenas se estiver saindo completamente (não apenas trocando de estado)
-      if (!displayState?.display_component) {
-        sessionStorage.removeItem('dashboard_auto_refreshed');
-      }
-    };
-  }, []);
+  }, [displayState?.display_component, currentProject?.id]);
 
   // SEMPRE retornar null enquanto está carregando para evitar "piscar" componentes
   // Isso garante que nenhum conteúdo seja renderizado até sabermos o que mostrar
