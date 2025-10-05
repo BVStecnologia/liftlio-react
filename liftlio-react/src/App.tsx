@@ -20,6 +20,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy load all pages
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const LandingPageHTML = lazy(() => import('./pages/LandingPageHTML'));
 const Overview = lazy(() => import('./pages/Overview'));
 const Analytics = lazy(() => import('./pages/Analytics'));
@@ -334,6 +335,11 @@ const AppContent: React.FC = () => {
               <LoginPage />
             </Suspense>
           } />
+          <Route path="/reset-password" element={
+            <Suspense fallback={null}>
+              <ResetPassword />
+            </Suspense>
+          } />
           <Route path="/auth/callback" element={
             <Suspense fallback={null}>
               <AuthCallback />
@@ -525,19 +531,19 @@ const ProtectedLayout = ({
   // IMPORTANTE: Mover hooks ANTES de qualquer return condicional
   const projectHasIntegrations = React.useMemo(() => {
     if (!currentProject) return false;
-    
+
     // projectIntegrations já vem filtrado do contexto para o projeto atual
     // Só precisamos verificar se tem alguma integração
     return projectIntegrations.length > 0;
   }, [currentProject, projectIntegrations]);
-  
+
   // Função helper para determinar o tipo de layout a mostrar
   const getLayoutType = React.useCallback(() => {
     // Ordem de prioridade clara:
     if (loading || !onboardingReady || isLoading) return 'loading';
     if (!user) return 'login';
     if (!hasProjects) return 'create-project';
-    
+
     // IMPORTANTE: Verificar integrações PRIMEIRO
     // Projetos sem integração devem ir para setup, independente do status
     if (currentProject && !projectHasIntegrations) {
@@ -552,13 +558,13 @@ const ProtectedLayout = ({
       console.log('[getLayoutType] Projeto em processamento (status:', projectStatus, '), indo para dashboard');
       return 'dashboard'; // ProcessingWrapper vai cuidar da visualização
     }
-    
+
     // Verificar onboarding
     if (isOnboarding) {
       console.log('[getLayoutType] Em onboarding');
       return 'onboarding';
     }
-    
+
     // Caso padrão: dashboard
     return 'dashboard';
   }, [

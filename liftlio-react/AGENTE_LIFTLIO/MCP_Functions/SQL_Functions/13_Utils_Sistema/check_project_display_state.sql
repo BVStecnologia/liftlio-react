@@ -348,6 +348,14 @@ BEGIN
       v_processing_step := 0;
       v_progress_percentage := 0;
       v_processing_message := 'Checking project state...';
+    ELSIF v_has_messages THEN
+      v_display_component := 'dashboard';
+      v_processing_step := 7;
+      v_progress_percentage := 100;
+      v_processing_message := 'Dashboard available';
+      v_verified_ready := true;
+      v_should_continue_checking := false;
+      v_onboarding_step := 4;
     ELSIF NOT v_has_integration AND NOT v_is_checking_integration THEN
       v_display_component := 'need_integration';
       v_processing_step := 0;
@@ -361,14 +369,6 @@ BEGIN
       v_progress_percentage := 0;
       v_processing_message := 'YouTube integration is disabled';
       v_verified_ready := false;
-    ELSIF v_has_messages THEN
-      v_display_component := 'dashboard';
-      v_processing_step := 7;
-      v_progress_percentage := 100;
-      v_processing_message := 'Dashboard available';
-      v_verified_ready := true;
-      v_should_continue_checking := false;
-      v_onboarding_step := 4;
     ELSIF v_project_status <= 5 OR (v_project_status = 6 AND NOT v_has_messages) THEN
       v_display_component := 'setup_processing';
       v_processing_step := v_project_status;

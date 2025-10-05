@@ -26,6 +26,7 @@ type ProjectContextType = {
   hasProjects: boolean;
   hasIntegrations: boolean;
   hasData: boolean;
+  hasMensagens: boolean; // Indica se o projeto tem mensagens
   onboardingStep: number;
   isOnboarding: boolean; // Indica se o usuário está em modo onboarding
   onboardingReady: boolean; // Indica se o estado de onboarding foi determinado
@@ -42,6 +43,7 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
   const [hasProjects, setHasProjects] = useState(false);
   const [hasIntegrations, setHasIntegrations] = useState(false);
   const [hasData, setHasData] = useState(false);
+  const [hasMensagens, setHasMensagens] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(1);
   const [onboardingReady, setOnboardingReady] = useState(false);
   const [projectIntegrations, setProjectIntegrations] = useState<any[]>([]);
@@ -258,16 +260,19 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
         
         hasMensagens = mensagens && mensagens.length > 0;
       }
-      
+
+      // Atualizar estado de hasMensagens
+      setHasMensagens(hasMensagens);
+
       // 3. Definir isInitialProcessing: verdadeiro se estiver processando OU (status=6 E não tiver mensagens)
       const shouldBeProcessing = isProcessing || (projectStatus === 6 && !hasMensagens);
-      
+
       // Só atualizar se mudou
       if (shouldBeProcessing !== isInitialProcessing) {
         console.log(`[ProjectContext] Atualizando estado de processamento para projeto ${projectId}: ${shouldBeProcessing}`);
         setIsInitialProcessing(shouldBeProcessing);
       }
-      
+
       console.log(`[ProjectContext] Projeto ${projectId}: status=${projectStatus}, hasMensagens=${hasMensagens}, isInitialProcessing=${shouldBeProcessing}`);
       
       // Limpar flag de verificação
@@ -393,13 +398,13 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
           .eq('id', project.id)
           .eq('user', user.email)
           .or('projetc_index.is.null,projetc_index.eq.false');
-        
+
         if (updateError) {
           console.error("Erro ao atualizar índice do projeto:", updateError);
           return false;
         } else {
           console.log(`Projeto ${project.id} definido como projeto indexado (método alternativo)`);
-          
+
           // Verificar se a atualização foi bem-sucedida
           return await verificarIndexacao(project.id, user.email);
         }
@@ -418,7 +423,7 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
     try {
       // Aguardar 500ms para dar tempo ao banco de processar a atualização
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // Verificar se o projeto está marcado como indexado
       const { data, error } = await supabase
         .from('Projeto')
@@ -441,7 +446,7 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
           .update({ projetc_index: true })
           .eq('id', projectId)
           .eq('user', userEmail);
-          
+
         if (updateError) {
           console.error("Falha na segunda tentativa de indexação:", updateError);
           return false;
@@ -449,7 +454,7 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
           console.log("Segunda tentativa de indexação bem-sucedida");
           // Verificar novamente após a segunda tentativa
           await new Promise(resolve => setTimeout(resolve, 500));
-          
+
           const { data: verificacaoData, error: verificacaoError } = await supabase
             .from('Projeto')
             .select('projetc_index')
@@ -764,6 +769,7 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
         hasProjects,
         hasIntegrations,
         hasData,
+        hasMensagens,
         onboardingStep,
         isOnboarding,
         onboardingReady,
