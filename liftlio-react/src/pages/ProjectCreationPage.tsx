@@ -231,7 +231,7 @@ const ProjectCreationPage: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true); // Novo estado para evitar "piscar"
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const { currentProject, hasIntegrations } = useProject();
+  const { currentProject, hasIntegrations, setCurrentProject } = useProject();
   const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
 
   // Verificar apenas se o usuário está autenticado
@@ -310,16 +310,20 @@ const ProjectCreationPage: React.FC = () => {
 
       if (error) throw error;
 
-      // Armazenar o ID do projeto criado no localStorage
+      // Atualizar contexto com o novo projeto
       if (data && data[0]) {
-        localStorage.setItem('currentProjectId', data[0].id.toString());
+        const newProject = data[0];
 
-        // Aguardar um momento para garantir que o estado foi salvo
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Usar setCurrentProject para atualizar o contexto (sem reload!)
+        await setCurrentProject(newProject);
 
-        // Recarregar a página para atualizar o contexto
-        // NOTA: Mantendo reload por enquanto mas com loading adequado
-        window.location.reload();
+        // Avançar para a etapa de integrações
+        setProjectCreated(true);
+        setCurrentStep(2);
+
+        // Esconder loader após atualização
+        hideGlobalLoader();
+        setIsInitializing(false);
       }
     } catch (error: any) {
       console.error('Error creating project:', error);

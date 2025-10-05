@@ -698,7 +698,7 @@ interface Integration {
 }
 
 const Integrations: React.FC = () => {
-  const { currentProject } = useProject();
+  const { currentProject, setCurrentProject } = useProject();
   const { t } = useLanguage();
   const { theme } = useTheme();
   const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
@@ -776,31 +776,30 @@ const Integrations: React.FC = () => {
       // Isso é útil especialmente durante o fluxo de onboarding
       fetchProjects().then(projects => {
         if (projects && projects.length > 0) {
-          // Selecionar o primeiro projeto automaticamente
+          // Selecionar o primeiro projeto automaticamente usando setCurrentProject
           const firstProject = projects[0];
-          localStorage.setItem('currentProjectId', firstProject.id.toString());
-          window.location.reload(); // Recarregar a página para atualizar o contexto
+          setCurrentProject(firstProject); // Usar contexto em vez de reload!
         } else {
           setUserIntegrations([]);
           setIsLoading(false);
         }
       });
     }
-    
+
     // Verificar se há uma mensagem de sucesso de integração
     const successFlag = localStorage.getItem('integrationSuccess') === 'true';
     if (successFlag) {
       setShowSuccessMessage(true);
       localStorage.removeItem('integrationSuccess');
-      
+
       // Auto-ocultar mensagem após 5 segundos
       const timer = setTimeout(() => {
         setShowSuccessMessage(false);
       }, 5000);
-      
+
       return () => clearTimeout(timer);
     }
-  }, [currentProject?.id]);
+  }, [currentProject?.id, setCurrentProject]);
 
   // Fetch integrations from Supabase
   const fetchIntegrations = async (showLoader = false) => {
@@ -1197,11 +1196,10 @@ const Integrations: React.FC = () => {
   };
   
   // Função para selecionar um projeto e continuar com a conexão
-  const setProjectAndContinue = (project: any, integration: any) => {
+  const setProjectAndContinue = async (project: any, integration: any) => {
     // Atualizar o projeto atual no ProjectContext
     if (project?.id) {
-      localStorage.setItem('currentProjectId', project.id.toString());
-      window.location.reload(); // Recarregar a página para atualizar o contexto do projeto
+      await setCurrentProject(project); // Usar contexto em vez de reload!
     }
   };
 
