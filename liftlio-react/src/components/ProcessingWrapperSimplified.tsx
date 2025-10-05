@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
 import { useGlobalLoading } from '../context/LoadingContext';
@@ -82,6 +82,7 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
   const [isLoading, setIsLoading] = useState(true);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true); // Nova flag para controlar loading inicial
+  const previousStateRef = useRef<string | null>(null); // Rastrear estado anterior para detectar mudanças
 
   // Função principal que chama o RPC
   const checkProjectState = useCallback(async (isPolling: boolean = false) => {
@@ -157,6 +158,44 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
       }
     };
   }, [user?.email]);
+
+  // Effect para detectar quando processamento termina e dar refresh automático
+  useEffect(() => {
+    if (!displayState?.display_component) return;
+
+    const currentComponent = displayState.display_component;
+    const previousComponent = previousStateRef.current;
+
+    // Detectar transição de setup_processing → dashboard
+    if (
+      previousComponent === 'setup_processing' &&
+      currentComponent === 'dashboard' &&
+      !sessionStorage.getItem('dashboard_auto_refreshed')
+    ) {
+      console.log('[ProcessingWrapper] Processamento concluído! Recarregando para carregar dados...');
+
+      // Marcar que já fez refresh para evitar loop
+      sessionStorage.setItem('dashboard_auto_refreshed', 'true');
+
+      // Pequeno delay para garantir que dados foram salvos no banco
+      setTimeout(() => {
+        window.location.reload();
+      }, 800);
+    }
+
+    // Atualizar referência para próxima verificação
+    previousStateRef.current = currentComponent;
+  }, [displayState?.display_component]);
+
+  // Cleanup: limpar flag de refresh ao desmontar
+  useEffect(() => {
+    return () => {
+      // Limpar apenas se estiver saindo completamente (não apenas trocando de estado)
+      if (!displayState?.display_component) {
+        sessionStorage.removeItem('dashboard_auto_refreshed');
+      }
+    };
+  }, []);
 
   // SEMPRE retornar null enquanto está carregando para evitar "piscar" componentes
   // Isso garante que nenhum conteúdo seja renderizado até sabermos o que mostrar

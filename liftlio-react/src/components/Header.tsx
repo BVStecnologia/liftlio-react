@@ -1160,7 +1160,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const { user, signOut } = useAuth();
-  const { currentProject, setCurrentProject, projects } = useProject();
+  const { currentProject, setCurrentProject, projects, isInitialProcessing } = useProject();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
@@ -1812,7 +1812,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         
         <RightSection>
           {/* Aviso do YouTube baseado em 3 estados: Suspensa, Desconectada, Conectada */}
-          {youtubeStatus.checked && !youtubeStatus.connected && (
+          {/* Não mostrar durante processamento inicial para evitar piscar falso */}
+          {youtubeStatus.checked && !youtubeStatus.connected && !isInitialProcessing && (
             <div
               style={{
                 display: 'flex',
