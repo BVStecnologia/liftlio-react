@@ -728,14 +728,10 @@ const Integrations: React.FC = () => {
   // Estado de loading para botão de conectar
   const [isConnecting, setIsConnecting] = useState(false);
   
-  // Garantir que o loader é escondido quando a página está completamente carregada
+  // Esconder loader imediatamente quando dados carregam - sem delay artificial
   useEffect(() => {
     if (pageFullyLoaded && !isLoading) {
-      // Aguardar um pouco para garantir que a UI foi renderizada
-      const timer = setTimeout(() => {
-        hideGlobalLoader();
-      }, 800);
-      return () => clearTimeout(timer);
+      hideGlobalLoader();
     }
   }, [pageFullyLoaded, isLoading, hideGlobalLoader]);
 
@@ -848,14 +844,7 @@ const Integrations: React.FC = () => {
       console.error('Error fetching integrations:', error);
     } finally {
       setIsLoading(false);
-
-      // Esconder loader global apenas após garantir que tudo foi renderizado
-      if (showLoader && pageFullyLoaded) {
-        // Aguardar um tempo mínimo para evitar flicker
-        setTimeout(() => {
-          hideGlobalLoader();
-        }, 500);
-      }
+      // Loader é escondido automaticamente pelo useEffect acima quando pageFullyLoaded muda
     }
   };
   
@@ -1278,10 +1267,8 @@ const Integrations: React.FC = () => {
         setShowSuccessMessage(true);
         fetchIntegrations(); // Recarregar integrações
 
-        // Redirecionar para overview após sucesso
-        setTimeout(() => {
-          navigate('/overview');
-        }, 1500);
+        // Redirecionar para overview imediatamente após sucesso
+        navigate('/overview');
       } else {
         console.error('RPC returned failure:', data);
         // Traduzir mensagem de erro se vier em português
