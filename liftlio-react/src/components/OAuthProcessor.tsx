@@ -177,9 +177,7 @@ export const OAuthProcessor: React.FC<OAuthProcessorProps> = ({
 
         console.log('[OAuthProcessor] Integração concluída com sucesso!');
 
-        // Aguardar um momento para garantir que tudo foi salvo
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
+        // Esconder loader imediatamente - todas operações await já completaram
         hideGlobalLoader();
 
         // Chamar callback de sucesso se fornecido

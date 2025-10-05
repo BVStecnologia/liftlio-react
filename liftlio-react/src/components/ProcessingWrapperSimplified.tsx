@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
 import { useGlobalLoading } from '../context/LoadingContext';
@@ -82,7 +82,6 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
   const [isLoading, setIsLoading] = useState(true);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true); // Nova flag para controlar loading inicial
-  const previousStateRef = useRef<string | null>(null); // Rastrear estado anterior para detectar mudanças
 
   // Função principal que chama o RPC
   const checkProjectState = useCallback(async (isPolling: boolean = false) => {
@@ -138,11 +137,9 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
       if (isInitialLoad) {
         setIsLoading(false);
         setIsInitialLoad(false);
-        // Esconder o loading apenas após a primeira carga completa
-        setTimeout(() => {
-          console.log('[ProcessingWrapper] Escondendo loading global após primeira carga');
-          hideGlobalLoader();
-        }, 300);
+        // Esconder o loading imediatamente - sem delay desnecessário
+        console.log('[ProcessingWrapper] Escondendo loading global após primeira carga');
+        hideGlobalLoader();
       }
     }
   }, [user, pollingInterval, showGlobalLoader, hideGlobalLoader, isInitialLoad]);
@@ -158,50 +155,6 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
       }
     };
   }, [user?.email]);
-
-  // Effect para detectar quando processamento termina e dar refresh automático
-  useEffect(() => {
-    if (!displayState?.display_component) return;
-
-    const currentComponent = displayState.display_component;
-    const previousComponent = previousStateRef.current;
-    const refreshFlag = sessionStorage.getItem('dashboard_auto_refreshed');
-
-    console.log('[ProcessingWrapper] Estado atual:', {
-      previous: previousComponent,
-      current: currentComponent,
-      refreshFlag,
-      projectId: currentProject?.id
-    });
-
-    // Se já está no dashboard e flag está setada, significa que acabou de recarregar
-    // Limpar a flag para permitir futuros refreshes
-    if (currentComponent === 'dashboard' && refreshFlag === 'true') {
-      console.log('[ProcessingWrapper] Dashboard carregado após refresh, limpando flag');
-      sessionStorage.removeItem('dashboard_auto_refreshed');
-    }
-
-    // Detectar transição de setup_processing → dashboard
-    if (
-      previousComponent === 'setup_processing' &&
-      currentComponent === 'dashboard' &&
-      refreshFlag !== 'true'
-    ) {
-      console.log('[ProcessingWrapper] ✅ Processamento concluído! Recarregando em 1.5s para carregar dados...');
-
-      // Marcar que já fez refresh para evitar loop
-      sessionStorage.setItem('dashboard_auto_refreshed', 'true');
-
-      // Delay maior para garantir que dados foram salvos no banco
-      setTimeout(() => {
-        console.log('[ProcessingWrapper] 🔄 Executando reload agora...');
-        window.location.reload();
-      }, 1500);
-    }
-
-    // Atualizar referência para próxima verificação
-    previousStateRef.current = currentComponent;
-  }, [displayState?.display_component, currentProject?.id]);
 
   // SEMPRE retornar null enquanto está carregando para evitar "piscar" componentes
   // Isso garante que nenhum conteúdo seja renderizado até sabermos o que mostrar
