@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import styled, { keyframes } from 'styled-components'
 // Ícones personalizados
 const SpinnerIcon = () => (
@@ -496,8 +497,27 @@ const Footer = styled.div`
   font-size: ${props => props.theme.fontSizes.xs};
 `
 
+const ForgotPasswordLink = styled.div`
+  text-align: right;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+
+  span {
+    color: ${props => props.theme.colors.secondary};
+    font-size: ${props => props.theme.fontSizes.sm};
+    cursor: pointer;
+    transition: all ${props => props.theme.transitions.default};
+
+    &:hover {
+      color: ${props => props.theme.colors.primary};
+      text-decoration: underline;
+    }
+  }
+`
+
 const Login: React.FC = () => {
   const { signIn, signUp } = useAuth()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [email, setEmail] = useState('')
@@ -660,17 +680,23 @@ const Login: React.FC = () => {
               
               <InputGroup>
                 <Label htmlFor="password">Password</Label>
-                <Input 
+                <Input
                   id="password"
-                  type="password" 
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
                 />
               </InputGroup>
-              
-              <Button 
+
+              <ForgotPasswordLink>
+                <span onClick={() => navigate('/reset-password')}>
+                  Forgot password?
+                </span>
+              </ForgotPasswordLink>
+
+              <Button
                 type="submit"
                 disabled={loading}
               >
