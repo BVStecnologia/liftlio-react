@@ -189,14 +189,13 @@ await mcp__supabase__deploy_edge_function({
 ### 📸 REGRA: Imagens são OBRIGATÓRIAS
 ```bash
 # Gerar imagem localmente SEMPRE com GPT-Image-1:
-/Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/gpt-image-1.sh "prompt" "1792x1024" "hd"
+/Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/gpt-image-1.sh "prompt" "1536x1024" "high"
 # NOTA: GPT-Image-1 usa internamente dall-e-3 como modelo
+# Tamanhos válidos: 1024x1024, 1024x1536, 1536x1024
+# Qualidade: low, medium, high, auto
 
-# Depois anexar ao card Trello:
-await mcp__trello__attach_image_to_card({
-  cardId: card.id,
-  imageUrl: "url_da_imagem"
-});
+# Imagem salva em: /liftlio-react/generated-images/
+# Usuário sobe manualmente no Trello como capa do card
 ```
 
 ## Integração WordPress MCP
