@@ -136,16 +136,22 @@
     <script>
       // Executar ANTES de qualquer outra coisa
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        // Criar um proxy para window.onerror que filtra erros de extensões
-        Object.defineProperty(window, 'onerror', {
-          value: function(msg, src, lineno, colno, error) {
-            if (src && (src.includes('chrome-extension://') || src.includes('frame_ant'))) return true;
-            if (msg && typeof msg === 'string' && msg.includes('Failed to fetch')) return true;
-            return false;
-          },
-          writable: false,
-          configurable: false
-        });
+        // Usar addEventListener em vez de Object.defineProperty para não bloquear Square SDK
+        window.addEventListener('error', function(event) {
+          const src = event.filename || '';
+          const msg = event.message || '';
+
+          if (src.includes('chrome-extension://') || src.includes('frame_ant')) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+          }
+          if (msg.includes('Failed to fetch')) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+          }
+        }, true); // Use capture phase para garantir execução antes de outros handlers
         
         // Interceptar TODOS os event listeners para unhandledrejection
         const originalAddEventListener = window.addEventListener;
