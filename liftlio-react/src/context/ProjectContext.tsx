@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, startTransition } from 'react';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabaseClient';
+import { useAuth } from './AuthContext';
 
 // Interface para o modelo de dados de Projeto
 interface Project {
@@ -37,6 +38,7 @@ type ProjectContextType = {
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
+  const { user } = useAuth(); // Importar user do AuthContext
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -124,19 +126,22 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       }
     };
     
-    // Inicializar o sistema de projetos
-    initializeProject();
-    
-    // Set up real-time subscription
-    setupRealtimeSubscription();
-    
+    // Só inicializar se tivermos um user autenticado
+    if (user) {
+      // Inicializar o sistema de projetos
+      initializeProject();
+
+      // Set up real-time subscription
+      setupRealtimeSubscription();
+    }
+
     // Clean up subscription on unmount
     return () => {
       if (subscriptionRef.current) {
         subscriptionRef.current.unsubscribe();
       }
     };
-  }, []);
+  }, [user]); // Reagir quando user mudar
   
   // Verificar se o projeto tem mensagens e configurar isInitialProcessing
   useEffect(() => {

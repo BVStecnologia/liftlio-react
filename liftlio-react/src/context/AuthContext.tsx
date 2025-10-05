@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase, callRPC } from '../lib/supabaseClient'
 import { Session, User, AuthChangeEvent } from '@supabase/supabase-js'
-import { handleNetworkError, isNetworkError, retryNetworkRequest } from '../utils/networkErrorHandler'
 
 type SubscriptionInfo = {
   subscription: {
@@ -53,63 +52,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   useEffect(() => {
-    // Configura o listener para mudanças de autenticação
+    // First, get the initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session loaded:', session ? 'Found' : 'Not found', 'Environment:', window.location.hostname);
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Then set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event: AuthChangeEvent, session: Session | null) => {
         console.log('Auth state changed:', _event, 'Session:', session ? 'Active' : 'None');
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-      }
-    )
-
-    // Carrega a sessão atual na inicialização
-    const loadSession = async () => {
-      try {
-        const { data } = await retryNetworkRequest(
-          () => supabase.auth.getSession(),
-          3,
-          1000
-        );
-        
-        const { session } = data;
-        console.log('Initial session check:', session ? 'Found' : 'Not found', 'Environment:', window.location.hostname);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-      } catch (error) {
-        const errorMessage = handleNetworkError(error);
-        console.error('Error fetching initial session:', errorMessage, error);
-        
-        // If it's a network error, we might still have a cached session
-        if (isNetworkError(error)) {
-          // Try to get cached session from localStorage
-          const cachedAuth = localStorage.getItem('sb-suqjifkhmekcdflwowiw-auth-token');
-          if (cachedAuth) {
-            try {
-              const parsed = JSON.parse(cachedAuth);
-              if (parsed?.currentSession || parsed?.access_token) {
-                const cachedSession = parsed.currentSession || parsed;
-                setSession(cachedSession);
-                setUser(cachedSession.user);
-                console.log('Using cached session due to network error');
-              }
-            } catch (e) {
-              console.error('Failed to parse cached auth:', e);
-            }
-          }
-        }
-        
-        // Always set loading to false
-        setLoading(false);
       }
-    };
-    
-    loadSession();
+    );
 
+    // Cleanup listener on unmount
     return () => {
-      subscription.unsubscribe()
-    }
+      subscription.unsubscribe();
+    };
   }, [])
 
   const signIn = async (provider: 'google' | 'email', credentials?: { email: string; password: string }) => {

@@ -525,7 +525,7 @@ const Login: React.FC = () => {
       setError('Please enter both email and password')
       return
     }
-    
+
     try {
       setLoading(true)
       setError(null)

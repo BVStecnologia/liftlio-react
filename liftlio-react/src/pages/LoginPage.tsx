@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import styled, { keyframes } from 'styled-components'
 import WaveParticles3D from '../components/WaveParticles3D'
+import { supabase } from '../lib/supabaseClient'
 
 // Componente de ícone personalizado
 const SpinnerIcon = () => <span className="icon-spinner">⟳</span>;
@@ -265,11 +266,37 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Se o usuário já estiver autenticado, redireciona para o dashboard
-    // O redirecionamento correto (dashboard ou create-project) será determinado no ProtectedLayout
-    if (user && !loading) {
-      navigate('/dashboard')
+    // Se o usuário já estiver autenticado, verificar estado antes de redirecionar
+    const checkAndRedirect = async () => {
+      if (user && !loading && user.email) {
+        // Verificar estado do projeto usando função SQL
+        const { data: displayState, error: rpcError } = await supabase.rpc('check_project_display_state', {
+          p_user_email: user.email,
+          p_project_id: null
+        })
+
+        if (rpcError) {
+          console.error('Erro ao verificar estado do projeto:', rpcError)
+          // Fallback para dashboard em caso de erro
+          navigate('/dashboard')
+          return
+        }
+
+        // Redirecionar baseado no resultado da função SQL
+        if (displayState?.display_component === 'dashboard') {
+          navigate('/dashboard')
+        } else if (displayState?.display_component === 'create_project') {
+          navigate('/create-project')
+        } else if (displayState?.display_component === 'need_integration') {
+          navigate('/integrations')
+        } else {
+          // Fallback para dashboard
+          navigate('/dashboard')
+        }
+      }
     }
+
+    checkAndRedirect()
   }, [user, loading, navigate])
 
   // Se estiver carregando, mostra uma mensagem de carregamento com spinner
