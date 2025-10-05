@@ -88,6 +88,26 @@ liftlio-react/
 
 ## 🔥 MCP (Model Context Protocol) - USE SEMPRE!
 
+### 🤖 REGRA AUTOMÁTICA: Delegação de Agentes MCP
+**⚠️ OBRIGATÓRIO - SEMPRE que for usar ferramentas MCP do Supabase:**
+```
+ANTES de qualquer chamada mcp__supabase__*,
+SEMPRE delegar para o agente supabase-mcp-expert usando Task tool.
+```
+
+**Exemplo:**
+```typescript
+// ❌ ERRADO - Nunca chamar diretamente
+await mcp__supabase__execute_sql({ query: "..." })
+
+// ✅ CORRETO - Sempre delegar para o agente
+await Task({
+  subagent_type: "supabase-mcp-expert",
+  prompt: "Execute esta query SQL: SELECT * FROM users",
+  description: "Query SQL via agente"
+})
+```
+
 ### Supabase MCP - Capacidades
 **✅ PODE fazer via MCP:**
 - Deploy de Edge Functions: `mcp__supabase__deploy_edge_function`
