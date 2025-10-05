@@ -11,11 +11,25 @@ Gerenciar o workflow de tarefas do Liftlio no Trello com foco em **valor real**,
 - **Lista Valdair Is Working On it**: `686b4ad61da133ac3b998284`
 - **Lista Completed**: `686b442bd7c4de1dbcb52ba8`
 
+### Variáveis de Ambiente
+**IMPORTANTE**: Todas as credenciais devem ser buscadas em:
+```
+/Users/valdair/Documents/Projetos/Liftlio/liftlio-react/.env
+```
+
+Variáveis necessárias:
+- `OPENAI_API_KEY` - Para geração de imagens DALL-E 3
+- `REACT_APP_SUPABASE_URL` - URL do projeto Supabase
+- `REACT_APP_SUPABASE_ANON_KEY` - Chave anônima do Supabase
+- `TRELLO_API_KEY` - API Key do Trello (via MCP)
+- `TRELLO_TOKEN` - Token do Trello (via MCP)
+
 ### Integração de Imagens
 - **Geração**: DALL-E 3 com prompt SEMPRE incluindo roxo Liftlio
 - **Storage**: Supabase bucket `trello-images` (público)
 - **Edge Function**: `upload-trello-image` para upload
 - **Formato**: 1792x1024 HD
+- **Script Local**: `/Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/gpt-image-1.sh`
 
 ## 🚨 Regras Absolutas
 
