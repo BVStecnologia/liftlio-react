@@ -1,4 +1,8 @@
-.claude/
+# Claude Code - Ignorar apenas dados sensíveis, NÃO os agentes
+.claude/secrets/
+.claude/cache/
+.claude/temp/
+.claude/settings.local.json
 
 # LinkedIn Content - Credentials e dados sensíveis
 LINKEDIN_CONTENT/.credentials/
