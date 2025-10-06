@@ -1,1 +1,10 @@
 .claude/
+
+# LinkedIn Content - Credentials e dados sensíveis
+LINKEDIN_CONTENT/.credentials/
+LINKEDIN_CONTENT/**/credentials*.sh
+LINKEDIN_CONTENT/**/linkedin-api*.sh
+LINKEDIN_CONTENT/**/*.env
+LINKEDIN_CONTENT/.env
+LINKEDIN_CONTENT/ANALYTICS/performance-log.json
+LINKEDIN_CONTENT/**/draft-*.md

@@ -86,63 +86,43 @@ Arquitetura AI + Sistema Financeiro + Analytics Proprietário | React 19 · Supa
 
 ## 📝 ETAPA 2: SOBRE (10 MIN)
 
-### ✅ TEXTO COMPLETO (Copiar e colar)
+### ✅ TEXTO COMPLETO (Copiar e colar) - **1.850 CARACTERES**
 
 ```markdown
-🎯 Co-fundador de plataforma AI que processa milhões de vídeos diariamente
+🚀 Co-founder of Liftlio - AI platform that generates organic traffic by analyzing millions of YouTube videos and creating authentic conversations at scale
 
-Sou Co-fundador do Liftlio (liftlio.com), uma plataforma SaaS que combina análise de
-sentimentos com IA para transformar vídeos em insights acionáveis.
+I built Liftlio, where AI watches videos, identifies potential customers in comments, and engages them with contextually relevant responses — converting strangers into customers through genuine interactions, not paid ads.
 
-🏆 APROVAÇÃO GOOGLE CLOUD
-• 2 MILHÕES de quotas da YouTube Data API v3 POR DIA
-• Projeto verificado e auditado pelo Google
-• Infraestrutura enterprise-level
-• Google Cloud Partner
+🎯 HOW IT WORKS:
+AI analyzes video content → scans comments for high-intent leads → creates emotional hooks → naturally introduces solutions → generates organic traffic.
 
-🏗️ SISTEMAS DESENVOLVIDOS
+🏆 GOOGLE CLOUD PARTNER
+• 2 MILLION daily YouTube API quotas (enterprise approval)
+• Processing millions of videos daily
 
-💳 Sistema Financeiro Completo:
-• Integração Square (processamento de pagamentos)
-• Gerenciamento próprio de cartões e assinaturas
-• Sistema de Crons para automação financeira
-• Controle total via SQL/Analytics/MCP
+🔥 SYSTEMS I BUILT:
 
-🧠 Inteligência Artificial:
-• Agente RAG com Claude Sonnet 4 + OpenAI Embeddings
-• IA que lê, avalia e cria conexões automaticamente
-• Algoritmo de tendências proprietário
-• 68 versões do sistema evoluindo
-• 14 tabelas de embeddings para contexto
+💬 AI Lead Detection Engine:
+Video analysis, real-time comment scanning, emotional engagement creation, contextual recommendations, automated traffic generation
 
-📊 Analytics Proprietário:
-• VPS Linux + Docker em produção (track.liftlio.com)
-• Sistema completo: pageviews, eventos, conversões, e-commerce
-• Anti-bot detection + CORS inteligente
-• Processamento de milhões de eventos
+📊 Liftlio Analytics (VPS + Docker):
+Custom tracking server on dedicated VPS (track.liftlio.com), real-time events/conversions/e-commerce, anti-bot detection, millions of events processed, Cloudflare (SSL + DDoS)
 
-🗄️ Backend Enterprise:
-• 282 SQL Functions customizadas em 15 módulos
-• Edge Functions em Deno (< 100ms latência)
-• Pipeline automatizado de processos
-• Monitoramento em tempo real
+📈 Liftlio Trends:
+Proprietary algorithm for viral pattern detection, AI sentiment analysis, live at liftlio.com/trends
 
-🔥 STACK TÉCNICA
-• Frontend: React 19, TypeScript, Framer Motion
-• Backend: Supabase (PostgreSQL + pgvector), 282 SQL Functions
-• AI/ML: Claude Sonnet 4, OpenAI Embeddings, RAG System, Algoritmo de Tendências
-• Pagamentos: Square (cartões, assinaturas, crons)
-• APIs: YouTube Data API v3 (2M quotas/dia), Google OAuth
-• Infra: Fly.io, Docker, VPS Linux, Cloudflare, Nginx
-• Analytics: Sistema proprietário (track.liftlio.com)
+🗄️ Backend:
+282 SQL Functions in 15 modules (YouTube API, RAG Embeddings, Payments/Square, Analytics, Scanner, Pipeline), RAG with Claude Sonnet 4 + OpenAI (14 tables), Edge Functions < 100ms
 
-📍 Empresa baseada nos Estados Unidos 🇺🇸
-🏠 Trabalho remoto do Brasil 🇧🇷
+💳 Payments:
+Square integration, subscriptions with automated Crons, SQL-based control
 
-🌐 liftlio.com
-📊 liftlio.com/liftlio-analytics
-📈 liftlio.com/trends
-📝 blog.liftlio.com
+🔧 STACK:
+React 19 · TypeScript · Supabase · PostgreSQL · pgvector · Claude AI · OpenAI · Square · Docker · VPS Linux · YouTube API (2M/day) · Edge Functions · Cloudflare
+
+📍 US-based 🇺🇸 | Remote from Brazil 🇧🇷
+
+🌐 liftlio.com | liftlio.com/trends | liftlio.com/liftlio-analytics
 ```
 
 **INSTRUÇÕES:**
@@ -440,35 +420,34 @@ React 19 · Supabase · Claude AI · Docker · VPS
 
 ---
 
-## 📝 ETAPA 7: CONTEÚDO PARA PUBLICAR (PRÓXIMOS 7 DIAS)
+## 📝 ETAPA 7: CONTEÚDO PARA PUBLICAR (PRÓXIMOS 30 DIAS)
 
 ### Post 1: Anúncio Liftlio (DIA 1)
 
 ```markdown
-🚀 Depois de 10 meses construindo, apresento: Liftlio
+🚀 After 10 months building, I'm launching: Liftlio
 
-Uma plataforma SaaS que usa IA para analisar sentimentos em vídeos e
-gerar insights acionáveis.
+An AI platform that generates organic traffic by analyzing millions of YouTube videos and creating authentic conversations at scale.
 
-🏆 O que construímos:
-• Google Cloud Partner (2M quotas YouTube/dia)
-• Sistema financeiro completo com Square
-• Analytics proprietário em VPS Linux
-• Backend com 282 SQL Functions
-• Agente RAG com algoritmo de tendências
-• IA que lê, avalia e cria conexões
+🎯 HOW IT WORKS:
+AI watches videos → identifies potential customers in comments → creates emotional hooks → naturally introduces solutions → generates organic traffic without ads.
 
-📊 Infraestrutura:
-• React 19 + TypeScript
-• Supabase + PostgreSQL + pgvector
-• Claude Sonnet 4 + OpenAI
-• Docker + VPS Linux + Cloudflare
+🏆 WHAT I BUILT:
+• Google Cloud Partner (2M daily YouTube quotas)
+• AI Lead Detection & Conversion Engine
+• Custom Analytics on VPS Linux + Docker
+• 282 SQL Functions across 15 modules
+• RAG System with Claude Sonnet 4
+• Liftlio Trends (proprietary algorithm)
 
-Do zero ao Google Cloud Partner em 10 meses.
+📊 TECH STACK:
+React 19, TypeScript, Supabase, PostgreSQL, Claude AI, OpenAI, Square, Docker, YouTube Data API (2M quotas/day)
+
+From zero to Google Cloud Partner in 10 months.
 
 Link: https://liftlio.com
 
-#AI #MachineLearning #SaaS #GoogleCloud #React
+#AI #OrganicGrowth #SaaS #GoogleCloud #LeadGeneration
 ```
 
 ---

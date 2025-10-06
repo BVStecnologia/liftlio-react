@@ -32,6 +32,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Server**: Cloudways (wordpress-1319296-5689133.cloudwaysapps.com)
 - **Acesso**: Via MCP WordPress tools
 
+### LinkedIn Content System
+- **Localização**: `/LINKEDIN_CONTENT/` (TUDO em um único lugar)
+- **Agente**: `LINKEDIN_CONTENT/linkedin-content-creator.md`
+- **Credentials**: `LINKEDIN_CONTENT/.credentials/linkedin-api.sh` (GITIGNORED)
+- **Dois modos**:
+  - **Technical Posts**: Posts técnicos do Valdair (English only)
+  - **Marketing Strategy**: Funil de 12 semanas baseado em Curiosity Gap
+- **Documentação**: `LINKEDIN_CONTENT/ORGANIZATION.md` (guia completo)
+- **Estratégia**: `LINKEDIN_CONTENT/_MASTER_DOCS/LIFTLIO_LINKEDIN_STRATEGY_MASTER.md` (25k palavras)
+
 ## Comandos Essenciais
 
 ```bash
@@ -277,3 +287,4 @@ docker-compose down && docker-compose up -d --build
 - **11/08/2025**: Análise e otimização do CLAUDE.md
 - **12/08/2025**: Correções em Analytics - Unificação de tráfego orgânico como Liftlio, cores roxas aplicadas, proteção contra erros de extensões no localhost
 - **13/08/2025**: Analytics Server - Configuração Cloudflare SSL Flexible, correção função track_event duplicada, documentação sobre servidor remoto, correção de tipos implícitos no GlobeVisualizationPro
+- **06/10/2025**: Sistema LinkedIn unificado - TUDO consolidado em `/LINKEDIN_CONTENT/`, estratégia de 12 semanas com Curiosity Gap, dois modos (Technical + Marketing), credentials gitignored
