@@ -869,67 +869,186 @@ document.documentElement.setAttribute('data-lang','en');
         </div>
     </section>
     
-    <!-- Breakthrough Section -->
-    <section class="section breakthrough-section">
-        <div class="container">
-            <div class="breakthrough-content">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        </span>
-                        The <span class="gradient-text">Breakthrough</span>
-                    </h2>
-                    <p class="section-description">
-                        Instead of paying for ads, get your brand naturally recommended in real conversations
-                    </p>
+    <!-- Breakthrough Section - Mission Control Style -->
+    <section class="section breakthrough-section" style="position: relative; overflow: hidden; background: var(--color-bg-primary);">
+        <!-- Subtle gradient background -->
+        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(139, 92, 246, 0.02) 0%, rgba(124, 58, 237, 0.03) 100%); pointer-events: none;"></div>
+
+        <div class="container" style="position: relative; z-index: 1;">
+            <!-- Header -->
+            <div class="section-header" style="text-align: center; margin-bottom: 60px;">
+                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 100px; color: #8b5cf6; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 24px; text-transform: uppercase;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                    The Breakthrough
                 </div>
-                
-                <div class="breakthrough-highlight">
-                    <h3 style="font-size:36px;font-weight:800;margin-bottom:16px">
-                        Imagine having <span class="gradient-text">thousands of ambassadors talking about your brand</span>
+                <h2 class="section-title" style="font-size: 56px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 16px;">
+                    <span class="gradient-text">Organic Reach</span> at Scale
+                </h2>
+                <p class="section-description" style="font-size: 18px; max-width: 650px; margin: 0 auto 40px; line-height: 1.6;">
+                    Instead of paying for ads, get your brand naturally recommended in real conversations
+                </p>
+            </div>
+
+            <!-- Highlight Banner -->
+            <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(124, 58, 237, 0.08) 100%); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 16px; padding: 40px; text-align: center; margin-bottom: 60px; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%); animation: pulse-slow 4s ease-in-out infinite;"></div>
+                <h3 style="font-size: 36px; font-weight: 800; margin-bottom: 16px; position: relative; z-index: 1;">
+                    Imagine having <span class="gradient-text">thousands of ambassadors talking about your brand</span>
+                </h3>
+                <p style="font-size: 20px; color: var(--color-text-secondary); position: relative; z-index: 1;">
+                    ...in discussions where people are actively looking for solutions
+                </p>
+            </div>
+
+            <!-- Advantage Cards Grid -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; background: var(--color-border-light); border-radius: 16px; overflow: hidden;">
+                <!-- Card 1: Genuine Conversations -->
+                <div class="advantage-card" style="background: var(--color-card-bg); padding: 40px 32px; position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%); transform: scaleX(0); transform-origin: left; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                        <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; color: #8b5cf6;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="status-pulse" style="width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6;"></div>
+                    </div>
+
+                    <h3 style="font-size: 20px; font-weight: 700; color: var(--color-text-primary); margin-bottom: 12px; letter-spacing: -0.3px;">
+                        Genuine Conversations
                     </h3>
-                    <p style="font-size:20px;color:var(--color-text-secondary)">
-                        ...in discussions where people are actively looking for solutions
+                    <p style="font-size: 14px; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 24px;">
+                        AI participates where people are already discussing problems you solve
                     </p>
+
+                    <div style="display: flex; gap: 12px;">
+                        <div class="metric-card" style="flex: 1; padding: 12px; background: var(--color-bg-primary); border: 1px solid var(--color-border-light); border-radius: 8px; transition: all 0.2s ease;">
+                            <div style="font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Threads/day</div>
+                            <div style="font-size: 18px; font-weight: 700; color: var(--color-text-primary); font-family: 'JetBrains Mono', monospace;">1.2k+</div>
+                        </div>
+                        <div class="metric-card" style="flex: 1; padding: 12px; background: var(--color-bg-primary); border: 1px solid var(--color-border-light); border-radius: 8px; transition: all 0.2s ease;">
+                            <div style="font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Relevance</div>
+                            <div style="font-size: 18px; font-weight: 700; color: var(--color-text-primary); font-family: 'JetBrains Mono', monospace;">96%</div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="breakthrough-features">
-                    <div class="breakthrough-card">
-                        <div class="breakthrough-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+
+                <!-- Card 2: Perfect Timing -->
+                <div class="advantage-card" style="background: var(--color-card-bg); padding: 40px 32px; position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%); transform: scaleX(0); transform-origin: left; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transition-delay: 0.1s;"></div>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                        <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; color: #8b5cf6;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                            </svg>
                         </div>
-                        <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">
-                            Genuine Conversations
-                        </h3>
-                        <p style="color:var(--color-text-secondary)">
-                            We participate where people are already discussing problems you solve
-                        </p>
+                        <div class="status-pulse" style="width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6;"></div>
                     </div>
-                    
-                    <div class="breakthrough-card">
-                        <div class="breakthrough-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="12" r="10"></circle><path d="M12 2v7"></path><path d="M12 15v7"></path><path d="M4.93 4.93l4.95 4.95"></path><path d="M14.12 14.12l4.95 4.95"></path><path d="M2 12h7"></path><path d="M15 12h7"></path><path d="M4.93 19.07l4.95-4.95"></path><path d="M14.12 9.88l4.95-4.95"></path></svg>
+
+                    <h3 style="font-size: 20px; font-weight: 700; color: var(--color-text-primary); margin-bottom: 12px; letter-spacing: -0.3px;">
+                        Perfect Timing
+                    </h3>
+                    <p style="font-size: 14px; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 24px;">
+                        Appear exactly when someone is actively looking for a solution like yours
+                    </p>
+
+                    <div style="display: flex; gap: 12px;">
+                        <div class="metric-card" style="flex: 1; padding: 12px; background: var(--color-bg-primary); border: 1px solid var(--color-border-light); border-radius: 8px; transition: all 0.2s ease;">
+                            <div style="font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Response</div>
+                            <div style="font-size: 18px; font-weight: 700; color: var(--color-text-primary); font-family: 'JetBrains Mono', monospace;">&lt;2min</div>
                         </div>
-                        <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">
-                            Perfect Timing
-                        </h3>
-                        <p style="color:var(--color-text-secondary)">
-                            We appear exactly when someone is looking for a solution like yours
-                        </p>
+                        <div class="metric-card" style="flex: 1; padding: 12px; background: var(--color-bg-primary); border: 1px solid var(--color-border-light); border-radius: 8px; transition: all 0.2s ease;">
+                            <div style="font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Intent Score</div>
+                            <div style="font-size: 18px; font-weight: 700; color: var(--color-text-primary); font-family: 'JetBrains Mono', monospace;">8.7/10</div>
+                        </div>
                     </div>
-                    
-                    <div class="breakthrough-card">
-                        <div class="breakthrough-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+
+                <!-- Card 3: Natural Trust -->
+                <div class="advantage-card" style="background: var(--color-card-bg); padding: 40px 32px; position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%); transform: scaleX(0); transform-origin: left; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transition-delay: 0.2s;"></div>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                        <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; color: #8b5cf6;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
                         </div>
-                        <h3 style="font-size:20px;font-weight:700;margin-bottom:8px">
-                            Natural Trust
-                        </h3>
-                        <p style="color:var(--color-text-secondary)">
-                            Contextual recommendations generate 10x more trust than paid ads
-                        </p>
+                        <div class="status-pulse" style="width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6;"></div>
+                    </div>
+
+                    <h3 style="font-size: 20px; font-weight: 700; color: var(--color-text-primary); margin-bottom: 12px; letter-spacing: -0.3px;">
+                        Natural Trust
+                    </h3>
+                    <p style="font-size: 14px; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 24px;">
+                        Contextual recommendations feel authentic because they are
+                    </p>
+
+                    <div style="display: flex; gap: 12px;">
+                        <div class="metric-card" style="flex: 1; padding: 12px; background: var(--color-bg-primary); border: 1px solid var(--color-border-light); border-radius: 8px; transition: all 0.2s ease;">
+                            <div style="font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Engagement</div>
+                            <div style="font-size: 18px; font-weight: 700; color: var(--color-text-primary); font-family: 'JetBrains Mono', monospace;">23%</div>
+                        </div>
+                        <div class="metric-card" style="flex: 1; padding: 12px; background: var(--color-bg-primary); border: 1px solid var(--color-border-light); border-radius: 8px; transition: all 0.2s ease;">
+                            <div style="font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Context Fit</div>
+                            <div style="font-size: 18px; font-weight: 700; color: var(--color-text-primary); font-family: 'JetBrains Mono', monospace;">94%</div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Responsive breakpoints -->
+            <style>
+            @media (max-width: 1024px) {
+                div[style*="grid-template-columns: repeat(3, 1fr)"] {
+                    grid-template-columns: repeat(2, 1fr) !important;
+                }
+            }
+            @media (max-width: 768px) {
+                div[style*="grid-template-columns: repeat(3, 1fr)"] {
+                    grid-template-columns: 1fr !important;
+                    gap: 12px !important;
+                    background: transparent !important;
+                }
+                .advantage-card {
+                    border-radius: 12px !important;
+                    border: 1px solid var(--color-border-light) !important;
+                }
+            }
+
+            /* Hover effects */
+            .advantage-card:hover {
+                background: var(--color-bg-hover) !important;
+                transform: translateY(-2px);
+            }
+            .advantage-card:hover > div:first-child {
+                transform: scaleX(1) !important;
+            }
+            .metric-card:hover {
+                border-color: rgba(139, 92, 246, 0.3) !important;
+                background: var(--color-bg-hover) !important;
+            }
+
+            /* Status pulse animation */
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+            .status-pulse {
+                animation: pulse 2s ease-in-out infinite;
+            }
+
+            /* Slow pulse for background */
+            @keyframes pulse-slow {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+            </style>
         </div>
     </section>
     
