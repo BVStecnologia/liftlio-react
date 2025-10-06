@@ -14,8 +14,6 @@
 ```
 LINKEDIN_CONTENT/
 │
-├── 🤖 linkedin-content-creator.md        # Agente principal (tudo em um só lugar!)
-│
 ├── 🔒 .credentials/                      # GITIGNORED - Dados sensíveis
 │   └── linkedin-api.sh                   # Credenciais LinkedIn API
 │                                         # Variáveis: LINKEDIN_CLIENT_ID, LINKEDIN_ACCESS_TOKEN, LINKEDIN_PERSON_URN
@@ -132,7 +130,9 @@ LINKEDIN_CONTENT/
 ## 🤖 COMO O AGENTE USA
 
 ### **Agente Location:**
-`/Users/valdair/Documents/Projetos/Liftlio/LINKEDIN_CONTENT/linkedin-content-creator.md`
+`/Users/valdair/Documents/Projetos/Liftlio/.claude/agents/linkedin-content-creator.md`
+
+**IMPORTANTE:** Agente fica em `.claude/agents/` (padrão Claude Code), mas conhece toda estrutura de `/LINKEDIN_CONTENT/`
 
 ### **O que o agente sabe:**
 ✅ Estrutura completa de `/LINKEDIN_CONTENT/`

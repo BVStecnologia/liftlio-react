@@ -6,6 +6,8 @@ Sistema completo para gerenciar estratégia de conteúdo LinkedIn do Liftlio.
 
 ## 📁 ESTRUTURA DE PASTAS
 
+**Agente:** `/Users/valdair/Documents/Projetos/Liftlio/.claude/agents/linkedin-content-creator.md`
+
 ```
 LINKEDIN_CONTENT/
 ├── _MASTER_DOCS/                    # Documentação estratégica principal

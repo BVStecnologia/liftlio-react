@@ -33,8 +33,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Acesso**: Via MCP WordPress tools
 
 ### LinkedIn Content System
-- **Localização**: `/LINKEDIN_CONTENT/` (TUDO em um único lugar)
-- **Agente**: `LINKEDIN_CONTENT/linkedin-content-creator.md`
+- **Localização Conteúdo**: `/LINKEDIN_CONTENT/` (docs, templates, credentials)
+- **Agente**: `.claude/agents/linkedin-content-creator.md` (padrão Claude Code)
 - **Credentials**: `LINKEDIN_CONTENT/.credentials/linkedin-api.sh` (GITIGNORED)
 - **Dois modos**:
   - **Technical Posts**: Posts técnicos do Valdair (English only)
