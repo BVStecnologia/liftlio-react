@@ -2128,9 +2128,9 @@ const Overview: React.FC = () => {
     border: 2px solid rgba(33, 150, 243, 0.3);
     box-shadow: 0 2px 10px rgba(33, 150, 243, 0.15);
     animation: ${DealPulse} 2s ease-in-out infinite;
-    
+
     &::before {
-      content: 'LEADS';
+      content: 'MENTIONS';
       position: absolute;
       top: -20px;
       left: 50%;
@@ -2885,7 +2885,6 @@ const Overview: React.FC = () => {
   const legendTooltips: { [key: string]: string } = {
     'Videos': 'Number of videos published on monitored channels per day',
     'Engagement': 'Comments posted without mentioning your product (pure engagement)',
-    'Leads': 'Comments where we mentioned your product or service',
     'Mentions': 'Comments where we mentioned your product or service'
   };
 
@@ -3425,11 +3424,11 @@ const Overview: React.FC = () => {
                   dot={{ r: 4, strokeWidth: 0, fill: "#FF7A30" }}
                   activeDot={{ r: 6, strokeWidth: 0, fill: "#FF7A30" }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="leads" 
-                  name="Leads"
-                  stroke="#4CAF50" 
+                <Line
+                  type="monotone"
+                  dataKey="leads"
+                  name="Mentions"
+                  stroke="#4CAF50"
                   strokeWidth={3}
                   dot={{ r: 4, strokeWidth: 0, fill: "#4CAF50" }}
                   activeDot={{ r: 6, strokeWidth: 0, fill: "#4CAF50" }}

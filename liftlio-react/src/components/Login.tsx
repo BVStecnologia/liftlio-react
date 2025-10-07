@@ -599,8 +599,8 @@ const Login: React.FC = () => {
         <Tagline>Monitor your digital presence</Tagline>
       </LogoContainer>
       
-      <PowerPhrase>Find your leads wherever they are</PowerPhrase>
-      
+      <PowerPhrase>Find and engage your audience</PowerPhrase>
+
       <Title>Welcome Back</Title>
       
       {isEmailLogin ? (

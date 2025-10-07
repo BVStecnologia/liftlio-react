@@ -1093,11 +1093,11 @@ const KeywordScannersList: React.FC<{ projectId: string | number }> = ({ project
                   <b>{keywordStats[scanner.Keyword]?.total_videos || 0}</b> videos
                 </ScannerStat>
                 <ScannerStat title="Engagement">
-                  <b>{keywordStats[scanner.Keyword] ? 
+                  <b>{keywordStats[scanner.Keyword] ?
                      (keywordStats[scanner.Keyword].total_views / 1000).toFixed(1) + 'K' : 0}</b> views
                 </ScannerStat>
-                <ScannerStat title="Leads">
-                  <b>{keywordStats[scanner.Keyword]?.total_leads || 0}</b> leads
+                <ScannerStat title="Mentions">
+                  <b>{keywordStats[scanner.Keyword]?.total_leads || 0}</b> mentions
                 </ScannerStat>
               </ScannerStats>
               <ScannerActions>

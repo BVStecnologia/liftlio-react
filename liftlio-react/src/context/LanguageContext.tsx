@@ -37,7 +37,7 @@ const translations = {
     // Overview
     'overview.totalMentions': 'Total Mentions',
     'overview.positiveSentiment': 'Positive Sentiment',
-    'overview.leadsGenerated': 'Leads Generated',
+    'overview.leadsGenerated': 'Mentions Generated',
     'overview.growthRate': 'Growth Rate',
     'overview.last7Days': 'Last 7 days',
     'overview.last30Days': 'Last 30 days',
@@ -517,7 +517,7 @@ const translations = {
     // Overview
     'overview.totalMentions': 'Total de Menções',
     'overview.positiveSentiment': 'Sentimento Positivo',
-    'overview.leadsGenerated': 'Leads Gerados',
+    'overview.leadsGenerated': 'Menções Geradas',
     'overview.growthRate': 'Taxa de Crescimento',
     'overview.last7Days': 'Últimos 7 dias',
     'overview.last30Days': 'Últimos 30 dias',
