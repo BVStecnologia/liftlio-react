@@ -832,10 +832,10 @@ const Billing: React.FC = () => {
                     : 'rgba(0, 0, 0, 0.05)'}`
                 }}>
                   <React.Suspense fallback={
-                    <div style={{ 
-                      textAlign: 'center', 
+                    <div style={{
+                      textAlign: 'center',
                       padding: '40px',
-                      color: theme.colors.text.secondary 
+                      color: theme.colors.text.secondary
                     }}>
                       Loading payment form...
                     </div>
@@ -844,6 +844,7 @@ const Billing: React.FC = () => {
                       onCardTokenized={handleCardTokenized}
                       isLoading={isAddingCard}
                       processingText={language === 'pt' ? 'Salvando cartão...' : 'Saving card...'}
+                      buttonText={language === 'pt' ? 'Adicionar Cartão' : 'Add Card'}
                     />
                   </React.Suspense>
                 </div>
@@ -861,7 +862,8 @@ const SquarePaymentFormWrapper: React.FC<{
   onCardTokenized: (token: string) => void;
   isLoading: boolean;
   processingText?: string;
-}> = ({ onCardTokenized, isLoading, processingText }) => {
+  buttonText?: string;
+}> = ({ onCardTokenized, isLoading, processingText, buttonText }) => {
   const [SquarePaymentForm, setSquarePaymentForm] = useState<any>(null);
   
   useEffect(() => {
@@ -879,6 +881,7 @@ const SquarePaymentFormWrapper: React.FC<{
       onCardTokenized={onCardTokenized}
       isLoading={isLoading}
       processingText={processingText}
+      buttonText={buttonText}
     />
   );
 };

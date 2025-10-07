@@ -45,9 +45,9 @@ const LoadingSpinner = styled.div`
   }
 `;
 
-const FormContainer = styled.div<{ darkMode?: boolean; language?: string }>`
+const FormContainer = styled.div<{ darkMode?: boolean; language?: string; buttonText?: string }>`
   position: relative;
-  
+
   .sq-payment-form {
     width: 100%;
   }
@@ -150,10 +150,10 @@ const FormContainer = styled.div<{ darkMode?: boolean; language?: string }>`
     
     /* Esconde o texto original "Pay" */
     font-size: 0 !important;
-    
+
     /* Adiciona nosso texto customizado */
     &::before {
-      content: "🔒 ${props => props.language === 'pt' ? 'Assinar Agora' : 'Subscribe Now'}";
+      content: "🔒 ${props => props.buttonText || (props.language === 'pt' ? 'Assinar Agora' : 'Subscribe Now')}";
       font-size: 18px;
       font-weight: 600;
       display: flex;
@@ -193,6 +193,7 @@ interface SquarePaymentFormProps {
   showSubmitButton?: boolean;
   isLoading?: boolean;
   processingText?: string;
+  buttonText?: string; // Texto customizado para o botão (ex: "Add Card" ou "Subscribe Now")
 }
 
 const SquarePaymentFormComponent: React.FC<SquarePaymentFormProps> = ({
@@ -202,6 +203,7 @@ const SquarePaymentFormComponent: React.FC<SquarePaymentFormProps> = ({
   showSubmitButton = false,
   isLoading = false,
   processingText,
+  buttonText,
 }) => {
   const { language } = useLanguage();
   const { theme, isDarkMode } = useTheme();
@@ -286,7 +288,7 @@ const SquarePaymentFormComponent: React.FC<SquarePaymentFormProps> = ({
   // Vamos aceitar que o botão existe e trabalhar com ele
 
   return (
-    <FormContainer theme={theme} darkMode={isDarkMode} language={language}>
+    <FormContainer theme={theme} darkMode={isDarkMode} language={language} buttonText={buttonText}>
       <LoadingOverlay show={isProcessing} theme={theme}>
         <LoadingSpinner theme={theme}>
           <div className="spinner" />
