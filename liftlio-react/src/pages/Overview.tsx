@@ -17,6 +17,8 @@ import EmptyState from '../components/EmptyState';
 import ProjectModal from '../components/ProjectModal';
 import { supabase } from '../lib/supabaseClient';
 import { PieLabelRenderProps } from 'recharts';
+import { Tooltip as ReactTooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 // Premium wave effect with physics
 const waveEffect = keyframes`
@@ -2870,13 +2872,86 @@ const Overview: React.FC = () => {
     const leftPos = Math.random() * 90 + 5;
     const opacity = Math.random() * 0.7 + 0.1;
     const scale = Math.random() * 1.5 + 0.5;
-    
+
     return {
       top: `${topPos}%`,
       left: `${leftPos}%`,
       opacity,
       transform: `scale(${scale})`
     };
+  };
+
+  // Tooltips para a legenda do gráfico
+  const legendTooltips: { [key: string]: string } = {
+    'Videos': 'Number of videos published on monitored channels per day',
+    'Engagement': 'Comments posted without mentioning your product (pure engagement)',
+    'Leads': 'Comments where we mentioned your product or service',
+    'Mentions': 'Comments where we mentioned your product or service'
+  };
+
+  // Custom Legend with Tooltips
+  const renderCustomLegend = (props: any) => {
+    const { payload } = props;
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '24px',
+        marginTop: '16px',
+        flexWrap: 'wrap'
+      }}>
+        {payload.map((entry: any, index: number) => (
+          <div
+            key={`legend-${index}`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'help'
+            }}
+            data-tooltip-id={`legend-tooltip-${entry.value}`}
+          >
+            <div style={{
+              width: '12px',
+              height: '12px',
+              backgroundColor: entry.color,
+              borderRadius: '50%'
+            }} />
+            <span style={{
+              color: theme.colors.text.primary,
+              fontSize: '14px',
+              fontWeight: 500
+            }}>
+              {entry.value}
+            </span>
+            <span style={{
+              opacity: 0.6,
+              fontSize: '12px',
+              display: 'inline-flex',
+              alignItems: 'center'
+            }}>
+              <IconComponent icon={FaIcons.FaInfoCircle} />
+            </span>
+            <ReactTooltip
+              id={`legend-tooltip-${entry.value}`}
+              place="top"
+              style={{
+                backgroundColor: theme.colors.background,
+                color: theme.colors.text.primary,
+                border: `1px solid ${theme.colors.borderLight}`,
+                borderRadius: '8px',
+                padding: '8px 12px',
+                fontSize: '13px',
+                maxWidth: '280px',
+                zIndex: 9999
+              }}
+            >
+              {legendTooltips[entry.value] || entry.value}
+            </ReactTooltip>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   // Se não houver projeto selecionado
@@ -2896,7 +2971,8 @@ const Overview: React.FC = () => {
       icon: 'FaFileAlt',
       color: COLORS.INFO, // Azul padrão do sistema para canais
       description: 'Active channels',
-      trend: statsData.reach.trend
+      trend: statsData.reach.trend,
+      tooltip: 'Active channels being monitored for your keywords across YouTube'
     },
     {
       id: 2,
@@ -2905,7 +2981,8 @@ const Overview: React.FC = () => {
       icon: 'FaComments',
       color: '#9C27B0', // Roxo para vídeos
       description: 'Total videos',
-      trend: statsData.activities.trend
+      trend: statsData.activities.trend,
+      tooltip: 'Total videos found containing your monitored keywords'
     },
     {
       id: 3,
@@ -2914,7 +2991,8 @@ const Overview: React.FC = () => {
       icon: 'FaStar',
       color: COLORS.WARNING, // Laranja padrão para menções totais
       description: 'All time mentions',
-      trend: statsData.engagements.trend
+      trend: statsData.engagements.trend,
+      tooltip: 'Total number of comments where we mentioned your product or service'
     },
     {
       id: 4,
@@ -2923,7 +3001,8 @@ const Overview: React.FC = () => {
       icon: 'FaUserCheck',
       color: COLORS.SUCCESS, // Verde padrão do sistema para menções de hoje
       description: 'Mentions today',
-      trend: statsData.leads.trend
+      trend: statsData.leads.trend,
+      tooltip: 'New comments with product mentions posted today'
     }
   ];
   
@@ -3097,8 +3176,40 @@ const Overview: React.FC = () => {
             
             <StatDisplay>
               <StatContent>
-                <StatCardTitle>
-                  {stat.title}
+                <StatCardTitle style={{ alignItems: 'center', gap: '8px' }}>
+                  <span>{stat.title}</span>
+                  <span
+                    data-tooltip-id={`tooltip-${stat.id}`}
+                    style={{
+                      cursor: 'help',
+                      opacity: 0.6,
+                      transition: 'opacity 0.2s',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      fontSize: '13px',
+                      lineHeight: 1
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
+                  >
+                    <IconComponent icon={FaIcons.FaInfoCircle} />
+                  </span>
+                  <ReactTooltip
+                    id={`tooltip-${stat.id}`}
+                    place="top"
+                    style={{
+                      backgroundColor: theme.colors.background,
+                      color: theme.colors.text.primary,
+                      border: `1px solid ${theme.colors.borderLight}`,
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      fontSize: '13px',
+                      maxWidth: '250px',
+                      zIndex: 9999
+                    }}
+                  >
+                    {stat.tooltip}
+                  </ReactTooltip>
                 </StatCardTitle>
                 {/* StatValue without any color-changing effects */}
                 <StatValue>
@@ -3250,7 +3361,7 @@ const Overview: React.FC = () => {
                     color: theme.colors.text.primary
                   }}
                 />
-                <Legend />
+                <Legend content={renderCustomLegend} />
                 <Bar dataKey="videos" name="Videos" fill="#1976D2" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="engagement" name="Engagement" fill="#FF5722" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="leads" name="Mentions" fill="#2E7D32" radius={[4, 4, 0, 0]} />
@@ -3286,16 +3397,16 @@ const Overview: React.FC = () => {
                   axisLine={false} 
                   tickLine={false}
                 />
-                <Tooltip 
-                  contentStyle={{ 
+                <Tooltip
+                  contentStyle={{
                     background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                     border: `1px solid ${theme.colors.border.primary}`,
                     borderRadius: '8px',
                     boxShadow: theme.shadows.md,
                     color: theme.colors.text.primary
-                  }} 
+                  }}
                 />
-                <Legend />
+                <Legend content={renderCustomLegend} />
                 <Line 
                   type="monotone" 
                   dataKey="videos" 
