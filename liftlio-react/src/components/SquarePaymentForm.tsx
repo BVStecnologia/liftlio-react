@@ -4,14 +4,14 @@ import { PaymentForm, CreditCard } from 'react-square-web-payments-sdk';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 
-const LoadingOverlay = styled.div<{ show: boolean }>`
+const LoadingOverlay = styled.div<{ $show: boolean }>`
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: ${props => props.theme.colors.background}E6;
-  display: ${props => props.show ? 'flex' : 'none'};
+  display: ${props => props.$show ? 'flex' : 'none'};
   align-items: center;
   justify-content: center;
   z-index: 1000;
@@ -45,7 +45,7 @@ const LoadingSpinner = styled.div`
   }
 `;
 
-const FormContainer = styled.div<{ darkMode?: boolean; language?: string; buttonText?: string }>`
+const FormContainer = styled.div<{ $darkMode?: boolean; $language?: string; $buttonText?: string }>`
   position: relative;
 
   .sq-payment-form {
@@ -81,11 +81,11 @@ const FormContainer = styled.div<{ darkMode?: boolean; language?: string; button
   
   /* Fix para inputs do Square no modo escuro */
   iframe {
-    color-scheme: ${props => props.darkMode ? 'dark' : 'light'};
+    color-scheme: ${props => props.$darkMode ? 'dark' : 'light'};
   }
-  
+
   /* Estilos adicionais para o Square no tema escuro */
-  ${props => props.darkMode && `
+  ${props => props.$darkMode && `
     /* Força texto branco nos inputs quando tema escuro */
     input[type="text"],
     input[type="tel"],
@@ -124,6 +124,7 @@ const FormContainer = styled.div<{ darkMode?: boolean; language?: string; button
   }
   
   /* Estiliza o botão do Square para parecer com nosso design */
+  #rswp-card-button,
   #sq-creditcard {
     width: 100%;
     padding: 16px 32px;
@@ -137,23 +138,23 @@ const FormContainer = styled.div<{ darkMode?: boolean; language?: string; button
     transition: all 0.3s ease;
     margin-top: 24px;
     position: relative;
-    
+
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 10px 30px ${props => props.theme.colors.shadowMedium};
     }
-    
+
     &:disabled {
       opacity: 0.7;
       cursor: not-allowed;
     }
-    
+
     /* Esconde o texto original "Pay" */
     font-size: 0 !important;
 
     /* Adiciona nosso texto customizado */
     &::before {
-      content: "🔒 ${props => props.buttonText || (props.language === 'pt' ? 'Assinar Agora' : 'Subscribe Now')}";
+      content: "🔒 ${props => props.$buttonText || (props.$language === 'pt' ? 'Assinar Agora' : 'Subscribe Now')}";
       font-size: 18px;
       font-weight: 600;
       display: flex;
@@ -161,13 +162,13 @@ const FormContainer = styled.div<{ darkMode?: boolean; language?: string; button
       justify-content: center;
       gap: 8px;
     }
-    
+
     /* Estado de loading */
     &[disabled]::before {
-      content: "⏳ ${props => props.language === 'pt' ? 'Processando...' : 'Processing...'}";
+      content: "⏳ ${props => props.$language === 'pt' ? 'Processando...' : 'Processing...'}";
       animation: pulse 1.5s ease-in-out infinite;
     }
-    
+
     @keyframes pulse {
       0% { opacity: 0.8; }
       50% { opacity: 1; }
@@ -288,8 +289,8 @@ const SquarePaymentFormComponent: React.FC<SquarePaymentFormProps> = ({
   // Vamos aceitar que o botão existe e trabalhar com ele
 
   return (
-    <FormContainer theme={theme} darkMode={isDarkMode} language={language} buttonText={buttonText}>
-      <LoadingOverlay show={isProcessing} theme={theme}>
+    <FormContainer theme={theme} $darkMode={isDarkMode} $language={language} $buttonText={buttonText}>
+      <LoadingOverlay $show={isProcessing} theme={theme}>
         <LoadingSpinner theme={theme}>
           <div className="spinner" />
           <div className="text">
