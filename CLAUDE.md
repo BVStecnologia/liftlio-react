@@ -233,6 +233,40 @@ REACT_APP_SUPABASE_ANON_KEY=xxx
 - recharts 2.15.1
 - posthog-js 1.258.5
 
+## UI Libraries Instaladas
+
+### Tooltips (react-tooltip)
+- **Instalação**: `npm install react-tooltip --legacy-peer-deps`
+- **Import**: `import { Tooltip as ReactTooltip } from 'react-tooltip'`
+- **CSS**: `import 'react-tooltip/dist/react-tooltip.css'`
+- **Exemplo de uso**: Ver `/src/pages/Overview.tsx` linhas 3179-3210
+- **Suporte a tema**: Sim (inline styles com theme.colors)
+- **Docs**: https://react-tooltip.com/docs/getting-started
+- **Instalado em**: 07/10/2025
+
+**Padrão de uso com tema:**
+```typescript
+<span data-tooltip-id="my-tooltip">
+  Hover me
+</span>
+<ReactTooltip
+  id="my-tooltip"
+  place="top"
+  style={{
+    backgroundColor: theme.colors.background,
+    color: theme.colors.text.primary,
+    border: `1px solid ${theme.colors.borderLight}`,
+    borderRadius: '8px',
+    padding: '8px 12px',
+    fontSize: '13px',
+    maxWidth: '250px',
+    zIndex: 9999
+  }}
+>
+  Tooltip content here
+</ReactTooltip>
+```
+
 ## Testes e Qualidade
 ```bash
 npm test                    # Jest + React Testing Library
@@ -288,3 +322,4 @@ docker-compose down && docker-compose up -d --build
 - **12/08/2025**: Correções em Analytics - Unificação de tráfego orgânico como Liftlio, cores roxas aplicadas, proteção contra erros de extensões no localhost
 - **13/08/2025**: Analytics Server - Configuração Cloudflare SSL Flexible, correção função track_event duplicada, documentação sobre servidor remoto, correção de tipos implícitos no GlobeVisualizationPro
 - **06/10/2025**: Sistema LinkedIn unificado - TUDO consolidado em `/LINKEDIN_CONTENT/`, estratégia de 12 semanas com Curiosity Gap, dois modos (Technical + Marketing), credentials gitignored
+- **07/10/2025**: Overview UX - Tooltips implementados em cards e gráficos com react-tooltip, correção SquarePaymentForm ("Pay" → "Add Card"), análise PDF feedback, cards Trello criados (UX/AI improvements + Supabase Branch backup)
