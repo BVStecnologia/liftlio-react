@@ -3438,19 +3438,19 @@ const Overview: React.FC = () => {
           </ChartContainer>
         </ChartBody>
       </ChartCard>
-      
+
+      {/* Keywords Insights Section - REMOVED per user request (PDF feedback)
       <div style={{ marginTop: '40px' }}></div>
-      
-      {/* Keywords Insights Section */}
-      <ContentHeader style={{ 
+
+      <ContentHeader style={{
         marginBottom: '40px',
-        display: 'flex', 
+        display: 'flex',
         alignItems: 'center',
         flexDirection: 'row',
-        justifyContent: 'space-between' 
+        justifyContent: 'space-between'
       }}>
-        <ContentTitle style={{ 
-          display: 'flex', 
+        <ContentTitle style={{
+          display: 'flex',
           alignItems: 'center',
           gap: '12px',
           fontSize: '22px'
@@ -3458,20 +3458,20 @@ const Overview: React.FC = () => {
           <IconComponent icon={FaIcons.FaHashtag} style={{ color: theme.colors.accent.primary }} />
           <span style={{ fontWeight: 600 }}>Keywords & Insights</span>
         </ContentTitle>
-        <AddNewProjectButton 
+        <AddNewProjectButton
           onClick={() => {
             console.log("Botão Add New Project clicado");
             setShowProjectModal(true);
           }}
         >
-          <IconComponent icon={FaIcons.FaPlus} /> 
+          <IconComponent icon={FaIcons.FaPlus} />
           Add New Project
         </AddNewProjectButton>
       </ContentHeader>
-      
-      {/* Spacing is now handled by the marginBottom in ContentHeader */}
-      
-      {/* Desktop version - table format */}
+
+      {/* Spacing is now handled by the marginBottom in ContentHeader
+
+      {/* Desktop version - table format
       <div style={{ display: 'none' }} className="desktop-keywords-table">
         <KeywordTable>
           <TableHeader>
@@ -3679,7 +3679,8 @@ const Overview: React.FC = () => {
           </div>
         )}
       </div>
-      
+      */}
+
       {/* Project Modal */}
       <ProjectModal
         isOpen={showProjectModal}
