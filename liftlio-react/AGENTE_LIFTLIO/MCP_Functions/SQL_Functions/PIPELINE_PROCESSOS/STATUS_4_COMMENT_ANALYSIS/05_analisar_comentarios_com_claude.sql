@@ -113,7 +113,7 @@ Palavra-chave da busca: %s',
 
 ## TRANSCRIÇÃO DO VÍDEO (RESUMO) ##
 %s',
-                    replace(regexp_replace(left(video_data.video_transcription, 2000), E'[\n\r\t]+', ' ', 'g'), '"', ''')
+                    replace(regexp_replace(left(video_data.video_transcription, 5000), E'[\n\r\t]+', ' ', 'g'), '"', ''')
                 );
             END IF;
 
@@ -205,7 +205,7 @@ Palavra-chave da busca: %s',
 
 ## TRANSCRIÇÃO DO VÍDEO (RESUMO) ##
 %s',
-                    replace(regexp_replace(left(video_data.video_transcription, 2000), E'[\n\r\t]+', ' ', 'g'), '"', ''')
+                    replace(regexp_replace(left(video_data.video_transcription, 5000), E'[\n\r\t]+', ' ', 'g'), '"', ''')
                 );
             END IF;
 
