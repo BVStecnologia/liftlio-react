@@ -48,6 +48,27 @@ const formatDate = (dateString: string | null, isComment: boolean = false) => {
   }
 };
 
+// Função utilitária para decodificar HTML entities (&#39; → ', &quot; → ", etc)
+// E converter tags HTML (<br> → quebra de linha)
+const decodeHtmlEntities = (text: string): string => {
+  if (!text) return '';
+
+  try {
+    // Criar elemento temporário para decodificar HTML entities
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = text;
+    let decodedText = textarea.value;
+
+    // Substituir tags HTML por equivalentes de texto
+    decodedText = decodedText.replace(/<br\s*\/?>/gi, '\n'); // <br> ou <br/> → quebra de linha
+
+    return decodedText;
+  } catch (error) {
+    console.error('Error decoding HTML entities:', error);
+    return text; // Em caso de erro, retorna o texto original
+  }
+};
+
 // Animation keyframes
 const fadeIn = keyframes`
   from {
@@ -989,6 +1010,7 @@ const CommentText = styled.div`
   position: relative;
   height: 65px; /* Altura fixa para manter consistência */
   overflow: hidden;
+  white-space: pre-wrap; /* Preservar quebras de linha convertidas de <br> */
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 3; /* Limitar a 3 linhas */
@@ -2034,7 +2056,7 @@ const EditResponseModal: React.FC<EditModalProps> = ({ isOpen, onClose, mention,
               borderRadius: '8px',
               color: theme.colors.text.primary
             }}>
-              {mention.comment.text}
+              {decodeHtmlEntities(mention.comment.text)}
             </div>
           </FormGroup>
           
@@ -2835,7 +2857,7 @@ const Mentions: React.FC = () => {
                         </CommentEngagement>
                       </CommentHeader>
                       <CommentText>
-                        {mention.comment.text}
+                        {decodeHtmlEntities(mention.comment.text)}
                       </CommentText>
                       {mention.comment.comment_justificativa && (
                         <div 
@@ -3112,7 +3134,7 @@ const Mentions: React.FC = () => {
                     <strong>{selectedMention.comment.author}</strong>
                     <span>{formatDate(selectedMention.comment.date)}</span>
                   </div>
-                  <p style={{ margin: '0 0 10px 0', lineHeight: '1.6' }}>{selectedMention.comment.text}</p>
+                  <p style={{ margin: '0 0 10px 0', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{decodeHtmlEntities(selectedMention.comment.text)}</p>
                   <div>
                     <IconComponent icon={FaIcons.FaThumbsUp} /> {selectedMention.comment.likes} likes
                   </div>
