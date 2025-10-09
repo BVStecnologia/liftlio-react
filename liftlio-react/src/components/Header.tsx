@@ -1386,13 +1386,13 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       console.log("Projeto atual logo após setCurrentProject:", currentProject);
       console.log("Projeto que foi selecionado:", project);
 
-      // Navegar para overview do novo projeto usando transição
-      // Isso evita múltiplos loadings durante navegação
-      startTransition(() => {
-        navigate('/dashboard');
-      });
+      // MUDANÇA: Não navegar mais para dashboard - manter o usuário na página atual
+      // As páginas já reagem automaticamente quando currentProject muda via useEffect
+      // startTransition(() => {
+      //   navigate('/dashboard');
+      // });
 
-      // Esconder o loader imediatamente após navegação
+      // Esconder o loader imediatamente após a troca de projeto
       // Os dados já foram carregados pelo setCurrentProject
       hideGlobalLoader();
 
