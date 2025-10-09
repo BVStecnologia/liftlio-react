@@ -7,6 +7,53 @@ import { useProject } from '../context/ProjectContext';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabaseClient';
 
+// Função utilitária para converter Markdown simples para JSX
+const parseMarkdown = (text: string): React.ReactNode => {
+  if (!text) return null;
+
+  // Dividir por quebras de linha
+  const lines = text.split('\n');
+
+  return lines.map((line, lineIndex) => {
+    const elements: (string | React.ReactElement)[] = [];
+    let currentText = line;
+    let key = 0;
+
+    // Processar negrito (**texto**)
+    const boldRegex = /\*\*(.*?)\*\*/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = boldRegex.exec(currentText)) !== null) {
+      // Adicionar texto antes do negrito
+      if (match.index > lastIndex) {
+        elements.push(currentText.substring(lastIndex, match.index));
+      }
+      // Adicionar negrito
+      elements.push(<strong key={`bold-${lineIndex}-${key++}`}>{match[1]}</strong>);
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Adicionar texto restante
+    if (lastIndex < currentText.length) {
+      elements.push(currentText.substring(lastIndex));
+    }
+
+    // Se não tiver elementos, adicionar a linha inteira
+    if (elements.length === 0) {
+      elements.push(line);
+    }
+
+    // Retornar linha com quebra de linha (exceto última)
+    return (
+      <React.Fragment key={`line-${lineIndex}`}>
+        {elements}
+        {lineIndex < lines.length - 1 && <br />}
+      </React.Fragment>
+    );
+  });
+};
+
 // Animações
 const fadeIn = keyframes`
   from {
@@ -645,7 +692,7 @@ const FloatingAgent: React.FC<FloatingAgentProps> = ({ externalIsOpen, onExterna
           {messages.map(message => (
             <Message key={message.id} isUser={message.isUser}>
               <MessageBubble isUser={message.isUser}>
-                {message.text}
+                {parseMarkdown(message.text)}
               </MessageBubble>
             </Message>
           ))}
