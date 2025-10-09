@@ -806,7 +806,7 @@ const SettingsSaveBar = styled.div<{ visible: boolean }>`
   bottom: 0;
   left: 250px; /* Considera o espaço para o menu lateral */
   right: 0;
-  background-color: white;
+  background-color: ${props => props.theme.colors.cardBg};
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
   padding: 15px 30px;
   display: flex;
@@ -2320,16 +2320,6 @@ const Settings: React.FC<{}> = () => {
                     </ToggleLabel>
                   </ToggleContainer>
                 </FormGroup>
-                
-                <FormRow>
-                  <ActionButton variant="secondary">
-                    {renderIcon(FaCloudUploadAlt)} Export Data
-                  </ActionButton>
-                  
-                  <ActionButton variant="danger">
-                    {renderIcon(FaTrashAlt)} Clear Project Data
-                  </ActionButton>
-                </FormRow>
               </FormSection>
               
             </Card>
@@ -2490,7 +2480,7 @@ const Settings: React.FC<{}> = () => {
               {renderIcon(FaCheck)} Settings saved successfully
             </SaveStatus>
           ) : (
-            <div>You have unsaved changes</div>
+            <div style={{ color: theme.colors.text.primary }}>You have unsaved changes</div>
           )}
           <SaveActions>
             <ActionButton 
@@ -2499,10 +2489,9 @@ const Settings: React.FC<{}> = () => {
             >
               Cancel
             </ActionButton>
-            <ActionButton 
+            <ActionButton
               variant="primary"
               onClick={handleSaveSettings}
-              style={{ color: 'white' }}
             >
               {renderIcon(FaSave)} Save Changes
             </ActionButton>
