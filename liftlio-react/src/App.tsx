@@ -526,7 +526,19 @@ const ProtectedLayout = ({
       navigate(postOAuthDestination, { replace: true });
     }
   }, [user, loading, isLoading, navigate]);
-  
+
+  // VERIFICAÇÃO DE ROTAS PÚBLICAS - Calcular antes de usar
+  const publicRoutes = ['/trends', '/liftlio-analytics', '/about', '/privacy', '/terms', '/security'];
+  const isPublicRoute = publicRoutes.includes(location.pathname);
+
+  // Redirecionar para login se não autenticado (deve estar ANTES de qualquer return)
+  useEffect(() => {
+    if (!user && !isPublicRoute && !loading) {
+      console.log('[ProtectedLayout] No user and not public route, redirecting to login');
+      navigate('/login', { replace: true });
+    }
+  }, [user, isPublicRoute, loading, navigate]);
+
   // Verificação simplificada de integrações usando useMemo para evitar re-cálculos
   // IMPORTANTE: Mover hooks ANTES de qualquer return condicional
   const projectHasIntegrations = React.useMemo(() => {
@@ -587,21 +599,55 @@ const ProtectedLayout = ({
   const hasOAuthCode = urlParams.get('code') !== null;
   const hasOAuthState = urlParams.get('state') !== null;
 
+  // PRIORIDADE 1: Verificar autenticação ANTES de loading
+  // Se não tem usuário E não é rota pública, mostrar loading de redirect
+  if (!user && !isPublicRoute && !loading) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: getThemeBackground(),
+        zIndex: 9999
+      }}>
+        <GlobalLoader message="Redirecting" subMessage="Taking you to login..." fullScreen={false} />
+      </div>
+    );
+  }
+
+  // PRIORIDADE 2: Loading states (só se tiver usuário ou for rota pública)
   // Não renderizar nada até estar pronto, EXCETO para projetos em processamento
   // Projetos em processamento devem renderizar o dashboard para que o ProcessingWrapper funcione
   if (!isProjectProcessing && (loading || !onboardingReady || isLoading || isInitializing || !isPageReady)) {
     console.log('[ProtectedLayout] Aguardando carregamento (não é projeto em processamento)');
-    return null;
+    // Mostrar loading visual ao invés de tela preta
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: getThemeBackground(),
+        zIndex: 9999
+      }}>
+        <GlobalLoader message="Loading" subMessage="Please wait..." fullScreen={false} />
+      </div>
+    );
   }
 
   // Se é projeto em processamento, permitir renderização mesmo durante loading
   if (isProjectProcessing) {
     console.log('[ProtectedLayout] Projeto em processamento detectado, permitindo renderização');
   }
-
-  // VERIFICAÇÃO DE ROTAS PÚBLICAS - APÓS TODOS OS HOOKS
-  const publicRoutes = ['/trends', '/liftlio-analytics', '/about', '/privacy', '/terms', '/security'];
-  const isPublicRoute = publicRoutes.includes(location.pathname);
 
   // Se é uma rota pública, não processar com ProtectedLayout
   if (isPublicRoute) {
@@ -612,17 +658,6 @@ const ProtectedLayout = ({
     console.log('[ProtectedLayout] OAuth em andamento, aguardando processamento...');
     showGlobalLoader('Processing', 'Connecting to YouTube');
     // Removido return null - permitir que o componente continue renderizando
-  }
-
-  // Redirecionar para a página inicial (login) se não estiver autenticado
-  // MAS NÃO redirecionar se é uma rota pública
-  if (!user && !isPublicRoute) {
-    console.log('[ProtectedLayout] No user and not public route, redirecting to landing-page.html');
-    // Adicionar delay para capturar logs
-    setTimeout(() => {
-      window.location.href = '/landing-page.html';
-    }, 1000);
-    return <div>Redirecting to login...</div>;
   }
 
   // Se chegou aqui, o usuário está autenticado e o carregamento foi concluído
