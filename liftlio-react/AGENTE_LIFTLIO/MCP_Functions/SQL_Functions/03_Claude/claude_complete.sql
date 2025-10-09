@@ -2,7 +2,8 @@
 -- Função: claude_complete
 -- Descrição: Função principal para chamadas à API do Claude com timeout configurável
 -- Criado: 2025-01-23
--- Atualizado: Sistema completo de integração com Claude API
+-- Atualizado: 2025-01-10 - Migrado para usar get_current_claude_model() wrapper
+--             Sistema completo de integração com Claude API
 -- =============================================
 
 DROP FUNCTION IF EXISTS claude_complete(text, text, integer, double precision, integer);
@@ -30,8 +31,9 @@ BEGIN
     );
 
     -- Construir o corpo da requisição
+    -- MODELO: Usa get_current_claude_model() para centralizar versão
     request_body := json_build_object(
-        'model', 'claude-3-5-sonnet-latest',
+        'model', get_current_claude_model(),
         'max_tokens', max_tokens,
         'temperature', temperature,
         'system', system_prompt,

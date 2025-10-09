@@ -1,7 +1,8 @@
 -- =============================================
--- Função: claude_complete_worker
--- Descrição: Worker function para processamento assíncrono com Claude API
+-- Funï¿½ï¿½o: claude_complete_worker
+-- Descriï¿½ï¿½o: Worker function para processamento assï¿½ncrono com Claude API
 -- Criado: 2025-01-24
+-- Atualizado: 2025-01-10 - Migrado para usar get_current_claude_model() wrapper
 -- =============================================
 
 CREATE OR REPLACE FUNCTION public.claude_complete_worker(user_prompt text, system_prompt text, max_tokens integer, temperature double precision)
@@ -15,7 +16,7 @@ DECLARE
     messages JSONB;
     request_body TEXT;
 BEGIN
-    -- O código aqui é similar ao original claude_complete
+    -- O cï¿½digo aqui ï¿½ similar ao original claude_complete
     -- Buscar a chave de API
     api_key := get_secret('CLAUDE_API_KEY');
 
@@ -24,16 +25,17 @@ BEGIN
         jsonb_build_object('role', 'user', 'content', user_prompt)
     );
 
-    -- Construir o corpo da requisição
+    -- Construir o corpo da requisiï¿½ï¿½o
+    -- MODELO: Usa get_current_claude_model() para centralizar versÃ£o
     request_body := json_build_object(
-        'model', 'claude-3-5-sonnet-20240620',
+        'model', get_current_claude_model(),
         'max_tokens', max_tokens,
         'temperature', temperature,
         'system', system_prompt,
         'messages', messages
     )::text;
 
-    -- Fazer a chamada à API do Claude
+    -- Fazer a chamada ï¿½ API do Claude
     SELECT * INTO http_response
     FROM http((
         'POST',

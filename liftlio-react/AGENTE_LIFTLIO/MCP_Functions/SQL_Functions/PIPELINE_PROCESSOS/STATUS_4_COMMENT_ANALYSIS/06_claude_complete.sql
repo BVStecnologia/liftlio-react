@@ -21,7 +21,8 @@
 --   → Também usada por: STATUS_3 (analyze_video_with_claude)
 --
 -- Criado: Data desconhecida
--- Atualizado: 2025-10-02 - Recuperado do Supabase e salvo localmente
+-- Atualizado: 2025-01-10 - Migrado para usar get_current_claude_model() wrapper
+--             2025-10-02 - Recuperado do Supabase e salvo localmente
 -- =============================================
 
 DROP FUNCTION IF EXISTS claude_complete(TEXT, TEXT, INTEGER, DOUBLE PRECISION, INTEGER);
@@ -55,8 +56,9 @@ BEGIN
     );
 
     -- Construir o corpo da requisição
+    -- MODELO: Usa get_current_claude_model() para centralizar versão
     request_body := json_build_object(
-        'model', 'claude-3-5-sonnet-latest',
+        'model', get_current_claude_model(),
         'max_tokens', max_tokens,
         'temperature', temperature,
         'system', system_prompt,
