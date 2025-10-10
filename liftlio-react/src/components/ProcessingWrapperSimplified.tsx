@@ -81,6 +81,7 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
   const [isLoading, setIsLoading] = useState(true);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true); // Nova flag para controlar loading inicial
+  const [loadingControlledByWrapper, setLoadingControlledByWrapper] = useState(false); // Flag para controlar se ProcessingWrapper mostrou loading
 
   // Função principal que chama o RPC
   const checkProjectState = useCallback(async (isPolling: boolean = false) => {
@@ -91,9 +92,11 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
 
     try {
       // Mostrar loading global APENAS na primeira carga, não no polling
-      if (isInitialLoad && !isPolling) {
+      // E APENAS se ProcessingWrapper ainda não mostrou (evitar duplicar com Header)
+      if (isInitialLoad && !isPolling && !loadingControlledByWrapper) {
         console.log('[ProcessingWrapper] Mostrando loading global (primeira carga)');
         showGlobalLoader('Loading Dashboard', 'Please wait...');
+        setLoadingControlledByWrapper(true);
       }
 
       console.log('[ProcessingWrapper] Chamando check_project_display_state...', { isPolling });
@@ -156,27 +159,36 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
     } catch (err) {
       console.error('[ProcessingWrapper] Erro:', err);
     } finally {
-      // Só muda isLoading e esconde loader na primeira carga
-      if (isInitialLoad) {
+      // SEMPRE esconder loading quando terminar de carregar
+      // Na primeira carga: isInitialLoad = true, então esconde
+      // Ao trocar projeto: Header mostrou loading, então esconde (decrementa contador)
+      if (isLoading) {
         setIsLoading(false);
-        setIsInitialLoad(false);
-        // Esconder o loading imediatamente - sem delay desnecessário
-        console.log('[ProcessingWrapper] Escondendo loading global após primeira carga');
+        console.log('[ProcessingWrapper] Escondendo loading global');
         hideGlobalLoader();
       }
+
+      // Marcar primeira carga como concluída apenas UMA VEZ
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
     }
-  }, [user, pollingInterval, showGlobalLoader, hideGlobalLoader, isInitialLoad]);
+  }, [user, pollingInterval, showGlobalLoader, hideGlobalLoader, isInitialLoad, loadingControlledByWrapper, isLoading]);
 
   // Effect principal - chama quando usuário muda OU quando projeto muda
   useEffect(() => {
-    // Resetar estado de loading quando projeto muda (exceto primeira carga)
+    // Quando projeto muda (não na primeira carga), apenas verificar estado
+    // NÃO resetar isInitialLoad - Header já mostrou loading
     if (!isInitialLoad && currentProject) {
       console.log('[ProcessingWrapper] Projeto mudou, verificando novo estado');
       setIsLoading(true);
-      setIsInitialLoad(true); // Tratar como nova carga
+      // NÃO setar isInitialLoad = true aqui! Header já mostrou loading
+      // Vamos forçar uma re-verificação chamando checkProjectState diretamente
+      checkProjectState();
+    } else if (isInitialLoad) {
+      // Apenas na primeira carga mesmo (página carregou)
+      checkProjectState();
     }
-
-    checkProjectState();
 
     // Cleanup do polling
     return () => {

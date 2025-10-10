@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useGlobalLoading } from '../context/LoadingContext';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabaseClient';
 
 // Import the MobileNavToggle from App.tsx
@@ -1162,6 +1163,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const { currentProject, setCurrentProject, projects, isInitialProcessing } = useProject();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
+  const { showGlobalLoader } = useGlobalLoading();
   const navigate = useNavigate();
   const [currentLanguage, setCurrentLanguage] = useState(language.toUpperCase());
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -1362,9 +1364,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     // Fechar dropdown imediatamente
     setShowProjectsDropdown(false);
 
-    // 🔥 REMOVIDO: Loading global do Header
-    // ProcessingWrapper agora controla TODO o loading via SQL state
-    // Header apenas atualiza o projeto silenciosamente
+    // ✅ Mostrar loading IMEDIATAMENTE para feedback visual
+    // ProcessingWrapper vai assumir controle e esconder quando terminar
+    showGlobalLoader('Switching Project', 'Loading project data...');
 
     try {
       // Marcar que estamos atualizando
@@ -1384,16 +1386,14 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
       // MUDANÇA: Não navegar mais para dashboard - manter o usuário na página atual
       // As páginas já reagem automaticamente quando currentProject muda via useEffect
-      // startTransition(() => {
-      //   navigate('/dashboard');
-      // });
 
-      // 🔥 REMOVIDO: hideGlobalLoader() do Header
-      // ProcessingWrapper detecta mudança de projeto e controla o loading
+      // ⚠️ NÃO chamar hideGlobalLoader() aqui!
+      // ProcessingWrapper detecta mudança via useEffect e controla o esconder
+      // Isso evita race conditions e garante que dados estejam carregados
 
     } catch (error) {
       console.error("Erro ao selecionar projeto:", error);
-      // Mesmo em erro, não esconder loading - ProcessingWrapper vai lidar
+      // Em caso de erro, ProcessingWrapper vai lidar com o loading
       alert("An error occurred while switching projects. Please try again.");
     } finally {
       // Limpar flag de atualização
