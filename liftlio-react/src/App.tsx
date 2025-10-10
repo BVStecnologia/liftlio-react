@@ -544,9 +544,12 @@ const ProtectedLayout = ({
   const projectHasIntegrations = React.useMemo(() => {
     if (!currentProject) return false;
 
-    // projectIntegrations já vem filtrado do contexto para o projeto atual
-    // Só precisamos verificar se tem alguma integração
-    return projectIntegrations.length > 0;
+    // FILTRAR integrações do projeto atual - projectIntegrations pode conter de outros projetos!
+    const currentProjectIntegrations = projectIntegrations.filter(
+      integration => integration['PROJETO id'] === currentProject.id
+    );
+
+    return currentProjectIntegrations.length > 0;
   }, [currentProject, projectIntegrations]);
 
   // Função helper para determinar o tipo de layout a mostrar
