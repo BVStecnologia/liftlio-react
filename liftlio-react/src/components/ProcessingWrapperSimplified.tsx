@@ -5,7 +5,6 @@ import { useGlobalLoading } from '../context/LoadingContext';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import ProjectCreationPage from '../pages/ProjectCreationPage';
-import Integrations from '../pages/Integrations';
 
 // Componente para mostrar cada etapa do processo
 const ProcessStep: React.FC<{
@@ -197,7 +196,9 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
       return <ProjectCreationPage />;
 
     case 'need_integration':
-      return <Integrations />;
+      // Navegar para /integrations para que App.tsx renderize sem sidebar
+      navigate('/integrations', { replace: true });
+      return null;
 
     case 'setup_processing':
       // Mostrar tela de processamento

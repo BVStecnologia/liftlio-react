@@ -40,7 +40,7 @@ BEGIN
   -- CTE única para todas verificações em paralelo
   WITH project_checks AS (
     SELECT
-      p.status::INTEGER,
+      COALESCE(p.status::INTEGER, 0) AS status,  -- NULL vira 0 (recém-criado)
       EXISTS(
         SELECT 1
         FROM "Integrações" i
@@ -78,34 +78,21 @@ BEGIN
     );
   END IF;
 
-  -- Determinar estados de verificação
-  IF v_project_status = 0 AND NOT v_has_integration THEN
-    v_is_checking_initial := true;
-    v_is_checking_integration := true;
-    v_should_continue_checking := true;
-  ELSIF v_has_integration AND v_project_status <= 2 THEN
-    v_is_checking_integration := false;
-    v_is_checking_initial := false;
-    v_should_continue_checking := true;
-  END IF;
+  -- REGRA SIMPLES E DIRETA:
+  -- 1. SEM integração → need_integration
+  -- 2. COM mensagens → dashboard
+  -- 3. COM integração SEM mensagens → setup_processing
 
-  -- Regra especial: Se está checando inicial
-  IF v_is_checking_initial THEN
-    v_display_component := 'checking';
-    v_processing_step := 0;
-    v_progress_percentage := 0;
-    v_processing_message := 'Verificando estado do projeto...';
-
-  -- Regra 1: SEM integração E NÃO está checando
-  ELSIF NOT v_has_integration AND NOT v_is_checking_integration THEN
+  IF NOT v_has_integration THEN
+    -- SEM integração = precisa conectar YouTube
     v_display_component := 'need_integration';
     v_processing_step := 0;
     v_progress_percentage := 0;
     v_processing_message := 'Conecte sua conta do YouTube para começar';
     v_verified_ready := false;
 
-  -- Regra 2: COM mensagens → SEMPRE dashboard
   ELSIF v_has_messages THEN
+    -- COM mensagens → SEMPRE dashboard
     v_display_component := 'dashboard';
     v_processing_step := 7;
     v_progress_percentage := 100;
@@ -113,8 +100,8 @@ BEGIN
     v_verified_ready := true;
     v_should_continue_checking := false;
 
-  -- Regra 3: SEM mensagens E (status <= 5 OU status = 6 sem checking inicial)
-  ELSIF v_project_status <= 5 OR (v_project_status = 6 AND NOT v_is_checking_initial) THEN
+  -- Regra 3: COM integração SEM mensagens → processando
+  ELSIF v_project_status <= 6 THEN
     v_display_component := 'setup_processing';
     v_processing_step := v_project_status;
     v_should_continue_checking := true;
@@ -272,7 +259,7 @@ BEGIN
   IF p_project_id IS NOT NULL THEN
     WITH project_checks AS (
       SELECT
-        p.status::INTEGER,
+        COALESCE(p.status::INTEGER, 0) AS status,  -- NULL vira 0 (recém-criado)
         p."Youtube Active",
         EXISTS(
           SELECT 1
@@ -326,29 +313,22 @@ BEGIN
       LIMIT 1;
     END IF;
 
-    -- Determinar estados e componente de exibição
-    IF v_project_status = 0 AND NOT v_has_integration THEN
-      v_is_checking_initial := true;
-      v_is_checking_integration := true;
-      v_should_continue_checking := true;
-      v_onboarding_step := 2;
-    ELSIF v_has_integration AND v_project_status <= 2 THEN
-      v_is_checking_integration := false;
-      v_is_checking_initial := false;
-      v_should_continue_checking := true;
-      v_onboarding_step := 3;
-    ELSIF v_has_messages THEN
-      v_onboarding_step := 4;
-      v_onboarding_ready := true;
-    END IF;
+    -- REGRA SIMPLES E DIRETA:
+    -- 1. SEM integração → need_integration
+    -- 2. COM mensagens → dashboard
+    -- 3. COM integração SEM mensagens → setup_processing
 
-    -- Determinar componente de display
-    IF v_is_checking_initial THEN
-      v_display_component := 'checking';
+    IF NOT v_has_integration THEN
+      -- SEM integração = precisa conectar YouTube
+      v_display_component := 'need_integration';
       v_processing_step := 0;
       v_progress_percentage := 0;
-      v_processing_message := 'Checking project state...';
+      v_processing_message := 'Connect your YouTube account to get started';
+      v_verified_ready := false;
+      v_onboarding_step := 2;
+
     ELSIF v_has_messages THEN
+      -- COM mensagens → SEMPRE dashboard
       v_display_component := 'dashboard';
       v_processing_step := 7;
       v_progress_percentage := 100;
@@ -356,20 +336,17 @@ BEGIN
       v_verified_ready := true;
       v_should_continue_checking := false;
       v_onboarding_step := 4;
-    ELSIF NOT v_has_integration AND NOT v_is_checking_integration THEN
-      v_display_component := 'need_integration';
-      v_processing_step := 0;
-      v_progress_percentage := 0;
-      v_processing_message := 'Connect your YouTube account to get started';
-      v_verified_ready := false;
-      v_onboarding_step := 2;
+
     ELSIF v_has_integration AND NOT v_integration_active THEN
+      -- Integração desativada
       v_display_component := 'integration_disabled';
       v_processing_step := 0;
       v_progress_percentage := 0;
       v_processing_message := 'YouTube integration is disabled';
       v_verified_ready := false;
-    ELSIF v_project_status <= 5 OR (v_project_status = 6 AND NOT v_has_messages) THEN
+
+    ELSIF v_project_status <= 6 THEN
+      -- COM integração ativa SEM mensagens → processando
       v_display_component := 'setup_processing';
       v_processing_step := v_project_status;
       v_should_continue_checking := true;
