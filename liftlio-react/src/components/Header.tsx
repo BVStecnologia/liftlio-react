@@ -1188,12 +1188,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const languageRef = useRef<HTMLDivElement>(null);
   
-  // Auto-select first project if none is selected
-  useEffect(() => {
-    if (!currentProject && projects.length > 0) {
-      setCurrentProject(projects[0]);
-    }
-  }, [currentProject, projects, setCurrentProject]);
+  // 🔥 REMOVIDO: ProcessingWrapper agora controla seleção via SQL
+  // Auto-select foi movido para check_project_display_state
+  // Não precisamos mais deste useEffect - ele causava loop infinito!
 
   // DEBUG: Monitorar mudanças no currentProject
   useEffect(() => {

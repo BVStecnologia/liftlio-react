@@ -54,69 +54,21 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
   const subscriptionRef = useRef<any>(null);
   
   useEffect(() => {
-    // Primeiro, vamos verificar se existe um projeto com projetc_index = true
-    const fetchIndexedProject = async () => {
-      try {
-        // Log do fuso horário atual do navegador para diagnóstico
-        const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        console.log(`Fuso horário atual do navegador: ${currentTimezone}`);
-        
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user || !user.email) {
-          return null;
-        }
-        
-        const { data, error } = await supabase
-          .from('Projeto')
-          .select('*')
-          .eq('user', user.email)
-          .eq('projetc_index', true)
-          .maybeSingle();
-          
-        if (data && !error) {
-          // Se encontramos um projeto indexado, usamos ele
-          console.log("Projeto indexado encontrado:", data.id);
-          setCurrentProject(data);
-          return data.id;
-        } else {
-          console.log("Nenhum projeto indexado encontrado");
-          return null;
-        }
-      } catch (error) {
-        console.error("Erro ao buscar projeto indexado:", error);
-        return null;
-      }
-    };
-    
+    // 🔥 SIMPLIFICADO: Não buscar mais projeto aqui - ProcessingWrapper faz isso via SQL!
     const initializeProject = async () => {
-      // Tenta buscar o projeto indexado primeiro
-      const indexedProjectId = await fetchIndexedProject();
-      
-      // Integração do YouTube agora é verificada usando chave de API e não mais via RPC
-      
-      // Carrega todos os projetos do usuário
+      console.log('[ProjectContext] Inicializando (aguardando SQL definir projeto)...');
+
+      // Apenas carregar lista de projetos do usuário
       const projectsList = await loadUserProjects();
       setProjects(projectsList);
       setHasProjects(projectsList.length > 0);
-      
-      // Se tem projetos, atualizar onboardingStep
+
+      // Se tem projetos, verificar onboarding do primeiro (fallback)
+      // O ProcessingWrapper vai definir o projeto correto via SQL
       if (projectsList.length > 0) {
-        // Se temos um projeto indexado, usá-lo, senão usar o primeiro da lista
-        const projectIdToUse = indexedProjectId || projectsList[0].id;
-        
-        // Se encontramos um projeto indexado, usamos ele (já setado em fetchIndexedProject)
-        // Se não encontramos, mas temos projetos disponíveis, selecionar o primeiro
-        if (!indexedProjectId && projectsList.length > 0) {
-          console.log("Nenhum projeto indexado encontrado, selecionando o primeiro da lista");
-          // Como esta é a inicialização, podemos definir o currentProject diretamente
-          // Isso previne o problema circular de não ter um projeto selecionado na inicialização
-          setCurrentProject(projectsList[0]);
-          // Em seguida, persistimos no banco
-          await updateProjectIndex(projectsList[0]);
-        }
-        
-        // Determinar estado de onboarding com base no projeto escolhido
+        const projectIdToUse = currentProject?.id || projectsList[0].id;
+
+        // Determinar estado de onboarding
         determineOnboardingState(projectIdToUse).finally(() => {
           setOnboardingReady(true);
         });

@@ -74,7 +74,7 @@ interface ProcessingWrapperProps {
  */
 const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ children }) => {
   const { user } = useAuth();
-  const { currentProject } = useProject();
+  const { currentProject, setCurrentProject } = useProject(); // Adicionar setCurrentProject
   const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
   const navigate = useNavigate();
 
@@ -111,6 +111,30 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
       }
 
       console.log('[ProcessingWrapper] Estado retornado:', data);
+
+      // 🔥 APLICAR O PROJETO QUE A SQL RETORNOU
+      if (data?.auto_selected_project && data?.project_id) {
+        // A SQL selecionou automaticamente um projeto
+        console.log(`[ProcessingWrapper] SQL selecionou projeto ${data.project_id}, aplicando ao contexto...`);
+
+        // Buscar dados completos do projeto
+        const { data: projectData, error: projectError } = await supabase
+          .from('Projeto')
+          .select('*')
+          .eq('id', data.project_id)
+          .single();
+
+        if (projectData && !projectError) {
+          // Atualizar APENAS se for diferente do atual
+          if (currentProject?.id !== projectData.id) {
+            console.log(`[ProcessingWrapper] Atualizando contexto para projeto ${projectData.id}`);
+            await setCurrentProject(projectData);
+          } else {
+            console.log(`[ProcessingWrapper] Projeto ${projectData.id} já está no contexto`);
+          }
+        }
+      }
+
       setDisplayState(data);
 
       // Se deve continuar verificando (status <= 6 e sem mensagens)
