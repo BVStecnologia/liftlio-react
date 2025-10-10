@@ -11,7 +11,6 @@ import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
-import { useGlobalLoading } from '../context/LoadingContext';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabaseClient';
 
 // Import the MobileNavToggle from App.tsx
@@ -1163,7 +1162,6 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const { currentProject, setCurrentProject, projects, isInitialProcessing } = useProject();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
-  const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
   const navigate = useNavigate();
   const [currentLanguage, setCurrentLanguage] = useState(language.toUpperCase());
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -1364,8 +1362,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     // Fechar dropdown imediatamente
     setShowProjectsDropdown(false);
 
-    // Mostrar loading global ANTES de começar a mudança
-    showGlobalLoader('Switching Project', 'Loading project data...');
+    // 🔥 REMOVIDO: Loading global do Header
+    // ProcessingWrapper agora controla TODO o loading via SQL state
+    // Header apenas atualiza o projeto silenciosamente
 
     try {
       // Marcar que estamos atualizando
@@ -1389,13 +1388,12 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       //   navigate('/dashboard');
       // });
 
-      // Esconder o loader imediatamente após a troca de projeto
-      // Os dados já foram carregados pelo setCurrentProject
-      hideGlobalLoader();
+      // 🔥 REMOVIDO: hideGlobalLoader() do Header
+      // ProcessingWrapper detecta mudança de projeto e controla o loading
 
     } catch (error) {
       console.error("Erro ao selecionar projeto:", error);
-      hideGlobalLoader();
+      // Mesmo em erro, não esconder loading - ProcessingWrapper vai lidar
       alert("An error occurred while switching projects. Please try again.");
     } finally {
       // Limpar flag de atualização

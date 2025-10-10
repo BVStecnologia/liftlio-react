@@ -167,8 +167,15 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
     }
   }, [user, pollingInterval, showGlobalLoader, hideGlobalLoader, isInitialLoad]);
 
-  // Effect principal - chama apenas UMA VEZ no início
+  // Effect principal - chama quando usuário muda OU quando projeto muda
   useEffect(() => {
+    // Resetar estado de loading quando projeto muda (exceto primeira carga)
+    if (!isInitialLoad && currentProject) {
+      console.log('[ProcessingWrapper] Projeto mudou, verificando novo estado');
+      setIsLoading(true);
+      setIsInitialLoad(true); // Tratar como nova carga
+    }
+
     checkProjectState();
 
     // Cleanup do polling
@@ -177,7 +184,7 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
         clearInterval(pollingInterval);
       }
     };
-  }, [user?.email]);
+  }, [user?.email, currentProject?.id]); // Adicionar currentProject.id como dependência
 
   // SEMPRE retornar null enquanto está carregando para evitar "piscar" componentes
   // Isso garante que nenhum conteúdo seja renderizado até sabermos o que mostrar
