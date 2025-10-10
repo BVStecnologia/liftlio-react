@@ -1163,7 +1163,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const { currentProject, setCurrentProject, projects, isInitialProcessing } = useProject();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
-  const { showGlobalLoader } = useGlobalLoading();
+  const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
   const navigate = useNavigate();
   const [currentLanguage, setCurrentLanguage] = useState(language.toUpperCase());
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -1364,8 +1364,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     // Fechar dropdown imediatamente
     setShowProjectsDropdown(false);
 
-    // ✅ Mostrar loading IMEDIATAMENTE para feedback visual
-    // ProcessingWrapper vai assumir controle e esconder quando terminar
+    // Mostrar loading global ANTES de começar a mudança
     showGlobalLoader('Switching Project', 'Loading project data...');
 
     try {
@@ -1386,14 +1385,17 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
       // MUDANÇA: Não navegar mais para dashboard - manter o usuário na página atual
       // As páginas já reagem automaticamente quando currentProject muda via useEffect
+      // startTransition(() => {
+      //   navigate('/dashboard');
+      // });
 
-      // ⚠️ NÃO chamar hideGlobalLoader() aqui!
-      // ProcessingWrapper detecta mudança via useEffect e controla o esconder
-      // Isso evita race conditions e garante que dados estejam carregados
+      // Esconder o loader imediatamente após a troca de projeto
+      // Os dados já foram carregados pelo setCurrentProject
+      hideGlobalLoader();
 
     } catch (error) {
       console.error("Erro ao selecionar projeto:", error);
-      // Em caso de erro, ProcessingWrapper vai lidar com o loading
+      hideGlobalLoader();
       alert("An error occurred while switching projects. Please try again.");
     } finally {
       // Limpar flag de atualização
