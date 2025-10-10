@@ -559,14 +559,11 @@ const ProtectedLayout = ({
     if (!user) return 'login';
     if (!hasProjects) return 'create-project';
 
-    // IMPORTANTE: Verificar integrações PRIMEIRO
-    // Projetos sem integração devem ir para setup, independente do status
-    if (currentProject && !projectHasIntegrations) {
-      console.log('[getLayoutType] Projeto sem integrações, indo para setup');
-      return 'integration-setup';
-    }
+    // REMOVIDO: Verificação de integrações - ProcessingWrapper já faz isso via SQL
+    // A SQL retorna display_component correto baseado em has_messages e has_integration
+    // Duplicar essa lógica aqui causa race conditions e redirecionamentos errados
 
-    // Depois verificar status do projeto
+    // Verificar status do projeto
     // Projetos em processamento (status 0-5) vão pro dashboard
     const projectStatus = parseInt(currentProject?.status || '0', 10);
     if (currentProject && projectStatus <= 5) {
@@ -580,7 +577,7 @@ const ProtectedLayout = ({
       return 'onboarding';
     }
 
-    // Caso padrão: dashboard
+    // Caso padrão: dashboard (ProcessingWrapper decide se mostra integrations)
     return 'dashboard';
   }, [
     loading,
@@ -589,7 +586,6 @@ const ProtectedLayout = ({
     user,
     hasProjects,
     currentProject,
-    projectHasIntegrations,
     isOnboarding
   ]);
 
@@ -690,25 +686,9 @@ const ProtectedLayout = ({
     hasIntegrations: projectHasIntegrations,
     integrationCount: projectIntegrations.length
   });
-  
-  // Renderizar layout baseado no tipo determinado
-  if (layoutType === 'integration-setup') {
-    return (
-      <AppContainer>
-        {/* SEM SIDEBAR - projeto sem integração não mostra menu lateral */}
-        <MainContent style={{ width: '100%' }}>
-          <Header toggleSidebar={toggleSidebar} />
-          <ContentWrapper>
-            <Routes>
-              <Route path="*" element={<Navigate to="/integrations" replace />} />
-              <Route path="/integrations" element={<SubscriptionGate><Integrations /></SubscriptionGate>} />
-            </Routes>
-          </ContentWrapper>
-        </MainContent>
-      </AppContainer>
-    );
-  }
-  
+
+  // REMOVIDO: case 'integration-setup' - ProcessingWrapper agora decide via SQL
+
   // Layout de onboarding - esconder completamente a sidebar
   if (layoutType === 'onboarding') {
     return (

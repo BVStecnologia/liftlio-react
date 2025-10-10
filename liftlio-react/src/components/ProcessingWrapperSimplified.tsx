@@ -96,11 +96,14 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
         showGlobalLoader('Loading Dashboard', 'Please wait...');
       }
 
-      console.log('[ProcessingWrapper] Chamando check_project_display_state...', { isPolling });
+      console.log('[ProcessingWrapper] Chamando check_project_display_state...', {
+        isPolling,
+        currentProjectId: currentProject?.id
+      });
 
       const { data, error } = await supabase.rpc('check_project_display_state', {
-        p_user_email: user.email
-        // Não precisa passar project_id - a função busca automaticamente!
+        p_user_email: user.email,
+        p_project_id: currentProject?.id || null
       });
 
       if (error) {
@@ -111,10 +114,10 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
 
       console.log('[ProcessingWrapper] Estado retornado:', data);
 
-      // 🔥 APLICAR O PROJETO QUE A SQL RETORNOU
-      if (data?.auto_selected_project && data?.project_id) {
-        // A SQL selecionou automaticamente um projeto
-        console.log(`[ProcessingWrapper] SQL selecionou projeto ${data.project_id}, aplicando ao contexto...`);
+      // Aplicar projeto retornado pela SQL APENAS se não temos projeto no contexto
+      // Isso evita loops infinitos mas garante que o projeto seja inicializado
+      if (data?.project_id && !currentProject) {
+        console.log(`[ProcessingWrapper] Projeto não existe no contexto, aplicando projeto ${data.project_id} retornado pela SQL...`);
 
         // Buscar dados completos do projeto
         const { data: projectData, error: projectError } = await supabase
@@ -124,14 +127,11 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
           .single();
 
         if (projectData && !projectError) {
-          // Atualizar APENAS se for diferente do atual
-          if (currentProject?.id !== projectData.id) {
-            console.log(`[ProcessingWrapper] Atualizando contexto para projeto ${projectData.id}`);
-            await setCurrentProject(projectData);
-          } else {
-            console.log(`[ProcessingWrapper] Projeto ${projectData.id} já está no contexto`);
-          }
+          console.log(`[ProcessingWrapper] Definindo projeto ${projectData.id} no contexto`);
+          await setCurrentProject(projectData);
         }
+      } else if (currentProject) {
+        console.log(`[ProcessingWrapper] Projeto ${currentProject.id} já existe no contexto, não sobrescrever`);
       }
 
       setDisplayState(data);
@@ -165,9 +165,9 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
         hideGlobalLoader();
       }
     }
-  }, [user, pollingInterval, showGlobalLoader, hideGlobalLoader, isInitialLoad]);
+  }, [user, currentProject, pollingInterval, showGlobalLoader, hideGlobalLoader, isInitialLoad]);
 
-  // Effect principal - chama apenas UMA VEZ no início
+  // Effect principal - chama quando usuário ou projeto muda
   useEffect(() => {
     checkProjectState();
 
@@ -177,7 +177,7 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
         clearInterval(pollingInterval);
       }
     };
-  }, [user?.email]);
+  }, [user?.email, currentProject?.id, checkProjectState]);
 
   // SEMPRE retornar null enquanto está carregando para evitar "piscar" componentes
   // Isso garante que nenhum conteúdo seja renderizado até sabermos o que mostrar
