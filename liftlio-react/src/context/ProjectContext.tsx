@@ -52,6 +52,8 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
   const [isInitialProcessing, setIsInitialProcessing] = useState(false);
   const isOnboarding = onboardingStep < 4; // Quando onboardingStep < 4, estamos em modo onboarding
   const subscriptionRef = useRef<any>(null);
+  const isTransitioning = useRef<boolean>(false); // Flag para pausar verificações durante transição
+  const intervalRef = useRef<NodeJS.Timeout | null>(null); // Ref para o intervalo de verificação
   
   useEffect(() => {
     // 🔥 SIMPLIFICADO: Não buscar mais projeto aqui - ProcessingWrapper faz isso via SQL!
@@ -102,7 +104,7 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       const cacheKey = `project_cache_${currentProject.id}`;
       const cachedData = sessionStorage.getItem(cacheKey);
       const cacheTime = sessionStorage.getItem(`${cacheKey}_time`);
-      
+
       // Invalidar cache se for mais antigo que 30 segundos
       if (cacheTime) {
         const timeDiff = Date.now() - parseInt(cacheTime);
@@ -112,16 +114,23 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
           sessionStorage.removeItem(`${cacheKey}_time`);
         }
       }
-      
+
       // Verificação inicial
       checkProjectProcessingState(currentProject.id);
-      
-      // Verificar fuso horário e atualizar se necessário
+
+      // Verificar fuso horário e atualizar se necessário (sem await para não bloquear)
       checkAndUpdateTimezone(currentProject);
-      
+
+      // Limpar intervalo anterior se existir
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+
       // Verificar novamente a cada 5 segundos para projetos em processamento
-      const intervalId = setInterval(() => {
-        if (currentProject?.id) {
+      // ⚡ OTIMIZAÇÃO: Só rodar se NÃO estiver em transição
+      intervalRef.current = setInterval(() => {
+        if (currentProject?.id && !isTransitioning.current) {
           const status = parseInt(currentProject.status || '6', 10);
           // Só verificar se está em processamento (status <= 6)
           if (status <= 6) {
@@ -129,9 +138,14 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
           }
         }
       }, 5000);
-      
+
       // Limpar o intervalo quando o componente for desmontado ou o projeto mudar
-      return () => clearInterval(intervalId);
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      };
     }
   }, [currentProject?.id]); // Mudado para depender apenas do ID
   
@@ -442,78 +456,71 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       return;
     }
 
+    // ⚡ OTIMIZAÇÃO: Ativar flag de transição para pausar verificações periódicas
+    isTransitioning.current = true;
+
     // Adicionar flag para impedir navegação durante a atualização
     const atualizacaoEmProgresso = 'projeto_atualizando_' + project.id;
     sessionStorage.setItem(atualizacaoEmProgresso, 'true');
 
     try {
-      console.log("Iniciando processo de atualização do projeto atual no Supabase");
+      console.log("⚡ [Otimizado] Iniciando troca rápida de projeto");
 
-      // IMPORTANTE: Resetar estado de processamento ANTES de trocar de projeto
-      // Isso evita que o estado antigo interfira no novo projeto
+      // IMPORTANTE: Resetar estados ANTES de trocar de projeto
       setIsInitialProcessing(false);
+      setHasIntegrations(false);
+      setProjectIntegrations([]); // Limpar integrações do projeto anterior
 
       // PRIMEIRO: Atualizar no banco de dados que este é o projeto ativo
       const atualizadoNoBanco = await updateProjectIndex(project);
 
       if (atualizadoNoBanco) {
-        // SOMENTE APÓS confirmação do banco de dados, atualizar estado local
-        console.log("Atualização confirmada no Supabase, atualizando estado local");
-        console.log("🔴 [ProjectContext] Projeto ANTES de setCurrentProject:", currentProject);
-        console.log("🟢 [ProjectContext] Projeto NOVO sendo definido:", project);
+        console.log("⚡ Projeto indexado, carregando dados em paralelo...");
 
-        // Usar startTransition para evitar múltiplos loadings durante a transição
+        // ⚡ OTIMIZAÇÃO: Executar queries em paralelo usando Promise.all
+        const [updatedProjects, processingState, onboardingCheck] = await Promise.all([
+          loadUserProjects(),
+          checkProjectProcessingState(project.id).then(() => true).catch(() => false),
+          (async () => {
+            const userCompletedOnboarding = localStorage.getItem('userCompletedOnboarding') === 'true';
+            // SEMPRE buscar integrações, mesmo se já completou onboarding
+            await determineOnboardingState(project.id);
+            return userCompletedOnboarding;
+          })()
+        ]);
+
+        // Encontrar o projeto atualizado na lista
+        const updatedProject = updatedProjects.find(p => p.id === project.id) || project;
+
+        // ⚡ OTIMIZAÇÃO: Batch de state updates usando startTransition
         startTransition(() => {
-          setCurrentProject(project);
+          setCurrentProject(updatedProject);
+          setProjects(updatedProjects);
+
+          // Se usuário já completou onboarding, configurar estados
+          if (onboardingCheck) {
+            setOnboardingStep(4);
+            setHasData(true);
+            setOnboardingReady(true);
+          }
         });
 
-        console.log("🟡 [ProjectContext] Logo após setCurrentProject (ainda não mudou!):", currentProject);
-
-        // Recarregar lista de projetos para garantir sincronização
-        const updatedProjects = await loadUserProjects();
-        setProjects(updatedProjects);
-
-        // Encontrar o projeto atualizado na lista nova
-        const updatedProject = updatedProjects.find(p => p.id === project.id);
-        if (updatedProject) {
-          setCurrentProject(updatedProject);
-        }
-        
-        // Limpar qualquer cache relacionado ao projeto anterior
-        // Isso garante que não haja interferência entre projetos
+        // Limpar cache do projeto anterior
         sessionStorage.removeItem('lastProjectId');
         sessionStorage.setItem('lastProjectId', project.id.toString());
-        
-        // Verificar estado de processamento do NOVO projeto
-        // Isso irá atualizar isInitialProcessing corretamente
-        await checkProjectProcessingState(project.id);
-        
-        // A verificação de integração do YouTube agora é feita no componente Header
-        // e usa chave de API em vez da função RPC
-        
-        // Ao trocar de projeto, verificamos se o usuário já completou o onboarding
-        const userCompletedOnboarding = localStorage.getItem('userCompletedOnboarding') === 'true';
-        
-        if (userCompletedOnboarding) {
-          // Se o usuário já completou, não reiniciar o onboarding
-          console.log("Trocando de projeto mas mantendo o status de onboarding completo");
-          setOnboardingStep(4);
-          setHasData(true);
-          setOnboardingReady(true);
-        } else {
-          // Se nunca completou, verificar estado normalmente
-          await determineOnboardingState(project.id);
-        }
-        
-        // Forçar re-renderização dos componentes dependentes
-        // Pequeno delay para garantir que todos os estados foram atualizados
-        await new Promise(resolve => setTimeout(resolve, 100));
+
+        console.log("✅ [Otimizado] Troca de projeto concluída rapidamente");
       } else {
         console.error("Falha ao atualizar o projeto no Supabase");
       }
     } catch (error) {
       console.error("Erro durante a atualização do projeto:", error);
     } finally {
+      // ⚡ OTIMIZAÇÃO: Desativar flag de transição após breve delay
+      setTimeout(() => {
+        isTransitioning.current = false;
+      }, 500);
+
       // Remover flag de atualização em progresso
       sessionStorage.removeItem(atualizacaoEmProgresso);
     }
@@ -524,22 +531,18 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
     try {
       // Verificar se o usuário já completou o onboarding antes
       const userCompletedOnboarding = localStorage.getItem('userCompletedOnboarding') === 'true';
-      
-      // Verificar se tem integrações ativas
-      const { data: activeIntegrations } = await supabase
-        .from('Integrações')
-        .select('*')
-        .eq('PROJETO id', projectId)
-        .eq('ativo', true);
-      
-      // Verificar se já existiu alguma integração (ativa ou não)
+
+      // ⚡ OTIMIZAÇÃO: Buscar todas as integrações de uma vez (ativas e inativas)
       const { data: anyIntegrations } = await supabase
         .from('Integrações')
         .select('*')
         .eq('PROJETO id', projectId);
-      
+
+      // Filtrar integrações ativas no cliente (evita query extra)
+      const activeIntegrations = anyIntegrations?.filter(i => i.ativo) || [];
+
       // Projeto tem integrações ativas?
-      const projectHasActiveIntegrations = activeIntegrations && activeIntegrations.length > 0;
+      const projectHasActiveIntegrations = activeIntegrations.length > 0;
       // Projeto já teve alguma integração (mesmo que não esteja ativa agora)?
       const projectEverHadIntegrations = anyIntegrations && anyIntegrations.length > 0;
       
@@ -646,51 +649,64 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
   const setupRealtimeSubscription = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user || !user.email) {
         console.error("User not authenticated for real-time subscription");
         return;
       }
-      
+
+      // ⚡ OTIMIZAÇÃO: Cancelar subscription antiga ANTES de criar nova
+      if (subscriptionRef.current) {
+        console.log("⚡ Cancelando subscription antiga antes de criar nova");
+        await subscriptionRef.current.unsubscribe();
+        subscriptionRef.current = null;
+      }
+
       // Create a channel for Projeto table changes
       const subscription = supabase
         .channel('public:Projeto')
-        .on('postgres_changes', 
-            { 
-              event: '*', 
-              schema: 'public', 
+        .on('postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
               table: 'Projeto',
               filter: `user=eq.${user.email}`
-            }, 
+            },
             (payload) => {
               console.log('Real-time change detected:', payload);
-              
+
+              // ⚡ OTIMIZAÇÃO: Ignorar eventos durante transição de projeto
+              if (isTransitioning.current) {
+                console.log("⚡ Ignorando evento real-time durante transição");
+                return;
+              }
+
               // Handle different types of changes
               if (payload.eventType === 'INSERT') {
                 setProjects(prevProjects => [...prevProjects, payload.new as Project]);
-              } 
+              }
               else if (payload.eventType === 'UPDATE') {
-                setProjects(prevProjects => 
-                  prevProjects.map(project => 
+                setProjects(prevProjects =>
+                  prevProjects.map(project =>
                     project.id === payload.new.id ? payload.new as Project : project
                   )
                 );
-                
+
                 // If current project was updated, update it
                 if (currentProject && currentProject.id === payload.new.id) {
                   setCurrentProject(payload.new as Project);
-                  
+
                   // Verificar estado de processamento quando o status muda
                   if (payload.old.status !== payload.new.status) {
                     checkProjectProcessingState(payload.new.id);
                   }
                 }
-              } 
+              }
               else if (payload.eventType === 'DELETE') {
-                setProjects(prevProjects => 
+                setProjects(prevProjects =>
                   prevProjects.filter(project => project.id !== payload.old.id)
                 );
-                
+
                 // If current project was deleted, set to null or another project
                 if (currentProject && currentProject.id === payload.old.id) {
                   const remainingProjects = projects.filter(p => p.id !== payload.old.id);
@@ -700,10 +716,10 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
             }
         )
         .subscribe();
-      
+
       // Store subscription reference for cleanup
       subscriptionRef.current = subscription;
-      console.log('Real-time subscription established');
+      console.log('⚡ Real-time subscription established');
     } catch (error) {
       console.error('Error setting up real-time subscription:', error);
     }

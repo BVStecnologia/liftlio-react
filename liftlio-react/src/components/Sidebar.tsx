@@ -10,6 +10,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useRealtime } from '../context/RealtimeProvider';
+import { Tooltip as ReactTooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -424,12 +426,12 @@ const UserButton = styled.button`
 
 // Removed ProjectName as well
 
-const NavItem = styled(NavLink)<{ isCollapsed?: boolean }>`
+const NavItem = styled(NavLink)<{ isCollapsed?: boolean; $disabled?: boolean }>`
   display: flex;
   align-items: center;
   padding: ${props => props.isCollapsed ? '15px 0' : '15px 24px'};
   justify-content: ${props => props.isCollapsed ? 'center' : 'flex-start'};
-  color: ${props => props.theme.components.sidebar.text};
+  color: ${props => props.$disabled ? 'rgba(255, 255, 255, 0.3)' : props.theme.components.sidebar.text};
   transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
   position: relative;
   text-decoration: none;
@@ -438,6 +440,9 @@ const NavItem = styled(NavLink)<{ isCollapsed?: boolean }>`
   perspective: 1000px;
   backface-visibility: hidden;
   will-change: transform, opacity, background-color;
+  cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
+  opacity: ${props => props.$disabled ? '0.5' : '1'};
+  pointer-events: ${props => props.$disabled ? 'auto' : 'auto'};
   
   @media (max-width: 768px) {
     padding: 16px 22px;
@@ -460,13 +465,15 @@ const NavItem = styled(NavLink)<{ isCollapsed?: boolean }>`
   
   /* Efeito de hover */
   &:hover {
-    color: ${props => props.theme.components.sidebar.textActive};
-    background: ${props => props.theme.components.sidebar.itemHover};
-    
-    /* Ícone no hover */
-    svg {
-      transform: scale(1.05);
-    }
+    ${props => !props.$disabled && css`
+      color: ${props.theme.components.sidebar.textActive};
+      background: ${props.theme.components.sidebar.itemHover};
+
+      /* Ícone no hover */
+      svg {
+        transform: scale(1.05);
+      }
+    `}
   }
   
   /* Efeito de foco */
@@ -1464,7 +1471,7 @@ const NotificationTooltip = styled.div`
 
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed: isCollapsedProp = false, onToggleCollapse, onOpenAgent, isAgentOpen = false }) => {
-  const { currentProject } = useProject();
+  const { currentProject, hasIntegrations, projectIntegrations } = useProject();
   const { theme } = useTheme();
   const { t, language } = useLanguage();
   const { user, signOut } = useAuth();
@@ -1748,44 +1755,78 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
           </Logo>
           
           <NavContainer>
-            {navItems.map(item => (
-              <NavItem
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) => isActive ? 'active' : ''}
-                onMouseEnter={() => setHoveredItem(item.path)}
-                onMouseLeave={() => setHoveredItem(null)}
-                aria-label={item.label}
-                title={isCollapsed ? item.label : ''}
-                style={{ position: 'relative' }}
-                onClick={() => {
-                  if (window.innerWidth <= 768 && onClose) {
-                    onClose();
-                  }
-                }}
-                isCollapsed={isCollapsed}
-              >
-                <NavItemIcon isCollapsed={isCollapsed}>
-                  <IconComponent icon={FaIcons[item.icon as keyof typeof FaIcons]} />
-                </NavItemIcon>
-                <NavItemText isCollapsed={isCollapsed}>
-                  {item.label}
-                </NavItemText>
-                {isCollapsed && <Tooltip>{item.label}</Tooltip>}
+            {navItems.map(item => {
+              // Determine which pages require integration
+              const requiresIntegration = ['/dashboard', '/analytics', '/mentions', '/monitoring'].includes(item.path);
+              // Check for ACTIVE integrations only
+              const hasActiveIntegrations = projectIntegrations?.filter((i: any) => i.ativo).length > 0;
+              const isDisabled = requiresIntegration && (!hasActiveIntegrations || !currentProject);
 
-                {/* Show notification dot for Analytics when no data */}
-                {item.path === '/analytics' && !hasAnalyticsData && (
-                  <>
-                    <NotificationDot />
-                    {hoveredItem === '/analytics' && (
-                      <NotificationTooltip>
-                        Add tracking tag to start measuring traffic
-                      </NotificationTooltip>
-                    )}
-                  </>
-                )}
-              </NavItem>
-            ))}
+              return (
+                <NavItem
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) => isActive ? 'active' : ''}
+                  onMouseEnter={() => setHoveredItem(item.path)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                  aria-label={item.label}
+                  title={isCollapsed ? item.label : ''}
+                  style={{ position: 'relative' }}
+                  onClick={(e) => {
+                    if (isDisabled) {
+                      e.preventDefault(); // Prevent navigation if disabled
+                      return;
+                    }
+                    if (window.innerWidth <= 768 && onClose) {
+                      onClose();
+                    }
+                  }}
+                  isCollapsed={isCollapsed}
+                  $disabled={isDisabled}
+                  data-tooltip-id={isDisabled ? `disabled-${item.path}` : undefined}
+                >
+                  <NavItemIcon isCollapsed={isCollapsed}>
+                    <IconComponent icon={FaIcons[item.icon as keyof typeof FaIcons]} />
+                  </NavItemIcon>
+                  <NavItemText isCollapsed={isCollapsed}>
+                    {item.label}
+                  </NavItemText>
+                  {isCollapsed && <Tooltip>{item.label}</Tooltip>}
+
+                  {/* Show notification dot for Analytics when no data */}
+                  {item.path === '/analytics' && !hasAnalyticsData && !isDisabled && (
+                    <>
+                      <NotificationDot />
+                      {hoveredItem === '/analytics' && (
+                        <NotificationTooltip>
+                          Add tracking tag to start measuring traffic
+                        </NotificationTooltip>
+                      )}
+                    </>
+                  )}
+
+                  {/* Tooltip for disabled links */}
+                  {isDisabled && (
+                    <ReactTooltip
+                      id={`disabled-${item.path}`}
+                      place="right"
+                      style={{
+                        backgroundColor: theme.colors.background,
+                        color: theme.colors.text.primary,
+                        border: `1px solid ${theme.colors.borderLight}`,
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        fontSize: '13px',
+                        maxWidth: '250px',
+                        zIndex: 9999
+                      }}
+                    >
+                      Connect an integration first
+                    </ReactTooltip>
+                  )}
+                </NavItem>
+              );
+            })}
 
             {/* AI Assistant button (mobile only) */}
             <NavActionButton

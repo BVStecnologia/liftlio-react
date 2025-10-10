@@ -1423,136 +1423,35 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     }
   };
   
-  // Função para buscar notificações
+  // Função para buscar notificações - OTIMIZADA: apenas 1 query
   const fetchNotifications = useCallback(async () => {
     try {
       setIsLoadingNotifications(true);
-      
-      // Verificar o valor do projeto atual
-      console.log("Buscando notificações para o projeto:", JSON.stringify(currentProject));
-      
+
       // Se não houver projeto selecionado, não mostrar notificações
       if (!currentProject?.id) {
-        console.log("Nenhum projeto selecionado, não buscar notificações");
         setNotifications([]);
         setUnreadCount(0);
         setIsLoadingNotifications(false);
         return;
       }
-      
-      // Extrair o ID do projeto
-      const projetoId = Number(currentProject.id);
-      console.log("ID do projeto atual:", projetoId, typeof projetoId);
-      
-      // ABORDAGEM 1: Consulta direta usando a sintaxe exata da documentação do Supabase
-      console.log("TENTATIVA 1: Consulta direta com sintaxe padrão");
-      let { data: notificacoes1, error: erro1 } = await supabase
+
+      // Query ÚNICA e eficiente com ordenação
+      const { data, error } = await supabase
         .from('Notificacoes')
         .select("*")
-        .eq('projeto_id', projetoId);
-        
-      if (erro1) {
-        console.error("Erro na abordagem 1:", erro1);
-      } else {
-        console.log("Resultado da abordagem 1:", notificacoes1?.length || 0, notificacoes1);
-      }
-      
-      // ABORDAGEM 2: Consulta direta convertendo ID para string - alguns bancos tratam bigint como string
-      console.log("TENTATIVA 2: Consulta com ID como string");
-      let { data: notificacoes2, error: erro2 } = await supabase
-        .from('Notificacoes')
-        .select("*")
-        .eq('projeto_id', String(projetoId));
-        
-      if (erro2) {
-        console.error("Erro na abordagem 2:", erro2);
-      } else {
-        console.log("Resultado da abordagem 2:", notificacoes2?.length || 0, notificacoes2);
-      }
-      
-      // ABORDAGEM 3: Consulta com filtro is não nulo e ordenação
-      console.log("TENTATIVA 3: Consulta com is() e não-nulo");
-      let { data: notificacoes3, error: erro3 } = await supabase
-        .from('Notificacoes')
-        .select("*")
-        .not('projeto_id', 'is', null)
-        .order('created_at', { ascending: false });
-        
-      if (erro3) {
-        console.error("Erro na abordagem 3:", erro3);
-      } else {
-        console.log("Resultado da abordagem 3:", notificacoes3?.length || 0);
-        
-        // Filtrar manualmente pelo projeto ID
-        const filtrado = notificacoes3?.filter((n: any) => {
-          // Tentar diferentes formas de comparação
-          const notifId = n.projeto_id;
-          console.log(`Comparando: ${notifId} (${typeof notifId}) com ${projetoId} (${typeof projetoId})`);
-          return String(notifId) === String(projetoId) || 
-                 Number(notifId) === Number(projetoId);
-        });
-        
-        console.log("Filtrado manualmente:", filtrado?.length || 0, filtrado);
-        
-        if (filtrado && filtrado.length > 0) {
-          // Usar os resultados deste método se encontrados
-          const formattedData = filtrado.map(formatNotification);
-          setNotifications(formattedData);
-          
-          // Calcular notificações não lidas
-          const unread = filtrado.filter((notif: any) => !notif.lido).length;
-          console.log("Notificações não lidas encontradas:", unread);
-          setUnreadCount(unread);
-          setIsLoadingNotifications(false);
-          return;
-        }
-      }
-      
-      // ABORDAGEM 4: Buscar todas e filtrar depois
-      console.log("TENTATIVA 4: Buscar todas e filtrar");
-      let { data: todasNotificacoes, error: erroTodas } = await supabase
-        .from('Notificacoes')
-        .select("*");
-        
-      if (erroTodas) {
-        console.error("Erro ao buscar todas:", erroTodas);
-      } else {
-        console.log("Total de notificações:", todasNotificacoes?.length || 0);
-        
-        // Obter valores únicos de projeto_id de forma compatível com todos os níveis do TypeScript
-        const valoresUnicos = todasNotificacoes ? 
-          Array.from(new Set(todasNotificacoes.map((n: any) => n.projeto_id)))
-          : [];
-          
-        console.log("Valores únicos de projeto_id:", valoresUnicos);
-        
-        // Tentar encontrar qualquer notificação que possa corresponder
-        const possiveisMatches = todasNotificacoes?.filter((n: any) => {
-          if (n.projeto_id === null || n.projeto_id === undefined) return false;
-          
-          // Tentar todas as comparações possíveis
-          return String(n.projeto_id) === String(projetoId) || 
-                 Number(n.projeto_id) === Number(projetoId) ||
-                 n.projeto_id == projetoId; // Comparação fraca para caso de string vs número
-        });
-        
-        console.log("Possíveis matches:", possiveisMatches?.length || 0, possiveisMatches);
-        
-        if (possiveisMatches && possiveisMatches.length > 0) {
-          // Usar estes resultados
-          const formattedData = possiveisMatches.map(formatNotification);
-          setNotifications(formattedData);
-          
-          // Calcular não lidas
-          const unread = possiveisMatches.filter((notif: any) => !notif.lido).length;
-          console.log("Notificações não lidas encontradas:", unread);
-          setUnreadCount(unread);
-        } else {
-          // Sem resultados em nenhuma tentativa
-          console.log("Nenhuma notificação encontrada após todas as tentativas");
-          setNotifications([]);
-          setUnreadCount(0);
-        }
+        .eq('projeto_id', currentProject.id)
+        .order('created_at', { ascending: false })
+        .limit(50); // Limitar para performance
+
+      if (error) {
+        console.error('Erro ao buscar notificações:', error);
+        setNotifications([]);
+        setUnreadCount(0);
+      } else if (data) {
+        const formattedData = data.map(formatNotification);
+        setNotifications(formattedData);
+        setUnreadCount(data.filter((n: any) => !n.lido).length);
       }
     } catch (error) {
       console.error('Erro ao buscar notificações:', error);
