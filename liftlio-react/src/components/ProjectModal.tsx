@@ -536,6 +536,69 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   };
   
   const generateKeywords = () => generateAIContent('keywords');
+
+  // Função auxiliar para gerar keywords com um audience específico (evita stale state)
+  const generateKeywordsWithAudience = async (audienceText: string) => {
+    // Validar que temos todos os dados necessários
+    if (!projectForm.name || !projectForm.company || !audienceText) {
+      console.error('Missing required fields for keyword generation');
+      return;
+    }
+
+    setIsGeneratingKeywords(true);
+
+    try {
+      const prompt = `Generate exactly 5 relevant keywords for the following project:
+         Project Name: ${projectForm.name}
+         Company/Product Name: ${projectForm.company}
+         Target Audience Description: ${audienceText}
+
+         Generate a list of 5 bottom-of-funnel keywords that indicate high purchase intent. Focus on transactional queries — such as comparisons, reviews, or product-versus-product searches — that indicate the user is further along in the buying process. Do not mention prices, free trials, or discounts.
+
+         Respond ONLY with the keywords separated by commas, without any introduction or explanation.`;
+
+      // Chamar edge function
+      const fnData = await callEdgeFunction('claude-proxy', {
+        prompt: prompt,
+        textOnly: true
+      });
+
+      // Extrair resposta
+      const responseText = fnData?.content?.[0]?.text || fnData?.text || fnData || '';
+
+      // Limpar resposta
+      const cleanedResponse = typeof responseText === 'string'
+        ? responseText.replace(/[\*\#\/\\\[\]\(\)]/g, '').replace(/ +/g, ' ').trim()
+        : String(responseText).replace(/[\*\#\/\\\[\]\(\)]/g, '').replace(/ +/g, ' ').trim();
+
+      // Processar keywords
+      const generatedKeywords = cleanedResponse
+        .split(',')
+        .map((keyword: string) => keyword.trim())
+        .filter((keyword: string) => keyword !== '');
+
+      // Validar que temos keywords
+      if (generatedKeywords.length === 0) {
+        throw new Error('Could not generate valid keywords');
+      }
+
+      // Atualizar formulário
+      setKeywordsArray(generatedKeywords);
+      setProjectForm(prev => ({
+        ...prev,
+        keywords: generatedKeywords.join(', ')
+      }));
+
+    } catch (error: unknown) {
+      console.error('Error generating keywords:', error);
+      // Não mostrar alert aqui - descrição já foi salva com sucesso
+      // Usuário pode gerar keywords manualmente depois
+      console.log('Keywords auto-generation failed, but description was saved. User can generate keywords manually.');
+    } finally {
+      setIsGeneratingKeywords(false);
+    }
+  };
+
   const generateDescription = async () => {
     // Verificar se temos dados suficientes
     if (!projectForm.name || !projectForm.company || !isValidUrl) {
@@ -568,12 +631,16 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
           .replace(/[\*\#\/\\\[\]\(\)]/g, '')
           .replace(/ +/g, ' ')
           .trim();
-          
+
         // Atualizar o campo de descrição do público
         setProjectForm(prev => ({
           ...prev,
           audience: cleanedMessage
         }));
+
+        // Automaticamente gerar keywords após salvar a descrição
+        // Passa o valor diretamente para evitar stale state
+        await generateKeywordsWithAudience(cleanedMessage);
       } else {
         // Se não há mensagem, informamos o usuário
         alert('Could not extract a description from this URL. Please try another URL or enter the description manually.');
