@@ -788,7 +788,7 @@ const ProtectedLayout = ({
   }
 
   if (displayState?.display_component === 'setup_processing') {
-    console.log('[ProtectedLayout] SQL indica setup_processing, renderizando tela de processamento');
+    console.log('[ProtectedLayout] SQL indica setup_processing, renderizando tela de processamento COM layout');
     const progress = displayState?.progress_percentage || 0;
     const message = displayState?.processing_message || 'Processing...';
     const status = displayState?.project_status || 0;
@@ -858,92 +858,127 @@ const ProtectedLayout = ({
     ];
 
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        padding: '20px',
-        width: '100%',
-        backgroundColor: getThemeBackground()
-      }}>
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(26, 26, 26, 0.98) 0%, rgba(30, 30, 30, 0.95) 100%)',
-          borderRadius: '20px',
-          padding: '40px',
-          maxWidth: '600px',
-          width: '100%',
-          border: '1px solid rgba(139, 92, 246, 0.3)',
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
-          margin: '0 auto'
-        }}>
-          <h2 style={{
-            fontSize: '24px',
-            fontWeight: '600',
-            marginBottom: '8px',
-            background: 'linear-gradient(135deg, #8b5cf6, #a855f7)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            textAlign: 'center'
-          }}>
-            Setting Up Your Project
-          </h2>
-
-          <p style={{
-            fontSize: '14px',
-            color: 'rgba(255, 255, 255, 0.6)',
-            marginBottom: '30px',
-            textAlign: 'center'
-          }}>
-            {message}
-          </p>
-
-          <div style={{ marginBottom: '30px' }}>
-            {steps.map((step, index) => (
-              <ProcessStep
-                key={step.number}
-                number={step.number}
-                label={step.label}
-                active={index === status}
-                completed={index < status}
-              />
-            ))}
-          </div>
-
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '10px',
-            height: '8px',
-            overflow: 'hidden',
-            marginTop: '20px'
-          }}>
+      <AppContainer>
+        <Suspense fallback={null}>
+          <Sidebar
+            isOpen={sidebarOpen}
+            onClose={() => toggleSidebar()}
+            onOpenAgent={toggleAgent}
+            isAgentOpen={agentOpen}
+          />
+        </Suspense>
+        <MainContent>
+          <Suspense fallback={null}>
+            <Header toggleSidebar={toggleSidebar} />
+          </Suspense>
+          <ContentWrapper>
             <div style={{
-              background: 'linear-gradient(90deg, #8b5cf6, #a855f7)',
-              height: '100%',
-              width: `${progress}%`,
-              transition: 'width 0.5s ease',
-              boxShadow: '0 0 10px rgba(139, 92, 246, 0.5)'
-            }} />
-          </div>
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 'calc(100vh - 200px)',
+              padding: '20px',
+              width: '100%'
+            }}>
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(26, 26, 26, 0.98) 0%, rgba(30, 30, 30, 0.95) 100%)',
+                borderRadius: '20px',
+                padding: '40px',
+                maxWidth: '600px',
+                width: '100%',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+                margin: '0 auto'
+              }}>
+                <h2 style={{
+                  fontSize: '24px',
+                  fontWeight: '600',
+                  marginBottom: '8px',
+                  background: 'linear-gradient(135deg, #8b5cf6, #a855f7)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  textAlign: 'center'
+                }}>
+                  Setting Up Your Project
+                </h2>
 
-          <p style={{
-            fontSize: '12px',
-            color: 'rgba(255, 255, 255, 0.4)',
-            marginTop: '10px',
-            textAlign: 'center'
-          }}>
-            {progress}% Complete
-          </p>
-        </div>
+                <p style={{
+                  fontSize: '14px',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  marginBottom: '10px',
+                  textAlign: 'center'
+                }}>
+                  {message}
+                </p>
 
-        <style>{`
-          @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-          }
-        `}</style>
-      </div>
+                <p style={{
+                  fontSize: '12px',
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  marginBottom: '30px',
+                  textAlign: 'center',
+                  fontStyle: 'italic'
+                }}>
+                  This may take a few minutes on your first setup while we analyze your content
+                </p>
+
+                <div style={{ marginBottom: '30px' }}>
+                  {steps.map((step, index) => (
+                    <ProcessStep
+                      key={step.number}
+                      number={step.number}
+                      label={step.label}
+                      active={index === status}
+                      completed={index < status}
+                    />
+                  ))}
+                </div>
+
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: '10px',
+                  height: '8px',
+                  overflow: 'hidden',
+                  marginTop: '20px'
+                }}>
+                  <div style={{
+                    background: 'linear-gradient(90deg, #8b5cf6, #a855f7)',
+                    height: '100%',
+                    width: `${progress}%`,
+                    transition: 'width 0.5s ease',
+                    boxShadow: '0 0 10px rgba(139, 92, 246, 0.5)'
+                  }} />
+                </div>
+
+                <p style={{
+                  fontSize: '12px',
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  marginTop: '10px',
+                  textAlign: 'center'
+                }}>
+                  {progress}% Complete
+                </p>
+              </div>
+
+              <style>{`
+                @keyframes pulse {
+                  0%, 100% { opacity: 1; }
+                  50% { opacity: 0.6; }
+                }
+              `}</style>
+            </div>
+          </ContentWrapper>
+        </MainContent>
+        <FloatingMenuButton onClick={toggleSidebar}>
+          <IconComponent icon={FaBars} />
+        </FloatingMenuButton>
+        <Suspense fallback={null}>
+          <FloatingAgent
+            externalIsOpen={agentOpen}
+            onExternalToggle={toggleAgent}
+          />
+        </Suspense>
+      </AppContainer>
     );
   }
 

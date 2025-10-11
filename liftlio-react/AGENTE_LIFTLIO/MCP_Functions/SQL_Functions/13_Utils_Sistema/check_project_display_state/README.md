@@ -369,6 +369,250 @@ Ação:   Mantém projeto 76, não sobrescreve contexto
 
 ---
 
+## 🎨 Componente "Setting Up Your Project"
+
+### Quando Aparece
+
+O componente **"Setting Up Your Project"** é renderizado quando a SQL retorna `display_component: "setup_processing"`. Isso acontece quando:
+
+✅ Projeto tem integração YouTube ativa
+❌ Projeto NÃO tem mensagens ainda
+⚙️ Status do projeto ≤ 6 (em processamento)
+
+### Localização no Código
+
+**Arquivo:** `/liftlio-react/src/App.tsx` (linhas 790-972)
+
+Este componente é renderizado diretamente no `ProtectedLayout`, não no `ProcessingWrapperSimplified`.
+
+### Estrutura Visual
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  SIDEBAR (esquerda)         │  HEADER (topo)            │
+│  - Logo Liftlio             │  - Seletor de projeto     │
+│  - Menu de navegação        │  - Notificações           │
+│  - Usuário e Sign Out       │  - Tema claro/escuro      │
+│                             │  - Avatar                 │
+├─────────────────────────────┴───────────────────────────┤
+│                                                          │
+│              Setting Up Your Project                     │
+│                                                          │
+│         Processing engagement metrics...                 │
+│                                                          │
+│  ✓ Starting project setup                               │
+│  ✓ Connecting to YouTube API                            │
+│  ✓ Analyzing channel and videos                         │
+│  4 Processing engagement metrics   Processing...        │
+│  5 Analyzing comments with AI                           │
+│  6 Generating insights and reports                      │
+│  7 Finalizing initial processing                        │
+│                                                          │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━                          │
+│              45% Complete                                │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Implementação (App.tsx)
+
+```typescript
+if (displayState?.display_component === 'setup_processing') {
+  console.log('[ProtectedLayout] SQL indica setup_processing, renderizando tela de processamento COM layout');
+
+  const progress = displayState?.progress_percentage || 0;
+  const message = displayState?.processing_message || 'Processing...';
+  const status = displayState?.project_status || 0;
+
+  const steps = [
+    { number: 1, label: 'Starting project setup' },
+    { number: 2, label: 'Connecting to YouTube API' },
+    { number: 3, label: 'Analyzing channel and videos' },
+    { number: 4, label: 'Processing engagement metrics' },
+    { number: 5, label: 'Analyzing comments with AI' },
+    { number: 6, label: 'Generating insights and reports' },
+    { number: 7, label: 'Finalizing initial processing' }
+  ];
+
+  return (
+    <AppContainer>
+      <Suspense fallback={null}>
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => toggleSidebar()}
+          onOpenAgent={toggleAgent}
+          isAgentOpen={agentOpen}
+        />
+      </Suspense>
+      <MainContent>
+        <Suspense fallback={null}>
+          <Header toggleSidebar={toggleSidebar} />
+        </Suspense>
+        <ContentWrapper>
+          {/* Tela de processamento com steps e barra de progresso */}
+        </ContentWrapper>
+      </MainContent>
+      <FloatingMenuButton onClick={toggleSidebar}>
+        <IconComponent icon={FaBars} />
+      </FloatingMenuButton>
+      <Suspense fallback={null}>
+        <FloatingAgent
+          externalIsOpen={agentOpen}
+          onExternalToggle={toggleAgent}
+        />
+      </Suspense>
+    </AppContainer>
+  );
+}
+```
+
+### ⚠️ Correção Importante (11/10/2025)
+
+**Problema Anterior:**
+O componente `setup_processing` era renderizado em **fullscreen** sem sidebar/header:
+
+```typescript
+// ❌ VERSÃO ANTIGA (ERRADA)
+return (
+  <div style={{
+    minHeight: '100vh',  // Tela cheia
+    backgroundColor: getThemeBackground()
+  }}>
+    {/* Apenas tela de processamento, SEM menu */}
+  </div>
+);
+```
+
+**Consequência:**
+- ❌ Menu lateral invisível
+- ❌ Header invisível
+- ❌ Usuário não conseguia navegar para outras páginas
+- ❌ Parecia que o app estava travado
+
+**Solução Aplicada:**
+Envolver em `<AppContainer>` com `<Sidebar>` e `<Header>`, igual ao caso `need_integration`:
+
+```typescript
+// ✅ VERSÃO NOVA (CORRETA)
+return (
+  <AppContainer>
+    <Sidebar ... />
+    <MainContent>
+      <Header ... />
+      <ContentWrapper>
+        <div style={{
+          minHeight: 'calc(100vh - 200px)',  // Ajustado para caber com header
+          // ... tela de processamento
+        }}>
+        </div>
+      </ContentWrapper>
+    </MainContent>
+    <FloatingMenuButton ... />
+    <FloatingAgent ... />
+  </AppContainer>
+);
+```
+
+**Benefícios:**
+✅ Menu lateral visível e funcional
+✅ Header visível com seletor de projeto
+✅ Usuário pode navegar para Settings/Integrations durante processamento
+✅ Consistência visual com outras telas
+
+### Progresso e Mensagens
+
+A SQL retorna informações dinâmicas que são exibidas na tela:
+
+```json
+{
+  "display_component": "setup_processing",
+  "project_status": 4,              // Define qual step está ativo
+  "progress_percentage": 45,        // Barra de progresso
+  "processing_message": "Processing engagement metrics..."  // Mensagem no topo
+}
+```
+
+**Mapeamento de Status → Steps:**
+
+| `project_status` | Step Ativo | Descrição |
+|------------------|------------|-----------|
+| 0 | 1 | Starting project setup |
+| 1 | 2 | Connecting to YouTube API |
+| 2 | 3 | Analyzing channel and videos |
+| 3 | 4 | Processing engagement metrics |
+| 4 | 5 | Analyzing comments with AI |
+| 5 | 6 | Generating insights and reports |
+| 6 | 7 | Finalizing initial processing |
+
+### Polling Automático
+
+Enquanto `setup_processing` está ativo, o `ProcessingWrapperSimplified` faz polling a cada 5 segundos:
+
+```typescript
+if (data?.display_component === 'setup_processing' && !data?.has_messages) {
+  const interval = setInterval(() => checkProjectState(true), 5000);
+  setPollingInterval(interval);
+}
+```
+
+Quando o processamento termina (`has_messages: true` ou `status > 6`), a SQL retorna `display_component: "dashboard"` e o polling é cancelado.
+
+### Animação dos Steps
+
+Cada step tem 3 estados visuais:
+
+1. **Completed** (✓): `index < status`
+   - Checkmark roxo
+   - Texto branco
+   - Glow effect
+
+2. **Active** (número): `index === status`
+   - Borda roxa animada
+   - "Processing..." piscando
+   - Glow mais forte
+
+3. **Pending** (número): `index > status`
+   - Cinza opaco
+   - Sem animação
+
+```typescript
+<ProcessStep
+  key={step.number}
+  number={step.number}
+  label={step.label}
+  active={index === status}      // Step atual
+  completed={index < status}     // Steps já completados
+/>
+```
+
+### Barra de Progresso
+
+A barra visual reflete `progress_percentage` da SQL:
+
+```typescript
+<div style={{
+  background: 'linear-gradient(90deg, #8b5cf6, #a855f7)',
+  width: `${progress}%`,  // 0-100%
+  transition: 'width 0.5s ease'
+}} />
+```
+
+**Cálculo no Backend:**
+O progresso é calculado proporcionalmente ao `status` do projeto:
+
+```sql
+-- Exemplo: status 4 de 7 = ~57%
+progress_percentage := (project_status::float / 7.0 * 100)::int;
+```
+
+### Screenshot de Referência
+
+Localização: `/.playwright-mcp/processing-screen-fixed.png`
+
+Este screenshot mostra a versão CORRIGIDA com menu e header visíveis.
+
+---
+
 ## 🐛 Problemas Comuns e Soluções
 
 ### Problema 1: Projeto Muda Sozinho ao Recarregar
