@@ -1708,8 +1708,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         
         <RightSection>
           {/* Aviso do YouTube baseado em 3 estados: Suspensa, Desconectada, Conectada */}
-          {/* Não mostrar durante processamento inicial para evitar piscar falso */}
-          {youtubeStatus.checked && !youtubeStatus.connected && !isInitialProcessing && (
+          {youtubeStatus.checked && !youtubeStatus.connected && (
             <div
               style={{
                 display: 'flex',
