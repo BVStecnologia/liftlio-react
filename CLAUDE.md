@@ -2,6 +2,35 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🧠 MODO DE PENSAMENTO
+**SEMPRE** usar ultrathink para:
+- Análises de arquitetura e design patterns
+- Debugging de problemas complexos
+- Decisões técnicas importantes (libs, ferramentas, refactoring)
+- Otimizações de performance
+- Mudanças que afetam múltiplos arquivos/sistemas
+
+**Thinking normal** para:
+- Features simples e bem definidas
+- Fixes rápidos
+- Mudanças pontuais
+
+## 🎯 FILOSOFIA DE TRABALHO
+1. **Menos é Mais**: SEMPRE preferir editar arquivos existentes a criar novos
+2. **Contexto Primeiro**: Ler arquivos relevantes ANTES de fazer mudanças
+3. **Incremental**: Fazer mudanças pequenas e testáveis
+4. **TodoWrite**: Usar SEMPRE para tarefas com 3+ etapas
+5. **Delegação MCP**: SEMPRE delegar ferramentas Supabase MCP para agente especializado
+6. **Validação**: Após mudanças críticas, explicar O QUÊ mudou e POR QUÊ
+
+## 📋 PADRÕES DE CÓDIGO
+- **TypeScript**: Tipos explícitos (evitar `any`, preferir `unknown`)
+- **React**: Functional components com hooks
+- **Styled Components**: Usar `GlobalThemeSystem.ts` para cores/estilos
+- **Imports**: Organizar (React → libs → local → types)
+- **Comentários**: Só quando lógica não é óbvia
+- **Naming**: camelCase (JS/TS), kebab-case (arquivos), UPPER_SNAKE (env vars)
+
 ## 🚨 REGRAS CRÍTICAS DE SEGURANÇA
 - **NUNCA** coloque senhas ou credenciais em arquivos
 - **SEMPRE** use variáveis de ambiente (.env)
@@ -9,311 +38,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Referencie credenciais como: `$SSH_PASSWORD`, `$API_KEY`
 
 ## Projeto Liftlio
-**Stack**: React 19, TypeScript 4.9, Supabase, Fly.io  
-**Tipo**: Plataforma de monitoramento de vídeos e análise de sentimentos com AI  
-**Última atualização**: 13/08/2025
+**Stack**: React 19, TypeScript 4.9, Supabase, Fly.io
+**Tipo**: Plataforma de monitoramento de vídeos e análise de sentimentos com AI
+**Última atualização**: 11/10/2025
 
-## 🖥️ Servidores e Ambientes
+---
 
-### Frontend Principal
-- **Local**: `/liftlio-react/` (desenvolvimento)
-- **Produção**: Fly.io (app: liftlio, região: sjc)
-- **URL**: https://liftlio.com
+# 📚 Documentação Modular (carregada automaticamente)
 
-### Analytics Server (SERVIDOR REMOTO!)
-- **Código-fonte**: `/Servidor/analytics/` (apenas código, NÃO roda local)
-- **Servidor Remoto**: 173.249.22.2 (VPS Linux)
-- **Container**: Docker `liftlio-analytics-prod`
-- **URL Pública**: https://track.liftlio.com (via Cloudflare)
-- **⚠️ IMPORTANTE**: Alterações em `/Servidor/analytics/` precisam ser deployadas via SSH no servidor remoto!
+@.claude/docs/CODE_STANDARDS.md
+@.claude/docs/MCP_GUIDE.md
+@.claude/docs/DEPLOY_GUIDE.md
+@.claude/docs/TRELLO_WORKFLOW.md
 
-### WordPress/Blog
-- **URL**: https://blog.liftlio.com
-- **Server**: Cloudways (wordpress-1319296-5689133.cloudwaysapps.com)
-- **Acesso**: Via MCP WordPress tools
+---
 
-### LinkedIn Content System
-- **Localização Conteúdo**: `/LINKEDIN_CONTENT/` (docs, templates, credentials)
-- **Agente**: `.claude/agents/linkedin-content-creator.md` (padrão Claude Code)
-- **Credentials**: `LINKEDIN_CONTENT/.credentials/linkedin-api.sh` (GITIGNORED)
-- **Dois modos**:
-  - **Technical Posts**: Posts técnicos do Valdair (English only)
-  - **Marketing Strategy**: Funil de 12 semanas baseado em Curiosity Gap
-- **Documentação**: `LINKEDIN_CONTENT/ORGANIZATION.md` (guia completo)
-- **Estratégia**: `LINKEDIN_CONTENT/_MASTER_DOCS/LIFTLIO_LINKEDIN_STRATEGY_MASTER.md` (25k palavras)
+## 🖥️ Resumo de Ambientes
 
-## Comandos Essenciais
+### Frontend
+- **Local**: `liftlio-react/` → `npm start` (localhost:3000)
+- **Produção**: Fly.io → https://liftlio.com
 
-```bash
-# Desenvolvimento
-cd liftlio-react
-npm install --legacy-peer-deps  # Necessário devido a conflitos de peer deps
-npm start                        # Inicia em localhost:3000
-npm run build                    # Build de produção
-npm test                         # Executa testes
+### Backend
+- **Supabase**: Project ID `suqjifkhmekcdflwowiw`
+- **Analytics**: VPS 173.249.22.2 → https://track.liftlio.com
 
-# Deploy
-fly deploy                       # Deploy para Fly.io (região: sjc)
-
-# Git (sempre verificar senhas antes)
-git add .
-git commit -m "descrição"
-git push
-```
-
-## Arquitetura
-
-### Frontend (React + TypeScript)
-```
-liftlio-react/
-├── src/
-│   ├── components/         # Componentes reutilizáveis
-│   │   ├── FloatingAgent.tsx  # Assistente AI flutuante
-│   │   └── ui/                # Componentes UI base
-│   ├── pages/              # Rotas principais (lazy loaded)
-│   ├── context/            # Context providers
-│   │   ├── AuthContext.tsx    # OAuth Google
-│   │   ├── ThemeContext.tsx   # Tema claro/escuro
-│   │   ├── LanguageContext.tsx # PT/EN
-│   │   └── ProjectContext.tsx  # Gestão de projetos
-│   ├── styles/
-│   │   └── GlobalThemeSystem.ts # Sistema unificado de temas
-│   └── lib/
-│       ├── supabaseClient.ts  # Cliente Supabase
-│       └── posthog.tsx         # Analytics
-```
-
-### Backend (Supabase)
-- **Project ID**: `suqjifkhmekcdflwowiw`
-- **PostgreSQL** com RLS habilitado
-- **Edge Functions** em Deno
-- **pgvector** para embeddings
-- **Realtime** para atualizações
-- **Storage** para arquivos
-
-### Deployment
-- **Fly.io**: App `liftlio`, região `sjc`
-- **Docker**: Multi-stage build com Node 20 + Nginx
-- **Build**: `npm run build` com `--legacy-peer-deps`
-
-## 🔥 MCP (Model Context Protocol) - USE SEMPRE!
-
-### 🤖 REGRA AUTOMÁTICA: Delegação de Agentes MCP
-**⚠️ OBRIGATÓRIO - SEMPRE que for usar ferramentas MCP do Supabase:**
-```
-ANTES de qualquer chamada mcp__supabase__*,
-SEMPRE delegar para o agente supabase-mcp-expert usando Task tool.
-```
-
-**Exemplo:**
-```typescript
-// ❌ ERRADO - Nunca chamar diretamente
-await mcp__supabase__execute_sql({ query: "..." })
-
-// ✅ CORRETO - Sempre delegar para o agente
-await Task({
-  subagent_type: "supabase-mcp-expert",
-  prompt: "Execute esta query SQL: SELECT * FROM users",
-  description: "Query SQL via agente"
-})
-```
-
-### Supabase MCP - Capacidades
-**✅ PODE fazer via MCP:**
-- Deploy de Edge Functions: `mcp__supabase__deploy_edge_function`
-- Criar/modificar funções SQL: `mcp__supabase__apply_migration`
-- Executar queries: `mcp__supabase__execute_sql`
-- Buscar logs: `mcp__supabase__get_logs`
-- Gerar tipos TypeScript: `mcp__supabase__generate_typescript_types`
-
-**❌ NÃO pode via MCP:**
-- Criar/alterar tabelas (use Dashboard)
-- Modificar RLS policies (use Dashboard)
-- Acessar Vault/Secrets diretamente (use Dashboard)
-
-**Exemplo de uso:**
-```typescript
-// Deploy Edge Function
-await mcp__supabase__deploy_edge_function({
-  project_id: "suqjifkhmekcdflwowiw",
-  name: "minha-funcao",
-  files: [{
-    name: "index.ts",
-    content: "// código"
-  }]
-});
-```
-
-### 🔴 REGRAS CRÍTICAS: Organização de Funções MCP
-
-**⚠️ OBRIGATÓRIO ao criar/modificar funções no Supabase:**
-
-1. **SEMPRE usar DROP FUNCTION IF EXISTS antes de CREATE**
-   ```sql
-   DROP FUNCTION IF EXISTS nome_funcao(parametros);
-   CREATE OR REPLACE FUNCTION nome_funcao(...)
-   ```
-
-2. **SEMPRE salvar cópia local IMEDIATAMENTE após criar/editar:**
-   - SQL Functions: `/liftlio-react/AGENTE_LIFTLIO/MCP_Functions/SQL_Functions/nome_funcao.sql`
-   - Edge Functions: `/liftlio-react/AGENTE_LIFTLIO/MCP_Functions/Edge_Functions/nome-funcao.ts`
-
-3. **NUNCA deixar funções duplicadas ou antigas no banco:**
-   - Remover versões antigas (ex: função sem parâmetro email quando criar com email)
-   - Manter apenas uma versão de cada função
-   - Usar nomes descritivos (ex: `check_user_youtube_integrations_by_email`)
-
-4. **SEMPRE sincronizar Supabase ↔ Local:**
-   - Após criar no Supabase → salvar localmente
-   - Após editar no Supabase → atualizar arquivo local
-   - Deletar funções não usadas do Supabase E dos arquivos locais
-
-5. **Padrão de documentação no arquivo:**
-   ```sql
-   -- =============================================
-   -- Função: nome_da_funcao
-   -- Descrição: O que ela faz
-   -- Criado: Data ISO
-   -- Atualizado: Mudanças importantes
-   -- =============================================
-   ```
-
-6. **Atualizar documentação:** `/AGENTE_LIFTLIO/5_Documentacao/INDICE_COMPLETO.md`
-
-## Sistema de Agente AI (v68)
-**Localização**: `/liftlio-react/AGENTE_LIFTLIO/`
-- **Edge Function**: `agente-liftlio` (linguagem natural, sem gatilhos)
-- **Sistema RAG**: Embeddings OpenAI em 14 tabelas
-- **Modelo Claude**: Sempre usar `claude-sonnet-4-20250514`
-- **SDK Supabase**: SEMPRE usar `supabase.functions.invoke()`
-
-## Integração Trello MCP
-
-### Configuração
-- **Board Principal**: Liftlio (ID: `686b43ced8d30f8eb12b9d12`)
-- **Listas do Valdair**:
-  - Pendentes: `686b4422d297ee28b3d92163`
-  - Em andamento: `686b4ad61da133ac3b998284`
-  - Completadas: `686b442bd7c4de1dbcb52ba8`
-
-### 📸 REGRA: Imagens são OBRIGATÓRIAS
-```bash
-# Gerar imagem localmente SEMPRE com GPT-Image-1:
-/Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/gpt-image-1.sh "prompt" "1536x1024" "high"
-# NOTA: GPT-Image-1 usa internamente dall-e-3 como modelo
-# Tamanhos válidos: 1024x1024, 1024x1536, 1536x1024
-# Qualidade: low, medium, high, auto
-
-# Imagem salva em: /liftlio-react/generated-images/
-# Usuário sobe manualmente no Trello como capa do card
-```
-
-## Integração WordPress MCP
-- **URL**: `https://wordpress-1319296-5689133.cloudwaysapps.com/`
-- **Usuário**: MCP claude
-- **Blog**: `blog.liftlio.com`
-- Use ferramentas `mcp__wordpress__*` para todas operações
-
-## Variáveis de Ambiente Necessárias
-```bash
-# .env (nunca commitar!)
-REACT_APP_GOOGLE_CLIENT_ID=xxx
-REACT_APP_GOOGLE_CLIENT_SECRET=xxx
-REACT_APP_SUPABASE_URL=xxx
-REACT_APP_SUPABASE_ANON_KEY=xxx
-```
-
-## Dependências Principais
-- React 19.0.0
-- TypeScript 4.9.5
-- @supabase/supabase-js 2.49.1
-- styled-components 6.1.15
-- framer-motion 12.16.0
-- react-router-dom 7.2.0
-- recharts 2.15.1
-- posthog-js 1.258.5
-
-## UI Libraries Instaladas
-
-### Tooltips (react-tooltip)
-- **Instalação**: `npm install react-tooltip --legacy-peer-deps`
-- **Import**: `import { Tooltip as ReactTooltip } from 'react-tooltip'`
-- **CSS**: `import 'react-tooltip/dist/react-tooltip.css'`
-- **Exemplo de uso**: Ver `/src/pages/Overview.tsx` linhas 3179-3210
-- **Suporte a tema**: Sim (inline styles com theme.colors)
-- **Docs**: https://react-tooltip.com/docs/getting-started
-- **Instalado em**: 07/10/2025
-
-**Padrão de uso com tema:**
-```typescript
-<span data-tooltip-id="my-tooltip">
-  Hover me
-</span>
-<ReactTooltip
-  id="my-tooltip"
-  place="top"
-  style={{
-    backgroundColor: theme.colors.background,
-    color: theme.colors.text.primary,
-    border: `1px solid ${theme.colors.borderLight}`,
-    borderRadius: '8px',
-    padding: '8px 12px',
-    fontSize: '13px',
-    maxWidth: '250px',
-    zIndex: 9999
-  }}
->
-  Tooltip content here
-</ReactTooltip>
-```
-
-## Testes e Qualidade
-```bash
-npm test                    # Jest + React Testing Library
-# Não há linter/formatter configurado atualmente
-# ESLint config existe mas sem scripts npm
-```
-
-## Documentação Adicional
-- `/liftlio-react/project-docs/` - Documentação do projeto
-- `/liftlio-react/AGENTE_LIFTLIO/5_Documentacao/` - Docs do agente AI
-- `/liftlio-react/README.md` - Setup inicial
-
-## Notas Importantes
-- Use `--legacy-peer-deps` ao instalar dependências
-- Autenticação via OAuth Google apenas
-- Claude API key como `CLAUDE_API_KEY` no Vault
-- OpenAI API key como `OPENAI_API_KEY` no Vault
-- Fly.io configurado com auto-stop/start para economia
-
-## 📊 Sistema de Analytics (track.liftlio.com)
-
-### Arquitetura
-- **Servidor**: VPS Linux em 173.249.22.2 (NÃO local!)
-- **Proxy**: Cloudflare com SSL Flexible (Configuration Rule específica)
-- **Container**: Docker rodando `liftlio-analytics-prod`
-- **Banco**: Tabela `analytics` no Supabase
-- **RPC**: Função `track_event` para inserir eventos
-
-### Como Usar
-```html
-<!-- Tag de tracking para sites -->
-<script async src="https://track.liftlio.com/t.js" data-id="58"></script>
-```
-
-### Troubleshooting Analytics
-- **Erro 521**: Verificar Configuration Rule no Cloudflare (SSL = Flexible)
-- **Eventos não salvam**: Verificar função RPC `track_event` (pode ter duplicatas)
-- **Bot detected**: Servidor tem proteção anti-bot agressiva
-
-### Deploy de Mudanças
-```bash
-# NO SERVIDOR REMOTO (não local!)
-ssh root@173.249.22.2
-cd /opt/liftlio-analytics
-git pull
-docker-compose down && docker-compose up -d --build
-```
+### Outros
+- **Blog**: https://blog.liftlio.com (Cloudways)
+- **LinkedIn**: `/LINKEDIN_CONTENT/` (system + strategy)
 
 ## Histórico de Sessões Relevantes
 - **14/01/2025**: MCP Supabase totalmente funcional
@@ -323,3 +75,4 @@ docker-compose down && docker-compose up -d --build
 - **13/08/2025**: Analytics Server - Configuração Cloudflare SSL Flexible, correção função track_event duplicada, documentação sobre servidor remoto, correção de tipos implícitos no GlobeVisualizationPro
 - **06/10/2025**: Sistema LinkedIn unificado - TUDO consolidado em `/LINKEDIN_CONTENT/`, estratégia de 12 semanas com Curiosity Gap, dois modos (Technical + Marketing), credentials gitignored
 - **07/10/2025**: Overview UX - Tooltips implementados em cards e gráficos com react-tooltip, correção SquarePaymentForm ("Pay" → "Add Card"), análise PDF feedback, cards Trello criados (UX/AI improvements + Supabase Branch backup)
+- **11/10/2025**: Melhorias CLAUDE.md - Adicionado modo ultrathink permanente, filosofia de trabalho, padrões de código, guidelines de debugging/performance, documentação sobre release notes e features novas do Claude Code v2.0.14
