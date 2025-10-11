@@ -56,24 +56,38 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
   const intervalRef = useRef<NodeJS.Timeout | null>(null); // Ref para o intervalo de verificação
   
   useEffect(() => {
-    // 🔥 SIMPLIFICADO: Não buscar mais projeto aqui - ProcessingWrapper faz isso via SQL!
+    // 🔥 OTIMIZADO: Carregar projeto marcado como index automaticamente
     const initializeProject = async () => {
-      console.log('[ProjectContext] Inicializando (aguardando SQL definir projeto)...');
+      console.log('[ProjectContext] Inicializando e carregando projeto index...');
 
-      // Apenas carregar lista de projetos do usuário
+      // Carregar lista de projetos do usuário
       const projectsList = await loadUserProjects();
       setProjects(projectsList);
       setHasProjects(projectsList.length > 0);
 
-      // Se tem projetos, verificar onboarding do primeiro (fallback)
-      // O ProcessingWrapper vai definir o projeto correto via SQL
+      // Se tem projetos, buscar o projeto marcado como index
       if (projectsList.length > 0) {
-        const projectIdToUse = currentProject?.id || projectsList[0].id;
+        // Procurar projeto com projetc_index = true
+        const indexedProject = projectsList.find(p => p.projetc_index === true);
 
-        // Determinar estado de onboarding
-        determineOnboardingState(projectIdToUse).finally(() => {
-          setOnboardingReady(true);
-        });
+        if (indexedProject) {
+          console.log(`[ProjectContext] Projeto ${indexedProject.id} encontrado com index=true, selecionando...`);
+          setCurrentProject(indexedProject);
+
+          // Determinar estado de onboarding do projeto selecionado
+          determineOnboardingState(indexedProject.id).finally(() => {
+            setOnboardingReady(true);
+          });
+        } else {
+          // Fallback: se nenhum tem index, usar o primeiro
+          console.log('[ProjectContext] Nenhum projeto com index=true, usando primeiro como fallback');
+          const fallbackProject = projectsList[0];
+          setCurrentProject(fallbackProject);
+
+          determineOnboardingState(fallbackProject.id).finally(() => {
+            setOnboardingReady(true);
+          });
+        }
       } else {
         setOnboardingStep(1); // Precisa criar projeto
         setOnboardingReady(true);

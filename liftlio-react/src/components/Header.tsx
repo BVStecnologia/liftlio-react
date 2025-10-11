@@ -1684,7 +1684,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                         {project["Project name"] || project.name}
                       </ProjectItem>
                     ))}
-                    <ProjectItem onClick={() => setShowProjectModal(true)} style={{borderTop: '1px solid rgba(0,0,0,0.1)', marginTop: '10px', paddingTop: '15px'}}>
+                    <ProjectItem onClick={() => {
+                      setShowProjectsDropdown(false);
+                      setShowProjectModal(true);
+                    }} style={{borderTop: '1px solid rgba(0,0,0,0.1)', marginTop: '10px', paddingTop: '15px'}}>
                       <IconComponent icon={FaIcons.FaPlus} />
                       {t('header.createProject')}
                     </ProjectItem>

@@ -2,13 +2,16 @@
 -- Função: check_project_display_state
 -- Descrição: Verifica estado de exibição do projeto (PRIORIZA MENSAGENS)
 -- Criado: 2025-10-10
--- Atualizado: 2025-10-10 - Correção de prioridade: mensagens ANTES de integração desativada
+-- Atualizado: 2025-10-11 - Adicionado auto-select do primeiro projeto quando nenhum tem index=true
 -- =============================================
--- LÓGICA CORRIGIDA:
--- 1. Sem integração → need_integration
--- 2. COM MENSAGENS → dashboard (PRIORIDADE MÁXIMA - independente da integração)
+-- LÓGICA CORRIGIDA (ORDEM DE PRIORIDADE):
+-- 1. 🔥 COM MENSAGENS → dashboard (PRIORIDADE MÁXIMA - independente da integração)
+-- 2. Sem integração → need_integration
 -- 3. Integração desativada → integration_disabled
 -- 4. Processando → setup_processing
+-- =============================================
+-- AUTO-SELECT: Se nenhum projeto tem projetc_index=true, seleciona o primeiro (ORDER BY created_at)
+--              e automaticamente marca como index. SÓ retorna create_project se não houver NENHUM projeto.
 -- =============================================
 
 DROP FUNCTION IF EXISTS check_project_display_state(text, bigint);
@@ -16,7 +19,7 @@ DROP FUNCTION IF EXISTS check_project_display_state(text, bigint);
 CREATE OR REPLACE FUNCTION public.check_project_display_state(p_user_email text, p_project_id bigint DEFAULT NULL::bigint)
 RETURNS json
 LANGUAGE plpgsql
-STABLE PARALLEL SAFE SECURITY DEFINER
+VOLATILE SECURITY DEFINER
 SET search_path TO 'public'
 AS $function$
 DECLARE
@@ -50,14 +53,35 @@ BEGIN
   END IF;
 
   IF p_project_id IS NULL THEN
+    -- Primeiro tenta encontrar projeto marcado como index
     SELECT id INTO p_project_id
     FROM "Projeto"
     WHERE "user" = p_user_email AND projetc_index = true
     LIMIT 1;
 
-    IF p_project_id IS NOT NULL THEN
-      v_auto_selected := true;
+    -- Se não encontrou projeto com index = true, mas usuário tem projetos,
+    -- seleciona o primeiro projeto (por data de criação) e marca como index
+    IF p_project_id IS NULL THEN
+      SELECT id INTO p_project_id
+      FROM "Projeto"
+      WHERE "user" = p_user_email
+      ORDER BY created_at ASC
+      LIMIT 1;
+
+      -- Se encontrou algum projeto, marca como index automaticamente
+      IF p_project_id IS NOT NULL THEN
+        v_auto_selected := true;
+        -- Marca este projeto como index no banco
+        UPDATE "Projeto"
+        SET projetc_index = true
+        WHERE id = p_project_id AND "user" = p_user_email;
+      END IF;
     ELSE
+      v_auto_selected := true;
+    END IF;
+
+    -- SÓ retorna create_project se usuário realmente não tem NENHUM projeto
+    IF p_project_id IS NULL THEN
       RETURN json_build_object(
         'display_component', 'create_project',
         'message', 'Create your first project',
@@ -109,16 +133,8 @@ BEGIN
       LIMIT 1;
     END IF;
 
-    -- REGRA 1: SEM integração → need_integration
-    IF NOT v_has_integration THEN
-      v_display_component := 'need_integration';
-      v_processing_step := 0;
-      v_progress_percentage := 0;
-      v_processing_message := 'Connect your YouTube account to get started';
-      v_onboarding_step := 2;
-
-    -- 🔥 REGRA 2: COM MENSAGENS → DASHBOARD (PRIORIDADE MÁXIMA!)
-    ELSIF v_has_messages THEN
+    -- 🔥 REGRA 1: COM MENSAGENS → DASHBOARD (PRIORIDADE MÁXIMA!)
+    IF v_has_messages THEN
       v_display_component := 'dashboard';
       v_processing_step := 7;
       v_progress_percentage := 100;
@@ -126,7 +142,15 @@ BEGIN
       v_verified_ready := true;
       v_onboarding_step := 4;
 
-    -- REGRA 3: Integração desativada (SÓ verifica se não tem mensagens)
+    -- REGRA 2: SEM integração → need_integration
+    ELSIF NOT v_has_integration THEN
+      v_display_component := 'need_integration';
+      v_processing_step := 0;
+      v_progress_percentage := 0;
+      v_processing_message := 'Connect your YouTube account to get started';
+      v_onboarding_step := 2;
+
+    -- REGRA 3: Integração desativada
     ELSIF v_has_integration AND NOT v_integration_active THEN
       v_display_component := 'integration_disabled';
       v_processing_step := 0;
@@ -199,8 +223,9 @@ END;
 $function$;
 
 COMMENT ON FUNCTION check_project_display_state(text, bigint) IS
-'Verifica estado do projeto com PRIORIDADE para mensagens:
-1. Sem integração → need_integration
-2. COM MENSAGENS → dashboard (independente da integração)
+'Verifica estado do projeto com AUTO-SELECT e PRIORIDADE para mensagens:
+1. 🔥 COM MENSAGENS → dashboard (PRIORIDADE MÁXIMA - independente da integração)
+2. Sem integração → need_integration
 3. Integração desativada → integration_disabled
-4. Processando → setup_processing';
+4. Processando → setup_processing
+AUTO-SELECT: Se nenhum projeto tem projetc_index=true, seleciona o primeiro automaticamente.';

@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
-import { useGlobalLoading } from '../context/LoadingContext';
 import { supabase } from '../lib/supabaseClient';
-import { useNavigate } from 'react-router-dom';
 import ProjectCreationPage from '../pages/ProjectCreationPage';
+import Integrations from '../pages/Integrations';
+import LoginPage from '../pages/LoginPage';
 
 // Componente para mostrar cada etapa do processo
 const ProcessStep: React.FC<{
@@ -73,34 +73,16 @@ interface ProcessingWrapperProps {
  */
 const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ children }) => {
   const { user } = useAuth();
-  const { currentProject, setCurrentProject } = useProject(); // Adicionar setCurrentProject
-  const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
-  const navigate = useNavigate();
+  const { currentProject } = useProject();
 
   const [displayState, setDisplayState] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
-  const [isInitialLoad, setIsInitialLoad] = useState(true); // Nova flag para controlar loading inicial
 
-  // Função principal que chama o RPC
+  // Função principal que chama o RPC - SIMPLIFICADA
   const checkProjectState = useCallback(async (isPolling: boolean = false) => {
-    if (!user?.email) {
-      setIsLoading(false);
-      return;
-    }
+    if (!user?.email) return;
 
     try {
-      // Mostrar loading global APENAS na primeira carga, não no polling
-      if (isInitialLoad && !isPolling) {
-        console.log('[ProcessingWrapper] Mostrando loading global (primeira carga)');
-        showGlobalLoader('Loading Dashboard', 'Please wait...');
-      }
-
-      console.log('[ProcessingWrapper] Chamando check_project_display_state...', {
-        isPolling,
-        currentProjectId: currentProject?.id
-      });
-
       const { data, error } = await supabase.rpc('check_project_display_state', {
         p_user_email: user.email,
         p_project_id: currentProject?.id || null
@@ -108,97 +90,52 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
 
       if (error) {
         console.error('[ProcessingWrapper] Erro no RPC:', error);
-        setIsLoading(false);
         return;
       }
 
-      console.log('[ProcessingWrapper] Estado retornado:', data);
-
-      // Aplicar projeto retornado pela SQL APENAS se não temos projeto no contexto
-      // Isso evita loops infinitos mas garante que o projeto seja inicializado
-      if (data?.project_id && !currentProject) {
-        console.log(`[ProcessingWrapper] Projeto não existe no contexto, aplicando projeto ${data.project_id} retornado pela SQL...`);
-
-        // Buscar dados completos do projeto
-        const { data: projectData, error: projectError } = await supabase
-          .from('Projeto')
-          .select('*')
-          .eq('id', data.project_id)
-          .single();
-
-        if (projectData && !projectError) {
-          console.log(`[ProcessingWrapper] Definindo projeto ${projectData.id} no contexto`);
-          await setCurrentProject(projectData);
-        }
-      } else if (currentProject) {
-        console.log(`[ProcessingWrapper] Projeto ${currentProject.id} já existe no contexto, não sobrescrever`);
-      }
-
+      // Atualiza estado IMEDIATAMENTE - sem queries extras
       setDisplayState(data);
 
-      // Se deve continuar verificando (status <= 6 e sem mensagens)
+      // Setup polling APENAS se necessário
       if (data?.display_component === 'setup_processing' && !data?.has_messages) {
-        // Continua polling a cada 5 segundos
-        if (!pollingInterval) {
-          const interval = setInterval(() => {
-            checkProjectState(true); // Passa true para indicar que é polling
-          }, 5000);
+        if (!pollingInterval && !isPolling) {
+          const interval = setInterval(() => checkProjectState(true), 5000);
           setPollingInterval(interval);
         }
       } else {
-        // Para o polling se não precisa mais
         if (pollingInterval) {
           clearInterval(pollingInterval);
           setPollingInterval(null);
         }
       }
-
     } catch (err) {
       console.error('[ProcessingWrapper] Erro:', err);
-    } finally {
-      // Só muda isLoading e esconde loader na primeira carga
-      if (isInitialLoad) {
-        setIsLoading(false);
-        setIsInitialLoad(false);
-        // Esconder o loading imediatamente - sem delay desnecessário
-        console.log('[ProcessingWrapper] Escondendo loading global após primeira carga');
-        hideGlobalLoader();
-      }
     }
-  }, [user, currentProject, pollingInterval, showGlobalLoader, hideGlobalLoader, isInitialLoad]);
+  }, [user?.email, currentProject?.id, pollingInterval]);
 
-  // Effect principal - chama quando usuário ou projeto muda
+  // Effect - APENAS uma vez na montagem
   useEffect(() => {
     checkProjectState();
-
-    // Cleanup do polling
     return () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-      }
+      if (pollingInterval) clearInterval(pollingInterval);
     };
-  }, [user?.email, currentProject?.id, checkProjectState]);
+  }, [user?.email]); // SÓ user.email - não currentProject para evitar loops
 
-  // SEMPRE retornar null enquanto está carregando para evitar "piscar" componentes
-  // Isso garante que nenhum conteúdo seja renderizado até sabermos o que mostrar
-  if (isLoading || !displayState) {
+  // Mostra loading APENAS enquanto não tem dados
+  if (!displayState) {
     return null;
   }
 
   // Renderizar baseado no display_component
   switch (displayState?.display_component) {
     case 'login':
-      // Não deveria chegar aqui se o usuário está autenticado
-      navigate('/login');
-      return null;
+      return <LoginPage />;
 
     case 'create_project':
       return <ProjectCreationPage />;
 
     case 'need_integration':
-      // Navegar para /integrations para que App.tsx renderize sem sidebar
-      navigate('/integrations', { replace: true });
-      return null;
+      return <Integrations />;
 
     case 'setup_processing':
       // Mostrar tela de processamento
