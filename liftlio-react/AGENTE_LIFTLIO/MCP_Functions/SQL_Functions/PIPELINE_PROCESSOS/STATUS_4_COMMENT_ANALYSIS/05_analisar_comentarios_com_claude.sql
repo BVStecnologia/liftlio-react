@@ -126,7 +126,7 @@ BEGIN
                     FROM public."Comentarios_Principais" cp
                     WHERE cp.video_id = v.id
                     AND (cp.comentario_analizado IS NULL OR cp.comentario_analizado = FALSE)
-                    LIMIT 30
+                    LIMIT 10
                 ) AS comentarios
             FROM videos_do_projeto vdp
             JOIN public."Videos" v ON vdp.video_id = v.id

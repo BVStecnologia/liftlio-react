@@ -5,6 +5,8 @@
 -- Criado: 2025-01-27
 -- =============================================
 
+DROP FUNCTION IF EXISTS atualizar_comentarios_analisados(integer);
+
 CREATE OR REPLACE FUNCTION public.atualizar_comentarios_analisados(p_project_id integer)
  RETURNS text
  LANGUAGE plpgsql
@@ -26,16 +28,20 @@ BEGIN
         RETURN 'A função analisar_comentarios_com_claude retornou um resultado nulo ou vazio';
     END IF;
 
+    -- Limpar markdown fence antes de converter
+    v_resultado_claude := regexp_replace(v_resultado_claude, '^\s*```json\s*|\s*```\s*$', '', 'g');
+    v_resultado_claude := trim(v_resultado_claude);
+
     -- Converter o resultado para JSONB
     BEGIN
         v_json_resultado := v_resultado_claude::JSONB;
     EXCEPTION WHEN OTHERS THEN
-        RETURN format('Erro ao converter o resultado para JSONB: %', v_resultado_claude);
+        RETURN 'Erro ao converter o resultado para JSONB: ' || v_resultado_claude;
     END;
 
     -- Verificar se o JSON resultante é um array
     IF jsonb_typeof(v_json_resultado) != 'array' THEN
-        RETURN format('O resultado não é um array JSON válido: %', v_json_resultado);
+        RETURN 'O resultado não é um array JSON válido: ' || v_json_resultado::text;
     END IF;
 
     -- Iterar sobre cada comentário no resultado
@@ -60,15 +66,15 @@ BEGIN
             v_atualizados := v_atualizados + v_rows_affected;
 
             IF v_rows_affected = 0 THEN
-                v_nao_atualizados := v_nao_atualizados || format('Comentário não atualizado: %s; ', v_comentario);
+                v_nao_atualizados := v_nao_atualizados || 'Comentário não atualizado: ' || v_comentario::text || '; ';
             END IF;
         EXCEPTION WHEN OTHERS THEN
-            v_nao_atualizados := v_nao_atualizados || format('Erro ao atualizar comentário %s: %s; ', v_comentario, SQLERRM);
+            v_nao_atualizados := v_nao_atualizados || 'Erro ao atualizar comentário: ' || SQLERRM || '; ';
         END;
     END LOOP;
 
     -- Retornar um resumo das operações
-    RETURN format('Processados: %s, Atualizados: %s, Não atualizados: %s. Detalhes: %s',
-                  v_total_processados, v_atualizados, v_total_processados - v_atualizados, v_nao_atualizados);
+    RETURN 'Processados: ' || v_total_processados || ', Atualizados: ' || v_atualizados ||
+           ', Não atualizados: ' || (v_total_processados - v_atualizados) || '. Detalhes: ' || v_nao_atualizados;
 END;
 $function$

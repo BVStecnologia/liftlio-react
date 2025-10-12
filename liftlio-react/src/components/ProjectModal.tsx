@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Modal from './Modal';
 import { supabase, callEdgeFunction } from '../lib/supabaseClient';
-import { FaTimes, FaMagic, FaSpinner, FaGlobe, FaUser, FaBuilding, FaTag } from 'react-icons/fa';
+import { FaTimes, FaMagic, FaSpinner, FaGlobe, FaUser, FaBuilding, FaTag, FaInfoCircle } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
+import { Tooltip as ReactTooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 const Form = styled.form`
   display: flex;
@@ -329,7 +331,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
         .split(',')
         .map(keyword => keyword.trim())
         .filter(keyword => keyword !== '')
-        .slice(0, 5); // Limitar a no máximo 5 keywords
+        .slice(0, 3); // Limitar a no máximo 3 keywords
       setKeywordsArray(keywords);
     } else {
       setKeywordsArray([]);
@@ -367,18 +369,13 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     // Verificar se todos os campos obrigatórios estão preenchidos
     if (!projectForm.name || !projectForm.company || !projectForm.link ||
         !projectForm.audience || keywordsArray.length === 0) {
-      alert('Please fill in all required fields and add at least 2 keywords.');
+      alert('Please fill in all required fields and add exactly 3 keywords.');
       return;
     }
 
-    // Validar número de keywords (mínimo 2, máximo 5)
-    if (keywordsArray.length < 2) {
-      alert('Please add at least 2 keywords for better targeting.');
-      return;
-    }
-
-    if (keywordsArray.length > 5) {
-      alert('Please use a maximum of 5 keywords to maintain focus.');
+    // Validar número de keywords (exatamente 3)
+    if (keywordsArray.length !== 3) {
+      alert('Please add exactly 3 keywords for optimal targeting.');
       return;
     }
     
@@ -457,13 +454,13 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       let prompt = '';
       
       if (contentType === 'keywords') {
-        prompt = `Generate exactly 5 relevant keywords for the following project:
+        prompt = `Generate exactly 3 relevant keywords for the following project:
          Project Name: ${projectForm.name}
          Company/Product Name: ${projectForm.company}
          Target Audience Description: ${projectForm.audience}
-         
-         Generate a list of 5 bottom-of-funnel keywords that indicate high purchase intent. Focus on transactional queries — such as comparisons, reviews, or product-versus-product searches — that indicate the user is further along in the buying process. Do not mention prices, free trials, or discounts.
-         
+
+         Generate a list of 3 bottom-of-funnel keywords that indicate high purchase intent. Focus on transactional queries — such as comparisons, reviews, or product-versus-product searches — that indicate the user is further along in the buying process. Do not mention prices, free trials, or discounts.
+
          Respond ONLY with the keywords separated by commas, without any introduction or explanation.`;
       } else {
         // Construir a URL correta
@@ -548,12 +545,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     setIsGeneratingKeywords(true);
 
     try {
-      const prompt = `Generate exactly 5 relevant keywords for the following project:
+      const prompt = `Generate exactly 3 relevant keywords for the following project:
          Project Name: ${projectForm.name}
          Company/Product Name: ${projectForm.company}
          Target Audience Description: ${audienceText}
 
-         Generate a list of 5 bottom-of-funnel keywords that indicate high purchase intent. Focus on transactional queries — such as comparisons, reviews, or product-versus-product searches — that indicate the user is further along in the buying process. Do not mention prices, free trials, or discounts.
+         Generate a list of 3 bottom-of-funnel keywords that indicate high purchase intent. Focus on transactional queries — such as comparisons, reviews, or product-versus-product searches — that indicate the user is further along in the buying process. Do not mention prices, free trials, or discounts.
 
          Respond ONLY with the keywords separated by commas, without any introduction or explanation.`;
 
@@ -814,17 +811,41 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
           
           <FormGroup>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Label htmlFor="keywords">
-                Keywords (2-5 required) {keywordsArray.length > 0 && (
+              <Label htmlFor="keywords" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                Keywords (3 required)
+                <span
+                  data-tooltip-id="keywords-tooltip"
+                  style={{ cursor: 'help', display: 'flex', alignItems: 'center' }}
+                >
+                  <IconComponent icon={FaInfoCircle} />
+                </span>
+                {keywordsArray.length > 0 && (
                   <span style={{
                     fontSize: '0.9em',
-                    color: keywordsArray.length < 2 || keywordsArray.length > 5 ? '#ef4444' : '#10b981',
-                    marginLeft: '8px'
+                    color: keywordsArray.length !== 3 ? '#ef4444' : '#10b981',
+                    marginLeft: '4px'
                   }}>
-                    [{keywordsArray.length}/5]
+                    [{keywordsArray.length}/3]
                   </span>
                 )}
               </Label>
+              <ReactTooltip
+                id="keywords-tooltip"
+                place="top"
+                style={{
+                  backgroundColor: '#1a1a1a',
+                  color: '#ffffff',
+                  border: '1px solid #333',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  fontSize: '13px',
+                  maxWidth: '320px',
+                  zIndex: 9999,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                }}
+              >
+                These 3 keywords serve as the foundation for our AI targeting system. The platform automatically generates dozens of related variations, long-tail phrases, and semantic alternatives to maximize your reach while maintaining relevance to your target audience.
+              </ReactTooltip>
               <GenerateButton
                 type="button"
                 variant="secondary"
@@ -850,7 +871,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                 name="keywords"
                 value={projectForm.keywords || ''}
                 onChange={handleChange}
-                placeholder="Enter 2-5 keywords separated by commas (e.g. marketing, sales, product)"
+                placeholder="Enter 3 keywords separated by commas (e.g. marketing automation, sales CRM, product analytics)"
                 required
               />
               {isGeneratingKeywords && (
@@ -880,9 +901,9 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                 ))}
               </KeywordsContainer>
             )}
-            
+
             <InfoText>
-              Add 2-5 keywords for optimal targeting. Keywords should focus on high-purchase intent transactional terms that indicate users who are ready to buy.
+              Add 3 core keywords for optimal targeting. These should be high-purchase intent transactional terms that indicate users who are ready to buy. Our AI will automatically expand these into related variations.
             </InfoText>
           </FormGroup>
         
