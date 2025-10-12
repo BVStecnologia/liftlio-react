@@ -12,3 +12,9 @@ LINKEDIN_CONTENT/**/*.env
 LINKEDIN_CONTENT/.env
 LINKEDIN_CONTENT/ANALYTICS/performance-log.json
 LINKEDIN_CONTENT/**/draft-*.md
+
+# Playwright MCP - Screenshots de teste
+.playwright-mcp/
+
+# Supabase - Repositório separado (submodule)
+Supabase/

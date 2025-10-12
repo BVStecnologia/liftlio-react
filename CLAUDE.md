@@ -67,6 +67,62 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Blog**: https://blog.liftlio.com (Cloudways)
 - **LinkedIn**: `/LINKEDIN_CONTENT/` (system + strategy)
 
+## 🌿 Supabase Branching Workflow (Atualizado 12/10/2025)
+
+### Estrutura de Branches
+- **main** (`suqjifkhmekcdflwowiw`): Produção, apenas updates manuais, 100% estável
+- **dev** (`cdnzajygbcujwcaoswpi`): Staging persistente, auto-deploy via migrations, ambiente de teste real
+
+### Workflow de Desenvolvimento
+
+**1. Nova Função SQL ou Modificação:**
+```
+a) Criar migration em /Supabase/supabase/migrations/YYYYMMDDHHMMSS_nome.sql
+b) Delegar para agente MCP testar na DEV (project_id: cdnzajygbcujwcaoswpi)
+c) Git commit + push para branch dev do Git
+d) Verificar sucesso no Dashboard > Branches > dev
+e) Merge manual para main (live) quando aprovado
+```
+
+**2. Nova Edge Function:**
+```
+a) Criar em /Supabase/supabase/functions/nome/index.ts
+b) Deploy via MCP na DEV primeiro
+c) Testar invocação
+d) Deploy manual no LIVE quando aprovado
+```
+
+### Versionamento e Controle
+
+**Estrutura Oficial:**
+```
+/Supabase/                          ← Fonte de verdade oficial
+├── supabase/
+│   ├── migrations/                 ← Schema + SQL functions (versionado)
+│   ├── functions/                  ← Edge Functions novas (versionado)
+│   └── config.toml
+├── functions_backup/               ← Histórico (315 SQL + 15 Edge já deployadas)
+│   ├── SQL_Functions/              ← Referência apenas
+│   └── Edge_Functions/             ← Referência apenas
+└── README.md
+```
+
+**IMPORTANTE:**
+- ✅ `/Supabase/` é source of truth (Git tracking completo)
+- ✅ `functions_backup/` são backups históricos (NÃO aplicar como migrations)
+- ✅ Agente MCP SEMPRE usa DEV primeiro (cdnzajygbcujwcaoswpi)
+- ✅ LIVE só recebe mudanças após aprovação manual
+
+### Benefícios do Sistema
+- ✅ Git tracking completo (histórico, blame, revert)
+- ✅ Code review antes de produção
+- ✅ Rollback trivial (git revert)
+- ✅ Zero risco de quebrar produção
+- ✅ Ambiente de teste real (dados, crons, configs)
+- ✅ Auto-deploy em dev (agilidade)
+
+---
+
 ## Histórico de Sessões Relevantes
 - **14/01/2025**: MCP Supabase totalmente funcional
 - **26/07/2025**: Gmail MCP configurado via Docker
@@ -76,3 +132,4 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **06/10/2025**: Sistema LinkedIn unificado - TUDO consolidado em `/LINKEDIN_CONTENT/`, estratégia de 12 semanas com Curiosity Gap, dois modos (Technical + Marketing), credentials gitignored
 - **07/10/2025**: Overview UX - Tooltips implementados em cards e gráficos com react-tooltip, correção SquarePaymentForm ("Pay" → "Add Card"), análise PDF feedback, cards Trello criados (UX/AI improvements + Supabase Branch backup)
 - **11/10/2025**: Melhorias CLAUDE.md - Adicionado modo ultrathink permanente, filosofia de trabalho, padrões de código, guidelines de debugging/performance, documentação sobre release notes e features novas do Claude Code v2.0.14
+- **12/10/2025**: Supabase Branching Workflow - Setup completo dev/main workflow, MCP configurado para branches, migração estrutural AGENTE_LIFTLIO → /Supabase/functions_backup/, Security Advisor issues fixed (RLS + search_path em 14 funções)
