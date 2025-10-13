@@ -2,8 +2,16 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { retryNetworkRequest } from '../utils/networkErrorHandler'
 import { safeFetch, detectExtensionIssues } from '../utils/fetchWrapper'
 
-export const supabaseUrl = 'https://suqjifkhmekcdflwowiw.supabase.co'
-export const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I'
+// Read from environment variables (supports .env.development for DEV and .env.production for LIVE)
+export const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!
+export const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY!
+
+// Log which branch we're connected to (only in development)
+if (process.env.NODE_ENV === 'development') {
+  const branch = supabaseUrl.includes('cdnzajygbcujwcaoswpi') ? 'DEV' :
+                 supabaseUrl.includes('suqjifkhmekcdflwowiw') ? 'LIVE' : 'UNKNOWN'
+  console.log(`🌿 Supabase connected to: ${branch} (${supabaseUrl})`)
+}
 
 // Detect extension issues early
 if (typeof window !== 'undefined') {
