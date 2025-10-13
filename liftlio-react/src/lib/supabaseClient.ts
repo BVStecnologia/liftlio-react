@@ -6,12 +6,24 @@ import { safeFetch, detectExtensionIssues } from '../utils/fetchWrapper'
 export const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!
 export const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY!
 
+// Get environment indicator
+const envIndicator = process.env.REACT_APP_ENV_INDICATOR || 'UNKNOWN'
+
 // Log which branch we're connected to (only in development)
 if (process.env.NODE_ENV === 'development') {
   const branch = supabaseUrl.includes('cdnzajygbcujwcaoswpi') ? 'DEV' :
-                 supabaseUrl.includes('suqjifkhmekcdflwowiw') ? 'LIVE' : 'UNKNOWN'
-  console.log(`🌿 Supabase connected to: ${branch} (${supabaseUrl})`)
+                 supabaseUrl.includes('suqjifkhmekcdflwowiw') ? 'MAIN' : 'UNKNOWN'
+  console.log(`🌿 Supabase connected to: ${envIndicator} (${supabaseUrl})`)
+
+  // Verify consistency
+  if ((branch === 'DEV' && !envIndicator.includes('DEV')) ||
+      (branch === 'MAIN' && !envIndicator.includes('MAIN'))) {
+    console.warn(`⚠️ Branch mismatch! ENV says ${envIndicator} but URL points to ${branch}`)
+  }
 }
+
+// Export for use in Header
+export const currentEnvironment = envIndicator
 
 // Detect extension issues early
 if (typeof window !== 'undefined') {
