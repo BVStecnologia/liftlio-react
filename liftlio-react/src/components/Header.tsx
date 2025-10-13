@@ -1662,8 +1662,8 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   return (
     <>
       <HeaderContainer>
-        {/* Environment Indicator Badge */}
-        {currentEnvironment && currentEnvironment !== 'UNKNOWN' && (
+        {/* Environment Indicator Badge - ONLY IN DEVELOPMENT */}
+        {process.env.NODE_ENV === 'development' && currentEnvironment && currentEnvironment !== 'UNKNOWN' && (
           <div style={{
             position: 'fixed',
             top: 10,
