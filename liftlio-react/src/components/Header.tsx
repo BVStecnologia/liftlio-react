@@ -12,7 +12,7 @@ import { useProject } from '../context/ProjectContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGlobalLoading } from '../context/LoadingContext';
-import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabaseClient';
+import { supabase, supabaseUrl, supabaseAnonKey, currentEnvironment } from '../lib/supabaseClient';
 
 // Import the MobileNavToggle from App.tsx
 const fadeIn = keyframes`
@@ -1662,6 +1662,27 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   return (
     <>
       <HeaderContainer>
+        {/* Environment Indicator Badge */}
+        {currentEnvironment && currentEnvironment !== 'UNKNOWN' && (
+          <div style={{
+            position: 'fixed',
+            top: 10,
+            right: 10,
+            padding: '5px 12px',
+            borderRadius: '20px',
+            background: currentEnvironment.includes('DEV')
+              ? 'linear-gradient(135deg, #10b981, #059669)'
+              : 'linear-gradient(135deg, #3b82f6, #2563eb)',
+            color: 'white',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            zIndex: 99999,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            letterSpacing: '0.5px'
+          }}>
+            {currentEnvironment}
+          </div>
+        )}
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div ref={projectsRef} style={{ position: 'relative' }}>
             <ProjectSelector onClick={() => setShowProjectsDropdown(!showProjectsDropdown)}>
