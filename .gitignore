@@ -15,3 +15,4 @@ LINKEDIN_CONTENT/**/draft-*.md
 
 # Playwright MCP - Screenshots de teste
 .playwright-mcp/
+liftlio-react/.env.development.original
