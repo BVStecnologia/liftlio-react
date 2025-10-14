@@ -67,11 +67,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Blog**: https://blog.liftlio.com (Cloudways)
 - **LinkedIn**: `/LINKEDIN_CONTENT/` (system + strategy)
 
-## 🌿 Supabase Branching Workflow (Atualizado 12/10/2025)
+## 🌿 Supabase Branching Workflow (Atualizado 13/10/2025)
 
-### Estrutura de Branches
+### Estrutura de Branches com Sincronização Automática
 - **main** (`suqjifkhmekcdflwowiw`): Produção, apenas updates manuais, 100% estável
 - **dev** (`cdnzajygbcujwcaoswpi`): Staging persistente, auto-deploy via migrations, ambiente de teste real
+
+### 🔄 Sistema de Sincronização Git ↔ Supabase
+**Script Automático**: `./switch-branch.sh [dev|main|status]`
+- Troca Git branch + Supabase branch automaticamente
+- Atualiza symlink `.env.development` → `.env.development.{dev|main}`
+- Indicador visual no console e UI (badge colorido)
+- Elimina confusão sobre qual ambiente está ativo
 
 ### Workflow de Desenvolvimento
 
@@ -133,3 +140,4 @@ d) Deploy manual no LIVE quando aprovado
 - **07/10/2025**: Overview UX - Tooltips implementados em cards e gráficos com react-tooltip, correção SquarePaymentForm ("Pay" → "Add Card"), análise PDF feedback, cards Trello criados (UX/AI improvements + Supabase Branch backup)
 - **11/10/2025**: Melhorias CLAUDE.md - Adicionado modo ultrathink permanente, filosofia de trabalho, padrões de código, guidelines de debugging/performance, documentação sobre release notes e features novas do Claude Code v2.0.14
 - **12/10/2025**: Supabase Branching Workflow - Setup completo dev/main workflow, MCP configurado para branches, migração estrutural AGENTE_LIFTLIO → /Supabase/functions_backup/, Security Advisor issues fixed (RLS + search_path em 14 funções)
+- **13/10/2025**: Monorepo & Branch Sync - Reorganização para estrutura monorepo (Supabase dentro de liftlio-react), script switch-branch.sh para sincronização automática Git↔Supabase, indicadores visuais de ambiente, arquivos .env.development.{dev|main} separados

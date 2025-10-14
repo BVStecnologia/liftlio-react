@@ -23,6 +23,8 @@ liftlio_2/
 .env
 .env.local
 .env.development
+.env.development.dev
+.env.development.main
 .env.development.local
 .env.test.local
 .env.production
