@@ -21,14 +21,13 @@ liftlio_2/
 # misc
 .DS_Store
 .env
+.env.*
 .env.local
 .env.development
-.env.development.dev
-.env.development.main
-.env.development.local
+.env.development.*
 .env.test.local
 .env.production
-.env.production.local
+.env.production.*
 .env.supabase
 
 # arquivos grandes

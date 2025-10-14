@@ -1,0 +1,93 @@
+-- =============================================
+-- Função: call_youtube_edge_function
+-- Tipo: Helper Function (chamada HTTP à Edge Function)
+--
+-- Descrição:
+--   Chama a Edge Function "bright-function" para buscar dados de vídeos do YouTube.
+--   Usa extensão http do PostgreSQL para fazer requisição POST.
+--
+-- Entrada:
+--   project_id INTEGER - ID do projeto
+--   video_ids TEXT - IDs de vídeos separados por vírgula (ex: "id1,id2,id3")
+--   parts TEXT - Partes da API do YouTube a serem retornadas (default: 'statistics,snippet,contentDetails')
+--
+-- Saída:
+--   JSONB com dados dos vídeos retornados pela API do YouTube
+--
+-- Conexões:
+--   → Chamada por: 01_update_video_stats (linha 104)
+--   → Chama: Edge Function "bright-function" (Supabase)
+--
+-- Criado: Data desconhecida
+-- Atualizado: 2025-10-02 - Recuperado do Supabase e salvo localmente
+-- =============================================
+
+DROP FUNCTION IF EXISTS call_youtube_edge_function(INTEGER, TEXT, TEXT);
+
+CREATE OR REPLACE FUNCTION public.call_youtube_edge_function(
+    project_id integer,
+    video_ids text,
+    parts text DEFAULT 'statistics,snippet,contentDetails'::text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+AS $function$
+DECLARE
+    http_response http_response;
+    response JSONB;
+    request_body text;
+    timeout_ms integer := 60000; -- 60 segundos
+BEGIN
+    -- Preparar o corpo da requisição (semelhante à função que funciona)
+    request_body := jsonb_build_object(
+        'video_ids', video_ids,
+        'project_id', project_id::text,
+        'parts', parts
+    )::text;
+
+    -- Configurar o timeout
+    PERFORM http_set_curlopt('CURLOPT_TIMEOUT_MS', timeout_ms::text);
+
+    -- Log para depuração
+    RAISE NOTICE 'Enviando requisição: %', request_body;
+
+    -- Fazer a chamada à Edge Function (exatamente como na função que funciona)
+    SELECT * INTO http_response
+    FROM http((
+        'POST',
+        'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/bright-function',
+        ARRAY[
+            http_header('Content-Type', 'application/json'),
+            http_header('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I')
+        ]::http_header[],
+        'application/json',
+        request_body
+    )::http_request);
+
+    -- Resetar as opções CURL
+    PERFORM http_reset_curlopt();
+
+    -- Log da resposta
+    RAISE NOTICE 'Status da resposta: %, Corpo: %', http_response.status, http_response.content;
+
+    -- Verificar status da resposta
+    IF http_response.status != 200 THEN
+        RAISE EXCEPTION 'Erro na chamada da Edge Function. Status: %, Resposta: %',
+                         http_response.status, http_response.content;
+    END IF;
+
+    -- Processar a resposta
+    BEGIN
+        response := http_response.content::jsonb;
+        RETURN response;
+    EXCEPTION WHEN OTHERS THEN
+        RAISE EXCEPTION 'Erro ao processar a resposta: % | Resposta: %',
+                         SQLERRM, COALESCE(http_response.content, 'NULL');
+    END;
+
+EXCEPTION WHEN OTHERS THEN
+    -- Garantir que as opções CURL sejam resetadas mesmo em caso de erro
+    PERFORM http_reset_curlopt();
+    RAISE EXCEPTION 'Erro ao chamar a Edge Function: %', SQLERRM;
+END;
+$function$

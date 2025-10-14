@@ -540,14 +540,18 @@ const ProtectedLayout = ({
         return;
       }
 
-      // 🔥 PROTEÇÃO ANTI-LOOP: Só executar se projeto mudou
+      // 🔥 PROTEÇÃO ANTI-LOOP: Só executar se projeto OU status mudou
       const projectId: number | null = currentProject?.id ? Number(currentProject.id) : null;
-      if (projectId === lastCheckedProjectId) {
-        console.log('[ProtectedLayout] Projeto não mudou (ID:', projectId, '), pulando verificação');
+      const projectStatus = currentProject?.status || '0';
+      const currentKey = `${projectId}_${projectStatus}`; // Chave única: ID + Status
+      const lastKey = lastCheckedProjectId ? `${lastCheckedProjectId}_${sessionStorage.getItem('lastCheckedStatus') || '0'}` : null;
+
+      if (currentKey === lastKey) {
+        console.log('[ProtectedLayout] Projeto e status não mudaram (ID:', projectId, 'Status:', projectStatus, '), pulando verificação');
         return;
       }
 
-      console.log('[ProtectedLayout] Projeto mudou de', lastCheckedProjectId, 'para', projectId, '- verificando estado...');
+      console.log('[ProtectedLayout] Projeto ou status mudou de', lastKey, 'para', currentKey, '- verificando estado...');
       setCheckingState(true);
 
       try {
@@ -565,8 +569,9 @@ const ProtectedLayout = ({
         console.log('[ProtectedLayout] Estado retornado:', data);
         setDisplayState(data);
 
-        // Atualizar último ID checado (protege contra loop)
+        // Atualizar último ID e status checados (protege contra loop)
         setLastCheckedProjectId(projectId);
+        sessionStorage.setItem('lastCheckedStatus', projectStatus);
 
         setCheckingState(false);
       } catch (err) {
@@ -585,7 +590,7 @@ const ProtectedLayout = ({
     return () => {
       clearTimeout(debounceTimeout);
     };
-  }, [user, loading, onboardingReady, currentProject?.id, lastCheckedProjectId]); // ✅ currentProject?.id adicionado COM proteção anti-loop + debounce
+  }, [user, loading, onboardingReady, currentProject?.id, currentProject?.status, lastCheckedProjectId]); // ✅ currentProject?.id e status adicionado COM proteção anti-loop + debounce
 
   // VERIFICAÇÃO DE ROTAS PÚBLICAS - Calcular antes de usar
   const publicRoutes = ['/trends', '/liftlio-analytics', '/about', '/privacy', '/terms', '/security'];

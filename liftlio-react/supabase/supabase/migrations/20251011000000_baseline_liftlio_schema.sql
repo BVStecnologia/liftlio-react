@@ -1,0 +1,118 @@
+-- =============================================
+-- Migration: Baseline Liftlio Schema
+-- Date: 2025-10-11
+-- Description: Baseline migration - marking starting point for Git-based workflow
+--
+-- IMPORTANT: This migration represents the state of the Liftlio project
+-- after 276 existing migrations have already been applied in production.
+--
+-- Previous migrations (20250606074817 through 20251012125303) were applied
+-- directly through the Supabase Dashboard. This repository starts tracking
+-- from this point forward.
+--
+-- DO NOT run this migration on the live database - it's already applied.
+-- This file serves as documentation of the baseline state.
+-- =============================================
+
+-- =============================================
+-- EXTENSIONS (already installed in production)
+-- =============================================
+-- dblink, hstore, http, pg_cron, pg_graphql, pg_net
+-- pg_stat_statements, pgcrypto, pgsodium, supabase_vault
+-- tsm_system_time, uuid-ossp, vector, wrappers
+
+-- =============================================
+-- SCHEMAS
+-- =============================================
+-- public (default)
+-- auth (Supabase)
+-- storage (Supabase)
+-- graphql (pg_graphql)
+-- vault (supabase_vault)
+-- extensions (Supabase)
+-- pgsodium (pgsodium)
+
+-- =============================================
+-- TABLES IN PRODUCTION (33 tables)
+-- =============================================
+-- 1. Projeto (7 rows) - Main projects table
+-- 2. Integrações (6 rows) - OAuth integrations
+-- 3. Canais do youtube (41 rows) - YouTube channels
+-- 4. Videos (137 rows) - YouTube videos
+-- 5. Comentarios_Principais (1,019 rows) - Main comments
+-- 6. Respostas_Comentarios (1,219 rows) - Comment replies
+-- 7. Mensagens (607 rows) - Generated responses
+-- 8. Settings messages posts (536 rows) - Posting schedule
+-- 9. Scanner de videos do youtube (61 rows) - Keyword scanner
+-- 10. Videos_trancricao (256 rows) - Video transcripts
+-- 11. analytics (709 rows) - Analytics events
+-- 12. customers (4 rows) - Customer data
+-- 13. subscriptions (3 rows) - Subscription management
+-- 14. cards (5 rows) - Payment cards
+-- 15. payments (7 rows) - Payment history
+-- 16. email_templates (17 rows) - Email templates
+-- 17. email_logs (13 rows) - Email sending logs
+-- 18. agent_conversations (133 rows) - AI agent memory
+-- 19. rag_embeddings (1,568 rows) - RAG vector embeddings
+-- 20. youtube_trends_current (27 rows) - Trending topics
+-- 21. contact_submissions (1 row) - Contact form
+-- 22. blocked_submissions (0 rows) - Spam filter
+-- 23. Configurações (0 rows) - Project settings
+-- 24. Menção (0 rows) - Mentions tracking
+-- 25. Notificacoes (1 row) - Notifications
+-- 26. Perfil user (0 rows) - User profiles
+-- 27. Página de busca youtube (0 rows) - Search pages
+-- 28. agent_tools (5 rows) - AI agent tools
+-- 29. system_logs (448,652 rows) - System logging
+-- 30. url_analyzer_rate_limit (32 rows) - Rate limiting
+-- 31. youtube_scan_queue (60 rows) - Processing queue
+-- 32. Canais do youtube (updated schema with auto_disabled_reason)
+-- 33. Mensagens (updated schema with YouTube verification fields)
+
+-- =============================================
+-- KEY FEATURES IN PRODUCTION
+-- =============================================
+-- ✅ Vector search (pgvector) for RAG
+-- ✅ Full-text search (tsvector) on comments
+-- ✅ Row Level Security (RLS) on all user tables
+-- ✅ Scheduled jobs (pg_cron) for monitoring
+-- ✅ HTTP requests (http extension) for external APIs
+-- ✅ Email system with templates
+-- ✅ Analytics tracking system
+-- ✅ Payment processing (Square integration)
+-- ✅ YouTube OAuth integration
+-- ✅ AI agent with conversation memory
+-- ✅ Comment verification anti-spam system
+-- ✅ Automated blacklist for channels
+
+-- =============================================
+-- RECENT MAJOR CHANGES (Last 10 migrations)
+-- =============================================
+-- 20251012125303 - fix_claude_complete_timeout_parameter
+-- 20251012125059 - add_debug_logging_analisar_comentarios
+-- 20251012124057 - fix_atualizar_comentarios_analisados_markdown_e_format
+-- 20251012121847 - fix_analisar_comentarios_claude_params
+-- 20251012121420 - fix_analisar_comentarios_timeout
+-- 20251012120826 - fix_analyze_video_with_claude_json_parsing
+-- 20251012013015 - update_atualizar_comentarios_analisados
+-- 20251012012844 - deploy_analisar_comentarios_otimizado
+-- 20251012012134 - drop_old_analisar_comentarios
+-- 20251012011839 - fix_column_names_analisar_comentarios
+
+-- =============================================
+-- NEXT STEPS
+-- =============================================
+-- From this point forward, all schema changes will be:
+-- 1. Created as new migration files in this directory
+-- 2. Tested locally with `supabase start` and `supabase db reset`
+-- 3. Committed to Git
+-- 4. Applied to dev branch first
+-- 5. Merged to main (production) after testing
+
+-- =============================================
+-- NO-OP MIGRATION
+-- =============================================
+-- This migration intentionally contains no SQL statements.
+-- It serves only as a marker for the Git-based workflow starting point.
+
+SELECT 'Baseline migration - no changes to apply' AS status;
