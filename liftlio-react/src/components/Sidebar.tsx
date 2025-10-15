@@ -442,7 +442,7 @@ const NavItem = styled(NavLink)<{ isCollapsed?: boolean; $disabled?: boolean }>`
   will-change: transform, opacity, background-color;
   cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
   opacity: ${props => props.$disabled ? '0.5' : '1'};
-  pointer-events: ${props => props.$disabled ? 'auto' : 'auto'};
+  pointer-events: ${props => props.$disabled ? 'none' : 'auto'};
   
   @media (max-width: 768px) {
     padding: 16px 22px;
@@ -1471,7 +1471,7 @@ const NotificationTooltip = styled.div`
 
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed: isCollapsedProp = false, onToggleCollapse, onOpenAgent, isAgentOpen = false }) => {
-  const { currentProject, hasIntegrations, projectIntegrations } = useProject();
+  const { currentProject, hasIntegrations } = useProject();
   const { theme } = useTheme();
   const { t, language } = useLanguage();
   const { user, signOut } = useAuth();
@@ -1758,9 +1758,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
             {navItems.map(item => {
               // Determine which pages require integration
               const requiresIntegration = ['/dashboard', '/analytics', '/mentions', '/monitoring'].includes(item.path);
-              // Check for ACTIVE integrations only
-              const hasActiveIntegrations = projectIntegrations?.filter((i: any) => i.ativo).length > 0;
-              const isDisabled = requiresIntegration && (!hasActiveIntegrations || !currentProject);
+              // Use hasIntegrations from context (already calculated)
+              const isDisabled = requiresIntegration && (!hasIntegrations || !currentProject);
 
               return (
                 <NavItem
