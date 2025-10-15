@@ -1,0 +1,23 @@
+﻿FROM python:3.9-slim
+
+# Instalar dependências básicas
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Instalar dependências Python
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar código da aplicação
+COPY api.py main.py ./
+
+# Variáveis de ambiente (definidas via Fly.io secrets)
+ENV PORT=8080
+ENV DATAIMPULSE_HOST=gw.dataimpulse.com
+ENV DATAIMPULSE_PORT=10000
+
+# Iniciar aplicação diretamente
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8080"]
