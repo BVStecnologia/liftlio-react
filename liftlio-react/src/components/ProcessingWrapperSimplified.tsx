@@ -75,6 +75,12 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
   const { user } = useAuth();
   const { currentProject } = useProject();
 
+  // ✅ CORREÇÃO: Extrair propriedades primitivas para React detectar mudanças corretamente
+  const userEmail = user?.email;
+  const projectId = currentProject?.id;
+  const projectStatus = currentProject?.status;
+  const updateTimestamp = currentProject?._updateTimestamp;
+
   const [displayState, setDisplayState] = useState<any>(null);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
@@ -83,6 +89,13 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
     if (!user?.email) return;
 
     try {
+      console.log('[ProcessingWrapper] Verificando estado do projeto:', {
+        userId: user.email,
+        projectId: currentProject?.id,
+        currentStatus: currentProject?.status,
+        isPolling
+      });
+
       const { data, error } = await supabase.rpc('check_project_display_state', {
         p_user_email: user.email,
         p_project_id: currentProject?.id || null
@@ -93,17 +106,27 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
         return;
       }
 
+      console.log('[ProcessingWrapper] RPC retornou:', {
+        displayComponent: data?.display_component,
+        projectStatus: data?.project_status,
+        progress: data?.progress_percentage,
+        hasMessages: data?.has_messages
+      });
+
       // Atualiza estado IMEDIATAMENTE - sem queries extras
-      setDisplayState(data);
+      // Força nova referência para garantir re-render
+      setDisplayState({ ...data });
 
       // Setup polling APENAS se necessário
       if (data?.display_component === 'setup_processing' && !data?.has_messages) {
         if (!pollingInterval && !isPolling) {
+          console.log('[ProcessingWrapper] Iniciando polling a cada 5s...');
           const interval = setInterval(() => checkProjectState(true), 5000);
           setPollingInterval(interval);
         }
       } else {
         if (pollingInterval) {
+          console.log('[ProcessingWrapper] Parando polling');
           clearInterval(pollingInterval);
           setPollingInterval(null);
         }
@@ -113,15 +136,28 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
     }
   }, [user?.email, currentProject?.id, pollingInterval]);
 
-  // Effect - APENAS uma vez na montagem
+  // Effect - Re-executar quando user, project ID ou STATUS mudar
+  // ✅ CORREÇÃO: Usar propriedades primitivas extraídas em vez de optional chaining
   useEffect(() => {
+    console.log('🔵 [ProcessingWrapper] useEffect DISPARADO! Motivo: mudança detectada:', {
+      userEmail,
+      projectId,
+      projectStatus,
+      updateTimestamp,
+      timestamp: new Date().toISOString()
+    });
+
+    // Executar IMEDIATAMENTE sem debounce
     checkProjectState();
+
     return () => {
       if (pollingInterval) clearInterval(pollingInterval);
     };
-  }, [user?.email]); // SÓ user.email - não currentProject para evitar loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userEmail, projectId, projectStatus, updateTimestamp]); // ✅ Dependências primitivas - React compara por VALOR
 
-  // Mostra loading APENAS enquanto não tem dados
+  // Mostra loading APENAS na primeira carga (não durante atualizações)
+  // Se já temos displayState, nunca mostrar null (evita flash de tela branca)
   if (!displayState) {
     return null;
   }

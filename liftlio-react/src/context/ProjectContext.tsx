@@ -11,10 +11,11 @@ interface Project {
   user_id?: string;
   link?: string;
   audience?: string;
-  status?: string;
+  status?: string | number; // Pode ser string ("4") do banco ou number (4) após conversão
   "Project name"?: string; // Campo legado usado na interface
   projetc_index?: boolean; // Indica se este é o projeto selecionado pelo usuário
   fuso_horario?: string; // Fuso horário do usuário
+  _updateTimestamp?: number; // Timestamp para forçar detecção de mudanças no React
   // Adicione outros campos conforme necessário
 }
 
@@ -145,7 +146,7 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       // ⚡ OTIMIZAÇÃO: Só rodar se NÃO estiver em transição
       intervalRef.current = setInterval(() => {
         if (currentProject?.id && !isTransitioning.current) {
-          const status = parseInt(currentProject.status || '6', 10);
+          const status = parseInt(String(currentProject.status || '6'), 10);
           // Só verificar se está em processamento (status <= 6)
           if (status <= 6) {
             checkProjectProcessingState(currentProject.id);
@@ -677,8 +678,11 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       }
 
       // Create a channel for Projeto table changes
+      // IMPORTANTE: Nome único do canal para evitar conflitos
+      const channelName = `projeto-changes-${user.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
       const subscription = supabase
-        .channel('public:Projeto')
+        .channel(channelName)
         .on('postgres_changes',
             {
               event: '*',
@@ -687,7 +691,7 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
               filter: `user=eq.${user.email}`
             },
             (payload) => {
-              console.log('Real-time change detected:', payload);
+              console.log('[Real-time] 🔴 EVENTO CAPTURADO:', payload.eventType); // Force recompile
 
               // ⚡ OTIMIZAÇÃO: Ignorar eventos durante transição de projeto
               if (isTransitioning.current) {
@@ -700,19 +704,53 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
                 setProjects(prevProjects => [...prevProjects, payload.new as Project]);
               }
               else if (payload.eventType === 'UPDATE') {
+                // Criar nova referência do objeto para garantir que React detecta a mudança
+                const updatedProject = { ...payload.new as Project };
+
                 setProjects(prevProjects =>
                   prevProjects.map(project =>
-                    project.id === payload.new.id ? payload.new as Project : project
+                    project.id === updatedProject.id ? updatedProject : project
                   )
                 );
 
                 // If current project was updated, update it
-                if (currentProject && currentProject.id === payload.new.id) {
-                  setCurrentProject(payload.new as Project);
+                if (currentProject && currentProject.id === updatedProject.id) {
+                  console.log('[Real-time] 🔴 PROJETO ATUAL ATUALIZADO:', {
+                    oldStatus: (payload.old as any).status,
+                    newStatus: updatedProject.status,
+                    projectId: updatedProject.id
+                  });
 
-                  // Verificar estado de processamento quando o status muda
-                  if (payload.old.status !== payload.new.status) {
-                    checkProjectProcessingState(payload.new.id);
+                  // Converte status para string para comparação consistente
+                  const oldStatus = String((payload.old as any).status);
+                  const newStatus = String(updatedProject.status);
+
+                  if (oldStatus !== newStatus) {
+                    console.log('[Real-time] 🚨 STATUS MUDOU! Forçando atualização IMEDIATA...');
+
+                    // 1. Limpar TODOS os caches IMEDIATAMENTE
+                    const cacheKeys = [
+                      `project_cache_${updatedProject.id}`,
+                      `project_state_${updatedProject.id}`,
+                      `project_state_${updatedProject.id}_checking`
+                    ];
+
+                    cacheKeys.forEach(key => {
+                      sessionStorage.removeItem(key);
+                      sessionStorage.removeItem(`${key}_time`);
+                    });
+
+                    // 2. Atualizar o projeto COM O NOVO STATUS + TIMESTAMP para forçar detecção de mudança
+                    setCurrentProject({
+                      ...updatedProject,
+                      _updateTimestamp: Date.now() // Força nova referência do objeto
+                    });
+
+                    // 3. Forçar re-verificação IMEDIATA sem debounce
+                    checkProjectProcessingState(updatedProject.id);
+                  } else {
+                    // Se o status não mudou, apenas atualizar o projeto normalmente
+                    setCurrentProject({ ...updatedProject });
                   }
                 }
               }
@@ -729,11 +767,22 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
               }
             }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('[Real-time] 🟢 SUBSCRIPTION STATUS:', status);
+          if (status === 'SUBSCRIBED') {
+            console.log('[Real-time] ✅ REALTIME ATIVO! Escutando mudanças na tabela Projeto');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('[Real-time] ❌ ERRO NO CANAL! Realtime NÃO está funcionando');
+          } else if (status === 'TIMED_OUT') {
+            console.error('[Real-time] ⏱️ TIMEOUT! Realtime demorou demais para conectar');
+          } else if (status === 'CLOSED') {
+            console.warn('[Real-time] 🔴 CANAL FECHADO! Realtime foi desconectado');
+          }
+        });
 
       // Store subscription reference for cleanup
       subscriptionRef.current = subscription;
-      console.log('⚡ Real-time subscription established');
+      console.log('[Real-time] 📡 Tentando estabelecer subscription no canal:', channelName);
     } catch (error) {
       console.error('Error setting up real-time subscription:', error);
     }

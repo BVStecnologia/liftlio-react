@@ -131,6 +131,207 @@ ORDER BY smp.postado DESC;
 
 ---
 
+## 🧪 TESTE MANUAL DO PIPELINE (STATUS 0→4)
+
+**Quando usar**: Debugging, validação, ambiente sem trigger/CRON ativo
+
+**Projeto de teste**: 116 (2025-10-16)
+- 2 scanners ativos
+- 4 vídeos coletados
+- 222 comentários principais
+- Trigger desativado
+
+### ✅ STATUS 0 → 1: Inicialização
+```sql
+SELECT atualizar_scanner_rodada(116);
+```
+
+**Resultado**:
+```
+Definido campo rodada = 1 para 2 scanners ativos do projeto 116
+Status do projeto 116 atualizado para 1
+```
+
+**Validação**:
+- Scanner 580: rodada = 1
+- Scanner 581: rodada = 1
+- Projeto: status = '1'
+
+---
+
+### ✅ STATUS 1 → 2: Scanner Processing
+
+**⚠️ IMPORTANTE**: Esta função processa **1 scanner por vez**.
+Precisa rodar **N vezes** (onde N = quantidade de scanners ativos).
+
+```sql
+-- 1ª execução
+SELECT process_next_project_scanner(116);
+```
+
+**Resultado (1ª)**:
+```
+Scanner 580 processado com sucesso na tentativa 1. Restam 1 scanners pendentes no projeto 116
+```
+
+```sql
+-- 2ª execução (última, pois projeto tem 2 scanners)
+SELECT process_next_project_scanner(116);
+```
+
+**Resultado (2ª - ÚLTIMA)**:
+```
+Scanner 581 processado com sucesso na tentativa 1. Projeto 116 completamente processado. Status atualizado para 2.
+```
+
+**Validação**:
+- Scanner 580: rodada = NULL, "ID Verificado" = "YOzXnEv5Nmo,OQIBf2mIs58,ZT4LqD2_GwM"
+- Scanner 581: rodada = NULL, "ID Verificado" = "Y7trnay3nHQ"
+- 4 vídeos inseridos na tabela Videos (IDs: 28548, 28549, 28550, 28551)
+- Projeto: status = '2'
+
+---
+
+### ✅ STATUS 2 → 3: Video Stats & Comments
+
+**⚠️ IMPORTANTE**: Esta função processa **TODOS os vídeos de uma vez**.
+Roda **apenas 1 vez** (diferente da anterior).
+
+```sql
+SELECT update_video_stats(116);
+```
+
+**Resultado**:
+```
+Iniciando update_video_stats para o projeto 116
+Processando scanner ID: 580
+  Vídeo inserido: YOzXnEv5Nmo (ID: 28548)
+  Vídeo inserido: OQIBf2mIs58 (ID: 28549)
+  Vídeo inserido: ZT4LqD2_GwM (ID: 28550)
+Scanner 580 atualizado
+Processando scanner ID: 581
+  Vídeo inserido: Y7trnay3nHQ (ID: 28551)
+Scanner 581 atualizado
+Status do projeto atualizado para 3
+Iniciando processamento de comentários
+```
+
+**Validação**:
+- 4 vídeos com estatísticas (views, likes, comment_count)
+- 4 transcrições completas em Videos_trancricao (IDs: 1071-1074)
+- 222 comentários coletados em Comentarios_Principais:
+  - Vídeo 28548: 78 comentários
+  - Vídeo 28549: 18 comentários
+  - Vídeo 28550: 26 comentários
+  - Vídeo 28551: 100 comentários
+- Projeto: status = '3'
+
+---
+
+### ✅ STATUS 3 → 4: Video Analysis
+
+**⚠️ PROBLEMA CONHECIDO**: Função `start_video_analysis_processing(116)` dá **timeout** ao processar múltiplos vídeos síncronos.
+
+**Soluções alternativas**:
+
+**Opção 1: Processar vídeos individualmente**
+```sql
+-- Analisar 1 vídeo por vez
+SELECT analyze_video_with_claude('YOzXnEv5Nmo');
+SELECT update_video_analysis(28548);
+
+-- Repetir para cada vídeo...
+```
+
+**Opção 2: Recriar função se foi alterada**
+```sql
+-- Se a função foi modificada sem autorização, recriar do arquivo original
+-- Arquivo: STATUS_3_VIDEO_ANALYSIS/02_process_video_analysis_batch.sql
+```
+
+**Resultado esperado** (após processar todos os vídeos):
+- 4 vídeos com análise Claude completa
+- Campos preenchidos: sentiment_analysis, relevance_score, target_audience, etc.
+- Vídeos irrelevantes deletados (se score baixo)
+- Projeto: status = '4'
+
+**Validação STATUS 3→4**:
+```sql
+-- Ver análises dos vídeos
+SELECT
+    v.id,
+    v."VIDEO",
+    v.sentiment_analysis->>'is_relevant' as relevante,
+    v.sentiment_analysis->>'relevance_score' as score
+FROM "Videos" v
+JOIN "Scanner de videos do youtube" s ON v.scanner_id = s.id
+WHERE s."Projeto_id" = 116;
+```
+
+---
+
+### 📊 Resumo do Teste (Projeto 116)
+
+| Status | Função | Execuções | Tempo | Resultado |
+|--------|--------|-----------|-------|-----------|
+| 0→1 | `atualizar_scanner_rodada` | 1x | ~1s | 2 scanners com rodada=1 ✅ |
+| 1→2 | `process_next_project_scanner` | 2x | ~10s | 4 vídeos inseridos ✅ |
+| 2→3 | `update_video_stats` | 1x | ~30s | 4 transcrições + 222 comentários ✅ |
+| 3→4 | `start_video_analysis_processing` | 1x* | timeout | Vídeos analisados ⚠️ |
+
+**Total**: 4 vídeos prontos para análise de comentários (STATUS 4→5)
+
+*Função deu timeout. Usar opções alternativas documentadas acima.
+
+---
+
+### 🔍 Queries Úteis de Validação
+
+**Ver progresso geral**:
+```sql
+SELECT
+    p.id,
+    p.status,
+    COUNT(DISTINCT s.id) as scanners,
+    COUNT(DISTINCT v.id) as videos,
+    COUNT(DISTINCT cp.id) as comentarios
+FROM "Projeto" p
+LEFT JOIN "Scanner de videos do youtube" s ON s."Projeto_id" = p.id
+LEFT JOIN "Videos" v ON v.scanner_id = s.id
+LEFT JOIN "Comentarios_Principais" cp ON cp.video_id = v.id
+WHERE p.id = 116
+GROUP BY p.id, p.status;
+```
+
+**Ver transcrições**:
+```sql
+SELECT
+    v.id,
+    v."VIDEO",
+    LENGTH(vt.trancription) as tamanho,
+    LEFT(vt.trancription, 100) as preview
+FROM "Videos" v
+JOIN "Videos_trancricao" vt ON v.transcript = vt.id
+JOIN "Scanner de videos do youtube" s ON v.scanner_id = s.id
+WHERE s."Projeto_id" = 116;
+```
+
+**Ver comentários por vídeo**:
+```sql
+SELECT
+    v.id,
+    v."VIDEO",
+    COUNT(cp.id) as total_comentarios,
+    COUNT(CASE WHEN cp.comentario_analizado = true THEN 1 END) as analisados
+FROM "Videos" v
+LEFT JOIN "Comentarios_Principais" cp ON cp.video_id = v.id
+JOIN "Scanner de videos do youtube" s ON v.scanner_id = s.id
+WHERE s."Projeto_id" = 116
+GROUP BY v.id, v."VIDEO";
+```
+
+---
+
 ## 🚀 Workflow de Deploy
 
 ### Deploy de Função Nova

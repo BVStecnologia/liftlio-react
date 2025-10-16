@@ -1261,12 +1261,26 @@ const Integrations: React.FC = () => {
 
       if (data && data[0]?.success) {
         console.log('Integration reused successfully!');
-        setShowReuseModal(false);
-        setShowSuccessMessage(true);
-        fetchIntegrations(); // Recarregar integrações
 
-        // Redirecionar para overview imediatamente após sucesso
-        navigate('/overview');
+        try {
+          // Recarregar integrações antes de navegar
+          await fetchIntegrations();
+
+          // Aguardar contexto estabilizar (ProjectContext detecta mudanças automaticamente)
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          // Fechar modal e mostrar sucesso
+          setShowReuseModal(false);
+          setShowSuccessMessage(true);
+
+          // Navegar com segurança para overview
+          navigate('/overview');
+
+        } catch (error) {
+          console.error('Erro ao finalizar integração:', error);
+          alert('Integration connected but failed to refresh. Please reload the page.');
+          setIsConnecting(false);
+        }
       } else {
         console.error('RPC returned failure:', data);
         // Traduzir mensagem de erro se vier em português

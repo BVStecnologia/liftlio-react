@@ -7,6 +7,13 @@
   - Em andamento: `686b4ad61da133ac3b998284`
   - Completadas: `686b442bd7c4de1dbcb52ba8`
 
+## 🔴 REGRA CRÍTICA: ENGLISH ONLY
+**⚠️ ALL TRELLO CARDS MUST BE IN ENGLISH**
+- Titles: English
+- Descriptions: English
+- Comments: English
+- Labels: Can use emojis but text in English
+
 ## 📸 REGRA: Imagens são OBRIGATÓRIAS
 
 ### Geração de Imagens
@@ -65,20 +72,20 @@
 ## Exemplo de Uso
 
 ```typescript
-// Criar card com descrição completa
+// Create card with complete description (ALWAYS IN ENGLISH!)
 await mcp__trello__create_card({
-  name: "Implementar sistema de notificações",
+  name: "Implement notification system",
   desc: `
-## Objetivo
-Criar sistema de push notifications para avisos em tempo real
+## Objective
+Create push notification system for real-time alerts
 
 ## Tasks
-- [ ] Design do componente UI
-- [ ] Integração com Supabase Realtime
-- [ ] Testes cross-browser
+- [ ] UI component design
+- [ ] Supabase Realtime integration
+- [ ] Cross-browser testing
 - [ ] Deploy
 
-## Referências
+## References
 - Figma: [link]
 - Docs: [link]
   `,
@@ -86,13 +93,13 @@ Criar sistema de push notifications para avisos em tempo real
   due: "2025-10-20T12:00:00Z"
 });
 
-// Adicionar comentário
+// Add comment (ENGLISH!)
 await mcp__trello__add_comment({
   cardId: "card_id",
-  text: "✅ Design aprovado pelo Valdair"
+  text: "✅ Design approved by Valdair"
 });
 
-// Mover para Em andamento
+// Move to In Progress
 await mcp__trello__move_card_to_list({
   cardId: "card_id",
   listId: "686b4ad61da133ac3b998284"
@@ -100,9 +107,9 @@ await mcp__trello__move_card_to_list({
 ```
 
 ## Best Practices
-1. **Título claro**: Usar verbo de ação + contexto
-2. **Descrição estruturada**: Markdown com seções (Objetivo, Tasks, Refs)
-3. **Imagem sempre**: Usar GPT-Image-1 para visual impact
-4. **Labels descritivos**: Facilitar filtro e organização
-5. **Comentários**: Atualizar progresso com emojis (✅ ❌ ⚠️)
-6. **Anexos úteis**: Links para Figma, docs, PRs
+1. **Clear title**: Use action verb + context (IN ENGLISH!)
+2. **Structured description**: Markdown with sections (Objective, Tasks, Refs) (IN ENGLISH!)
+3. **Always include image**: Use GPT-Image-1 for visual impact
+4. **Descriptive labels**: Facilitate filtering and organization
+5. **Comments**: Update progress with emojis (✅ ❌ ⚠️) (IN ENGLISH!)
+6. **Useful attachments**: Links to Figma, docs, PRs

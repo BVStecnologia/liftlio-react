@@ -1,9 +1,12 @@
 -- =============================================
--- Função: process_comment_analysis_batch
--- Descrição: Processa lote de análise de comentários e gerencia job agendado
+-- Funï¿½ï¿½o: process_comment_analysis_batch
+-- Descriï¿½ï¿½o: Processa lote de anï¿½lise de comentï¿½rios e gerencia job agendado
 -- Criado: 2024-01-24
--- Atualizado: -
+-- Atualizado: 2025-10-16 - Adicionada proteï¿½ï¿½o anti-loop para evitar chamadas infinitas de Claude API
+--                          quando atualizar_comentarios_analisados falha ou retorna 0 atualizados
 -- =============================================
+
+DROP FUNCTION IF EXISTS process_comment_analysis_batch(integer, integer);
 
 CREATE OR REPLACE FUNCTION public.process_comment_analysis_batch(project_id integer, batch_size integer)
  RETURNS void
@@ -13,18 +16,73 @@ DECLARE
   v_comentarios_nao_analisados INTEGER;
   v_resultado TEXT;
   v_job_exists BOOLEAN;
+  v_num_atualizados INTEGER;
 BEGIN
-  -- Verifica quantos comentários ainda não foram analisados
+  -- Verifica quantos comentï¿½rios ainda nï¿½o foram analisados
   SELECT comentarios_nao_analisados INTO v_comentarios_nao_analisados
   FROM contar_comentarios_analisados(project_id);
 
   IF v_comentarios_nao_analisados > 0 THEN
-    -- Chama a função para analisar o próximo lote de comentários
+    -- Chama a funï¿½ï¿½o para analisar o prï¿½ximo lote de comentï¿½rios
     SELECT atualizar_comentarios_analisados(project_id) INTO v_resultado;
 
     RAISE NOTICE 'Processed batch for project ID: %. Result: %', project_id, v_resultado;
 
-    -- Agenda a próxima execução
+    -- PROTEÃ‡ÃƒO ANTI-LOOP: Verificar se houve sucesso real
+    IF v_resultado LIKE '%Erro%' OR
+       v_resultado LIKE '%retornou um resultado nulo%' OR
+       v_resultado LIKE '%nï¿½o ï¿½ um array JSON vï¿½lido%' OR
+       v_resultado IS NULL THEN
+
+        -- Log do erro
+        RAISE WARNING 'Anï¿½lise de comentï¿½rios FALHOU para projeto %: %', project_id, v_resultado;
+
+        -- Remover job agendado se existir
+        SELECT EXISTS (
+          SELECT 1 FROM cron.job
+          WHERE jobname = 'process_comment_analysis_' || project_id::text
+        ) INTO v_job_exists;
+
+        IF v_job_exists THEN
+          PERFORM cron.unschedule('process_comment_analysis_' || project_id::text);
+        END IF;
+
+        -- Marcar projeto com erro voltando para STATUS 4
+        UPDATE public."Projeto"
+        SET status = '4' -- Manter em 4 para retry manual
+        WHERE id = project_id;
+
+        -- IMPORTANTE: Sair SEM reagendar para evitar loop infinito de Claude API
+        RETURN;
+    END IF;
+
+    -- Verificar se realmente atualizou algo (evita loop com "Atualizados: 0")
+    IF v_resultado LIKE 'Processados:%Atualizados:%' THEN
+        -- Extrair nï¿½mero de atualizados usando regex
+        v_num_atualizados := COALESCE(
+            substring(v_resultado from 'Atualizados: (\d+)')::INTEGER,
+            0
+        );
+
+        IF v_num_atualizados = 0 THEN
+            RAISE WARNING 'Nenhum comentï¿½rio foi atualizado para projeto %, possï¿½vel problema de IDs ou todos jï¿½ processados', project_id;
+
+            -- Remover job se existir
+            SELECT EXISTS (
+              SELECT 1 FROM cron.job
+              WHERE jobname = 'process_comment_analysis_' || project_id::text
+            ) INTO v_job_exists;
+
+            IF v_job_exists THEN
+              PERFORM cron.unschedule('process_comment_analysis_' || project_id::text);
+            END IF;
+
+            -- Tambï¿½m parar neste caso para evitar loop
+            RETURN;
+        END IF;
+    END IF;
+
+    -- Sï¿½ agenda prï¿½xima execuï¿½ï¿½o se tudo ocorreu bem
     PERFORM cron.schedule(
       'process_comment_analysis_' || project_id::text,
       '5 seconds',
@@ -32,7 +90,7 @@ BEGIN
     );
 
   ELSE
-    -- Verifica se o job existe antes de tentar removê-lo
+    -- Verifica se o job existe antes de tentar removï¿½-lo
     SELECT EXISTS (
       SELECT 1
       FROM cron.job
@@ -44,7 +102,7 @@ BEGIN
       PERFORM cron.unschedule('process_comment_analysis_' || project_id::text);
     END IF;
 
-    -- Atualiza o status do projeto para 4 quando todos os comentários foram processados
+    -- Atualiza o status do projeto para 4 quando todos os comentï¿½rios foram processados
     UPDATE public."Projeto"
     SET status = '5'
     WHERE id = project_id;

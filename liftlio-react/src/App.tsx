@@ -495,7 +495,7 @@ const ProtectedLayout = ({
     const oauthCompleted = urlParams.get('oauth_completed') === 'true';
 
     // Projeto em processamento - deixar ProcessingWrapper cuidar
-    const projectStatus = parseInt(currentProject?.status || '0', 10);
+    const projectStatus = parseInt(String(currentProject?.status || '0'), 10);
     if (currentProject && projectStatus <= 5) {
       console.log('Projeto em processamento, deixando ProcessingWrapper controlar');
       setIsInitializing(false);
@@ -571,7 +571,7 @@ const ProtectedLayout = ({
 
         // Atualizar último ID e status checados (protege contra loop)
         setLastCheckedProjectId(projectId);
-        sessionStorage.setItem('lastCheckedStatus', projectStatus);
+        sessionStorage.setItem('lastCheckedStatus', String(projectStatus));
 
         setCheckingState(false);
       } catch (err) {
@@ -630,7 +630,7 @@ const ProtectedLayout = ({
 
     // Verificar status do projeto
     // Projetos em processamento (status 0-5) vão pro dashboard
-    const projectStatus = parseInt(currentProject?.status || '0', 10);
+    const projectStatus = parseInt(String(currentProject?.status || '0'), 10);
     if (currentProject && projectStatus <= 5) {
       console.log('[getLayoutType] Projeto em processamento (status:', projectStatus, '), indo para dashboard');
       return 'dashboard'; // ProcessingWrapper vai cuidar da visualização
@@ -655,7 +655,7 @@ const ProtectedLayout = ({
   ]);
 
   // Verificar se projeto está em processamento ANTES de decidir se retorna null
-  const currentProjectStatus = parseInt(currentProject?.status || '0', 10);
+  const currentProjectStatus = parseInt(String(currentProject?.status || '0'), 10);
   const isProjectProcessing = currentProject && currentProjectStatus <= 5;
 
   // Verificar se há parâmetros OAuth na URL antes de redirecionar
@@ -792,199 +792,11 @@ const ProtectedLayout = ({
     );
   }
 
+  // REMOVIDO: Lógica duplicada de setup_processing
+  // O ProcessingWrapperSimplified agora cuida disso nas rotas /dashboard, /monitoring, /mentions
   if (displayState?.display_component === 'setup_processing') {
-    console.log('[ProtectedLayout] SQL indica setup_processing, renderizando tela de processamento COM layout');
-    const progress = displayState?.progress_percentage || 0;
-    const message = displayState?.processing_message || 'Processing...';
-    const status = displayState?.project_status || 0;
-
-    const ProcessStep = ({ number, label, active, completed }: {
-      number: number;
-      label: string;
-      active?: boolean;
-      completed?: boolean;
-    }) => (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '20px',
-        opacity: completed || active ? 1 : 0.5
-      }}>
-        <div style={{
-          width: '32px',
-          height: '32px',
-          borderRadius: '50%',
-          background: completed ? 'linear-gradient(135deg, #8b5cf6, #a855f7)' :
-                      active ? 'rgba(139, 92, 246, 0.2)' :
-                      'rgba(255, 255, 255, 0.1)',
-          border: active ? '2px solid #8b5cf6' : 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: '12px',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          color: completed || active ? '#fff' : 'rgba(255, 255, 255, 0.5)',
-          transition: 'all 0.3s ease',
-          boxShadow: active ? '0 0 20px rgba(139, 92, 246, 0.4)' :
-                     completed ? '0 0 10px rgba(168, 85, 247, 0.3)' : 'none'
-        }}>
-          {completed ? '✓' : number}
-        </div>
-        <div style={{
-          flex: 1,
-          fontSize: '14px',
-          color: completed || active ? '#fff' : 'rgba(255, 255, 255, 0.5)',
-          fontWeight: active ? '500' : 'normal'
-        }}>
-          {label}
-          {active && (
-            <span style={{
-              marginLeft: '8px',
-              fontSize: '12px',
-              color: '#a855f7',
-              animation: 'pulse 1.5s ease-in-out infinite'
-            }}>
-              Processing...
-            </span>
-          )}
-        </div>
-      </div>
-    );
-
-    const steps = [
-      { number: 1, label: 'Starting project setup' },
-      { number: 2, label: 'Connecting to YouTube API' },
-      { number: 3, label: 'Analyzing channel and videos' },
-      { number: 4, label: 'Processing engagement metrics' },
-      { number: 5, label: 'Analyzing comments with AI' },
-      { number: 6, label: 'Generating insights and reports' },
-      { number: 7, label: 'Finalizing initial processing' }
-    ];
-
-    return (
-      <AppContainer>
-        <Suspense fallback={null}>
-          <Sidebar
-            isOpen={sidebarOpen}
-            onClose={() => toggleSidebar()}
-            onOpenAgent={toggleAgent}
-            isAgentOpen={agentOpen}
-          />
-        </Suspense>
-        <MainContent>
-          <Suspense fallback={null}>
-            <Header toggleSidebar={toggleSidebar} />
-          </Suspense>
-          <ContentWrapper>
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: 'calc(100vh - 200px)',
-              padding: '20px',
-              width: '100%'
-            }}>
-              <div style={{
-                background: 'linear-gradient(135deg, rgba(26, 26, 26, 0.98) 0%, rgba(30, 30, 30, 0.95) 100%)',
-                borderRadius: '20px',
-                padding: '40px',
-                maxWidth: '600px',
-                width: '100%',
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
-                margin: '0 auto'
-              }}>
-                <h2 style={{
-                  fontSize: '24px',
-                  fontWeight: '600',
-                  marginBottom: '8px',
-                  background: 'linear-gradient(135deg, #8b5cf6, #a855f7)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  textAlign: 'center'
-                }}>
-                  Setting Up Your Project
-                </h2>
-
-                <p style={{
-                  fontSize: '14px',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  marginBottom: '10px',
-                  textAlign: 'center'
-                }}>
-                  {message}
-                </p>
-
-                <p style={{
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.4)',
-                  marginBottom: '30px',
-                  textAlign: 'center',
-                  fontStyle: 'italic'
-                }}>
-                  This may take a few minutes on your first setup while we analyze your content
-                </p>
-
-                <div style={{ marginBottom: '30px' }}>
-                  {steps.map((step, index) => (
-                    <ProcessStep
-                      key={step.number}
-                      number={step.number}
-                      label={step.label}
-                      active={index === status}
-                      completed={index < status}
-                    />
-                  ))}
-                </div>
-
-                <div style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '10px',
-                  height: '8px',
-                  overflow: 'hidden',
-                  marginTop: '20px'
-                }}>
-                  <div style={{
-                    background: 'linear-gradient(90deg, #8b5cf6, #a855f7)',
-                    height: '100%',
-                    width: `${progress}%`,
-                    transition: 'width 0.5s ease',
-                    boxShadow: '0 0 10px rgba(139, 92, 246, 0.5)'
-                  }} />
-                </div>
-
-                <p style={{
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.4)',
-                  marginTop: '10px',
-                  textAlign: 'center'
-                }}>
-                  {progress}% Complete
-                </p>
-              </div>
-
-              <style>{`
-                @keyframes pulse {
-                  0%, 100% { opacity: 1; }
-                  50% { opacity: 0.6; }
-                }
-              `}</style>
-            </div>
-          </ContentWrapper>
-        </MainContent>
-        <FloatingMenuButton onClick={toggleSidebar}>
-          <IconComponent icon={FaBars} />
-        </FloatingMenuButton>
-        <Suspense fallback={null}>
-          <FloatingAgent
-            externalIsOpen={agentOpen}
-            onExternalToggle={toggleAgent}
-          />
-        </Suspense>
-      </AppContainer>
-    );
+    console.log('[ProtectedLayout] SQL indica setup_processing, permitindo rotas renderizarem ProcessingWrapper');
+    // Continuar para renderizar layout normal - ProcessingWrapper decide o que mostrar
   }
 
   if (displayState?.display_component === 'integration_disabled') {

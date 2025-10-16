@@ -47,6 +47,187 @@ Ambas as fases usam **batch processing** com **circuit breaker** para respeitar 
 
 ---
 
+## 🧪 TESTE MANUAL PASSO A PASSO
+
+**Quando usar**: Debugging, validação de funções, ambiente sem CRON ativo
+
+**Pré-requisitos**:
+- Trigger desativado (não deletará comentários automaticamente)
+- Projeto criado com scanners ativos
+
+### ETAPA 1: STATUS 0 → 1 (Inicialização)
+```sql
+-- Função: atualizar_scanner_rodada
+-- Objetivo: Definir rodada=1 nos scanners e mudar status para '1'
+
+SELECT atualizar_scanner_rodada(116);
+```
+
+**Resultado esperado**:
+```
+Definido campo rodada = 1 para 2 scanners ativos do projeto 116
+Cache de scanners não atualizado - função ausente
+Status do projeto 116 atualizado para 1 - Pronto para processar
+```
+
+**Validação**:
+```sql
+-- Verificar scanners
+SELECT id, "Keyword", rodada, "Ativa?"
+FROM "Scanner de videos do youtube"
+WHERE "Projeto_id" = 116;
+-- Resultado: rodada = 1, Ativa? = true
+
+-- Verificar status do projeto
+SELECT id, status FROM "Projeto" WHERE id = 116;
+-- Resultado: status = '1'
+```
+
+---
+
+### ETAPA 2: STATUS 1 → 2 (Buscar vídeos do YouTube)
+```sql
+-- Função: process_next_project_scanner
+-- Objetivo: Processar scanners UM POR VEZ (rodada IS NOT NULL)
+-- IMPORTANTE: Roda N VEZES (N = quantidade de scanners ativos do projeto)
+
+-- Primeira execução
+SELECT process_next_project_scanner(116);
+```
+
+**Resultado esperado (1ª execução)**:
+```
+Scanner 580 processado com sucesso na tentativa 1. Restam 1 scanners pendentes no projeto 116
+```
+
+```sql
+-- Segunda execução (último scanner, pois projeto 116 tem 2 scanners)
+SELECT process_next_project_scanner(116);
+```
+
+**Resultado esperado (2ª execução - ÚLTIMA)**:
+```
+Scanner 581 processado com sucesso na tentativa 1. Projeto 116 completamente processado. Status atualizado para 2.
+```
+
+**IMPORTANTE**: Se o projeto tivesse 5 scanners, seria necessário rodar 5 vezes.
+
+**Validação**:
+```sql
+-- Verificar scanners processados
+SELECT id, "Keyword", rodada
+FROM "Scanner de videos do youtube"
+WHERE "Projeto_id" = 116;
+-- Resultado: rodada = NULL (foi limpo após processamento)
+
+-- Verificar vídeos inseridos
+SELECT id, "VIDEO", video_title, scanner_id
+FROM "Videos" v
+JOIN "Scanner de videos do youtube" s ON v.scanner_id = s.id
+WHERE s."Projeto_id" = 116
+ORDER BY id;
+-- Resultado: 4 vídeos inseridos (IDs: 28548, 28549, 28550, 28551)
+
+-- Verificar status do projeto
+SELECT id, status FROM "Projeto" WHERE id = 116;
+-- Resultado: status = '2'
+```
+
+**Observação importante**:
+- Esta função processa **1 scanner por vez**
+- Precisa rodar **N vezes** (onde N = quantidade de scanners ativos do projeto)
+- Com CRON ativo, roda automaticamente a cada X segundos até `remaining_count = 0`
+
+---
+
+### ETAPA 3: STATUS 2 → 3 (Estatísticas e Comentários)
+```sql
+-- Função: update_video_stats
+-- Objetivo: Buscar estatísticas e comentários dos vídeos
+-- IMPORTANTE: Processa TODOS os scanners/vídeos de UMA VEZ
+
+SELECT update_video_stats(116);
+```
+
+**Resultado esperado**:
+```
+Iniciando update_video_stats para o projeto 116 em 2025-10-16 15:16:04.929733+00
+Processando scanner ID: 580
+Processando 3 IDs
+Vídeo inserido: YOzXnEv5Nmo (ID: 28548)
+Vídeo inserido: OQIBf2mIs58 (ID: 28549)
+Vídeo inserido: ZT4LqD2_GwM (ID: 28550)
+Scanner 580 atualizado: IDs verificados e cache limpo
+Processando scanner ID: 581
+Processando 1 IDs
+Vídeo inserido: Y7trnay3nHQ (ID: 28551)
+Scanner 581 atualizado: IDs verificados e cache limpo
+Status do projeto atualizado para 3
+Iniciando processamento de comentários
+```
+
+**Validação**:
+```sql
+-- Verificar vídeos com estatísticas
+SELECT id, "VIDEO", view_count, like_count, comment_count, stats_atualizadas
+FROM "Videos" v
+JOIN "Scanner de videos do youtube" s ON v.scanner_id = s.id
+WHERE s."Projeto_id" = 116;
+-- Resultado: stats_atualizadas = true, campos de stats preenchidos
+
+-- Verificar comentários coletados
+SELECT COUNT(*) as total_comentarios
+FROM "Comentarios_Principais" cp
+JOIN "Videos" v ON cp.video_id = v.id
+JOIN "Scanner de videos do youtube" s ON v.scanner_id = s.id
+WHERE s."Projeto_id" = 116;
+-- Resultado: Comentários inseridos
+
+-- Verificar status do projeto
+SELECT id, status FROM "Projeto" WHERE id = 116;
+-- Resultado: status = '3'
+```
+
+**Observação importante**:
+- Esta função processa **TODOS os vídeos de uma vez**
+- **NÃO precisa rodar múltiplas vezes** (diferente de process_next_project_scanner)
+- Já muda o status para '3' automaticamente
+- Já inicia o processamento de comentários automaticamente
+
+---
+
+### 📊 COMPARAÇÃO: Processamento 1 por vez vs Todos de uma vez
+
+| Função | Processa | Precisa Rodar Múltiplas Vezes? | Status ao Fim |
+|--------|----------|--------------------------------|---------------|
+| `atualizar_scanner_rodada()` | Todos os scanners | ❌ Não (1x apenas) | '1' |
+| `process_next_project_scanner()` | 1 scanner por vez | ✅ Sim (N vezes = N scanners) | '2' |
+| `update_video_stats()` | Todos os vídeos | ❌ Não (1x apenas) | '3' |
+
+---
+
+### ✅ CHECKLIST DE TESTE MANUAL
+
+**STATUS 0→1**:
+- [x] 2 scanners com `rodada = 1`
+- [x] Status do projeto = '1'
+
+**STATUS 1→2**:
+- [x] Scanner 580 processado (3 vídeos)
+- [x] Scanner 581 processado (1 vídeo)
+- [x] Total: 4 vídeos na tabela Videos
+- [x] Scanners com `rodada = NULL`
+- [x] Status do projeto = '2'
+
+**STATUS 2→3**:
+- [x] 4 vídeos com estatísticas (views, likes, comments)
+- [x] Comentários coletados e salvos
+- [x] Status do projeto = '3'
+
+**Próximos passos**: STATUS 3→4 (Análise de sentimentos), STATUS 4→5 (Análise PICS de comentários)
+
+---
+
 ## 🔄 FLUXO DETALHADO
 
 ```

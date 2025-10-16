@@ -3,6 +3,7 @@
 -- Descricao: Sistema completo de qualificacao de leads usando analise PICS via Claude
 -- Criado: 2025-01-23
 -- Atualizado: 2025-10-15 - Sincronizado com Supabase main (LIMIT 20/15, timeout 300s)
+-- Atualizado: 2025-10-16 - max_tokens aumentado 4000->16000 para evitar truncamento JSON
 -- =============================================
 
 DROP FUNCTION IF EXISTS analisar_comentarios_com_claude(integer, integer);
@@ -186,7 +187,7 @@ BEGIN
         'IMPORTANTE: Comentarios com pontuacao inferior a 6 DEVEM ser marcados como "lead": false. ' ||
         'A justificativa deve explicar o raciocinio, referenciar elementos do contexto e ser concisa (100-150 caracteres). ' ||
         'Responda somente com o JSON solicitado, sem texto adicional',
-        4000,
+        16000,
         0.3,
         300000
     ) INTO resultado_claude;
