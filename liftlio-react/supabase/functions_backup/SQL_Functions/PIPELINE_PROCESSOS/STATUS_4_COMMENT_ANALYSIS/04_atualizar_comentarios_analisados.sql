@@ -3,6 +3,7 @@
 -- Descrição: Atualiza comentários com análise do Claude
 -- Dependência de: process_comment_analysis_batch
 -- Criado: 2025-01-27
+-- Atualizado: 2025-10-15 - Sincronizado com versão do Supabase main (tratamento BOM, mensagens melhoradas)
 -- =============================================
 
 DROP FUNCTION IF EXISTS atualizar_comentarios_analisados(integer);
@@ -28,20 +29,28 @@ BEGIN
         RETURN 'A função analisar_comentarios_com_claude retornou um resultado nulo ou vazio';
     END IF;
 
-    -- Limpar markdown fence antes de converter
-    v_resultado_claude := regexp_replace(v_resultado_claude, '^\s*```json\s*|\s*```\s*$', '', 'g');
-    v_resultado_claude := trim(v_resultado_claude);
+    -- Limpar qualquer markdown fence, whitespace e caracteres de controle
+    v_resultado_claude := regexp_replace(v_resultado_claude, '^\s*```json\s*', '', 'g');
+    v_resultado_claude := regexp_replace(v_resultado_claude, '\s*```\s*$', '', 'g');
+    v_resultado_claude := trim(both E'\n\r\t ' from v_resultado_claude);
+
+    -- Remover possível BOM (Byte Order Mark) ou caracteres invisíveis
+    v_resultado_claude := regexp_replace(v_resultado_claude, '^\uFEFF', '');
 
     -- Converter o resultado para JSONB
     BEGIN
         v_json_resultado := v_resultado_claude::JSONB;
     EXCEPTION WHEN OTHERS THEN
-        RETURN 'Erro ao converter o resultado para JSONB: ' || v_resultado_claude;
+        -- Retornar apenas os primeiros 500 caracteres do erro para evitar overflow
+        RETURN 'Erro ao converter o resultado para JSONB. Primeiros 500 chars: ' ||
+               left(v_resultado_claude, 500) || '... [truncado]. Erro: ' || SQLERRM;
     END;
 
     -- Verificar se o JSON resultante é um array
     IF jsonb_typeof(v_json_resultado) != 'array' THEN
-        RETURN 'O resultado não é um array JSON válido: ' || v_json_resultado::text;
+        RETURN 'O resultado não é um array JSON válido. Tipo: ' ||
+               jsonb_typeof(v_json_resultado) || '. Primeiros 500 chars: ' ||
+               left(v_json_resultado::text, 500);
     END IF;
 
     -- Iterar sobre cada comentário no resultado
@@ -66,15 +75,17 @@ BEGIN
             v_atualizados := v_atualizados + v_rows_affected;
 
             IF v_rows_affected = 0 THEN
-                v_nao_atualizados := v_nao_atualizados || 'Comentário não atualizado: ' || v_comentario::text || '; ';
+                v_nao_atualizados := v_nao_atualizados || 'ID não encontrado: ' ||
+                                     COALESCE((v_comentario->>'comment_id'), (v_comentario->>'comentario_id'), 'null') || '; ';
             END IF;
         EXCEPTION WHEN OTHERS THEN
-            v_nao_atualizados := v_nao_atualizados || 'Erro ao atualizar comentário: ' || SQLERRM || '; ';
+            v_nao_atualizados := v_nao_atualizados || 'Erro: ' || SQLERRM || '; ';
         END;
     END LOOP;
 
     -- Retornar um resumo das operações
     RETURN 'Processados: ' || v_total_processados || ', Atualizados: ' || v_atualizados ||
-           ', Não atualizados: ' || (v_total_processados - v_atualizados) || '. Detalhes: ' || v_nao_atualizados;
+           ', Não atualizados: ' || (v_total_processados - v_atualizados) ||
+           CASE WHEN v_nao_atualizados != '' THEN '. Detalhes: ' || v_nao_atualizados ELSE '' END;
 END;
 $function$

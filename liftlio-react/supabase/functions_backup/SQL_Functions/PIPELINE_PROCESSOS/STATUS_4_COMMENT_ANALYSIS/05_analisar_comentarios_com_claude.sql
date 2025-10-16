@@ -2,16 +2,15 @@
 -- Funcao: analisar_comentarios_com_claude
 -- Descricao: Sistema completo de qualificacao de leads usando analise PICS via Claude
 -- Criado: 2025-01-23
--- Atualizado: 2025-10-12 - Refatorado para concatenação de strings (evita problemas de encoding)
+-- Atualizado: 2025-10-15 - Sincronizado com Supabase main (LIMIT 20/15, timeout 300s)
 -- =============================================
 
 DROP FUNCTION IF EXISTS analisar_comentarios_com_claude(integer, integer);
 
-CREATE OR REPLACE FUNCTION public.analisar_comentarios_com_claude(
-    p_project_id INTEGER,
-    p_video_id INTEGER DEFAULT NULL
-)
-RETURNS TEXT AS $
+CREATE OR REPLACE FUNCTION public.analisar_comentarios_com_claude(p_project_id integer, p_video_id integer DEFAULT NULL::integer)
+ RETURNS text
+ LANGUAGE plpgsql
+AS $function$
 DECLARE
     prompt_claude TEXT;
     resultado_claude TEXT;
@@ -67,7 +66,7 @@ BEGIN
                     FROM public."Comentarios_Principais" cp
                     WHERE cp.video_id = v.id
                     AND (cp.comentario_analizado IS NULL OR cp.comentario_analizado = FALSE)
-                    LIMIT 100
+                    LIMIT 20
                 ) AS comentarios
             FROM public."Videos" v
             LEFT JOIN public."Scanner de videos do youtube" s ON v.scanner_id = s.id
@@ -126,7 +125,7 @@ BEGIN
                     FROM public."Comentarios_Principais" cp
                     WHERE cp.video_id = v.id
                     AND (cp.comentario_analizado IS NULL OR cp.comentario_analizado = FALSE)
-                    LIMIT 10
+                    LIMIT 15
                 ) AS comentarios
             FROM videos_do_projeto vdp
             JOIN public."Videos" v ON vdp.video_id = v.id
@@ -189,9 +188,9 @@ BEGIN
         'Responda somente com o JSON solicitado, sem texto adicional',
         4000,
         0.3,
-        90000
+        300000
     ) INTO resultado_claude;
 
     RETURN resultado_claude;
 END;
-$ LANGUAGE plpgsql;
+$function$
