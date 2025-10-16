@@ -1,5 +1,136 @@
 # SQL Functions - Liftlio
 
+**Última atualização**: 2025-01-15
+**Total**: 27 SQL Functions + 5 Edge Functions
+**Pipeline**: 7 stages (STATUS 0-6) | ~2 minutos total
+
+---
+
+## 📊 VISÃO GERAL DO SISTEMA
+
+### Pipeline Liftlio - Fluxo Completo
+
+```
+STATUS 0 → 1: INICIALIZAÇÃO (~1s)
+  └─> atualizar_scanner_rodada()
+
+STATUS 1 → 2: SCANNER PROCESSING (~20s)
+  └─> process_next_project_scanner()
+      └─> update_video_id_cache()
+      └─> get_youtube_channel_videos() [Edge Function]
+
+STATUS 2 → 3: VIDEO STATS & COMMENTS (~30s)
+  └─> update_video_stats()
+  └─> start_video_processing()
+      └─> process_videos_batch()
+      └─> fetch_and_store_comments_for_video()
+
+STATUS 3 → 4: VIDEO ANALYSIS (~20s)
+  └─> start_video_analysis_processing()
+      └─> process_video_analysis_batch()
+      └─> analyze_video_with_claude() [Edge Function]
+
+STATUS 4 → 5: COMMENT ANALYSIS (~30s)
+  └─> start_comment_analysis_processing()
+      └─> process_comment_analysis_batch()
+      └─> analisar_comentarios_com_claude() [Edge Function]
+
+STATUS 5 → 6: ENGAGEMENT MESSAGES (~20s)
+  └─> start_engagement_messages_processing()
+      └─> process_engagement_messages_batch()
+      └─> process_engagement_comments_with_claude() [Edge Function]
+      └─> agendar_postagens_todos_projetos()
+```
+
+### 🎯 Sistema Dual de Mensagens
+
+**SISTEMA 1: DESCOBERTA (99.7%)**
+- 2.238 mensagens de RESPOSTA a comentários
+- Scanner busca vídeos relevantes via keywords
+- PICS score identifica leads potenciais
+- Cria respostas personalizadas
+- `Comentarios_Principal IS NOT NULL`
+
+**SISTEMA 2: MONITORAMENTO (0.3%)**
+- 48 mensagens INICIAIS (não responde ninguém)
+- Top canais do projeto monitorados
+- Comentários engajantes em vídeos "quentes"
+- `Comentarios_Principal IS NULL`
+
+**Diferenciador Real**: Campo `Comentarios_Principal` (não `tipo_msg`)
+**Tipos de Resposta**: 'engajamento' (570) | 'produto' (40)
+
+### 🛡️ Proteções e Tecnologias
+
+**Mecanismos:**
+- Advisory Locks: `pg_try_advisory_lock()`
+- Circuit Breaker: Máx 100 exec/hora
+- Backoff Exponencial: 7s → 15s → 30s
+- Batch Processing: Paralelização otimizada
+
+**Stack:**
+- PostgreSQL (PL/pgSQL)
+- pg_cron (agendamento)
+- Supabase Edge Functions (Deno)
+- YouTube Data API v3
+- Claude API (Anthropic)
+
+### 📋 Estrutura de Tabelas Principais
+
+**Settings messages posts** (Agendamento)
+```
+id                      : ID do agendamento
+Projeto                 : Projeto dono
+Videos                  : Vídeo onde será postado
+Comentarios_Principal   : Comentário PAI (⚠️ NULL = inicial, NOT NULL = resposta)
+Mensagens              : Mensagem criada pela IA
+status                 : 'pending' | 'posted'
+postado                : Timestamp da postagem
+proxima_postagem       : Agendamento futuro
+tipo_msg               : Tipo de agendamento
+```
+
+**Mensagens** (Conteúdo)
+```
+id                     : ID da mensagem
+mensagem              : Texto da resposta gerada
+respondido            : Se já foi postado
+tipo_msg              : Tipo de processamento
+tipo_resposta         : 'engajamento' | 'produto'
+project_id            : Projeto dono
+```
+
+**Comentarios_Principais** (Comentários originais)
+```
+id                    : ID interno
+id_do_comentario      : ID do YouTube (parent comment)
+text_display          : Texto original do comentário
+author_name           : Autor do comentário
+```
+
+**Query Útil: Ver respostas postadas**
+```sql
+SELECT
+    smp.id,
+    smp.postado,
+    m.mensagem as nossa_resposta,
+    m.tipo_resposta,
+    cp.text_display as comentario_original,
+    cp.id_do_comentario as youtube_parent_id,
+    v."VIDEO" as youtube_video_id,
+    c.nome as canal
+FROM "Settings messages posts" smp
+JOIN "Mensagens" m ON smp."Mensagens" = m.id
+JOIN "Comentarios_Principais" cp ON smp."Comentarios_Principal" = cp.id
+JOIN "Videos" v ON smp."Videos" = v.id
+JOIN "Canais do youtube" c ON v."Canais" = c.id
+WHERE smp.status = 'posted'
+AND smp."Comentarios_Principal" IS NOT NULL
+ORDER BY smp.postado DESC;
+```
+
+---
+
 ## 🚀 Workflow de Deploy
 
 ### Deploy de Função Nova
