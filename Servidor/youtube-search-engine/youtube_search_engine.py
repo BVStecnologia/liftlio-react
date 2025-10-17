@@ -130,7 +130,7 @@ REGRAS IMPORTANTES:
 Gere 5 queries SIMPLES e EFETIVAS. Retorne APENAS as queries, uma por linha."""
 
         response = self.claude.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=200,
             temperature=0.3,
             messages=[{"role": "user", "content": prompt}]
@@ -353,8 +353,8 @@ Gere 5 queries SIMPLES e EFETIVAS. Retorne APENAS as queries, uma por linha."""
             return []
     
     async def analyze_with_claude(self, videos: List[Dict], project_data: Dict) -> List[str]:
-        """Claude analisa e seleciona os 3 melhores vídeos"""
-        if len(videos) <= 3:
+        """Claude analisa e seleciona os 2 melhores vídeos"""
+        if len(videos) <= 2:
             return [v['id'] for v in videos]
         
         # Buscar comentários para análise
@@ -382,7 +382,7 @@ Amostras de comentários:
         palavra_chave = project_data.get('palavra_chave', '')
         descricao = project_data.get('descricao_projeto', '')
         
-        prompt = f"""Analise os vídeos e selecione os 3 MELHORES para o projeto:
+        prompt = f"""Analise os vídeos e selecione os 2 MELHORES para o projeto:
 
 PROJETO:
 - Palavra-chave: {palavra_chave}
@@ -397,17 +397,17 @@ CRITÉRIOS (em ordem de importância):
 VÍDEOS:
 {''.join(videos_info)}
 
-Retorne APENAS os 3 IDs dos melhores vídeos, um por linha."""
+Retorne APENAS os 2 IDs dos melhores vídeos, um por linha."""
 
         response = self.claude.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=200,
             temperature=0.2,
             messages=[{"role": "user", "content": prompt}]
         )
-        
+
         result = response.content[0].text.strip()
-        
+
         # Extrair IDs
         selected_ids = []
         for line in result.split('\n'):
@@ -416,13 +416,13 @@ Retorne APENAS os 3 IDs dos melhores vídeos, um por linha."""
                 video_id = match.group(0)
                 if video_id in [v['id'] for v in videos]:
                     selected_ids.append(video_id)
-        
-        # Fallback se não encontrou 3
-        if len(selected_ids) < 3:
+
+        # Fallback se não encontrou 2
+        if len(selected_ids) < 2:
             sorted_videos = sorted(videos, key=lambda x: x['engagement_rate'], reverse=True)
-            selected_ids = [v['id'] for v in sorted_videos[:3]]
-        
-        return selected_ids[:3]
+            selected_ids = [v['id'] for v in sorted_videos[:2]]
+
+        return selected_ids[:2]
     
     async def search_videos(self, scanner_id: int) -> Dict:
         """Executa o processo completo de busca"""
