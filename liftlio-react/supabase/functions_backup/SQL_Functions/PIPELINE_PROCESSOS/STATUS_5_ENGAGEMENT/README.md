@@ -1,47 +1,83 @@
-# 💬 STATUS 5 → 6: MENSAGENS DE ENGAJAMENTO
+# 💬 STATUS 5: CRIAÇÃO DE MENSAGENS DE ENGAGEMENT
 
-**Transição**: STATUS 5 → STATUS 6
+**Transição**: STATUS 4 (LEADS) → STATUS 5 (ENGAGEMENT) → STATUS 6 (POSTAGENS)
 **Função Principal**: `start_engagement_messages_processing()`
-**Tempo Médio**: 30-90 minutos
+**Tempo Médio**: 3-10 minutos (depende da quantidade de comentários)
 **Intervalo**: 30 segundos entre batches
-**Objetivo**: Criar mensagens personalizadas para engajar com leads identificados
+**Objetivo**: Criar mensagens de engagement usando timestamps da transcrição do vídeo como ganchos emocionais
 
 ---
 
 ## 📋 VISÃO GERAL
 
-Esta é a **etapa final do pipeline**. Aqui, o sistema cria **mensagens personalizadas** para cada lead identificado no STATUS 4, usando Claude AI para gerar respostas contextualizadas e relevantes.
+Neste estágio, o sistema cria **mensagens de engagement** para comentários, usando Claude AI para gerar respostas contextualizadas que:
+- Usam timestamps específicos da transcrição do vídeo como gancho emocional
+- Mencionam o produto/serviço de forma INDIRETA (como usuário compartilhando experiência)
+- Priorizam leads para menções ao produto
+- Respeitam limites de menções baseados no tamanho do vídeo
 
-Após criar as mensagens, elas são agendadas para postagem futura através de `agendar_postagens_todos_projetos()`.
+Após criar todas as mensagens, o sistema:
+1. Atualiza status do projeto → 6
+2. Chama `agendar_postagens_todos_projetos()` (STATUS_6)
+3. Sistema de postagens assume controle
 
 ---
 
-## 🎯 FUNÇÕES NESTE MÓDULO
+## 🎯 FUNÇÕES NESTE MÓDULO (6 funções)
 
-### 1. `start_engagement_messages_processing(project_id integer, batch_size integer)`
-**Tipo**: Main Function
-**Retorno**: void
-**Responsabilidade**: Orquestrar processamento em batches
+### 01_process_engagement_comments_with_claude.sql
+**Tipo**: AI Processor (análise com Claude)
+**Entrada**: project_id, limit
+**Saída**: JSONB com respostas geradas
+**Responsabilidade**:
+- Usar transcrição do vídeo como contexto
+- Gerar comentários com timestamps como gancho emocional
+- Mencionar produto de forma INDIRETA (usuário comum)
+- Respeitar limite de menções baseado no tamanho do vídeo
 
-### 2. `process_engagement_messages_batch(project_id integer, batch_size integer)`
-**Tipo**: Main Function (recursiva)
-**Retorno**: void
-**Responsabilidade**: Processar batch e agendar próximo
+### 02_process_and_create_messages_engagement.sql
+**Tipo**: Message Creator (wrapper + inserção)
+**Entrada**: project_id
+**Saída**: TABLE (message_id, cp_id, status)
+**Responsabilidade**:
+- Chamar função 01 para gerar respostas
+- Inserir mensagens na tabela Mensagens
+- Marcar comentários como processados
 
-### 3. `process_and_create_messages_engagement(comment_ids bigint[])`
-**Tipo**: Core Function
-**Retorno**: void
-**Responsabilidade**: Criar mensagens para múltiplos comentários
+### 03_process_engagement_messages_batch.sql
+**Tipo**: Batch Processor (processador em lotes)
+**Entrada**: project_id, batch_size
+**Saída**: void
+**Responsabilidade**:
+- Gerenciar jobs do cron
+- Processar comentários em lotes
+- Fazer chamadas recursivas se necessário
+- **Proteções contra loop infinito** ✅
 
-### 4. `process_engagement_comments_with_claude(comments jsonb)` ⚡ Edge Function
-**Tipo**: Edge Function (Deno)
-**API**: Claude API (Anthropic)
-**Responsabilidade**: Gerar mensagens personalizadas em batch
+### 04_start_engagement_messages_processing.sql
+**Tipo**: Inicializador
+**Entrada**: project_id, batch_size
+**Saída**: text (mensagem de status)
+**Responsabilidade**:
+- Verificar se já existe job rodando
+- Iniciar processamento imediato
+- Chamar função 03 para processar lotes
 
-### 5. `agendar_postagens_todos_projetos()`
-**Tipo**: Scheduler Function
-**Retorno**: void
-**Responsabilidade**: Agendar postagens para horários ideais
+### 05_stop_engagement_messages_processing.sql
+**Tipo**: Controle de Job
+**Entrada**: project_id
+**Saída**: text
+**Responsabilidade**:
+- Parar job cron em execução
+- Útil para cancelar processamento
+
+### 06_video_engagement_metrics.sql
+**Tipo**: Analytics
+**Entrada**: Vários parâmetros
+**Saída**: Métricas de engagement
+**Responsabilidade**:
+- Calcular métricas de engagement
+- Análise de performance das mensagens
 
 ---
 
