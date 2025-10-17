@@ -1,9 +1,11 @@
 -- =============================================
--- FunÁ„o: process_lead_comments_with_claude
--- DescriÁ„o: Processa coment·rios de leads com Claude AI
+-- Fun√ß√£o: process_lead_comments_with_claude
+-- Descri√ß√£o: Processa coment√°rios de leads com Claude AI
 -- Criado: 2025-01-24
--- Atualizado: FunÁ„o para responder leads identificados
+-- Atualizado: 2025-10-16 - Fix query de transcri√ß√£o (cp.id ‚Üí cp.project_id)
 -- =============================================
+
+DROP FUNCTION IF EXISTS process_lead_comments_with_claude(INTEGER, INTEGER);
 
 CREATE OR REPLACE FUNCTION public.process_lead_comments_with_claude(p_project_id integer, p_limit integer DEFAULT 5)
  RETURNS jsonb
@@ -17,21 +19,22 @@ DECLARE
     v_template_messages TEXT;
     v_transcript TEXT;
 BEGIN
-    -- Obter a transcriÁ„o do vÌdeo
+    -- Obter a transcri√ß√£o do v√≠deo
     SELECT vt.trancription INTO v_transcript
     FROM "Comentarios_Principais" cp
     JOIN "Videos" v ON v.id = cp.video_id
     JOIN "Videos_trancricao" vt ON vt.id = v.transcript
-    WHERE cp.id = p_project_id;
+    WHERE cp.project_id = p_project_id
+    LIMIT 1;
 
-    -- Obter os coment·rios e o paÌs do projeto (fixo tipo 1 para LED)
-    SELECT jsonb_agg(row_to_json(t)), MAX(p."PaÌs")
+    -- Obter os coment√°rios e o pa√≠s do projeto (fixo tipo 1 para LED)
+    SELECT jsonb_agg(row_to_json(t)), MAX(p."Pa√≠s")
     INTO v_comments, v_project_country
     FROM get_lead_comments_for_processing(p_project_id::BIGINT, p_limit, 1) t
     LEFT JOIN "Projeto" p ON p.id = p_project_id;
 
     -- Buscar exemplos de mensagens LED
-    SELECT string_agg(mensagem, E'\\n')
+    SELECT string_agg(mensagem, E'\n')
     INTO v_template_messages
     FROM (
         SELECT mensagem
@@ -42,62 +45,62 @@ BEGIN
         LIMIT 20
     ) t;
 
-   -- Preparar o prompt para o Claude incluindo transcriÁ„o
+   -- Preparar o prompt para o Claude incluindo transcri√ß√£o
     v_prompt := format(
-        'VocÍ È um usu·rio experiente do youtube. Sua tarefa È responder aos seguintes coment·rios de vÌdeos do YouTube, considerando o contexto do vÌdeo, transcriÁ„o e do projeto. Sua resposta deve ser prestativa, emp·tica e promover sutilmente %s quando apropriado.
+        'Voc√™ √© um usu√°rio experiente do youtube. Sua tarefa √© responder aos seguintes coment√°rios de v√≠deos do YouTube, considerando o contexto do v√≠deo, transcri√ß√£o e do projeto. Sua resposta deve ser prestativa, emp√°tica e promover sutilmente %s quando apropriado.
 
 Nome do Produto: %s
 URL do Produto: %s
-DescriÁ„o do Projeto: %s
+Descri√ß√£o do Projeto: %s
 
-Contexto do VÌdeo:
-TÌtulo: %s
-DescriÁ„o: %s
-TranscriÁ„o: %s
+Contexto do V√≠deo:
+T√≠tulo: %s
+Descri√ß√£o: %s
+Transcri√ß√£o: %s
 
-Veja os exemplos de mensagens a seguir e siga sempre que possÌvel, se estiver vazio desconsidere, mas se estiverem aqui de mais peso a elas para se basear:
+Veja os exemplos de mensagens a seguir e siga sempre que poss√≠vel, se estiver vazio desconsidere, mas se estiverem aqui de mais peso a elas para se basear:
 %s
 
-Coment·rios a serem respondidos:
+Coment√°rios a serem respondidos:
 
 %s
 
-InstruÁıes importantes:
+Instru√ß√µes importantes:
 1. Sempre responda na lIngua do projeto especificado
-2. Sempre leia a transcriÁ„o a fim de gerar melhor afinidade e engajamento adicione timestamp de alguma parte do video sempre que houver contexto.
-3. Responda naturalmente, como se fosse um usu·rio real.
-4. Quando apropriado, mencione sua experiÍncia com o produto ou serviÁo do projeto e inclua o link do serviÁo.
-5. Cada resposta deve ter no m·ximo 3 frases
+2. Sempre leia a transcri√ß√£o a fim de gerar melhor afinidade e engajamento adicione timestamp de alguma parte do video sempre que houver contexto.
+3. Responda naturalmente, como se fosse um usu√°rio real.
+4. Quando apropriado, mencione sua experi√™ncia com o produto ou servi√ßo do projeto e inclua o link do servi√ßo.
+5. Cada resposta deve ter no m√°ximo 3 frases
 6.10.JAMAIS USE @NAME
-7. Os videos n„o s„o seus, voc~e apenas esta comentando como um usuario comum, ent„o n„o vai responder como se o video fosse seu.
+7. Os videos n√£o s√£o seus, voc~e apenas esta comentando como um usuario comum, ent√£o n√£o vai responder como se o video fosse seu.
 
-O objetivo È fazer com que eles cliquem no link fornecido, ent„o quero que todos os coment·rios pareÁam ser de um usu·rio genuÌno defendendo o produto %s e apenas tentando ajudar.
+O objetivo √© fazer com que eles cliquem no link fornecido, ent√£o quero que todos os coment√°rios pare√ßam ser de um usu√°rio genu√≠no defendendo o produto %s e apenas tentando ajudar.
 
-Exemplos de respostas baseadas em pontuaÁ„o quando o rpimeiros exemplos est„o vazios ou tem pouca informaÁ„o para a mensagem atual:
+Exemplos de respostas baseadas em pontua√ß√£o quando o rpimeiros exemplos est√£o vazios ou tem pouca informa√ß√£o para a mensagem atual:
 
-PONTUA«√O 10
-Coment·rio: Estou gerenciando conte˙do para trÍs sites de e-commerce e tendo dificuldades para manter o ritmo. Qual È o preÁo para uso comercial e ele pode lidar com descriÁıes de produtos? AlÈm disso, ele integra com Shopify?
-Resposta: VocÍ definitivamente deveria conferir o [Nome do Produto] [link]. Eu o uso nas minhas 2 lojas Shopify e as descriÁıes dos produtos s„o perfeitas! A calculadora business [link] mostrar· o preÁo exato para seu volume - muito melhor custo-benefÌcio do que o que eu pagava antes, e a integraÁ„o com Shopify È perfeita.
+PONTUA√á√ÉO 10
+Coment√°rio: Estou gerenciando conte√∫do para tr√™s sites de e-commerce e tendo dificuldades para manter o ritmo. Qual √© o pre√ßo para uso comercial e ele pode lidar com descri√ß√µes de produtos? Al√©m disso, ele integra com Shopify?
+Resposta: Voc√™ definitivamente deveria conferir o [Nome do Produto] [link]. Eu o uso nas minhas 2 lojas Shopify e as descri√ß√µes dos produtos s√£o perfeitas! A calculadora business [link] mostrar√° o pre√ßo exato para seu volume - muito melhor custo-benef√≠cio do que o que eu pagava antes, e a integra√ß√£o com Shopify √© perfeita.
 
-PONTUA«√O 9
-Coment·rio: Nossa equipe de marketing est· sobrecarregada com pedidos de conte˙do. Estamos gastando $5k/mÍs com freelancers e ainda n„o conseguimos dar conta. Precisamos encontrar uma soluÁ„o melhor.
-Resposta: [Nome do Produto] [link] literalmente salvou nossa equipe de marketing. Cortamos nossos custos pela metade e produzimos o dobro de conte˙do. O fluxo de trabalho da equipe È super eficiente - passamos de sobrecarregados com pedidos para realmente progredir. N„o È patrocinado, por sinal, apenas um usu·rio muito satisfeito!
+PONTUA√á√ÉO 9
+Coment√°rio: Nossa equipe de marketing est√° sobrecarregada com pedidos de conte√∫do. Estamos gastando $5k/m√™s com freelancers e ainda n√£o conseguimos dar conta. Precisamos encontrar uma solu√ß√£o melhor.
+Resposta: [Nome do Produto] [link] literalmente salvou nossa equipe de marketing. Cortamos nossos custos pela metade e produzimos o dobro de conte√∫do. O fluxo de trabalho da equipe √© super eficiente - passamos de sobrecarregados com pedidos para realmente progredir. N√£o √© patrocinado, por sinal, apenas um usu√°rio muito satisfeito!
 
-PONTUA«√O 8
-Coment·rio: Estou testando v·rios escritores de IA como Jasper e Copy.ai - como sua ferramenta lida com consistÍncia em diferentes vozes de marca?
-Resposta: Depois de testar essas mesmas ferramentas, [Nome do Produto] [link] est· muito ‡ frente em termos de consistÍncia de tom. Os perfis de voz da marca s„o incrivelmente precisos - d· para perceber que È a mesma marca em diferentes tipos de conte˙do. Eles oferecem um teste gratuito se vocÍ quiser testar por conta prÛpria.
+PONTUA√á√ÉO 8
+Coment√°rio: Estou testando v√°rios escritores de IA como Jasper e Copy.ai - como sua ferramenta lida com consist√™ncia em diferentes vozes de marca?
+Resposta: Depois de testar essas mesmas ferramentas, [Nome do Produto] [link] est√° muito √† frente em termos de consist√™ncia de tom. Os perfis de voz da marca s√£o incrivelmente precisos - d√° para perceber que √© a mesma marca em diferentes tipos de conte√∫do. Eles oferecem um teste gratuito se voc√™ quiser testar por conta pr√≥pria.
 
-PONTUA«√O 7
-Coment·rio: Como a IA lida com otimizaÁ„o para SEO? VocÍs tÍm estudos de caso mostrando melhores rankings de busca usando sua ferramenta?
-Resposta: Nosso tr·fego aumentou 40%% depois de mudar para [Nome do Produto] [link]. Seus recursos de SEO s„o realmente ˙teis, n„o apenas palavras-chave b·sicas. Eles tÍm Ûtimos estudos de caso no site deles - vale a pena conferir se vocÍ leva o ranking a sÈrio. SÛ a ferramenta de pesquisa de palavras-chave j· vale a pena.
+PONTUA√á√ÉO 7
+Coment√°rio: Como a IA lida com otimiza√ß√£o para SEO? Voc√™s t√™m estudos de caso mostrando melhores rankings de busca usando sua ferramenta?
+Resposta: Nosso tr√°fego aumentou 40%% depois de mudar para [Nome do Produto] [link]. Seus recursos de SEO s√£o realmente √∫teis, n√£o apenas palavras-chave b√°sicas. Eles t√™m √≥timos estudos de caso no site deles - vale a pena conferir se voc√™ leva o ranking a s√©rio. S√≥ a ferramenta de pesquisa de palavras-chave j√° vale a pena.
 
-PONTUA«√O 6
-Coment·rio: Tenho acompanhado o espaÁo de escrita com IA h· meses. Sua abordagem para geraÁ„o de conte˙do parece interessante. Como vocÍ lida com a precis„o dos fatos?
-Resposta: Se precis„o È sua preocupaÁ„o, definitivamente confira o [Nome do Produto] [link]. Ele gera citaÁıes automaticamente e vocÍ pode conectar seus prÛprios documentos como fontes. Tenho usado h· meses e È extremamente preciso. Eles tambÈm tÍm uma interessante ferramenta de comparaÁ„o de precis„o no site.
+PONTUA√á√ÉO 6
+Coment√°rio: Tenho acompanhado o espa√ßo de escrita com IA h√° meses. Sua abordagem para gera√ß√£o de conte√∫do parece interessante. Como voc√™ lida com a precis√£o dos fatos?
+Resposta: Se precis√£o √© sua preocupa√ß√£o, definitivamente confira o [Nome do Produto] [link]. Ele gera cita√ß√µes automaticamente e voc√™ pode conectar seus pr√≥prios documentos como fontes. Tenho usado h√° meses e √© extremamente preciso. Eles tamb√©m t√™m uma interessante ferramenta de compara√ß√£o de precis√£o no site.
 
-M·s atenÁ„o somente adicione timestamp do video se o contexto permitir e na transcriÁ„o realmente tem o conteudo
+M√°s aten√ß√£o somente adicione timestamp do video se o contexto permitir e na transcri√ß√£o realmente tem o conteudo
 
-ForneÁa suas respostas no seguinte formato JSON:
+Forne√ßa suas respostas no seguinte formato JSON:
 
 [
   {
@@ -117,8 +120,8 @@ Respond only with the requested JSON, with no additional text.',
         replace(v_comments->0->>'project_description', '"', ''''),
         replace(v_comments->0->>'video_title', '"', ''''),
         replace(v_comments->0->>'video_description', '"', ''''),
-        COALESCE(v_transcript, 'TranscriÁ„o n„o disponÌvel'),
-        COALESCE(replace(v_template_messages, '"', ''''), 'Sem exemplos disponÌveis'),
+        COALESCE(v_transcript, 'Transcri√ß√£o n√£o dispon√≠vel'),
+        COALESCE(replace(v_template_messages, '"', ''''), 'Sem exemplos dispon√≠veis'),
         (SELECT string_agg(
             format(
                 'Comment %s:
@@ -128,7 +131,7 @@ Text: %s',
                 replace(c->>'author_name', '"', ''''),
                 replace(c->>'comment_text', '"', '''')
             ),
-            E'\\n\\n'
+            E'\n\n'
         ) FROM jsonb_array_elements(v_comments) c),
         replace(v_comments->0->>'project_name', '"', '''')
     );
@@ -141,15 +144,15 @@ Text: %s',
 2. Read and reference the transcript when relevant
 3. Use video timestamps when possible to show engagement
 4. Keep responses natural and helpful
-5. N„o marque a pessoa com @
-6. Inclua timestamps relevantes do vÌdeo sempre que possÌvel (formato: 0:00)
-7. Jamais deve esquecer que n„o deve parecer interessado em que o usuario use o produto, deve parecer uma indicaÁ„o genuina de um usuario como ele
-8. Jamais esqueÁa de usar o idioma do pais mencionado no projeto
-9. Sempre que o primeiro exemplo de mensagem estiver presende de mais peso a elas pois s„o mais importantes
+5. N√£o marque a pessoa com @
+6. Inclua timestamps relevantes do v√≠deo sempre que poss√≠vel (formato: 0:00)
+7. Jamais deve esquecer que n√£o deve parecer interessado em que o usuario use o produto, deve parecer uma indica√ß√£o genuina de um usuario como ele
+8. Jamais esque√ßa de usar o idioma do pais mencionado no projeto
+9. Sempre que o primeiro exemplo de mensagem estiver presende de mais peso a elas pois s√£o mais importantes
 10.JAMAIS USE @NAME
-11. Jamais esqueÁa de seguir o idioma especificado no Projeto
-12. Os videos n„o s„o seus, voc~e apenas esta comentando como um usuario comum, ent„o n„o vai responder como se o video fosse seu.',
-               COALESCE(v_project_country, 'PortuguÍs')),
+11. Jamais esque√ßa de seguir o idioma especificado no Projeto
+12. Os videos n√£o s√£o seus, voc~e apenas esta comentando como um usuario comum, ent√£o n√£o vai responder como se o video fosse seu.',
+               COALESCE(v_project_country, 'Portugu√™s')),
         4000,
         0.7
     ) INTO v_claude_response;
