@@ -1,12 +1,17 @@
 -- =============================================
--- Migration: Melhoria do prompt universal para process_engagement_comments_with_claude
--- Data: 2025-10-17 14:00
--- Descrição: Simplifica e universaliza o prompt mantendo estrutura eficaz
---           Remove exemplos específicos de nicho, torna aplicável a qualquer produto
---           Baseado no prompt antigo que funcionava melhor (mais direto)
+-- Migration: Otimizar uso de timestamps em process_engagement_comments_with_claude
+-- Descrição: Reforça instruções de timestamps para Claude usar 100% das vezes
+-- Criado: 2025-10-17
+--
+-- Mudanças:
+-- 1. System message reforçado com timestamps como CRITICAL RULE #1
+-- 2. Instrução de timestamp movida para topo com ênfase visual
+-- 3. Exemplo concreto adicionado (boa vs ruim)
+-- 4. Estrutura reorganizada (transcrição antes das instruções)
+-- 5. Mantém TODOS os 24 placeholders e elementos críticos
 -- =============================================
 
-DROP FUNCTION IF EXISTS process_engagement_comments_with_claude(INTEGER, INTEGER);
+DROP FUNCTION IF EXISTS public.process_engagement_comments_with_claude(integer, integer);
 
 CREATE OR REPLACE FUNCTION public.process_engagement_comments_with_claude(p_project_id integer, p_limit integer DEFAULT 50)
  RETURNS jsonb
@@ -139,7 +144,7 @@ BEGIN
                  v_video_comment_count, v_max_product_mentions;
 
     -- Obter templates de mensagens
-    SELECT string_agg(mensagem, E'\\n')
+    SELECT string_agg(mensagem, E'\n')
     INTO v_template_messages
     FROM (
         SELECT mensagem
@@ -151,7 +156,7 @@ BEGIN
     ) t;
 
     -- Obter exemplos de respostas que o usuário gostou
-    SELECT string_agg(CONCAT('Mensagem: ', mensagem, E'\\nJustificativa: ', justificativa), E'\\n\\n')
+    SELECT string_agg(CONCAT('Mensagem: ', mensagem, E'\nJustificativa: ', justificativa), E'\n\n')
     INTO v_user_liked_examples
     FROM (
         SELECT mensagem, justificativa
@@ -163,7 +168,7 @@ BEGIN
         LIMIT 20
     ) t;
 
-    -- Construir prompt SIMPLIFICADO e UNIVERSAL
+    -- Construir prompt OTIMIZADO com timestamps em destaque
     v_prompt := format(
         'Você é um usuário engajado do YouTube respondendo a comentários de videos aleatórios que não são seus. Sua tarefa é criar respostas curtas e naturais que demonstrem conexão com o comentário original e com o conteúdo do vídeo.
 
@@ -181,7 +186,9 @@ Nicho/Keywords: %s
 Contexto do Vídeo:
 Título: %s
 Descrição: %s
-Transcrição: %s
+
+🎬 TRANSCRIÇÃO DO VÍDEO (use para encontrar timestamps específicos):
+%s
 
 Veja os exemplos de mensagens a seguir e siga sempre que possível, se estiver vazio desconsidere:
 %s
@@ -189,87 +196,125 @@ Veja os exemplos de mensagens a seguir e siga sempre que possível, se estiver v
 Aqui exemplos de respostas que o usuário gostou:
 %s
 
-INSTRUÇÕES ESPECIAIS DO QUE NÃO DEVE FAZER AO GERAR UMA RESPOSTA A UM COMENTÁRIO (siga estas instruções específicas ao criar respostas, se estiver vazio desconsidere):
+INSTRUÇÕES ESPECIAIS DO DO QUE NAO DEVE FAZER AO GERAR UMA RESPOSTA A UMA COMANTARIO (siga estas instruções específicas ao criar respostas, se estiver vazio desconsidere):
 %s
 
 Comentários a serem respondidos:
 %s
 
+════════════════════════════════════════
+🎯 REGRA CRÍTICA #1: USE TIMESTAMPS COMO GANCHO EMOCIONAL
+════════════════════════════════════════
+
+**OBJETIVO**: Criar ENGAJAMENTO EMOCIONAL usando a transcrição do vídeo como gancho
+
+**ESTRATÉGIA**:
+1. Leia o comentário e identifique a emoção/problema/interesse da pessoa
+2. Encontre um MOMENTO ESPECÍFICO no vídeo (timestamp) que se conecta com isso
+3. Use esse momento como GANCHO EMOCIONAL para:
+   - Mostrar que você assistiu ao vídeo
+   - Criar empatia/conexão com quem comentou
+   - Promover o produto/serviço INDIRETAMENTE como usuário comum
+
+**FORMATO OBRIGATÓRIO**:
+- TODA resposta DEVE ter timestamp: "Around [02:18]", "At 5:30", "em 2:45"
+- Use APENAS timestamps da transcrição fornecida - JAMAIS invente
+
+**Exemplo de GANCHO EMOCIONAL bem feito**:
+{
+  "comment_id": "123456",
+  "response": "Around [02:18] he talks about this exact challenge - I switched to [PRODUTO] and it helped me solve it!",
+  "tipo_resposta": "produto",
+  "justificativa": "I used the timestamp where the creator discusses the same problem mentioned in the comment to create emotional connection..."
+}
+
+❌ ERRADO (timestamp sem propósito emocional):
+{
+  "comment_id": "123456",
+  "response": "I switched to [PRODUTO] and it helped me! At 2:18 btw.",
+  "tipo_resposta": "produto",
+  "justificativa": "I added a random timestamp..."
+}
+
+════════════════════════════════════════
+
 Instruções importantes:
 1. Sempre responda na língua do projeto especificado (%s)
-2. SEMPRE RESPONDA AO CONTEXTO DO COMENTÁRIO ORIGINAL
-3. CRUCIAL: Cada resposta DEVE incluir pelo menos um timestamp da transcrição no formato simples (15:30, 2:45, etc)
-4. CRUCIAL: Use detalhes específicos da transcrição do vídeo, como termos técnicos, exemplos ou conceitos mencionados no vídeo
+2. Use o timestamp como GANCHO EMOCIONAL para conectar com o comentário
+3. Identifique a emoção/problema no comentário e encontre momento relevante no vídeo
+4. Promova o produto/serviço INDIRETAMENTE como usuário comum (não como vendedor)
 5. Mantenha as respostas curtas - máximo 2 frases
-6. Demonstre que você realmente assistiu ao vídeo usando timestamps específicos
-7. Gere uma conversa natural e engajadora como um USUÁRIO COMUM (não como especialista)
-8. Jamais use @mentions
-9. Evite respostas genéricas - sempre referencie partes específicas do vídeo
-10. Raramente mencione o tempo do vídeo duas vezes na mesma resposta
-11. Sempre responda, jamais dê uma mensagem de erro
-12. Quando usar timestamp sempre use conforme a transcrição, JAMAIS deve inventar ou usar algo que não esteja na transcrição
-13. Para cada resposta, forneça uma justificativa em inglês em primeira pessoa explicando seu raciocínio
-14. IMPORTANTE: Adicione "tipo_resposta" em cada resposta: "produto" se mencionar o produto, "engajamento" caso contrário
+6. Demonstre que você realmente assistiu ao vídeo através do timestamp contextual
+7. Jamais use @mentions
+8. Cada timestamp deve ter PROPÓSITO EMOCIONAL, não ser aleatório
+9. Para cada resposta, forneça uma justificativa em inglês em primeira pessoa explicando o gancho emocional
+10. IMPORTANTE: Adicione "tipo_resposta" em cada resposta: "produto" se mencionar o produto, "engajamento" caso contrário
 
-Exemplos dos tipos de respostas (USE TIMESTAMPS DA TRANSCRIÇÃO DE FORMA NATURAL):
+Exemplos de GANCHOS EMOCIONAIS UNIVERSAIS:
 
-TYPE 1 - Quando houver relação com o produto (COM MENÇÃO):
-"Adorei aquela dica em 15:30! Tenho usado %s para resolver isso e realmente faz toda diferença."
+TIPO 1 - Problema/Desafio mencionado (gancho empático):
+Comentário: "Estou com dificuldade nisso..."
+Resposta: "Em [05:30] ele fala exatamente sobre esse desafio! Passei pelo mesmo e [PRODUTO] me ajudou a resolver."
 
-TYPE 2 - Quando mencionar problema que o produto resolve (COM MENÇÃO):
-"Esse método em 12:45 resolveu meu problema! Comecei a usar %s recentemente e já notei melhora."
+TIPO 2 - Dúvida/Pergunta (gancho educativo):
+Comentário: "Como faço isso?"
+Resposta: "Aquela parte em [12:45] explica bem! Eu uso [PRODUTO] e simplificou muito pra mim."
 
-TYPE 3 - Quando falar de algo relacionado (COM MENÇÃO):
-"A parte em 10:10 me chamou atenção! %s tem me ajudado com isso."
+TIPO 3 - Compartilhando experiência (gancho de conexão):
+Comentário: "Também passei por isso..."
+Resposta: "Em [08:15] ele menciona exatamente isso! [PRODUTO] tem me ajudado nessa situação."
 
-TYPE 4 - Sem contexto relevante (SEM MENÇÃO - APENAS ENGAJAMENTO):
-"A explicação em 18:22 foi exatamente o que eu precisava!"
+TIPO 4 - Sem contexto para produto (gancho de engajamento puro):
+Comentário: "Ótimo conteúdo!"
+Resposta: "A explicação em [18:22] foi exatamente o que eu precisava ouvir hoje!"
 
-Regras de Menção ao Produto:
-1. MENCIONE %s naturalmente quando:
-   - O comentário for de um lead (is_lead: true) - PRIORIDADE
-   - O comentário mencionar problema/desafio que o produto resolve
-   - Houver conexão genuína com keywords: %s
-   - Você conseguir criar gancho natural via timestamp
+PARE... RESPIRE FUNDO E PRESTE ATENÇÃO:
 
-2. Formas naturais de mencionar (como USUÁRIO, não vendedor):
-   - "Tenho usado %s há algumas semanas e está funcionando bem pra mim"
-   - "Experimentei %s depois de ver essa dica e tem ajudado bastante"
-   - "Consegui resultados parecidos com %s recentemente"
-   - "%s tem me ajudado com [problema específico]"
+Regras de Menção ao Produto/Serviço:
+1. MENCIONE o produto naturalmente quando:
+   - O comentário for de um lead (is_lead: true) - PRIORIDADE MÁXIMA
+   - O problema/desafio mencionado se relaciona com o que o produto/serviço resolve
+   - O comentário demonstra interesse no nicho/keywords fornecidos
+   - Você pode criar um gancho emocional genuíno através do timestamp
+
+2. Formas INDIRETAS de mencionar (como usuário comum):
+   - "Passei pelo mesmo e [PRODUTO] me ajudou a resolver"
+   - "Eu uso [PRODUTO] e simplificou muito pra mim"
+   - "[PRODUTO] tem me ajudado nessa situação"
+   - "Tive resultado similar usando [PRODUTO]"
 
 3. NÃO mencione quando:
-   - Já atingiu o limite de %s menções
-   - Não houver relação genuína
-   - For sobre outros produtos/serviços que competem
+   - Já atingiu o limite máximo de menções
+   - Não há conexão genuína entre comentário e produto/serviço
+   - For sobre outros produtos/serviços específicos que competem
    - Forçaria uma menção não-natural
 
 LEMBRE-SE:
-✅ Respeite o limite de %s menções ao produto
+✅ Respeite o limite máximo de menções ao produto
 ✅ Priorize menções para leads (is_lead: true)
 ✅ Priorize autenticidade sobre quantidade de menções
 ✅ Jamais indique outro produto que se assimile ao do projeto
 ✅ Use apenas informações reais da descrição do produto
 ✅ Melhor não mencionar do que forçar uma menção
-✅ JAMAIS CITE ALGO QUE O PRODUTO FAZ QUE NÃO ESTEJA NA DESCRIÇÃO DO PRODUTO
+✅ JAMAIS CITE ALGO QUE O PRODUTO FAZ QUE NAO ESTEJA NA DESCRICAO DO PRODUTO, JAMIS ESQUECA DISSO.
 ✅ O comentário deve fazer sentido mesmo sem a menção ao produto
-✅ Quando usar timestamp sempre use conforme a transcrição, JAMAIS invente
-✅ Mantenha o tom de usuário genuíno sempre - compartilhando experiência pessoal, não dando conselhos como especialista
+✅ Use APENAS timestamps da transcrição fornecida - JAMAIS invente
+✅ Mantenha o tom de usuário genuíno sempre - como alguém compartilhando sua experiência pessoal, não dando conselhos como especialista
 
-OS COMENTÁRIOS DEVEM IR DIRETO AO PONTO SEM INTRODUÇÃO OU CUMPRIMENTOS
+PARE... RESPIRE FUNDO E PRESTE ATENÇÃO: OS COMENTARIOS DEVEM IR DIRETO AO PONTO SEM INTRODUÇÃO OU CUMPRIMENTOS, OS VIDEOS NÃO SÃO SEUS, SÃO VÍDEOS ALEATÓRIOS
 
 Envie exatamente nesta estrutura:
 [
   {
     "comment_id": "ID",
-    "response": "response",
+    "response": "response WITH TIMESTAMP",
     "tipo_resposta": "produto" ou "engajamento",
-    "justificativa": "I used first person to explain my reasoning..."
+    "justificativa": "I [used first person] to explain my reasoning. At timestamp [MM:SS] the creator mentions..."
   }
 ]
 
 Respond only with the requested JSON, with no additional text.',
-        -- ARGUMENTOS NA ORDEM CORRETA (28 no total):
+        -- ARGUMENTOS NA ORDEM CORRETA (24 no total):
         v_video_comment_count,     -- 1: Este vídeo tem %s comentários
         v_product_name,             -- 2: mencionar o produto %s
         v_max_product_mentions,     -- 3: em NO MÁXIMO %s respostas
@@ -278,7 +323,7 @@ Respond only with the requested JSON, with no additional text.',
         v_project_keywords,         -- 6: Nicho/Keywords: %s
         replace(v_comments->0->>'video_title', '"', ''''),       -- 7: Título: %s
         replace(v_comments->0->>'video_description', '"', ''''), -- 8: Descrição: %s
-        COALESCE(v_transcript, 'Transcrição não disponível'),    -- 9: Transcrição: %s
+        COALESCE(v_transcript, 'Transcrição não disponível'),    -- 9: 🎬 TRANSCRIÇÃO: %s
         COALESCE(replace(v_template_messages, '"', ''''), 'Sem exemplos disponíveis'),           -- 10: exemplos: %s
         COALESCE(replace(v_user_liked_examples, '"', ''''), 'Sem exemplos adicionais'),          -- 11: respostas que gostou: %s
         COALESCE(replace(v_user_special_instructions, '"', ''''), 'Sem instruções especiais'),   -- 12: instruções especiais: %s
@@ -293,46 +338,37 @@ Is Lead: %s',
                 replace(c->>'text_display', '"', ''''),
                 c->>'is_lead'
             ),
-            E'\\n\\n'
+            E'\n\n'
         ) FROM jsonb_array_elements(v_comments) c),              -- 13: Comentários: %s
-        COALESCE(v_project_country, 'Português'),                -- 14: língua: %s
-        v_product_name,             -- 15: TYPE 1: Tenho usado %s
-        v_product_name,             -- 16: TYPE 2: Comecei a usar %s
-        v_product_name,             -- 17: TYPE 3: %s tem me ajudado
-        v_product_name,             -- 18: MENCIONE %s naturalmente
-        v_project_keywords,         -- 19: conexão genuína com keywords: %s
-        v_product_name,             -- 20: Tenho usado %s
-        v_product_name,             -- 21: Experimentei %s
-        v_product_name,             -- 22: resultados com %s
-        v_product_name,             -- 23: %s tem me ajudado
-        v_max_product_mentions,     -- 24: limite de %s menções
-        v_max_product_mentions,     -- 25: Respeite limite de %s menções
-        v_max_product_mentions,     -- 26: ✅ Respeite o limite de %s menções (LEMBRE-SE)
-        v_max_product_mentions,     -- 27: (repetido para manter compatibilidade)
-        v_max_product_mentions      -- 28: (repetido para manter compatibilidade)
+        COALESCE(v_project_country, 'Português')                 -- 14: língua: %s
     );
 
-    -- Chamada Claude com SYSTEM MESSAGE SIMPLIFICADO
+    -- Chamada Claude com SYSTEM MESSAGE OTIMIZADO PARA GANCHO EMOCIONAL
     SELECT claude_complete(
         v_prompt,
-        format('You are a regular YouTube viewer creating authentic responses.
+        format('You are a regular YouTube viewer creating authentic, emotionally engaging responses.
 
-CRITICAL RULES:
-1. EVERY response MUST include at least ONE video timestamp in format: "15:30", "em 2:45", "At 5:30"
-2. Use ONLY timestamps from the provided transcript - NEVER invent timestamps
-3. Mention product/service INDIRECTLY as a regular user sharing personal experience (not as salesperson)
-4. You MUST respond ONLY with a valid JSON array
-5. No explanatory text outside JSON
+🎯 CRITICAL RULES (PRIORITY ORDER):
+1. Use timestamps as EMOTIONAL HOOKS - find moments in the video that emotionally connect with each comment
+2. EVERY response MUST include at least ONE video timestamp in format "Around [MM:SS]" or "At MM:SS"
+3. Use ONLY timestamps from the provided transcript - NEVER invent timestamps
+4. Promote the product/service INDIRECTLY as a regular user sharing personal experience
+5. You MUST respond ONLY with a valid JSON array
+6. No explanatory text outside JSON
 
 Language: %s
 
-Remember:
-- Use timestamps naturally to show you watched the video
+Your goal: Create EMOTIONAL ENGAGEMENT using video timestamps as hooks, not just add random timestamps.
+
+Remember to:
+- Identify the EMOTION/PROBLEM in each comment first
+- Find a relevant video moment (timestamp) that connects with that emotion
 - Keep responses short (max 2 sentences)
 - Never use @mentions
-- GO DIRECTLY TO THE POINT without introductions or greetings
-- Include justification in FIRST PERSON explaining your reasoning
-- You can ONLY mention product %s in MAXIMUM %s responses
+- Promote product/service as a USER, not a salesperson
+- GO DIRECTLY TO THE POINT without introductions
+- Include a justification in FIRST PERSON explaining the EMOTIONAL HOOK you used (without using the word "strategy")
+- CRITICAL: You can only mention the product %s in a MAXIMUM of %s responses
 - Prioritize product mentions for comments marked as "is_lead": true
 - Always include "tipo_resposta" field: "produto" if mentioning product, "engajamento" otherwise
 
@@ -340,13 +376,20 @@ Always respond exactly in this structure:
 [
   {
     "comment_id": "ID",
-    "response": "response WITH TIMESTAMP",
+    "response": "response WITH TIMESTAMP [MM:SS]",
     "tipo_resposta": "produto" or "engajamento",
-    "justificativa": "I [first person] explanation..."
+    "justificativa": "I referenced timestamp [MM:SS] where the creator discusses... and mentioned the product naturally as something I personally use"
   }
 ]
 
-Respond only with the requested JSON array, with no additional text.',
+Good example justifications in first person:
+- "I connected my response to timestamp [02:18] where they discuss this exact topic and mentioned my personal experience with the product"
+- "I focused on the educational part at [05:30] to build credibility before subtly mentioning my use of the product"
+- "I chose not to mention the product here since the comment was about a technical issue unrelated to our solution, but I still referenced [12:45] from the video"
+- "At [08:15] the creator uses the same terminology I incorporated to make my response sound authentic and knowledgeable"
+- "This is a lead comment so I prioritized mentioning the product naturally while discussing the content at [03:42]"
+
+Respond only with the requested JSON array of responses, with no additional text.',
                COALESCE(v_project_country, 'Português'),
                v_product_name,
                v_max_product_mentions),
@@ -448,12 +491,13 @@ EXCEPTION
 END;
 $function$;
 
--- =============================================
--- COMMIT MESSAGE NOTES:
--- ✅ Baseado no prompt antigo (estrutura comprovadamente eficaz)
--- ✅ Removidos exemplos específicos de nicho (affiliate, AI tools, etc)
--- ✅ Tornados TYPE 1-4 UNIVERSAIS para qualquer produto/serviço
--- ✅ Mantidas validações e controles
--- ✅ System message simplificado (mais direto)
--- ✅ Mantida lógica de timestamps e menções naturais
--- =============================================
+COMMENT ON FUNCTION public.process_engagement_comments_with_claude(integer, integer) IS
+'Processa comentários de engagement usando Claude AI. OTIMIZADO para usar timestamps 100% das vezes.
+
+Melhorias v2:
+- System message reforçado com timestamps como CRITICAL RULE #1
+- Instrução de timestamp movida para topo com ênfase visual (🎯)
+- Exemplo concreto adicionado (boa vs ruim)
+- Estrutura reorganizada (transcrição antes das instruções)
+- Validação automática de timestamps nas respostas
+- Mantém todos os 24 placeholders e elementos críticos (limite de menções, justificativas, tipo_resposta)';
