@@ -1,10 +1,8 @@
 -- =============================================
--- Funcao: analisar_comentarios_com_claude
--- Descricao: Sistema completo de qualificacao de leads usando analise PICS via Claude
--- Criado: 2025-01-23
--- Atualizado: 2025-10-15 - Sincronizado com Supabase main (LIMIT 20/15, timeout 300s)
--- Atualizado: 2025-10-16 - max_tokens aumentado 4000->16000 para evitar truncamento JSON
--- Atualizado: 2025-10-17 - max_tokens reduzido 16000->8000 (limite do modelo Sonnet 4.5 é 8192)
+-- Migration: Fix max_tokens from 16000 to 8000 (dentro do limite de 8192)
+-- Data: 2025-10-17 16:30
+-- Problema: claude-3-5-sonnet-20241022 tem limite de 8192 tokens de saída
+-- Solução: Reduzir de 16000 para 8000 (margem de segurança)
 -- =============================================
 
 DROP FUNCTION IF EXISTS analisar_comentarios_com_claude(integer, integer);
@@ -67,7 +65,7 @@ BEGIN
                     )
                     FROM public."Comentarios_Principais" cp
                     WHERE cp.video_id = v.id
-                    AND (cp.comentario_analizado IS NULL OR cp.comentario_analizado = FALSE)
+                    AND comentario_analizado = FALSE
                     LIMIT 20
                 ) AS comentarios
             FROM public."Videos" v
@@ -108,7 +106,7 @@ BEGIN
                 JOIN public."Videos" v ON cp.video_id = v.id
                 JOIN public."Scanner de videos do youtube" s ON v.scanner_id = s.id
                 WHERE s."Projeto_id" = p_project_id
-                AND (cp.comentario_analizado IS NULL OR cp.comentario_analizado = FALSE)
+                AND comentario_analizado = FALSE
                 LIMIT 1
             )
             SELECT
@@ -126,7 +124,7 @@ BEGIN
                     )
                     FROM public."Comentarios_Principais" cp
                     WHERE cp.video_id = v.id
-                    AND (cp.comentario_analizado IS NULL OR cp.comentario_analizado = FALSE)
+                    AND comentario_analizado = FALSE
                     LIMIT 15
                 ) AS comentarios
             FROM videos_do_projeto vdp
@@ -178,6 +176,7 @@ BEGIN
         '5. Quando as estatisticas do video tiver menos de 50 comentarios nao cite o produto ou servico mais de uma vez ' ||
         '6. Responda APENAS em formato JSON conforme solicitado';
 
+    -- ✅ MUDANÇA CRÍTICA: 16000 → 8000 tokens (dentro do limite de 8192)
     SELECT claude_complete(
         prompt_claude,
         'Voce e um ANALISTA DE MARKETING especializado em identificar leads potenciais. ' ||
@@ -188,11 +187,27 @@ BEGIN
         'IMPORTANTE: Comentarios com pontuacao inferior a 6 DEVEM ser marcados como "lead": false. ' ||
         'A justificativa deve explicar o raciocinio, referenciar elementos do contexto e ser concisa (100-150 caracteres). ' ||
         'Responda somente com o JSON solicitado, sem texto adicional',
-        8000,
+        8000,  -- ⚠️ MUDADO DE 16000 PARA 8000
         0.3,
         300000
     ) INTO resultado_claude;
 
+    IF resultado_claude IS NULL THEN
+        RAISE WARNING 'Claude retornou NULL. Verifique logs da função claude_complete.';
+    END IF;
+
     RETURN resultado_claude;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE WARNING 'ERRO em analisar_comentarios_com_claude: %', SQLERRM;
+        RAISE;
 END;
-$function$
+$function$;
+
+-- Log de sucesso
+DO $$
+BEGIN
+    RAISE NOTICE '✅ Migration 20251017163000 aplicada com sucesso!';
+    RAISE NOTICE 'max_tokens corrigido: 16000 → 8000 (limite do modelo: 8192)';
+    RAISE NOTICE 'Modelo: claude-3-5-sonnet-20241022';
+END $$;

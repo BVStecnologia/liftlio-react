@@ -1,17 +1,18 @@
 -- =============================================
--- Funcao: analisar_comentarios_com_claude
--- Descricao: Sistema completo de qualificacao de leads usando analise PICS via Claude
--- Criado: 2025-01-23
--- Atualizado: 2025-10-15 - Sincronizado com Supabase main (LIMIT 20/15, timeout 300s)
--- Atualizado: 2025-10-16 - max_tokens aumentado 4000->16000 para evitar truncamento JSON
--- Atualizado: 2025-10-17 - max_tokens reduzido 16000->8000 (limite do modelo Sonnet 4.5 é 8192)
+-- Migration: Otimizar analisar_comentarios_com_claude
+-- Problema: Prompt muito grande causando timeout/NULL
+-- Solução: Reduzir tamanho da transcrição + logging detalhado
+-- Data: 2025-10-17
 -- =============================================
 
 DROP FUNCTION IF EXISTS analisar_comentarios_com_claude(integer, integer);
 
-CREATE OR REPLACE FUNCTION public.analisar_comentarios_com_claude(p_project_id integer, p_video_id integer DEFAULT NULL::integer)
- RETURNS text
- LANGUAGE plpgsql
+CREATE OR REPLACE FUNCTION public.analisar_comentarios_com_claude(
+    p_project_id integer,
+    p_video_id integer DEFAULT NULL::integer
+)
+RETURNS text
+LANGUAGE plpgsql
 AS $function$
 DECLARE
     prompt_claude TEXT;
@@ -21,11 +22,17 @@ DECLARE
     comentarios_json JSONB;
     v_pais TEXT;
     v_idioma TEXT;
+    v_prompt_size INTEGER;
 BEGIN
+    -- Buscar dados do projeto
     SELECT "description service", "Keywords", "País"
     INTO project_data
     FROM public."Projeto"
     WHERE id = p_project_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Projeto % não encontrado', p_project_id;
+    END IF;
 
     v_pais := COALESCE(project_data."País", 'US');
 
@@ -34,6 +41,7 @@ BEGIN
         ELSE 'ingles'
     END;
 
+    -- Prompt base (sistema de qualificação)
     prompt_claude := '### SISTEMA DE QUALIFICACAO AVANCADA DE LEADS ### ' ||
     'Voce e um ANALISTA ESPECIALIZADO EM QUALIFICACAO DE LEADS com experiencia em identificar potenciais clientes. ' ||
     'Sua tarefa e avaliar comentarios do YouTube para encontrar pessoas com real interesse no produto ou servico descrito. ' ||
@@ -50,6 +58,7 @@ BEGIN
     '- Nao e Lead (<6): Comentarios genericos sem intencao comercial ' ||
     'IMPORTANTE: Comentarios com pontuacao inferior a 6 DEVEM ser classificados como "lead": false';
 
+    -- Buscar vídeo específico ou primeiro vídeo com comentários não analisados
     IF p_video_id IS NOT NULL THEN
         FOR video_data IN (
             SELECT
@@ -75,32 +84,41 @@ BEGIN
             LEFT JOIN public."Videos_trancricao" vt ON v.transcript = vt.id
             WHERE v.id = p_video_id
         ) LOOP
+            -- Contexto do produto
             prompt_claude := prompt_claude || ' ## CONTEXTO DO PRODUTO ## ' ||
-                'Descricao do produto/servico: ' || replace(project_data."description service", '"', '''') || ' ' ||
-                'Keywords/Nicho: ' || replace(project_data."Keywords", '"', '''') || ' ' ||
-                '## CONTEXTO DO VIDEO ## ' ||
+                'Descricao do produto/servico: ' || COALESCE(replace(project_data."description service", '"', ''''), 'N/A') || ' ' ||
+                'Keywords/Nicho: ' || COALESCE(replace(project_data."Keywords", '"', ''''), 'N/A') || ' ';
+
+            -- Contexto do vídeo
+            prompt_claude := prompt_claude || '## CONTEXTO DO VIDEO ## ' ||
                 'ID do Video: ' || video_data.video_id || ' ' ||
-                'Titulo: ' || replace(video_data.video_title, '"', '''') || ' ' ||
-                'Descricao: ' || replace(regexp_replace(left(video_data.video_description, 1000), E'[\n\r\t]+', ' ', 'g'), '"', '''') || ' ' ||
-                'Palavra-chave da busca: ' || replace(video_data.scanner_keyword, '"', '''');
+                'Titulo: ' || COALESCE(replace(video_data.video_title, '"', ''''), 'N/A') || ' ' ||
+                'Descricao: ' || COALESCE(replace(regexp_replace(left(video_data.video_description, 500), E'[\n\r\t]+', ' ', 'g'), '"', ''''), 'N/A') || ' ' ||
+                'Palavra-chave da busca: ' || COALESCE(replace(video_data.scanner_keyword, '"', ''''), 'N/A') || ' ';
 
+            -- Transcrição MUITO REDUZIDA (apenas primeiros 1500 chars)
             IF video_data.video_transcription IS NOT NULL AND LENGTH(video_data.video_transcription) > 0 THEN
-                prompt_claude := prompt_claude || ' ## TRANSCRICAO DO VIDEO (RESUMO) ## ' ||
-                    replace(regexp_replace(left(video_data.video_transcription, 5000), E'[\n\r\t]+', ' ', 'g'), '"', '''');
+                prompt_claude := prompt_claude || '## TRANSCRICAO DO VIDEO (RESUMO INICIAL) ## ' ||
+                    replace(regexp_replace(left(video_data.video_transcription, 1500), E'[\n\r\t]+', ' ', 'g'), '"', '''') || ' ';
             END IF;
 
-            prompt_claude := prompt_claude || ' ## COMENTARIOS PARA ANALISE ## ';
-
+            -- Comentários
+            prompt_claude := prompt_claude || '## COMENTARIOS PARA ANALISE ## ';
             comentarios_json := video_data.comentarios;
-            IF comentarios_json IS NOT NULL THEN
-                FOR i IN 0..jsonb_array_length(comentarios_json)-1 LOOP
-                    prompt_claude := prompt_claude ||
-                        ' Comentario ID: ' || ((comentarios_json->i)::jsonb->>'comentario_id') || ' ' ||
-                        'Texto: ' || replace(regexp_replace(left((comentarios_json->i)::jsonb->>'text_display', 1000), E'[\n\r\t]+', ' ', 'g'), '"', '''');
-                END LOOP;
+
+            IF comentarios_json IS NULL THEN
+                RAISE NOTICE 'Nenhum comentário não analisado encontrado para vídeo %', p_video_id;
+                RETURN NULL;
             END IF;
+
+            FOR i IN 0..jsonb_array_length(comentarios_json)-1 LOOP
+                prompt_claude := prompt_claude ||
+                    ' Comentario ID: ' || ((comentarios_json->i)::jsonb->>'comentario_id') || ' ' ||
+                    'Texto: ' || replace(regexp_replace(left((comentarios_json->i)::jsonb->>'text_display', 800), E'[\n\r\t]+', ' ', 'g'), '"', '''') || ' ';
+            END LOOP;
         END LOOP;
     ELSE
+        -- Buscar primeiro vídeo do projeto com comentários não analisados
         FOR video_data IN (
             WITH videos_do_projeto AS (
                 SELECT DISTINCT cp.video_id
@@ -134,42 +152,50 @@ BEGIN
             LEFT JOIN public."Scanner de videos do youtube" s ON v.scanner_id = s.id
             LEFT JOIN public."Videos_trancricao" vt ON v.transcript = vt.id
         ) LOOP
+            -- Contexto do produto
             prompt_claude := prompt_claude || ' ## CONTEXTO DO PRODUTO ## ' ||
-                'Descricao do produto/servico: ' || replace(project_data."description service", '"', '''') || ' ' ||
-                'Keywords/Nicho: ' || replace(project_data."Keywords", '"', '''') || ' ' ||
-                '## CONTEXTO DO VIDEO ## ' ||
+                'Descricao do produto/servico: ' || COALESCE(replace(project_data."description service", '"', ''''), 'N/A') || ' ' ||
+                'Keywords/Nicho: ' || COALESCE(replace(project_data."Keywords", '"', ''''), 'N/A') || ' ';
+
+            -- Contexto do vídeo
+            prompt_claude := prompt_claude || '## CONTEXTO DO VIDEO ## ' ||
                 'ID do Video: ' || video_data.video_id || ' ' ||
-                'Titulo: ' || replace(video_data.video_title, '"', '''') || ' ' ||
-                'Descricao: ' || replace(regexp_replace(left(video_data.video_description, 1000), E'[\n\r\t]+', ' ', 'g'), '"', '''') || ' ' ||
-                'Palavra-chave da busca: ' || replace(video_data.scanner_keyword, '"', '''');
+                'Titulo: ' || COALESCE(replace(video_data.video_title, '"', ''''), 'N/A') || ' ' ||
+                'Descricao: ' || COALESCE(replace(regexp_replace(left(video_data.video_description, 500), E'[\n\r\t]+', ' ', 'g'), '"', ''''), 'N/A') || ' ' ||
+                'Palavra-chave da busca: ' || COALESCE(replace(video_data.scanner_keyword, '"', ''''), 'N/A') || ' ';
 
+            -- Transcrição MUITO REDUZIDA (apenas primeiros 1500 chars)
             IF video_data.video_transcription IS NOT NULL AND LENGTH(video_data.video_transcription) > 0 THEN
-                prompt_claude := prompt_claude || ' ## TRANSCRICAO DO VIDEO (RESUMO) ## ' ||
-                    replace(regexp_replace(left(video_data.video_transcription, 4000), E'[\n\r\t]+', ' ', 'g'), '"', '''');
+                prompt_claude := prompt_claude || '## TRANSCRICAO DO VIDEO (RESUMO INICIAL) ## ' ||
+                    replace(regexp_replace(left(video_data.video_transcription, 1500), E'[\n\r\t]+', ' ', 'g'), '"', '''') || ' ';
             END IF;
 
-            prompt_claude := prompt_claude || ' ## COMENTARIOS PARA ANALISE ## ';
-
+            -- Comentários
+            prompt_claude := prompt_claude || '## COMENTARIOS PARA ANALISE ## ';
             comentarios_json := video_data.comentarios;
-            IF comentarios_json IS NOT NULL THEN
-                FOR i IN 0..jsonb_array_length(comentarios_json)-1 LOOP
-                    prompt_claude := prompt_claude ||
-                        ' Comentario ID: ' || ((comentarios_json->i)::jsonb->>'comentario_id') || ' ' ||
-                        'Texto: ' || replace(regexp_replace(left((comentarios_json->i)::jsonb->>'text_display', 1000), E'[\n\r\t]+', ' ', 'g'), '"', '''');
-                END LOOP;
+
+            IF comentarios_json IS NULL THEN
+                RAISE NOTICE 'Nenhum comentário não analisado encontrado para projeto %', p_project_id;
+                RETURN NULL;
             END IF;
+
+            FOR i IN 0..jsonb_array_length(comentarios_json)-1 LOOP
+                prompt_claude := prompt_claude ||
+                    ' Comentario ID: ' || ((comentarios_json->i)::jsonb->>'comentario_id') || ' ' ||
+                    'Texto: ' || replace(regexp_replace(left((comentarios_json->i)::jsonb->>'text_display', 800), E'[\n\r\t]+', ' ', 'g'), '"', '''') || ' ';
+            END LOOP;
         END LOOP;
     END IF;
 
+    -- Instruções finais
     prompt_claude := prompt_claude || ' ## INSTRUCOES PARA JUSTIFICATIVAS ## ' ||
         'Para cada comentario, forneca uma justificativa clara e concisa que explique seu raciocinio para a classificacao. ' ||
         'A justificativa deve: ' ||
         '1. Explicar por que o comentario foi classificado como lead ou nao-lead ' ||
         '2. Mencionar elementos especificos do comentario que indicam interesse ou falta dele ' ||
         '3. Fazer referencia ao contexto do video quando relevante ' ||
-        '4. Se disponivel na transcricao, mencionar timestamps especificos relevantes ao comentario ' ||
-        '5. Ser escrita em ' || v_idioma || ' (conforme o pais do projeto: ' || v_pais || ') ' ||
-        '6. Ter entre 100-150 caracteres, sendo direta e informativa ' ||
+        '4. Ser escrita em ' || v_idioma || ' (conforme o pais do projeto: ' || v_pais || ') ' ||
+        '5. Ter entre 100-150 caracteres, sendo direta e informativa ' ||
         '## INSTRUCOES FINAIS ## ' ||
         '1. Analise cuidadosamente o contexto do video e o conteudo de cada comentario ' ||
         '2. Identifique sinais de interesse genuino pelo produto/servico descrito ' ||
@@ -177,6 +203,17 @@ BEGIN
         '4. LEMBRE-SE: Comentarios com pontuacao abaixo de 6 devem ser marcados como lead=false ' ||
         '5. Quando as estatisticas do video tiver menos de 50 comentarios nao cite o produto ou servico mais de uma vez ' ||
         '6. Responda APENAS em formato JSON conforme solicitado';
+
+    -- Log do tamanho do prompt
+    v_prompt_size := LENGTH(prompt_claude);
+    RAISE NOTICE 'Tamanho do prompt: % caracteres', v_prompt_size;
+
+    IF v_prompt_size > 100000 THEN
+        RAISE WARNING 'Prompt muito grande (% chars). Pode causar timeout!', v_prompt_size;
+    END IF;
+
+    -- Chamar Claude API
+    RAISE NOTICE 'Chamando Claude API...';
 
     SELECT claude_complete(
         prompt_claude,
@@ -188,11 +225,26 @@ BEGIN
         'IMPORTANTE: Comentarios com pontuacao inferior a 6 DEVEM ser marcados como "lead": false. ' ||
         'A justificativa deve explicar o raciocinio, referenciar elementos do contexto e ser concisa (100-150 caracteres). ' ||
         'Responda somente com o JSON solicitado, sem texto adicional',
-        8000,
+        16000,
         0.3,
         300000
     ) INTO resultado_claude;
 
+    IF resultado_claude IS NULL THEN
+        RAISE WARNING 'Claude retornou NULL. Verifique logs da função claude_complete.';
+    ELSE
+        RAISE NOTICE 'Claude respondeu com sucesso (% caracteres)', LENGTH(resultado_claude);
+    END IF;
+
     RETURN resultado_claude;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE WARNING 'ERRO em analisar_comentarios_com_claude: %', SQLERRM;
+        RETURN NULL;
 END;
-$function$
+$function$;
+
+-- Comentário da função
+COMMENT ON FUNCTION public.analisar_comentarios_com_claude(integer, integer) IS
+'Analisa comentários de vídeos usando Claude AI (versão otimizada - transcrição reduzida para 1500 chars)';

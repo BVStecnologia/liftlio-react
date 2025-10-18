@@ -1,30 +1,14 @@
 -- =============================================
--- Função: claude_complete
--- Tipo: API Wrapper (chamada HTTP à Claude API)
---
--- Descrição:
---   Wrapper para chamar a API do Claude da Anthropic.
---   Usa extensão http do PostgreSQL para fazer requisição POST.
---
--- Entrada:
---   user_prompt TEXT - Prompt do usuário
---   system_prompt TEXT - Prompt do sistema (default: 'você é um professor')
---   max_tokens INTEGER - Máximo de tokens na resposta (default: 4000)
---   temperature DOUBLE PRECISION - Temperatura do modelo (default: 0.1)
---   timeout_ms INTEGER - Timeout em milissegundos (default: 30000)
---
--- Saída:
---   TEXT - Resposta do Claude
---
--- Conexões:
---   → Chamada por: 05_analisar_comentarios_com_claude (linha 259)
---   → Também usada por: STATUS_3 (analyze_video_with_claude)
---
--- Criado: Data desconhecida
--- Atualizado: 2025-01-10 - Migrado para usar get_current_claude_model() wrapper
---             2025-10-02 - Recuperado do Supabase e salvo localmente
---             2025-10-17 - Melhorado error logging (NOTICE → WARNING, propaga exceções)
+-- Migration: Fix claude_complete error logging + DEFAULT FALSE
+-- Data: 2025-10-17 14:30
+-- Objetivo:
+--   1. Melhorar logging de erros em claude_complete (NOTICE → WARNING)
+--   2. Adicionar DEFAULT FALSE em comentario_analizado
+--   3. Atualizar registros NULL para FALSE
 -- =============================================
+
+-- PARTE 1: Melhorar tratamento de erros em claude_complete
+-- =========================================================
 
 DROP FUNCTION IF EXISTS claude_complete(TEXT, TEXT, INTEGER, DOUBLE PRECISION, INTEGER);
 
@@ -57,7 +41,6 @@ BEGIN
     );
 
     -- Construir o corpo da requisição
-    -- MODELO: Usa get_current_claude_model() para centralizar versão
     request_body := json_build_object(
         'model', get_current_claude_model(),
         'max_tokens', max_tokens,
@@ -65,9 +48,6 @@ BEGIN
         'system', system_prompt,
         'messages', messages
     )::text;
-
-    -- Log para debug (opcional)
-    RAISE NOTICE 'Request body: %', request_body;
 
     -- Fazer a chamada à API do Claude
     SELECT * INTO http_response
@@ -106,4 +86,33 @@ EXCEPTION
         -- ✅ MUDANÇA: Propagar erro ao invés de retornar NULL
         RAISE;
 END;
-$function$
+$function$;
+
+-- PARTE 2: Adicionar DEFAULT FALSE em comentario_analizado
+-- ==========================================================
+
+-- Atualizar registros NULL para FALSE
+UPDATE public."Comentarios_Principais"
+SET comentario_analizado = FALSE
+WHERE comentario_analizado IS NULL;
+
+-- Adicionar DEFAULT FALSE na coluna
+ALTER TABLE public."Comentarios_Principais"
+ALTER COLUMN comentario_analizado SET DEFAULT FALSE;
+
+-- PARTE 3: Simplificar queries futuras
+-- =====================================
+-- Agora todas as queries podem usar apenas:
+--   WHERE comentario_analizado = FALSE
+-- Ao invés de:
+--   WHERE (comentario_analizado IS NULL OR comentario_analizado = FALSE)
+
+-- Log de sucesso
+DO $$
+BEGIN
+    RAISE NOTICE 'Migration 20251017143000 aplicada com sucesso!';
+    RAISE NOTICE '- claude_complete agora loga erros como WARNING';
+    RAISE NOTICE '- comentario_analizado tem DEFAULT FALSE';
+    RAISE NOTICE '- % registros atualizados de NULL para FALSE',
+        (SELECT COUNT(*) FROM public."Comentarios_Principais" WHERE comentario_analizado = FALSE);
+END $$;
