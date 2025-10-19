@@ -1,5 +1,49 @@
 # YouTube Search Engine v5 - Sistema de Busca e Curadoria de Vídeos
 
+## 🚀 Infraestrutura & Deploy
+
+### Servidor de Produção
+- **URL**: http://173.249.22.2:8000
+- **Porta**: 8000 (porta FIXA - não alterar!)
+- **Localização VPS**: `/opt/containers/youtube-search-engine`
+- **Container**: `liftlio-youtube-search`
+- **Health Check**: http://173.249.22.2:8000/health
+
+### Deploy para VPS
+```bash
+# 1. Certifique-se que o .env está configurado localmente
+cp .env.example .env
+# Edite o .env com suas keys (NUNCA commite!)
+
+# 2. Execute o script de deploy
+bash deploy-seguro.sh
+
+# Ou faça deploy manual via SSH:
+cd /Users/valdair/Documents/Projetos/Liftlio/Servidor/youtube-search-engine
+tar -czf youtube-search-v5.tar.gz youtube_search_engine.py requirements.txt Dockerfile docker-compose.yml .env
+scp -i ~/.ssh/contabo_key youtube-search-v5.tar.gz root@173.249.22.2:/tmp/
+ssh -i ~/.ssh/contabo_key root@173.249.22.2 "
+  cd /opt/containers/youtube-search-engine
+  tar -xzf /tmp/youtube-search-v5.tar.gz
+  docker-compose down && docker-compose build && docker-compose up -d
+"
+```
+
+### ⚠️ IMPORTANTE: Separação de Serviços
+Este serviço **NÃO é o mesmo** que `Monitormanto de canais`:
+- **youtube-search-engine** (porta 8000): Sistema de BUSCA de vídeos novos no YouTube
+- **Monitormanto de canais** (porta 8001): Sistema de QUALIFICAÇÃO de vídeos de canais específicos
+
+Ambos usam YouTube API e rodam no mesmo VPS, mas têm funções diferentes!
+
+### 🔒 Segurança
+- ⚠️ **NUNCA commite o arquivo `.env`** - ele contém API keys sensíveis
+- ✅ O `.env` está no `.gitignore` e será ignorado automaticamente
+- ✅ Use apenas `.env.example` como referência
+- ✅ Novas API keys devem ser atualizadas no servidor via deploy
+
+---
+
 ## 📋 Visão Geral
 
 Sistema inteligente de busca e seleção de vídeos do YouTube usando AI. O sistema funciona em 5 etapas sequenciais, adaptando-se dinamicamente à região do projeto (BR, US, etc.) e aplicando filtros rigorosos de qualidade.
