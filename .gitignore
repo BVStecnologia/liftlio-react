@@ -16,3 +16,15 @@ LINKEDIN_CONTENT/**/draft-*.md
 # Playwright MCP - Screenshots de teste
 .playwright-mcp/
 liftlio-react/.env.development.original
+
+# Servidor - Python projects (Monitormanto, youtube-search-engine)
+Servidor/**/.env
+Servidor/**/venv/
+Servidor/**/__pycache__/
+Servidor/**/*.log
+Servidor/**/*.pyc
+Servidor/**/*.pyo
+Servidor/**/*.pyd
+Servidor/**/.pytest_cache/
+Servidor/**/.coverage
+Servidor/**/htmlcov/
