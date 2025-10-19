@@ -224,10 +224,24 @@ const ProcessingWrapperSimplified: React.FC<ProcessingWrapperProps> = ({ childre
             <p style={{
               fontSize: '14px',
               color: 'rgba(255, 255, 255, 0.6)',
-              marginBottom: '30px',
+              marginBottom: '12px',
               textAlign: 'center'
             }}>
               {message}
+            </p>
+
+            <p style={{
+              fontSize: '13px',
+              color: 'rgba(168, 85, 247, 0.8)',
+              marginBottom: '30px',
+              textAlign: 'center',
+              fontStyle: 'italic',
+              padding: '12px 20px',
+              background: 'rgba(139, 92, 246, 0.1)',
+              borderRadius: '8px',
+              border: '1px solid rgba(139, 92, 246, 0.2)'
+            }}>
+              Initial setup usually takes 3-5 minutes. Feel free to grab a coffee ☕ and come back soon!
             </p>
 
             <div style={{ marginBottom: '30px' }}>
