@@ -1,0 +1,49 @@
+# ============================================
+# Video Qualifier - Docker Compose
+# Local development and testing
+# ============================================
+
+services:
+  video-qualifier:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: liftlio-video-qualifier
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Load from .env file
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-5-20250929}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - TRANSCRIPT_API_URL=${TRANSCRIPT_API_URL:-http://173.249.22.2:8081}
+      - PORT=${PORT:-8000}
+      - HOST=${HOST:-0.0.0.0}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - MAX_CONCURRENT_TRANSCRIPTS=${MAX_CONCURRENT_TRANSCRIPTS:-5}
+      - TRANSCRIPT_TIMEOUT=${TRANSCRIPT_TIMEOUT:-300}
+      - YOUTUBE_MAX_RESULTS=${YOUTUBE_MAX_RESULTS:-20}
+    volumes:
+      # Mount .env file
+      - ./.env:/app/.env:ro
+    networks:
+      - liftlio-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  liftlio-network:
+    driver: bridge
