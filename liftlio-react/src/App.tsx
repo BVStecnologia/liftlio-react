@@ -38,6 +38,8 @@ const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 // About, Privacy, Terms agora são servidas como HTML estático da pasta public
 const Security = lazy(() => import('./pages/Security'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
+const WaitlistPage = lazy(() => import('./pages/WaitlistPage'));
+const WaitlistPendingPage = lazy(() => import('./pages/WaitlistPendingPage'));
 
 // Lazy load heavy components
 const Sidebar = lazy(() => import('./components/Sidebar'));
@@ -372,6 +374,16 @@ const AppContent: React.FC = () => {
           <Route path="/contact" element={
             <Suspense fallback={null}>
               <ContactPage />
+            </Suspense>
+          } />
+          <Route path="/waitlist" element={
+            <Suspense fallback={null}>
+              <WaitlistPage />
+            </Suspense>
+          } />
+          <Route path="/waitlist-pending" element={
+            <Suspense fallback={null}>
+              <WaitlistPendingPage />
             </Suspense>
           } />
           <Route path="/privacy" element={<StaticRedirect to="/privacy.html" />} />

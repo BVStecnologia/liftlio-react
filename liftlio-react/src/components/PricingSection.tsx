@@ -102,7 +102,7 @@ const translations = {
     titleHighlight: "Incredible ROI",
     subtitle: "Choose the plan that fits your growth stage. Scale up anytime.",
     monthly: "month",
-    cta: "Start Growing Today",
+    cta: "Join the Waitlist",
     plans: {
       starter: {
         name: "Starter",
@@ -144,7 +144,7 @@ const translations = {
     titleHighlight: "ROI Incrível",
     subtitle: "Escolha o plano que se encaixa no seu estágio de crescimento. Escale a qualquer momento.",
     monthly: "mês",
-    cta: "Começar a Crescer Hoje",
+    cta: "Entrar na Lista de Espera",
     plans: {
       starter: {
         name: "Iniciante",
@@ -190,7 +190,7 @@ const PricingSection: React.FC = () => {
   const t = translations[language];
   
   const handleGetStarted = (plan?: string) => {
-    navigate('/register', { state: { plan } });
+    navigate('/waitlist', { state: { plan } });
   };
   
   return (
