@@ -3,6 +3,7 @@
 -- Descricao: Obtem estatisticas completas do dashboard para um projeto
 -- Criado: 2024-01-24
 -- Atualizado: 2025-01-19 - Adicionado total_engagement + JOIN com Mensagens para filtrar por tipo
+-- Atualizado: 2025-10-19 - Corrigido post_today para contar TODOS os tipos (produto + engajamento)
 -- =============================================
 
 -- Drop da versao anterior
@@ -49,14 +50,12 @@ BEGIN
       AND smp.postado IS NOT NULL
       AND m.tipo_resposta = 'engajamento';
 
-    -- MODIFICADO: Mensagens tipo 'produto' postadas hoje (JOIN com Mensagens)
+    -- CORRIGIDO: TODAS as mensagens postadas hoje (produto + engajamento)
     SELECT COUNT(*)
     INTO post_today
     FROM public."Settings messages posts" smp
-    JOIN public."Mensagens" m ON smp."Mensagens" = m.id
     WHERE smp."Projeto" = project_id_param
       AND smp.postado IS NOT NULL
-      AND m.tipo_resposta = 'produto'
       AND smp.postado >= CURRENT_DATE
       AND smp.postado < (CURRENT_DATE + INTERVAL '1 day');
 
