@@ -3,6 +3,15 @@ import { supabase, callRPC } from '../lib/supabaseClient'
 import { Session, User, AuthChangeEvent } from '@supabase/supabase-js'
 
 type SubscriptionInfo = {
+  success?: boolean
+  waitlist_approved: boolean
+  waitlist_status?: string
+  has_active_subscription: boolean
+  can_access_checkout: boolean
+  can_access_dashboard: boolean
+  mentions_available: number
+  is_cancelled_with_access: boolean
+  message?: string
   subscription: {
     id: number
     status: string
@@ -13,10 +22,7 @@ type SubscriptionInfo = {
     next_billing_date: string
     days_until_billing: number
     is_in_grace_period: boolean
-  }
-  mentions_available: number
-  has_active_subscription: boolean
-  is_cancelled_with_access: boolean
+  } | null
 }
 
 type AuthContextType = {

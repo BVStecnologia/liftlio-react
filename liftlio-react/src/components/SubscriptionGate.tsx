@@ -40,14 +40,32 @@ const SubscriptionGate: React.FC<SubscriptionGateProps> = ({ children }) => {
       </div>
     );
   }
-  
-  // Se não tem assinatura ativa, redireciona para checkout
-  if (!subscription?.has_active_subscription) {
-    console.log('Redirecionando para checkout - subscription:', subscription);
+
+  // ========================================
+  // 1. VERIFICAR WAITLIST PRIMEIRO
+  // ========================================
+  // Se não está aprovado na waitlist, bloqueia TUDO
+  if (subscription && !subscription.waitlist_approved) {
+    console.log('Usuário não aprovado na waitlist - bloqueando acesso:', {
+      waitlist_status: subscription.waitlist_status,
+      message: subscription.message
+    });
+    return <Navigate to="/waitlist-pending" replace />;
+  }
+
+  // ========================================
+  // 2. SE APROVADO MAS SEM SUBSCRIPTION
+  // ========================================
+  // Permite ir para checkout
+  if (subscription && !subscription.has_active_subscription) {
+    console.log('Aprovado na waitlist mas sem subscription - redirecionando para checkout');
     return <Navigate to="/checkout" replace />;
   }
-  
-  // Se tem assinatura ativa, mostra o conteúdo
+
+  // ========================================
+  // 3. SE APROVADO E COM SUBSCRIPTION ATIVA
+  // ========================================
+  // Mostra o conteúdo protegido
   return <>{children}</>;
 };
 
