@@ -1,6 +1,6 @@
 -- =============================================
--- Função: youtube_transcribe
--- Descrição: Obtém transcrição de vídeos do YouTube (limita a 30 minutos)
+-- Funï¿½ï¿½o: youtube_transcribe
+-- Descriï¿½ï¿½o: Obtï¿½m transcriï¿½ï¿½o de vï¿½deos do YouTube (limita a 30 minutos)
 -- Criado: 2025-01-23
 -- =============================================
 
@@ -18,7 +18,7 @@ DECLARE
     result TEXT := '';
     found_over_30min BOOLEAN := FALSE;
 BEGIN
-    -- Construir a URL completa do YouTube usando o ID do vídeo
+    -- Construir a URL completa do YouTube usando o ID do vï¿½deo
     video_url := 'https://www.youtube.com/watch?v=' || video_id;
 
     -- Aumentar o timeout para 5 minutos (300000 milliseconds)
@@ -27,7 +27,7 @@ BEGIN
     SELECT * INTO http_response
     FROM http((
         'POST',
-        'https://youtube-transcribe.fly.dev/transcribe',
+        'https://transcricao.liftlio.com/transcribe',
         ARRAY[
             http_header('Content-Type', 'application/json')
         ],
@@ -35,25 +35,25 @@ BEGIN
         '{"url": "' || video_url || '"}'
     )::http_request);
 
-    -- Resetar o timeout para não afetar outras chamadas
+    -- Resetar o timeout para nï¿½o afetar outras chamadas
     PERFORM http_reset_curlopt();
 
-    -- Pega transcrição completa
+    -- Pega transcriï¿½ï¿½o completa
     full_transcription := (http_response.content::jsonb->>'transcription');
 
-    -- Se não houver conteúdo de transcrição, retornar NULL
+    -- Se nï¿½o houver conteï¿½do de transcriï¿½ï¿½o, retornar NULL
     IF full_transcription IS NULL OR full_transcription = '' THEN
         RETURN NULL;
     END IF;
 
-    -- Processar a transcrição linha por linha
+    -- Processar a transcriï¿½ï¿½o linha por linha
     FOR current_line IN
         SELECT unnest(string_to_array(full_transcription, E'\n'))
     LOOP
         -- Extrair timestamp usando regex
         timestamp_matches := regexp_matches(current_line, timestamp_pattern, 'g');
 
-        -- Se encontrou timestamp, verificar se é < 30 minutos
+        -- Se encontrou timestamp, verificar se ï¿½ < 30 minutos
         IF array_length(timestamp_matches, 1) > 0 THEN
             -- Converter horas, minutos, segundos para total de segundos
             IF (timestamp_matches[1]::integer * 3600 +
@@ -73,8 +73,8 @@ BEGIN
         END IF;
     END LOOP;
 
-    -- Se não encontramos um timestamp que ultrapasse 30 minutos,
-    -- retornamos a transcrição completa
+    -- Se nï¿½o encontramos um timestamp que ultrapasse 30 minutos,
+    -- retornamos a transcriï¿½ï¿½o completa
     IF NOT found_over_30min THEN
         RETURN full_transcription;
     END IF;
