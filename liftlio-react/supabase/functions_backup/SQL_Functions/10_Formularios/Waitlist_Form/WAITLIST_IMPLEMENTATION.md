@@ -26,12 +26,13 @@ Este documento é o **guia completo** para implementar o sistema de waitlist do 
 - [ ] Adicionar CSS (animações pulse, glow, responsive)
 - [ ] Adicionar JavaScript (countdown timer + spots counter)
 
-### Frontend (React/TypeScript)
-- [ ] `PricingSection.tsx` modificado (CTA → "Join the Waitlist")
-- [ ] `WaitlistPage.tsx` criada (formulário de inscrição)
-- [ ] Rota `/waitlist` adicionada em `App.tsx`
-- [ ] Testes manuais no localhost
-- [ ] Testes no staging/produção
+### Frontend (React/TypeScript) - SIMPLIFIED VERSION
+- [x] **Step 1:** Modify `PricingSection.tsx` - Change CTA to "Join the Waitlist" ✅
+- [x] **Step 2:** Create `WaitlistPage.tsx` - Simple form (name, email, website, source) ✅
+- [x] **Step 3:** Create `WaitlistPendingPage.tsx` - Thank you page with "Back Home" button ✅
+- [x] **Step 4:** Add routes `/waitlist` and `/waitlist-pending` in `App.tsx` ✅
+- [ ] **Step 5:** Test on localhost (form submit → pending page → back home)
+- [ ] **Step 6:** Test in production after deploy
 
 ### Deploy
 - [ ] Git commit com mudanças
@@ -727,6 +728,43 @@ SELECT
     created_at
 FROM waitlist
 ORDER BY position_in_queue;
+```
+
+### Admin Notification System (NEW - 2025-10-19)
+
+**Status:** ✅ Implementado e testado no LIVE
+
+O sistema agora envia automaticamente emails de notificação para os admins quando um novo usuário se inscreve na waitlist.
+
+**Destinatários:**
+- valdair3d@gmail.com
+- steven@stevenjwilson.com
+
+**Arquivos criados:**
+- `06_trigger_notify_admin_new_signup.sql` - Trigger automático
+
+**Como funciona:**
+1. Usuário preenche formulário de waitlist
+2. `add_to_waitlist()` insere dados na tabela
+3. Trigger `notify_admin_new_waitlist_signup` dispara automaticamente
+4. Email de notificação é enviado para os admins via template `waitlist-admin-notification`
+
+**Template usado:** `waitlist-admin-notification` (categoria: alert)
+- Visual: Header roxo com gradiente Liftlio
+- Conteúdo: Dados do usuário (nome, email, website, discovery source, posição)
+- CTA: Link direto para Supabase Dashboard
+- Variáveis: userName, userEmail, websiteUrl, discoverySource, queuePosition
+
+**Testado em:** 2025-10-19 23:00 UTC
+- ✅ Trigger dispara automaticamente após INSERT
+- ✅ Edge Function `email-automation-engine` invocada com sucesso (200 OK)
+- ✅ Emails entregues em menos de 2 segundos
+
+**Logs de teste:**
+```
+23:00:24 UTC → INSERT na waitlist (ID: 6)
+23:00:25 UTC → Trigger dispara email-automation-engine
+23:00:25 UTC → Status 200 (1041ms) - Emails enviados
 ```
 
 ---

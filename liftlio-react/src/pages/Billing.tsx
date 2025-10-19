@@ -605,13 +605,13 @@ const Billing: React.FC = () => {
                 </SubscriptionTitle>
                 {subscription?.has_active_subscription && (
                   <SubscriptionBadge status={
-                    subscription.is_cancelled_with_access ? 'cancelled' : 
-                    subscription.subscription.is_in_grace_period ? 'trial' : 
+                    subscription.is_cancelled_with_access ? 'cancelled' :
+                    subscription.subscription?.is_in_grace_period ? 'trial' :
                     'active'
                   }>
                     {renderIcon(FaCheck)}
-                    {subscription.is_cancelled_with_access ? 'Cancelled' : 
-                     subscription.subscription.is_in_grace_period ? 'Trial' : 
+                    {subscription.is_cancelled_with_access ? 'Cancelled' :
+                     subscription.subscription?.is_in_grace_period ? 'Trial' :
                      'Active'}
                   </SubscriptionBadge>
                 )}
@@ -619,7 +619,7 @@ const Billing: React.FC = () => {
               
               {subscription?.has_active_subscription ? (
                 <>
-                  {subscription.is_cancelled_with_access && (
+                  {subscription.is_cancelled_with_access && subscription.subscription?.next_billing_date && (
                     <CancelledWarning>
                       {renderIcon(FaInfoCircle)}
                       <div>
@@ -632,17 +632,17 @@ const Billing: React.FC = () => {
                     <SubscriptionItem>
                       <SubscriptionLabel>Plan</SubscriptionLabel>
                       <SubscriptionValue>
-                        {subscription.subscription.plan_name}
-                        {subscription.subscription.plan_name === 'Starter' && ' - $49/mo'}
-                        {subscription.subscription.plan_name === 'Growth' && ' - $99/mo'}
-                        {subscription.subscription.plan_name === 'Scale' && ' - $199/mo'}
+                        {subscription.subscription?.plan_name}
+                        {subscription.subscription?.plan_name === 'Starter' && ' - $49/mo'}
+                        {subscription.subscription?.plan_name === 'Growth' && ' - $99/mo'}
+                        {subscription.subscription?.plan_name === 'Scale' && ' - $199/mo'}
                       </SubscriptionValue>
                     </SubscriptionItem>
                     
                     <SubscriptionItem>
                       <SubscriptionLabel>Mentions Available</SubscriptionLabel>
                       <SubscriptionValue>
-                        {subscription.mentions_available} / {subscription.subscription.mentions_limit}
+                        {subscription.mentions_available} / {subscription.subscription?.mentions_limit}
                       </SubscriptionValue>
                     </SubscriptionItem>
                     
@@ -652,8 +652,8 @@ const Billing: React.FC = () => {
                       </SubscriptionLabel>
                       <SubscriptionValue>
                         {renderIcon(FaCalendarAlt)}
-                        {new Date(subscription.subscription.next_billing_date).toLocaleDateString()}
-                        {subscription.is_cancelled_with_access && subscription.subscription.days_until_billing === 0 && 
+                        {subscription.subscription?.next_billing_date && new Date(subscription.subscription.next_billing_date).toLocaleDateString()}
+                        {subscription.is_cancelled_with_access && subscription.subscription?.days_until_billing === 0 &&
                           ' (No future charges)'}
                       </SubscriptionValue>
                     </SubscriptionItem>
@@ -661,7 +661,7 @@ const Billing: React.FC = () => {
                     <SubscriptionItem>
                       <SubscriptionLabel>Environment</SubscriptionLabel>
                       <SubscriptionValue>
-                        {subscription.subscription.is_production ? 'Production' : 'Development'}
+                        {subscription.subscription?.is_production ? 'Production' : 'Development'}
                       </SubscriptionValue>
                     </SubscriptionItem>
                   </SubscriptionDetails>
