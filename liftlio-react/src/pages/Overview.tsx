@@ -2954,6 +2954,95 @@ const Overview: React.FC = () => {
     );
   };
 
+  // Custom Tooltip for Weekly Performance Chart
+  const CustomWeeklyTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload) return null;
+
+    // Verificar se há pelo menos um valor > 0
+    const hasData = payload.some((p: any) => p.value > 0);
+    if (!hasData) return null;
+
+    return (
+      <div style={{
+        backgroundColor: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        border: `1px solid ${theme.colors.border.primary}`,
+        borderRadius: '8px',
+        padding: '12px',
+        fontSize: '13px',
+        boxShadow: theme.shadows.md
+      }}>
+        <p style={{
+          marginBottom: '8px',
+          fontWeight: 600,
+          color: theme.colors.text.primary
+        }}>
+          {label}
+        </p>
+        {payload.map((entry: any, index: number) => (
+          entry.value > 0 && (
+            <p key={index} style={{
+              color: entry.color,
+              margin: '4px 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span style={{
+                width: '8px',
+                height: '8px',
+                backgroundColor: entry.color,
+                borderRadius: '50%',
+                display: 'inline-block'
+              }} />
+              <span style={{ fontWeight: 500 }}>
+                {entry.value} {entry.name}
+              </span>
+            </p>
+          )
+        ))}
+      </div>
+    );
+  };
+
+  // Minimal labels for chart points (only show when value > 0)
+  const renderMinimalLabel = (props: any) => {
+    const { x, y, value, index } = props;
+    if (!value || value === 0) return null;
+
+    // Determinar a cor com base no dataKey do ponto
+    // Usar as mesmas cores definidas nas linhas do gráfico
+    const getColorByValue = () => {
+      // Verificar qual linha está renderizando baseado nos dados
+      const dataPoint = weeklyPerformanceData[index];
+      if (!dataPoint) return '#FFFFFF';
+
+      // Priorizar a cor da métrica com valor
+      if (dataPoint.videos === value) return '#2196F3'; // Azul
+      if (dataPoint.engagement === value) return '#FF7A30'; // Laranja
+      if (dataPoint.leads === value) return '#4CAF50'; // Verde
+
+      return '#FFFFFF'; // Fallback
+    };
+
+    return (
+      <text
+        x={x}
+        y={y - 8}
+        textAnchor="middle"
+        fill={getColorByValue()}
+        fontSize={11}
+        fontWeight={700}
+        style={{
+          textShadow: theme.name === 'dark'
+            ? '0 0 4px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,0.9)'
+            : '0 0 4px rgba(255,255,255,0.9), 0 1px 2px rgba(255,255,255,1)'
+        }}
+      >
+        {value}
+      </text>
+    );
+  };
+
   // Se não houver projeto selecionado
   if (!currentProject) {
     // SEMPRE retornar null quando não há projeto
@@ -3399,42 +3488,37 @@ const Overview: React.FC = () => {
                   axisLine={false} 
                   tickLine={false}
                 />
-                <Tooltip
-                  contentStyle={{
-                    background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                    border: `1px solid ${theme.colors.border.primary}`,
-                    borderRadius: '8px',
-                    boxShadow: theme.shadows.md,
-                    color: theme.colors.text.primary
-                  }}
-                />
+                <Tooltip content={<CustomWeeklyTooltip />} />
                 <Legend content={renderCustomLegend} />
-                <Line 
-                  type="monotone" 
-                  dataKey="videos" 
+                <Line
+                  type="monotone"
+                  dataKey="videos"
                   name="Videos"
-                  stroke="#2196F3" 
+                  stroke="#2196F3"
                   strokeWidth={3}
                   dot={{ r: 4, strokeWidth: 0, fill: "#2196F3" }}
                   activeDot={{ r: 8, strokeWidth: 0, fill: "#2196F3" }}
+                  label={renderMinimalLabel as any}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="engagement" 
+                <Line
+                  type="monotone"
+                  dataKey="engagement"
                   name="Engagement"
-                  stroke="#FF7A30" 
+                  stroke="#FF7A30"
                   strokeWidth={3}
                   dot={{ r: 4, strokeWidth: 0, fill: "#FF7A30" }}
                   activeDot={{ r: 6, strokeWidth: 0, fill: "#FF7A30" }}
+                  label={renderMinimalLabel as any}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="leads" 
+                <Line
+                  type="monotone"
+                  dataKey="leads"
                   name="Leads"
-                  stroke="#4CAF50" 
+                  stroke="#4CAF50"
                   strokeWidth={3}
                   dot={{ r: 4, strokeWidth: 0, fill: "#4CAF50" }}
                   activeDot={{ r: 6, strokeWidth: 0, fill: "#4CAF50" }}
+                  label={renderMinimalLabel as any}
                 />
               </LineChart>
             </ResponsiveContainer>
