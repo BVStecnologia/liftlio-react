@@ -2,6 +2,8 @@
 -- Função: get_weekly_performance
 -- Descrição: Retorna performance semanal do projeto com métricas agregadas
 -- Criado: 2025-01-24
+-- Atualizado: 2025-10-19 - Corrigido Mentions para contar apenas tipo 'produto' (JOIN com Mensagens)
+--                          Corrigido Engagement para contar mensagens tipo 'engajamento' ao invés de comentários
 -- =============================================
 
 CREATE OR REPLACE FUNCTION public.get_weekly_performance(project_id_param integer, days_back integer DEFAULT 7)
@@ -28,19 +30,23 @@ BEGIN
         GROUP BY DATE(v.created_at)
     ),
     engagement_counts AS (
-        -- Contagem de engajamentos (comentários) por dia
-        SELECT DATE(c.published_at) AS day, COUNT(*) AS count
-        FROM public."Comentarios_Principais" c
-        WHERE c.project_id = project_id_param
-          AND c.published_at >= start_date
-        GROUP BY DATE(c.published_at)
-    ),
-    mention_counts AS (
-        -- Contagem de mensagens postadas por dia
+        -- Contagem de mensagens tipo 'engajamento' postadas por dia (JOIN com Mensagens para filtrar)
         SELECT DATE(s.postado) AS day, COUNT(*) AS count
         FROM public."Settings messages posts" s
+        JOIN public."Mensagens" m ON s."Mensagens" = m.id
         WHERE s."Projeto" = project_id_param
           AND s.postado >= start_date
+          AND m.tipo_resposta = 'engajamento'
+        GROUP BY DATE(s.postado)
+    ),
+    mention_counts AS (
+        -- Contagem de mensagens tipo 'produto' postadas por dia (JOIN com Mensagens para filtrar)
+        SELECT DATE(s.postado) AS day, COUNT(*) AS count
+        FROM public."Settings messages posts" s
+        JOIN public."Mensagens" m ON s."Mensagens" = m.id
+        WHERE s."Projeto" = project_id_param
+          AND s.postado >= start_date
+          AND m.tipo_resposta = 'produto'
         GROUP BY DATE(s.postado)
     ),
     combined_data AS (
