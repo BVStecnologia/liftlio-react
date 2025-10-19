@@ -132,10 +132,10 @@ Health check endpoint.
 
 ```env
 # YouTube Data API v3
-YOUTUBE_API_KEY=AIzaSyBkPx_QhVQXKkRJM6nwc3oy5tfdRRZLEyk
+YOUTUBE_API_KEY=your_youtube_api_key_here
 
 # Claude API (Anthropic)
-CLAUDE_API_KEY=sk-ant-...
+CLAUDE_API_KEY=your_claude_api_key_here
 
 # Supabase
 SUPABASE_URL=https://suqjifkhmekcdflwowiw.supabase.co

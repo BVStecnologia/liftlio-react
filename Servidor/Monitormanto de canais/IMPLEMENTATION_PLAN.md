@@ -10,7 +10,7 @@ Python native system replacing Langflow workflow, qualifying YouTube videos for 
 ## 🔑 API Configurations
 
 **YouTube Data API v3:**
-- Key: `AIzaSyBkPx_QhVQXKkRJM6nwc3oy5tfdRRZLEyk`
+- Key: `your_youtube_api_key_here` (⚠️ NEVER commit real keys!)
 - Quota: **2,000,000 units/day** 🚀 (200x standard!)
 - Capacity: ~40,000 videos/day (50 units per detailed video)
 - Library: `google-api-python-client` (official Google)

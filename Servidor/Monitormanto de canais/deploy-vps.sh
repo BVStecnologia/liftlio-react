@@ -14,7 +14,7 @@ VPS_HOST="173.249.22.2"
 VPS_USER="root"
 VPS_PATH="/opt/liftlio-video-qualifier"
 CONTAINER_NAME="liftlio-video-qualifier-prod"
-PORT="8000"
+PORT="8001"
 SSH_KEY="$HOME/.ssh/contabo_key"
 SSH_OPTS="-i ${SSH_KEY} -o StrictHostKeyChecking=no"
 
@@ -88,7 +88,7 @@ echo "Starting new container..."
 docker run -d \
     --name liftlio-video-qualifier-prod \
     --restart unless-stopped \
-    -p 8000:8000 \
+    -p 8001:8000 \
     --env-file .env \
     liftlio-video-qualifier:latest
 
