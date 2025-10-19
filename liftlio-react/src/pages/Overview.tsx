@@ -2128,9 +2128,9 @@ const Overview: React.FC = () => {
     border: 2px solid rgba(33, 150, 243, 0.3);
     box-shadow: 0 2px 10px rgba(33, 150, 243, 0.15);
     animation: ${DealPulse} 2s ease-in-out infinite;
-
+    
     &::before {
-      content: 'MENTIONS';
+      content: 'LEADS';
       position: absolute;
       top: -20px;
       left: 50%;
@@ -2885,6 +2885,7 @@ const Overview: React.FC = () => {
   const legendTooltips: { [key: string]: string } = {
     'Videos': 'Number of videos published on monitored channels per day',
     'Engagement': 'Comments posted without mentioning your product (pure engagement)',
+    'Leads': 'Comments where we mentioned your product or service',
     'Mentions': 'Comments where we mentioned your product or service'
   };
 
@@ -2962,46 +2963,48 @@ const Overview: React.FC = () => {
   }
   
   // Configuração dos cards com dados reais
+  const totalPosts = Number(statsData.engagements.value) + Number(statsData.engagement.value);
+
   const statsCards = [
     {
       id: 1,
       title: 'Channels',
       value: statsData.reach.value,
-      icon: 'FaFileAlt',
-      color: COLORS.INFO, // Azul padrão do sistema para canais
+      icon: 'FaBroadcastTower',
+      color: COLORS.INFO,
       description: 'Active channels',
       trend: statsData.reach.trend,
-      tooltip: 'Active channels being monitored for your keywords across YouTube'
+      tooltip: 'YouTube channels being monitored for relevant conversations about your niche'
     },
     {
       id: 2,
       title: 'Videos',
       value: statsData.activities.value,
-      icon: 'FaComments',
-      color: '#9C27B0', // Roxo para vídeos
+      icon: 'FaVideo',
+      color: '#9C27B0',
       description: 'Total videos',
       trend: statsData.activities.trend,
-      tooltip: 'Total videos found containing your monitored keywords'
+      tooltip: 'Total videos discovered where we can engage with the audience'
     },
     {
       id: 3,
-      title: 'Total Mentions',
-      value: statsData.engagements.value,
+      title: 'Posts',
+      value: totalPosts.toString(),
       icon: 'FaStar',
-      color: COLORS.WARNING, // Laranja padrão para menções totais
-      description: 'All time mentions',
-      trend: statsData.engagements.trend,
-      tooltip: 'Total number of comments where we mentioned your product or service'
+      color: COLORS.WARNING,
+      description: 'All posts published',
+      trend: null,
+      tooltip: `Product mentions: ${statsData.engagements.value} | Engagement: ${statsData.engagement.value}`
     },
     {
       id: 4,
-      title: 'Today\'s Mentions',
+      title: 'Today',
       value: statsData.leads.value,
-      icon: 'FaUserCheck',
-      color: COLORS.SUCCESS, // Verde padrão do sistema para menções de hoje
-      description: 'Mentions today',
+      icon: 'FaCalendarDay',
+      color: COLORS.SUCCESS,
+      description: 'Posted today',
       trend: statsData.leads.trend,
-      tooltip: 'New comments with product mentions posted today'
+      tooltip: 'Product mention comments posted today to maintain consistent presence'
     }
   ];
   
@@ -3219,12 +3222,12 @@ const Overview: React.FC = () => {
                 </StatLabel>
               </StatContent>
               <StatIconContainer>
-                <StatIcon 
-                  bgColor={stat.color} 
+                <StatIcon
+                  bgColor={stat.color}
                   animationDelay={`${index * 0.2}s`}
                 >
-                  {stat.title === 'Total Mentions' && <IconComponent icon={FaIcons.FaStar} />}
-                  {stat.title === 'Today\'s Mentions' && <IconComponent icon={FaIcons.FaCalendarDay} />}
+                  {stat.title === 'Posts' && <IconComponent icon={FaIcons.FaStar} />}
+                  {stat.title === 'Today' && <IconComponent icon={FaIcons.FaCalendarDay} />}
                   {stat.title === 'Videos' && <IconComponent icon={FaIcons.FaVideo} />}
                   {stat.title === 'Channels' && <IconComponent icon={FaIcons.FaBroadcastTower} />}
                 </StatIcon>
@@ -3240,14 +3243,14 @@ const Overview: React.FC = () => {
         >
           <StatCardTitle>
             <IconComponent icon={FaIcons.FaChartPie} />
-            Main Channels <span style={{ 
-              fontSize: '15px', 
-              fontWeight: 'normal', 
+            Main Channels <span style={{
+              fontSize: '15px',
+              fontWeight: 'normal',
               marginLeft: '8px',
               color: theme.colors.text.secondary,
               opacity: 0.9
             }}>
-              Top Mentions by Channel
+              Top Posts by Channel
             </span>
           </StatCardTitle>
           <ChartContainer style={{ height: '250px' }}>
@@ -3322,8 +3325,8 @@ const Overview: React.FC = () => {
                     />
                   ))}
                 </Pie>
-                <Tooltip 
-                  formatter={(value) => [`${value}`, 'Mentions']}
+                <Tooltip
+                  formatter={(value) => [`${value}`, 'Posts']}
                   contentStyle={{
                     background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                     border: `1px solid ${theme.colors.border.primary}`,
@@ -3424,11 +3427,11 @@ const Overview: React.FC = () => {
                   dot={{ r: 4, strokeWidth: 0, fill: "#FF7A30" }}
                   activeDot={{ r: 6, strokeWidth: 0, fill: "#FF7A30" }}
                 />
-                <Line
-                  type="monotone"
-                  dataKey="leads"
-                  name="Mentions"
-                  stroke="#4CAF50"
+                <Line 
+                  type="monotone" 
+                  dataKey="leads" 
+                  name="Leads"
+                  stroke="#4CAF50" 
                   strokeWidth={3}
                   dot={{ r: 4, strokeWidth: 0, fill: "#4CAF50" }}
                   activeDot={{ r: 6, strokeWidth: 0, fill: "#4CAF50" }}
@@ -3438,8 +3441,6 @@ const Overview: React.FC = () => {
           </ChartContainer>
         </ChartBody>
       </ChartCard>
-
-      {/* Keywords Insights Section - REMOVED per user request (PDF feedback) */}
 
       {/* Project Modal */}
       <ProjectModal

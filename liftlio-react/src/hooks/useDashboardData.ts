@@ -18,6 +18,7 @@ interface StatsData {
   reach: StatData;
   activities: StatData;
   engagements: StatData;
+  engagement: StatData;  // Community engagement messages
   leads: StatData;
 }
 
@@ -101,6 +102,7 @@ export const useDashboardData = () => {
     reach: { value: '0', trend: null },
     activities: { value: '0', trend: null },
     engagements: { value: '0', trend: null },
+    engagement: { value: '0', trend: null },
     leads: { value: '0', trend: null }
   });
   
@@ -218,7 +220,8 @@ export const useDashboardData = () => {
           channels_count: 0,
           videos_count: 0,
           total_mentions: 0,
-          today_mentions: 0
+          total_engagement: 0,
+          post_today: 0
         };
         const topChannels = channelsResponse.data || [];
         const performanceAnalysis: PerformanceAnalysisData[] = performanceAnalysisResponse.data || [];
@@ -288,27 +291,32 @@ export const useDashboardData = () => {
         const totalChannels = Number(dashboardStats.channels_count) || 0;
         const totalVideos = Number(dashboardStats.videos_count) || 0;
         const totalMentions = Number(dashboardStats.total_mentions) || 0;
-        const todayMentions = Number(dashboardStats.today_mentions) || 0;
-        
+        const totalEngagement = Number(dashboardStats.total_engagement) || 0;
+        const postToday = Number(dashboardStats.post_today) || 0;
+
         console.log('Dashboard Stats from RPC:', dashboardStats);
-        
+
         // Calcular tendências (simulação para este exemplo)
         // Em produção, você compararia com dados históricos reais
         setStatsData({
-          reach: { 
-            value: totalChannels.toString(), 
+          reach: {
+            value: totalChannels.toString(),
             trend: null
           },
-          activities: { 
-            value: totalVideos.toString(), 
+          activities: {
+            value: totalVideos.toString(),
             trend: null
           },
-          engagements: { 
-            value: totalMentions.toString(), 
+          engagements: {
+            value: totalMentions.toString(),
             trend: null
           },
-          leads: { 
-            value: todayMentions.toString(), 
+          engagement: {
+            value: totalEngagement.toString(),
+            trend: null
+          },
+          leads: {
+            value: postToday.toString(), 
             trend: null
           }
         });
