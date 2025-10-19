@@ -22,6 +22,8 @@
 -- Atualizado: 2025-10-02 - Documentação completa e organização
 -- Atualizado: 2025-10-17 - Adicionado sistema de lock para evitar race conditions entre cron jobs
 --                          Lock com timeout de 5 minutos (auto-recovery) + liberação manual
+-- Atualizado: 2025-10-18 - Otimização: substituído agendar_postagens_todos_projetos() por
+--                          agendar_postagens_diarias(p_project_id) para agendar apenas o projeto específico
 -- =============================================
 
 DROP FUNCTION IF EXISTS process_engagement_messages_batch(INTEGER, INTEGER);
@@ -91,8 +93,8 @@ BEGIN
         processing_locked_until = NULL
     WHERE "id" = p_project_id;
 
-    -- Chama a nova função para agendar postagens (substituindo a antiga)
-    PERFORM agendar_postagens_todos_projetos();
+    -- Agenda postagens diárias especificamente para este projeto
+    PERFORM agendar_postagens_diarias(p_project_id);
 
     RAISE NOTICE 'Todos os comentários processados. Status do projeto atualizado para 6.';
     RETURN 'COMPLETED: All comments processed, advancing to STATUS 6';
@@ -155,8 +157,8 @@ BEGIN
         processing_locked_until = NULL
     WHERE "id" = p_project_id;
 
-    -- Chama a nova função para agendar postagens (substituindo a antiga)
-    PERFORM agendar_postagens_todos_projetos();
+    -- Agenda postagens diárias especificamente para este projeto
+    PERFORM agendar_postagens_diarias(p_project_id);
 
     RAISE NOTICE 'Todos os comentários processados após este lote. Status do projeto atualizado para 6.';
     RETURN 'COMPLETED: All comments processed after this batch, advancing to STATUS 6';
