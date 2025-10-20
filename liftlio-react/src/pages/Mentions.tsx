@@ -1217,20 +1217,6 @@ const DetailPopupContent = styled.div`
   &::-webkit-scrollbar-thumb:hover {
     background-color: ${props => props.theme.colors.text.primary};
   }
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: ${props => props.theme.colors.gradient.primary};
-    z-index: -1;
-    border-radius: ${props => props.theme.radius.xl};
-    opacity: 0.5;
-    pointer-events: none;
-  }
 `;
 
 const DetailPopupHeader = styled.div`
