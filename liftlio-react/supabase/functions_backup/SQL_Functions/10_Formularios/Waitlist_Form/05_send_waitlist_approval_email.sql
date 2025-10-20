@@ -53,7 +53,9 @@ BEGIN
 
     IF (v_email_result->>'success')::boolean THEN
         UPDATE public.waitlist
-        SET invitation_sent_at = NOW()
+        SET
+            status = 'approved',
+            invitation_sent_at = NOW()
         WHERE email = p_email;
 
         RETURN jsonb_build_object(
