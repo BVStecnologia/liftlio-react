@@ -43,7 +43,7 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'Template not found');
     END IF;
 
-    v_template_body := REPLACE(v_template_body, '{{name}}', COALESCE(p_name, 'there'));
+    v_template_body := REPLACE(v_template_body, '{{userName}}', COALESCE(p_name, 'there'));
 
     v_email_result := public.send_email(
         recipient_email := p_email,
