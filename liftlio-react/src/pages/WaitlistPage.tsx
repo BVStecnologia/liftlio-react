@@ -109,23 +109,6 @@ const Input = styled.input`
   }
 `;
 
-const Select = styled.select`
-  padding: 14px 16px;
-  font-size: 16px;
-  border: 1px solid ${props => props.theme.colors.borderLight};
-  border-radius: 12px;
-  background: ${props => props.theme.colors.background};
-  color: ${props => props.theme.colors.text.primary};
-  cursor: pointer;
-  transition: all 0.3s;
-
-  &:focus {
-    outline: none;
-    border-color: #8b5cf6;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-  }
-`;
-
 const Button = styled.button<{ disabled?: boolean }>`
   padding: 16px 32px;
   font-size: 16px;
@@ -163,7 +146,7 @@ const WaitlistPage: React.FC = () => {
     name: '',
     email: '',
     website: '',
-    source: 'Other'
+    source: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -248,18 +231,13 @@ const WaitlistPage: React.FC = () => {
 
           <InputGroup>
             <Label>How did you find us? *</Label>
-            <Select
+            <Input
+              type="text"
               value={formData.source}
               onChange={(e) => setFormData({ ...formData, source: e.target.value })}
               required
-            >
-              <option value="Twitter/X">Twitter / X</option>
-              <option value="LinkedIn">LinkedIn</option>
-              <option value="Referral">Referral</option>
-              <option value="YouTube">YouTube</option>
-              <option value="Google">Google</option>
-              <option value="Other">Other</option>
-            </Select>
+              minLength={2}
+            />
           </InputGroup>
 
           {error && <ErrorMessage>{error}</ErrorMessage>}
