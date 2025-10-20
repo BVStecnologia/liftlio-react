@@ -32,7 +32,6 @@ DECLARE
     v_position INTEGER;
     v_waitlist_id BIGINT;
     v_email_result JSONB;
-    v_discovery_normalized TEXT;
 BEGIN
     -- ========================================
     -- 1. VALIDAÇÕES
@@ -53,16 +52,6 @@ BEGIN
             'error', 'Name must be at least 2 characters'
         );
     END IF;
-
-    -- Normalizar discovery_source (aceitar variações)
-    v_discovery_normalized := CASE
-        WHEN LOWER(p_discovery_source) IN ('twitter', 'x', 'twitter/x') THEN 'Twitter/X'
-        WHEN LOWER(p_discovery_source) = 'linkedin' THEN 'LinkedIn'
-        WHEN LOWER(p_discovery_source) IN ('indicacao', 'indicação', 'referral') THEN 'Referral'
-        WHEN LOWER(p_discovery_source) = 'youtube' THEN 'YouTube'
-        WHEN LOWER(p_discovery_source) = 'google' THEN 'Google'
-        ELSE 'Other'
-    END;
 
     -- Verificar se email já existe na waitlist
     IF EXISTS (SELECT 1 FROM public.waitlist WHERE email = LOWER(TRIM(p_email))) THEN
@@ -95,7 +84,7 @@ BEGIN
         TRIM(p_name),
         LOWER(TRIM(p_email)),
         NULLIF(TRIM(p_website_url), ''),
-        v_discovery_normalized,
+        TRIM(p_discovery_source),
         v_position,
         'pending'
     )
