@@ -1,6 +1,6 @@
 -- =============================================
--- FunÁ„o: trigger_postar_comentario_youtube
--- DescriÁ„o: Trigger para postar coment·rio no YouTube
+-- FunÔøΩÔøΩo: trigger_postar_comentario_youtube
+-- DescriÔøΩÔøΩo: Trigger para postar comentÔøΩrio no YouTube
 -- Criado: 2025-01-23
 -- =============================================
 
@@ -14,7 +14,7 @@ DECLARE
     v_youtube_video_id TEXT;
     v_resultado JSONB;
 BEGIN
-    -- NOVA CONDI«√O: SÛ dispara se teste = TRUE (controle manual)
+    -- NOVA CONDIÔøΩÔøΩO: SÔøΩ dispara se teste = TRUE (controle manual)
     IF NEW.teste = TRUE AND NEW.video IS NOT NULL AND (NEW.respondido IS NULL OR NEW.respondido = FALSE) THEN
 
         -- Busca o YouTube video ID
@@ -23,9 +23,9 @@ BEGIN
         FROM public."Videos" v
         WHERE v.id = NEW.video;
 
-        -- Se encontrou o vÌdeo no YouTube, posta o coment·rio
+        -- Se encontrou o vÔøΩdeo no YouTube, posta o comentÔøΩrio
         IF v_youtube_video_id IS NOT NULL AND NEW.mensagem IS NOT NULL THEN
-            -- Chama a funÁ„o com par‚metros NOMEADOS
+            -- Chama a funÔøΩÔøΩo com parÔøΩmetros NOMEADOS
             SELECT * INTO v_resultado
             FROM post_youtube_video_comment(
                 project_id := NEW.project_id::INTEGER,
@@ -33,12 +33,13 @@ BEGIN
                 comment_text := NEW.mensagem
             );
 
-            -- Verifica se a operaÁ„o foi bem-sucedida
+            -- Verifica se a operaÔøΩÔøΩo foi bem-sucedida
             IF (v_resultado->>'success')::BOOLEAN = TRUE THEN
                 -- Atualiza o status da mensagem para respondido = TRUE
                 UPDATE public."Mensagens"
                 SET respondido = TRUE,
-                    teste = FALSE -- Reseta o campo teste apÛs postar
+                    teste = FALSE, -- Reseta o campo teste apÔøΩs postar
+                    youtube_comment_id = v_resultado->'response'->>'id' -- Salva ID do coment√°rio no YouTube
                 WHERE id = NEW.id;
             END IF;
         END IF;
