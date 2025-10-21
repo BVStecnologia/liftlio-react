@@ -291,7 +291,29 @@ Gere 5 queries SIMPLES e EFETIVAS. Retorne APENAS as queries, uma por linha."""
                 print(f"Erro ao buscar canais: {e}")
         
         return channel_details
-    
+
+    async def get_blocked_channels(self, project_id: int) -> set:
+        """Busca canais bloqueados via RPC get_blocked_channels (batch)"""
+        headers = {
+            "apikey": self.supabase_key,
+            "Authorization": f"Bearer {self.supabase_key}",
+            "Content-Type": "application/json"
+        }
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.supabase_url}/rest/v1/rpc/get_blocked_channels",
+                    headers=headers,
+                    json={"p_project_id": project_id}
+                )
+                result = response.json()
+                # Retorna set para lookup O(1) - muito rápido
+                return set(result) if result else set()
+        except Exception as e:
+            print(f"Erro ao buscar canais bloqueados: {e}")
+            return set()
+
     def apply_filters(self, videos: List[Dict], video_details: Dict, channel_details: Dict) -> List[Dict]:
         """Aplica filtros de qualidade ajustados"""
         filtered_videos = []
@@ -353,8 +375,8 @@ Gere 5 queries SIMPLES e EFETIVAS. Retorne APENAS as queries, uma por linha."""
             return []
     
     async def analyze_with_claude(self, videos: List[Dict], project_data: Dict) -> List[str]:
-        """Claude analisa e seleciona os 2 melhores vídeos"""
-        if len(videos) <= 2:
+        """Claude analisa e seleciona o MELHOR vídeo"""
+        if len(videos) <= 1:
             return [v['id'] for v in videos]
         
         # Buscar comentários para análise
@@ -382,7 +404,7 @@ Amostras de comentários:
         palavra_chave = project_data.get('palavra_chave', '')
         descricao = project_data.get('descricao_projeto', '')
         
-        prompt = f"""Analise os vídeos e selecione os 2 MELHORES para o projeto:
+        prompt = f"""Analise os vídeos e selecione o MELHOR para o projeto:
 
 PROJETO:
 - Palavra-chave: {palavra_chave}
@@ -397,7 +419,7 @@ CRITÉRIOS (em ordem de importância):
 VÍDEOS:
 {''.join(videos_info)}
 
-Retorne APENAS os 2 IDs dos melhores vídeos, um por linha."""
+Retorne APENAS o ID do melhor vídeo."""
 
         response = self.claude.messages.create(
             model="claude-sonnet-4-5-20250929",
@@ -417,12 +439,12 @@ Retorne APENAS os 2 IDs dos melhores vídeos, um por linha."""
                 if video_id in [v['id'] for v in videos]:
                     selected_ids.append(video_id)
 
-        # Fallback se não encontrou 2
-        if len(selected_ids) < 2:
+        # Fallback se não encontrou
+        if len(selected_ids) < 1:
             sorted_videos = sorted(videos, key=lambda x: x['engagement_rate'], reverse=True)
-            selected_ids = [v['id'] for v in sorted_videos[:2]]
+            selected_ids = [v['id'] for v in sorted_videos[:1]]
 
-        return selected_ids[:2]
+        return selected_ids[:1]
     
     async def search_videos(self, scanner_id: int) -> Dict:
         """Executa o processo completo de busca"""
@@ -454,7 +476,14 @@ Retorne APENAS os 2 IDs dos melhores vídeos, um por linha."""
             print(f"   • Query '{query}': {len(videos)} vídeos")
         
         print(f"   ✅ Total: {len(all_videos)} vídeos encontrados")
-        
+
+        # Filtrar canais bloqueados (anti-spam)
+        project_id = project_data.get('projeto_id')
+        blocked_channels = await self.get_blocked_channels(project_id)
+        if blocked_channels:
+            all_videos = [v for v in all_videos if v.get('channel_id') not in blocked_channels]
+            print(f"   🚫 Canais bloqueados filtrados: {len(all_videos)} vídeos restantes")
+
         if len(all_videos) == 0:
             return {
                 'success': False,

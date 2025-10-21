@@ -1,8 +1,8 @@
 -- =============================================
--- Função: check_and_update_projects_status
--- Descrição: Verifica e atualiza status de projetos baseado em critérios
+-- Funï¿½ï¿½o: check_and_update_projects_status
+-- Descriï¿½ï¿½o: Verifica e atualiza status de projetos baseado em critï¿½rios
 -- Criado: 2025-01-24
--- Atualizado: Atualiza status para '0' baseado em condições específicas
+-- Atualizado: Atualiza status para '0' baseado em condiï¿½ï¿½es especï¿½ficas
 -- =============================================
 
 CREATE OR REPLACE FUNCTION public.check_and_update_projects_status()
@@ -11,24 +11,36 @@ CREATE OR REPLACE FUNCTION public.check_and_update_projects_status()
 AS $function$
 BEGIN
     -- Atualiza o status para '0' para projetos que:
-    -- 1. Têm "Youtube Active" como TRUE
-    -- 2. Já possuem mensagens cadastradas (não é um projeto novo)
-    -- 3. Têm menos de 3 mensagens não respondidas
+    -- 1. Tï¿½m "Youtube Active" como TRUE
+    -- 2. Tï¿½m integraï¿½ï¿½o ativa (integracao_valida = TRUE)
+    -- 3. Jï¿½ possuem mensagens cadastradas (nï¿½o ï¿½ um projeto novo)
+    -- 4. Tï¿½m menos de 3 mensagens nï¿½o respondidas DE CANAIS Vï¿½LIDOS
     UPDATE public."Projeto" p
     SET status = '0'
     WHERE p."Youtube Active" = TRUE
+    AND p.integracao_valida = TRUE  -- Validar integraï¿½ï¿½o ativa
     AND EXISTS (
         SELECT 1 FROM public."Mensagens" m WHERE m.project_id = p.id
-    ) -- Verifica se já existem mensagens para este projeto
+    ) -- Verifica se jï¿½ existem mensagens para este projeto
     AND (
         SELECT COUNT(*)
         FROM public."Mensagens" m
+        JOIN "Comentarios_Principais" cp ON m."Comentario_Principais" = cp.id
+        JOIN "Videos" v ON cp.video_id = v.id
+        LEFT JOIN "Canais do youtube" c ON v.channel_id_yotube = c.channel_id
         WHERE m.project_id = p.id
         AND m.respondido = FALSE
+        AND (
+            -- Canal novo (nï¿½o existe na tabela) - OK para contar
+            c.channel_id IS NULL
+            OR
+            -- Canal existe MAS nï¿½o estï¿½ bloqueado por anti-spam
+            can_comment_on_channel(c.channel_id, p.id) = TRUE
+        )
     ) < 3;
 
-    -- Log da execução
-    RAISE NOTICE 'Verificação de projetos concluída: % projetos atualizados',
+    -- Log da execuï¿½ï¿½o
+    RAISE NOTICE 'Verificaï¿½ï¿½o de projetos concluï¿½da: % projetos atualizados',
         (SELECT COUNT(*) FROM public."Projeto" WHERE status = '0' AND "Youtube Active" = TRUE);
 END;
 $function$

@@ -10,11 +10,12 @@ BEGIN
     -- Log inicial
     RAISE NOTICE 'Iniciando agendamento para todos os projetos ativos';
 
-    -- Buscar projetos ativos sem agendamentos pendentes E com mensagens não respondidas
+    -- Buscar projetos ativos sem agendamentos pendentes E com mensagens nï¿½o respondidas
     FOR projeto_record IN (
         SELECT p.id
         FROM "Projeto" p
         WHERE p."Youtube Active" = true
+        AND p.integracao_valida = true  -- Validar integraï¿½ï¿½o ativa
         AND NOT EXISTS (
             SELECT 1
             FROM "Settings messages posts" smp
@@ -22,13 +23,23 @@ BEGIN
             AND smp.status = 'pending'
         )
         AND EXISTS (
-            SELECT 3
+            SELECT 1
             FROM "Mensagens" m
+            JOIN "Comentarios_Principais" cp ON m."Comentario_Principais" = cp.id
+            JOIN "Videos" v ON cp.video_id = v.id
+            LEFT JOIN "Canais do youtube" c ON v.channel_id_yotube = c.channel_id
             WHERE m.project_id = p.id
             AND m.respondido = false
+            AND (
+                -- Canal novo (nï¿½o existe na tabela) - OK para agendar
+                c.channel_id IS NULL
+                OR
+                -- Canal existe MAS nï¿½o estï¿½ bloqueado por anti-spam
+                can_comment_on_channel(c.channel_id, p.id) = TRUE
+            )
         )
     ) LOOP
-        RAISE NOTICE 'Processando projeto % com mensagens não respondidas', projeto_record.id;
+        RAISE NOTICE 'Processando projeto % com mensagens nï¿½o respondidas', projeto_record.id;
         SELECT agendar_postagens_diarias(projeto_record.id) INTO resultado;
         total_agendado := total_agendado + resultado;
         RAISE NOTICE 'Projeto %: % postagens agendadas', projeto_record.id, resultado;
