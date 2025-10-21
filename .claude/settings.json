@@ -1,0 +1,74 @@
+{
+  "description": "Liftlio Project - Automated Workflow Configuration",
+
+  "env": {
+    "OPENAI_API_KEY": "${env:OPENAI_API_KEY}"
+  },
+
+  "permissions": {
+    "allowedTools": [
+      "Read(**/*.{js,ts,tsx,json,md,sql,sh})",
+      "Edit(**/*.{js,ts,tsx,json,md})",
+      "Write(**/*.{js,ts,tsx,json,md})",
+      "Bash(git:*)",
+      "Bash(npm:*)",
+      "Bash(/Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/gpt-image-wrapper.sh:*)",
+      "Bash(/Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/trello-set-cover.sh:*)",
+      "Bash(/Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/upload-to-supabase.sh:*)",
+      "Bash(.claude/scripts/*)",
+      "mcp__trello__create_card",
+      "mcp__trello__update_card",
+      "mcp__trello__add_comment",
+      "mcp__trello__add_attachment",
+      "mcp__trello__move_card_to_list",
+      "mcp__trello__get_board",
+      "mcp__trello__get_board_lists",
+      "mcp__trello__get_board_labels",
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__deploy_edge_function",
+      "mcp__supabase__get_edge_function",
+      "mcp__supabase__list_edge_functions",
+      "mcp__supabase__get_logs"
+    ],
+    "deniedTools": [
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(**/*credentials*)",
+      "Edit(**/*secret*)",
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)",
+      "Bash(chmod 777:*)",
+      "Bash(export * &&:*)",
+      "Bash(source * &&:*)"
+    ]
+  },
+
+  "permissionMode": "normal",
+
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "bash .claude/hooks/load-env.sh"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '✅ File saved successfully' >&2"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "osascript -e 'display notification \"Claude Code session completed!\" with title \"✅ Session Complete\"' 2>/dev/null || true"
+      }
+    ]
+  }
+}
