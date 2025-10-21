@@ -139,11 +139,11 @@ BEGIN
 
   -- Determinar dias necessários baseado no tamanho do canal
   IF v_subscriber_count < 10000 THEN
-    v_required_days := 14; -- Canal pequeno: mais cuidado
+    v_required_days := 7; -- Canal pequeno: 7 dias
   ELSIF v_subscriber_count < 100000 THEN
-    v_required_days := 10; -- Canal médio: cuidado moderado
+    v_required_days := 5; -- Canal médio: 5 dias
   ELSE
-    v_required_days := 7;  -- Canal grande: menos suspeito
+    v_required_days := 3;  -- Canal grande: 3 dias
   END IF;
 
   -- Comparar e decidir
