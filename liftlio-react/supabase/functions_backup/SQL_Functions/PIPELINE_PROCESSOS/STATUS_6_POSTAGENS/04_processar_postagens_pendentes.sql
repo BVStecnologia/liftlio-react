@@ -132,9 +132,10 @@ BEGIN
                     postado = CURRENT_TIMESTAMP
                 WHERE id = v_registro.id;
 
-                -- 2. NOVO: Marcar mensagem como respondida
+                -- 2. NOVO: Marcar mensagem como respondida e salvar youtube_comment_id
                 UPDATE "Mensagens"
-                SET respondido = true
+                SET respondido = true,
+                    youtube_comment_id = v_resposta->'response'->>'id'
                 WHERE id = v_registro.mensagem_id;
 
                 RAISE NOTICE 'CORREÇÃO APLICADA: Mensagem % marcada como respondida=true', v_registro.mensagem_id;
