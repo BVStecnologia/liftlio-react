@@ -1,8 +1,48 @@
+# 🚀 IMPLEMENTAÇÃO ANTI-SPAM - GUIA DE EXECUÇÃO
+
+**Data**: 2025-10-21 (atualizado)
+**Tempo estimado**: 15 minutos
+**Foco**: 100% AÇÃO, ZERO teoria
+
+---
+
+## ✅ STATUS ATUAL
+
+```
+✅ can_comment_on_channel V3 - 7 validações (projeto existe + YouTube ativo + integração válida)
+✅ verify_comment_and_apply_penalty criada
+✅ cron_verify_comments criada
+✅ Integração COMPLETA - anti-spam em monitor_top_channels_for_project
+✅ verificar_novos_videos_youtube COM proteção anti-spam (TESTADO E FUNCIONANDO!)
+❌ cron_verify_comments NÃO agendado
+```
+
+**⭐ NOVO**: `can_comment_on_channel` agora valida:
+1. Projeto existe
+2. YouTube ativo (`"Youtube Active" = TRUE`)
+3. Integração válida (`integracao_valida = TRUE`)
+4-7. Validações originais (canal desativado, blacklist, intervalo)
+
+---
+
+## 📋 O QUE FALTA FAZER
+
+- [x] **TAREFA 1**: Adicionar filtro anti-spam em `verificar_novos_videos_youtube` ✅ CONCLUÍDO (2025-10-21)
+  - ✅ Integrado e testado
+  - ✅ Lógica de 30 minutos funcionando corretamente
+  - ✅ Validação de projeto/YouTube Active/integração válida funcionando
+- [ ] **TAREFA 2**: Agendar `cron_verify_comments` no Supabase
+
+---
+
+## 🔧 TAREFA 1: Modificar verificar_novos_videos_youtube
+
+### SQL COMPLETO (Copiar e executar no Supabase):
+
+```sql
 -- =============================================
 -- Função: verificar_novos_videos_youtube (COM ANTI-SPAM)
--- Descrição: Verifica e processa novos vídeos do YouTube para monitoramento
--- Criado: 2025-01-23
--- Atualizado: 2025-10-21 (Integração Anti-Spam - 7 validações)
+-- Atualizado: 2025-10-20 (Integração Anti-Spam)
 -- =============================================
 
 DROP FUNCTION IF EXISTS verificar_novos_videos_youtube();
@@ -23,7 +63,7 @@ DECLARE
     v_video JSONB;
 BEGIN
     -- Obter a chave da API do YouTube
-    SELECT decrypted_secret INTO v_youtube_api_key
+    SELECT value INTO v_youtube_api_key
     FROM vault.decrypted_secrets
     WHERE name = 'YOUTUBE_API_KEY'
     LIMIT 1;
@@ -156,3 +196,156 @@ EXCEPTION WHEN OTHERS THEN
     );
 END;
 $$;
+```
+
+**O que mudou**: Adicionadas 4 linhas após linha 58 (filtro anti-spam antes de processar canal)
+
+---
+
+## ⏰ TAREFA 2: Agendar cron_verify_comments
+
+### SQL COMPLETO (Copiar e executar no Supabase):
+
+```sql
+-- Agendar verificação de comentários deletados (roda a cada 1 hora)
+SELECT cron.schedule(
+    'verify-youtube-comments',
+    '0 * * * *',
+    $$SELECT cron_verify_comments()$$
+);
+```
+
+### Validar agendamento:
+
+```sql
+-- Ver cron ativo
+SELECT * FROM cron.job WHERE jobname = 'verify-youtube-comments';
+```
+
+---
+
+## ✅ CHECKLIST DE VALIDAÇÃO
+
+Execute na ordem:
+
+### 1. Funções Anti-Spam existem?
+```sql
+SELECT routine_name FROM information_schema.routines
+WHERE routine_name IN ('can_comment_on_channel', 'verify_comment_and_apply_penalty', 'cron_verify_comments')
+AND routine_schema = 'public';
+```
+**Esperado**: 3 funções retornadas
+
+### 2. Função modificada foi aplicada?
+```sql
+SELECT verificar_novos_videos_youtube();
+```
+**Esperado**: JSON com success=true (verificar NOTICE logs para ver canais pulados)
+
+### 3. Cron foi agendado?
+```sql
+SELECT jobname, schedule, command FROM cron.job
+WHERE jobname = 'verify-youtube-comments';
+```
+**Esperado**: 1 linha retornada
+
+### 4. Testar anti-spam diretamente (com novas validações)
+```sql
+-- Teste 1: Projeto válido com YouTube ativo
+SELECT can_comment_on_channel('UCKU0u3VbuYn0wD3CUr-Yn6A', 117);
+-- Esperado: TRUE ou FALSE (baseado em intervalo)
+
+-- Teste 2: Projeto com YouTube desativado (deve bloquear)
+-- Substitua 70 por ID de projeto com "Youtube Active" = FALSE
+SELECT can_comment_on_channel('UCKU0u3VbuYn0wD3CUr-Yn6A', 70);
+-- Esperado: FALSE
+
+-- Teste 3: Projeto inexistente (deve dar EXCEPTION)
+SELECT can_comment_on_channel('UCKU0u3VbuYn0wD3CUr-Yn6A', 99999);
+-- Esperado: EXCEPTION 'Projeto ID 99999 não encontrado'
+```
+**Esperado**: Validações funcionando conforme acima
+
+### 5. Testar verificação manual
+```sql
+SELECT cron_verify_comments();
+```
+**Esperado**: JSON com verified, deleted, errors
+
+---
+
+## 🧪 COMANDOS DE TESTE COMPLETO
+
+```sql
+-- 1. Ver quais canais podem comentar
+SELECT
+  c.channel_id,
+  c."Nome",
+  c.subscriber_count,
+  can_comment_on_channel(c.channel_id, 77) as pode_comentar
+FROM "Canais do youtube" c
+JOIN "Canais do youtube_Projeto" cp ON cp."Canais do youtube_id" = c.id
+WHERE cp."Projeto_id" = 77
+ORDER BY cp.rank_position
+LIMIT 10;
+
+-- 2. Rodar verificação de novos vídeos (olhar NOTICE logs)
+SELECT verificar_novos_videos_youtube();
+
+-- 3. Verificar comentários deletados manualmente
+SELECT cron_verify_comments();
+
+-- 4. Ver canais blacklistados
+SELECT "Nome", channel_id, auto_disabled_reason, comments_deleted_count
+FROM "Canais do youtube"
+WHERE auto_disabled_reason IS NOT NULL OR comments_deleted_count > 0;
+
+-- 5. Ver histórico de execução do cron
+SELECT * FROM cron.job_run_details
+WHERE jobname = 'verify-youtube-comments'
+ORDER BY start_time DESC
+LIMIT 5;
+```
+
+---
+
+## 🎯 ORDEM DE EXECUÇÃO
+
+1. ✅ Executar TAREFA 1 (modificar função)
+2. ✅ Validar checklist item 1
+3. ✅ Validar checklist item 2
+4. ✅ Executar TAREFA 2 (agendar cron)
+5. ✅ Validar checklist item 3
+6. ✅ Executar testes completos
+7. ✅ Monitorar por 24h
+
+---
+
+## 🚨 SE ALGO DER ERRADO
+
+### Reverter TAREFA 1:
+```sql
+-- Voltar versão sem anti-spam (arquivo original em /02_Descoberta/)
+```
+
+### Cancelar TAREFA 2:
+```sql
+SELECT cron.unschedule('verify-youtube-comments');
+```
+
+---
+
+**Última atualização**: 2025-10-21
+**Versão**: can_comment_on_channel V3 (7 validações)
+**Status**: TAREFA 1 CONCLUÍDA ✅
+
+**Testes realizados (2025-10-21):**
+- ✅ `can_comment_on_channel` com projeto válido/inválido
+- ✅ `verificar_novos_videos_youtube` executada 2x com intervalo de 17 minutos
+- ✅ Lógica de intervalo de 30 minutos respeitada (0 canais processados na 2ª execução)
+- ✅ Integração anti-spam funcionando perfeitamente
+
+**Próximo passo**:
+1. ✅ ~~Copiar `can_comment_on_channel.sql` atualizado para Supabase~~ (CONCLUÍDO)
+2. ✅ ~~Executar TAREFA 1 (verificar_novos_videos_youtube)~~ (CONCLUÍDO)
+3. ⏳ Executar TAREFA 2 (agendar cron)
