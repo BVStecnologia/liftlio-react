@@ -1,16 +1,17 @@
 -- =============================================
--- Função: can_comment_on_channel (V3 - COMPLETA COM VALIDAÇÕES DE PROJETO)
--- Descrição: Versão completa com 7 camadas de validação:
+-- Função: can_comment_on_channel (V4 - COMPLETA COM VALIDAÇÕES DE PROJETO + SUBSCRIPTION)
+-- Descrição: Versão completa com 8 camadas de validação:
 --   1. Projeto existe
 --   2. YouTube ativo no projeto ("Youtube Active" = TRUE)
 --   3. Integração válida (integracao_valida = TRUE)
---   4. Canal não desativado manualmente
---   5. Canal não blacklistado
---   6. Canal ativo no sistema
---   7. Intervalo mínimo respeitado (7-14 dias)
+--   4. Subscription ativa (has_active_subscription = TRUE)
+--   5. Canal não desativado manualmente
+--   6. Canal não blacklistado
+--   7. Canal ativo no sistema
+--   8. Intervalo mínimo respeitado (7-14 dias)
 --
 -- Criado: 2025-10-03
--- Atualizado: 2025-10-21 (validações de projeto + integração)
+-- Atualizado: 2025-10-21 (validações de projeto + integração + subscription)
 -- Etapa: 1 - Proteção por Frequência
 -- =============================================
 
@@ -28,6 +29,8 @@ AS $$
 DECLARE
   v_projeto_youtube_active BOOLEAN;
   v_projeto_integracao_valida BOOLEAN;
+  v_projeto_user_id UUID;
+  v_has_active_subscription BOOLEAN;
   v_canal_db_id BIGINT;
   v_canal_is_active BOOLEAN;
   v_canal_desativado_pelo_user BOOLEAN;
@@ -42,10 +45,12 @@ BEGIN
   -- =============================================
   SELECT
     COALESCE(p."Youtube Active", FALSE),
-    COALESCE(p.integracao_valida, FALSE)
+    COALESCE(p.integracao_valida, FALSE),
+    p."User id"
   INTO
     v_projeto_youtube_active,
-    v_projeto_integracao_valida
+    v_projeto_integracao_valida,
+    v_projeto_user_id
   FROM "Projeto" p
   WHERE p.id = p_project_id;
 
@@ -67,7 +72,30 @@ BEGIN
   END IF;
 
   -- =============================================
-  -- VALIDAÇÃO 4, 5, 6: Buscar informações do canal
+  -- VALIDAÇÃO 4: Subscription ativa
+  -- =============================================
+  SELECT
+    CASE
+      WHEN s.status = 'active' AND s.next_billing_date >= CURRENT_DATE THEN TRUE
+      WHEN s.status = 'cancelled' AND s.next_billing_date >= CURRENT_DATE THEN TRUE
+      WHEN s.next_billing_date >= CURRENT_DATE - INTERVAL '3 days' THEN TRUE
+      ELSE FALSE
+    END
+  INTO v_has_active_subscription
+  FROM customers c
+  JOIN subscriptions s ON c.id = s.customer_id
+  WHERE c.user_id = v_projeto_user_id
+  ORDER BY s.created_at DESC
+  LIMIT 1;
+
+  -- Se não encontrou subscription OU está inativa, bloqueia
+  IF v_has_active_subscription IS NULL OR v_has_active_subscription = FALSE THEN
+    RAISE LOG 'Projeto ID % bloqueado - Subscription inativa', p_project_id;
+    RETURN FALSE;
+  END IF;
+
+  -- =============================================
+  -- VALIDAÇÃO 5, 6, 7: Buscar informações do canal
   -- =============================================
   SELECT
     c.id,
@@ -110,7 +138,7 @@ BEGIN
   END IF;
 
   -- =============================================
-  -- VALIDAÇÃO 7: Intervalo mínimo desde último comentário
+  -- VALIDAÇÃO 8: Intervalo mínimo desde último comentário
   -- =============================================
   -- Buscar última data de comentário neste canal
   -- ⭐ VERSÃO HÍBRIDA: Suporta AMBOS os padrões (novo e antigo)
