@@ -2130,7 +2130,7 @@ const Overview: React.FC = () => {
     animation: ${DealPulse} 2s ease-in-out infinite;
     
     &::before {
-      content: 'LEADS';
+      content: 'MENTIONS';
       position: absolute;
       top: -20px;
       left: 50%;
@@ -2885,7 +2885,6 @@ const Overview: React.FC = () => {
   const legendTooltips: { [key: string]: string } = {
     'Videos': 'Number of videos published on monitored channels per day',
     'Engagement': 'Comments posted without mentioning your product (pure engagement)',
-    'Leads': 'Comments where we mentioned your product or service',
     'Mentions': 'Comments where we mentioned your product or service'
   };
 
