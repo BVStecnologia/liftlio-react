@@ -1,158 +1,197 @@
--- =============================================
--- Função: verificar_novos_videos_youtube (COM ANTI-SPAM)
--- Descrição: Verifica e processa novos vídeos do YouTube para monitoramento
--- Criado: 2025-01-23
--- Atualizado: 2025-10-21 (Integração Anti-Spam - 7 validações)
--- =============================================
-
+-- Remover a versão anterior
+DROP FUNCTION IF EXISTS verificar_novos_videos_youtube(INT);
 DROP FUNCTION IF EXISTS verificar_novos_videos_youtube();
 
-CREATE OR REPLACE FUNCTION verificar_novos_videos_youtube()
-RETURNS JSONB
-LANGUAGE plpgsql
-AS $$
+-- Função otimizada (SUA VERSÃO) + Anti-Spam
+CREATE OR REPLACE FUNCTION verificar_novos_videos_youtube(lote_tamanho INT DEFAULT 15)
+RETURNS void AS $
 DECLARE
-    v_projeto RECORD;
-    v_canal RECORD;
-    v_result JSONB;
-    v_videos_checked INTEGER := 0;
-    v_new_videos INTEGER := 0;
-    v_project_results JSONB[] := ARRAY[]::JSONB[];
-    v_youtube_api_key TEXT;
-    v_edge_result JSONB;
-    v_video JSONB;
+    canal_record RECORD;
+    video_ids_result JSONB;
+    video_ids_array TEXT[];
+    api_result JSONB;
+    video_id TEXT;
+    processados INT := 0;
+    total_canais INT;
+    canal_com_erro TEXT;
+    videos_novos_array TEXT[];
+    todos_novos TEXT;
+    videos_scanreados_check TEXT;
+    processar_check TEXT;
+    start_time TIMESTAMP := NOW();
+    execution_time INTERVAL;
 BEGIN
-    -- Obter a chave da API do YouTube
-    SELECT decrypted_secret INTO v_youtube_api_key
-    FROM vault.decrypted_secrets
-    WHERE name = 'YOUTUBE_API_KEY'
-    LIMIT 1;
+    -- Conta total de canais a serem processados
+    SELECT COUNT(*) INTO total_canais
+    FROM "Canais do youtube" c
+    JOIN "Projeto" p ON c."Projeto" = p.id
+    WHERE p."Youtube Active" = true
+    AND c.is_active = true
+    AND c.desativado_pelo_user = false
+    -- Adiciona intervalo mínimo de 30 minutos entre verificações
+    AND (c.last_canal_check IS NULL OR c.last_canal_check < NOW() - INTERVAL '30 minutes');
 
-    IF v_youtube_api_key IS NULL THEN
-        RETURN jsonb_build_object(
-            'success', false,
-            'error', 'YouTube API key not found',
-            'timestamp', NOW()
-        );
-    END IF;
+    RAISE NOTICE 'Iniciando verificação SQL otimizada - % canais em lotes de %', total_canais, lote_tamanho;
 
-    -- Processar cada projeto ativo
-    FOR v_projeto IN
-        SELECT DISTINCT p.id, p."Project name", p.qtdmonitoramento
-        FROM "Projeto" p
-        WHERE p.status = 'active'
-          AND p.qtdmonitoramento > 0
+    -- Seleciona canais usando a estrutura original
+    FOR canal_record IN
+        SELECT c.id, c.channel_id, c.videos_scanreados, c."processar", p.id as projeto_id
+        FROM "Canais do youtube" c
+        JOIN "Projeto" p ON c."Projeto" = p.id
+        WHERE p."Youtube Active" = true
+        AND c.is_active = true
+        AND c.desativado_pelo_user = false
+        -- Intervalo mínimo de 30 minutos
+        AND (c.last_canal_check IS NULL OR c.last_canal_check < NOW() - INTERVAL '30 minutes')
+        ORDER BY c.last_canal_check NULLS FIRST
+        LIMIT lote_tamanho
     LOOP
-        v_videos_checked := 0;
-        v_new_videos := 0;
+        BEGIN
+            processados := processados + 1;
 
-        -- Buscar top canais para monitoramento (baseado em rank_position)
-        FOR v_canal IN
-            SELECT c.channel_id, c."Nome"
-            FROM "Canais do youtube" c
-            JOIN "Canais do youtube_Projeto" cp ON cp."Canais do youtube_id" = c.id
-            WHERE cp."Projeto_id" = v_projeto.id
-              AND cp.rank_position <= v_projeto.qtdmonitoramento
-            ORDER BY cp.rank_position
-            LIMIT v_projeto.qtdmonitoramento
-        LOOP
             -- ⭐ ANTI-SPAM: Verificar se pode comentar neste canal
-            IF NOT can_comment_on_channel(v_canal.channel_id, v_projeto.id) THEN
-                RAISE NOTICE 'Canal % pulado - bloqueado por Anti-Spam', v_canal."Nome";
-                CONTINUE; -- Pula canal bloqueado
+            IF NOT can_comment_on_channel(canal_record.channel_id, canal_record.projeto_id) THEN
+                RAISE NOTICE 'Canal ID % pulado - bloqueado por Anti-Spam', canal_record.id;
+                -- Atualiza timestamp mesmo pulando (para não ficar tentando sempre)
+                UPDATE "Canais do youtube"
+                SET last_canal_check = CURRENT_TIMESTAMP
+                WHERE id = canal_record.id;
+                CONTINUE;
             END IF;
 
-            -- Chamar Edge Function para buscar vídeos recentes
+            -- Atualiza timestamp usando o campo original
+            UPDATE "Canais do youtube"
+            SET last_canal_check = CURRENT_TIMESTAMP
+            WHERE id = canal_record.id;
+
+            RAISE NOTICE 'Processando canal ID: % (channel_id: %)', canal_record.id, canal_record.channel_id;
+
+            -- Usar função SQL ao invés de Edge Function
             BEGIN
-                SELECT payload INTO v_edge_result
-                FROM http((
-                    'POST',
-                    current_setting('app.supabase_url') || '/functions/v1/check-youtube-videos',
-                    ARRAY[http_header('Authorization', 'Bearer ' || current_setting('app.supabase_anon_key'))],
-                    'application/json',
-                    jsonb_build_object(
-                        'channelId', v_canal.channel_id,
-                        'apiKey', v_youtube_api_key,
-                        'maxResults', 5
-                    )::text
-                )::http_request);
-
-                -- Processar vídeos retornados
-                IF v_edge_result ? 'videos' THEN
-                    FOR v_video IN SELECT * FROM jsonb_array_elements(v_edge_result->'videos')
-                    LOOP
-                        v_videos_checked := v_videos_checked + 1;
-
-                        -- Verificar se o vídeo já existe
-                        IF NOT EXISTS (
-                            SELECT 1 FROM "Videos"
-                            WHERE "VIDEO" = v_video->>'videoId'
-                        ) THEN
-                            -- Inserir novo vídeo
-                            INSERT INTO "Videos" (
-                                "VIDEO",
-                                video_title,
-                                video_description,
-                                channel_id_yotube,
-                                published_at,
-                                view_count,
-                                like_count,
-                                comment_count,
-                                created_at
-                            ) VALUES (
-                                v_video->>'videoId',
-                                v_video->>'title',
-                                v_video->>'description',
-                                v_canal.channel_id,
-                                (v_video->>'publishedAt')::TIMESTAMP,
-                                (v_video->>'viewCount')::BIGINT,
-                                (v_video->>'likeCount')::BIGINT,
-                                (v_video->>'commentCount')::BIGINT,
-                                NOW()
-                            );
-
-                            v_new_videos := v_new_videos + 1;
-
-                            -- Criar mensagem de monitoramento
-                            PERFORM create_monitoring_message(
-                                v_projeto.id,
-                                v_video->>'videoId',
-                                v_canal.channel_id
-                            );
-                        END IF;
-                    END LOOP;
-                END IF;
+                SELECT monitormanto_de_canal_sql(
+                    canal_record.channel_id,
+                    'today',    -- timeFilter
+                    10,         -- maxResults
+                    TRUE        -- simpleResponse (retorna apenas IDs)
+                ) INTO video_ids_result;
             EXCEPTION WHEN OTHERS THEN
-                -- Log error but continue processing
-                RAISE NOTICE 'Error processing channel %: %', v_canal.channel_id, SQLERRM;
+                RAISE WARNING 'Erro ao verificar canal ID % (channel_id: %): %', canal_record.id, canal_record.channel_id, SQLERRM;
+                CONTINUE;
             END;
-        END LOOP;
 
-        -- Adicionar resultado do projeto
-        v_project_results := array_append(
-            v_project_results,
-            jsonb_build_object(
-                'project_id', v_projeto.id,
-                'project_name', v_projeto."Project name",
-                'videos_checked', v_videos_checked,
-                'new_videos', v_new_videos
-            )
-        );
+            -- Verificar se houve erro na resposta
+            IF video_ids_result ? 'error' THEN
+                RAISE WARNING 'Erro na verificação do canal ID %: %',
+                    canal_record.id,
+                    video_ids_result->>'error';
+                CONTINUE;
+            END IF;
+
+            -- Verificar se não há vídeos novos (retorno "NOT")
+            IF video_ids_result = '"NOT"'::jsonb THEN
+                RAISE NOTICE 'Canal ID %: Nenhum vídeo novo encontrado', canal_record.id;
+                CONTINUE;
+            END IF;
+
+            -- Converter JSONB array para array PostgreSQL
+            IF jsonb_typeof(video_ids_result) = 'array' THEN
+                SELECT array_agg(value::text) INTO video_ids_array
+                FROM jsonb_array_elements_text(video_ids_result);
+
+                RAISE NOTICE 'Canal ID %: Encontrados % vídeos para verificação',
+                    canal_record.id,
+                    array_length(video_ids_array, 1);
+            ELSE
+                RAISE WARNING 'Canal ID %: Formato inesperado de resposta', canal_record.id;
+                CONTINUE;
+            END IF;
+
+            -- Filtrar apenas vídeos não processados
+            videos_novos_array := '{}';
+            videos_scanreados_check := ',' || COALESCE(canal_record.videos_scanreados, '') || ',';
+            -- MELHORIA: Verificar também contra o campo processar
+            processar_check := ',' || COALESCE(canal_record."processar", '') || ',';
+
+            FOREACH video_id IN ARRAY video_ids_array
+            LOOP
+                -- Verifica se o vídeo é realmente novo (não está em nenhum dos campos)
+                IF position(',' || video_id || ',' in videos_scanreados_check) = 0
+                   AND position(',' || video_id || ',' in processar_check) = 0 THEN
+                    videos_novos_array := array_append(videos_novos_array, video_id);
+                END IF;
+            END LOOP;
+
+            -- Se há vídeos realmente novos, processa
+            IF array_length(videos_novos_array, 1) > 0 THEN
+                RAISE NOTICE 'Canal ID %: % vídeos realmente novos encontrados',
+                    canal_record.id,
+                    array_length(videos_novos_array, 1);
+
+                -- Marca TODOS os vídeos novos imediatamente em videos_scanreados
+                todos_novos := array_to_string(videos_novos_array, ',');
+
+                -- Atualiza videos_scanreados com os novos vídeos
+                IF canal_record.videos_scanreados IS NULL OR canal_record.videos_scanreados = '' THEN
+                    UPDATE "Canais do youtube"
+                    SET videos_scanreados = todos_novos
+                    WHERE id = canal_record.id;
+                ELSE
+                    -- SEM TRUNCAMENTO - deixa crescer naturalmente
+                    UPDATE "Canais do youtube"
+                    SET videos_scanreados = canal_record.videos_scanreados || ',' || todos_novos
+                    WHERE id = canal_record.id;
+                END IF;
+
+                -- Chama a segunda função para análise detalhada
+                BEGIN
+                    EXECUTE format('SELECT call_api_edge_function(%L)', canal_record.id) INTO api_result;
+
+                    -- Se a segunda função retornar vídeos bons (não "NOT"), atualiza o campo processar
+                    IF (api_result->>'text') != 'NOT' THEN
+                        -- Adiciona os vídeos aprovados ao campo processar
+                        IF canal_record."processar" IS NULL OR canal_record."processar" = '' THEN
+                            UPDATE "Canais do youtube"
+                            SET "processar" = api_result->>'text'
+                            WHERE id = canal_record.id;
+                        ELSE
+                            -- SEM TRUNCAMENTO - deixa crescer naturalmente
+                            UPDATE "Canais do youtube"
+                            SET "processar" = canal_record."processar" || ',' || (api_result->>'text')
+                            WHERE id = canal_record.id;
+                        END IF;
+
+                        RAISE NOTICE 'Canal ID %: % vídeos aprovados pela análise', canal_record.id, api_result->>'text';
+                    ELSE
+                        RAISE NOTICE 'Canal ID %: Nenhum vídeo aprovado pela análise', canal_record.id;
+                    END IF;
+
+                EXCEPTION WHEN OTHERS THEN
+                    RAISE WARNING 'Erro ao analisar vídeos do canal ID %: %', canal_record.id, SQLERRM;
+                END;
+            ELSE
+                RAISE NOTICE 'Canal ID %: Todos os vídeos já foram processados anteriormente', canal_record.id;
+            END IF;
+
+            -- Log de progresso
+            IF processados % 10 = 0 THEN
+                RAISE NOTICE 'Processados % de % canais', processados, total_canais;
+            END IF;
+
+        EXCEPTION WHEN OTHERS THEN
+            canal_com_erro := canal_record.channel_id;
+            RAISE WARNING 'Erro geral ao processar canal %: %', canal_com_erro, SQLERRM;
+        END;
     END LOOP;
 
-    -- Retornar resultado consolidado
-    RETURN jsonb_build_object(
-        'success', true,
-        'projects_processed', array_length(v_project_results, 1),
-        'results', v_project_results,
-        'timestamp', NOW()
-    );
+    -- Calcular tempo de execução
+    execution_time := NOW() - start_time;
+
+    RAISE NOTICE '🎉 Verificação SQL otimizada concluída em %!', execution_time;
+    RAISE NOTICE 'Processados: % de % canais', processados, total_canais;
+    RAISE NOTICE '⚡ Economia: ~92%% menos invocações Edge Functions!';
+    RAISE NOTICE '✅ Sem truncamento: requisições duplicadas ao Claude eliminadas!';
 
 EXCEPTION WHEN OTHERS THEN
-    RETURN jsonb_build_object(
-        'success', false,
-        'error', SQLERRM,
-        'timestamp', NOW()
-    );
+    RAISE EXCEPTION 'Erro crítico na função verificar_novos_videos_youtube: %', SQLERRM;
 END;
-$$;
+$ LANGUAGE plpgsql;

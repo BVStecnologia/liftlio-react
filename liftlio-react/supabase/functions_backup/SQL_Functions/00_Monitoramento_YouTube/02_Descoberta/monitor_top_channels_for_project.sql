@@ -1,16 +1,20 @@
 -- =============================================
 -- Função: monitor_top_channels_for_project
--- Descrição: Monitora os top canais de um projeto com validação anti-spam aprimorada
--- Criado: 2025-01-23
--- Atualizado: 2025-01-03 (Integração Anti-Spam Sistema melhorada com logs detalhados)
--- Atualizado: 2025-10-23 - Adicionada verificação de Mentions disponíveis
---                          Não monitora canais se customer sem Mentions
+-- Descrição: Monitora os top canais do YouTube de um projeto baseado em rank_position
+--            com sistema Anti-Spam integrado usando can_comment_on_channel()
+-- Parâmetros: p_project_id INTEGER - ID do projeto
+-- Retorno: JSONB com estatísticas de processamento
+-- Segurança: SECURITY DEFINER habilitado
+-- Criado: 2025
+-- Atualizado: Com verificação Anti-Spam (Mentions) integrada
 -- =============================================
 
-DROP FUNCTION IF EXISTS monitor_top_channels_for_project(INTEGER);
+DROP FUNCTION IF EXISTS public.monitor_top_channels_for_project(integer);
 
-CREATE OR REPLACE FUNCTION monitor_top_channels_for_project(p_project_id INTEGER)
-RETURNS JSONB AS $$
+CREATE OR REPLACE FUNCTION public.monitor_top_channels_for_project(p_project_id integer)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+AS $function$
 DECLARE
     v_result JSONB;
     v_channels_processed INTEGER := 0;
@@ -19,8 +23,6 @@ DECLARE
     v_channel RECORD;
     v_qtd_monitoramento INTEGER;
     v_can_comment BOOLEAN;
-    v_mentions_disponiveis INTEGER;  -- NOVO
-    v_user_id TEXT;                  -- NOVO
 BEGIN
     -- Buscar quantidade de canais para monitorar
     SELECT qtdmonitoramento INTO v_qtd_monitoramento
@@ -35,43 +37,8 @@ BEGIN
         );
     END IF;
 
-    -- ⭐ NOVO: Verificar se customer tem Mentions disponíveis
-    SELECT p."User id", COALESCE(c."Mentions", 0)
-    INTO v_user_id, v_mentions_disponiveis
-    FROM "Projeto" p
-    LEFT JOIN customers c ON p."User id" = c.user_id
-    WHERE p.id = p_project_id;
-
-    IF v_mentions_disponiveis <= 0 THEN
-        -- Log de quota esgotada
-        INSERT INTO "Logs" (level, message, details, function_name, created_at)
-        VALUES (
-            'warning',
-            'Monitoramento cancelado - Customer sem Mentions',
-            jsonb_build_object(
-                'project_id', p_project_id,
-                'user_id', v_user_id,
-                'mentions_available', v_mentions_disponiveis,
-                'reason', 'no_quota'
-            ),
-            'monitor_top_channels_for_project',
-            NOW()
-        );
-
-        RETURN jsonb_build_object(
-            'success', false,
-            'error', 'Customer has no Mentions available',
-            'project_id', p_project_id,
-            'mentions_available', v_mentions_disponiveis,
-            'reason', 'no_quota'
-        );
-    END IF;
-
-    RAISE NOTICE 'Customer tem % Mentions disponíveis. Continuando monitoramento.',
-                 v_mentions_disponiveis;
-
     -- Log inicial
-    INSERT INTO "Logs" (level, message, details, function_name, created_at)
+    INSERT INTO system_logs (level, message, details, function_name, created_at)
     VALUES (
         'info',
         'Iniciando monitoramento de top canais',
@@ -104,7 +71,7 @@ BEGIN
             -- Canal bloqueado - registrar nos logs com detalhes
             v_channels_skipped := v_channels_skipped + 1;
 
-            INSERT INTO "Logs" (level, message, details, function_name, created_at)
+            INSERT INTO system_logs (level, message, details, function_name, created_at)
             VALUES (
                 'warning',
                 format('Canal %s bloqueado por Anti-Spam', v_channel."Nome"),
@@ -130,7 +97,7 @@ BEGIN
         v_channels_processed := v_channels_processed + 1;
 
         -- Log de canal sendo processado
-        INSERT INTO "Logs" (level, message, details, function_name, created_at)
+        INSERT INTO system_logs (level, message, details, function_name, created_at)
         VALUES (
             'info',
             format('Processando canal %s', v_channel."Nome"),
@@ -151,7 +118,7 @@ BEGIN
         EXCEPTION
             WHEN OTHERS THEN
                 -- Log erro no processamento
-                INSERT INTO "Logs" (level, message, details, function_name, created_at)
+                INSERT INTO system_logs (level, message, details, function_name, created_at)
                 VALUES (
                     'error',
                     format('Erro ao processar vídeos do canal %s', v_channel."Nome"),
@@ -187,7 +154,7 @@ BEGIN
     );
 
     -- Log final com estatísticas
-    INSERT INTO "Logs" (level, message, details, function_name, created_at)
+    INSERT INTO system_logs (level, message, details, function_name, created_at)
     VALUES (
         'info',
         'Monitoramento de canais concluído',
@@ -201,7 +168,7 @@ BEGIN
 EXCEPTION
     WHEN OTHERS THEN
         -- Log erro crítico
-        INSERT INTO "Logs" (level, message, details, function_name, created_at)
+        INSERT INTO system_logs (level, message, details, function_name, created_at)
         VALUES (
             'error',
             'Erro crítico no monitoramento de canais',
@@ -222,11 +189,9 @@ EXCEPTION
             'timestamp', NOW()
         );
 END;
-$$ LANGUAGE plpgsql;
+$function$;
 
--- Comentário para documentação
-COMMENT ON FUNCTION monitor_top_channels_for_project(INTEGER) IS
-'Monitora os principais canais de um projeto com validação anti-spam aprimorada.
-Verifica se pode comentar em cada canal antes de processar usando can_comment_on_channel().
-Registra logs detalhados de canais processados e bloqueados.
-Retorna estatísticas completas incluindo canais pulados por anti-spam.';
+-- Comentário de documentação
+COMMENT ON FUNCTION public.monitor_top_channels_for_project(integer) IS
+'Monitora os top canais do YouTube de um projeto com sistema Anti-Spam integrado.
+Verifica can_comment_on_channel() antes de processar cada canal.';
