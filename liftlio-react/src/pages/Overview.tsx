@@ -3513,7 +3513,7 @@ const Overview: React.FC = () => {
                 <Line
                   type="monotone"
                   dataKey="leads"
-                  name="Leads"
+                  name="Mentions"
                   stroke="#4CAF50"
                   strokeWidth={3}
                   dot={{ r: 4, strokeWidth: 0, fill: "#4CAF50" }}
