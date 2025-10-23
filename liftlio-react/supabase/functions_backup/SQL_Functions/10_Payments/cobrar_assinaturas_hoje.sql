@@ -1,11 +1,15 @@
 -- =============================================
 -- Função: cobrar_assinaturas_hoje
--- Descrição: Processa cobrança das assinaturas que vencem hoje via Square API
--- Criado: 2025-01-23
--- Atualizado: Sistema completo de cobrança com retry e tratamento de erros
+-- Descrição: Processa cobranças de assinaturas vencidas hoje
+-- Parâmetros:
+--   - p_is_production: boolean (default false) - Se true, processa assinaturas de produção
+--   - p_limit: integer (default 50) - Limite de assinaturas a processar por execução
+-- Retorna: Tabela com resultado de cada cobrança processada
+-- Dependências: Edge Function process-payment, tabelas subscriptions e customers
+-- Criado: 2025-01-20
+-- Atualizado: 2025-01-21 - Adicionado suporte a extra_items (cobrar mention comments e outros)
+-- Sincronizado com Supabase Live: 2025-10-23 (revertido grace_period temporariamente)
 -- =============================================
-
-DROP FUNCTION IF EXISTS cobrar_assinaturas_hoje(boolean, integer);
 
 CREATE OR REPLACE FUNCTION public.cobrar_assinaturas_hoje(p_is_production boolean DEFAULT false, p_limit integer DEFAULT 50)
  RETURNS TABLE(subscription_id bigint, plan_name text, amount integer, payment_status text, payment_id text, error_message text)
@@ -82,15 +86,13 @@ BEGIN
             RAISE NOTICE 'Processando assinatura %: %', v_sub.id, request_body;
 
             -- Chamar Edge Function process-payment
-            -- ⚠️ IMPORTANTE: Em produção, usar Supabase Vault para SERVICE_ROLE_KEY
-            -- Exemplo: SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'service_role_key'
             SELECT * INTO http_response
             FROM http((
                 'POST',
                 'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/process-payment',
                 ARRAY[
                     http_header('Content-Type', 'application/json'),
-                    http_header('Authorization', 'Bearer <USE_SUPABASE_VAULT_SERVICE_ROLE_KEY>')
+                    http_header('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyNjUwOTM0NCwiZXhwIjoyMDQyMDg1MzQ0fQ.O-RO8VMAjfxZzZmDcyJeKABJJ2cn9OfIpapuxDENH8c')
                 ]::http_header[],
                 'application/json',
                 request_body
