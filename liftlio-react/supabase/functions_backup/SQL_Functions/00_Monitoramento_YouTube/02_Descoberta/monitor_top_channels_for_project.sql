@@ -6,7 +6,7 @@
 -- Retorno: JSONB com estatísticas de processamento
 -- Segurança: SECURITY DEFINER habilitado
 -- Criado: 2025
--- Atualizado: Com verificação Anti-Spam (Mentions) integrada
+-- Atualizado: 23/10/2025 - CORRIGIDO: Removido JOIN com tabela inexistente
 -- =============================================
 
 DROP FUNCTION IF EXISTS public.monitor_top_channels_for_project(integer);
@@ -38,31 +38,28 @@ BEGIN
     END IF;
 
     -- Log inicial
-    INSERT INTO system_logs (level, message, details, function_name, created_at)
+    INSERT INTO system_logs (operation, details, success)
     VALUES (
-        'info',
-        'Iniciando monitoramento de top canais',
-        jsonb_build_object(
-            'project_id', p_project_id,
-            'qtd_monitoramento', v_qtd_monitoramento,
-            'timestamp', NOW()
-        ),
-        'monitor_top_channels_for_project',
-        NOW()
+        'MONITOR_TOP_CHANNELS_START',
+        format('Iniciando monitoramento de top canais - Projeto: %s, Qtd: %s',
+            p_project_id, v_qtd_monitoramento),
+        true
     );
 
     -- Processar top canais baseado em rank_position
     FOR v_channel IN
         SELECT
+            c.id,
             c.channel_id,
             c."Nome",
-            cyp.rank_position,
-            cyp.ranking_score
+            c.rank_position,
+            c.ranking_score
         FROM "Canais do youtube" c
-        JOIN "Canais do youtube_Projeto" cyp ON cyp."Canais do youtube_id" = c.id
-        WHERE cyp."Projeto_id" = p_project_id
-          AND cyp.rank_position <= v_qtd_monitoramento
-        ORDER BY cyp.rank_position
+        WHERE c."Projeto" = p_project_id
+          AND c.is_active = true
+          AND c.rank_position IS NOT NULL
+          AND c.rank_position <= v_qtd_monitoramento
+        ORDER BY c.rank_position
     LOOP
         -- ⭐ ANTI-SPAM: Verificar se pode comentar neste canal
         v_can_comment := can_comment_on_channel(v_channel.channel_id, p_project_id);
@@ -71,20 +68,12 @@ BEGIN
             -- Canal bloqueado - registrar nos logs com detalhes
             v_channels_skipped := v_channels_skipped + 1;
 
-            INSERT INTO system_logs (level, message, details, function_name, created_at)
+            INSERT INTO system_logs (operation, details, success)
             VALUES (
-                'warning',
-                format('Canal %s bloqueado por Anti-Spam', v_channel."Nome"),
-                jsonb_build_object(
-                    'project_id', p_project_id,
-                    'channel_id', v_channel.channel_id,
-                    'channel_name', v_channel."Nome",
-                    'rank_position', v_channel.rank_position,
-                    'ranking_score', v_channel.ranking_score,
-                    'reason', 'anti_spam_block'
-                ),
-                'monitor_top_channels_for_project',
-                NOW()
+                'CHANNEL_SKIPPED_ANTISPAM',
+                format('[WARNING] Canal %s (ID: %s) bloqueado por Anti-Spam - Rank: %s, Projeto: %s',
+                    v_channel."Nome", v_channel.channel_id, v_channel.rank_position, p_project_id),
+                true
             );
 
             RAISE NOTICE 'Canal % (%) pulado - bloqueado por Anti-Spam (rank: %)',
@@ -97,19 +86,13 @@ BEGIN
         v_channels_processed := v_channels_processed + 1;
 
         -- Log de canal sendo processado
-        INSERT INTO system_logs (level, message, details, function_name, created_at)
+        INSERT INTO system_logs (operation, details, success)
         VALUES (
-            'info',
-            format('Processando canal %s', v_channel."Nome"),
-            jsonb_build_object(
-                'project_id', p_project_id,
-                'channel_id', v_channel.channel_id,
-                'channel_name', v_channel."Nome",
-                'rank_position', v_channel.rank_position,
-                'ranking_score', v_channel.ranking_score
-            ),
-            'monitor_top_channels_for_project',
-            NOW()
+            'CHANNEL_PROCESSING',
+            format('Processando canal %s (ID: %s) - Rank: %s, Score: %s, Projeto: %s',
+                v_channel."Nome", v_channel.channel_id, v_channel.rank_position,
+                v_channel.ranking_score, p_project_id),
+            true
         );
 
         -- Processar vídeos do canal
@@ -118,18 +101,12 @@ BEGIN
         EXCEPTION
             WHEN OTHERS THEN
                 -- Log erro no processamento
-                INSERT INTO system_logs (level, message, details, function_name, created_at)
+                INSERT INTO system_logs (operation, details, success)
                 VALUES (
-                    'error',
-                    format('Erro ao processar vídeos do canal %s', v_channel."Nome"),
-                    jsonb_build_object(
-                        'project_id', p_project_id,
-                        'channel_id', v_channel.channel_id,
-                        'error', SQLERRM,
-                        'sqlstate', SQLSTATE
-                    ),
-                    'monitor_top_channels_for_project',
-                    NOW()
+                    'CHANNEL_PROCESSING_ERROR',
+                    format('[ERROR] Canal %s (ID: %s) - Projeto: %s - Erro: %s (SQLSTATE: %s)',
+                        v_channel."Nome", v_channel.channel_id, p_project_id, SQLERRM, SQLSTATE),
+                    false
                 );
         END;
     END LOOP;
@@ -154,13 +131,12 @@ BEGIN
     );
 
     -- Log final com estatísticas
-    INSERT INTO system_logs (level, message, details, function_name, created_at)
+    INSERT INTO system_logs (operation, details, success)
     VALUES (
-        'info',
-        'Monitoramento de canais concluído',
-        v_result,
-        'monitor_top_channels_for_project',
-        NOW()
+        'MONITOR_TOP_CHANNELS_COMPLETE',
+        format('Monitoramento concluído - Projeto: %s, Processados: %s, Pulados: %s, Mensagens: %s',
+            p_project_id, v_channels_processed, v_channels_skipped, v_messages_created),
+        true
     );
 
     RETURN v_result;
@@ -168,18 +144,12 @@ BEGIN
 EXCEPTION
     WHEN OTHERS THEN
         -- Log erro crítico
-        INSERT INTO system_logs (level, message, details, function_name, created_at)
+        INSERT INTO system_logs (operation, details, success)
         VALUES (
-            'error',
-            'Erro crítico no monitoramento de canais',
-            jsonb_build_object(
-                'project_id', p_project_id,
-                'error', SQLERRM,
-                'sqlstate', SQLSTATE,
-                'timestamp', NOW()
-            ),
-            'monitor_top_channels_for_project',
-            NOW()
+            'MONITOR_TOP_CHANNELS_CRITICAL_ERROR',
+            format('[CRITICAL ERROR] Projeto: %s - Erro: %s (SQLSTATE: %s)',
+                p_project_id, SQLERRM, SQLSTATE),
+            false
         );
 
         RETURN jsonb_build_object(
