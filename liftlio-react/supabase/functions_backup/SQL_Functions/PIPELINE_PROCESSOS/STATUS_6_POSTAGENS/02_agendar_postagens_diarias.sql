@@ -19,6 +19,9 @@
 --
 -- Criado: Data desconhecida
 -- Atualizado: 2025-10-18 - Implementação de proporção dinâmica produto/engajamento + Removido filtro de 3 dias
+-- Atualizado: 2025-10-23 - Adicionada verificação de Mentions disponíveis antes de agendar
+--                          Proteção: não agenda se Mentions <= 0
+--                          Ajuste: limita posts_por_dia se Mentions < posts_por_dia
 -- =============================================
 
 DROP FUNCTION IF EXISTS agendar_postagens_diarias(BIGINT);
@@ -59,6 +62,11 @@ DECLARE
     videos_usados_hoje bigint[] := ARRAY[]::bigint[];
     v_tentativa integer;
     v_mensagem_encontrada boolean;
+
+    -- NOVO: Variáveis para verificação de Mentions
+    v_mentions_disponiveis integer;
+    v_user_id text;
+    v_customer_email text;
 BEGIN
     -- Log inicial
     RAISE NOTICE 'Iniciando agendamento para projeto %', projeto_id_param;
@@ -81,6 +89,41 @@ BEGIN
         RAISE NOTICE 'Projeto não está ativo, retornando 0';
         RETURN 0;
     END IF;
+
+    -- =============================================
+    -- NOVO: Verificar Mentions disponíveis do customer
+    -- =============================================
+    SELECT
+        p."User id",
+        c.email,
+        COALESCE(c."Mentions", 0)
+    INTO
+        v_user_id,
+        v_customer_email,
+        v_mentions_disponiveis
+    FROM "Projeto" p
+    LEFT JOIN customers c ON p."User id" = c.user_id
+    WHERE p.id = projeto_id_param;
+
+    RAISE NOTICE 'Customer (user_id: %, email: %) tem % Mentions disponíveis',
+                 v_user_id, v_customer_email, v_mentions_disponiveis;
+
+    -- Proteção: Se não tem Mentions, não agenda nada
+    IF v_mentions_disponiveis IS NULL OR v_mentions_disponiveis <= 0 THEN
+        RAISE NOTICE 'Customer sem Mentions disponíveis (Mentions=%)', v_mentions_disponiveis;
+        RAISE NOTICE 'Não será agendado nenhum post. Sistema economiza recursos.';
+        RETURN 0;
+    END IF;
+
+    -- Ajuste: Se Mentions < posts_por_dia, limita quantidade
+    IF v_mentions_disponiveis < posts_por_dia THEN
+        RAISE NOTICE 'AJUSTE: Mentions insuficientes para % posts/dia', posts_por_dia;
+        RAISE NOTICE 'Limitando para % posts (Mentions disponíveis)', v_mentions_disponiveis;
+        posts_por_dia := v_mentions_disponiveis;
+    END IF;
+
+    RAISE NOTICE 'Agendando % posts com % Mentions disponíveis',
+                 posts_por_dia, v_mentions_disponiveis;
 
     -- Obter data local no fuso horário do projeto
     data_local := (CURRENT_DATE AT TIME ZONE 'UTC' AT TIME ZONE fuso_horario_projeto)::date;
