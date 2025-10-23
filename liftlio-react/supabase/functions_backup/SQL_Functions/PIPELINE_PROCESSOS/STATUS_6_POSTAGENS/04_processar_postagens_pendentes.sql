@@ -20,14 +20,17 @@
 --   Atualiza AMBAS as tabelas após sucesso:
 --   - Settings messages posts (status = 'posted')
 --   - Mensagens (respondido = true)
+--   - Customers (Mentions = Mentions - 1) - Controle de consumo
 --
 -- Criado: Data desconhecida
--- Atualizado: 2025-10-02 - Recuperado do Supabase e salvo localmente
+-- Atualizado: 2025-10-21 - Adicionado decremento de Mentions
 -- =============================================
 
-DROP FUNCTION IF EXISTS processar_postagens_pendentes(BIGINT);
+-- Remover versões anteriores
+DROP FUNCTION IF EXISTS public.processar_postagens_pendentes(INT);
+DROP FUNCTION IF EXISTS public.processar_postagens_pendentes();
 
-CREATE OR REPLACE FUNCTION public.processar_postagens_pendentes(projeto_id_param bigint DEFAULT NULL::bigint)
+CREATE OR REPLACE FUNCTION public.processar_postagens_pendentes(projeto_id_param integer DEFAULT NULL::integer)
  RETURNS TABLE(total_processados integer, sucessos integer, falhas integer, status_mensagem text)
  LANGUAGE plpgsql
 AS $function$
@@ -139,6 +142,15 @@ BEGIN
                 WHERE id = v_registro.mensagem_id;
 
                 RAISE NOTICE 'CORREÇÃO APLICADA: Mensagem % marcada como respondida=true', v_registro.mensagem_id;
+
+                -- 3. NOVO: Decrementar Mentions do customer (consumo de quota)
+                UPDATE customers c
+                SET "Mentions" = GREATEST(COALESCE("Mentions", 0) - 1, 0)
+                FROM "Projeto" p
+                WHERE p.id = v_registro.projeto_id
+                AND c.user_id = p."User id";
+
+                RAISE NOTICE 'Mentions decrementado para projeto ID=%', v_registro.projeto_id;
 
                 v_sucessos := v_sucessos + 1;
                 RAISE NOTICE 'Postagem bem-sucedida para ID=% (Mensagem ID=%)', v_registro.id, v_registro.mensagem_id;
