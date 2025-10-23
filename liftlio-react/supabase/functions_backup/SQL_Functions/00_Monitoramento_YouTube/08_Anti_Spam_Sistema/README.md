@@ -49,36 +49,11 @@ CAMADA 2: APRENDIZADO (Etapa 2)
 
 ## 🗺️ ARQUITETURA DO SISTEMA
 
-### FLUXO ATUAL (Sem Anti-Spam):
+### FLUXO ATUAL (Com Anti-Spam integrado):
 
 ```
-monitor_top_channels_for_project(77)
-  ↓ Busca TOP 30 canais
-  ↓
-  ├─ Canal A (comentou ontem)     → Processa ✅
-  ├─ Canal B (comentou hoje)      → Processa ✅ PROBLEMA!
-  ├─ Canal C (deletou 3x)         → Processa ✅ PROBLEMA!
-  └─ Canal D (user desativou)     → Pula ✅
-  ↓
-process_channel_videos()
-  ↓ Busca vídeos novos
-  ↓
-process_monitored_videos()
-  ↓ Cria comentários
-  ↓
-post_youtube_video_comment()
-  └─ POSTA no YouTube
-```
-
-**Resultado**: Comenta múltiplas vezes no mesmo canal = BAN
-
----
-
-### FLUXO NOVO (Com Anti-Spam):
-
-```
-monitor_top_channels_for_project(77)
-  ↓ Busca TOP 30 canais
+verificar_novos_videos_youtube() (CRON 45min)
+  ↓ Verifica canais ativos
   ↓
   ├─ Canal A (comentou ontem)
   │   └─ can_comment_on_channel(A, 77)? ❌ (< 7 dias)
@@ -86,7 +61,9 @@ monitor_top_channels_for_project(77)
   │
   ├─ Canal B (comentou há 15 dias, 5k subs)
   │   └─ can_comment_on_channel(B, 77)? ✅ (> 14 dias)
-  │       └─ Processa ✅
+  │       ├─ Busca vídeos novos
+  │       ├─ IA qualifica vídeos
+  │       └─ Adiciona IDs em campo [processar] ✅
   │
   ├─ Canal C (deletou 3x comentários)
   │   └─ can_comment_on_channel(C, 77)? ❌ (blacklisted)
@@ -96,7 +73,11 @@ monitor_top_channels_for_project(77)
       └─ can_comment_on_channel(D, 77)? ❌ (desativado)
           └─ PULA ✅
   ↓
+⚡ TRIGGER channel_videos_processor (automático)
+  ↓ Processa campo [processar]
+  ↓
 process_channel_videos()
+  ↓ INSERT vídeos com monitored=true
   ↓ (só processa canais aprovados)
   ↓
 process_monitored_videos()
@@ -230,10 +211,10 @@ can_comment_on_channel(canal_id, project_id)
 ```
 
 **Responsabilidade**: TODA a inteligência em 1 lugar
-**Onde usar**: `monitor_top_channels_for_project()`
+**Onde usar**: `verificar_novos_videos_youtube()`
 
-#### **1 Modificação**:
-Adicionar 3 linhas em `monitor_top_channels_for_project()`:
+#### **Integração**:
+A função `can_comment_on_channel()` já está integrada em `verificar_novos_videos_youtube()`:
 ```sql
 IF NOT can_comment_on_channel(v_channel.id, p_project_id) THEN
   CONTINUE; -- Pula este canal
@@ -370,8 +351,8 @@ SELECT
 FROM "Canais do youtube" c
 LIMIT 10;
 
--- Rodar monitoramento e ver logs:
-SELECT monitor_top_channels_for_project(77);
+-- Rodar verificação de vídeos novos e ver logs:
+-- (Executado automaticamente pelo CRON a cada 45min)
 ```
 
 ### Após Etapa 2:
@@ -457,8 +438,8 @@ WHERE auto_disabled_reason IS NOT NULL;
 - 🆕 `comments_deleted_count` em "Canais do youtube" (Etapa 2)
 - 🆕 `last_verified_at`, `verification_count`, `still_exists`, `deleted_at` em "Mensagens" (Etapa 2)
 
-### Funções que VAI modificar:
-- 📝 `monitor_top_channels_for_project()` - Adicionar 3 linhas (Etapa 1)
+### Funções que já têm anti-spam integrado:
+- ✅ `verificar_novos_videos_youtube()` - Já chama can_comment_on_channel() (Etapa 1)
 
 ### Funções que NÃO vai mexer:
 - ✅ `process_monitored_videos()` - Continua igual

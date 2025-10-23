@@ -55,38 +55,66 @@ Usado por ambos sistemas (Descoberta busca vídeos relevantes, Monitoramento mar
   - `"Videos"` (SELECT)
   - `"Canais do youtube_Projeto"` (JOIN para filtrar por projeto)
 
-### 🔵 process_channel_videos.sql
-- **Descrição**: Processa vídeos de um canal, marcando como monitored=true se canal for top
+### ⭐ process_channel_videos.sql (CONSUMIDOR DO CAMPO [processar])
+- **Descrição**: **PROCESSA CAMPO [processar]** - Insere vídeos aprovados pela IA na tabela "Videos"
 - **Parâmetros**:
-  - `p_channel_id` (TEXT) - ID do canal no YouTube
-  - `p_project_id` (INTEGER opcional) - Filtrar por projeto
-- **Retorna**: JSONB com estatísticas (vídeos processados, marcados como monitored)
+  - `p_channel_id` (BIGINT) - ID interno do canal (não YouTube ID!)
+- **Retorna**: JSONB com estatísticas (vídeos processados, inseridos, erros)
 - **Usado por**:
-  - `monitor_top_channels_for_project()`
-  - Processos de marcação de vídeos
+  - ⚡ **TRIGGER channel_videos_processor** (automático!) ⭐
 - **Chama**:
-  - Funções de análise de vídeo (se necessário)
+  - `call_youtube_edge_function()` - Busca metadados dos vídeos
+  - `pg_advisory_lock()` - Lock para evitar processamento duplicado
 - **Tabelas afetadas**:
-  - `"Videos"` (SELECT, UPDATE: monitored = true)
-  - `"Canais do youtube"` (SELECT)
+  - `"Canais do youtube"` (SELECT + UPDATE: processar → executed, processar = '')
+  - `"Videos"` (INSERT com monitored=true, comentarios_atualizados=true)
+
+**⚡ ARQUITETURA EVENT-DRIVEN:**
+```
+Esta função é chamada AUTOMATICAMENTE pelo TRIGGER quando
+o campo [processar] é atualizado!
+
+Fluxo de execução:
+1. Lê campo [processar] do canal (CSV de video IDs)
+2. Converte CSV → Array, filtra IDs válidos
+3. Aplica pg_advisory_lock (evita duplicação)
+4. Chama call_youtube_edge_function() para metadados
+5. INSERT vídeos na tabela "Videos" com flags:
+   - monitored = true
+   - comentarios_atualizados = true
+   - Keyword = 'Canal Monitorado'
+6. Move IDs de [processar] → [executed]
+7. Limpa campo [processar] = ''
+
+⚠️ NÃO PRECISA DE CRON! O trigger faz a chamada automaticamente.
+```
+
+**Campos manipulados:**
+| Campo | Antes | Depois | Ação |
+|-------|-------|--------|------|
+| `processar` | `"abc,def,ghi"` | `""` | Limpo após processar |
+| `executed` | `"xyz"` | `"xyz,abc,def,ghi"` | IDs movidos para histórico |
+
+**Ver documentação completa:**
+- `/00_Monitoramento_YouTube/README.md` → "CICLO COMPLETO DE UM VÍDEO"
+- `/07_Automacao/README.md` → "channel_videos_processor"
 
 ---
 
 ## 🔗 FLUXO DE INTERLIGAÇÃO
 
 ```
-CRON Descoberta de Vídeos (diário):
+CRON Descoberta de Vídeos (a cada 45min):
   └─→ verificar_novos_videos_youtube()
         ├─→ Para cada canal:
         │     ├─→ Busca vídeos via API YouTube
-        │     └─→ INSERT novos vídeos
-        └─→ Retorna estatísticas
-
-Sistema Monitoramento:
-  └─→ monitor_top_channels_for_project(project_id)
-        └─→ process_channel_videos(channel_id, project_id)
-              ├─→ Busca vídeos recentes do canal
-              └─→ UPDATE Videos SET monitored = true
+        │     ├─→ IA aprova vídeos relevantes
+        │     └─→ Adiciona IDs em campo [processar]
+        ↓
+⚡ TRIGGER channel_videos_processor (automático):
+  └─→ process_channel_videos(channel_id)
+        ├─→ Busca metadados via YouTube API
+        └─→ INSERT vídeos na tabela "Videos"
 
 Queries de consulta (independentes):
 ├─→ get_videos_by_channel_id(channel_id)

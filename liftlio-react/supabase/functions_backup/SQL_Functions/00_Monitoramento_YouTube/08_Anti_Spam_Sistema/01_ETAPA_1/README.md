@@ -547,54 +547,37 @@ WHERE v.canal IS NOT NULL
 
 ---
 
-## 🔗 INTEGRAÇÃO COM MONITOR
+## 🔗 INTEGRAÇÃO COM SISTEMA DE MONITORAMENTO
 
-### Modificação: `monitor_top_channels_for_project()`
+### ✅ Anti-Spam JÁ Integrado
 
-**Localização**: `/00_Monitoramento_YouTube/02_Descoberta/monitor_top_channels_for_project.sql`
+**Função**: `verificar_novos_videos_youtube()`
+**Localização**: `/00_Monitoramento_YouTube/02_Descoberta/verificar_novos_videos_youtube.sql`
 
-**O que mudar**: Adicionar 3 linhas ANTES de processar canal
+A proteção anti-spam **já está implementada** na função que verifica vídeos novos:
 
-**Código atual**:
+**Código integrado**:
 ```sql
 FOR v_channel IN
-  SELECT ... FROM "Canais do youtube" c ...
+  SELECT ... FROM "Canais do youtube" c WHERE is_active = true ...
 LOOP
-  PERFORM process_channel_videos(...); -- processa direto
-END LOOP;
-```
-
-**Código novo**:
-```sql
-FOR v_channel IN
-  SELECT ... FROM "Canais do youtube" c ...
-LOOP
-  -- ⭐ NOVA VALIDAÇÃO (3 linhas):
-  IF NOT can_comment_on_channel(v_channel.channel_id, p_project_id) THEN
+  -- ⭐ VALIDAÇÃO ANTI-SPAM (já implementada):
+  IF NOT can_comment_on_channel(v_channel.id, v_projeto.id) THEN
     CONTINUE; -- pula para próximo canal
-  END IF;
+  END IF
 
-  PERFORM process_channel_videos(...); -- só processa se passou
+  -- Busca vídeos novos
+  -- IA qualifica vídeos
+  -- Adiciona IDs aprovados em campo [processar]
 END LOOP;
 ```
 
-### Fluxo Detalhado
+### Fluxo Atual (Com Anti-Spam Integrado)
 
-**Antes (Sem Anti-Spam)**:
 ```
-monitor_top_channels_for_project(77)
+verificar_novos_videos_youtube() (CRON 45min)
   ↓
-Loop nos top 30 canais:
-  ├─ Canal 1 → process_channel_videos() → Busca vídeos
-  ├─ Canal 2 → process_channel_videos() → Busca vídeos
-  └─ ... (todos processados)
-```
-
-**Depois (Com Anti-Spam)**:
-```
-monitor_top_channels_for_project(77)
-  ↓
-Loop nos top 30 canais:
+Loop nos canais ativos:
   ├─ Canal 1
   │   ├─ can_comment_on_channel(channel_id, 77)?
   │   ├─ is_active=FALSE
@@ -614,9 +597,9 @@ Loop nos top 30 canais:
 
 ## 🔄 COMO REVERTER
 
-1. **Remover modificação** em `monitor_top_channels_for_project()`:
-   - Apagar as 3 linhas do IF
-   - Voltar código original
+1. **Modificar** `verificar_novos_videos_youtube()`:
+   - Remover chamada a can_comment_on_channel()
+   - Voltar a processar todos canais ativos
 
 2. **Dropar função**:
    ```sql
@@ -627,12 +610,12 @@ Loop nos top 30 canais:
 
 ---
 
-## 📝 PRÓXIMOS PASSOS RECOMENDADOS
+## 📝 STATUS ATUAL
 
-1. **Modificar** `monitor_top_channels_for_project()` para usar a função
-2. **Testar** em ambiente de produção
-3. **Monitorar** por 2-3 dias
-4. **Implementar** Etapa 2 (detecção automática) se necessário
+1. ✅ **Função can_comment_on_channel() criada e testada**
+2. ✅ **Integração com verificar_novos_videos_youtube() já implementada**
+3. ✅ **Sistema em produção funcionando**
+4. 📋 **Próximo passo**: Implementar Etapa 2 (detecção automática) se necessário
 
 ---
 

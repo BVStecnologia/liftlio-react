@@ -18,17 +18,50 @@ comentário no vídeo para gerar engajamento inicial.
 
 ## 📊 FUNÇÕES DISPONÍVEIS
 
-### 🔵 monitor_top_channels_for_project.sql
-- **Descrição**: Monitora os top X canais de um projeto (baseado em `rank_position`)
-- **Parâmetros**:
-  - `p_project_id` (INTEGER) - ID do projeto a monitorar
-- **Retorna**: JSONB com estatísticas (canais processados, mensagens criadas)
-- **Usado por**: CRON jobs, chamadas manuais
-- **Chama**: `process_channel_videos()`
+### ⭐ verificar_novos_videos_youtube.sql (FUNÇÃO CRÍTICA DO SISTEMA)
+- **Descrição**: **ALIMENTA O CAMPO [processar]** - Monitora canais ativos buscando novos vídeos e filtrando com IA
+- **Parâmetros**: Nenhum (processa TODOS projetos com YouTube Active)
+- **Retorna**: JSONB com estatísticas detalhadas por canal
+- **Usado por**: CRON a cada 45 minutos (`*/45 * * * *`)
+- **Chama**:
+  - `can_comment_on_channel()` - Anti-spam (limite 1 comentário/7 dias por canal)
+  - `monitormanto_de_canal_sql()` - Busca vídeos novos via SQL direto (otimizado!)
+  - `call_api_edge_function()` - Qualifica vídeos com IA (video-qualifier-wrapper)
 - **Tabelas afetadas**:
-  - `"Canais do youtube"` (SELECT)
-  - `"Canais do youtube_Projeto"` (SELECT)
-  - `"Mensagens"` (INSERT via outras funções)
+  - `"Canais do youtube"` (UPDATE: videos_scanreados, processar)
+  - `"Projeto"` (SELECT WHERE Youtube Active = true)
+  - `"Customers"` (SELECT para verificar Mentions disponíveis)
+- **Sistema de campos:**
+  - `videos_scanreados`: Adiciona TODOS vídeos encontrados (histórico completo)
+  - `processar`: Adiciona APENAS vídeos APROVADOS pela IA ⭐
+
+**⚡ ARQUITETURA EVENT-DRIVEN:**
+```
+Esta função ALIMENTA o campo [processar], que automaticamente
+dispara o TRIGGER channel_videos_processor para processar vídeos!
+
+Fluxo completo:
+1. verificar_novos_videos_youtube() encontra vídeos novos
+2. IA aprova vídeos relevantes via call_api_edge_function()
+3. UPDATE campo [processar] com IDs aprovados
+4. ⚡ TRIGGER channel_videos_processor dispara automaticamente
+5. process_channel_videos() insere vídeos na tabela "Videos"
+6. Campo [processar] é limpo = ''
+
+POR ISSO NÃO PRECISA DE CRON PARA PROCESSAR! O trigger faz tudo.
+```
+
+**Campos críticos da tabela "Canais do youtube":**
+| Campo | Propósito | Limpeza |
+|-------|-----------|---------|
+| `videos_scanreados` | Histórico completo (TODOS vídeos já verificados) | ❌ Nunca |
+| `processar` ⭐ | Fila de vídeos APROVADOS aguardando processamento | ✅ Após trigger |
+| `executed` | Histórico de vídeos já inseridos no banco | ❌ Nunca |
+
+**Ver ciclo completo em:**
+- `/00_Monitoramento_YouTube/README.md` → Seção "CICLO COMPLETO DE UM VÍDEO"
+
+---
 
 ### 🔵 process_monitored_videos.sql
 - **Descrição**: Processa vídeos com `monitored = true`, analisa e cria comentários para High potential
@@ -76,15 +109,16 @@ comentário no vídeo para gerar engajamento inicial.
 ## 🔗 FLUXO DE INTERLIGAÇÃO
 
 ```
-CRON Job (diário)
+CRON verificar_novos_videos_youtube() (a cada 45min)
+  ├─→ Busca vídeos novos em canais ativos
+  ├─→ IA aprova vídeos relevantes
+  └─→ Adiciona IDs em campo [processar]
   ↓
-monitor_top_channels_for_project(project_id)
-  ├─→ Busca top X canais (baseado em rank_position)
-  ├─→ Para cada canal:
-  │     └─→ process_channel_videos(channel_id)
-  │           └─→ Marca vídeos novos como monitored = true
+⚡ TRIGGER channel_videos_processor (automático)
+  └─→ process_channel_videos()
+        └─→ INSERT vídeos com monitored = true
   ↓
-process_monitored_videos()
+CRON process_monitored_videos() (diário)
   ├─→ Para cada vídeo monitored = true:
   │     ├─→ update_video_analysis() → lead_potential
   │     └─→ Se lead_potential = 'High':
@@ -144,16 +178,13 @@ Settings messages posts
 ## 🧪 COMO TESTAR
 
 ```sql
--- Teste 1: Monitorar canais top do projeto 77
-SELECT monitor_top_channels_for_project(77);
-
--- Teste 2: Processar todos vídeos monitorados (qualquer projeto)
+-- Teste 1: Processar todos vídeos monitorados (qualquer projeto)
 SELECT process_monitored_videos();
 
--- Teste 3: Criar comentário específico
+-- Teste 2: Criar comentário específico
 SELECT create_initial_video_comment_with_claude(12345::BIGINT, 77::BIGINT);
 
--- Teste 4: Verificar vídeos monitorados aguardando comentário
+-- Teste 3: Verificar vídeos monitorados aguardando comentário
 SELECT v.id, v."VIDEO", v.video_title, v.lead_potential
 FROM "Videos" v
 WHERE v.monitored = true
@@ -161,7 +192,7 @@ WHERE v.monitored = true
   AND NOT EXISTS (SELECT 1 FROM "Mensagens" WHERE video = v.id)
 LIMIT 10;
 
--- Teste 5: Ver mensagens de monitoramento criadas hoje
+-- Teste 4: Ver mensagens de monitoramento criadas hoje
 SELECT m.id, m.mensagem, m.video, m.created_at
 FROM "Mensagens" m
 WHERE m.tipo_msg = 1
@@ -169,7 +200,7 @@ WHERE m.tipo_msg = 1
   AND m.created_at >= CURRENT_DATE
 ORDER BY m.created_at DESC;
 
--- Teste 6: Estatísticas do sistema de monitoramento
+-- Teste 5: Estatísticas do sistema de monitoramento
 SELECT
     COUNT(*) as total_mensagens,
     COUNT(CASE WHEN m.respondido = true THEN 1 END) as postadas,

@@ -12,7 +12,7 @@
 ✅ can_comment_on_channel V3 - 7 validações (projeto existe + YouTube ativo + integração válida)
 ✅ verify_comment_and_apply_penalty criada
 ✅ cron_verify_comments criada
-✅ Integração COMPLETA - anti-spam em monitor_top_channels_for_project
+✅ Integração COMPLETA - anti-spam em verificar_novos_videos_youtube
 ✅ verificar_novos_videos_youtube COM proteção anti-spam (TESTADO E FUNCIONANDO!)
 ❌ cron_verify_comments NÃO agendado
 ```
