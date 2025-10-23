@@ -49,6 +49,16 @@ class QualificationResult(BaseModel):
     success: bool = Field(default=True, description="Whether process succeeded")
     error: Optional[str] = Field(default=None, description="Error message if failed")
 
+    # New diagnostic fields
+    warnings: List[str] = Field(
+        default_factory=list,
+        description="List of warnings during processing"
+    )
+    stats: dict = Field(
+        default_factory=dict,
+        description="Detailed statistics about the qualification process"
+    )
+
     class Config:
         json_schema_extra = {
             "example": {

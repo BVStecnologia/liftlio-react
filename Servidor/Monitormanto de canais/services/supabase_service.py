@@ -115,7 +115,7 @@ class SupabaseService:
                 data = data[0]
 
             result = ProjectData(
-                nome_produto=data.get("nome_produto", ""),
+                nome_produto=data.get("nome_produto_servico", ""),
                 descricao_servico=data.get("descricao_servico", ""),
                 pais=data.get("pais", "BR")
             )

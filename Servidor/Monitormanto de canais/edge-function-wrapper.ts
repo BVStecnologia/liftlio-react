@@ -72,11 +72,27 @@ Deno.serve(async (req: Request) => {
     const vpsData = await vpsResponse.json();
     console.log(`📊 VPS Response:`, vpsData);
 
+    // ⚠️ LOG WARNINGS (if any)
+    if (vpsData.warnings && vpsData.warnings.length > 0) {
+      console.warn(`⚠️ Warnings (${vpsData.warnings.length}):`, vpsData.warnings);
+      vpsData.warnings.forEach((w: string, i: number) => {
+        console.warn(`  ${i + 1}. ${w}`);
+      });
+    }
+
+    // 📊 LOG STATS
+    if (vpsData.stats) {
+      console.log(`📊 Stats:`, vpsData.stats);
+      if (vpsData.stats.videos_without_transcript > 0) {
+        console.warn(`  ⚠️ ${vpsData.stats.videos_without_transcript} videos without transcript`);
+      }
+    }
+
     // Extract video IDs (compatible with SQL format)
     const videoIdsCsv = vpsData.qualified_video_ids_csv || '';
     const resultText = videoIdsCsv.trim() === '' ? 'NOT' : videoIdsCsv;
 
-    console.log(`✅ Returning: ${resultText}`);
+    console.log(`✅ Returning to SQL: ${resultText}`);
 
     // Return in SQL-compatible format
     return new Response(
