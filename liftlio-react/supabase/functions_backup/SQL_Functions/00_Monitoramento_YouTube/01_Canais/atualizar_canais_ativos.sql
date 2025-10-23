@@ -15,6 +15,7 @@ DECLARE
     projeto_record RECORD;
     qtd_monitoramento INTEGER;
     youtube_active BOOLEAN;
+    v_mentions_disponiveis INTEGER;
 BEGIN
     -- Se projeto_id_param for fornecido, processa apenas esse projeto
     -- Caso contrário, processa todos os projetos
@@ -23,6 +24,19 @@ BEGIN
         FROM public."Projeto"
         WHERE id = COALESCE(projeto_id_param, id)
     LOOP
+        -- ⭐ Verificar se customer tem Mentions disponíveis
+        SELECT COALESCE(c."Mentions", 0)
+        INTO v_mentions_disponiveis
+        FROM customers c
+        JOIN "Projeto" p ON p."User id" = c.user_id
+        WHERE p.id = projeto_record.id;
+
+        -- Se não tem Mentions, pula este projeto (não processa canais)
+        IF v_mentions_disponiveis <= 0 THEN
+            RAISE NOTICE 'Projeto % sem Mentions - pulando processamento', projeto_record.id;
+            CONTINUE;
+        END IF;
+
         -- Verifica se YouTube está ativo para este projeto
         youtube_active := COALESCE(projeto_record."Youtube Active", false);
 
