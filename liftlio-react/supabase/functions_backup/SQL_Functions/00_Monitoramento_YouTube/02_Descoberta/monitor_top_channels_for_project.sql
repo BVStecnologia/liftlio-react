@@ -3,6 +3,8 @@
 -- Descrição: Monitora os top canais de um projeto com validação anti-spam aprimorada
 -- Criado: 2025-01-23
 -- Atualizado: 2025-01-03 (Integração Anti-Spam Sistema melhorada com logs detalhados)
+-- Atualizado: 2025-10-23 - Adicionada verificação de Mentions disponíveis
+--                          Não monitora canais se customer sem Mentions
 -- =============================================
 
 DROP FUNCTION IF EXISTS monitor_top_channels_for_project(INTEGER);
@@ -17,6 +19,8 @@ DECLARE
     v_channel RECORD;
     v_qtd_monitoramento INTEGER;
     v_can_comment BOOLEAN;
+    v_mentions_disponiveis INTEGER;  -- NOVO
+    v_user_id TEXT;                  -- NOVO
 BEGIN
     -- Buscar quantidade de canais para monitorar
     SELECT qtdmonitoramento INTO v_qtd_monitoramento
@@ -30,6 +34,41 @@ BEGIN
             'project_id', p_project_id
         );
     END IF;
+
+    -- ⭐ NOVO: Verificar se customer tem Mentions disponíveis
+    SELECT p."User id", COALESCE(c."Mentions", 0)
+    INTO v_user_id, v_mentions_disponiveis
+    FROM "Projeto" p
+    LEFT JOIN customers c ON p."User id" = c.user_id
+    WHERE p.id = p_project_id;
+
+    IF v_mentions_disponiveis <= 0 THEN
+        -- Log de quota esgotada
+        INSERT INTO "Logs" (level, message, details, function_name, created_at)
+        VALUES (
+            'warning',
+            'Monitoramento cancelado - Customer sem Mentions',
+            jsonb_build_object(
+                'project_id', p_project_id,
+                'user_id', v_user_id,
+                'mentions_available', v_mentions_disponiveis,
+                'reason', 'no_quota'
+            ),
+            'monitor_top_channels_for_project',
+            NOW()
+        );
+
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'Customer has no Mentions available',
+            'project_id', p_project_id,
+            'mentions_available', v_mentions_disponiveis,
+            'reason', 'no_quota'
+        );
+    END IF;
+
+    RAISE NOTICE 'Customer tem % Mentions disponíveis. Continuando monitoramento.',
+                 v_mentions_disponiveis;
 
     -- Log inicial
     INSERT INTO "Logs" (level, message, details, function_name, created_at)
