@@ -9,19 +9,20 @@
 ## ✅ STATUS ATUAL
 
 ```
-✅ can_comment_on_channel V3 - 7 validações (projeto existe + YouTube ativo + integração válida)
+✅ can_comment_on_channel V4 - 8 validações (projeto + YouTube + integração + SUBSCRIPTION)
 ✅ verify_comment_and_apply_penalty criada
-✅ cron_verify_comments criada
+✅ cron_verify_comments criada E AGENDADA (a cada 60 min)
 ✅ Integração COMPLETA - anti-spam em verificar_novos_videos_youtube
 ✅ verificar_novos_videos_youtube COM proteção anti-spam (TESTADO E FUNCIONANDO!)
-❌ cron_verify_comments NÃO agendado
+✅ SISTEMA 100% OPERACIONAL
 ```
 
-**⭐ NOVO**: `can_comment_on_channel` agora valida:
+**⭐ VERSÃO V4**: `can_comment_on_channel` agora valida:
 1. Projeto existe
 2. YouTube ativo (`"Youtube Active" = TRUE`)
 3. Integração válida (`integracao_valida = TRUE`)
-4-7. Validações originais (canal desativado, blacklist, intervalo)
+4. **Subscription ativa** (has_active_subscription = TRUE) ← NOVO!
+5-8. Validações originais (canal desativado, blacklist, intervalo)
 
 ---
 
@@ -31,7 +32,8 @@
   - ✅ Integrado e testado
   - ✅ Lógica de 30 minutos funcionando corretamente
   - ✅ Validação de projeto/YouTube Active/integração válida funcionando
-- [ ] **TAREFA 2**: Agendar `cron_verify_comments` no Supabase
+- [x] **TAREFA 2**: Agendar `cron_verify_comments` no Supabase ✅ CONCLUÍDO (agendado 60 min)
+- [x] **UPGRADE V4**: can_comment_on_channel com validação de subscription ✅ DEPLOYADO
 
 ---
 
@@ -335,17 +337,18 @@ SELECT cron.unschedule('verify-youtube-comments');
 
 ---
 
-**Última atualização**: 2025-10-21
-**Versão**: can_comment_on_channel V3 (7 validações)
-**Status**: TAREFA 1 CONCLUÍDA ✅
+**Última atualização**: 2025-10-23
+**Versão**: can_comment_on_channel V4 (8 validações COM subscription)
+**Status**: SISTEMA 100% OPERACIONAL ✅
 
-**Testes realizados (2025-10-21):**
-- ✅ `can_comment_on_channel` com projeto válido/inválido
+**Testes realizados:**
+- ✅ `can_comment_on_channel` V4 com validação de subscription (2025-10-23)
 - ✅ `verificar_novos_videos_youtube` executada 2x com intervalo de 17 minutos
 - ✅ Lógica de intervalo de 30 minutos respeitada (0 canais processados na 2ª execução)
 - ✅ Integração anti-spam funcionando perfeitamente
+- ✅ `cron_verify_comments` agendado a cada 60 minutos
 
-**Próximo passo**:
-1. ✅ ~~Copiar `can_comment_on_channel.sql` atualizado para Supabase~~ (CONCLUÍDO)
-2. ✅ ~~Executar TAREFA 1 (verificar_novos_videos_youtube)~~ (CONCLUÍDO)
-3. ⏳ Executar TAREFA 2 (agendar cron)
+**Sistema Completo**:
+1. ✅ TAREFA 1 (verificar_novos_videos_youtube com anti-spam)
+2. ✅ TAREFA 2 (cron_verify_comments agendado)
+3. ✅ UPGRADE V4 (validação de subscription ativa)
