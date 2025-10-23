@@ -2,9 +2,8 @@
 -- Fun��o: trigger_postar_comentario_youtube
 -- Descri��o: Trigger para postar coment�rio no YouTube
 -- Criado: 2025-01-23
+-- Atualizado: 2025-10-21 - Adicionado decremento de Mentions
 -- =============================================
-
-DROP FUNCTION IF EXISTS public.trigger_postar_comentario_youtube();
 
 CREATE OR REPLACE FUNCTION public.trigger_postar_comentario_youtube()
  RETURNS trigger
@@ -41,6 +40,15 @@ BEGIN
                     teste = FALSE, -- Reseta o campo teste ap�s postar
                     youtube_comment_id = v_resultado->'response'->>'id' -- Salva ID do comentário no YouTube
                 WHERE id = NEW.id;
+
+                -- Decrementar Mentions do customer (consumo de quota)
+                UPDATE public.customers c
+                SET "Mentions" = GREATEST(COALESCE("Mentions", 0) - 1, 0)
+                FROM public."Projeto" p
+                WHERE p.id = NEW.project_id
+                AND c.user_id = p."User id";
+
+                RAISE NOTICE 'Mentions decrementado para projeto ID=% (trigger automático)', NEW.project_id;
             END IF;
         END IF;
     END IF;
