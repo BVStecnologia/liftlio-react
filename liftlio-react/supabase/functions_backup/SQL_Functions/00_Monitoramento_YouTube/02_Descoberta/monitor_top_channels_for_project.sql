@@ -10,8 +10,9 @@
 -- =============================================
 
 DROP FUNCTION IF EXISTS public.monitor_top_channels_for_project(integer);
+DROP FUNCTION IF EXISTS public.monitor_top_channels_for_project(bigint);
 
-CREATE OR REPLACE FUNCTION public.monitor_top_channels_for_project(p_project_id integer)
+CREATE OR REPLACE FUNCTION public.monitor_top_channels_for_project(p_project_id bigint)
  RETURNS jsonb
  LANGUAGE plpgsql
 AS $function$
@@ -162,6 +163,6 @@ END;
 $function$;
 
 -- Comentário de documentação
-COMMENT ON FUNCTION public.monitor_top_channels_for_project(integer) IS
+COMMENT ON FUNCTION public.monitor_top_channels_for_project(bigint) IS
 'Monitora os top canais do YouTube de um projeto com sistema Anti-Spam integrado.
 Verifica can_comment_on_channel() antes de processar cada canal.';
