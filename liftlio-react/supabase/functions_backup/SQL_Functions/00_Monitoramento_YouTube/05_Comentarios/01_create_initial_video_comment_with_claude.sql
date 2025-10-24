@@ -24,6 +24,7 @@
 --
 -- Criado: 2025-01-23
 -- Atualizado: 2025-10-01 - Documentação melhorada
+-- Atualizado: 2025-10-24 - JSON parsing robusto com regex cleanup + erro propagado
 -- =============================================
 
 DROP FUNCTION IF EXISTS create_initial_video_comment_with_claude(INTEGER, INTEGER);
@@ -34,6 +35,7 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     v_claude_response TEXT;
+    v_json_clean TEXT;
     v_prompt TEXT;
     v_project_country TEXT;
     v_transcript TEXT;
@@ -216,7 +218,7 @@ Envie exatamente nesta estrutura:
   "justificativa": "Explicação em inglês (primeira pessoa) do seu raciocínio e como o comentário segue as instruções"
 }
 
-Responda apenas com o JSON solicitado, sem texto adicional.',
+CRITICAL: Your response MUST be ONLY the JSON object above, with absolutely no additional text before or after. Do not include explanations, greetings, code blocks, or markdown formatting. Start your response with { and end with }.',
             v_product_name,
             v_project_description,
             v_project_keywords,
@@ -279,18 +281,41 @@ Respond only with the requested JSON, with no additional text.',
         RAISE;
     END;
 
-    -- Verificar se a resposta é um JSON válido
+    -- Limpar e validar a resposta JSON
     BEGIN
-        -- Testar se a resposta pode ser convertida para JSON
-        PERFORM (v_claude_response::jsonb)->>'comment';
+        -- Remover texto antes do primeiro { e depois do último }
+        v_json_clean := regexp_replace(v_claude_response, '^[^{]*', ''); -- Remove tudo antes de {
+        v_json_clean := regexp_replace(v_json_clean, '[^}]*$', '');      -- Remove tudo depois de }
+
+        -- Adicionar debug info sobre a limpeza
+        v_debug_info := v_debug_info || jsonb_build_object(
+            'step', 'json_cleaning',
+            'original_length', length(v_claude_response),
+            'cleaned_length', length(v_json_clean),
+            'removed_prefix', length(v_claude_response) - length(regexp_replace(v_claude_response, '^[^{]*', ''))
+        );
+
+        -- Testar se o JSON limpo é válido
+        PERFORM (v_json_clean::jsonb)->>'comment';
+
+        -- Se chegou aqui, o JSON é válido - substituir a resposta original
+        v_claude_response := v_json_clean;
 
         v_debug_info := v_debug_info || jsonb_build_object('step', 'json_validation', 'success', true);
     EXCEPTION WHEN OTHERS THEN
-        v_debug_info := v_debug_info || jsonb_build_object('step', 'json_validation',
-                                                         'error', SQLERRM,
-                                                         'response_preview', left(v_claude_response, 100));
-        -- Tente corrigir o JSON ou forneça um JSON padrão
-        v_claude_response := '{"comment": "Erro ao gerar comentário.", "justificativa": "Error in JSON parsing"}';
+        -- Adicionar informações detalhadas de erro para debug
+        v_debug_info := v_debug_info || jsonb_build_object(
+            'step', 'json_validation',
+            'error', SQLERRM,
+            'error_state', SQLSTATE,
+            'response_preview', left(v_claude_response, 200),
+            'cleaned_preview', left(v_json_clean, 200)
+        );
+
+        -- Propagar o erro em vez de usar fallback silencioso
+        RAISE EXCEPTION 'Failed to parse Claude response as valid JSON. Error: %. Preview: %',
+                        SQLERRM,
+                        left(v_claude_response, 100);
     END;
 
     -- Processar resposta e preparar resultado
