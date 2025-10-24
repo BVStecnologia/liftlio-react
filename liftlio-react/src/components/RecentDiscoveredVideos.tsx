@@ -519,6 +519,56 @@ const DiscoveredVideoSubtitle = styled.div`
   }
 `;
 
+// Empty state components
+const EmptyStateContainer = styled.div`
+  text-align: center;
+  padding: 80px 40px;
+  background: ${props => props.theme.name === 'dark'
+    ? 'linear-gradient(180deg, rgba(139, 92, 246, 0.05) 0%, transparent 100%)'
+    : 'rgba(139, 92, 246, 0.03)'};
+  border-radius: 12px;
+  margin: 20px 0;
+`;
+
+const EmptyStateIcon = styled.div`
+  font-size: 48px;
+  margin-bottom: 20px;
+  opacity: 0.3;
+  color: ${props => props.theme.colors.text.primary};
+
+  svg {
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.5; }
+  }
+`;
+
+const EmptyStateTitle = styled.div`
+  font-size: 18px;
+  font-weight: 500;
+  color: ${props => props.theme.colors.text.primary};
+  margin-bottom: 12px;
+`;
+
+const EmptyStateDescription = styled.div`
+  font-size: 14px;
+  line-height: 1.7;
+  color: ${props => props.theme.colors.text.secondary};
+  max-width: 500px;
+  margin: 0 auto;
+`;
+
+const EmptyStateFooter = styled.div`
+  margin-top: 24px;
+  font-size: 12px;
+  color: rgba(139, 92, 246, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+`;
+
 // Horizontal scroll layout for videos
 const VideosContainer = styled.div`
   position: relative;
@@ -624,49 +674,23 @@ const VideoOverlay = styled.div`
   z-index: 1;
 `;
 
-const StatusBadge = styled.div`
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  background: rgba(16, 185, 129, 0.9);
-  backdrop-filter: blur(12px);
-  border-radius: 8px;
-  padding: 6px 10px;
-  color: white;
-  font-size: 11px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  z-index: 2;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-
-  svg {
-    margin-right: 5px;
-    font-size: 12px;
-  }
-`;
+// StatusBadge removed for minimalist design
 
 const TimeBadge = styled.div`
   position: absolute;
   top: 12px;
   right: 12px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(8px);
-  border-radius: 8px;
-  padding: 6px 10px;
-  color: white;
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 400;
   z-index: 2;
   display: flex;
   align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-
-  svg {
-    margin-right: 5px;
-    font-size: 10px;
-  }
+  border: none;
 `;
 
 const VideoTitle = styled.h3`
@@ -724,38 +748,35 @@ const ChannelName = styled.div`
 const VisitCommentButton = styled.a`
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: ${props => props.theme.name === 'dark'
-    ? 'rgba(139, 92, 246, 0.12)'
-    : 'rgba(139, 92, 246, 0.08)'};
-  border: 1px solid ${props => props.theme.name === 'dark'
-    ? 'rgba(139, 92, 246, 0.3)'
-    : 'rgba(139, 92, 246, 0.2)'};
-  border-radius: 8px;
-  color: ${props => props.theme.name === 'dark' ? '#A78BFA' : '#8B5CF6'};
+  justify-content: center;
+  gap: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: ${props => props.theme.colors.text.secondary};
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 400;
   text-decoration: none;
   transition: all 0.2s ease;
   cursor: pointer;
 
   svg {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   &:hover {
     background: ${props => props.theme.name === 'dark'
-      ? 'rgba(139, 92, 246, 0.2)'
-      : 'rgba(139, 92, 246, 0.15)'};
-    border-color: ${props => props.theme.name === 'dark'
-      ? 'rgba(139, 92, 246, 0.5)'
-      : 'rgba(139, 92, 246, 0.4)'};
-    transform: translateY(-1px);
+      ? 'rgba(255, 255, 255, 0.05)'
+      : 'rgba(0, 0, 0, 0.05)'};
+    color: ${props => props.theme.colors.primary};
+    transform: none;
   }
 
   &:active {
-    transform: translateY(0);
+    transform: scale(0.95);
   }
 `;
 
@@ -788,9 +809,9 @@ const MetricValue = styled.div`
 const MetricLabel = styled.div`
   font-size: 10px;
   color: ${props => props.theme.name === 'dark' ? '#888' : '#666'};
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 500;
+  text-transform: capitalize;
+  letter-spacing: 0px;
+  font-weight: 400;
 `;
 
 const EngagementSection = styled.div`
@@ -813,34 +834,31 @@ const EngagementHeader = styled.div`
 `;
 
 const EngagementTitle = styled.div`
-  font-weight: ${props => props.theme.fontWeights.semiBold};
+  font-weight: ${props => props.theme.fontWeights.medium};
   font-size: 11px;
-  color: ${props => props.theme.colors.text.primary};
+  color: ${props => props.theme.colors.text.secondary};
   display: flex;
   align-items: center;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  
+  text-transform: none;
+  letter-spacing: 0px;
+
   svg {
-    margin-right: 6px;
-    color: ${props => props.theme.colors.primary};
-    font-size: 12px;
+    display: none;
   }
 `;
 
 const EngagementLabel = styled.div`
   font-size: 10px;
-  background: ${props => withOpacity(props.theme.colors.success, 0.1)};
-  color: ${props => props.theme.colors.success};
-  padding: 3px 8px;
-  border-radius: 4px;
+  background: transparent;
+  color: ${props => props.theme.colors.text.secondary};
+  padding: 0;
+  border-radius: 0;
   display: flex;
   align-items: center;
-  font-weight: ${props => props.theme.fontWeights.semiBold};
-  
+  font-weight: ${props => props.theme.fontWeights.normal};
+
   svg {
-    margin-right: 4px;
-    font-size: 9px;
+    display: none;
   }
 `;
 
@@ -859,7 +877,7 @@ const EngagementMessage = styled.div`
   height: 70px;
   overflow-y: auto;
   position: relative;
-  padding-left: 18px;
+  padding-left: 12px;
   
   &::-webkit-scrollbar {
     width: 4px;
@@ -875,16 +893,7 @@ const EngagementMessage = styled.div`
     border-radius: 10px;
   }
   
-  &::before {
-    content: '"';
-    position: absolute;
-    top: 5px;
-    left: 7px;
-    font-size: 18px;
-    line-height: 1;
-    color: ${props => withOpacity(props.theme.colors.primary, 0.3)};
-    font-family: Georgia, serif;
-  }
+  /* Removed decorative quotes for minimalism */
 `;
 
 const ProductMention = styled.span`
@@ -956,10 +965,10 @@ const VideoDetailOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to top, 
-    rgba(0, 0, 0, 0.9) 0%, 
-    rgba(0, 0, 0, 0.5) 40%,
-    rgba(0, 0, 0, 0.2) 80%);
+  background: linear-gradient(to top,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.3) 40%,
+    rgba(0, 0, 0, 0.1) 80%);
   z-index: 1;
 `;
 
@@ -1042,20 +1051,20 @@ const TimeLabel = styled.div`
   font-size: 11px;
   color: ${props => props.theme.colors.text.secondary};
   margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  text-transform: none;
+  letter-spacing: 0px;
+  font-weight: 400;
 `;
 
 const TimeValue = styled.div`
-  font-weight: ${props => props.theme.fontWeights.semiBold};
-  font-size: ${props => props.theme.fontSizes.md};
-  color: ${props => props.theme.colors.text.primary};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.secondary};
   display: flex;
   align-items: center;
-  
+
   svg {
-    margin-right: 8px;
-    color: ${props => props.theme.colors.primary};
+    display: none;
   }
 `;
 
@@ -1090,8 +1099,10 @@ const DetailMetricValue = styled.div`
 `;
 
 const DetailMetricLabel = styled.div`
-  font-size: ${props => props.theme.fontSizes.sm};
+  font-size: 11px;
   color: ${props => props.theme.colors.text.secondary};
+  text-transform: capitalize;
+  font-weight: 400;
 `;
 
 const DetailEngagementSection = styled.div`
@@ -1099,16 +1110,15 @@ const DetailEngagementSection = styled.div`
 `;
 
 const DetailEngagementTitle = styled.h3`
-  font-size: ${props => props.theme.fontSizes.lg};
-  font-weight: ${props => props.theme.fontWeights.semiBold};
-  color: ${props => props.theme.colors.text.primary};
-  margin-bottom: 16px;
+  font-size: ${props => props.theme.fontSizes.md};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  color: ${props => props.theme.colors.text.secondary};
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
-  
+
   svg {
-    margin-right: 12px;
-    color: ${props => props.theme.colors.primary};
+    display: none;
   }
 `;
 
@@ -1122,18 +1132,9 @@ const DetailEngagementContent = styled.div`
   position: relative;
   border: 1px solid ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
   
-  &::before {
-    content: '"';
-    position: absolute;
-    top: 12px;
-    left: 16px;
-    font-size: 40px;
-    line-height: 1;
-    color: ${props => withOpacity(props.theme.colors.primary, 0.2)};
-    font-family: Georgia, serif;
-  }
-  
-  padding-left: 40px;
+  /* Removed decorative quotes for minimalism */
+
+  padding-left: 24px;
 `;
 
 const DetailStatsFooter = styled.div`
@@ -1377,7 +1378,9 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
   onPrevPage
 }) => {
   // Use provided data or fallback to mock data
-  const videosToDisplay = data || MOCK_DISCOVERED_VIDEOS;
+  // Show empty state only when data is explicitly an empty array (not undefined/null)
+  const shouldShowEmptyState = data !== undefined && data.length === 0 && !loading;
+  const videosToDisplay = (data && data.length > 0) ? data : MOCK_DISCOVERED_VIDEOS;
   
   // Fetch real channel count data
   const { count: channelCount, loading: channelLoading } = useMonitoredChannels(projectId);
@@ -1529,29 +1532,37 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
             <span>{monitoringStatus.activity}:</span> {monitoringStatus.message}
           </MonitoringStatusText>
         </div>
-
-        <DataMetricsRow>
-          <DataMetric>
-            <IconComponent icon={FaIcons.FaSatelliteDish} />
-            <span>{monitoringStatus.metrics.channels}</span>
-          </DataMetric>
-          <DataMetric>
-            <IconComponent icon={FaIcons.FaSearch} />
-            <span>{monitoringStatus.metrics.scans}</span>
-          </DataMetric>
-          <DataMetric>
-            <IconComponent icon={FaIcons.FaVideo} />
-            <span>{monitoringStatus.metrics.videos}</span>
-          </DataMetric>
-        </DataMetricsRow>
       </TechMonitoringBanner>
       
       <DiscoveredVideoSubtitle>
-        Our AI-powered system <span>automatically identifies</span> and engages with fresh content, 
+        Our AI-powered system <span>automatically identifies</span> and engages with fresh content,
         securing prime positioning in the top {MOCK_DISCOVERED_VIDEOS[1].position_comment}-{MOCK_DISCOVERED_VIDEOS[0].position_comment} comments to maximize visibility and drive targeted engagement.
       </DiscoveredVideoSubtitle>
-      
-      <VideosContainer>
+
+      {/* Empty state when no videos are discovered */}
+      {shouldShowEmptyState && (
+        <EmptyStateContainer>
+          <EmptyStateIcon>
+            <IconComponent icon={RiIcons.RiRadarLine} />
+          </EmptyStateIcon>
+
+          <EmptyStateTitle>
+            Discovering Strategic Videos
+          </EmptyStateTitle>
+
+          <EmptyStateDescription>
+            Your videos and generated messages will appear here. Liftlio's computer vision watches videos and analyzes them, only accepting those that are strategic for your audience.
+          </EmptyStateDescription>
+
+          <EmptyStateFooter>
+            System Active • Monitoring {channelCount || 0} Channels
+          </EmptyStateFooter>
+        </EmptyStateContainer>
+      )}
+
+      {/* Videos container - only show when there are videos */}
+      {!shouldShowEmptyState && (
+        <VideosContainer>
         {/* Horizontal scroll navigation buttons */}
         <ScrollNavButton 
           direction="left" 
@@ -1597,7 +1608,6 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
               </VideoThumbnail>
               <VideoOverlay />
               <TimeBadge>
-                <IconComponent icon={FaIcons.FaClock} />
                 {formatTimeAgo(video.discovered_at)}
               </TimeBadge>
               <VideoTitle>{video.nome_do_video}</VideoTitle>
@@ -1614,36 +1624,33 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
+                  title="Open video"
                 >
                   <IconComponent icon={FaIcons.FaExternalLinkAlt} />
-                  Visit
                 </VisitCommentButton>
               </ChannelInfo>
               
               <MetricsRow>
                 <MetricItem>
-                  <MetricValue>{video.views}</MetricValue>
-                  <MetricLabel>Current Views</MetricLabel>
+                  <MetricValue>{video.views.toLocaleString()}</MetricValue>
+                  <MetricLabel>views</MetricLabel>
                 </MetricItem>
                 <MetricItem>
                   <MetricValue>{video.position_comment}</MetricValue>
-                  <MetricLabel>Comment Pos</MetricLabel>
+                  <MetricLabel>comments</MetricLabel>
                 </MetricItem>
                 <MetricItem>
                   <MetricValue>{(video.relevance_score * 10).toFixed(1)}</MetricValue>
-                  <MetricLabel>Relevance</MetricLabel>
+                  <MetricLabel>relevance</MetricLabel>
                 </MetricItem>
               </MetricsRow>
               
               <EngagementSection>
                 <EngagementHeader>
                   <EngagementTitle>
-                    <IconComponent icon={FaIcons.FaCommentDots} />
-                    Auto-Generated Comment
+                    {formatTimeAgo(video.engaged_at)}
                   </EngagementTitle>
                   <EngagementLabel>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    {formatPostedTime(video.engaged_at)}
                   </EngagementLabel>
                 </EngagementHeader>
                 
@@ -1670,7 +1677,8 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
           </VideosGrid>
         </VideosScrollWrapper>
       </VideosContainer>
-      
+      )}
+
       {/* Pagination Controls */}
       {totalCount > 0 && (
         <PaginationContainer>
@@ -1734,15 +1742,13 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
                   <TimeInfo>
                     <TimeLabel>Discovered</TimeLabel>
                     <TimeValue>
-                      <IconComponent icon={FaIcons.FaSearchPlus} />
                       {formatTimeAgo(selectedVideo.discovered_at)}
                     </TimeValue>
                   </TimeInfo>
-                  
+
                   <TimeInfo>
                     <TimeLabel>Engaged</TimeLabel>
                     <TimeValue>
-                      <IconComponent icon={FaIcons.FaReply} />
                       {formatTimeAgo(selectedVideo.engaged_at)}
                     </TimeValue>
                   </TimeInfo>
@@ -1751,25 +1757,24 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
               
               <DetailMetricsGrid>
                 <DetailMetricCard>
-                  <DetailMetricValue>{selectedVideo.views}</DetailMetricValue>
-                  <DetailMetricLabel>Current Views</DetailMetricLabel>
+                  <DetailMetricValue>{selectedVideo.views.toLocaleString()}</DetailMetricValue>
+                  <DetailMetricLabel>Current views</DetailMetricLabel>
                 </DetailMetricCard>
-                
+
                 <DetailMetricCard>
                   <DetailMetricValue>{selectedVideo.projected_views.toLocaleString()}</DetailMetricValue>
-                  <DetailMetricLabel>Projected Views</DetailMetricLabel>
+                  <DetailMetricLabel>Projected views</DetailMetricLabel>
                 </DetailMetricCard>
-                
+
                 <DetailMetricCard>
                   <DetailMetricValue>{(selectedVideo.relevance_score * 10).toFixed(1)}</DetailMetricValue>
-                  <DetailMetricLabel>Relevance Score</DetailMetricLabel>
+                  <DetailMetricLabel>Relevance</DetailMetricLabel>
                 </DetailMetricCard>
               </DetailMetricsGrid>
               
               <DetailEngagementSection>
                 <DetailEngagementTitle>
-                  <IconComponent icon={FaIcons.FaCommentDots} />
-                  Auto-Generated Comment
+                  Comment
                 </DetailEngagementTitle>
                 
                 <DetailEngagementContent>
@@ -1780,13 +1785,8 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
               <DetailStatsFooter>
                 <DetailCommentPosition>
                   <IconComponent icon={FaIcons.FaSort} />
-                  Comment Position: #{selectedVideo.position_comment} out of {selectedVideo.total_comments}
+                  #{selectedVideo.position_comment} of {selectedVideo.total_comments} comments
                 </DetailCommentPosition>
-                
-                <DetailProjectedViews>
-                  <IconComponent icon={FaIcons.FaChartLine} />
-                  Engagement Ratio: {((selectedVideo.position_comment / selectedVideo.total_comments) * 100).toFixed(1)}%
-                </DetailProjectedViews>
               </DetailStatsFooter>
             </VideoDetailContent>
           </VideoDetailContainer>
