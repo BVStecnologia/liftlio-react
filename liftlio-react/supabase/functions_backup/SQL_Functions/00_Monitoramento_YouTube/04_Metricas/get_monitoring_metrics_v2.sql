@@ -36,92 +36,105 @@ BEGIN
         SELECT
             -- Total de vídeos analisados (únicos)
             (SELECT COUNT(DISTINCT elem->>'id')
-             FROM "Canais do youtube" c,
-                  jsonb_array_elements(
+             FROM canais_youtube c,
+                  LATERAL jsonb_array_elements(
                       CASE
-                          WHEN jsonb_typeof(c.videos_scanreados::jsonb) = 'array'
-                          THEN c.videos_scanreados::jsonb
-                          ELSE '[]'::jsonb
+                          WHEN c.videos_scanreados IS NULL OR c.videos_scanreados = ''
+                          THEN '[]'::jsonb
+                          ELSE c.videos_scanreados::jsonb
                       END
                   ) elem
-             WHERE c."Projeto" = p_project_id
+             WHERE c.project_id = p_project_id
                AND c.videos_scanreados IS NOT NULL
-               AND c.videos_scanreados != '[]'
+               AND c.videos_scanreados != ''
             ) as total_analyzed,
 
             -- Vídeos aprovados (total)
             (SELECT COUNT(*)
-             FROM "Canais do youtube" c,
-                  jsonb_array_elements(
+             FROM canais_youtube c,
+                  LATERAL jsonb_array_elements(
                       CASE
-                          WHEN jsonb_typeof(c.videos_scanreados::jsonb) = 'array'
-                          THEN c.videos_scanreados::jsonb
-                          ELSE '[]'::jsonb
+                          WHEN c.videos_scanreados IS NULL OR c.videos_scanreados = ''
+                          THEN '[]'::jsonb
+                          ELSE c.videos_scanreados::jsonb
                       END
                   ) elem
-             WHERE c."Projeto" = p_project_id
+             WHERE c.project_id = p_project_id
                AND elem->>'status' = 'APPROVED'
             ) as total_approved,
 
             -- Vídeos rejeitados (total)
             (SELECT COUNT(*)
-             FROM "Canais do youtube" c,
-                  jsonb_array_elements(
+             FROM canais_youtube c,
+                  LATERAL jsonb_array_elements(
                       CASE
-                          WHEN jsonb_typeof(c.videos_scanreados::jsonb) = 'array'
-                          THEN c.videos_scanreados::jsonb
-                          ELSE '[]'::jsonb
+                          WHEN c.videos_scanreados IS NULL OR c.videos_scanreados = ''
+                          THEN '[]'::jsonb
+                          ELSE c.videos_scanreados::jsonb
                       END
                   ) elem
-             WHERE c."Projeto" = p_project_id
+             WHERE c.project_id = p_project_id
                AND elem->>'status' = 'REJECTED'
             ) as total_rejected,
 
             -- ====================================
             -- MÉTRICAS DE HOJE
             -- ====================================
-            -- Vídeos analisados hoje (baseado em last_canal_check)
+            -- Vídeos analisados hoje (baseado em analyzed_at quando disponível, senão last_canal_check)
             (SELECT COUNT(DISTINCT elem->>'id')
-             FROM "Canais do youtube" c,
-                  jsonb_array_elements(
+             FROM canais_youtube c,
+                  LATERAL jsonb_array_elements(
                       CASE
-                          WHEN jsonb_typeof(c.videos_scanreados::jsonb) = 'array'
-                          THEN c.videos_scanreados::jsonb
-                          ELSE '[]'::jsonb
+                          WHEN c.videos_scanreados IS NULL OR c.videos_scanreados = ''
+                          THEN '[]'::jsonb
+                          ELSE c.videos_scanreados::jsonb
                       END
                   ) elem
-             WHERE c."Projeto" = p_project_id
-               AND c.last_canal_check >= v_today_start
-               AND c.videos_scanreados IS NOT NULL
+             WHERE c.project_id = p_project_id
+               AND (
+                   -- Prioriza analyzed_at quando disponível
+                   (elem->>'analyzed_at' IS NOT NULL AND (elem->>'analyzed_at')::timestamptz >= v_today_start)
+                   OR
+                   -- Fallback para last_canal_check
+                   (elem->>'analyzed_at' IS NULL AND c.last_canal_check >= v_today_start)
+               )
             ) as analyzed_today,
 
             -- Aprovados hoje
             (SELECT COUNT(*)
-             FROM "Canais do youtube" c,
-                  jsonb_array_elements(
+             FROM canais_youtube c,
+                  LATERAL jsonb_array_elements(
                       CASE
-                          WHEN jsonb_typeof(c.videos_scanreados::jsonb) = 'array'
-                          THEN c.videos_scanreados::jsonb
-                          ELSE '[]'::jsonb
+                          WHEN c.videos_scanreados IS NULL OR c.videos_scanreados = ''
+                          THEN '[]'::jsonb
+                          ELSE c.videos_scanreados::jsonb
                       END
                   ) elem
-             WHERE c."Projeto" = p_project_id
-               AND c.last_canal_check >= v_today_start
+             WHERE c.project_id = p_project_id
+               AND (
+                   (elem->>'analyzed_at' IS NOT NULL AND (elem->>'analyzed_at')::timestamptz >= v_today_start)
+                   OR
+                   (elem->>'analyzed_at' IS NULL AND c.last_canal_check >= v_today_start)
+               )
                AND elem->>'status' = 'APPROVED'
             ) as approved_today,
 
             -- Rejeitados hoje
             (SELECT COUNT(*)
-             FROM "Canais do youtube" c,
-                  jsonb_array_elements(
+             FROM canais_youtube c,
+                  LATERAL jsonb_array_elements(
                       CASE
-                          WHEN jsonb_typeof(c.videos_scanreados::jsonb) = 'array'
-                          THEN c.videos_scanreados::jsonb
-                          ELSE '[]'::jsonb
+                          WHEN c.videos_scanreados IS NULL OR c.videos_scanreados = ''
+                          THEN '[]'::jsonb
+                          ELSE c.videos_scanreados::jsonb
                       END
                   ) elem
-             WHERE c."Projeto" = p_project_id
-               AND c.last_canal_check >= v_today_start
+             WHERE c.project_id = p_project_id
+               AND (
+                   (elem->>'analyzed_at' IS NOT NULL AND (elem->>'analyzed_at')::timestamptz >= v_today_start)
+                   OR
+                   (elem->>'analyzed_at' IS NULL AND c.last_canal_check >= v_today_start)
+               )
                AND elem->>'status' = 'REJECTED'
             ) as rejected_today,
 
@@ -130,14 +143,14 @@ BEGIN
             -- ====================================
             -- Canais ativos
             (SELECT COUNT(*)
-             FROM "Canais do youtube" c
-             WHERE c."Projeto" = p_project_id
+             FROM canais_youtube c
+             WHERE c.project_id = p_project_id
                AND c.is_active = true
             ) as active_channels,
 
             -- Limite de canais do projeto
             (SELECT p.qtdmonitoramento
-             FROM "Projeto" p
+             FROM projeto p
              WHERE p.id = p_project_id
             ) as max_channels,
 
@@ -146,15 +159,15 @@ BEGIN
             -- ====================================
             -- Comentários pendentes
             (SELECT COUNT(*)
-             FROM "Mensagens" m
-             WHERE m."Projeto" = p_project_id
+             FROM mensagens m
+             WHERE m.project_id = p_project_id
                AND m.respondido = false
             ) as comments_pending,
 
             -- Comentários postados
             (SELECT COUNT(*)
-             FROM "Mensagens" m
-             WHERE m."Projeto" = p_project_id
+             FROM mensagens m
+             WHERE m.project_id = p_project_id
                AND m.respondido = true
             ) as comments_posted,
 
@@ -163,8 +176,8 @@ BEGIN
             -- ====================================
             -- Último scan
             (SELECT MAX(last_canal_check)
-             FROM "Canais do youtube" c
-             WHERE c."Projeto" = p_project_id
+             FROM canais_youtube c
+             WHERE c.project_id = p_project_id
             ) as last_scan,
 
             -- ====================================
@@ -174,8 +187,8 @@ BEGIN
             (SELECT COUNT(*)
              FROM (
                 SELECT unnest(string_to_array(videos_para_scann, ',')) as video_id
-                FROM "Canais do youtube" c
-                WHERE c."Projeto" = p_project_id
+                FROM canais_youtube c
+                WHERE c.project_id = p_project_id
                   AND videos_para_scann IS NOT NULL
                   AND videos_para_scann != ''
              ) t
@@ -185,8 +198,8 @@ BEGIN
             (SELECT COUNT(*)
              FROM (
                 SELECT unnest(string_to_array(processar, ',')) as video_id
-                FROM "Canais do youtube" c
-                WHERE c."Projeto" = p_project_id
+                FROM canais_youtube c
+                WHERE c.project_id = p_project_id
                   AND processar IS NOT NULL
                   AND processar != ''
              ) t
@@ -194,24 +207,30 @@ BEGIN
     ),
 
     -- ====================================
-    -- TOP MOTIVOS DE REJEIÇÃO
+    -- TOP MOTIVOS DE REJEIÇÃO (BILÍNGUE)
     -- ====================================
     rejection_reasons AS (
         SELECT
-            elem->>'motivo' as motivo,
+            CASE
+                WHEN p_language = 'en' AND elem->>'reason' IS NOT NULL
+                THEN elem->>'reason'
+                ELSE elem->>'motivo'
+            END as motivo,
+            elem->>'motivo' as motivo_pt,
+            elem->>'reason' as reason_en,
             COUNT(*) as count
-        FROM "Canais do youtube" c,
-             jsonb_array_elements(
+        FROM canais_youtube c,
+             LATERAL jsonb_array_elements(
                  CASE
-                     WHEN jsonb_typeof(c.videos_scanreados::jsonb) = 'array'
-                     THEN c.videos_scanreados::jsonb
-                     ELSE '[]'::jsonb
+                     WHEN c.videos_scanreados IS NULL OR c.videos_scanreados = ''
+                     THEN '[]'::jsonb
+                     ELSE c.videos_scanreados::jsonb
                  END
              ) elem
-        WHERE c."Projeto" = p_project_id
+        WHERE c.project_id = p_project_id
           AND elem->>'status' = 'REJECTED'
           AND elem->>'motivo' IS NOT NULL
-        GROUP BY elem->>'motivo'
+        GROUP BY elem->>'motivo', elem->>'reason'
         ORDER BY COUNT(*) DESC
         LIMIT 5
     )
@@ -322,11 +341,50 @@ BEGIN
                 (SELECT jsonb_agg(
                     jsonb_build_object(
                         'reason', motivo,
+                        'reason_pt', motivo_pt,
+                        'reason_en', reason_en,
                         'count', count,
                         'percentage', ROUND((count::NUMERIC / NULLIF(total_rejected, 0)) * 100, 1)
                     )
                     ORDER BY count DESC
                 ) FROM rejection_reasons),
+                '[]'::jsonb
+            ),
+
+            -- Últimos vídeos analisados (bilíngue)
+            'recent_analyzed_videos', COALESCE(
+                (SELECT jsonb_agg(video_data ORDER BY analyzed_timestamp DESC)
+                 FROM (
+                     SELECT jsonb_build_object(
+                         'video_id', elem->>'id',
+                         'status', elem->>'status',
+                         'motivo_pt', elem->>'motivo',
+                         'reason_en', elem->>'reason',
+                         'score', (elem->>'score')::numeric,
+                         'tags', elem->'tags',
+                         'analyzed_at', elem->>'analyzed_at',
+                         'channel_name', c.nome
+                     ) as video_data,
+                     CASE
+                         WHEN elem->>'analyzed_at' IS NOT NULL
+                         THEN (elem->>'analyzed_at')::timestamptz
+                         ELSE c.last_canal_check
+                     END as analyzed_timestamp
+                     FROM canais_youtube c,
+                          LATERAL jsonb_array_elements(
+                              CASE
+                                  WHEN c.videos_scanreados IS NULL OR c.videos_scanreados = ''
+                                  THEN '[]'::jsonb
+                                  ELSE c.videos_scanreados::jsonb
+                              END
+                          ) elem
+                     WHERE c.project_id = p_project_id
+                       AND c.videos_scanreados IS NOT NULL
+                       AND c.videos_scanreados != ''
+                     ORDER BY analyzed_timestamp DESC
+                     LIMIT 10
+                 ) recent_videos
+                ),
                 '[]'::jsonb
             )
         ),
@@ -432,11 +490,15 @@ $$;
 --     "top_rejection_reasons": [
 --       {
 --         "reason": "Conteúdo genérico sobre produtividade",
+--         "reason_pt": "Conteúdo genérico sobre produtividade",
+--         "reason_en": "Generic content about productivity",
 --         "count": 234,
 --         "percentage": 15.5
 --       },
 --       {
 --         "reason": "Sem relação com marketing B2B",
+--         "reason_pt": "Sem relação com marketing B2B",
+--         "reason_en": "Not related to B2B marketing",
 --         "count": 187,
 --         "percentage": 12.4
 --       }
