@@ -1,109 +1,97 @@
 -- =============================================
 -- Função: processar_fila_videos
 -- Descrição: Processa 1 canal da fila (videos_para_scann)
--- Chama Python, salva resultados, limpa fila
+-- Chama Edge Function, salva resultados, limpa fila
 -- Criado: 2025-01-23
--- Atualizado: 2025-10-24 - JSONB VERSION
--- Features:
---   - Processamento atômico (UPDATE ... RETURNING)
---   - FOR UPDATE SKIP LOCKED (evita race conditions)
---   - Limpa videos_para_scann ANTES de processar
---   - Salva TUDO em videos_scanreados como JSONB array
---   - Extrai APENAS aprovados para campo "processar"
---   - Logs extensivos de debug
---   - Timeout de 2 minutos
---   - Edge Function v5 retorna JSONB array
+-- Atualizado: 2025-10-24 - V3 (LIVE)
+-- =============================================
+--
+-- ⚠️ ATUALIZADO EM: 2025-10-24 23:15 UTC
+-- ⚠️ SINCRONIZADO COM: Supabase LIVE (suqjifkhmekcdflwowiw)
+-- ⚠️ VERSÃO: V3 - "com limpeza no final"
+--
+-- 🔄 DIFERENÇAS PRINCIPAIS vs VERSÃO ANTERIOR:
+--
+-- 1. TIMING DA LIMPEZA DA FILA:
+--    ❌ ANTES (V2): Limpava videos_para_scann ANTES de processar (UPDATE ... RETURNING)
+--    ✅ AGORA (V3): Limpa DEPOIS de salvar com sucesso
+--    Motivo: Mais seguro, permite retry em caso de erro
+--
+-- 2. SELEÇÃO DO CANAL:
+--    ❌ ANTES: UPDATE ... WHERE id = (SELECT...) RETURNING *
+--    ✅ AGORA: SELECT ... FROM ... WHERE id IN (SELECT...)
+--    Motivo: Preserva dados originais até garantir sucesso
+--
+-- 3. EXTRAÇÃO DO JSONB:
+--    ❌ ANTES: api_result->'text' (INCORRETO!)
+--    ✅ AGORA: api_result->'call_api_edge_function'->'text'
+--    Motivo: Edge Function retorna estrutura aninhada
+--
+-- 4. ROBUSTEZ:
+--    ✅ Não perde IDs se Python falhar
+--    ✅ Pode retentar em caso de erro
+--    ✅ Limpeza controlada apenas após sucesso
+--
 -- =============================================
 
 DROP FUNCTION IF EXISTS public.processar_fila_videos();
 
 CREATE OR REPLACE FUNCTION public.processar_fila_videos()
-RETURNS void
-LANGUAGE plpgsql
+ RETURNS void
+ LANGUAGE plpgsql
 AS $function$
 DECLARE
     canal_id BIGINT;
-    video_ids TEXT;  -- IDs salvos ANTES de limpar
+    video_ids TEXT;
     api_result JSONB;
-    videos_array JSONB;  -- Array JSONB de vídeos (Edge Function v5)
-    videos_scanreados_atual JSONB;  -- Array atual de videos_scanreados
-    approved_ids_array TEXT[];  -- Array de IDs aprovados
-    approved_ids_text TEXT;  -- IDs aprovados como texto
+    videos_array JSONB;
+    videos_scanreados_atual JSONB;
+    approved_ids_array TEXT[];
+    approved_ids_text TEXT;
     canal_record RECORD;
     v_mentions_disponiveis INTEGER;
     v_projeto_id BIGINT;
 BEGIN
-    -- 🔧 CONFIGURAR TIMEOUT (2 minutos)
     SET LOCAL statement_timeout = '120s';
 
-    -- 🔍 LOG PERSISTENTE: Início
     INSERT INTO debug_processar_fila (step, message)
-    VALUES ('inicio', 'Iniciando processar_fila_videos()');
+    VALUES ('inicio', 'Iniciando processar_fila_videos() - V3 com limpeza no final');
 
-    RAISE NOTICE '🚀 [DEBUG] Iniciando processar_fila_videos()';
+    RAISE NOTICE '🚀 [DEBUG] Iniciando processar_fila_videos() - V3';
 
-    -- 1. ⭐ BUSCAR 1 CANAL E LIMPAR IMEDIATAMENTE (ATOMIC!)
-    RAISE NOTICE '🔍 [DEBUG] Buscando canal na fila...';
-
-    UPDATE "Canais do youtube"
-    SET videos_para_scann = NULL  -- LIMPA PRIMEIRO (evita conflitos)
-    WHERE id = (
-        SELECT id
-        FROM "Canais do youtube"
+    -- 1. Buscar canal SEM limpar (SELECT apenas)
+    SELECT id, "Projeto", channel_id, videos_para_scann, videos_scanreados, "processar"
+    INTO canal_record
+    FROM "Canais do youtube"
+    WHERE id IN (
+        SELECT id FROM "Canais do youtube"
         WHERE videos_para_scann IS NOT NULL
           AND videos_para_scann != ''
-        ORDER BY last_canal_check ASC  -- Mais antigo primeiro
+        ORDER BY last_canal_check ASC
         LIMIT 1
-        FOR UPDATE SKIP LOCKED  -- Evita race conditions
-    )
-    RETURNING id, videos_para_scann, channel_id, videos_scanreados, "processar"
-    INTO canal_record;
+        FOR UPDATE SKIP LOCKED
+    );
 
-    RAISE NOTICE '✅ [DEBUG] UPDATE RETURNING concluído';
-
-    -- 2. Se não encontrou nada, sai
     IF canal_record.id IS NULL THEN
         INSERT INTO debug_processar_fila (step, message)
         VALUES ('fila_vazia', 'Nenhum canal na fila');
-
-        RAISE NOTICE '📭 [DEBUG] Fila vazia - nenhum canal para processar';
+        RAISE NOTICE '📭 [DEBUG] Fila vazia';
         RETURN;
     END IF;
 
-    -- Guarda IDs que foram removidos
     video_ids := canal_record.videos_para_scann;
     canal_id := canal_record.id;
 
-    -- 🔍 LOG PERSISTENTE: Canal encontrado
-    INSERT INTO debug_processar_fila (step, canal_id, message, data)
-    VALUES (
-        'canal_encontrado',
-        canal_id,
-        'Canal encontrado e videos_para_scann limpo',
-        jsonb_build_object(
-            'channel_id', canal_record.channel_id,
-            'video_ids', video_ids,
-            'videos_scanreados_anterior', canal_record.videos_scanreados,
-            'processar_anterior', canal_record."processar"
-        )
-    );
+    INSERT INTO debug_processar_fila (step, canal_id, message)
+    VALUES ('canal_encontrado', canal_id, 'Canal encontrado (fila NÃO limpa ainda)');
 
-    RAISE NOTICE '🔄 [DEBUG] Canal encontrado:';
-    RAISE NOTICE '   📌 ID: %', canal_id;
-    RAISE NOTICE '   📌 Channel ID: %', canal_record.channel_id;
-    RAISE NOTICE '   📌 Videos para processar: %', video_ids;
-    RAISE NOTICE '   📌 Videos scanreados atual: %', canal_record.videos_scanreados;
-    RAISE NOTICE '   📌 Processar atual: %', canal_record."processar";
+    RAISE NOTICE '🔄 [DEBUG] Canal % encontrado (fila preservada)', canal_id;
 
-    -- 2.1. ⭐ VERIFICAR MENTIONS DISPONÍVEIS
-    RAISE NOTICE '🔍 [DEBUG] Verificando Mentions disponíveis...';
-
+    -- 2. Verificar Mentions
     SELECT p.id INTO v_projeto_id
     FROM "Canais do youtube" c
     JOIN "Projeto" p ON c."Projeto" = p.id
     WHERE c.id = canal_id;
-
-    RAISE NOTICE '   📌 Projeto ID: %', v_projeto_id;
 
     SELECT COALESCE(c."Mentions", 0)
     INTO v_mentions_disponiveis
@@ -111,316 +99,179 @@ BEGIN
     JOIN "Projeto" p ON p."User id" = c.user_id
     WHERE p.id = v_projeto_id;
 
-    RAISE NOTICE '   📌 Mentions disponíveis: %', v_mentions_disponiveis;
-
     IF v_mentions_disponiveis IS NULL OR v_mentions_disponiveis <= 0 THEN
-        RAISE NOTICE '❌ [DEBUG] Canal ID % pulado - Customer sem Mentions disponíveis (Mentions=%)',
-            canal_id, v_mentions_disponiveis;
-        -- Canal já foi removido da fila, apenas retorna
+        RAISE NOTICE '❌ [DEBUG] Sem Mentions disponíveis';
         RETURN;
     END IF;
 
-    -- 3. ⭐ CHAMAR PYTHON (Edge Function)
-    RAISE NOTICE '🐍 [DEBUG] Chamando call_api_edge_function(%)', canal_id;
-    RAISE NOTICE '⏱️  [DEBUG] Aguardando resposta do Python (timeout: 120s)...';
+    -- 3. Chamar Edge Function
+    RAISE NOTICE '🐍 [DEBUG] Chamando Edge Function...';
 
     BEGIN
         EXECUTE format('SELECT call_api_edge_function(%L)', canal_id::text)
         INTO api_result;
 
-        RAISE NOTICE '✅ [DEBUG] Python respondeu! Tipo retorno: %', pg_typeof(api_result);
+        RAISE NOTICE '✅ [DEBUG] Edge Function respondeu';
 
-        -- 🔍 LOG PERSISTENTE: Resposta Python
         INSERT INTO debug_processar_fila (step, canal_id, message, data)
         VALUES (
             'python_respondeu',
             canal_id,
-            'Python retornou resultado',
-            jsonb_build_object(
-                'api_result_completo', api_result,
-                'tipo_retorno', pg_typeof(api_result)::text
-            )
+            'Edge Function retornou',
+            jsonb_build_object('api_result', api_result)
         );
 
-        -- ⭐ EXTRAIR ARRAY JSONB (Edge Function v5 retorna array)
-        videos_array := api_result->'text';
+        -- Extrair array JSONB (⚠️ CAMINHO CORRETO!)
+        videos_array := api_result->'call_api_edge_function'->'text';
 
-        -- 🔍 LOG PERSISTENTE: Extração do JSONB
+        RAISE NOTICE '📊 [DEBUG] JSONB extraído: %', videos_array;
+
         INSERT INTO debug_processar_fila (step, canal_id, message, data)
         VALUES (
             'jsonb_extraido',
             canal_id,
-            format('JSONB extraído: %s vídeos', jsonb_array_length(videos_array)),
+            format('JSONB extraído: %s vídeos', COALESCE(jsonb_array_length(videos_array), 0)),
             jsonb_build_object(
                 'videos_array', videos_array,
-                'array_length', jsonb_array_length(videos_array),
                 'is_null', (videos_array IS NULL),
-                'is_array', (jsonb_typeof(videos_array) = 'array')
+                'is_array', (jsonb_typeof(videos_array) = 'array'),
+                'array_length', COALESCE(jsonb_array_length(videos_array), 0)
             )
         );
 
-        RAISE NOTICE '📊 [DEBUG] JSONB array extraído:';
-        RAISE NOTICE '   📌 api_result completo: %', api_result;
-        RAISE NOTICE '   📌 videos_array: %', videos_array;
-        RAISE NOTICE '   📌 Quantidade de vídeos: %', jsonb_array_length(videos_array);
-
-        -- 4. SALVAR RESULTADOS
-        -- ⭐ Verificar se array não está vazio
+        -- 4. Salvar resultados
         IF videos_array IS NOT NULL AND jsonb_typeof(videos_array) = 'array' AND jsonb_array_length(videos_array) > 0 THEN
 
-            -- 🔍 LOG PERSISTENTE: Entrando no IF de salvamento
-            INSERT INTO debug_processar_fila (step, canal_id, message, data)
-            VALUES (
-                'entrando_salvamento',
-                canal_id,
-                format('Condição IF passou - %s vídeos para salvar', jsonb_array_length(videos_array)),
-                jsonb_build_object(
-                    'videos_array_null', (videos_array IS NULL),
-                    'is_array', (jsonb_typeof(videos_array) = 'array'),
-                    'array_length', jsonb_array_length(videos_array),
-                    'primeiro_video', videos_array->0
-                )
-            );
+            RAISE NOTICE '💾 [DEBUG] Salvando % vídeos...', jsonb_array_length(videos_array);
 
-            RAISE NOTICE '💾 [DEBUG] Salvando resultados em videos_scanreados...';
-
-            -- 4.1. ⭐ SALVAR TUDO em videos_scanreados como JSONB array
-            -- Converter campo atual de TEXT para JSONB (se necessário)
             BEGIN
                 IF canal_record.videos_scanreados IS NULL OR canal_record.videos_scanreados = '' THEN
-                    videos_scanreados_atual := '[]'::jsonb;  -- Array vazio
-                    RAISE NOTICE '   📝 [DEBUG] Campo vazio, criando novo array JSONB...';
+                    videos_scanreados_atual := '[]'::jsonb;
                 ELSE
-                    -- Tentar converter para JSONB (pode ser TEXT ainda)
                     BEGIN
                         videos_scanreados_atual := canal_record.videos_scanreados::jsonb;
-                        RAISE NOTICE '   📝 [DEBUG] Campo já é JSONB, fazendo append...';
                     EXCEPTION WHEN OTHERS THEN
-                        -- Campo ainda é TEXT (formato antigo), converter para JSONB array vazio
-                        RAISE NOTICE '   ⚠️ [DEBUG] Campo é TEXT (formato antigo), iniciando com array vazio...';
                         videos_scanreados_atual := '[]'::jsonb;
                     END;
                 END IF;
 
-                -- ⭐ APPEND: Concatenar arrays JSONB usando operador ||
+                -- Append arrays
                 videos_scanreados_atual := videos_scanreados_atual || videos_array;
 
-                RAISE NOTICE '   📌 Array antigo: %', canal_record.videos_scanreados;
-                RAISE NOTICE '   📌 Array novo: %', videos_array;
-                RAISE NOTICE '   📌 Array final: %', videos_scanreados_atual;
+                RAISE NOTICE '   📌 Array final: % vídeos', jsonb_array_length(videos_scanreados_atual);
 
-                -- Salvar array JSONB
+                -- Salvar
                 UPDATE "Canais do youtube"
                 SET videos_scanreados = videos_scanreados_atual::text
                 WHERE id = canal_id;
 
-                RAISE NOTICE '   ✅ [DEBUG] Array JSONB salvo com sucesso!';
+                RAISE NOTICE '   ✅ Salvo em videos_scanreados';
+
+                -- ✅ LIMPAR fila apenas após sucesso
+                UPDATE "Canais do youtube"
+                SET videos_para_scann = NULL
+                WHERE id = canal_id;
+
+                RAISE NOTICE '   🧹 Fila limpa após processamento bem-sucedido';
 
             EXCEPTION WHEN OTHERS THEN
-                RAISE WARNING '   ❌ [ERROR] Erro ao salvar JSONB: %', SQLERRM;
-                -- Fallback: salvar apenas o novo array
+                RAISE WARNING '❌ Erro ao salvar JSONB: %', SQLERRM;
                 UPDATE "Canais do youtube"
                 SET videos_scanreados = videos_array::text
                 WHERE id = canal_id;
+
+                -- Limpar mesmo em caso de fallback
+                UPDATE "Canais do youtube"
+                SET videos_para_scann = NULL
+                WHERE id = canal_id;
             END;
 
-            -- 🔍 LOG PERSISTENTE: Salvamento concluído
-            INSERT INTO debug_processar_fila (step, canal_id, message)
-            VALUES (
-                'videos_scanreados_salvo',
-                canal_id,
-                'Campo videos_scanreados atualizado com sucesso'
-            );
-
-            -- 4.2. ⭐ EXTRAIR APENAS APROVADOS para campo "processar"
-            RAISE NOTICE '🔍 [DEBUG] Extraindo apenas vídeos aprovados...';
-
-            -- ⭐ JSONB torna isso MUITO mais fácil!
+            -- 5. Extrair aprovados
             SELECT array_agg(elem->>'id')
             INTO approved_ids_array
             FROM jsonb_array_elements(videos_array) AS elem
             WHERE elem->>'status' = 'APPROVED';
 
-            -- Converter array para texto separado por vírgulas
             IF approved_ids_array IS NOT NULL AND array_length(approved_ids_array, 1) > 0 THEN
                 approved_ids_text := array_to_string(approved_ids_array, ',');
             ELSE
                 approved_ids_text := NULL;
             END IF;
 
-            RAISE NOTICE '   📌 Aprovados extraídos: %', approved_ids_text;
-            RAISE NOTICE '   📌 Quantidade de aprovados: %',
-                CASE WHEN approved_ids_array IS NULL THEN 0
-                     ELSE array_length(approved_ids_array, 1)
-                END;
+            RAISE NOTICE '   📌 Aprovados: %', approved_ids_text;
 
-            -- Salvar apenas aprovados em "processar"
-            IF approved_ids_text IS NOT NULL AND approved_ids_text != '' THEN
-                RAISE NOTICE '💾 [DEBUG] Salvando aprovados em processar...';
-
+            -- Salvar aprovados em "processar"
+            IF approved_ids_text IS NOT NULL THEN
                 IF canal_record."processar" IS NULL OR canal_record."processar" = '' THEN
-                    RAISE NOTICE '   📝 [DEBUG] Campo processar vazio, criando novo...';
                     UPDATE "Canais do youtube"
                     SET "processar" = approved_ids_text
                     WHERE id = canal_id;
-                    RAISE NOTICE '   ✅ [DEBUG] Aprovados salvos (novo campo)';
                 ELSE
-                    RAISE NOTICE '   📝 [DEBUG] Campo processar já existe, concatenando...';
-                    RAISE NOTICE '   📌 Valor antigo: %', canal_record."processar";
                     UPDATE "Canais do youtube"
                     SET "processar" = canal_record."processar" || ',' || approved_ids_text
                     WHERE id = canal_id;
-                    RAISE NOTICE '   ✅ [DEBUG] Aprovados salvos (append)';
                 END IF;
-
-                RAISE NOTICE '✅ [DEBUG] Canal ID %: % vídeos aprovados salvos em processar',
-                    canal_id, approved_ids_text;
+                RAISE NOTICE '   ✅ Aprovados salvos em processar';
             ELSE
-                RAISE NOTICE '❌ [DEBUG] Canal ID %: Nenhum vídeo aprovado (todos rejected/skipped)', canal_id;
+                RAISE NOTICE '   ℹ️ Nenhum vídeo aprovado';
             END IF;
 
-            -- 🔍 LOG PERSISTENTE: Sucesso total
             INSERT INTO debug_processar_fila (step, canal_id, message)
-            VALUES (
-                'sucesso_completo',
-                canal_id,
-                'Canal processado com sucesso - tudo salvo'
-            );
+            VALUES ('sucesso_completo', canal_id, 'Processamento concluído com sucesso');
 
-            RAISE NOTICE '🎉 [DEBUG] Canal ID % processado com sucesso!', canal_id;
+            RAISE NOTICE '🎉 [DEBUG] Canal % processado!', canal_id;
 
         ELSE
-            -- 🔍 LOG PERSISTENTE: Array vazio ou nulo
             INSERT INTO debug_processar_fila (step, canal_id, message, data)
             VALUES (
                 'array_vazio',
                 canal_id,
-                'Nenhum vídeo para processar (array vazio ou NULL)',
-                jsonb_build_object(
-                    'videos_array', videos_array,
-                    'is_null', (videos_array IS NULL),
-                    'is_array', (jsonb_typeof(videos_array) = 'array'),
-                    'array_length', COALESCE(jsonb_array_length(videos_array), 0)
-                )
+                'Array vazio ou NULL',
+                jsonb_build_object('videos_array', videos_array)
             );
-
-            RAISE NOTICE '⚠️  [DEBUG] Canal ID %: Nenhum vídeo para processar (array vazio ou NULL)', canal_id;
+            RAISE NOTICE '⚠️ [DEBUG] Nenhum vídeo para processar';
         END IF;
 
     EXCEPTION WHEN OTHERS THEN
-        -- 🔍 LOG PERSISTENTE: Erro capturado
         INSERT INTO debug_processar_fila (step, canal_id, message, data)
         VALUES (
             'erro_exception',
             canal_id,
-            'Erro capturado no EXCEPTION',
-            jsonb_build_object(
-                'erro', SQLERRM,
-                'sqlstate', SQLSTATE
-            )
+            'Erro no processamento',
+            jsonb_build_object('erro', SQLERRM, 'sqlstate', SQLSTATE)
         );
-
-        RAISE WARNING '❌ [ERROR] Erro ao processar canal ID %: %', canal_id, SQLERRM;
-        RAISE WARNING '   📌 SQLSTATE: %', SQLSTATE;
-        RAISE WARNING '   📌 Context: %', current_query();
-        -- Canal já foi removido da fila (videos_para_scann = NULL)
-        -- Não tenta novamente
+        RAISE WARNING '❌ [ERROR] Erro: %', SQLERRM;
     END;
 
-    -- 🔍 LOG PERSISTENTE: Finalizando
     INSERT INTO debug_processar_fila (step, message)
-    VALUES ('finalizando', 'Função processar_fila_videos() finalizada');
+    VALUES ('finalizando', 'Função finalizada');
 
-    RAISE NOTICE '🏁 [DEBUG] Finalizando processar_fila_videos()';
+    RAISE NOTICE '🏁 [DEBUG] Finalizado';
 
 END;
 $function$;
 
 -- =============================================
--- NOTAS DE IMPLEMENTAÇÃO
+-- NOTAS DE USO
 -- =============================================
 
 /*
-COMO FUNCIONA:
-
-1. BUSCA 1 CANAL DA FILA:
-   - WHERE videos_para_scann IS NOT NULL
-   - ORDER BY last_canal_check ASC (mais antigo primeiro)
-   - LIMIT 1 (apenas um canal)
-   - FOR UPDATE SKIP LOCKED (evita race conditions)
-
-2. LIMPA CAMPO IMEDIATAMENTE:
-   - UPDATE videos_para_scann = NULL
-   - RETURNING * INTO canal_record
-   - ⭐ ATOMIC: Pega e limpa em 1 operação
-
-3. PROCESSA VÍDEOS:
-   - Chama call_api_edge_function(canal_id)
-   - Retorna: "id1:✅ APPROVED｜motivo,id2:❌ REJECTED｜motivo"
-   - Tempo: ~28s
-
-4. SALVA RESULTADOS:
-   - videos_scanreados: TUDO (aprovados + rejeitados)
-   - processar: APENAS aprovados (IDs sem justificativa)
-
-5. RETORNA:
-   - Canal processado (videos_para_scann = NULL)
-   - Pronto para próximo CRON
-
-RACE CONDITIONS:
-  ✅ FOR UPDATE SKIP LOCKED: Se outro CRON já está processando um canal,
-     este CRON pega o próximo da fila automaticamente
-
-  ✅ ATOMIC UPDATE: Campo limpo ANTES de processar, então mesmo se o Python
-     falhar, o canal não volta para a fila
-
-FORMATO DOS DADOS:
-
-  videos_para_scann (ANTES):
-    "ExOuL-QSJms,haYapr2Czb0,RG-wtjqc5e4"
-
-  Retorno Python:
-    {
-      "call_api_edge_function": {
-        "text": "ExOuL-QSJms:❌ REJECTED｜Vídeo sobre desenvolvimento pessoal,haYapr2Czb0:❌ REJECTED｜Conteúdo sobre caridade,RG-wtjqc5e4:✅ APPROVED｜Vídeo sobre marketing digital B2B"
-      }
-    }
-
-  videos_scanreados (DEPOIS):
-    "ExOuL-QSJms:❌ REJECTED｜Vídeo sobre desenvolvimento pessoal,haYapr2Czb0:❌ REJECTED｜Conteúdo sobre caridade,RG-wtjqc5e4:✅ APPROVED｜Vídeo sobre marketing digital B2B"
-
-  processar (DEPOIS):
-    "RG-wtjqc5e4"
-
 EXEMPLO DE USO:
 
-  -- Executar manualmente (testar)
-  SELECT processar_fila_videos();
+  -- Executar manualmente
+  SELECT public.processar_fila_videos();
 
-  -- Ver status da fila
-  SELECT COUNT(*) as canais_na_fila
-  FROM "Canais do youtube"
-  WHERE videos_para_scann IS NOT NULL;
+  -- Ver fila
+  SELECT COUNT(*) FROM "Canais do youtube" WHERE videos_para_scann IS NOT NULL;
 
-  -- Ver últimos processados
-  SELECT id, "Nome", videos_scanreados, "processar"
-  FROM "Canais do youtube"
-  WHERE videos_scanreados IS NOT NULL
-  ORDER BY last_canal_check DESC
-  LIMIT 5;
+  -- Ver debug logs
+  SELECT * FROM debug_processar_fila ORDER BY created_at DESC LIMIT 20;
 
 TROUBLESHOOTING:
 
-  -- Erro: Fila não processa
-  -- Solução: Verificar se Edge Function está deployada
-  SELECT * FROM mcp__supabase__list_edge_functions
-  WHERE name = 'video-qualifier-wrapper';
+  -- Ver estrutura do retorno da Edge Function
+  SELECT call_api_edge_function('1120');
 
-  -- Erro: Python não retorna
-  -- Solução: Testar Edge Function manualmente
-  SELECT call_api_edge_function('CANAL_ID');
-
-  -- Erro: Canal processado 2x
-  -- Solução: NÃO DEVE ACONTECER (FOR UPDATE SKIP LOCKED)
-  -- Se acontecer, reportar bug
+  -- Limpar fila manualmente (emergência)
+  UPDATE "Canais do youtube" SET videos_para_scann = NULL WHERE id = 1123;
 */

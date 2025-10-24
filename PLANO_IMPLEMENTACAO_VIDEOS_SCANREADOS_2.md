@@ -1,827 +1,527 @@
-# 🎯 PLANO DE IMPLEMENTAÇÃO: videos_scanreados_2
-**Sistema de Controle de Duplicatas no Monitoramento YouTube**
+# 🎯 ARQUITETURA COMPLETA DO SISTEMA DE SCANNING DE VÍDEOS DO YOUTUBE
 
-**Criado**: 2025-10-24
-**Atualizado**: 2025-10-24 23:55 UTC
-**Objetivo**: Evitar duplicatas e race conditions no sistema de descoberta de vídeos
-**Status**: ✅ IMPLEMENTAÇÃO COMPLETA (Etapas 1-5 finalizadas)
+**Data de Análise:** 24/10/2025
+**Status:** Documentação detalhada do sistema atual
 
 ---
 
-## 🎉 RESUMO DA IMPLEMENTAÇÃO COMPLETA
-
-### O Que Foi Implementado:
-
-✅ **Arquitetura Corrigida**
-- SQL descobre vídeos → Registra imediatamente em `videos_scanreados_2`
-- Python lê IDs de `videos_para_scann` (fila) → Analisa apenas esses IDs
-- Zero chamadas duplicadas à YouTube API
-- Zero race conditions
-
-✅ **Mudanças Aplicadas**
-1. **Banco de Dados**: Campo `videos_scanreados_2` TEXT criado com índice
-2. **SQL Discovery**: Função modificada para usar deduplicação TEXT
-3. **Python Services**: 3 arquivos modificados para receber IDs
-4. **Edge Function**: Porta corrigida (8000) e deployada
-5. **SQL RPC**: Retorna JSONB com `videos_para_scann`
-
-✅ **Deployment Status**
-- ✅ Python VPS (173.249.22.2:8000): DEPLOYED & HEALTHY
-- ✅ Edge Function (video-qualifier-wrapper v7): DEPLOYED & ACTIVE
-- ✅ SQL Functions (2 funções): DEPLOYED & TESTED
-- ✅ Database Field (videos_scanreados_2): CREATED & INDEXED
-
-### Benefícios Alcançados:
-
-- 🚀 **Performance**: TEXT search vs JSONB parsing (10x mais rápido)
-- 🛡️ **Confiabilidade**: Fonte única de verdade (SQL)
-- 🔒 **Zero Duplicatas**: Registro imediato em videos_scanreados_2
-- ⚡ **Zero Race Conditions**: Não há mais divergência temporal
-- 🔄 **Backward Compatible**: videos_scanreados (JSONB) ainda funciona
+## 📋 ÍNDICE
+1. [Visão Geral do Sistema](#visão-geral-do-sistema)
+2. [Fluxo de Descoberta de Vídeos Novos](#fluxo-de-descoberta-de-vídeos-novos)
+3. [Influência do Campo Postagem_dia](#influência-do-campo-postagem_dia)
+4. [Componentes Principais](#componentes-principais)
+5. [Análise do Problema Atual](#análise-do-problema-atual)
+6. [Solução Proposta](#solução-proposta)
 
 ---
 
-## 📈 PROGRESSO DA IMPLEMENTAÇÃO
+## 🔍 VISÃO GERAL DO SISTEMA
 
-### ✅ ETAPAS COMPLETAS:
+### Existem 2 Sistemas de Scanning INDEPENDENTES:
 
-**ETAPA 3: Python Qualifier** ✅ (23:30 UTC)
-- [x] Modificado `youtube_service.py` - Agora recebe IDs ao invés de descobrir
-- [x] Modificado `supabase_service.py` - Lê de videos_para_scann
-- [x] Modificado `qualifier.py` - Valida fila antes de processar
-- [x] Deploy Python no VPS (173.249.22.2:8000) - Health OK
-- **Resultado**: Sistema Python pronto para receber IDs da fila
+#### 1️⃣ **Sistema de Canais do Youtube** (Discovery de Novos Vídeos)
+- **Propósito:** Monitorar canais do YouTube e descobrir vídeos novos
+- **Campo de armazenamento:** `videos_para_scann` na tabela `Canais do youtube`
+- **Frequência:** A cada 45 minutos (cron job)
+- **Função SQL:** `verificar_novos_videos_youtube()`
+- **NÃO USA** `Postagem_dia` para determinar quantidade de vídeos
 
-**ETAPA 4: SQL RPC** ✅ (23:35 UTC)
-- [x] Modificado `obter_canal_e_videos.sql` - Retorna JSONB com videos_para_scann
-- [x] Deploy no Supabase LIVE via agente MCP
-- [x] Teste SQL: Função retorna estrutura correta
-- **Resultado**: RPC pronto para fornecer IDs ao Python
-
-**ETAPA 5: Integração End-to-End** ✅ (23:40 UTC)
-- [x] Teste com canal ID 856 (Kimberly Mitchell)
-- [x] SQL → Python → YouTube API: Fluxo funciona corretamente
-- [x] Edge Function chamando Python VPS: OK
-- **Resultado**: Arquitetura validada, sistema operacional
-- **Nota**: Test IDs inválidos (vídeos deletados), mas fluxo correto
-
-**ETAPA 1: Adicionar Campo** ✅ (23:47 UTC)
-- [x] Campo `videos_scanreados_2` TEXT criado com sucesso
-- [x] Índice `idx_videos_scanreados_2` criado para performance
-- [x] Verificação: Campo e índice confirmados no banco
-- **Resultado**: Campo pronto no banco LIVE
-
-**ETAPA 2: Modificar SQL Discovery** ✅ (23:52 UTC)
-- [x] Modificado `verificar_novos_videos_youtube.sql`
-- [x] Deduplicação simplificada: JSONB parsing → TEXT simples
-- [x] Adicionado update automático de videos_scanreados_2
-- [x] Deploy no Supabase LIVE via agente MCP
-- [x] Teste com 11 canais ativos: 100% sucesso
-- **Resultado**: Função modificada e operacional em produção
-
-### ⏳ PRÓXIMAS ETAPAS (OPCIONAIS):
-
-**ETAPA 6: Git Commit** (Recomendado)
-- [ ] Commit com todas mudanças
-- [ ] Push para repositório
-
-**ETAPA 6: Deploy Produção**
-- [ ] Git commit com todas mudanças
-- [ ] Verificar health dos serviços
-- [ ] Documentar deploy
-
-**ETAPA 7: Monitoramento 24h**
-- [ ] Verificar CRON execuções
-- [ ] Validar zero duplicatas
-- [ ] Confirmar fila sendo processada
+#### 2️⃣ **Sistema de Scanner de Keywords** (Sistema Legado - NÃO USADO)
+- **Propósito:** Buscar vídeos por palavras-chave
+- **Tabela:** `Scanner de videos do youtube`
+- **Status:** **DESATIVADO/LEGADO** - Não está em uso ativo no sistema atual
+- **Campo:** `ID cache videos`
 
 ---
 
-## 🐛 DEBUG SESSION - 2025-10-24 22:15 UTC
+## 🎬 FLUXO DE DESCOBERTA DE VÍDEOS NOVOS (Sistema Atual)
 
-### Problema Identificado:
-
-**Teste realizado:**
-- Adicionado manualmente IDs em `videos_para_scann` do canal 1122: `_6neEaBSRYs,KiwrZTcAnUI`
-- Executado `SELECT verificar_novos_videos_youtube()`
-- **Resultado**: IDs desapareceram, campo virou NULL
-
-**Investigação:**
-- ✅ CRON `process_monitored_videos` roda a cada 5 min
-- ⚠️ Função completa em 0.015s (15ms) - MUITO RÁPIDO!
-- ❌ Vídeos não existem na tabela Videos
-- ❌ Campo `videos_para_scann` setado para NULL
-
-**Hipótese:**
-- CRON automático limpou a fila antes do teste completar
-- Função pode ter bug que deleta sem processar
-- Ou IDs inválidos causaram falha silenciosa
-
-### Plano de Correção:
-
-**[⏳ EM ANDAMENTO]**
-
-1. [ ] Adicionar IDs manualmente no canal 1122
-2. [ ] Executar `verificar_novos_videos_youtube()` com logging
-3. [ ] Analisar comportamento e identificar bug
-4. [ ] Corrigir função (se necessário)
-5. [ ] Testar novamente
-6. [ ] Validar que `videos_scanreados_2` é populado corretamente
-
-**Registros:**
-
-**[22:17 UTC] PASSO 1 - IDs Adicionados ✅**
-- Adicionado manualmente: `_6neEaBSRYs,KiwrZTcAnUI` no canal 1122
-- Campo confirmado com IDs
-
-**[22:18 UTC] PASSO 2 - Intervalo Resetado ✅**
-- `last_canal_check` setado para 2 horas atrás
-- Canal 1122 agora elegível para processamento
-
-**[22:19 UTC] PASSO 3 - Função Executada ✅**
-- `SELECT verificar_novos_videos_youtube(1)` executado
-- Função completou com sucesso
-
-**[22:19 UTC] PASSO 4 - BUG CONFIRMADO! ❌**
-- **ANTES**: `videos_para_scann = "_6neEaBSRYs,KiwrZTcAnUI"`
-- **DEPOIS**: `videos_para_scann = "_sZq0vQNsFc,KiwrZTcAnUI"`
-- **PROBLEMA**: Função SOBRESCREVEU ao invés de CONCATENAR
-- ID `_6neEaBSRYs` foi PERDIDO!
-- `videos_scanreados_2` foi populado corretamente: `_sZq0vQNsFc,KiwrZTcAnUI`
-
-**Causa Raiz:**
-Linha 164 de `verificar_novos_videos_youtube.sql`:
+### 1. **Cron Job Principal**
 ```sql
-videos_para_scann = array_to_string(videos_novos_array, ',')  -- ❌ SOBRESCREVE
+-- Roda a cada 45 minutos
+SELECT public.verificar_novos_videos_youtube()
 ```
 
-**Correção Necessária:**
+### 2. **Função: verificar_novos_videos_youtube()**
+
+**Localização:** SQL Function (PostgreSQL)
+**Parâmetros:**
+- `lote_tamanho INTEGER DEFAULT 50` (quantos canais processar por vez)
+
+**Lógica:**
+
 ```sql
-videos_para_scann = CASE
-    WHEN videos_para_scann IS NULL OR videos_para_scann = ''
-    THEN array_to_string(videos_novos_array, ',')
-    ELSE videos_para_scann || ',' || array_to_string(videos_novos_array, ',')  -- ✅ CONCATENA
-END
+-- Seleciona canais para verificar
+FOR canal_record IN
+    SELECT c.id, c.channel_id, c.videos_scanreados_2, c.videos_para_scann, p.id as projeto_id
+    FROM "Canais do youtube" c
+    JOIN "Projeto" p ON c."Projeto" = p.id
+    WHERE p."Youtube Active" = true
+      AND c.is_active = true
+      AND c.desativado_pelo_user = false
+      AND (c.last_canal_check IS NULL OR c.last_canal_check < NOW() - INTERVAL '30 minutes')
+    ORDER BY c.last_canal_check NULLS FIRST
+    LIMIT lote_tamanho  -- ⚠️ NOTA: Não usa Postagem_dia aqui!
+LOOP
+    -- 1. Verifica se customer tem Mentions
+    SELECT COALESCE(c."Mentions", 0) INTO v_mentions_disponiveis
+    FROM customers c
+    JOIN "Projeto" p ON p."User id" = c.user_id
+    WHERE p.id = canal_record.projeto_id;
+
+    IF v_mentions_disponiveis IS NULL OR v_mentions_disponiveis <= 0 THEN
+        RAISE NOTICE 'Canal ID % pulado - sem Mentions', canal_record.id;
+        CONTINUE; -- Pula este canal
+    END IF;
+
+    -- 2. Verifica Anti-Spam
+    IF NOT can_comment_on_channel(canal_record.channel_id, canal_record.projeto_id) THEN
+        RAISE NOTICE 'Canal ID % pulado - Anti-Spam', canal_record.id;
+        CONTINUE;
+    END IF;
+
+    -- 3. Chama função de monitoramento para buscar vídeos novos
+    SELECT monitormanto_de_canal_sql(
+        canal_record.channel_id,
+        'today',        -- ⚠️ Filtro de tempo: 'today' ou 'week'
+        10,             -- ⚠️ max_results: Sempre 10 vídeos por canal
+        TRUE            -- simple_response: Retorna apenas IDs
+    ) INTO video_ids_result;
+
+    -- 4. Filtra vídeos que já foram processados
+    videos_scanreados_check := ',' || COALESCE(canal_record.videos_scanreados_2, '') || ',';
+
+    videos_novos_array := '{}';
+    FOREACH video_id IN ARRAY video_ids_array
+    LOOP
+        -- Se vídeo NÃO está em videos_scanreados_2, adiciona à fila
+        IF position(',' || video_id || ',' in videos_scanreados_check) = 0 THEN
+            videos_novos_array := array_append(videos_novos_array, video_id);
+        END IF;
+    END LOOP;
+
+    -- 5. Salva vídeos novos (sem duplicatas)
+    IF array_length(videos_novos_array, 1) > 0 THEN
+        -- Combina vídeos existentes em videos_para_scann com os novos
+        v_all_ids := array_cat(v_existing_ids, videos_novos_array);
+
+        -- Remove duplicatas
+        SELECT array_agg(DISTINCT vid ORDER BY vid)
+        INTO v_unique_ids
+        FROM unnest(v_all_ids) AS vid
+        WHERE length(trim(vid)) > 0;
+
+        UPDATE "Canais do youtube"
+        SET
+            videos_scanreados_2 = CASE
+                WHEN videos_scanreados_2 IS NULL OR videos_scanreados_2 = ''
+                THEN array_to_string(v_unique_ids, ',')
+                ELSE videos_scanreados_2 || ',' || array_to_string(v_unique_ids, ',')
+            END,
+            videos_para_scann = array_to_string(v_unique_ids, ',')  -- ⭐ CAMPO CRÍTICO
+        WHERE id = canal_record.id;
+    END IF;
+END LOOP;
 ```
 
-**[22:20 UTC] PASSO 5 - Correção Aplicada ✅**
-- Modificado linhas 165-169 para CONCATENAR ao invés de sobrescrever
-- Deploy realizado no Supabase LIVE
+### 3. **Função: monitormanto_de_canal_sql()**
 
-**[22:22 UTC] PASSO 6 - Teste Pós-Correção ⚠️**
-- **ANTES**: `videos_para_scann = "_6neEaBSRYs,KiwrZTcAnUI"`, `videos_scanreados_2 = ""`
-- **DEPOIS**: `videos_para_scann = "_6neEaBSRYs,KiwrZTcAnUI,_sZq0vQNsFc,KiwrZTcAnUI"`, `videos_scanreados_2 = "_sZq0vQNsFc,KiwrZTcAnUI"`
+**Localização:** SQL Function (PostgreSQL)
+**Parâmetros:**
+- `channel_id TEXT` - ID do canal do YouTube
+- `time_filter TEXT` - 'today' ou 'week'
+- `max_results INTEGER` - Quantos vídeos buscar (padrão: 10)
+- `simple_response BOOLEAN` - Se TRUE, retorna apenas IDs
 
-**NOVOS PROBLEMAS DETECTADOS:**
-1. ❌ **Duplicata**: `KiwrZTcAnUI` aparece 2x (estava manual + veio da API)
-2. ❌ **Controle incompleto**: `_6neEaBSRYs` não foi adicionado em `videos_scanreados_2`
+**Lógica:**
 
-**Causa Raiz:**
-- Função não deduplica IDs antes de concatenar
-- Função não adiciona IDs manuais existentes ao controle
-
-**[22:23 UTC] PASSO 7 - Correção Definitiva...**
-Implementando lógica com deduplicação:
-1. Mesclar IDs existentes + novos da API
-2. Remover duplicatas com DISTINCT
-3. Adicionar TODOS ao controle (manuais + API)
-
----
-
-## 🎪 RESUMO EXECUTIVO
-
-### Problema Atual:
-- SQL descobre vídeos com filtro "today"
-- Python descobre vídeos com filtro "today" **NOVAMENTE**
-- Possível divergência: Python pode ver vídeos que SQL não viu
-- Race condition: CRON pode rodar antes do Python processar
-
-### Solução:
-- **Novo campo**: `videos_scanreados_2` (TEXT) para controle SQL
-- SQL adiciona ID imediatamente em `videos_scanreados_2`
-- Python **NÃO descobre**, apenas analisa IDs de `videos_para_scann`
-- `videos_scanreados` (JSONB) continua sendo populado pelo Python
-
----
-
-## ✅ CHECKLIST DE IMPLEMENTAÇÃO
-
-### ETAPA 1: Adicionar Campo no Banco (5 min)
-- [ ] **1.1** Conectar no Supabase (project: `suqjifkhmekcdflwowiw`)
-- [ ] **1.2** Executar migration:
 ```sql
--- Migration: add_videos_scanreados_2
-ALTER TABLE "Canais do youtube"
-ADD COLUMN IF NOT EXISTS videos_scanreados_2 TEXT DEFAULT '';
+-- 1. Busca informações do canal para obter playlist de uploads
+SELECT * FROM http((
+    'GET',
+    'https://www.googleapis.com/youtube/v3/channels?id={channel_id}&part=contentDetails&key={api_key}',
+    ...
+)) INTO http_response;
 
--- Criar índice para performance
-CREATE INDEX IF NOT EXISTS idx_videos_scanreados_2
-ON "Canais do youtube" (videos_scanreados_2);
+-- Extrai uploads_playlist_id
+uploads_playlist_id := channel_response->'items'->0->'contentDetails'->'relatedPlaylists'->>'uploads';
 
-COMMENT ON COLUMN "Canais do youtube".videos_scanreados_2 IS
-'Controle simples de IDs já descobertos pelo SQL (evita duplicatas). Formato: "vid1,vid2,vid3"';
-```
-- [ ] **1.3** Verificar campo criado:
-```sql
-SELECT column_name, data_type, column_default
-FROM information_schema.columns
-WHERE table_name = 'Canais do youtube'
-  AND column_name = 'videos_scanreados_2';
-```
+-- 2. Busca vídeos da playlist de uploads (limitado por max_results)
+SELECT * FROM http((
+    'GET',
+    'https://www.googleapis.com/youtube/v3/playlistItems?playlistId={uploads_playlist_id}&part=snippet,contentDetails&maxResults={max_results}&key={api_key}',
+    ...
+)) INTO http_response;
 
----
-
-### ETAPA 2: Modificar SQL Function (15 min)
-
-**Arquivo**: `/liftlio-react/supabase/functions_backup/SQL_Functions/00_Monitoramento_YouTube/02_Descoberta/verificar_novos_videos_youtube.sql`
-
-- [ ] **2.1** Ler arquivo atual
-- [ ] **2.2** Localizar linha 133-146 (seção de deduplicação)
-- [ ] **2.3** Substituir código de verificação:
-
-**ANTES:**
-```sql
--- Linha 133-146: Deduplicação usando videos_scanreados (JSONB)
-videos_scanreados_check := ',' || COALESCE((
-    SELECT string_agg(elem->>'id', ',')
-    FROM jsonb_array_elements(
-        CASE
-            WHEN canal_record.videos_scanreados IS NULL OR canal_record.videos_scanreados = ''
-            THEN '[]'::jsonb
-            ELSE canal_record.videos_scanreados::jsonb
-        END
-    ) AS elem
-), '') || ',';
-```
-
-**DEPOIS:**
-```sql
--- ⭐ NOVO: Deduplicação usando videos_scanreados_2 (TEXT simples)
-videos_scanreados_check := ',' || COALESCE(canal_record.videos_scanreados_2, '') || ',';
-```
-
-- [ ] **2.4** Localizar linha 159-172 (adicionar à fila)
-- [ ] **2.5** Adicionar update de `videos_scanreados_2`:
-
-**ANTES:**
-```sql
--- Linha 159-172
-IF array_length(videos_novos_array, 1) > 0 THEN
-    -- ⭐ SALVAR em videos_para_scann (FILA)
-    UPDATE "Canais do youtube"
-    SET videos_para_scann = array_to_string(videos_novos_array, ',')
-    WHERE id = canal_record.id;
+-- 3. Filtra vídeos por data
+IF time_filter = 'today' THEN
+    min_date := date_trunc('day', NOW());  -- Apenas hoje
+ELSIF time_filter = 'week' THEN
+    min_date := NOW() - INTERVAL '7 days';  -- Últimos 7 dias
 END IF;
+
+-- 4. Retorna apenas IDs dos vídeos filtrados
+RETURN to_jsonb(video_ids);  -- Exemplo: ["id1", "id2", "id3"]
 ```
 
-**DEPOIS:**
+---
+
+## 📊 INFLUÊNCIA DO CAMPO `Postagem_dia`
+
+### ❌ **NÃO INFLUENCIA** o Scanning Inicial
+
+O campo `Postagem_dia` da tabela `Projeto`:
+- **NÃO** controla quantos vídeos são descobertos
+- **NÃO** limita o campo `videos_para_scann`
+- **NÃO** afeta a função `verificar_novos_videos_youtube()`
+
+### ✅ **INFLUENCIA** Apenas o Agendamento de Mensagens
+
+O campo `Postagem_dia` é usado **APENAS** em:
+
+#### Função: `agendar_postagens_diarias(projeto_id_param bigint)`
+
 ```sql
-IF array_length(videos_novos_array, 1) > 0 THEN
-    RAISE NOTICE 'Canal ID %: % vídeos realmente novos → ADICIONANDO À FILA',
-        canal_record.id,
-        array_length(videos_novos_array, 1);
+-- Busca quantas postagens por dia
+SELECT
+    COALESCE(NULLIF("Postagem_dia", ''), '3')::integer
+INTO posts_por_dia
+FROM "Projeto"
+WHERE id = projeto_id_param;
 
-    -- ⭐ NOVO: Adicionar em videos_scanreados_2 (controle)
-    UPDATE "Canais do youtube"
-    SET
-        videos_scanreados_2 = CASE
-            WHEN videos_scanreados_2 IS NULL OR videos_scanreados_2 = ''
-            THEN array_to_string(videos_novos_array, ',')
-            ELSE videos_scanreados_2 || ',' || array_to_string(videos_novos_array, ',')
-        END,
-        -- Adicionar em videos_para_scann (fila)
-        videos_para_scann = array_to_string(videos_novos_array, ',')
-    WHERE id = canal_record.id;
-
-    RAISE NOTICE 'Canal ID %: IDs salvos em videos_scanreados_2 e adicionados à fila', canal_record.id;
-ELSE
-    RAISE NOTICE 'Canal ID %: Todos os vídeos já foram processados anteriormente', canal_record.id;
-END IF;
+-- Cria ESSA quantidade de posts por dia
+FOR i IN 1..posts_por_dia LOOP
+    -- Seleciona mensagens disponíveis
+    -- Cria agendamentos em "Settings messages posts"
+END LOOP;
 ```
 
-- [ ] **2.6** Atualizar header da função:
+**Exemplo:**
+- **Projeto 117:** `Postagem_dia = "7"`
+- **Resultado:** Sistema agenda 7 mensagens por dia
+- **MAS:** O campo `videos_para_scann` pode ter 10, 50, 100+ vídeos!
+
+---
+
+## 🧩 COMPONENTES PRINCIPAIS
+
+### 1. **Tabela: Canais do youtube**
+
 ```sql
--- Linha 6: Atualizar versão
--- Atualizado: 2025-10-24 - Adicionado videos_scanreados_2 para controle de duplicatas
-```
+CREATE TABLE "Canais do youtube" (
+    id BIGSERIAL PRIMARY KEY,
+    channel_id TEXT,                    -- ID do canal no YouTube
+    "Projeto" BIGINT,                   -- FK para Projeto
+    is_active BOOLEAN DEFAULT true,
+    desativado_pelo_user BOOLEAN DEFAULT false,
+    last_canal_check TIMESTAMPTZ,       -- Última verificação
 
-- [ ] **2.7** Salvar arquivo modificado
-- [ ] **2.8** Aplicar no Supabase via agente MCP:
-```
-Task → supabase-mcp-expert:
-"Aplicar a função SQL verificar_novos_videos_youtube.sql no Supabase"
-```
-
----
-
-### ETAPA 3: Modificar Python Qualifier (20 min)
-
-**Arquivo**: `/Servidor/Monitormanto de canais/services/youtube_service.py`
-
-- [ ] **3.1** Ler arquivo atual (linha 95-228)
-- [ ] **3.2** Localizar método `get_channel_videos()`
-- [ ] **3.3** Modificar assinatura do método:
-
-**ANTES:**
-```python
-# Linha 95
-async def get_channel_videos(
-    self,
-    channel_id: str,
-    max_results: Optional[int] = None,
-    date_filter: str = "último dia",  # ❌ REMOVE ESTE FILTRO
-    excluded_ids: Optional[List[str]] = None
-) -> List[Dict]:
-```
-
-**DEPOIS:**
-```python
-async def get_channel_videos(
-    self,
-    video_ids: List[str],  # ⭐ NOVO: recebe IDs ao invés de descobrir
-    channel_id: Optional[str] = None,  # ⭐ Opcional (só para logs)
-    max_results: Optional[int] = None
-) -> List[Dict]:
-    """
-    Get videos BY ID (not by discovery with 'today' filter)
-
-    ⚠️ IMPORTANT CHANGE (2025-10-24):
-    - Previously: Discovered videos using 'today' filter
-    - Now: Receives video IDs from SQL (videos_para_scann)
-    - Benefit: Single source of truth, no race conditions
-
-    Args:
-        video_ids: List of video IDs to fetch (from videos_para_scann)
-        channel_id: Optional channel ID (only for logging)
-        max_results: Maximum number of videos to return
-
-    Returns:
-        List of video dictionaries with basic info
-    """
-    try:
-        if not video_ids:
-            logger.warning("No video IDs provided to fetch")
-            return []
-
-        logger.info(
-            f"Fetching {len(video_ids)} videos BY ID "
-            f"(channel: {channel_id or 'unknown'})"
-        )
-
-        # ⭐ BUSCAR DETALHES POR ID (não por 'today')
-        all_videos = []
-
-        # Process in batches of 50 (API limit)
-        batch_size = 50
-        for i in range(0, len(video_ids), batch_size):
-            batch = video_ids[i:i + batch_size]
-            logger.debug(f"Processing batch {i//batch_size + 1}: {len(batch)} videos")
-
-            response = self.youtube.videos().list(
-                part="snippet,contentDetails",
-                id=",".join(batch)  # ⭐ BUSCA POR ID
-            ).execute()
-
-            for item in response.get("items", []):
-                snippet = item.get("snippet", {})
-                content_details = item.get("contentDetails", {})
-
-                video_data = {
-                    "video_id": item.get("id", ""),
-                    "title": snippet.get("title", ""),
-                    "description": snippet.get("description", ""),
-                    "published_at": snippet.get("publishedAt", ""),
-                    "thumbnail_url": (
-                        snippet.get("thumbnails", {})
-                        .get("default", {})
-                        .get("url", "")
-                    ),
-                }
-
-                all_videos.append(video_data)
-
-        logger.success(
-            f"✅ Fetched {len(all_videos)} videos by ID "
-            f"(requested: {len(video_ids)})"
-        )
-
-        if len(all_videos) < len(video_ids):
-            missing = len(video_ids) - len(all_videos)
-            logger.warning(
-                f"⚠️ {missing} videos not found (may be deleted/private)"
-            )
-
-        return all_videos
-
-    except HttpError as e:
-        logger.error(f"❌ YouTube API error: {e}")
-        if e.resp.status == 403:
-            logger.error("Quota exceeded or invalid API key!")
-        raise
-    except Exception as e:
-        logger.error(f"❌ Error fetching videos by ID: {e}")
-        raise
-```
-
-- [ ] **3.4** Remover código antigo (linhas 130-219):
-```python
-# DELETAR todo este bloco (não é mais necessário):
-# - Get uploads playlist ID
-# - Get date filter
-# - Fetch playlist items
-# - Check excluded IDs
-# - Check date filter
-```
-
-- [ ] **3.5** Salvar arquivo modificado
-
----
-
-**Arquivo**: `/Servidor/Monitormanto de canais/services/supabase_service.py`
-
-- [ ] **3.6** Localizar método `get_canal_e_videos()` (linha 26)
-- [ ] **3.7** Modificar para buscar `videos_para_scann`:
-
-**ANTES:**
-```python
-# Linha 26-82
-async def get_canal_e_videos(self, scanner_id: int) -> CanalData:
-    """
-    Get channel data and video IDs from Supabase
-
-    Calls RPC: obter_canal_e_videos
-    Returns: CanalData with youtube_channel_id and excluded videos list
-    """
-    # ... código atual que busca 'videos' (lista de excluídos)
-```
-
-**DEPOIS:**
-```python
-async def get_canal_e_videos(self, scanner_id: int) -> CanalData:
-    """
-    Get channel data and video IDs TO PROCESS from Supabase
-
-    ⚠️ IMPORTANT CHANGE (2025-10-24):
-    - Previously: Returned 'videos' (excluded list)
-    - Now: Returns 'videos_para_scann' (queue to process)
-
-    Calls RPC: obter_canal_e_videos
-    Returns: CanalData with youtube_channel_id and videos_to_process
-    """
-    try:
-        logger.info(f"Fetching canal data for scanner {scanner_id}")
-
-        # Call Supabase RPC
-        response = self.client.rpc(
-            'obter_canal_e_videos',
-            {'canal_id': scanner_id}
-        ).execute()
-
-        if not response.data:
-            raise ValueError(f"No data returned for scanner {scanner_id}")
-
-        # Parse response
-        data = response.data
-        if isinstance(data, list) and len(data) > 0:
-            data = data[0]
-
-        # ⭐ NOVO: Buscar videos_para_scann ao invés de videos
-        canal_id = data.get("youtube_channel_id", "")
-        videos_para_scann = data.get("videos_para_scann", "")
-
-        # Convert CSV to list
-        if videos_para_scann:
-            video_ids = [v.strip() for v in videos_para_scann.split(",") if v.strip()]
-        else:
-            video_ids = []
-
-        result = CanalData(
-            youtube_channel_id=canal_id,
-            videos=video_ids  # ⭐ Agora contém IDs para processar
-        )
-
-        logger.success(
-            f"✅ Canal data fetched: {result.youtube_channel_id}, "
-            f"{len(result.videos)} videos to process"
-        )
-        return result
-
-    except Exception as e:
-        logger.error(f"❌ Error fetching canal data: {e}")
-        raise
-```
-
-- [ ] **3.8** Salvar arquivo modificado
-
----
-
-**Arquivo**: `/Servidor/Monitormanto de canais/core/qualifier.py`
-
-- [ ] **3.9** Localizar linha 110-113 (chamada get_channel_videos)
-- [ ] **3.10** Modificar chamada:
-
-**ANTES:**
-```python
-# Linha 110-113
-basic_videos = await self.youtube.get_channel_videos(
-    channel_id=canal_data.youtube_channel_id,
-    excluded_ids=canal_data.videos or []
-)
-```
-
-**DEPOIS:**
-```python
-# ⭐ NOVO: Buscar vídeos POR ID (da fila videos_para_scann)
-if not canal_data.videos or len(canal_data.videos) == 0:
-    logger.warning(
-        f"⚠️ No videos in queue (videos_para_scann) for scanner {scanner_id}"
-    )
-    warnings.append("No videos in processing queue")
-    execution_time = time.time() - start_time
-    return QualificationResult(
-        scanner_id=scanner_id,
-        qualified_video_ids=[],
-        qualified_video_ids_csv="",
-        total_analyzed=0,
-        execution_time_seconds=execution_time,
-        success=True,
-        warnings=warnings,
-        stats=stats
-    )
-
-logger.info(
-    f"🎥 Fetching {len(canal_data.videos)} videos BY ID from queue..."
-)
-
-basic_videos = await self.youtube.get_channel_videos(
-    video_ids=canal_data.videos,  # ⭐ IDs da fila
-    channel_id=canal_data.youtube_channel_id
-)
-```
-
-- [ ] **3.11** Salvar arquivo modificado
-
----
-
-### ETAPA 4: Modificar SQL RPC (10 min)
-
-**Arquivo**: `/liftlio-react/supabase/functions_backup/SQL_Functions/03_Busca/obter_canal_e_videos.sql`
-
-- [ ] **4.1** Localizar função `obter_canal_e_videos()`
-- [ ] **4.2** Modificar retorno para incluir `videos_para_scann`:
-
-**ANTES:**
-```sql
-RETURN JSONB_BUILD_OBJECT(
-    'youtube_channel_id', v_channel_id,
-    'videos', v_videos_array
+    -- ⭐ CAMPOS CRÍTICOS:
+    videos_scanreados_2 TEXT,           -- Histórico de TODOS vídeos já processados (CSV)
+    videos_para_scann TEXT,             -- ⚠️ Fila de vídeos PENDENTES (CSV)
+    "processar" TEXT                    -- Vídeos em processamento (CSV)
 );
 ```
 
-**DEPOIS:**
+**Exemplo de Dados:**
+```
+Canal ID: 123
+videos_scanreados_2: "id1,id2,id3,id4,id5,id6,id7,id8,id9,id10,id11,id12"
+videos_para_scann: "id11,id12"  ← Apenas os 2 últimos ainda não processados
+```
+
+### 2. **Tabela: Projeto**
+
 ```sql
-RETURN JSONB_BUILD_OBJECT(
-    'youtube_channel_id', v_channel_id,
-    'videos_para_scann', v_videos_para_scann,  -- ⭐ NOVO
-    'videos', v_videos_array  -- Mantém para backward compat
+CREATE TABLE "Projeto" (
+    id BIGSERIAL PRIMARY KEY,
+    "Project name" TEXT,
+    "Postagem_dia" TEXT DEFAULT '3',   -- ⚠️ Usado APENAS para agendamento
+    "Youtube Active" BOOLEAN,
+    status TEXT,
+    "User id" TEXT                     -- FK para customers
 );
 ```
 
-- [ ] **4.3** Adicionar busca de `videos_para_scann`:
+### 3. **Tabela: customers**
+
 ```sql
--- Adicionar ANTES do RETURN
-SELECT videos_para_scann INTO v_videos_para_scann
-FROM "Canais do youtube"
-WHERE id = p_canal_id;
+CREATE TABLE customers (
+    id BIGSERIAL PRIMARY KEY,
+    user_id TEXT,
+    email TEXT,
+    "Mentions" INTEGER DEFAULT 0       -- ⚠️ Créditos disponíveis
+);
 ```
 
-- [ ] **4.4** Declarar variável no DECLARE:
+**Validação de Mentions:**
 ```sql
+-- ANTES de processar canal, verifica se customer tem créditos
+SELECT COALESCE(c."Mentions", 0)
+FROM customers c
+JOIN "Projeto" p ON p."User id" = c.user_id
+WHERE p.id = projeto_id;
+
+IF v_mentions_disponiveis <= 0 THEN
+    CONTINUE; -- Pula canal
+END IF;
+```
+
+### 4. **Cron Jobs Ativos**
+
+```sql
+-- 1. Discovery de Vídeos Novos (a cada 45 min)
+jobid: 71029
+jobname: "Monitormanto de Novos Videos Do canal"
+schedule: "*/45 * * * *"
+command: SELECT public.verificar_novos_videos_youtube()
+
+-- 2. Processamento da Fila (a cada 5 min)
+jobid: 158977
+jobname: "Processar videos recetes de canais"
+schedule: "*/5 * * * *"
+command: SELECT public.processar_fila_videos()
+
+-- 3. Análise de Vídeos (a cada 5 min)
+jobid: 71038
+jobname: "Analiza video vindo do monitoramento e cria mensagem"
+schedule: "*/5 * * * *"
+command: SELECT public.process_monitored_videos()
+```
+
+---
+
+## 🚨 ANÁLISE DO PROBLEMA ATUAL
+
+### Projeto 117 (Liftlio -)
+
+**Status Atual:**
+```
+"Postagem_dia": "7"
+"Youtube Active": true
+status: "6"
+```
+
+**Problema Identificado:**
+
+1. **Scanning está funcionando corretamente:**
+   - ✅ `verificar_novos_videos_youtube()` roda a cada 45 min
+   - ✅ Busca 10 vídeos por canal com `monitormanto_de_canal_sql()`
+   - ✅ Salva em `videos_para_scann`
+
+2. **MAS `videos_para_scann` está sempre vazio porque:**
+
+   **Hipótese 1:** Processamento muito rápido
+   - Cron `processar_fila_videos()` roda a cada 5 min
+   - Se processar mais rápido que o discovery, campo fica vazio
+
+   **Hipótese 2:** Vídeos já foram todos processados
+   - `videos_scanreados_2` tem histórico completo
+   - Vídeos novos só aparecem se canal postar vídeo novo
+
+   **Hipótese 3:** Filtro de tempo muito restritivo
+   - `time_filter = 'today'` busca apenas vídeos de HOJE
+   - Se canal não postou hoje, retorna vazio
+
+3. **`Postagem_dia = "7"` não ajuda:**
+   - Sistema agenda 7 mensagens/dia
+   - MAS se não tem vídeos em `videos_para_scann`, não há o que agendar
+
+---
+
+## ✅ SOLUÇÃO PROPOSTA
+
+### **Opção 1: Aumentar Janela de Tempo de Discovery**
+
+**Objetivo:** Buscar vídeos dos últimos 7 dias em vez de apenas hoje
+
+**Modificação:**
+```sql
+-- Em verificar_novos_videos_youtube()
+-- ATUAL:
+SELECT monitormanto_de_canal_sql(
+    canal_record.channel_id,
+    'today',        -- ❌ Muito restritivo
+    10,
+    TRUE
+) INTO video_ids_result;
+
+-- PROPOSTO:
+SELECT monitormanto_de_canal_sql(
+    canal_record.channel_id,
+    'week',         -- ✅ Últimos 7 dias
+    10,
+    TRUE
+) INTO video_ids_result;
+```
+
+**Impacto:**
+- ✅ Mais vídeos disponíveis para processar
+- ✅ Mantém fila `videos_para_scann` sempre com conteúdo
+- ⚠️ Pode aumentar carga de processamento inicial
+
+---
+
+### **Opção 2: Aumentar Quantidade de Vídeos por Canal**
+
+**Objetivo:** Buscar 50 vídeos em vez de 10
+
+**Modificação:**
+```sql
+-- ATUAL:
+SELECT monitormanto_de_canal_sql(
+    canal_record.channel_id,
+    'today',
+    10,             -- ❌ Apenas 10 vídeos
+    TRUE
+) INTO video_ids_result;
+
+-- PROPOSTO:
+SELECT monitormanto_de_canal_sql(
+    canal_record.channel_id,
+    'week',         -- ✅ Janela de 7 dias
+    50,             -- ✅ 50 vídeos
+    TRUE
+) INTO video_ids_result;
+```
+
+**Impacto:**
+- ✅ Muito mais vídeos na fila
+- ✅ Sistema nunca fica sem vídeos para processar
+- ⚠️ Mais consumo de API do YouTube
+- ⚠️ Mais processamento de mensagens
+
+---
+
+### **Opção 3: Criar Nova Função com Parâmetro Dinâmico** ⭐ **RECOMENDADO**
+
+**Objetivo:** Usar `Postagem_dia` para calcular quantos vídeos buscar
+
+**Nova Função:**
+```sql
+CREATE OR REPLACE FUNCTION verificar_novos_videos_youtube_v2(
+    lote_tamanho INTEGER DEFAULT 50
+)
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
 DECLARE
-    -- ... outras variáveis
-    v_videos_para_scann TEXT;  -- ⭐ NOVO
+    canal_record RECORD;
+    v_postagens_dia INTEGER;
+    v_max_videos INTEGER;
+BEGIN
+    FOR canal_record IN
+        SELECT
+            c.id,
+            c.channel_id,
+            c.videos_scanreados_2,
+            c.videos_para_scann,
+            p.id as projeto_id,
+            COALESCE(NULLIF(p."Postagem_dia", ''), '3')::integer as postagens_dia
+        FROM "Canais do youtube" c
+        JOIN "Projeto" p ON c."Projeto" = p.id
+        WHERE p."Youtube Active" = true
+          AND c.is_active = true
+          AND c.desativado_pelo_user = false
+    LOOP
+        -- Calcular quantidade de vídeos a buscar
+        -- Fórmula: postagens_dia * 7 (uma semana de conteúdo)
+        v_max_videos := canal_record.postagens_dia * 7;
+
+        -- Mínimo 10, máximo 50
+        v_max_videos := GREATEST(10, LEAST(50, v_max_videos));
+
+        RAISE NOTICE 'Canal %: Postagens/dia=%, Buscando % vídeos',
+            canal_record.id, canal_record.postagens_dia, v_max_videos;
+
+        -- Buscar vídeos
+        SELECT monitormanto_de_canal_sql(
+            canal_record.channel_id,
+            'week',         -- Última semana
+            v_max_videos,   -- ⭐ Dinâmico baseado em Postagem_dia
+            TRUE
+        ) INTO video_ids_result;
+
+        -- Processar como antes...
+    END LOOP;
+END;
+$$;
 ```
 
-- [ ] **4.5** Salvar e aplicar no Supabase
+**Exemplo:**
+- `Postagem_dia = "7"` → Busca 49 vídeos (7 * 7)
+- `Postagem_dia = "3"` → Busca 21 vídeos (3 * 7)
+- `Postagem_dia = "10"` → Busca 50 vídeos (limite máximo)
+
+**Impacto:**
+- ✅ Proporcional às necessidades do projeto
+- ✅ Economia de recursos para projetos pequenos
+- ✅ Mais vídeos para projetos grandes
+- ✅ Usa `Postagem_dia` de forma útil
 
 ---
 
-### ETAPA 5: Testar Integração (30 min)
+## 🎯 RECOMENDAÇÃO FINAL
 
-- [ ] **5.1** Teste SQL Discovery:
+### **Implementar Opção 3 (Função Dinâmica)**
+
+**Motivos:**
+1. **Eficiência:** Cada projeto busca apenas o necessário
+2. **Escalabilidade:** Sistema se adapta ao crescimento
+3. **Economia:** Projetos pequenos não consomem recursos desnecessários
+4. **Lógica:** `Postagem_dia` passa a ter significado real no scanning
+
+**Implementação:**
 ```sql
--- Executar descoberta
-SELECT verificar_novos_videos_youtube(5);
+-- 1. Criar função v2
+CREATE OR REPLACE FUNCTION verificar_novos_videos_youtube_v2(...);
 
--- Verificar campo populado
-SELECT
-    id,
-    "Nome",
-    videos_scanreados_2,
-    videos_para_scann,
-    LENGTH(videos_scanreados_2) as controle_length,
-    LENGTH(videos_para_scann) as fila_length
+-- 2. Atualizar cron job
+UPDATE cron.job
+SET command = 'SELECT public.verificar_novos_videos_youtube_v2()'
+WHERE jobid = 71029;
+
+-- 3. Testar com projeto 117
+SELECT verificar_novos_videos_youtube_v2();
+
+-- 4. Verificar campo videos_para_scann
+SELECT id, channel_id, videos_para_scann
 FROM "Canais do youtube"
-WHERE videos_para_scann IS NOT NULL AND videos_para_scann != ''
-LIMIT 5;
-```
-
-- [ ] **5.2** Teste Python Qualifier (local):
-```bash
-cd "/Users/valdair/Documents/Projetos/Liftlio/Servidor/Monitormanto de canais"
-
-# Testar endpoint
-curl -X POST http://localhost:8000/qualify-videos \
-  -H "Content-Type: application/json" \
-  -d '{"scanner_id": 1119}'
-```
-
-- [ ] **5.3** Verificar logs:
-```bash
-# Ver logs Python
-docker-compose logs -f video-qualifier
-
-# Ver logs Supabase
-# Dashboard > Logs > Postgres Logs
-```
-
-- [ ] **5.4** Validar videos_scanreados populado:
-```sql
--- Verificar se Python populou videos_scanreados
-SELECT
-    c.id,
-    c."Nome",
-    jsonb_array_length(c.videos_scanreados::jsonb) as total_analisados,
-    c.videos_scanreados::jsonb -> -1 as ultimo_video
-FROM "Canais do youtube" c
-WHERE c.videos_scanreados IS NOT NULL
-  AND c.videos_scanreados != ''
-LIMIT 5;
+WHERE "Projeto" = 117;
 ```
 
 ---
 
-### ETAPA 6: Deploy Produção (15 min)
+## 📝 CHECKLIST DE IMPLEMENTAÇÃO
 
-- [ ] **6.1** Commitar mudanças:
-```bash
-cd /Users/valdair/Documents/Projetos/Liftlio
-
-git add liftlio-react/supabase/functions_backup/SQL_Functions/00_Monitoramento_YouTube/02_Descoberta/verificar_novos_videos_youtube.sql
-git add liftlio-react/supabase/functions_backup/SQL_Functions/03_Busca/obter_canal_e_videos.sql
-git add "Servidor/Monitormanto de canais/services/youtube_service.py"
-git add "Servidor/Monitormanto de canais/services/supabase_service.py"
-git add "Servidor/Monitormanto de canais/core/qualifier.py"
-
-git commit -m "feat: Add videos_scanreados_2 field to prevent duplicates
-
-- SQL discovery now uses videos_scanreados_2 for simple ID control
-- Python qualifier receives IDs from videos_para_scann (no more 'today' filter)
-- Eliminates race conditions and temporal divergence
-- Single source of truth for video discovery
-
-Refs: PLANO_IMPLEMENTACAO_VIDEOS_SCANREADOS_2.md
-
-🤖 Generated with Claude Code"
-
-git push
-```
-
-- [ ] **6.2** Deploy Python no VPS:
-```bash
-ssh root@173.249.22.2
-cd /opt/containers/video-qualifier
-git pull
-docker-compose down && docker-compose up -d --build
-docker-compose logs -f
-```
-
-- [ ] **6.3** Verificar health:
-```bash
-curl http://173.249.22.2:8000/health
-```
+- [ ] Criar função `verificar_novos_videos_youtube_v2()`
+- [ ] Testar função manualmente com projeto 117
+- [ ] Verificar se `videos_para_scann` está sendo preenchido
+- [ ] Atualizar cron job para usar nova função
+- [ ] Monitorar logs por 24h
+- [ ] Documentar mudanças no código
+- [ ] Criar migration no `/Supabase/supabase/migrations/`
+- [ ] Backup da função antiga antes de substituir
 
 ---
 
-### ETAPA 7: Monitoramento Pós-Deploy (24h)
+## 🔗 ARQUIVOS RELACIONADOS
 
-- [ ] **7.1** Verificar CRON rodando:
-```sql
--- Ver execuções recentes
-SELECT * FROM cron.job_run_details
-WHERE jobname LIKE '%verificar_novos_videos%'
-ORDER BY start_time DESC
-LIMIT 10;
-```
+### SQL Functions:
+- `verificar_novos_videos_youtube()` - Discovery de vídeos novos
+- `monitormanto_de_canal_sql()` - Busca vídeos via YouTube API
+- `agendar_postagens_diarias()` - Usa `Postagem_dia`
+- `processar_fila_videos()` - Processa vídeos de `videos_para_scann`
 
-- [ ] **7.2** Verificar duplicatas (deve ser 0):
-```sql
--- Verificar duplicatas em videos_scanreados_2
-WITH ids AS (
-    SELECT
-        id,
-        unnest(string_to_array(videos_scanreados_2, ',')) as video_id
-    FROM "Canais do youtube"
-    WHERE videos_scanreados_2 IS NOT NULL
-)
-SELECT
-    id,
-    video_id,
-    COUNT(*) as duplicatas
-FROM ids
-GROUP BY id, video_id
-HAVING COUNT(*) > 1;
--- Esperado: 0 linhas
-```
+### Edge Functions:
+- `Canal_youtube_dados` - Busca detalhes de canal
+- `Retornar-Ids-do-youtube` - Sistema legado de scanners (não usado)
 
-- [ ] **7.3** Verificar Python processando fila:
-```sql
--- Ver canais com fila sendo processada
-SELECT
-    COUNT(*) as canais_com_fila
-FROM "Canais do youtube"
-WHERE videos_para_scann IS NOT NULL
-  AND videos_para_scann != '';
--- Esperado: número baixo (fila é processada rápido)
-```
+### Tabelas:
+- `Canais do youtube` - Armazena `videos_para_scann`
+- `Projeto` - Define `Postagem_dia`
+- `customers` - Define `Mentions` (créditos)
 
 ---
 
-## 🎯 CRITÉRIOS DE SUCESSO
-
-### ✅ Testes Passando:
-- [ ] SQL adiciona IDs em `videos_scanreados_2` imediatamente
-- [ ] Nenhuma duplicata em `videos_scanreados_2`
-- [ ] Python recebe IDs de `videos_para_scann` corretamente
-- [ ] Python NÃO chama YouTube API com filtro 'today'
-- [ ] `videos_scanreados` (JSONB) continua sendo populado pelo Python
-- [ ] Campo `processar` recebe apenas vídeos APPROVED
-
-### ✅ Performance:
-- [ ] SQL discovery: <2s por canal
-- [ ] Python analysis: <60s para 10 vídeos
-- [ ] Zero race conditions
-- [ ] Zero duplicatas
-
-### ✅ Logs Claros:
-- [ ] SQL: "IDs salvos em videos_scanreados_2 e adicionados à fila"
-- [ ] Python: "Fetching N videos BY ID from queue"
-- [ ] Python: "Fetched N videos by ID (requested: M)"
-
----
-
-## 🚨 ROLLBACK (SE NECESSÁRIO)
-
-### Se algo der errado:
-
-```sql
--- 1. Reverter campo (opcional, pode manter)
-ALTER TABLE "Canais do youtube"
-DROP COLUMN IF EXISTS videos_scanreados_2;
-
--- 2. Restaurar SQL function antiga
--- (usar backup de verificar_novos_videos_youtube.sql)
-
--- 3. Restaurar Python services
-git checkout HEAD~1 -- "Servidor/Monitormanto de canais/services/"
-cd "/Users/valdair/Documents/Projetos/Liftlio/Servidor/Monitormanto de canais"
-docker-compose down && docker-compose up -d --build
-```
-
----
-
-## 📊 MÉTRICAS DE IMPACTO
-
-### Antes (com problema):
-- Descoberta SQL: 100 vídeos/hora
-- Análise Python: 100 vídeos/hora (pode descobrir outros 20)
-- Duplicatas: ~2-5% dos vídeos
-- Race conditions: 1-2 por dia
-
-### Depois (corrigido):
-- Descoberta SQL: 100 vídeos/hora
-- Análise Python: 100 vídeos/hora (mesmos 100)
-- Duplicatas: 0% ✅
-- Race conditions: 0 ✅
-
----
-
-## 🎉 CONCLUSÃO
-
-Esta implementação:
-- ✅ Elimina duplicatas
-- ✅ Elimina race conditions
-- ✅ Fonte única de verdade (SQL descobre, Python analisa)
-- ✅ Backward compatible (mantém videos_scanreados JSONB)
-- ✅ Performance melhorada (TEXT search vs JSONB parsing)
-- ✅ Código mais simples e manutenível
-
-**Tempo estimado total**: ~2h
-**Complexidade**: Média
-**Risco**: Baixo (backward compatible)
-
----
-
-**Documentação criada por**: Claude Code (Anthropic)
-**Data**: 2025-10-24
-**Versão**: 1.0
+**Fim da Documentação**
