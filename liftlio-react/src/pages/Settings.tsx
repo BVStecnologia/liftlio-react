@@ -1851,6 +1851,14 @@ const Settings: React.FC<{}> = () => {
   
   // Function to toggle project active state
   const toggleYoutubeActive = () => {
+    // Check if trying to enable YouTube without active subscription
+    if (!projectData["Youtube Active"] && !subscription?.has_active_subscription) {
+      alert(language === 'pt'
+        ? 'Por favor, renove sua assinatura para reativar o monitoramento do YouTube.'
+        : 'Please renew your subscription to reactivate YouTube monitoring.');
+      return;
+    }
+
     setProjectData(prev => ({
       ...prev,
       "Youtube Active": !prev["Youtube Active"]
@@ -2305,20 +2313,40 @@ const Settings: React.FC<{}> = () => {
                   </div>
                   <ToggleContainer>
                     <ToggleSwitch>
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         checked={projectData["Youtube Active"]}
                         onChange={toggleYoutubeActive}
+                        disabled={!projectData["Youtube Active"] && !subscription?.has_active_subscription}
+                        style={{
+                          opacity: !projectData["Youtube Active"] && !subscription?.has_active_subscription ? 0.5 : 1,
+                          cursor: !projectData["Youtube Active"] && !subscription?.has_active_subscription ? 'not-allowed' : 'pointer'
+                        }}
                       />
                       <span />
                     </ToggleSwitch>
                     <ToggleLabel>
-                      {projectData["Youtube Active"] ? 
-                        <><IconComponent icon={FaYoutube} style={{ color: '#FF0000' }} /> Project Active</> : 
+                      {projectData["Youtube Active"] ?
+                        <><IconComponent icon={FaYoutube} style={{ color: '#FF0000' }} /> Project Active</> :
                         <><IconComponent icon={FaYoutube} style={{ color: '#999' }} /> Project Disabled</>
                       }
                     </ToggleLabel>
                   </ToggleContainer>
+                  {!projectData["Youtube Active"] && !subscription?.has_active_subscription && (
+                    <div style={{
+                      marginTop: '10px',
+                      padding: '10px',
+                      background: theme.name === 'dark' ? 'rgba(255, 152, 0, 0.15)' : 'rgba(255, 152, 0, 0.1)',
+                      border: '1px solid rgba(255, 152, 0, 0.3)',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      color: theme.name === 'dark' ? '#ffb74d' : '#e65100'
+                    }}>
+                      ⚠️ {language === 'pt'
+                        ? 'Renove sua assinatura para reativar o monitoramento do YouTube'
+                        : 'Renew your subscription to reactivate YouTube monitoring'}
+                    </div>
+                  )}
                 </FormGroup>
               </FormSection>
               

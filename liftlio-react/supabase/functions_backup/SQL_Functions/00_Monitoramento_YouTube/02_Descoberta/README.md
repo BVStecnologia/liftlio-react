@@ -1,65 +1,89 @@
-# 📁 02_Sistema_Monitoramento
+# 📁 02_Sistema_Descoberta (JSONB v5)
 
-**Responsabilidade**: Sistema de comentários iniciais em vídeos "quentes" de canais top
-**Sistema**: Sistema 2 - Monitoramento (comentários iniciais, NÃO respostas)
-**Última atualização**: 2025-09-30 - Claude Code (Anthropic)
+**Responsabilidade**: Sistema de descoberta e qualificação de vídeos com IA
+**Sistema**: Sistema 2 - Descoberta de vídeos + Fila assíncrona
+**Última atualização**: 2025-10-24 - Claude Code (Anthropic) - Migração JSONB v5
 
 ---
 
 ## 🎯 PROPÓSITO
 
-Este sistema monitora os TOP X canais de cada projeto e cria **comentários iniciais engajantes**
-em vídeos novos com alto potencial de leads (`lead_potential = High`).
+Este sistema descobre vídeos novos em canais monitorados, qualifica com IA (Claude + Python VPS),
+e armazena resultados em **formato JSONB estruturado** para processamento posterior.
 
-**DIFERENTE** do Sistema Descoberta que RESPONDE comentários, este sistema CRIA o primeiro
-comentário no vídeo para gerar engajamento inicial.
+**ARQUITETURA ASSÍNCRONA (v5)**: Sistema de 2 etapas com fila intermediária:
+1. **Descoberta** → Encontra vídeos novos e adiciona na fila
+2. **Qualificação** → Processa fila com IA e salva resultados JSONB
 
 ---
 
 ## 📊 FUNÇÕES DISPONÍVEIS
 
-### ⭐ verificar_novos_videos_youtube.sql (FUNÇÃO CRÍTICA DO SISTEMA)
-- **Descrição**: **ALIMENTA O CAMPO [processar]** - Monitora canais ativos buscando novos vídeos e filtrando com IA
-- **Parâmetros**: Nenhum (processa TODOS projetos com YouTube Active)
-- **Retorna**: JSONB com estatísticas detalhadas por canal
-- **Usado por**: CRON a cada 45 minutos (`*/45 * * * *`)
+### ⭐ verificar_novos_videos_youtube.sql (DISCOVERY - Etapa 1)
+- **Descrição**: **APENAS DESCOBRE** vídeos novos e adiciona em `videos_para_scann` (fila)
+- **Parâmetros**: `lote_tamanho` (default: 15 canais por execução)
+- **Retorna**: void
+- **Usado por**: CRON a cada 5 minutos
+- **Versão**: v2.0 - JSONB v5 compatible
 - **Chama**:
   - `can_comment_on_channel()` - Anti-spam (limite 1 comentário/7 dias por canal)
-  - `monitormanto_de_canal_sql()` - Busca vídeos novos via SQL direto (otimizado!)
-  - `call_api_edge_function()` - Qualifica vídeos com IA (video-qualifier-wrapper)
+  - `Canal_youtube_dados()` - Edge Function que busca vídeos via YouTube Data API
 - **Tabelas afetadas**:
-  - `"Canais do youtube"` (UPDATE: videos_scanreados, processar)
+  - `"Canais do youtube"` (UPDATE: `videos_para_scann`, `last_canal_check`)
   - `"Projeto"` (SELECT WHERE Youtube Active = true)
   - `"Customers"` (SELECT para verificar Mentions disponíveis)
-- **Sistema de campos:**
-  - `videos_scanreados`: Adiciona TODOS vídeos encontrados (histórico completo)
-  - `processar`: Adiciona APENAS vídeos APROVADOS pela IA ⭐
 
-**⚡ ARQUITETURA EVENT-DRIVEN:**
+**Features JSONB v5:**
+- ✅ Deduplicação usando JSONB operators: `jsonb_array_elements(videos_scanreados::jsonb)`
+- ✅ Extrai IDs com `string_agg(elem->>'id', ',')` ao invés de regex
+- ✅ Compatível com arrays JSONB (não quebra com vírgulas em justificativas)
+- ✅ Processamento em lotes para evitar timeout (15 canais/execução)
+
+**Campos atualizados:**
+- `videos_para_scann`: Adiciona IDs de vídeos novos separados por vírgula
+- `last_canal_check`: Timestamp da última verificação (evita re-verificar antes de 30min)
+
+---
+
+### 🔥 processar_fila_videos.sql (QUALIFICATION - Etapa 2) **NOVA!**
+- **Descrição**: **QUALIFICA COM IA** vídeos da fila e salva resultados em JSONB array
+- **Parâmetros**: Nenhum (processa 1 canal por execução)
+- **Retorna**: void
+- **Usado por**: CRON a cada 3 minutos
+- **Versão**: v1.0 - JSONB v5 native
+- **Chama**:
+  - `video-qualifier-wrapper` - Edge Function v5 (retorna JSONB array)
+  - Python VPS (173.249.22.2:8001) - Claude Sonnet 4 + análise semântica
+- **Tabelas afetadas**:
+  - `"Canais do youtube"` (UPDATE: `videos_scanreados`, `processar`, limpa `videos_para_scann`)
+  - `debug_processar_fila` (INSERT logs de debug - opcional)
+
+**Features JSONB v5:**
+- ✅ Recebe array JSONB da Edge Function: `[{"id": "...", "status": "APPROVED|REJECTED", "motivo": "..."}]`
+- ✅ Concatena arrays com operador `||`: `videos_scanreados_atual || videos_array`
+- ✅ Filtra aprovados com: `WHERE elem->>'status' = 'APPROVED'`
+- ✅ Sistema de logs em 8 pontos críticos (debugging completo)
+
+**Campos atualizados:**
+- `videos_scanreados` (JSONB): Adiciona array com TODOS vídeos analisados (histórico completo)
+- `processar` (TEXT): Adiciona APENAS IDs aprovados separados por vírgula
+- `videos_para_scann`: Limpa após processar (libera fila)
+
+**Exemplo de JSONB salvo:**
+```json
+[
+  {
+    "id": "gFpBbvI6NF8",
+    "status": "APPROVED",
+    "motivo": "Vídeo sobre AI marketing B2B, público alvo enterprise"
+  },
+  {
+    "id": "xyz789abc",
+    "status": "REJECTED",
+    "motivo": "Conteúdo genérico sobre produtividade; não relacionado a marketing digital"
+  }
+]
 ```
-Esta função ALIMENTA o campo [processar], que automaticamente
-dispara o TRIGGER channel_videos_processor para processar vídeos!
-
-Fluxo completo:
-1. verificar_novos_videos_youtube() encontra vídeos novos
-2. IA aprova vídeos relevantes via call_api_edge_function()
-3. UPDATE campo [processar] com IDs aprovados
-4. ⚡ TRIGGER channel_videos_processor dispara automaticamente
-5. process_channel_videos() insere vídeos na tabela "Videos"
-6. Campo [processar] é limpo = ''
-
-POR ISSO NÃO PRECISA DE CRON PARA PROCESSAR! O trigger faz tudo.
-```
-
-**Campos críticos da tabela "Canais do youtube":**
-| Campo | Propósito | Limpeza |
-|-------|-----------|---------|
-| `videos_scanreados` | Histórico completo (TODOS vídeos já verificados) | ❌ Nunca |
-| `processar` ⭐ | Fila de vídeos APROVADOS aguardando processamento | ✅ Após trigger |
-| `executed` | Histórico de vídeos já inseridos no banco | ❌ Nunca |
-
-**Ver ciclo completo em:**
-- `/00_Monitoramento_YouTube/README.md` → Seção "CICLO COMPLETO DE UM VÍDEO"
 
 ---
 
@@ -75,110 +99,213 @@ POR ISSO NÃO PRECISA DE CRON PARA PROCESSAR! O trigger faz tudo.
   - `"Videos"` (SELECT WHERE monitored = true, UPDATE lead_potential)
   - `"Mensagens"` (INSERT via create_and_save_initial_comment)
 
-### 🔵 create_initial_video_comment_with_claude.sql
-- **Descrição**: Cria comentário inicial usando Claude AI (baseado em título, descrição, transcrição)
+### 🔵 update_video_analysis.sql
+- **Descrição**: Atualiza análise de um vídeo específico
 - **Parâmetros**:
   - `p_video_id` (BIGINT) - ID do vídeo
-  - `p_project_id` (BIGINT) - ID do projeto
-- **Retorna**: JSONB com `{success, message_id, comment}`
-- **Usado por**:
-  - `process_monitored_videos()`
-  - `create_monitoring_message()`
-- **Chama**:
-  - `claude_complete()` - Gera texto do comentário
+- **Retorna**: void
+- **Usado por**: `process_monitored_videos()`
 - **Tabelas afetadas**:
-  - `"Videos"` (SELECT + JOIN Videos_trancricao)
-  - `"Projeto"` (SELECT config)
-  - `"Mensagens"` (INSERT com tipo_msg=1)
-
-### 🔵 create_monitoring_message.sql
-- **Descrição**: Wrapper que verifica duplicatas e chama create_initial_video_comment_with_claude
-- **Parâmetros**:
-  - `p_project_id` (INTEGER) - ID do projeto
-  - `p_video_youtube_id` (TEXT) - ID do YouTube do vídeo
-  - `p_channel_id` (TEXT) - ID do canal
-- **Retorna**: JSONB com resultado
-- **Usado por**: Sistemas externos, APIs
-- **Chama**: `create_initial_video_comment_with_claude()`
-- **Tabelas afetadas**:
-  - `"Videos"` (SELECT)
-  - `"Mensagens"` (SELECT para verificar duplicata)
+  - `"Videos"` (UPDATE: lead_potential)
 
 ---
 
-## 🔗 FLUXO DE INTERLIGAÇÃO
+## 🔗 FLUXO DE INTERLIGAÇÃO (ARQUITETURA ASSÍNCRONA v5)
 
 ```
-CRON verificar_novos_videos_youtube() (a cada 45min)
-  ├─→ Busca vídeos novos em canais ativos
-  ├─→ IA aprova vídeos relevantes
-  └─→ Adiciona IDs em campo [processar]
-  ↓
-⚡ TRIGGER channel_videos_processor (automático)
-  └─→ process_channel_videos()
-        └─→ INSERT vídeos com monitored = true
-  ↓
-CRON process_monitored_videos() (diário)
-  ├─→ Para cada vídeo monitored = true:
-  │     ├─→ update_video_analysis() → lead_potential
-  │     └─→ Se lead_potential = 'High':
-  │           └─→ create_and_save_initial_comment(video_id)
-  │                 └─→ create_initial_video_comment_with_claude()
-  │                       ├─→ claude_complete() → gera texto
-  │                       └─→ INSERT Mensagens (tipo_msg=1, Comentario_Principais=NULL)
-  ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  ETAPA 1: DESCOBERTA (verificar_novos_videos_youtube)          │
+│  CRON: */5 * * * * (a cada 5 minutos)                           │
+└─────────────────────────────────────────────────────────────────┘
+         │
+         ├─→ Busca vídeos novos via Canal_youtube_dados() Edge Function
+         ├─→ Verifica anti-spam via can_comment_on_channel()
+         ├─→ Deduplica usando JSONB operators (extrai IDs de videos_scanreados)
+         └─→ Adiciona IDs novos em `videos_para_scann` (fila)
+
+         ↓ (FILA INTERMEDIÁRIA - videos_para_scann)
+
+┌─────────────────────────────────────────────────────────────────┐
+│  ETAPA 2: QUALIFICAÇÃO IA (processar_fila_videos)              │
+│  CRON: */3 * * * * (a cada 3 minutos)                           │
+└─────────────────────────────────────────────────────────────────┘
+         │
+         ├─→ Pega 1 canal da fila (videos_para_scann)
+         ├─→ Chama Edge Function v5: video-qualifier-wrapper
+         │     └─→ Python VPS (173.249.22.2:8001)
+         │           └─→ Claude Sonnet 4 analisa semântica
+         │                 └─→ Retorna JSONB: [{"id", "status", "motivo"}]
+         ├─→ Salva JSONB array em `videos_scanreados` (concatena com ||)
+         ├─→ Extrai aprovados para `processar` (apenas IDs)
+         └─→ Limpa `videos_para_scann` (libera fila)
+
+         ↓ (Campo processar preenchido com IDs aprovados)
+
+┌─────────────────────────────────────────────────────────────────┐
+│  ETAPA 3: PROCESSAMENTO (process_monitored_videos)             │
+│  CRON: diário ou sob demanda                                    │
+└─────────────────────────────────────────────────────────────────┘
+         │
+         ├─→ Para cada vídeo monitored = true:
+         │     ├─→ update_video_analysis() → lead_potential
+         │     └─→ Se lead_potential = 'High':
+         │           └─→ create_and_save_initial_comment(video_id)
+         │                 └─→ create_initial_video_comment_with_claude()
+         │                       ├─→ claude_complete() → gera texto
+         │                       └─→ INSERT Mensagens (tipo_msg=1)
+         ↓
 Settings messages posts
   └─→ Agendamento automático (CRON postagem)
 ```
 
 ---
 
+## 📋 CAMPOS CRÍTICOS DA TABELA "Canais do youtube"
+
+| Campo | Tipo | Propósito | Limpeza | Formato JSONB v5 |
+|-------|------|-----------|---------|------------------|
+| `videos_para_scann` ⭐ **NOVO!** | TEXT | Fila de vídeos aguardando qualificação IA | ✅ Após processar | CSV: "id1,id2,id3" |
+| `videos_scanreados` | TEXT | Histórico completo com justificativas (TODOS vídeos analisados) | ❌ Nunca | ✅ JSONB array: `[{"id": "...", "status": "...", "motivo": "..."}]` |
+| `processar` | TEXT | IDs aprovados pela IA (apenas vídeos relevantes) | ⚠️ Manual | CSV: "id1,id2,id3" |
+| `executed` | TEXT | Histórico de vídeos já inseridos no banco | ❌ Nunca | CSV: "id1,id2,id3" |
+| `last_canal_check` | TIMESTAMP | Última verificação de vídeos novos (evita re-check < 30min) | ❌ Atualizado | ISO timestamp |
+
+**Fluxo de dados:**
+```
+videos_para_scann (descobertos)
+  → processar_fila_videos()
+    → videos_scanreados (JSONB) + processar (aprovados)
+```
+
+**Ver ciclo completo em:**
+- `/00_Monitoramento_YouTube/README.md` → Seção "CICLO COMPLETO DE UM VÍDEO"
+- `/ASYNC_QUEUE_IMPLEMENTATION_PLAN.md` → Testes completos da migração JSONB v5
+
+---
+
 ## 📋 DEPENDÊNCIAS
 
-### Funções externas necessárias:
+### Funções SQL necessárias:
+- `can_comment_on_channel()` - Anti-spam (limite temporal)
 - `process_channel_videos()` - Localização: `../03_Videos/`
 - `update_video_analysis()` - Localização: `../PIPELINE_PROCESSOS/STATUS_3_VIDEO_ANALYSIS/`
 - `create_and_save_initial_comment()` - Localização: `../04_Mensagens/`
 - `claude_complete()` - Localização: `../03_Claude/`
+- `limpar_debug_logs()` - Limpeza automática de logs (opcional)
+
+### Edge Functions (Supabase):
+- ✅ **Canal_youtube_dados** - Busca vídeos via YouTube Data API
+- ✅ **video-qualifier-wrapper** (v5) - Qualifica vídeos com IA
+  - Localização: `/supabase/functions/video-qualifier-wrapper/`
+  - Versão: JSONB v5 (retorna array estruturado)
+  - Deployment: Supabase LIVE + backups em 3 localizações
+  - Chama: Python VPS (173.249.22.2:8001) → Claude Sonnet 4
+
+### Serviços Externos:
+- **Python VPS** (173.249.22.2:8001)
+  - Endpoint: `/qualify-videos`
+  - Modelo: Claude Sonnet 4 (claude-sonnet-4-20250514)
+  - Retorna: JSON com justificativas detalhadas
+  - Código: `/Servidor/Monitormanto de canais/`
 
 ### Tabelas do Supabase:
+- `"Canais do youtube"` - [SELECT, UPDATE: videos_para_scann, videos_scanreados, processar]
+- `"Projeto"` - [SELECT: Youtube Active, keywords, prompt_user]
+- `"Customers"` - [SELECT: Mentions disponíveis]
 - `"Videos"` - [SELECT, UPDATE: lead_potential, monitored]
 - `"Mensagens"` - [INSERT: tipo_msg=1, Comentario_Principais=NULL]
-- `"Canais do youtube"` - [SELECT]
-- `"Canais do youtube_Projeto"` - [SELECT: rank_position, ranking_score]
-- `"Projeto"` - [SELECT: qtdmonitoramento, keywords, prompt_user]
-- `"Videos_trancricao"` - [SELECT: transcrição]
-
-### Edge Functions:
-- Nenhuma (usa funções SQL diretas)
+- `debug_processar_fila` - [INSERT: logs de debug] (opcional)
 
 ---
 
 ## ⚙️ CONFIGURAÇÕES & VARIÁVEIS
 
+- `verificar_novos_videos_youtube()`:
+  - `lote_tamanho` (default: 15) - Canais processados por execução
+  - Intervalo mínimo: 30 minutos entre verificações do mesmo canal
+
+- `processar_fila_videos()`:
+  - Processa: 1 canal por execução (evita timeout)
+  - Timeout Edge Function: 60 segundos
+  - Logs debug: 8 pontos críticos na tabela `debug_processar_fila`
+
 - `Projeto.qtdmonitoramento` - Quantidade de canais top para monitorar (ex: 5)
 - `Videos.monitored` - Flag boolean TRUE para vídeos de canais top
 - `Videos.lead_potential` - Valores: 'High', 'Medium', 'Low' (apenas High recebe comentário)
 - `Mensagens.tipo_msg` - Valor 1 identifica mensagem de monitoramento
-- `Canais do youtube_Projeto.rank_position` - Posição do canal no ranking (1 = melhor)
 
 ---
 
 ## 🚨 REGRAS DE NEGÓCIO
 
+### Sistema de Descoberta (v5):
+1. **Fila assíncrona**: Descoberta e qualificação em etapas separadas (evita timeout)
+2. **Deduplicação JSONB**: Usa operators ao invés de regex (mais robusto)
+3. **Anti-spam**: 30 minutos mínimo entre verificações do mesmo canal
+4. **Lotes pequenos**: 15 canais por execução (performance otimizada)
+5. **JSONB arrays**: Vírgulas em justificativas não quebram parsing
+
+### Sistema de Monitoramento:
 1. **Apenas top X canais**: Usa `rank_position <= qtdmonitoramento`
 2. **Apenas vídeos High**: Comentário só é criado se `lead_potential = 'High'`
 3. **Sem duplicatas**: Verifica se já existe mensagem antes de criar
 4. **Comentário inicial**: `Comentario_Principais = NULL` (não responde ninguém)
 5. **tipo_msg = 1**: Identificador de mensagem de monitoramento
-6. **Agendamento automático**: Após criação, entra no sistema de agendamento padrão
 
 ---
 
 ## 🧪 COMO TESTAR
 
+### Teste da Fila Assíncrona (JSONB v5):
+
 ```sql
--- Teste 1: Processar todos vídeos monitorados (qualquer projeto)
+-- Teste 1: Descobrir vídeos novos (Etapa 1)
+SELECT verificar_novos_videos_youtube(5);  -- Processa 5 canais
+
+-- Teste 2: Verificar fila criada
+SELECT id, channel_id, videos_para_scann
+FROM "Canais do youtube"
+WHERE videos_para_scann IS NOT NULL AND videos_para_scann != ''
+LIMIT 5;
+
+-- Teste 3: Processar fila com IA (Etapa 2)
+SELECT processar_fila_videos();
+
+-- Teste 4: Ver resultados JSONB salvos
+SELECT
+    id,
+    channel_id,
+    videos_para_scann,  -- Deve estar NULL (limpo)
+    videos_scanreados,  -- JSONB array com justificativas
+    processar           -- IDs aprovados
+FROM "Canais do youtube"
+WHERE id = 1119;  -- Canal de teste (Dan Martell)
+
+-- Teste 5: Ver logs de debug (se habilitado)
+SELECT * FROM debug_processar_fila
+ORDER BY timestamp DESC
+LIMIT 20;
+
+-- Teste 6: Extrair vídeos aprovados do JSONB
+SELECT
+    c.id,
+    c.channel_id,
+    elem->>'id' as video_id,
+    elem->>'status' as status,
+    elem->>'motivo' as motivo
+FROM "Canais do youtube" c,
+     jsonb_array_elements(c.videos_scanreados::jsonb) as elem
+WHERE elem->>'status' = 'APPROVED'
+LIMIT 10;
+
+-- Teste 7: Limpar logs de debug (manutenção)
+SELECT limpar_debug_logs(7);  -- Remove logs > 7 dias
+```
+
+### Testes do Sistema de Monitoramento:
+
+```sql
+-- Teste 1: Processar todos vídeos monitorados
 SELECT process_monitored_videos();
 
 -- Teste 2: Criar comentário específico
@@ -215,12 +342,63 @@ WHERE m.tipo_msg = 1
 
 ## 📝 CHANGELOG
 
+### 2025-10-24 - Claude Code (Migração JSONB v5) 🎉
+- ✅ **MIGRAÇÃO COMPLETA PARA JSONB ARRAYS**
+- ✅ Adicionada função `processar_fila_videos()` - Qualificação assíncrona com IA
+- ✅ Atualizada `verificar_novos_videos_youtube()` - Deduplicação via JSONB operators
+- ✅ Sistema de fila assíncrona (`videos_para_scann`) - Evita timeouts
+- ✅ Edge Function v5 deployada (`video-qualifier-wrapper`) - Retorna JSONB array
+- ✅ Python service atualizado - Retorna JSON estruturado ao invés de CSV
+- ✅ Sistema de logs em 8 pontos críticos - Debug completo
+- ✅ 4 testes executados com sucesso - Canal 1119 (Dan Martell)
+- ✅ Backups em 3 localizações - Redundância garantida
+- **Total de funções**: 5 (+1 nova: processar_fila_videos)
+- **Status**: Todas funcionais em LIVE
+- **Documentação**: `/ASYNC_QUEUE_IMPLEMENTATION_PLAN.md` com testes detalhados
+
+**Benefícios JSONB v5:**
+1. ✅ Vírgulas em justificativas não quebram mais o sistema
+2. ✅ Queries estruturadas: `jsonb_array_elements()` para filtrar
+3. ✅ Type safety: PostgreSQL valida estrutura JSON
+4. ✅ Indexável: GIN indexes para performance futura
+5. ✅ Debugging fácil: Estrutura clara e legível
+
 ### 2025-09-30 - Claude Code
 - Reorganização inicial: movido de raiz para subpasta
 - Criação deste README.md
 - Total de funções: 4
 - Status: Todas funcionais
 - Dados reais: 48 mensagens, 56 vídeos monitorados
+
+---
+
+## 🔧 TROUBLESHOOTING
+
+### Problema: Vídeos não aparecem em videos_para_scann
+**Solução**: Verificar se canal passou os critérios:
+- `Youtube Active = true` no projeto
+- `is_active = true` no canal
+- `desativado_pelo_user = false`
+- `last_canal_check` > 30 minutos atrás
+
+### Problema: processar_fila_videos() não processa nada
+**Solução**: Verificar logs na tabela `debug_processar_fila`:
+```sql
+SELECT * FROM debug_processar_fila
+WHERE canal_id = 1119
+ORDER BY timestamp DESC;
+```
+
+### Problema: JSONB parse error
+**Solução**: Verificar se Edge Function v5 está deployada:
+- Deve retornar array: `[{"id": "...", "status": "...", "motivo": "..."}]`
+- Não deve retornar CSV string
+
+### Problema: Python VPS timeout
+**Solução**:
+- Verificar VPS online: `curl http://173.249.22.2:8001/health`
+- Ver logs: `ssh root@173.249.22.2 'docker logs -f liftlio-video-qualifier-prod'`
+- Timeout padrão: 60s (ajustar se necessário)
 
 ---
 
@@ -234,3 +412,5 @@ WHERE m.tipo_msg = 1
 4. ✅ Revisar "FLUXO DE INTERLIGAÇÃO" se mudou
 5. ✅ Atualizar "DEPENDÊNCIAS" se mudou
 6. ✅ Atualizar "COMO TESTAR" se interface mudou
+7. ✅ Testar no LIVE antes de commitar
+8. ✅ Atualizar backups em `/functions_backup/`
