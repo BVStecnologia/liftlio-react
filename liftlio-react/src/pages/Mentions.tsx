@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes, css, useTheme } from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
 import { COLORS, withOpacity } from '../styles/colors';
 import Card from '../components/Card';
 import { IconContext } from 'react-icons';
@@ -196,6 +197,68 @@ const PageTitle = styled.h1`
     font-size: ${props => props.theme.fontSizes.lg};
     margin-bottom: 16px;
   }
+`;
+
+const PageSubtitle = styled.div`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.secondary};
+  margin-bottom: 16px;
+  line-height: 1.6;
+  max-width: 700px;
+
+  strong {
+    color: #8B5CF6;
+    font-weight: ${props => props.theme.fontWeights.semibold};
+  }
+`;
+
+const ExplanationBox = styled.div`
+  background: ${props => props.theme.colors.background};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  border-left: 3px solid #8B5CF6;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  max-width: 800px;
+`;
+
+const ExplanationHeader = styled.div<{ $isExpanded?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+
+  .chevron-icon {
+    color: #8B5CF6;
+    font-size: 20px;
+    transition: transform 0.2s ease;
+    transform: ${props => props.$isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'};
+  }
+`;
+
+const ExplanationTitle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.primary};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  flex: 1;
+
+  svg {
+    color: #8B5CF6;
+    font-size: 18px;
+  }
+`;
+
+const ExplanationContent = styled(motion.div)`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.secondary};
+  line-height: 1.7;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid ${props => props.theme.colors.borderLight};
 `;
 
 // Improved tab design
@@ -2176,7 +2239,8 @@ const Mentions: React.FC = () => {
   const dashTheme = useDashboardTheme(theme.name);
   
   const [activeTab, setActiveTab] = useState<TabType>('scheduled');
-  
+  const [isExplanationExpanded, setIsExplanationExpanded] = useState(false);
+
   // Hook para verificar se a aba 'scheduled' está vazia e mudar para 'posted'
   useEffect(() => {
     if (activeTab === 'scheduled') {
@@ -2690,7 +2754,73 @@ const Mentions: React.FC = () => {
           <IconComponent icon={FaIcons.FaComments} />
           Mentions
         </PageTitle>
-        
+
+        <PageSubtitle>
+          Intelligent video discovery meets computer vision: Liftlio finds the perfect moments to engage, comments strategically, and continuously learns to improve results.
+        </PageSubtitle>
+
+        <ExplanationBox>
+          <ExplanationHeader
+            onClick={() => setIsExplanationExpanded(!isExplanationExpanded)}
+            $isExpanded={isExplanationExpanded}
+          >
+            <ExplanationTitle>
+              <IconComponent icon={FaIcons.FaRoute} />
+              The Journey of a Liftlio Comment
+            </ExplanationTitle>
+            <span className="chevron-icon">
+              <IconComponent icon={FaIcons.FaChevronDown} />
+            </span>
+          </ExplanationHeader>
+
+          <AnimatePresence>
+            {isExplanationExpanded && (
+              <ExplanationContent
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div style={{ marginBottom: '16px' }}>
+                  <strong>Stage 1: Discovery</strong><br />
+                  Liftlio's computer vision watches thousands of videos, analyzing frames,
+                  transcripts, and context. Only videos with perfect alignment to your
+                  business make it through.
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <strong>Stage 2: Quality Gate</strong><br />
+                  Each candidate passes rigorous checks:
+                  <ul style={{ marginTop: '8px', marginLeft: '20px' }}>
+                    <li>Does the content truly match your niche?</li>
+                    <li>Is the audience engaged and receptive?</li>
+                    <li>Will your comment add genuine value?</li>
+                  </ul>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <strong>Stage 3: Human Camouflage</strong><br />
+                  Our anti-spam AI ensures you never look like a bot:
+                  <ul style={{ marginTop: '8px', marginLeft: '20px' }}>
+                    <li>Varied comment frequency (no patterns)</li>
+                    <li>Natural language, never repetitive</li>
+                    <li>Strategic timing, never mechanical</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <strong>Stage 4: Evolution</strong><br />
+                  When the first batch completes, Liftlio hunts for new opportunities.
+                  This self-feeding cycle means your reach grows continuously.<br />
+                  <em style={{ color: '#8B5CF6', marginTop: '8px', display: 'block' }}>
+                    You're seeing Phase 1. The system gets smarter every day.
+                  </em>
+                </div>
+              </ExplanationContent>
+            )}
+          </AnimatePresence>
+        </ExplanationBox>
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <TabContainer>
             <Tab active={activeTab === 'scheduled'} onClick={() => setActiveTab('scheduled')}>
