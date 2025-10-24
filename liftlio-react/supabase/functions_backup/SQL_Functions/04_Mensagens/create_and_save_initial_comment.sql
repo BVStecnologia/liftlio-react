@@ -1,8 +1,11 @@
 -- =============================================
--- Função: create_and_save_initial_comment
--- Descrição: Cria e salva comentário inicial para vídeos
+-- FunÃ§Ã£o: create_and_save_initial_comment
+-- DescriÃ§Ã£o: Cria e salva comentÃ¡rio inicial para vÃ­deos
 -- Criado: 2025-01-24
+-- Atualizado: 2025-10-24 - ValidaÃ§Ãµes de seguranÃ§a para evitar inserir comentÃ¡rios de erro
 -- =============================================
+
+DROP FUNCTION IF EXISTS public.create_and_save_initial_comment(INTEGER);
 
 CREATE OR REPLACE FUNCTION public.create_and_save_initial_comment(p_video_id integer)
  RETURNS jsonb
@@ -14,23 +17,23 @@ DECLARE
     v_inserted_message_id INTEGER;
     v_result JSONB;
 BEGIN
-    -- Obter o ID do projeto associado ao vídeo usando a relação com o canal
+    -- Obter o ID do projeto associado ao vï¿½deo usando a relaï¿½ï¿½o com o canal
     SELECT c."Projeto" INTO v_project_id
     FROM "Videos" v
     JOIN "Canais do youtube" c ON v.canal = c.id
     WHERE v.id = p_video_id
     LIMIT 1;
 
-    -- Verificar se encontrou um projeto válido
+    -- Verificar se encontrou um projeto vï¿½lido
     IF v_project_id IS NULL THEN
         RETURN jsonb_build_object(
             'success', false,
-            'error', 'Não foi possível encontrar um projeto associado a este vídeo',
+            'error', 'Nï¿½o foi possï¿½vel encontrar um projeto associado a este vï¿½deo',
             'video_id', p_video_id
         );
     END IF;
 
-    -- Chamar a função para criar o comentário inicial
+    -- Chamar a funï¿½ï¿½o para criar o comentï¿½rio inicial
     SELECT create_initial_video_comment_with_claude(v_project_id, p_video_id) INTO v_comment_result;
 
     -- Verificar se ocorreu algum erro
@@ -42,6 +45,66 @@ BEGIN
             'project_id', v_project_id
         );
     END IF;
+
+    -- ============================================
+    -- VALIDAÃ‡Ã•ES DE SEGURANÃ‡A (Adicionadas 2025-10-24)
+    -- Garantir que NUNCA inserimos comentÃ¡rios de erro no banco
+    -- ============================================
+
+    -- 1. Validar se o comentÃ¡rio nÃ£o estÃ¡ vazio
+    IF v_comment_result->>'comment' IS NULL OR
+       TRIM(v_comment_result->>'comment') = '' THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'ComentÃ¡rio gerado estÃ¡ vazio',
+            'video_id', p_video_id,
+            'project_id', v_project_id,
+            'debug_info', v_comment_result->'debug_info'
+        );
+    END IF;
+
+    -- 2. Validar se o comentÃ¡rio nÃ£o Ã© uma mensagem de erro
+    IF v_comment_result->>'comment' ILIKE '%erro%' OR
+       v_comment_result->>'comment' ILIKE '%error%' THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'ComentÃ¡rio gerado contÃ©m mensagem de erro',
+            'comment_preview', v_comment_result->>'comment',
+            'video_id', p_video_id,
+            'project_id', v_project_id,
+            'debug_info', v_comment_result->'debug_info'
+        );
+    END IF;
+
+    -- 3. Validar tamanho mÃ­nimo (comentÃ¡rios reais do YouTube tÃªm pelo menos 20 caracteres)
+    IF LENGTH(TRIM(v_comment_result->>'comment')) < 20 THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'ComentÃ¡rio gerado Ã© muito curto (mÃ­nimo 20 caracteres)',
+            'comment_length', LENGTH(TRIM(v_comment_result->>'comment')),
+            'comment_preview', v_comment_result->>'comment',
+            'video_id', p_video_id,
+            'project_id', v_project_id
+        );
+    END IF;
+
+    -- 4. Validar se a justificativa nÃ£o contÃ©m palavras de erro
+    IF v_comment_result->>'justificativa' ILIKE '%error%' OR
+       v_comment_result->>'justificativa' ILIKE '%failed%' OR
+       v_comment_result->>'justificativa' ILIKE '%parsing%' THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'Justificativa contÃ©m indicadores de erro',
+            'justificativa_preview', v_comment_result->>'justificativa',
+            'video_id', p_video_id,
+            'project_id', v_project_id,
+            'debug_info', v_comment_result->'debug_info'
+        );
+    END IF;
+
+    -- ============================================
+    -- FIM DAS VALIDAÃ‡Ã•ES DE SEGURANÃ‡A
+    -- ============================================
 
     -- Inserir na tabela Mensagens com base na estrutura fornecida
     INSERT INTO "Mensagens" (
@@ -56,12 +119,12 @@ BEGIN
     ) VALUES (
         v_comment_result->>'comment',
         v_comment_result->>'justificativa',
-        false, -- não é um template
-        1,     -- tipo de mensagem: comentário inicial (ajuste conforme necessário)
+        false, -- nï¿½o ï¿½ um template
+        1,     -- tipo de mensagem: comentï¿½rio inicial (ajuste conforme necessï¿½rio)
         v_project_id,
         p_video_id,
-        false, -- não aprovado inicialmente
-        false  -- não respondido inicialmente
+        false, -- nï¿½o aprovado inicialmente
+        false  -- nï¿½o respondido inicialmente
     ) RETURNING id INTO v_inserted_message_id;
 
     -- Preparar o resultado
