@@ -1509,12 +1509,16 @@ const Analytics: React.FC = () => {
         const baseVisitors = 150 + Math.floor(Math.random() * 50);
         const growth = Math.floor((30 - i) * 2); // Gradual growth
         const dailyVariation = Math.floor(Math.random() * 30) - 15; // Daily variation
-        
+
         demoTraffic.push({
-          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          timestamp: date.getTime(), // Timestamp for proper time scaling
+          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), // Keep for backwards compatibility
           visitors: Math.max(50, baseVisitors + growth + dailyVariation),
           pageViews: Math.max(100, (baseVisitors + growth + dailyVariation) * 2.5),
-          sessions: Math.max(80, (baseVisitors + growth + dailyVariation) * 1.8)
+          sessions: Math.max(80, (baseVisitors + growth + dailyVariation) * 1.8),
+          liftlio: Math.floor((baseVisitors + growth + dailyVariation) * 0.68), // 68% Liftlio traffic
+          ads: Math.floor((baseVisitors + growth + dailyVariation) * 0.12), // 12% Paid traffic
+          direct: Math.floor((baseVisitors + growth + dailyVariation) * 0.20) // 20% Direct traffic
         });
       }
       
@@ -1649,12 +1653,13 @@ const Analytics: React.FC = () => {
       
       const dates = [];
       const dateToKey = new Map();
+      const dateToTimestamp = new Map(); // Store timestamps for each formatted date
       const periodUniqueVisitors = new Map(); // date/month -> Set de visitor_ids
-      
+
       if (shouldGroupByMonth) {
         // Para 90d e 365d, agrupar por mês
         const monthsToShow = period === '90d' ? 3 : 12;
-        
+
         for (let i = monthsToShow - 1; i >= 0; i--) {
           const date = new Date();
           date.setMonth(date.getMonth() - i);
@@ -1662,12 +1667,13 @@ const Analytics: React.FC = () => {
           const formattedMonth = date.toLocaleDateString('en-US', { month: 'short', year: monthsToShow > 6 ? '2-digit' : undefined });
           dates.push(formattedMonth);
           dateToKey.set(monthKey, formattedMonth);
+          dateToTimestamp.set(formattedMonth, date.getTime());
           periodUniqueVisitors.set(formattedMonth, new Set());
         }
       } else {
         // Para 7d e 30d, continuar mostrando por dia
         const daysToShow = period === '7d' ? 7 : 30;
-        
+
         for (let i = daysToShow - 1; i >= 0; i--) {
           const date = new Date();
           date.setDate(date.getDate() - i);
@@ -1677,6 +1683,7 @@ const Analytics: React.FC = () => {
             : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
           dates.push(formattedDate);
           dateToKey.set(dateKey, formattedDate);
+          dateToTimestamp.set(formattedDate, date.getTime());
           periodUniqueVisitors.set(formattedDate, new Set());
         }
       }
@@ -1746,18 +1753,19 @@ const Analytics: React.FC = () => {
       const traffic = dates.map(date => {
         const periodVisitors = periodUniqueVisitors.get(date) || new Set();
         const periodVisitorIds = Array.from(periodVisitors);
-        
+
         // Contar visitantes únicos por fonte para este período
         let liftlio = 0, direct = 0, ads = 0;
-        
+
         periodVisitorIds.forEach(visitorId => {
           const source = visitorSources.get(visitorId);
           if (source === 'Direct') direct++;
           else if (source === 'Paid') ads++;
           else liftlio++; // Default para Liftlio
         });
-        
+
         return {
+          timestamp: dateToTimestamp.get(date), // Add timestamp for proper time scaling
           date,
           liftlio,
           ads,
@@ -2492,13 +2500,21 @@ const Analytics: React.FC = () => {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="0" stroke={chartColors.grid} vertical={false} opacity={0.1} />
-              <XAxis 
-                dataKey="date" 
+              <XAxis
+                dataKey="timestamp"
+                type="number"
+                scale="time"
+                domain={['dataMin', 'dataMax']}
                 stroke={chartColors.text}
                 tick={{ fontSize: 11, fontWeight: 500 }}
                 tickLine={false}
                 axisLine={{ stroke: chartColors.grid, strokeWidth: 0.5 }}
                 dy={10}
+                tickFormatter={(timestamp) => {
+                  const date = new Date(timestamp);
+                  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                }}
+                interval="equidistantPreserveStart"
               />
               <YAxis 
                 stroke={chartColors.text}
@@ -2507,12 +2523,12 @@ const Analytics: React.FC = () => {
                 axisLine={false}
                 dx={-5}
               />
-              <Tooltip 
-                contentStyle={{ 
+              <Tooltip
+                contentStyle={{
                   backgroundColor: theme.name === 'dark' ? 'rgba(17, 24, 39, 0.98)' : 'rgba(255, 255, 255, 0.98)',
                   border: 'none',
                   borderRadius: '16px',
-                  boxShadow: theme.name === 'dark' 
+                  boxShadow: theme.name === 'dark'
                     ? '0 10px 40px rgba(0, 0, 0, 0.4), 0 0 1px rgba(139, 92, 246, 0.5)'
                     : '0 10px 40px rgba(0, 0, 0, 0.1), 0 0 1px rgba(139, 92, 246, 0.3)',
                   color: theme.colors.text.primary,
@@ -2521,6 +2537,10 @@ const Analytics: React.FC = () => {
                   fontWeight: 500
                 }}
                 formatter={(value: number) => [`${value.toLocaleString()} visits`, '']}
+                labelFormatter={(timestamp) => {
+                  const date = new Date(timestamp);
+                  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                }}
                 labelStyle={{ fontWeight: 600, marginBottom: 8 }}
                 itemStyle={{ padding: '2px 0' }}
               />
