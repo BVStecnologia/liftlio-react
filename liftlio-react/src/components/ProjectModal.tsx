@@ -430,23 +430,22 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
 
   // Função para detectar idioma baseado nos campos do formulário
   const detectLanguage = () => {
+    // 1. PRIORIDADE MÁXIMA: País selecionado
+    if (projectForm.country === 'BR') return 'pt';
+    if (projectForm.country === 'US' || projectForm.country === 'GB' || projectForm.country === 'CA' || projectForm.country === 'AU') return 'en';
+
+    // 2. Se país não é definitivo, analisar o texto
     const textToAnalyze = `${projectForm.name} ${projectForm.company} ${projectForm.audience}`.toLowerCase();
 
-    // Lista de palavras comuns em português
-    const ptWords = ['para', 'com', 'sem', 'como', 'uma', 'mais', 'sobre', 'que', 'dos', 'das', 'pela', 'pelo'];
-    const ptCount = ptWords.filter(word => textToAnalyze.includes(word)).length;
-
-    // Detectar acentos (forte indicador de PT)
+    // Detectar acentos portugueses (forte indicador)
     const hasAccents = /[àáâãäèéêëìíîïòóôõöùúûü]/i.test(textToAnalyze);
+    if (hasAccents) return 'pt';
 
-    // País Brasil também indica PT
-    const isBrazil = projectForm.country === 'BR';
+    // Detectar palavras exclusivas do português (word boundaries)
+    const ptExclusiveWords = /\b(está|estão|são|você|também|muito|então|após|além|através)\b/i;
+    if (ptExclusiveWords.test(textToAnalyze)) return 'pt';
 
-    // Se tem acentos OU país é BR OU tem 2+ palavras PT comuns
-    if (hasAccents || isBrazil || ptCount >= 2) {
-      return 'pt';
-    }
-
+    // 3. Default: inglês
     return 'en';
   };
 
