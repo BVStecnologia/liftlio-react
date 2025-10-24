@@ -476,7 +476,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       let prompt = '';
 
       if (contentType === 'keywords') {
-        prompt = `You are a YouTube SEO expert. Generate exactly 3 keywords that people ACTUALLY type in YouTube search to find this type of product/service.
+        prompt = `Generate exactly 3 search keywords that people interested in this product/service would use to find solutions to their problems.
 
 Project Information:
 - Project Name: ${projectForm.name}
@@ -484,27 +484,34 @@ Project Information:
 - Target Audience: ${projectForm.audience}
 
 CRITICAL RULES:
-1. Use NATURAL and CONVERSATIONAL language (how real people talk)
-2. Optimal length: 2-4 words per keyword (no longer!)
-3. Mix different types:
-   - 1 SHORT keyword (2 words): broad and direct term
-   - 1 MID keyword (2-3 words): specific but not overly technical
-   - 1 LONG keyword (3-4 words): with clear intent (how to, review, vs, best, tutorial)
+1. Focus on the PRODUCT/SERVICE being offered, NOT on "YouTube" or any platform
+2. Think about what PROBLEMS this solves for the target audience
+3. Use NATURAL language (2-4 words per keyword)
+4. Mix different types:
+   - 1 BROAD keyword: main category/solution
+   - 1 SPECIFIC keyword: what it does exactly
+   - 1 INTENT keyword: problem being solved or action being taken
 
-4. Focus on how REAL PEOPLE search on YouTube, not corporate jargon
-5. Avoid excessive technical terminology
-6. Use action verbs when possible (automate, setup, use, create, learn)
-7. Think TUTORIALS, REVIEWS, and COMPARISONS (YouTube is about learning/watching)
+5. Keywords should help FIND PEOPLE interested in this type of solution
+6. Avoid platform names (YouTube, social media, etc) unless the product IS about that platform
+7. Focus on the VALUE PROPOSITION and TARGET AUDIENCE needs
 
 LANGUAGE:
 ${language === 'pt'
-  ? '- Generate keywords in PORTUGUESE (Brazilian Portuguese)\n- Use terms like: "como", "ferramenta", "tutorial", "melhor", "vs"\n- Examples: "ferramenta youtube", "automatizar comentários", "como usar youtube"'
-  : '- Generate keywords in ENGLISH\n- Use terms like: "how to", "tool", "tutorial", "best", "vs"\n- Examples: "youtube tool", "automate comments", "how to use youtube"'}
+  ? '- Generate keywords in PORTUGUESE (Brazilian Portuguese)\n- Natural terms people would search'
+  : '- Generate keywords in ENGLISH\n- Natural terms people would search'}
 
-EXAMPLES OF WHAT TO GENERATE:
-✅ GOOD (English): "youtube automation", "auto reply comments", "youtube engagement tutorial"
-✅ GOOD (Portuguese): "automação youtube", "responder comentários automaticamente", "engajamento youtube"
-❌ BAD: "enterprise-grade YouTube engagement automation platform for digital marketers"
+EXAMPLES:
+
+Project: "AI chatbot for customer support"
+Audience: "E-commerce companies needing 24/7 support"
+✅ GOOD: "customer support automation, AI chatbot for ecommerce, automate customer service"
+❌ BAD: "youtube chatbot tutorial, how to build chatbot youtube, chatbot youtube"
+
+Project: "Marketing automation for B2B companies"
+Audience: "Marketing managers in tech companies"
+✅ GOOD: "B2B marketing automation, lead generation software, automate email campaigns"
+❌ BAD: "youtube marketing automation, marketing youtube tutorial, youtube B2B"
 
 Respond ONLY with the 3 keywords separated by commas, without any introduction or explanation.`;
       } else {
@@ -593,7 +600,7 @@ Respond ONLY with the 3 keywords separated by commas, without any introduction o
       // Detectar idioma
       const language = detectLanguage();
 
-      const prompt = `You are a YouTube SEO expert. Generate exactly 3 keywords that people ACTUALLY type in YouTube search to find this type of product/service.
+      const prompt = `Generate exactly 3 search keywords that people interested in this product/service would use to find solutions to their problems.
 
 Project Information:
 - Project Name: ${projectForm.name}
@@ -601,27 +608,34 @@ Project Information:
 - Target Audience: ${audienceText}
 
 CRITICAL RULES:
-1. Use NATURAL and CONVERSATIONAL language (how real people talk)
-2. Optimal length: 2-4 words per keyword (no longer!)
-3. Mix different types:
-   - 1 SHORT keyword (2 words): broad and direct term
-   - 1 MID keyword (2-3 words): specific but not overly technical
-   - 1 LONG keyword (3-4 words): with clear intent (how to, review, vs, best, tutorial)
+1. Focus on the PRODUCT/SERVICE being offered, NOT on "YouTube" or any platform
+2. Think about what PROBLEMS this solves for the target audience
+3. Use NATURAL language (2-4 words per keyword)
+4. Mix different types:
+   - 1 BROAD keyword: main category/solution
+   - 1 SPECIFIC keyword: what it does exactly
+   - 1 INTENT keyword: problem being solved or action being taken
 
-4. Focus on how REAL PEOPLE search on YouTube, not corporate jargon
-5. Avoid excessive technical terminology
-6. Use action verbs when possible (automate, setup, use, create, learn)
-7. Think TUTORIALS, REVIEWS, and COMPARISONS (YouTube is about learning/watching)
+5. Keywords should help FIND PEOPLE interested in this type of solution
+6. Avoid platform names (YouTube, social media, etc) unless the product IS about that platform
+7. Focus on the VALUE PROPOSITION and TARGET AUDIENCE needs
 
 LANGUAGE:
 ${language === 'pt'
-  ? '- Generate keywords in PORTUGUESE (Brazilian Portuguese)\n- Use terms like: "como", "ferramenta", "tutorial", "melhor", "vs"\n- Examples: "ferramenta youtube", "automatizar comentários", "como usar youtube"'
-  : '- Generate keywords in ENGLISH\n- Use terms like: "how to", "tool", "tutorial", "best", "vs"\n- Examples: "youtube tool", "automate comments", "how to use youtube"'}
+  ? '- Generate keywords in PORTUGUESE (Brazilian Portuguese)\n- Natural terms people would search'
+  : '- Generate keywords in ENGLISH\n- Natural terms people would search'}
 
-EXAMPLES OF WHAT TO GENERATE:
-✅ GOOD (English): "youtube automation", "auto reply comments", "youtube engagement tutorial"
-✅ GOOD (Portuguese): "automação youtube", "responder comentários automaticamente", "engajamento youtube"
-❌ BAD: "enterprise-grade YouTube engagement automation platform for digital marketers"
+EXAMPLES:
+
+Project: "AI chatbot for customer support"
+Audience: "E-commerce companies needing 24/7 support"
+✅ GOOD: "customer support automation, AI chatbot for ecommerce, automate customer service"
+❌ BAD: "youtube chatbot tutorial, how to build chatbot youtube, chatbot youtube"
+
+Project: "Marketing automation for B2B companies"
+Audience: "Marketing managers in tech companies"
+✅ GOOD: "B2B marketing automation, lead generation software, automate email campaigns"
+❌ BAD: "youtube marketing automation, marketing youtube tutorial, youtube B2B"
 
 Respond ONLY with the 3 keywords separated by commas, without any introduction or explanation.`;
 
