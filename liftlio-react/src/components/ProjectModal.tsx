@@ -427,7 +427,29 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       keywords: updatedKeywords.join(', ')
     }));
   };
-  
+
+  // Função para detectar idioma baseado nos campos do formulário
+  const detectLanguage = () => {
+    const textToAnalyze = `${projectForm.name} ${projectForm.company} ${projectForm.audience}`.toLowerCase();
+
+    // Lista de palavras comuns em português
+    const ptWords = ['para', 'com', 'sem', 'como', 'uma', 'mais', 'sobre', 'que', 'dos', 'das', 'pela', 'pelo'];
+    const ptCount = ptWords.filter(word => textToAnalyze.includes(word)).length;
+
+    // Detectar acentos (forte indicador de PT)
+    const hasAccents = /[àáâãäèéêëìíîïòóôõöùúûü]/i.test(textToAnalyze);
+
+    // País Brasil também indica PT
+    const isBrazil = projectForm.country === 'BR';
+
+    // Se tem acentos OU país é BR OU tem 2+ palavras PT comuns
+    if (hasAccents || isBrazil || ptCount >= 2) {
+      return 'pt';
+    }
+
+    return 'en';
+  };
+
   const generateAIContent = async (contentType: 'keywords' | 'description') => {
     // Verificar se temos dados suficientes
     if (contentType === 'keywords' && (!projectForm.name || !projectForm.company || !projectForm.audience)) {
@@ -447,21 +469,44 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     }
     
     try {
-      // Determinar o idioma baseado no país selecionado
-      const language = projectForm.country === 'BR' ? 'pt' : 'en';
-      
+      // Detectar idioma automaticamente
+      const language = detectLanguage();
+
       // Preparar o prompt adequado baseado no tipo de conteúdo
       let prompt = '';
-      
+
       if (contentType === 'keywords') {
-        prompt = `Generate exactly 3 relevant keywords for the following project:
-         Project Name: ${projectForm.name}
-         Company/Product Name: ${projectForm.company}
-         Target Audience Description: ${projectForm.audience}
+        prompt = `You are a YouTube SEO expert. Generate exactly 3 keywords that people ACTUALLY type in YouTube search to find this type of product/service.
 
-         Generate a list of 3 bottom-of-funnel keywords that indicate high purchase intent. Focus on transactional queries — such as comparisons, reviews, or product-versus-product searches — that indicate the user is further along in the buying process. Do not mention prices, free trials, or discounts.
+Project Information:
+- Project Name: ${projectForm.name}
+- Company Name: ${projectForm.company}
+- Target Audience: ${projectForm.audience}
 
-         Respond ONLY with the keywords separated by commas, without any introduction or explanation.`;
+CRITICAL RULES:
+1. Use NATURAL and CONVERSATIONAL language (how real people talk)
+2. Optimal length: 2-4 words per keyword (no longer!)
+3. Mix different types:
+   - 1 SHORT keyword (2 words): broad and direct term
+   - 1 MID keyword (2-3 words): specific but not overly technical
+   - 1 LONG keyword (3-4 words): with clear intent (how to, review, vs, best, tutorial)
+
+4. Focus on how REAL PEOPLE search on YouTube, not corporate jargon
+5. Avoid excessive technical terminology
+6. Use action verbs when possible (automate, setup, use, create, learn)
+7. Think TUTORIALS, REVIEWS, and COMPARISONS (YouTube is about learning/watching)
+
+LANGUAGE:
+${language === 'pt'
+  ? '- Generate keywords in PORTUGUESE (Brazilian Portuguese)\n- Use terms like: "como", "ferramenta", "tutorial", "melhor", "vs"\n- Examples: "ferramenta youtube", "automatizar comentários", "como usar youtube"'
+  : '- Generate keywords in ENGLISH\n- Use terms like: "how to", "tool", "tutorial", "best", "vs"\n- Examples: "youtube tool", "automate comments", "how to use youtube"'}
+
+EXAMPLES OF WHAT TO GENERATE:
+✅ GOOD (English): "youtube automation", "auto reply comments", "youtube engagement tutorial"
+✅ GOOD (Portuguese): "automação youtube", "responder comentários automaticamente", "engajamento youtube"
+❌ BAD: "enterprise-grade YouTube engagement automation platform for digital marketers"
+
+Respond ONLY with the 3 keywords separated by commas, without any introduction or explanation.`;
       } else {
         // Construir a URL correta
         let url = projectForm.link;
@@ -545,14 +590,40 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     setIsGeneratingKeywords(true);
 
     try {
-      const prompt = `Generate exactly 3 relevant keywords for the following project:
-         Project Name: ${projectForm.name}
-         Company/Product Name: ${projectForm.company}
-         Target Audience Description: ${audienceText}
+      // Detectar idioma
+      const language = detectLanguage();
 
-         Generate a list of 3 bottom-of-funnel keywords that indicate high purchase intent. Focus on transactional queries — such as comparisons, reviews, or product-versus-product searches — that indicate the user is further along in the buying process. Do not mention prices, free trials, or discounts.
+      const prompt = `You are a YouTube SEO expert. Generate exactly 3 keywords that people ACTUALLY type in YouTube search to find this type of product/service.
 
-         Respond ONLY with the keywords separated by commas, without any introduction or explanation.`;
+Project Information:
+- Project Name: ${projectForm.name}
+- Company Name: ${projectForm.company}
+- Target Audience: ${audienceText}
+
+CRITICAL RULES:
+1. Use NATURAL and CONVERSATIONAL language (how real people talk)
+2. Optimal length: 2-4 words per keyword (no longer!)
+3. Mix different types:
+   - 1 SHORT keyword (2 words): broad and direct term
+   - 1 MID keyword (2-3 words): specific but not overly technical
+   - 1 LONG keyword (3-4 words): with clear intent (how to, review, vs, best, tutorial)
+
+4. Focus on how REAL PEOPLE search on YouTube, not corporate jargon
+5. Avoid excessive technical terminology
+6. Use action verbs when possible (automate, setup, use, create, learn)
+7. Think TUTORIALS, REVIEWS, and COMPARISONS (YouTube is about learning/watching)
+
+LANGUAGE:
+${language === 'pt'
+  ? '- Generate keywords in PORTUGUESE (Brazilian Portuguese)\n- Use terms like: "como", "ferramenta", "tutorial", "melhor", "vs"\n- Examples: "ferramenta youtube", "automatizar comentários", "como usar youtube"'
+  : '- Generate keywords in ENGLISH\n- Use terms like: "how to", "tool", "tutorial", "best", "vs"\n- Examples: "youtube tool", "automate comments", "how to use youtube"'}
+
+EXAMPLES OF WHAT TO GENERATE:
+✅ GOOD (English): "youtube automation", "auto reply comments", "youtube engagement tutorial"
+✅ GOOD (Portuguese): "automação youtube", "responder comentários automaticamente", "engajamento youtube"
+❌ BAD: "enterprise-grade YouTube engagement automation platform for digital marketers"
+
+Respond ONLY with the 3 keywords separated by commas, without any introduction or explanation.`;
 
       // Chamar edge function
       const fnData = await callEdgeFunction('claude-proxy', {
