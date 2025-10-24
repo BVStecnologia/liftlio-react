@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, ReactElement } from 'react';
 import styled, { keyframes, css } from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Card from '../components/Card';
 import { IconContext } from 'react-icons';
@@ -9,7 +10,8 @@ import {
   FaCheck, FaFont, FaSlidersH, FaMoon, FaSun, FaSave, FaRedo, 
   FaCloudUploadAlt, FaSearch, FaChevronDown, FaSort, FaDatabase, 
   FaTrashAlt, FaExternalLinkAlt, FaInfoCircle, FaToggleOn, FaToggleOff,
-  FaYoutube, FaCreditCard, FaCrown, FaCalendarAlt, FaCheckCircle
+  FaYoutube, FaCreditCard, FaCrown, FaCalendarAlt, FaCheckCircle, FaEdit,
+  FaLightbulb
 } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
@@ -515,6 +517,64 @@ const KeywordsContainer = styled.div`
   animation: ${fadeIn} 0.4s ease;
 `;
 
+const ExplanationBox = styled.div`
+  background: ${props => props.theme.colors.background};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  border-left: 3px solid #8B5CF6;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  max-width: 900px;
+`;
+
+const ExplanationHeader = styled.div<{ $isExpanded?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+
+  .chevron-icon {
+    color: #8B5CF6;
+    font-size: 20px;
+    transition: transform 0.2s ease;
+    transform: ${props => props.$isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'};
+  }
+`;
+
+const ExplanationTitle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.primary};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  flex: 1;
+
+  svg {
+    color: #8B5CF6;
+    font-size: 18px;
+  }
+`;
+
+const ExplanationContent = styled(motion.div)`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.secondary};
+  line-height: 1.7;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid ${props => props.theme.colors.borderLight};
+
+  strong {
+    color: ${props => props.theme.colors.text.primary};
+    font-weight: 600;
+  }
+
+  em {
+    font-style: italic;
+  }
+`;
+
 const KeywordItem = styled.div`
   display: flex;
   justify-content: space-between;
@@ -958,6 +1018,7 @@ const KeywordScannersList: React.FC<{ projectId: string | number }> = ({ project
   const [keywordStats, setKeywordStats] = useState<Record<string, KeywordOverview>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isExplanationExpanded, setIsExplanationExpanded] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -1061,7 +1122,42 @@ const KeywordScannersList: React.FC<{ projectId: string | number }> = ({ project
   
   const [newKeyword, setNewKeyword] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingScanner, setEditingScanner] = useState<KeywordScanner | null>(null);
+  const [editedKeyword, setEditedKeyword] = useState('');
+
+  const handleEditScanner = (scanner: KeywordScanner) => {
+    setEditingScanner(scanner);
+    setEditedKeyword(scanner.Keyword);
+    setShowEditModal(true);
+  };
+
+  const updateScanner = async () => {
+    if (!editingScanner || !editedKeyword.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('Scanner de videos do youtube')
+        .update({ "Keyword": editedKeyword.trim() })
+        .eq('id', editingScanner.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setScanners(prev =>
+        prev.map(s => s.id === editingScanner.id ? { ...s, "Keyword": editedKeyword.trim() } : s)
+      );
+
+      // Close modal and reset
+      setShowEditModal(false);
+      setEditingScanner(null);
+      setEditedKeyword('');
+    } catch (err: any) {
+      console.error('Error updating scanner:', err);
+      alert('Failed to update scanner. Please try again.');
+    }
+  };
+
   if (isLoading) {
     return (
       <LoadingOverlay>
@@ -1077,10 +1173,55 @@ const KeywordScannersList: React.FC<{ projectId: string | number }> = ({ project
   
   return (
     <div>
-      <div style={{ marginBottom: '15px' }}>
-        <p>Keyword scanners monitor platforms for mentions of your keywords and collect data for analysis.</p>
-      </div>
-      
+      <ExplanationBox>
+        <ExplanationHeader
+          onClick={() => setIsExplanationExpanded(!isExplanationExpanded)}
+          $isExpanded={isExplanationExpanded}
+        >
+          <ExplanationTitle>
+            <IconComponent icon={FaLightbulb} />
+            Semantic Keyword Expansion: 1 Master Keyword → 10 Intelligent Variations
+          </ExplanationTitle>
+          <span className="chevron-icon">
+            <IconComponent icon={FaChevronDown} />
+          </span>
+        </ExplanationHeader>
+        <AnimatePresence>
+          {isExplanationExpanded && (
+            <ExplanationContent
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <p style={{ marginBottom: '16px' }}>
+                Each keyword you define becomes a <strong>master seed</strong> that Liftlio automatically expands into 10 semantically related variations. This ensures comprehensive coverage without manual effort.
+              </p>
+
+              <div style={{ marginBottom: '12px' }}>
+                <strong style={{ color: '#8B5CF6' }}>How It Works:</strong>
+              </div>
+              <ul style={{ marginLeft: '20px', lineHeight: '1.9', marginBottom: '16px' }}>
+                <li><strong>Semantic AI Analysis:</strong> Claude analyzes your master keyword to understand intent, context, and domain</li>
+                <li><strong>Automatic Variation:</strong> Generates 10 related terms (synonyms, related concepts, industry terms)</li>
+                <li><strong>Continuous Scanning:</strong> All 10 variations monitor platforms simultaneously for maximum coverage</li>
+                <li><strong>Unified Metrics:</strong> Results aggregate under the master keyword for clear insights</li>
+              </ul>
+
+              <div style={{
+                background: 'rgba(139, 92, 246, 0.1)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                marginTop: '12px'
+              }}>
+                <strong style={{ color: '#8B5CF6' }}>Example:</strong> Master keyword "AI agents" → automatically expands to: "autonomous agents", "intelligent assistants", "AI automation", "agent frameworks", "multi-agent systems", and 5 more variations.
+              </div>
+            </ExplanationContent>
+          )}
+        </AnimatePresence>
+      </ExplanationBox>
+
       {scanners.length === 0 ? (
         <div style={{ padding: '20px', textAlign: 'center', background: '#f9f9f9', borderRadius: '8px' }}>
           No keyword scanners configured. Add a scanner to start monitoring.
@@ -1092,11 +1233,6 @@ const KeywordScannersList: React.FC<{ projectId: string | number }> = ({ project
               <ScannerItemLeft>
                 <IconComponent icon={FaDatabase} style={{ marginRight: '10px' }} />
                 <ScannerKeyword>{scanner.Keyword}</ScannerKeyword>
-                {keywordStats[scanner.Keyword] && 
-                  <ScannerScore score={keywordStats[scanner.Keyword].keyword_composite_score || 0}>
-                    {Math.round((keywordStats[scanner.Keyword].keyword_composite_score || 0) * 100)}
-                  </ScannerScore>
-                }
               </ScannerItemLeft>
               <ScannerStats>
                 <ScannerStat title="Videos found">
@@ -1111,29 +1247,17 @@ const KeywordScannersList: React.FC<{ projectId: string | number }> = ({ project
                 </ScannerStat>
               </ScannerStats>
               <ScannerActions>
-                <ScannerToggle
-                  active={scanner["Ativa?"] || false}
-                  onClick={() => toggleScannerActive(scanner.id, scanner["Ativa?"] || false)}
-                  title={scanner["Ativa?"] ? "Deactivate scanner" : "Activate scanner"}
-                >
-                  {scanner["Ativa?"] 
-                    ? <IconComponent icon={FaToggleOn} /> 
-                    : <IconComponent icon={FaToggleOff} />
-                  }
-                </ScannerToggle>
+                <EditButton onClick={() => handleEditScanner(scanner)} title="Edit keyword">
+                  <IconComponent icon={FaEdit} />
+                </EditButton>
               </ScannerActions>
             </ScannerItem>
           ))}
         </KeywordsContainer>
       )}
-      
-      <AddButton 
-        variant="secondary"
-        onClick={() => setShowAddModal(true)}
-      >
-        {renderIcon(FaPlus)} Add keyword scanner
-      </AddButton>
-      
+
+      {/* Add keyword scanner button removed - users can only edit existing scanners */}
+
       {showAddModal && (
         <Modal onClick={() => setShowAddModal(false)}>
           <ModalContent onClick={(e) => e.stopPropagation()}>
@@ -1174,6 +1298,50 @@ const KeywordScannersList: React.FC<{ projectId: string | number }> = ({ project
                 disabled={!newKeyword.trim()}
               >
                 Add Scanner
+              </ActionButton>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
+
+      {showEditModal && editingScanner && (
+        <Modal onClick={() => setShowEditModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitle>Edit Keyword Scanner</ModalTitle>
+              <CloseButton onClick={() => setShowEditModal(false)}>
+                {renderIcon(FaTimes)}
+              </CloseButton>
+            </ModalHeader>
+
+            <FormGroup>
+              <Label htmlFor="editScannerKeyword">Keyword to monitor</Label>
+              <Input
+                id="editScannerKeyword"
+                placeholder="Enter a keyword to monitor across platforms"
+                value={editedKeyword}
+                onChange={(e) => setEditedKeyword(e.target.value)}
+                autoFocus
+              />
+            </FormGroup>
+
+            <ModalFooter>
+              <ActionButton
+                variant="secondary"
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingScanner(null);
+                  setEditedKeyword('');
+                }}
+              >
+                Cancel
+              </ActionButton>
+              <ActionButton
+                variant="primary"
+                onClick={updateScanner}
+                disabled={!editedKeyword.trim()}
+              >
+                Save Changes
               </ActionButton>
             </ModalFooter>
           </ModalContent>
@@ -1248,6 +1416,30 @@ const ScannerActions = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
+`;
+
+const EditButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${props => props.theme.colors.primary};
+  transition: all 0.2s ease;
+  padding: 6px;
+  border-radius: 6px;
+
+  &:hover {
+    background-color: ${props => props.theme.colors.lightBg};
+    color: #8B5CF6;
+    transform: scale(1.1);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
 `;
 
 const ScannerToggle = styled.button<{ active: boolean }>`
