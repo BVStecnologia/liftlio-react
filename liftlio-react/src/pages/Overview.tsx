@@ -3158,7 +3158,7 @@ const Overview: React.FC = () => {
       title: 'Channels',
       value: statsData.reach.value,
       icon: 'FaBroadcastTower',
-      color: '#8b5cf6', // Analytics primary purple
+      color: '#9A4FE1', // Custom purple tone
       description: 'Active channels',
       trend: statsData.reach.trend,
       tooltip: 'YouTube channels being monitored for relevant conversations about your niche'
@@ -3168,7 +3168,7 @@ const Overview: React.FC = () => {
       title: 'Videos',
       value: statsData.activities.value,
       icon: 'FaVideo',
-      color: '#a855f7', // Analytics secondary purple
+      color: '#9A4FE1', // Custom purple tone
       description: 'Total videos',
       trend: statsData.activities.trend,
       tooltip: 'Total videos discovered where we can engage with the audience'
@@ -3178,7 +3178,7 @@ const Overview: React.FC = () => {
       title: 'Posts',
       value: totalPosts.toString(),
       icon: 'FaStar',
-      color: '#c084fc', // Analytics light purple
+      color: '#9A4FE1', // Custom purple tone
       description: 'All posts published',
       trend: null,
       tooltip: `Product mentions: ${statsData.engagements.value} | Engagement: ${statsData.engagement.value}`
@@ -3188,7 +3188,7 @@ const Overview: React.FC = () => {
       title: 'Today',
       value: statsData.leads.value,
       icon: 'FaCalendarDay',
-      color: '#7c3aed', // Analytics dark purple
+      color: '#9A4FE1', // Custom purple tone
       description: 'Posted today',
       trend: statsData.leads.trend,
       tooltip: 'Product mention comments posted today to maintain consistent presence'
