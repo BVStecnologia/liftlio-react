@@ -1801,41 +1801,6 @@ const CardBadge = styled.div<{ variant: 'default' | 'primary' }>`
   `}
 `;
 
-// Styled components for negative keywords
-const NegativeKeywordsContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 15px;
-`;
-
-const NegativeKeywordTag = styled.div`
-  display: flex;
-  align-items: center;
-  background-color: #f1f1f1;
-  border-radius: 16px;
-  padding: 6px 12px;
-  font-size: 14px;
-  color: ${props => props.theme.colors.text};
-  border: 1px solid ${props => props.theme.colors.grey};
-`;
-
-const NegativeKeywordRemove = styled.button`
-  border: none;
-  background: none;
-  color: ${props => props.theme.colors.darkGrey};
-  margin-left: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px;
-  
-  &:hover {
-    color: ${props => props.theme.colors.error};
-  }
-`;
-
 const Settings: React.FC<{}> = () => {
   // Get current project from context
   const { currentProject } = useProject();
@@ -1844,9 +1809,6 @@ const Settings: React.FC<{}> = () => {
   const { user, subscription, checkSubscription } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // State for negative keywords
-  const [newNegativeKeyword, setNewNegativeKeyword] = useState('');
 
   // State for project data
   const [projectData, setProjectData] = useState({
@@ -1855,7 +1817,6 @@ const Settings: React.FC<{}> = () => {
     url_service: '',
     description_service: '',
     "Keywords": '',
-    "Negative keywords": '',
     "País": '',
     user: '',
     "User id": '',
@@ -1864,52 +1825,7 @@ const Settings: React.FC<{}> = () => {
   
   // Parse keywords from string to array
   const activeKeywords = projectData.Keywords ? projectData.Keywords.split(',').map(k => k.trim()) : [];
-  
-  // Helper functions for negative keywords
-  const getNegativeKeywords = (): string[] => {
-    const keywords = projectData["Negative keywords"] || '';
-    return keywords.split(',')
-      .map(keyword => keyword.trim())
-      .filter(keyword => keyword !== '');
-  };
-  
-  const addNegativeKeyword = () => {
-    if (!newNegativeKeyword.trim()) return;
-    
-    const currentKeywords = getNegativeKeywords();
-    
-    // Check if keyword already exists
-    if (currentKeywords.includes(newNegativeKeyword.trim())) {
-      alert('This negative keyword already exists.');
-      return;
-    }
-    
-    // Add the new keyword to the existing list
-    const updatedKeywords = [...currentKeywords, newNegativeKeyword.trim()].join(', ');
-    
-    // Update project data
-    setProjectData({
-      ...projectData,
-      "Negative keywords": updatedKeywords
-    });
-    
-    // Clear input
-    setNewNegativeKeyword('');
-  };
-  
-  const removeNegativeKeyword = (keywordToRemove: string) => {
-    const currentKeywords = getNegativeKeywords();
-    const updatedKeywords = currentKeywords
-      .filter(keyword => keyword !== keywordToRemove)
-      .join(', ');
-    
-    // Update project data
-    setProjectData({
-      ...projectData,
-      "Negative keywords": updatedKeywords
-    });
-  };
-  
+
   // UI state
   const [activeTab, setActiveTab] = useState('project');
   
@@ -1965,7 +1881,6 @@ const Settings: React.FC<{}> = () => {
             url_service: data["url service"] || '',
             description_service: data["description service"] || '',
             "Keywords": data["Keywords"] || '',
-            "Negative keywords": data["Negative keywords"] || '',
             "País": data["País"] || '',
             user: data.user || '',
             "User id": data["User id"] || '',
@@ -2043,7 +1958,6 @@ const Settings: React.FC<{}> = () => {
     if (isFieldChanged(projectData.url_service, originalData.url_service)) return true;
     if (isFieldChanged(projectData.description_service, originalData.description_service)) return true;
     if (isFieldChanged(projectData.Keywords, originalData.Keywords)) return true;
-    if (isFieldChanged(projectData["Negative keywords"], originalData["Negative keywords"])) return true;
     if (isFieldChanged(projectData["País"], originalData["País"])) return true;
     if (isFieldChanged(projectData["Youtube Active"], originalData["Youtube Active"])) return true;
     
@@ -2084,7 +1998,6 @@ const Settings: React.FC<{}> = () => {
     newChangedFields["url_service"] = isFieldChanged(updatedData.url_service, originalData.url_service);
     newChangedFields["description_service"] = isFieldChanged(updatedData.description_service, originalData.description_service);
     newChangedFields["Keywords"] = isFieldChanged(updatedData.Keywords, originalData.Keywords);
-    newChangedFields["Negative keywords"] = isFieldChanged(updatedData["Negative keywords"], originalData["Negative keywords"]);
     newChangedFields["País"] = isFieldChanged(updatedData["País"], originalData["País"]);
     newChangedFields["Youtube Active"] = isFieldChanged(updatedData["Youtube Active"], originalData["Youtube Active"]);
     
@@ -2135,7 +2048,6 @@ const Settings: React.FC<{}> = () => {
         "url service": projectData.url_service,
         "description service": projectData.description_service,
         "Keywords": projectData.Keywords,
-        "Negative keywords": projectData["Negative keywords"],
         "País": projectData["País"],
         "Youtube Active": projectData["Youtube Active"]
       };
@@ -2177,7 +2089,6 @@ const Settings: React.FC<{}> = () => {
           url_service: updatedData["url service"] || '',
           description_service: updatedData["description service"] || '',
           "Keywords": updatedData["Keywords"] || '',
-          "Negative keywords": updatedData["Negative keywords"] || '',
           "País": updatedData["País"] || '',
           user: updatedData.user || '',
           "User id": updatedData["User id"] || '',
@@ -2438,120 +2349,8 @@ const Settings: React.FC<{}> = () => {
                 ) : (
                   <div>{t('settings.selectProject')}</div>
                 )}
-                
-                <FormGroup style={{ marginTop: '30px' }}>
-                  <Label>{t('settings.negativeKeywords')}</Label>
-                  <div style={{ marginBottom: '10px', fontSize: '14px', color: '#666' }}>
-                    {t('settings.negativeKeywordsDescription')}
-                  </div>
-                  
-                  {getNegativeKeywords().length > 0 ? (
-                    <NegativeKeywordsContainer>
-                      {getNegativeKeywords().map((keyword, index) => (
-                        <NegativeKeywordTag key={index}>
-                          {keyword}
-                          <NegativeKeywordRemove 
-                            onClick={() => removeNegativeKeyword(keyword)}
-                            title="Remove negative keyword"
-                          >
-                            {renderIcon(FaTimes)}
-                          </NegativeKeywordRemove>
-                        </NegativeKeywordTag>
-                      ))}
-                    </NegativeKeywordsContainer>
-                  ) : (
-                    <div style={{ 
-                      padding: '15px', 
-                      backgroundColor: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f9f9f9', 
-                      borderRadius: '8px', 
-                      marginBottom: '15px',
-                      color: theme.colors.text.secondary 
-                    }}>
-                      {t('settings.noNegativeKeywords')}
-                    </div>
-                  )}
-                  
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <Input
-                      placeholder={t('settings.addNegativeKeywordPlaceholder')}
-                      value={newNegativeKeyword}
-                      onChange={(e) => setNewNegativeKeyword(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' && newNegativeKeyword.trim()) {
-                          e.preventDefault();
-                          addNegativeKeyword();
-                        }
-                      }}
-                      style={{ flex: 1 }}
-                    />
-                    <ActionButton
-                      variant="secondary"
-                      onClick={addNegativeKeyword}
-                      disabled={!newNegativeKeyword.trim()}
-                    >
-                      {t('common.add')}
-                    </ActionButton>
-                  </div>
-                </FormGroup>
               </FormSection>
-                
-              <FormSection>
-                <SectionTitle>Data Management</SectionTitle>
-                <FormGroup>
-                  <Label>Data retention period</Label>
-                  <Select defaultValue="90">
-                    <option value="30">30 days</option>
-                    <option value="60">60 days</option>
-                    <option value="90">90 days</option>
-                    <option value="180">180 days</option>
-                    <option value="365">1 year</option>
-                  </Select>
-                </FormGroup>
-                
-                <FormGroup>
-                  <Label>Project Status</Label>
-                  <div style={{ marginBottom: '10px', fontSize: '14px', color: '#666' }}>
-                    Disabling the project will pause monitoring and integrations
-                  </div>
-                  <ToggleContainer>
-                    <ToggleSwitch>
-                      <input
-                        type="checkbox"
-                        checked={projectData["Youtube Active"]}
-                        onChange={toggleYoutubeActive}
-                        disabled={!projectData["Youtube Active"] && !subscription?.has_active_subscription}
-                        style={{
-                          opacity: !projectData["Youtube Active"] && !subscription?.has_active_subscription ? 0.5 : 1,
-                          cursor: !projectData["Youtube Active"] && !subscription?.has_active_subscription ? 'not-allowed' : 'pointer'
-                        }}
-                      />
-                      <span />
-                    </ToggleSwitch>
-                    <ToggleLabel>
-                      {projectData["Youtube Active"] ?
-                        <><IconComponent icon={FaYoutube} style={{ color: '#FF0000' }} /> Project Active</> :
-                        <><IconComponent icon={FaYoutube} style={{ color: '#999' }} /> Project Disabled</>
-                      }
-                    </ToggleLabel>
-                  </ToggleContainer>
-                  {!projectData["Youtube Active"] && !subscription?.has_active_subscription && (
-                    <div style={{
-                      marginTop: '10px',
-                      padding: '10px',
-                      background: theme.name === 'dark' ? 'rgba(255, 152, 0, 0.15)' : 'rgba(255, 152, 0, 0.1)',
-                      border: '1px solid rgba(255, 152, 0, 0.3)',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      color: theme.name === 'dark' ? '#ffb74d' : '#e65100'
-                    }}>
-                      ⚠️ {language === 'pt'
-                        ? 'Renove sua assinatura para reativar o monitoramento do YouTube'
-                        : 'Renew your subscription to reactivate YouTube monitoring'}
-                    </div>
-                  )}
-                </FormGroup>
-              </FormSection>
-              
+
             </Card>
           )}
           
