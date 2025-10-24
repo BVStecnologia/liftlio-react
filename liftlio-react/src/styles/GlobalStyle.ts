@@ -23,14 +23,20 @@ const GlobalStyle = createGlobalStyle`
     }
   }
 
+  html, body, #root {
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: ${props => props.theme.colors.bg.primary} !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
   body {
     font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
-    background-color: ${props => props.theme.colors.background};
-    color: ${props => props.theme.colors.text};
+    color: ${props => props.theme.colors.text.primary};
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
-    width: 100%;
     position: relative;
   }
 
@@ -64,7 +70,7 @@ const GlobalStyle = createGlobalStyle`
   
   /* For better accessibility */
   :focus-visible {
-    outline: 2px solid ${props => props.theme.colors.primary};
+    outline: 2px solid ${props => props.theme.colors.accent.primary};
     outline-offset: 2px;
   }
   
@@ -144,38 +150,38 @@ const GlobalStyle = createGlobalStyle`
   
   /* Page components styling */
   h1, h2, h3, h4, h5, h6 {
-    color: ${props => props.theme.colors.primary}; /* Azul naval escuro (10%) */
+    color: ${props => props.theme.colors.text.primary};
     font-weight: 600;
     margin-bottom: 0.5em;
   }
-  
+
   p {
-    color: ${props => props.theme.colors.text};
+    color: ${props => props.theme.colors.text.primary};
     line-height: 1.6;
   }
   
   /* Main content container - applies the dominant color (60%) as background */
   main {
-    background-color: ${props => props.theme.colors.tertiary}; /* Cinza médio - dominant color */
+    background-color: ${props => props.theme.colors.bg.primary};
   }
-  
+
   /* Card components - apply the secondary color (30%) */
   .card, .stat-card, .data-card {
-    background-color: ${props => props.theme.colors.secondary}; /* Branco - secondary color */
-    border: 1px solid rgba(165, 177, 183, 0.2); /* Borderline based on dominant color */
+    background-color: ${props => props.theme.colors.bg.secondary};
+    border: 1px solid ${props => props.theme.colors.border.primary};
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    box-shadow: ${props => props.theme.colors.shadow.sm};
   }
-  
+
   /* Buttons, links, and interactive elements - apply the accent color (10%) */
   .accent-element {
-    color: ${props => props.theme.colors.primary}; /* Azul naval escuro - accent color */
+    color: ${props => props.theme.colors.accent.primary};
   }
-  
+
   /* Header components usually have white background (secondary color - 30%) */
   header {
-    background-color: ${props => props.theme.colors.secondary};
-    border-bottom: 1px solid ${props => props.theme.colors.tertiary};
+    background-color: ${props => props.theme.components.header.bg};
+    border-bottom: 1px solid ${props => props.theme.components.header.border};
   }
 `;
 

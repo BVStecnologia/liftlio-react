@@ -28,7 +28,7 @@ const HeaderContainer = styled.header`
   align-items: center;
   padding: 12px 24px;
   background-color: ${props => props.theme.components.header.bg};
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Reduzido para evitar acúmulo de sombras */
   border-bottom: 1px solid ${props => props.theme.components.header.border};
   color: ${props => props.theme.components.header.text};
   position: sticky;

@@ -55,11 +55,12 @@ const AppContainer = styled.div`
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  
+  background-color: ${props => props.theme.colors.bg.primary};
+
   @media (min-width: 769px) {
     flex-direction: row;
   }
-  
+
   /* Applied to fix any possible issues with sidebar */
   position: relative;
   z-index: 0;
@@ -68,7 +69,7 @@ const AppContainer = styled.div`
 const MainContent = styled.main`
   flex: 1;
   overflow-y: auto;
-  background-color: ${props => props.theme.colors.background};
+  background-color: ${props => props.theme.colors.bg.primary};
   width: 100%;
 `;
 

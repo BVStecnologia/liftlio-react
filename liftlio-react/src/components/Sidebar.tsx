@@ -64,9 +64,9 @@ const SidebarContainer = styled.aside<{ isOpen: boolean; isCollapsed?: boolean }
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: none;
   z-index: 1000; /* Higher z-index to appear above header */
-  border-right: 1px solid ${props => props.theme.components.sidebar.border};
+  border-right: none; /* Removido - estava causando visual artifact preto */
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   @media (min-width: 769px) {
@@ -81,8 +81,8 @@ const SidebarContainer = styled.aside<{ isOpen: boolean; isCollapsed?: boolean }
     width: 85%;
     max-width: 300px;
     transform: translateX(${props => props.isOpen ? '0' : '-105%'});
-    box-shadow: ${props => props.isOpen ? '0 0 24px rgba(0, 0, 0, 0.25)' : 'none'};
-    transition: transform 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67), box-shadow 0.3s ease;
+    box-shadow: none; /* Removido - estava causando sombra preta no mobile */
+    transition: transform 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67);
     animation: ${props => props.isOpen ? slideIn : 'none'} 0.35s cubic-bezier(0.17, 0.67, 0.83, 0.67);
     
     /* Edge highlight when opened */

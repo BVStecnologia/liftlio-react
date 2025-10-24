@@ -48,10 +48,6 @@
     <!-- Hreflang tags for international SEO -->
     <link rel="alternate" hreflang="en" href="https://liftlio.com" />
     <link rel="alternate" hreflang="x-default" href="https://liftlio.com" />
-    
-    <!-- Trends Override CSS - FORÇA CORES CORRETAS -->
-    <link rel="stylesheet" href="%PUBLIC_URL%/trends-override.css">
-    
     <!-- Add support for Supabase authentication redirects -->
     <script>
       // AGGRESSIVE Service Worker cleanup for development
@@ -250,14 +246,14 @@
   box-sizing: border-box;
 }
 
-/* Typography */
-body {
+/* Typography - Body styles controlled by GlobalStyle.ts */
+html, body {
+  margin: 0;
+  padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #0a0a0a;
-  color: #fff;
-  overflow-x: hidden;
+  /* Background and color controlled by GlobalStyle.ts (styled-components) for theme support */
 }
 
 /* Hero Section - Above the fold */

@@ -261,7 +261,9 @@ const ErrorMessage = styled.div`
 
 const InfoTooltip = styled.div`
   position: absolute;
-  background: white;
+  background: ${props => props.theme.name === 'dark'
+    ? props.theme.colors.bg.secondary
+    : props.theme.colors.bg.secondary};
   border-radius: ${props => props.theme.radius.md};
   padding: 10px 15px;
   box-shadow: ${props => props.theme.shadows.md};
@@ -271,7 +273,7 @@ const InfoTooltip = styled.div`
   left: 100%;
   margin-left: 15px;
   font-size: ${props => props.theme.fontSizes.sm};
-  color: ${props => props.theme.colors.text};
+  color: ${props => props.theme.colors.text.primary};
   border-left: 3px solid ${props => props.theme.colors.primary};
   pointer-events: none;
   animation: ${fadeIn} 0.2s ease;
@@ -329,22 +331,28 @@ const InputWithIcon = styled.div`
 const TextArea = styled.textarea<{ changed?: boolean }>`
   width: 100%;
   padding: 12px 15px;
-  border: 1px solid ${props => props.changed ? props.theme.colors.primary : props.theme.colors.grey};
+  border: 1px solid ${props => props.changed ? props.theme.colors.primary : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.grey};
   border-radius: ${props => props.theme.radius.md};
   font-size: ${props => props.theme.fontSizes.md};
   min-height: 120px;
   resize: vertical;
   transition: all 0.2s ease;
-  background-color: ${props => props.changed ? 'rgba(94, 53, 177, 0.05)' : 'white'};
-  
+  background-color: ${props => {
+    if (props.changed) {
+      return props.theme.name === 'dark' ? 'rgba(94, 53, 177, 0.1)' : 'rgba(94, 53, 177, 0.05)';
+    }
+    return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : props.theme.colors.bg.secondary;
+  }};
+  color: ${props => props.theme.colors.text.primary};
+
   &:focus {
     border-color: ${props => props.theme.colors.primary};
     outline: none;
-    box-shadow: 0 0 0 3px rgba(94, 53, 177, 0.2);
+    box-shadow: 0 0 0 3px ${props => props.theme.name === 'dark' ? 'rgba(94, 53, 177, 0.3)' : 'rgba(94, 53, 177, 0.2)'};
   }
-  
+
   &::placeholder {
-    color: ${props => props.theme.colors.grey};
+    color: ${props => props.theme.colors.text.secondary};
   }
 `;
 
@@ -471,7 +479,7 @@ const ToggleSwitch = styled.label`
       width: 20px;
       left: 4px;
       bottom: 4px;
-      background-color: white;
+      background-color: ${props => props.theme.name === 'dark' ? '#ffffff' : '#ffffff'};
       transition: .3s;
       border-radius: 50%;
     }
@@ -694,11 +702,11 @@ const ThemePreviewSidebar = styled.div<{ bgColor: string; isDark: boolean }>`
 
 const ThemePreviewMain = styled.div<{ isDark: boolean }>`
   flex: 1;
-  background-color: ${props => props.isDark ? '#272734' : 'white'};
+  background-color: ${props => props.isDark ? '#272734' : props.theme.colors.bg.secondary};
   border-radius: ${props => props.theme.radius.md};
   padding: 20px;
   min-height: 300px;
-  color: ${props => props.isDark ? 'white' : props.theme.colors.text};
+  color: ${props => props.isDark ? 'white' : props.theme.colors.text.primary};
   transition: all 0.3s ease;
 `;
 
@@ -843,8 +851,8 @@ const Modal = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: ${props => props.theme.name === 'dark' 
-    ? 'rgba(0, 0, 0, 0.8)' 
+  background-color: ${props => props.theme.name === 'dark'
+    ? 'rgba(0, 0, 0, 0.8)'
     : 'rgba(0, 0, 0, 0.6)'};
   backdrop-filter: blur(5px);
   display: flex;
@@ -855,7 +863,9 @@ const Modal = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background-color: ${props => props.theme.colors.cardBg};
+  background-color: ${props => props.theme.name === 'dark'
+    ? props.theme.colors.bg.secondary
+    : props.theme.colors.bg.secondary};
   border-radius: ${props => props.theme.radius.lg};
   padding: 25px;
   width: 100%;
@@ -868,7 +878,7 @@ const ModalContent = styled.div`
     : 'rgba(0, 0, 0, 0.05)'};
   animation: ${fadeIn} 0.4s ease;
   transform: translateY(0);
-  
+
   @media (max-width: 576px) {
     margin: 20px;
     max-width: calc(100vw - 40px);

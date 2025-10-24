@@ -457,36 +457,7 @@ const PageContainer = styled(motion.div)`
   background: ${props => props.theme.colors.bg.primary};
   min-height: 100vh;
   
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 300px;
-    background: linear-gradient(
-      135deg,
-      rgba(0, 245, 255, 0.03) 0%,
-      rgba(107, 0, 204, 0.03) 100%
-    );
-    pointer-events: none;
-    animation: ${digitalFlow} 20s ease-in-out infinite;
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 300px;
-    background: radial-gradient(
-      circle at center,
-      rgba(45, 62, 80, 0.02) 0%,
-      transparent 70%
-    );
-    pointer-events: none;
-  }
+  /* Removido ::before e ::after que criavam gradientes de fundo */
   
   @media (max-width: 768px) {
     padding: 16px 12px;

@@ -167,7 +167,7 @@ export function extendTheme(baseTheme: GlobalTheme): ExtendedTheme {
       
       // Backgrounds
       background: baseTheme.colors.bg.primary,
-      white: isLight ? '#FFFFFF' : '#0A0A0A',
+      white: isLight ? '#FFFFFF' : baseTheme.colors.bg.primary,
       lightGrey: isLight ? '#F5F7FA' : '#1A1A1A',
       grey: isLight ? '#9CA3AF' : '#666666',
       darkGrey: isLight ? '#666666' : '#999999',
@@ -221,7 +221,7 @@ export function extendTheme(baseTheme: GlobalTheme): ExtendedTheme {
         glass: isLight
           ? 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)'
           : 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
-        dark: 'linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)',
+        dark: 'linear-gradient(135deg, #1A1A1A 0%, #0F0F0F 100%)',
         hoverOverlay: isLight
           ? 'linear-gradient(135deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.04) 100%)'
           : 'linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.04) 100%)',
@@ -245,7 +245,7 @@ export function extendTheme(baseTheme: GlobalTheme): ExtendedTheme {
       // Landing page specific
       headerBg: isLight
         ? 'rgba(255, 255, 255, 0.8)'
-        : 'rgba(10, 10, 10, 0.8)',
+        : 'rgba(15, 15, 15, 0.8)',
       headerBgSolid: baseTheme.colors.bg.secondary,
       cardBg: baseTheme.components.card.bg,
       cardHoverBg: baseTheme.colors.bg.hover,
@@ -281,7 +281,7 @@ export function extendTheme(baseTheme: GlobalTheme): ExtendedTheme {
       ctaBg: isLight
         ? 'linear-gradient(135deg, #2d3e50 0%, #34495e 100%)'
         : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-      footerBg: isLight ? '#2d3e50' : '#0A0A0A'
+      footerBg: isLight ? '#2d3e50' : baseTheme.colors.bg.primary
     },
     
     // Estrutura do tema
