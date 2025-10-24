@@ -148,10 +148,7 @@ const PageContainer = styled.div<{ isBlurred?: boolean }>`
     return dt.layout.contentPadding;
   }};
   animation: ${fadeIn} 0.6s ease-out forwards;
-  background-color: ${props => {
-    const dt = useDashboardTheme(props.theme.name);
-    return dt.layout.mainBg;
-  }};
+  /* background removido para herdar do App.tsx */
   transition: filter 0.3s ease;
   filter: ${props => props.isBlurred ? 'blur(5px)' : 'none'};
   

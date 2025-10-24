@@ -158,9 +158,7 @@ const PageContainer = styled.div`
   padding: 20px;
   max-width: 1600px;
   margin: 0 auto;
-  background-color: ${props => props.theme.name === 'dark' 
-    ? '#0A0A0A' 
-    : COLORS.DOMINANT};
+  /* background removido para herdar do App.tsx */
 `;
 
 const PageTitle = styled.h1`
