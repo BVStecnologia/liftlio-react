@@ -3,6 +3,7 @@
 -- Descrição: Cria e salva comentário inicial para vídeos
 -- Criado: 2025-01-24
 -- Atualizado: 2025-10-24 - Validações de segurança para evitar inserir comentários de erro
+-- Atualizado: 2025-10-24 - Adicionado campo teste=true para ativar trigger de postagem no YouTube
 -- =============================================
 
 DROP FUNCTION IF EXISTS public.create_and_save_initial_comment(INTEGER);
@@ -115,16 +116,18 @@ BEGIN
         project_id,
         video,
         aprove,
-        respondido
+        respondido,
+        teste
     ) VALUES (
         v_comment_result->>'comment',
         v_comment_result->>'justificativa',
-        false, -- n�o � um template
-        1,     -- tipo de mensagem: coment�rio inicial (ajuste conforme necess�rio)
+        false, -- não é um template
+        1,     -- tipo de mensagem: comentário inicial (ajuste conforme necessário)
         v_project_id,
         p_video_id,
-        false, -- n�o aprovado inicialmente
-        false  -- n�o respondido inicialmente
+        false, -- não aprovado inicialmente
+        false, -- não respondido inicialmente
+        true   -- ✅ ATIVA trigger para postar no YouTube automaticamente
     ) RETURNING id INTO v_inserted_message_id;
 
     -- Preparar o resultado
