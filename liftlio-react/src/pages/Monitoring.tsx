@@ -21,6 +21,8 @@ import MetricCard from '../components/ui/MetricCard';
 import { useLocation, useNavigate } from 'react-router-dom';
 import RecentDiscoveredVideos from '../components/RecentDiscoveredVideos';
 import DiscoveredVideosSection from '../components/DiscoveredVideosSection';
+import { Tooltip as ReactTooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 // Hook customizado para reduced motion
 const useReducedMotion = () => {
@@ -164,16 +166,78 @@ const PageContainer = styled.div`
 const PageTitle = styled.h1`
   font-size: ${props => props.theme.fontSizes['2xl']};
   font-weight: ${props => props.theme.fontWeights.bold};
-  margin-bottom: 24px;
+  margin-bottom: 8px;
   color: ${props => props.theme.colors.text.primary};
   display: flex;
   align-items: center;
-  
+
   svg {
     margin-right: 16px;
     color: #FF0000; /* YouTube red - keeping this as it's platform-specific */
     font-size: 32px;
   }
+`;
+
+const PageSubtitle = styled.p`
+  font-size: ${props => props.theme.fontSizes.md};
+  color: ${props => props.theme.colors.text.secondary};
+  margin-bottom: 16px;
+  line-height: 1.6;
+  max-width: 700px;
+
+  strong {
+    color: #8B5CF6; /* Roxo Liftlio */
+    font-weight: ${props => props.theme.fontWeights.semibold};
+  }
+`;
+
+const ExplanationBox = styled.div`
+  background: ${props => props.theme.colors.background};
+  border: 1px solid ${props => props.theme.colors.borderLight};
+  border-left: 3px solid #8B5CF6;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  max-width: 800px;
+`;
+
+const ExplanationHeader = styled.div<{ $isExpanded?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+
+  .chevron-icon {
+    color: #8B5CF6;
+    font-size: 20px;
+    transition: transform 0.2s ease;
+    transform: ${props => props.$isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'};
+  }
+`;
+
+const ExplanationTitle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.primary};
+  font-weight: ${props => props.theme.fontWeights.medium};
+  flex: 1;
+
+  svg {
+    color: #8B5CF6;
+    font-size: 18px;
+  }
+`;
+
+const ExplanationContent = styled(motion.div)`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.secondary};
+  line-height: 1.7;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid ${props => props.theme.colors.borderLight};
 `;
 
 // Enhanced tab navigation
@@ -3436,6 +3500,8 @@ const YoutubeMonitoring: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'channels' | 'videos' | 'comments'>('overview');
   const [channelFilter, setChannelFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isExplanationExpanded, setIsExplanationExpanded] = useState(false);
+  const [isAntiSpamExpanded, setIsAntiSpamExpanded] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<VideoDetails | null>(null);
   const [showChannelDetails, setShowChannelDetails] = useState(false);
@@ -3448,12 +3514,10 @@ const YoutubeMonitoring: React.FC = () => {
   // Estados para dados
   const [metricsData, setMetricsData] = useState<any>(null);
   const [rpcData, setRpcData] = useState({
-    total_views: 0,
-    total_likes: 0,
-    media: '0',
-    posts: 0,
-    total_channels: 0,
-    total_videos: 0
+    total_channels: 0,  // Card 1: Channels
+    total_videos: 0,    // Card 2: Analyzed
+    posts: 0,           // Card 3: Approved
+    videos_today: 0     // Card 4: Today
   });
   const [channels, setChannels] = useState<ChannelDetails[]>([]);
   const [channelVideos, setChannelVideos] = useState<any[]>([]);
@@ -3672,11 +3736,10 @@ const YoutubeMonitoring: React.FC = () => {
   useEffect(() => {
     const fetchMetrics = async () => {
       if (!currentProject?.id) return;
-      
-      const id_projeto = currentProject.id;
+
       try {
-        console.log('Buscando métricas do projeto:', id_projeto);
-        const data = await callRPC('get_project_metrics', { id_projeto });
+        console.log('Buscando métricas do projeto:', currentProject.id);
+        const data = await callRPC('get_project_metrics', { p_project_id: currentProject.id });
         
         console.log('Métricas retornadas:', data);
         if (data && data.length > 0) {
@@ -3695,18 +3758,16 @@ const YoutubeMonitoring: React.FC = () => {
       try {
         console.log('Buscando dados RPC do projeto:', currentProject.id);
         const data = await callRPC('get_project_metrics', {
-          id_projeto: currentProject.id
+          p_project_id: currentProject.id
         });
         
         console.log('Dados RPC retornados:', data);
         if (data && data[0]) {
           setRpcData({
-            total_views: data[0].total_views || 0,
-            total_likes: data[0].total_likes || 0,
-            media: data[0].media || '0',
-            posts: data[0].posts || 0,
-            total_channels: data[0].total_channels || 0,
-            total_videos: data[0].total_videos || 0
+            total_channels: data[0].total_channels || 0,  // Card 1: Channels
+            total_videos: data[0].total_videos || 0,      // Card 2: Analyzed
+            posts: data[0].posts || 0,                    // Card 3: Approved
+            videos_today: data[0].videos_today || 0       // Card 4: Today
           });
           
           // Atualizar também o metricsData para manter consistência
@@ -4470,7 +4531,41 @@ const YoutubeMonitoring: React.FC = () => {
         <IconComponent icon={FaIcons.FaYoutube} />
         YouTube Monitoring
       </PageTitle>
-      
+
+      <PageSubtitle>
+        Be among the first comments on trending videos in your niche. <strong>Own the top, own the traffic</strong>
+      </PageSubtitle>
+
+      <ExplanationBox>
+        <ExplanationHeader
+          onClick={() => setIsExplanationExpanded(!isExplanationExpanded)}
+          $isExpanded={isExplanationExpanded}
+        >
+          <ExplanationTitle>
+            <IconComponent icon={FaIcons.FaInfoCircle} />
+            How it works
+          </ExplanationTitle>
+          <div className="chevron-icon">
+            <IconComponent icon={FaIcons.FaChevronDown} />
+          </div>
+        </ExplanationHeader>
+
+        <AnimatePresence>
+          {isExplanationExpanded && (
+            <ExplanationContent
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+            >
+              Every video scanned in the initial "comment responses" phase that aligns with your niche triggers continuous monitoring of that channel.
+              When a new video is posted, the system alerts you immediately so you can mention your product and capture all the early traffic before
+              the video gains traction.
+            </ExplanationContent>
+          )}
+        </AnimatePresence>
+      </ExplanationBox>
+
       <TabsContainer>
         <Tab active={activeTab === 'overview'} onClick={() => handleTabChange('overview')}>
           <TabIcon><IconComponent icon={FaIcons.FaChartLine} /></TabIcon>
@@ -4537,126 +4632,33 @@ const YoutubeMonitoring: React.FC = () => {
                 grid-template-columns: 1fr;
               }
             }
+
+            @keyframes fadeIn {
+              from {
+                opacity: 0;
+                transform: translateY(-10px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
           `}</style>
 
           {/* Ultra Minimalista Stats Grid */}
           <div className="stats-grid-responsive">
             {/* Card 1: SEO Assets */}
-            <div style={{
-              background: theme.name === 'dark' ? '#1A1A1A' : '#fff',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '28px 24px',
-              position: 'relative'
-            }}>
-              <div style={{
-                fontSize: '11px',
-                color: 'rgba(139, 92, 246, 0.7)',
-                textTransform: 'uppercase',
-                letterSpacing: '1.2px',
-                marginBottom: '12px',
-                fontWeight: '500'
-              }}>
-                SEO Assets
-              </div>
-              <div style={{
-                fontSize: '48px',
-                fontWeight: '300',
-                color: theme.colors.text.primary,
-                marginBottom: '4px',
-                letterSpacing: '-0.02em'
-              }}>
-                {rpcData.posts.toLocaleString()}
-              </div>
-              <div style={{
-                fontSize: '12px',
-                color: 'rgba(255, 255, 255, 0.4)',
-                fontWeight: '400'
-              }}>
-                Active comments generating traffic
-              </div>
-            </div>
-
-            {/* Card 2: Brand Impressions */}
-            <div style={{
-              background: theme.name === 'dark' ? '#1A1A1A' : '#fff',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '28px 24px',
-              position: 'relative'
-            }}>
-              <div style={{
-                fontSize: '11px',
-                color: 'rgba(139, 92, 246, 0.7)',
-                textTransform: 'uppercase',
-                letterSpacing: '1.2px',
-                marginBottom: '12px',
-                fontWeight: '500'
-              }}>
-                Impressions
-              </div>
-              <div style={{
-                fontSize: '48px',
-                fontWeight: '300',
-                color: theme.colors.text.primary,
-                marginBottom: '4px',
-                letterSpacing: '-0.02em'
-              }}>
-                {(rpcData.total_views / 1000000).toFixed(1)}M
-              </div>
-              <div style={{
-                fontSize: '12px',
-                color: 'rgba(255, 255, 255, 0.4)',
-                fontWeight: '400'
-              }}>
-                Total views reached
-              </div>
-            </div>
-
-            {/* Card 3: Success Rate */}
-            <div style={{
-              background: theme.name === 'dark' ? '#1A1A1A' : '#fff',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '28px 24px',
-              position: 'relative'
-            }}>
-              <div style={{
-                fontSize: '11px',
-                color: 'rgba(139, 92, 246, 0.7)',
-                textTransform: 'uppercase',
-                letterSpacing: '1.2px',
-                marginBottom: '12px',
-                fontWeight: '500'
-              }}>
-                Success Rate
-              </div>
-              <div style={{
-                fontSize: '48px',
-                fontWeight: '300',
-                color: theme.colors.text.primary,
-                marginBottom: '4px',
-                letterSpacing: '-0.02em'
-              }}>
-                {((rpcData.posts / (rpcData.posts + Math.round(rpcData.posts * 0.077))) * 100).toFixed(1)}%
-              </div>
-              <div style={{
-                fontSize: '12px',
-                color: 'rgba(255, 255, 255, 0.4)',
-                fontWeight: '400'
-              }}>
-                Comments posted successfully
-              </div>
-            </div>
-
-            {/* Card 4: Channels Monitored */}
-            <div style={{
-              background: theme.name === 'dark' ? '#1A1A1A' : '#fff',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '28px 24px',
-              position: 'relative'
-            }}>
+            <div
+              data-tooltip-id="card-seo-assets"
+              style={{
+                background: theme.name === 'dark' ? '#1A1A1A' : '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '28px 24px',
+                position: 'relative',
+                cursor: 'help'
+              }}
+            >
               <div style={{
                 fontSize: '11px',
                 color: 'rgba(139, 92, 246, 0.7)',
@@ -4681,10 +4683,203 @@ const YoutubeMonitoring: React.FC = () => {
                 color: 'rgba(255, 255, 255, 0.4)',
                 fontWeight: '400'
               }}>
-                Actively monitored
+                Monitored daily for new posts
+              </div>
+            </div>
+
+            {/* Card 2: Brand Impressions */}
+            <div
+              data-tooltip-id="card-impressions"
+              style={{
+                background: theme.name === 'dark' ? '#1A1A1A' : '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '28px 24px',
+                position: 'relative',
+                cursor: 'help'
+              }}
+            >
+              <div style={{
+                fontSize: '11px',
+                color: 'rgba(139, 92, 246, 0.7)',
+                textTransform: 'uppercase',
+                letterSpacing: '1.2px',
+                marginBottom: '12px',
+                fontWeight: '500'
+              }}>
+                Analyzed
+              </div>
+              <div style={{
+                fontSize: '48px',
+                fontWeight: '300',
+                color: theme.colors.text.primary,
+                marginBottom: '4px',
+                letterSpacing: '-0.02em'
+              }}>
+                {rpcData.total_videos || 0}
+              </div>
+              <div style={{
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.4)',
+                fontWeight: '400'
+              }}>
+                Videos analyzed by AI vision
+              </div>
+            </div>
+
+            {/* Card 3: Success Rate */}
+            <div
+              data-tooltip-id="card-success-rate"
+              style={{
+                background: theme.name === 'dark' ? '#1A1A1A' : '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '28px 24px',
+                position: 'relative',
+                cursor: 'help'
+              }}
+            >
+              <div style={{
+                fontSize: '11px',
+                color: 'rgba(139, 92, 246, 0.7)',
+                textTransform: 'uppercase',
+                letterSpacing: '1.2px',
+                marginBottom: '12px',
+                fontWeight: '500'
+              }}>
+                Approved
+              </div>
+              <div style={{
+                fontSize: '48px',
+                fontWeight: '300',
+                color: theme.colors.text.primary,
+                marginBottom: '4px',
+                letterSpacing: '-0.02em'
+              }}>
+                {rpcData.posts || 0}
+              </div>
+              <div style={{
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.4)',
+                fontWeight: '400'
+              }}>
+                Videos approved for strategic comments
+              </div>
+            </div>
+
+            {/* Card 4: Channels Monitored */}
+            <div
+              data-tooltip-id="card-channels"
+              style={{
+                background: theme.name === 'dark' ? '#1A1A1A' : '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '28px 24px',
+                position: 'relative',
+                cursor: 'help'
+              }}
+            >
+              <div style={{
+                fontSize: '11px',
+                color: 'rgba(139, 92, 246, 0.7)',
+                textTransform: 'uppercase',
+                letterSpacing: '1.2px',
+                marginBottom: '12px',
+                fontWeight: '500'
+              }}>
+                Today
+              </div>
+              <div style={{
+                fontSize: '48px',
+                fontWeight: '300',
+                color: theme.colors.text.primary,
+                marginBottom: '4px',
+                letterSpacing: '-0.02em'
+              }}>
+                {rpcData.videos_today || 0}
+              </div>
+              <div style={{
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.4)',
+                fontWeight: '400'
+              }}>
+                Posts analyzed today
               </div>
             </div>
           </div>
+
+          {/* Tooltips for metric cards */}
+          <ReactTooltip
+            id="card-seo-assets"
+            place="top"
+            style={{
+              backgroundColor: theme.colors.background,
+              color: theme.colors.text.primary,
+              border: `1px solid ${theme.colors.borderLight}`,
+              borderRadius: '8px',
+              padding: '12px 16px',
+              fontSize: '13px',
+              maxWidth: '300px',
+              zIndex: 9999,
+              lineHeight: '1.5'
+            }}
+          >
+            Video channels from the first stage that had context for your niche. Now monitored 24/7 for new daily posts to capture early engagement opportunities.
+          </ReactTooltip>
+
+          <ReactTooltip
+            id="card-impressions"
+            place="top"
+            style={{
+              backgroundColor: theme.colors.background,
+              color: theme.colors.text.primary,
+              border: `1px solid ${theme.colors.borderLight}`,
+              borderRadius: '8px',
+              padding: '12px 16px',
+              fontSize: '13px',
+              maxWidth: '300px',
+              zIndex: 9999,
+              lineHeight: '1.5'
+            }}
+          >
+            Total videos analyzed by Liftlio's computer vision. Each video is evaluated for strategic relevance to your niche before approval.
+          </ReactTooltip>
+
+          <ReactTooltip
+            id="card-success-rate"
+            place="top"
+            style={{
+              backgroundColor: theme.colors.background,
+              color: theme.colors.text.primary,
+              border: `1px solid ${theme.colors.borderLight}`,
+              borderRadius: '8px',
+              padding: '12px 16px',
+              fontSize: '13px',
+              maxWidth: '300px',
+              zIndex: 9999,
+              lineHeight: '1.5'
+            }}
+          >
+            Videos approved by Liftlio's AI to receive strategic comments. Only the most relevant content for your audience gets engagement.
+          </ReactTooltip>
+
+          <ReactTooltip
+            id="card-channels"
+            place="top"
+            style={{
+              backgroundColor: theme.colors.background,
+              color: theme.colors.text.primary,
+              border: `1px solid ${theme.colors.borderLight}`,
+              borderRadius: '8px',
+              padding: '12px 16px',
+              fontSize: '13px',
+              maxWidth: '300px',
+              zIndex: 9999,
+              lineHeight: '1.5'
+            }}
+          >
+            Total posts analyzed by Liftlio's computer vision today. Real-time monitoring ensures you never miss strategic opportunities.
+          </ReactTooltip>
 
           {/* Ultra Minimalista System Performance */}
           <div style={{
@@ -4707,12 +4902,68 @@ const YoutubeMonitoring: React.FC = () => {
 
             <div style={{
               fontSize: '15px',
-              lineHeight: '1.7',
-              color: 'rgba(255, 255, 255, 0.5)',
+              lineHeight: '1.8',
+              color: 'rgba(255, 255, 255, 0.6)',
               marginBottom: '32px',
-              maxWidth: '600px'
+              maxWidth: '700px'
             }}>
-              AI monitors <span style={{ color: theme.colors.text.primary, fontWeight: '500' }}>{rpcData.total_channels} channels</span> 24/7, posting strategic comments within ~5 minutes to capture early organic traffic.
+              Liftlio's AI <span style={{ color: theme.colors.text.primary, fontWeight: '500' }}>automatically monitors {rpcData.total_channels} channels</span> 24/7, discovering and engaging with fresh content within ~5 minutes. The longer your project runs, the more quality channels and strategic videos are captured.
+
+              <div
+                onClick={() => setIsAntiSpamExpanded(!isAntiSpamExpanded)}
+                style={{
+                  marginTop: '16px',
+                  paddingLeft: '16px',
+                  borderLeft: `2px solid ${theme.colors.primary}`,
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: isAntiSpamExpanded ? '8px' : '0'
+                }}>
+                  <strong style={{ color: theme.colors.text.primary }}>Intelligent Anti-Spam Protection</strong>
+                  <span style={{
+                    transform: isAntiSpamExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.3s ease',
+                    display: 'inline-flex',
+                    fontSize: '12px'
+                  }}>
+                    ▼
+                  </span>
+                </div>
+
+                {isAntiSpamExpanded && (
+                  <ul style={{
+                    marginTop: '8px',
+                    paddingLeft: '20px',
+                    lineHeight: '1.6',
+                    animation: 'fadeIn 0.3s ease'
+                  }}>
+                    <li>Never posts more than once per week on smaller channels</li>
+                    <li>Automatically detects and excludes channels that delete comments</li>
+                    <li>Positions your message naturally in the top 1-3 comments for maximum visibility</li>
+                    <li>Works seamlessly with YouTube's algorithm - zero risk of blocks or sounding robotic</li>
+                  </ul>
+                )}
+              </div>
+
+              {isAntiSpamExpanded && (
+                <div style={{
+                  marginTop: '16px',
+                  fontSize: '14px',
+                  color: 'rgba(139, 92, 246, 0.8)',
+                  fontStyle: 'italic',
+                  animation: 'fadeIn 0.3s ease'
+                }}>
+                  No manual work required - just let Liftlio build organic demand for your business.
+                </div>
+              )}
             </div>
 
             <div style={{
@@ -4788,446 +5039,9 @@ const YoutubeMonitoring: React.FC = () => {
 
           {/* Recently Discovered Videos from Monitored Channels */}
           <DiscoveredVideosSection projectId={currentProject?.id} itemsPerPage={10} />
-          
-          {/* Categorias de Conteúdo */}
-          <ChartRow>
-            <ChartContainer
-              className="content-categories"
-            >
-              <ChartHeader>
-                <ChartTitle>
-                  <IconComponent icon={FaIcons.FaChartPie} />
-                  Market Reach by Content Category
-                </ChartTitle>
-                <div style={{
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  fontWeight: '400'
-                }}>
-                  Understanding where your brand appears most
-                </div>
-              </ChartHeader>
-              <ChartBody>
-                <div className="chart-content">
-                  <div className="pie-container">
-                    <div className="total-count">
-                      <span className="total-count-value" style={{
-                        color: theme.name === 'dark' ? theme.colors.primary : undefined
-                      }}>
-                        {contentCategories.length}
-                      </span>
-                      <span className="total-count-label" style={{
-                        color: theme.name === 'dark' ? theme.colors.text.secondary : undefined,
-                        background: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : undefined
-                      }}>Categories</span>
-                    </div>
-                    
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <defs>
-                          {chartPalette.map((color, index) => (
-                            <linearGradient key={index} id={`colorGradient-${index}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={color} stopOpacity={0.8} />
-                              <stop offset="100%" stopColor={color} stopOpacity={1} />
-                            </linearGradient>
-                          ))}
-                        </defs>
-                        
-                        <Pie
-                          data={getContentDistributionData()}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={110}
-                          innerRadius={75}
-                          fill={chartPalette[0]}
-                          dataKey="value"
-                          nameKey="shortName"
-                          animationBegin={0}
-                          animationDuration={1500}
-                          animationEasing="ease-out"
-                          paddingAngle={2}
-                          strokeWidth={0}
-                          isAnimationActive
-                        >
-                          {getContentDistributionData().map((entry, index) => (
-                            <Cell 
-                              key={`cell-${index}`} 
-                              fill={`url(#colorGradient-${index % chartPalette.length})`}
-                              stroke="white"
-                              strokeWidth={1}
-                            />
-                          ))}
-                        </Pie>
-                        
-                        <Tooltip 
-                          content={<CustomTooltip />}
-                          wrapperStyle={{ outline: 'none' }}
-                          cursor={{ fill: 'transparent' }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  
-                  <div className="category-cards" style={{
-                    scrollbarColor: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05)' : undefined
-                  }}>
-                    {getContentDistributionData().map((category, index) => {
-                      // Calcular a classe de relevância baseada no valor
-                      let relevanceClass = 'relevance-low';
-                      if (parseFloat(category.relevance) >= 8.0) {
-                        relevanceClass = 'relevance-high';
-                      } else if (parseFloat(category.relevance) >= 6.0) {
-                        relevanceClass = 'relevance-medium';
-                      }
-                      
-                      return (
-                        <div key={index} className="category-card" style={{
-                          background: theme.name === 'dark' ? '#1A1A1A' : undefined,
-                          border: 'none'
-                        }}>
-                          <div className="card-shine"></div>
-                          <div className="rocket-particles"></div>
-                          <div className="category-name" style={{
-                            color: theme.name === 'dark' ? theme.colors.text.primary : undefined
-                          }}>
-                            <span 
-                              className="category-color" 
-                              style={{ backgroundColor: chartPalette[index % chartPalette.length] }}
-                            ></span>
-                            {category.fullName}
-                          </div>
-                          
-                          <div className="progress-bar" style={{
-                            background: theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : undefined
-                          }}>
-                            <div 
-                              className="progress-value" 
-                              style={{ 
-                                width: `${category.percentage || 0}%`,
-                                background: chartPalette[index % chartPalette.length] 
-                              }}
-                            ></div>
-                          </div>
-                          
-                          <div className="metric-row">
-                            <div className="metric">
-                              <span className="metric-value" style={{
-                                color: theme.name === 'dark' ? theme.colors.text.primary : undefined
-                              }}>{category.videos}</span>
-                              <span className="metric-label" style={{
-                                color: theme.name === 'dark' ? theme.colors.text.secondary : undefined
-                              }}>Vídeos</span>
-                            </div>
-                            <div className="metric">
-                              <span className="metric-value" style={{
-                                color: theme.name === 'dark' ? theme.colors.text.primary : undefined
-                              }}>
-                                {Number(category.views).toLocaleString()}
-                              </span>
-                              <span className="metric-label" style={{
-                                color: theme.name === 'dark' ? theme.colors.text.secondary : undefined
-                              }}>Views</span>
-                            </div>
-                            <div className="metric">
-                              <span className="metric-value" style={{
-                                color: theme.name === 'dark' ? theme.colors.text.primary : undefined
-                              }}>
-                                {Number(category.likes).toLocaleString()}
-                              </span>
-                              <span className="metric-label" style={{
-                                color: theme.name === 'dark' ? theme.colors.text.secondary : undefined
-                              }}>Likes</span>
-                            </div>
-                            <div className="metric">
-                              <span className={`relevance-badge ${relevanceClass}`}>
-                                {parseFloat(category.relevance).toFixed(1)}
-                              </span>
-                              <span className="metric-label">Relevance</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </ChartBody>
-            </ChartContainer>
-          </ChartRow>
-          
-          <ChartRow>
-            <ChartContainer>
-              <ChartHeader>
-                <ChartTitle>
-                  <IconComponent icon={FaIcons.FaPlay} />
-                  Highest Impact Videos
-                </ChartTitle>
-                <div style={{
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  fontWeight: '400'
-                }}>
-                  Videos with your strategic comments generating maximum reach
-                </div>
-              </ChartHeader>
-              
-              <VideoTable>
-                <VideoTableHeader>
-                  <div>Video</div>
-                  <div>Views</div>
-                  <div>Comments</div>
-                  <div>Category</div>
-                  <div>Relevance</div>
-                  <div>Channel</div>
-                </VideoTableHeader>
-                
-                {isLoadingTopVideos ? (
-                  // Loading state
-                  Array(5).fill(0).map((_, index) => (
-                    <VideoTableRow key={`loading-${index}`} style={{ opacity: 0.6 }}>
-                      <VideoTitle>
-                        <VideoThumbnail style={{ background: '#f0f0f0' }}>
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <IconComponent icon={FaIcons.FaSpinner} style={{ fontSize: '24px', color: '#aaa' }} />
-                          </div>
-                        </VideoThumbnail>
-                        <VideoTitleText>
-                          <div style={{ height: '18px', width: '240px', background: '#f0f0f0', borderRadius: '4px' }}></div>
-                          <div style={{ height: '12px', width: '160px', background: '#f0f0f0', borderRadius: '4px', marginTop: '8px' }}></div>
-                        </VideoTitleText>
-                      </VideoTitle>
-                      <VideoStat>-</VideoStat>
-                      <VideoStat>-</VideoStat>
-                      <VideoStat>-</VideoStat>
-                      <VideoStat>-</VideoStat>
-                      <VideoStat>-</VideoStat>
-                    </VideoTableRow>
-                  ))
-                ) : topVideos.length === 0 ? (
-                  <div style={{ padding: '32px', textAlign: 'center', width: '100%' }}>
-                    <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px', color: '#666' }}>No videos found</div>
-                    <div style={{ fontSize: '14px', color: '#888' }}>No videos have been tracked for this project yet.</div>
-                  </div>
-                ) : (
-                  topVideos.map((video) => (
-                    <VideoTableRow 
-                      key={video.id}
-                      onClick={() => setSelectedVideoForDetail(video)}
-                    >
-                      <VideoTitle>
-                        <VideoThumbnail>
-                          {video.thumbnailUrl ? (
-                            <img 
-                              src={video.thumbnailUrl} 
-                              alt={video.nome_do_video || "Video thumbnail"} 
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = `https://via.placeholder.com/120x68/5F27CD/FFFFFF?text=${video.nome_do_video?.charAt(0) || "V"}`;
-                              }}
-                            />
-                          ) : (
-                            <div style={{ 
-                              width: '100%', 
-                              height: '100%', 
-                              background: '#5F27CD', 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'center',
-                              color: 'white',
-                              fontSize: '24px'
-                            }}>
-                              {video.nome_do_video?.charAt(0) || "V"}
-                            </div>
-                          )}
-                        </VideoThumbnail>
-                        <VideoTitleText>
-                          <VideoMainTitle>
-                            {video.nome_do_video || "Untitled Video"}
-                          </VideoMainTitle>
-                          {video.total_posts > 0 && (
-                            <VideoBadge type="featured">
-                              <span style={{ marginLeft: '5px', display: 'inline-block' }}>
-                                {video.total_posts} {video.total_posts === 1 ? 'post' : 'posts'}
-                              </span>
-                            </VideoBadge>
-                          )}
-                        </VideoTitleText>
-                      </VideoTitle>
-                      <VideoStat data-value={video.views || 0}>
-                        {typeof video.views === 'number' && video.views >= 1000 
-                          ? `${(video.views / 1000).toFixed(0)}K` 
-                          : video.views || '0'}
-                      </VideoStat>
-                      <VideoStat data-value={video.commets || video.comments || 0}>
-                        {video.commets || video.comments || '0'}
-                      </VideoStat>
-                      <VideoStat>
-                        <span style={{
-                          padding: '4px 10px',
-                          background: 'rgba(139, 92, 246, 0.15)',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '11px',
-                          fontWeight: '500',
-                          color: 'rgba(139, 92, 246, 0.9)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          maxWidth: '120px',
-                          display: 'inline-block'
-                        }}>
-                          {video.content_category || 'Uncategorized'}
-                        </span>
-                      </VideoStat>
-                      <VideoStat data-value={
-                        video.relevance_score
-                          ? (typeof video.relevance_score === 'number' ? video.relevance_score : parseFloat(String(video.relevance_score)) * 10).toFixed(1)
-                          : 0
-                      }>
-                        <span style={{
-                          padding: '4px 10px',
-                          borderRadius: '6px',
-                          fontSize: '11px',
-                          fontWeight: '500',
-                          background: typeof video.relevance_score === 'number'
-                            ? (video.relevance_score >= 0.8 ? 'rgba(139, 92, 246, 0.25)'
-                              : video.relevance_score >= 0.6 ? 'rgba(139, 92, 246, 0.18)'
-                              : 'rgba(139, 92, 246, 0.12)')
-                            : (parseFloat(String(video.relevance_score || '0')) >= 0.8
-                              ? 'rgba(139, 92, 246, 0.25)'
-                              : parseFloat(String(video.relevance_score || '0')) >= 0.6
-                              ? 'rgba(139, 92, 246, 0.18)'
-                              : 'rgba(139, 92, 246, 0.12)'),
-                          border: 'none',
-                          color: typeof video.relevance_score === 'number'
-                            ? (video.relevance_score >= 0.8 ? 'rgba(139, 92, 246, 1)'
-                              : video.relevance_score >= 0.6 ? 'rgba(139, 92, 246, 0.9)'
-                              : 'rgba(139, 92, 246, 0.7)')
-                            : (parseFloat(String(video.relevance_score || '0')) >= 0.8
-                              ? 'rgba(139, 92, 246, 1)'
-                              : parseFloat(String(video.relevance_score || '0')) >= 0.6
-                              ? 'rgba(139, 92, 246, 0.9)'
-                              : 'rgba(139, 92, 246, 0.7)')
-                        }}>
-                          {video.relevance_score
-                            ? `${(typeof video.relevance_score === 'number' ? video.relevance_score : parseFloat(String(video.relevance_score)) * 10).toFixed(1)}/10`
-                            : 'N/A'}
-                        </span>
-                      </VideoStat>
-                      <VideoStat>
-                        {video.canal_nome || 'Unknown'}
-                      </VideoStat>
-                    </VideoTableRow>
-                  ))
-                )}
-              </VideoTable>
-              
-              {!isLoadingTopVideos && topVideos.length > 0 && (
-                <PaginationContainer>
-                  <PaginationInfo>
-                    Showing {topVideos.length} of {totalVideos} videos
-                  </PaginationInfo>
-                  <PaginationControls>
-                    <PaginationButton 
-                      disabled={currentPage <= 1} 
-                      onClick={() => {
-                        if (currentPage > 1) {
-                          const newPage = currentPage - 1;
-                          setCurrentPage(newPage);
-                          // Use function from parent scope
-                          const fetchVideos = async () => {
-                            if (!currentProject?.id) return;
-                            setIsLoadingTopVideos(true);
-                            try {
-                              const data = await callRPC('get_videos_by_project_id', { 
-                                projeto_id: currentProject.id,
-                                page_number: newPage,
-                                page_size: pageSize
-                              });
-                              
-                              if (data && Array.isArray(data) && data.length > 0) {
-                                const totalRegistros = data[0]?.total_registros || 0;
-                                setTotalVideos(totalRegistros);
-                                
-                                const processedVideos = data.map(video => {
-                                  const videoId = video.video_id_youtube || '';
-                                  return {
-                                    ...video,
-                                    thumbnailUrl: videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : ''
-                                  };
-                                });
-                                
-                                setTopVideos(processedVideos);
-                              } else {
-                                setTopVideos([]);
-                                setTotalVideos(0);
-                              }
-                            } catch (err) {
-                              console.error('Error fetching videos:', err);
-                            } finally {
-                              setIsLoadingTopVideos(false);
-                            }
-                          };
-                          fetchVideos();
-                        }
-                      }}
-                    >
-                      <IconComponent icon={FaIcons.FaChevronLeft} />
-                      Previous
-                    </PaginationButton>
-                    <PaginationPage>{currentPage}</PaginationPage>
-                    <PaginationButton 
-                      disabled={topVideos.length < pageSize || (totalVideos > 0 && currentPage * pageSize >= totalVideos)} 
-                      onClick={() => {
-                        const newPage = currentPage + 1;
-                        setCurrentPage(newPage);
-                        // Use function from parent scope
-                        const fetchVideos = async () => {
-                          if (!currentProject?.id) return;
-                          setIsLoadingTopVideos(true);
-                          try {
-                            const data = await callRPC('get_videos_by_project_id', { 
-                              projeto_id: currentProject.id,
-                              page_number: newPage,
-                              page_size: pageSize
-                            });
-                            
-                            if (data && Array.isArray(data) && data.length > 0) {
-                              const totalRegistros = data[0]?.total_registros || 0;
-                              setTotalVideos(totalRegistros);
-                              
-                              const processedVideos = data.map(video => {
-                                const videoId = video.video_id_youtube || '';
-                                return {
-                                  ...video,
-                                  thumbnailUrl: videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : ''
-                                };
-                              });
-                              
-                              setTopVideos(processedVideos);
-                            } else {
-                              setTopVideos([]);
-                              setTotalVideos(0);
-                            }
-                          } catch (err) {
-                            console.error('Error fetching videos:', err);
-                          } finally {
-                            setIsLoadingTopVideos(false);
-                          }
-                        };
-                        fetchVideos();
-                      }}
-                    >
-                      Next
-                      <IconComponent icon={FaIcons.FaChevronRight} />
-                    </PaginationButton>
-                  </PaginationControls>
-                </PaginationContainer>
-              )}
-            </ChartContainer>
-          </ChartRow>
         </>
       )}
-      
+
       {activeTab === 'channels' && (
         <>
           <FilterBar>
@@ -5338,10 +5152,10 @@ const YoutubeMonitoring: React.FC = () => {
                 border: `1px solid ${theme.name === 'dark' ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.2)'}`
               }}>
                 <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#6366F1', marginBottom: '4px' }}>
-                  {(rpcData.total_views / 1000000).toFixed(1)}M
+                  {rpcData.videos_today}
                 </div>
                 <div style={{ fontSize: '13px', color: theme.colors.text.secondary }}>
-                  Total Reach
+                  Analyzed Today
                 </div>
               </div>
             </div>

@@ -94,19 +94,22 @@ class YouTubeService:
 
     async def get_channel_videos(
         self,
-        channel_id: str,
-        max_results: Optional[int] = None,
-        date_filter: str = "último dia",
-        excluded_ids: Optional[List[str]] = None
+        video_ids: List[str],
+        channel_id: Optional[str] = None,
+        max_results: Optional[int] = None
     ) -> List[Dict]:
         """
-        Get videos from a YouTube channel
+        Get videos BY ID (not by discovery with 'today' filter)
+
+        IMPORTANT CHANGE (2025-10-24):
+        - Previously: Discovered videos using 'today' filter
+        - Now: Receives video IDs from SQL (videos_para_scann)
+        - Benefit: Single source of truth, no race conditions
 
         Args:
-            channel_id: YouTube channel ID
-            max_results: Maximum number of videos to return (default from settings)
-            date_filter: Date filter name
-            excluded_ids: List of video IDs to exclude
+            video_ids: List of video IDs to fetch (from videos_para_scann)
+            channel_id: Optional channel ID (only for logging)
+            max_results: Maximum number of videos to return
 
         Returns:
             List of video dictionaries with basic info
@@ -115,87 +118,36 @@ class YouTubeService:
             Exception: If API call fails
         """
         try:
-            max_results = max_results or self.max_results
-            excluded_ids = excluded_ids or []
-            excluded_ids_normalized = [
-                self._normalize_video_id(vid) for vid in excluded_ids
-            ]
+            if not video_ids:
+                logger.warning("No video IDs provided to fetch")
+                return []
 
             logger.info(
-                f"Fetching videos from channel {channel_id} "
-                f"(max: {max_results}, filter: {date_filter}, "
-                f"excluded: {len(excluded_ids_normalized)})"
+                f"Fetching {len(video_ids)} videos BY ID "
+                f"(channel: {channel_id or 'unknown'})"
             )
 
-            # Get uploads playlist ID
-            channel_response = self.youtube.channels().list(
-                part="contentDetails",
-                id=channel_id
-            ).execute()
-
-            if not channel_response.get("items"):
-                raise ValueError(f"Channel not found: {channel_id}")
-
-            uploads_playlist_id = (
-                channel_response["items"][0]
-                ["contentDetails"]
-                ["relatedPlaylists"]
-                ["uploads"]
-            )
-
-            logger.debug(f"Uploads playlist ID: {uploads_playlist_id}")
-
-            # Get date filter
-            published_after = self._get_date_filter(date_filter)
-
-            # Fetch playlist items
             all_videos = []
-            next_page_token = None
-            buffer_factor = 2 if excluded_ids_normalized else 1
-            fetch_limit = min(50, max_results * buffer_factor)
 
-            while len(all_videos) < max_results:
-                playlist_params = {
-                    "playlistId": uploads_playlist_id,
-                    "part": "snippet,contentDetails",
-                    "maxResults": fetch_limit
-                }
+            # Process in batches of 50 (API limit)
+            batch_size = 50
+            for i in range(0, len(video_ids), batch_size):
+                batch = video_ids[i:i + batch_size]
+                logger.debug(f"Processing batch {i//batch_size + 1}: {len(batch)} videos")
 
-                if next_page_token:
-                    playlist_params["pageToken"] = next_page_token
-
-                playlist_response = self.youtube.playlistItems().list(
-                    **playlist_params
+                response = self.youtube.videos().list(
+                    part="snippet",
+                    id=",".join(batch)
                 ).execute()
 
-                for item in playlist_response.get("items", []):
+                for item in response.get("items", []):
                     snippet = item.get("snippet", {})
-                    content_details = item.get("contentDetails", {})
-                    video_id = content_details.get("videoId", "")
-                    published_at = snippet.get("publishedAt", "")
-
-                    if not video_id:
-                        continue
-
-                    # Check if excluded
-                    normalized_id = self._normalize_video_id(video_id)
-                    if normalized_id in excluded_ids_normalized:
-                        logger.debug(f"Skipping excluded video: {video_id}")
-                        continue
-
-                    # Check date filter
-                    if published_after and published_at < published_after:
-                        logger.debug(
-                            f"Skipping video {video_id} "
-                            f"(published before filter)"
-                        )
-                        continue
 
                     video_data = {
-                        "video_id": video_id,
+                        "video_id": item.get("id", ""),
                         "title": snippet.get("title", ""),
                         "description": snippet.get("description", ""),
-                        "published_at": published_at,
+                        "published_at": snippet.get("publishedAt", ""),
                         "thumbnail_url": (
                             snippet.get("thumbnails", {})
                             .get("default", {})
@@ -205,18 +157,18 @@ class YouTubeService:
 
                     all_videos.append(video_data)
 
-                    if len(all_videos) >= max_results:
-                        break
-
-                # Check if there's a next page
-                next_page_token = playlist_response.get("nextPageToken")
-                if not next_page_token:
-                    break
-
             logger.success(
-                f"✅ Fetched {len(all_videos)} videos from channel {channel_id}"
+                f"✅ Fetched {len(all_videos)} videos by ID "
+                f"(requested: {len(video_ids)})"
             )
-            return all_videos[:max_results]
+
+            if len(all_videos) < len(video_ids):
+                missing = len(video_ids) - len(all_videos)
+                logger.warning(
+                    f"⚠️ {missing} videos not found (may be deleted/private)"
+                )
+
+            return all_videos
 
         except HttpError as e:
             logger.error(f"❌ YouTube API error: {e}")
@@ -224,7 +176,7 @@ class YouTubeService:
                 logger.error("Quota exceeded or invalid API key!")
             raise
         except Exception as e:
-            logger.error(f"❌ Error fetching channel videos: {e}")
+            logger.error(f"❌ Error fetching videos by ID: {e}")
             raise
 
     async def get_video_details(self, video_ids: List[str]) -> List[VideoData]:

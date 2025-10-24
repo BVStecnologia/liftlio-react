@@ -2,13 +2,13 @@
 -- Função: process_monitored_videos
 -- Descrição: Processa vídeos monitorados e cria comentários iniciais
 -- Criado: 2025-01-23
--- Atualizado: 2025-01-23
+-- Atualizado: 2025-10-24 - Adicionada verificação de videos_scanreados para prevenir duplicatas
 -- =============================================
 
 DROP FUNCTION IF EXISTS process_monitored_videos();
 
 CREATE OR REPLACE FUNCTION process_monitored_videos()
-RETURNS jsonb
+RETURNS JSONB
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -17,16 +17,37 @@ DECLARE
     v_after_value TEXT;
     v_processed_count INTEGER := 0;
     v_analyzed_count INTEGER := 0;
+    v_skipped_count INTEGER := 0;
     v_commented_count INTEGER := 0;
     v_high_processed INTEGER := 0;
-    v_results JSONB := '{"processed": [], "errors": [], "high_videos": []}';
+    v_results JSONB := '{"processed": [], "errors": [], "high_videos": [], "skipped": []}';
     v_log_info JSONB;
     v_video_exists BOOLEAN;
 BEGIN
     -- ETAPA 1: Processar vídeos monitorados que não foram analisados ainda
     FOR v_video IN
-        SELECT v.id, v."VIDEO" as youtube_id, v.lead_potential
+        SELECT
+            v.id,
+            v."VIDEO" as youtube_id,
+            v.lead_potential,
+            v.canal as channel_id,
+            -- Verificar se já foi analisado (otimizado com LEFT JOIN LATERAL)
+            CASE
+                WHEN scanned.video_id IS NOT NULL THEN true
+                ELSE false
+            END as ja_foi_analisado,
+            scanned.count as vezes_analisado
         FROM "Videos" v
+        LEFT JOIN LATERAL (
+            SELECT
+                elem->>'id' as video_id,
+                COUNT(*) as count
+            FROM "Canais do youtube" c,
+                 jsonb_array_elements(c.videos_scanreados::jsonb) AS elem
+            WHERE c.id = v.canal
+              AND elem->>'id' = v."VIDEO"
+            GROUP BY elem->>'id'
+        ) scanned ON true
         WHERE v.monitored = true
           AND (v.lead_potential IS NULL OR v.lead_potential = '')
         ORDER BY v.created_at DESC
@@ -38,8 +59,33 @@ BEGIN
         v_log_info := jsonb_build_object(
             'video_id', v_video.id,
             'youtube_id', v_video.youtube_id,
+            'channel_id', v_video.channel_id,
             'lead_potential_before', v_before_value
         );
+
+        -- ====== VALIDAÇÃO: Skip se já foi analisado ======
+        IF v_video.ja_foi_analisado THEN
+            v_skipped_count := v_skipped_count + 1;
+
+            RAISE NOTICE '⏭️ SKIP: Vídeo % já foi analisado % vez(es)',
+                         v_video.youtube_id,
+                         v_video.vezes_analisado;
+
+            v_log_info := v_log_info || jsonb_build_object(
+                'skipped', true,
+                'reason', 'Already in videos_scanreados',
+                'times_analyzed', v_video.vezes_analisado
+            );
+
+            v_results := jsonb_set(
+                v_results,
+                '{skipped}',
+                (v_results->'skipped') || to_jsonb(v_log_info)
+            );
+
+            CONTINUE;  -- ✅ Pula para próximo vídeo
+        END IF;
+        -- ====== FIM DA VALIDAÇÃO ======
 
         RAISE NOTICE 'Atualizando análise do vídeo ID % (YouTube ID: %)',
             v_video.id, v_video.youtube_id;
@@ -73,7 +119,6 @@ BEGIN
                         WHERE video = v_video.id
                     ) THEN
                         BEGIN
-                            -- CORREÇÃO: Adicionar ::INTEGER
                             PERFORM create_and_save_initial_comment(v_video.id::INTEGER);
                             v_commented_count := v_commented_count + 1;
                             v_log_info := v_log_info || jsonb_build_object(
@@ -125,7 +170,7 @@ BEGIN
         WHERE v.monitored = true
           AND v.lead_potential = 'High'
           AND NOT EXISTS (
-              SELECT 1 FROM "Mensagens" m WHERE m.video = v_video.id
+              SELECT 1 FROM "Mensagens" m WHERE m.video = v.id
           )
         ORDER BY v.created_at DESC
         LIMIT 10
@@ -140,7 +185,6 @@ BEGIN
         );
 
         BEGIN
-            -- CORREÇÃO: Adicionar ::INTEGER
             PERFORM create_and_save_initial_comment(v_video.id::INTEGER);
             v_commented_count := v_commented_count + 1;
 
@@ -176,6 +220,7 @@ BEGIN
     RETURN jsonb_build_object(
         'total_processed', v_processed_count,
         'videos_analyzed', v_analyzed_count,
+        'videos_skipped', v_skipped_count,
         'high_videos_processed', v_high_processed,
         'comments_created', v_commented_count,
         'details', v_results

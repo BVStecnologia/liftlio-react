@@ -25,10 +25,14 @@ class SupabaseService:
 
     async def get_canal_e_videos(self, scanner_id: int) -> CanalData:
         """
-        Get channel data and video IDs from Supabase
+        Get channel data and video IDs TO PROCESS from Supabase
+
+        IMPORTANT CHANGE (2025-10-24):
+        - Previously: Returned 'videos' (excluded list)
+        - Now: Returns 'videos_para_scann' (queue to process)
 
         Calls RPC: obter_canal_e_videos
-        Returns: CanalData with youtube_channel_id and excluded videos list
+        Returns: CanalData with youtube_channel_id and videos_to_process
 
         Args:
             scanner_id: Scanner ID from Supabase table
@@ -56,24 +60,26 @@ class SupabaseService:
             if isinstance(data, list) and len(data) > 0:
                 data = data[0]
 
-            # Handle different response structures
+            # Get channel ID
             canal_id = data.get("youtube_channel_id", "")
-            videos = data.get("videos", [])
 
-            # If videos is a single ID, make it a list
-            if isinstance(videos, str):
-                videos = [videos] if videos else []
-            elif not isinstance(videos, list):
-                videos = []
+            # Get videos_para_scann (queue to process)
+            videos_para_scann = data.get("videos_para_scann", "")
+
+            # Convert CSV to list
+            if videos_para_scann and isinstance(videos_para_scann, str):
+                video_ids = [v.strip() for v in videos_para_scann.split(",") if v.strip()]
+            else:
+                video_ids = []
 
             result = CanalData(
                 youtube_channel_id=canal_id,
-                videos=videos
+                videos=video_ids
             )
 
             logger.success(
                 f"✅ Canal data fetched: {result.youtube_channel_id}, "
-                f"{len(result.videos)} excluded videos"
+                f"{len(result.videos)} videos to process"
             )
             return result
 

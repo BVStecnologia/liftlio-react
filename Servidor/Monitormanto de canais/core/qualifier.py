@@ -100,16 +100,35 @@ class VideoQualifier:
             )
 
             # ============================================
-            # STEP 3: Fetch YouTube videos
+            # STEP 3: Fetch YouTube videos BY ID (from queue)
             # ============================================
+
+            # Check if there are videos in the queue
+            if not canal_data.videos or len(canal_data.videos) == 0:
+                logger.warning(
+                    f"⚠️ No videos in queue (videos_para_scann) for scanner {scanner_id}"
+                )
+                warnings.append("No videos in processing queue")
+                execution_time = time.time() - start_time
+                return QualificationResult(
+                    scanner_id=scanner_id,
+                    qualified_video_ids=[],
+                    qualified_video_ids_csv="",
+                    total_analyzed=0,
+                    execution_time_seconds=execution_time,
+                    success=True,
+                    warnings=warnings,
+                    stats=stats
+                )
+
             logger.info(
-                f"🎥 Fetching videos from YouTube channel "
-                f"{canal_data.youtube_channel_id}..."
+                f"🎥 Fetching {len(canal_data.videos)} videos BY ID from queue "
+                f"(channel: {canal_data.youtube_channel_id})..."
             )
 
             basic_videos = await self.youtube.get_channel_videos(
-                channel_id=canal_data.youtube_channel_id,
-                excluded_ids=canal_data.videos or []
+                video_ids=canal_data.videos,
+                channel_id=canal_data.youtube_channel_id
             )
 
             # Update stats
@@ -117,9 +136,10 @@ class VideoQualifier:
 
             if not basic_videos:
                 logger.warning(
-                    f"⚠️ No new videos found for scanner {scanner_id}"
+                    f"⚠️ No videos found by ID for scanner {scanner_id} "
+                    f"(requested: {len(canal_data.videos)})"
                 )
-                warnings.append("No new videos found in last 24h")
+                warnings.append(f"No videos found (requested {len(canal_data.videos)} IDs)")
                 execution_time = time.time() - start_time
                 return QualificationResult(
                     scanner_id=scanner_id,

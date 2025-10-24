@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     console.log(`🌍 Using bilingual V2 API endpoint`);
 
     // Call Video Qualifier API V2 on VPS
-    const vpsResponse = await fetch('http://173.249.22.2:8001/qualify-videos', {
+    const vpsResponse = await fetch('http://173.249.22.2:8000/qualify-videos', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

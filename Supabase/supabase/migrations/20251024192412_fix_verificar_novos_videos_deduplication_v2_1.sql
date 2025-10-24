@@ -1,15 +1,26 @@
 -- =============================================
--- Função: verificar_novos_videos_youtube (v2.1 - DISCOVERY + videos_scanreados_2)
--- Descrição: APENAS descobre vídeos novos e marca em videos_para_scann
--- NÃO chama Python (evita timeout)
--- Criado: 2025-01-23
--- Atualizado: 2025-10-24 22:24 UTC - FIX: Deduplicação completa em videos_para_scann
--- Features:
---   - Processamento em lotes (padrão 15 canais)
---   - Anti-spam via can_comment_on_channel
---   - Intervalo mínimo de 30 min entre verificações
---   - Deduplicação usando JSONB operators (compatível com v5)
---   - Salva vídeos novos em videos_para_scann (fila de processamento)
+-- Migration: Fix deduplication in verificar_novos_videos_youtube
+-- Data: 2025-10-24 22:24 UTC
+-- Descrição: Corrige duplicação de video_ids em videos_para_scann
+--
+-- PROBLEMA IDENTIFICADO:
+--   - videos_para_scann acumulava duplicatas a cada execução
+--   - Faltava deduplicação ao mesclar IDs existentes + novos
+--   - Causava processamento redundante e desperdício de recursos
+--
+-- SOLUÇÃO IMPLEMENTADA:
+--   - Adicionadas 3 variáveis: v_existing_ids, v_all_ids, v_unique_ids
+--   - Linhas 158-186: Lógica completa de deduplicação
+--     1. Pegar IDs já existentes em videos_para_scann
+--     2. Mesclar com novos IDs da API
+--     3. Remover duplicatas com DISTINCT
+--     4. Atualizar ambos campos com lista deduplicada
+--
+-- BENEFÍCIOS:
+--   ✅ Elimina duplicatas em videos_para_scann
+--   ✅ Reduz carga de processamento
+--   ✅ Evita re-análises desnecessárias
+--   ✅ Mantém histórico limpo em videos_scanreados_2
 -- =============================================
 
 -- Remover versões anteriores
@@ -37,7 +48,7 @@ DECLARE
     v_mentions_disponiveis INTEGER;
     v_existing_ids TEXT[];  -- IDs já existentes em videos_para_scann
     v_all_ids TEXT[];       -- Todos IDs (existentes + novos)
-    v_unique_ids TEXT[];    -- IDs deduplica dos
+    v_unique_ids TEXT[];    -- IDs deduplicados
 BEGIN
     -- Conta total de canais a serem processados
     SELECT COUNT(*) INTO total_canais
@@ -51,7 +62,7 @@ BEGIN
     RAISE NOTICE '🔍 [DISCOVERY ONLY] Iniciando descoberta - % canais em lotes de %', total_canais, lote_tamanho;
 
     FOR canal_record IN
-        SELECT c.id, c.channel_id, c.videos_scanreados, c.videos_scanreados_2, c."processar", p.id as projeto_id
+        SELECT c.id, c.channel_id, c.videos_scanreados, c.videos_scanreados_2, c."processar", c.videos_para_scann, p.id as projeto_id
         FROM "Canais do youtube" c
         JOIN "Projeto" p ON c."Projeto" = p.id
         WHERE p."Youtube Active" = true
@@ -210,41 +221,20 @@ END;
 $function$;
 
 -- =============================================
--- NOTAS DE IMPLEMENTAÇÃO
+-- TESTES RECOMENDADOS
 -- =============================================
 
-/*
-MUDANÇAS da v2.1 (antiga) para v2.0 (nova):
+-- 1. Verificar função foi criada
+SELECT proname, pronargs FROM pg_proc WHERE proname = 'verificar_novos_videos_youtube';
 
-v2.1 (ANTIGA - COM TIMEOUT):
-  ✅ Descobre vídeos
-  ✅ Chama Python (~28s por canal)  ← CAUSA TIMEOUT!
-  ✅ Salva em videos_scanreados
-  ✅ Salva em processar
+-- 2. Testar com 1 canal
+SELECT verificar_novos_videos_youtube(1);
 
-v2.0 (NOVA - SEM TIMEOUT):
-  ✅ Descobre vídeos
-  ✅ Salva em videos_para_scann (FILA)
-  ❌ NÃO chama Python (evita timeout)
-  ❌ NÃO salva em videos_scanreados (será feito por processar_fila_videos)
-
-BENEFÍCIOS:
-  ✅ Rápido: 100 canais em ~1,6 min (vs 46 min na v2.1)
-  ✅ Sem timeout: Não chama Python
-  ✅ Simples: Mantém toda lógica atual (anti-spam, deduplicação)
-  ✅ Escalável: Pode processar 1000+ canais sem timeout
-
-PRÓXIMOS PASSOS:
-  1. Criar função processar_fila_videos() (processa a fila)
-  2. CRON 1 (já existente): verificar_novos_videos_youtube() a cada 45 min
-  3. Configurar CRON 2 (novo): processar_fila_videos() a cada 3 min
-
-EXEMPLO DE USO:
-  -- Executar descoberta
-  SELECT verificar_novos_videos_youtube(100);
-
-  -- Ver canais na fila
-  SELECT id, "Nome", videos_para_scann
-  FROM "Canais do youtube"
-  WHERE videos_para_scann IS NOT NULL;
-*/
+-- 3. Verificar deduplicação funcionando
+SELECT id, "Nome",
+       length(videos_para_scann) as queue_length,
+       length(videos_scanreados_2) as history_length
+FROM "Canais do youtube"
+WHERE videos_para_scann IS NOT NULL
+ORDER BY queue_length DESC
+LIMIT 5;
