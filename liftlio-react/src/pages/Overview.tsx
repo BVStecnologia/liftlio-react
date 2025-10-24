@@ -20,6 +20,40 @@ import { PieLabelRenderProps } from 'recharts';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 
+// 🎨 ANALYTICS COLOR PALETTE - Liftlio Brand Identity
+// Consistent with Analytics page for unified visual experience
+const ANALYTICS_COLORS = {
+  // Primary Purple Palette
+  purple: {
+    primary: '#8b5cf6',    // Main brand color - 60% usage
+    secondary: '#a855f7',  // Secondary accent - 25% usage
+    light: '#c084fc',      // Light accent - 10% usage
+    lighter: '#d8b4fe',    // Lightest - 5% highlights
+    dark: '#7c3aed',       // Dark shade - gradients & hovers
+  },
+  // Accent Colors (for visual hierarchy)
+  accent: {
+    cyan: '#22d3ee',       // Organic/Natural metrics
+    green: '#10b981',      // Time/Action metrics
+    orange: '#fb923c',     // Warning/Attention
+    blue: '#3b82f6',       // Info/Secondary
+  },
+  // Gradients
+  gradients: {
+    purplePrimary: 'linear-gradient(90deg, #8b5cf6 0%, #a855f7 50%, #c084fc 100%)',
+    purpleCard: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+    purpleLight: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)',
+  },
+  // Transparency levels (for backgrounds/hovers)
+  alpha: {
+    bg05: 'rgba(139, 92, 246, 0.05)',  // Lightest background
+    bg10: 'rgba(139, 92, 246, 0.1)',   // Hover state
+    bg15: 'rgba(139, 92, 246, 0.15)',  // Active state
+    bg20: 'rgba(139, 92, 246, 0.2)',   // Border/highlight
+    border: 'rgba(139, 92, 246, 0.2)', // Default border
+  }
+};
+
 // Premium wave effect with physics
 const waveEffect = keyframes`
   0% {
@@ -642,12 +676,13 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost' | 'ou
   ${props => {
     if (props.variant === 'primary') {
       return css`
-        background: ${COLORS.GRADIENT.PRIMARY}; /* Accent color (10%) for primary buttons */
+        background: #8055E0; /* Liftlio purple custom */
         color: ${COLORS.TEXT.ON_DARK}; /* Text on dark backgrounds */
         border: none;
         box-shadow: ${COLORS.SHADOW.LIGHT};
-        
+
         &:hover {
+          background: #6b43d1;
           box-shadow: ${COLORS.SHADOW.MEDIUM};
           transform: translateY(-2px);
         }
@@ -737,20 +772,22 @@ const StatCard = styled(motion.div)<{ gridSpan?: number; cardIndex?: number; act
   overflow: hidden;
   grid-column: span ${props => props.gridSpan || 3};
   animation: ${fadeIn} 0.6s ease-out forwards;
-  transform: ${props => props.cardIndex !== undefined 
+  transform: ${props => props.cardIndex !== undefined
     ? `scale(${1 - props.cardIndex * 0.01}) ${props.active ? 'translateY(-1px)' : 'translateY(0)'}`
     : 'scale(1)'
   };
   z-index: ${props => props.cardIndex !== undefined ? 10 - props.cardIndex : 1};
   border: 1px solid ${props => props.theme.colors.border.primary};
-  
+
   /* Fundo simples sem gradientes coloridos */
   background: ${props => props.theme.components.card.bg};
-  
+
+  /* Transição suave para hover minimalista */
+  transition: all 0.3s ease;
+
   &:hover {
-    transform: translateY(-4px) ${props => props.cardIndex !== undefined ? `scale(${1 - props.cardIndex * 0.01})` : 'scale(1)'};
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-    background: ${props => props.theme.colors.bg.hover};
+    transform: translateY(-1px) ${props => props.cardIndex !== undefined ? `scale(${1 - props.cardIndex * 0.01})` : 'scale(1)'};
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.08);
   }
   
   @media (max-width: 1200px) {
@@ -1680,6 +1717,50 @@ const renderIcon = (iconName: string) => {
   // Use the imported IconComponent helper instead of direct createElement
   return Icon ? <IconComponent icon={Icon} /> : null;
 };
+
+// Helper function to add smart offsets to prevent overlapping lines
+interface ChartDataPoint {
+  name: string;
+  videos: number;
+  engagement: number;
+  leads: number;
+}
+
+function addSmartOffsets(data: ChartDataPoint[]): ChartDataPoint[] {
+  const OFFSET_AMOUNT = 0.08; // Small offset for visual separation
+
+  return data.map((point) => {
+    const values = [
+      { key: 'videos' as const, value: point.videos },
+      { key: 'engagement' as const, value: point.engagement },
+      { key: 'leads' as const, value: point.leads }
+    ];
+
+    // Group by value to find duplicates
+    const valueGroups = new Map<number, (keyof ChartDataPoint)[]>();
+    values.forEach(({ key, value }) => {
+      if (!valueGroups.has(value)) {
+        valueGroups.set(value, []);
+      }
+      valueGroups.get(value)!.push(key);
+    });
+
+    // Apply offsets to overlapping values
+    const offsetPoint = { ...point };
+    valueGroups.forEach((keys, value) => {
+      if (keys.length > 1) {
+        // Multiple lines have the same value - apply symmetric offset
+        keys.forEach((key, index) => {
+          // Spread lines vertically: -offset, 0, +offset
+          const offset = (index - (keys.length - 1) / 2) * OFFSET_AMOUNT;
+          (offsetPoint as any)[key] = value + offset;
+        });
+      }
+    });
+
+    return offsetPoint;
+  });
+}
 
 // Main component
 const Overview: React.FC = () => {
@@ -2964,11 +3045,12 @@ const Overview: React.FC = () => {
     return (
       <div style={{
         backgroundColor: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-        border: `1px solid ${theme.colors.border.primary}`,
+        border: `1px solid ${ANALYTICS_COLORS.alpha.border}`,
         borderRadius: '8px',
         padding: '12px',
         fontSize: '13px',
-        boxShadow: theme.shadows.md
+        boxShadow: `0 4px 12px ${ANALYTICS_COLORS.alpha.bg10}`,
+        color: theme.colors.text.primary
       }}>
         <p style={{
           marginBottom: '8px',
@@ -2994,7 +3076,7 @@ const Overview: React.FC = () => {
                 display: 'inline-block'
               }} />
               <span style={{ fontWeight: 500 }}>
-                {entry.value} {entry.name}
+                {Math.round(entry.value)} {entry.name}
               </span>
             </p>
           )
@@ -3016,9 +3098,9 @@ const Overview: React.FC = () => {
       if (!dataPoint) return '#FFFFFF';
 
       // Priorizar a cor da métrica com valor
-      if (dataPoint.videos === value) return '#2196F3'; // Azul
-      if (dataPoint.engagement === value) return '#FF7A30'; // Laranja
-      if (dataPoint.leads === value) return '#4CAF50'; // Verde
+      if (dataPoint.videos === value) return ANALYTICS_COLORS.accent.cyan; // Cyan
+      if (dataPoint.engagement === value) return ANALYTICS_COLORS.purple.secondary; // Roxo
+      if (dataPoint.leads === value) return ANALYTICS_COLORS.accent.green; // Verde
 
       return '#FFFFFF'; // Fallback
     };
@@ -3037,7 +3119,7 @@ const Overview: React.FC = () => {
             : '0 0 4px rgba(255,255,255,0.9), 0 1px 2px rgba(255,255,255,1)'
         }}
       >
-        {value}
+        {Math.round(value)}
       </text>
     );
   };
@@ -3059,7 +3141,7 @@ const Overview: React.FC = () => {
       title: 'Channels',
       value: statsData.reach.value,
       icon: 'FaBroadcastTower',
-      color: COLORS.INFO,
+      color: ANALYTICS_COLORS.purple.primary, // Roxo primário - metric principal
       description: 'Active channels',
       trend: statsData.reach.trend,
       tooltip: 'YouTube channels being monitored for relevant conversations about your niche'
@@ -3069,7 +3151,7 @@ const Overview: React.FC = () => {
       title: 'Videos',
       value: statsData.activities.value,
       icon: 'FaVideo',
-      color: '#9C27B0',
+      color: ANALYTICS_COLORS.accent.cyan, // Cyan - representa conteúdo orgânico/descoberta
       description: 'Total videos',
       trend: statsData.activities.trend,
       tooltip: 'Total videos discovered where we can engage with the audience'
@@ -3079,7 +3161,7 @@ const Overview: React.FC = () => {
       title: 'Posts',
       value: totalPosts.toString(),
       icon: 'FaStar',
-      color: COLORS.WARNING,
+      color: ANALYTICS_COLORS.purple.secondary, // Roxo secundário - métrica hero
       description: 'All posts published',
       trend: null,
       tooltip: `Product mentions: ${statsData.engagements.value} | Engagement: ${statsData.engagement.value}`
@@ -3089,7 +3171,7 @@ const Overview: React.FC = () => {
       title: 'Today',
       value: statsData.leads.value,
       icon: 'FaCalendarDay',
-      color: COLORS.SUCCESS,
+      color: ANALYTICS_COLORS.accent.green, // Verde - ação/urgência/tempo
       description: 'Posted today',
       trend: statsData.leads.trend,
       tooltip: 'Product mention comments posted today to maintain consistent presence'
@@ -3417,9 +3499,9 @@ const Overview: React.FC = () => {
                   formatter={(value) => [`${value}`, 'Videos']}
                   contentStyle={{
                     background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                    border: `1px solid ${theme.colors.border.primary}`,
+                    border: `1px solid ${ANALYTICS_COLORS.alpha.border}`,
                     borderRadius: '8px',
-                    boxShadow: theme.shadows.md,
+                    boxShadow: `0 4px 12px ${ANALYTICS_COLORS.alpha.bg10}`,
                     color: theme.colors.text.primary
                   }}
                 />
@@ -3438,23 +3520,41 @@ const Overview: React.FC = () => {
           </StatCardTitle>
           <ChartContainer style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyPerformanceData} margin={{ top: 30, right: 10, left: 0, bottom: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                <YAxis axisLine={false} tickLine={false} />
+              <BarChart
+                data={weeklyPerformanceData}
+                margin={{ top: 30, right: 10, left: 0, bottom: 10 }}
+                barGap={8}
+                barCategoryGap="15%"
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(139, 92, 246, 0.1)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} stroke="rgba(139, 92, 246, 0.3)" />
+                <YAxis axisLine={false} tickLine={false} stroke="rgba(139, 92, 246, 0.3)" />
                 <Tooltip
                   contentStyle={{
                     background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                    border: `1px solid ${theme.colors.border.primary}`,
+                    border: `1px solid ${ANALYTICS_COLORS.alpha.border}`,
                     borderRadius: '8px',
-                    boxShadow: theme.shadows.md,
+                    boxShadow: `0 4px 12px ${ANALYTICS_COLORS.alpha.bg10}`,
                     color: theme.colors.text.primary
                   }}
                 />
                 <Legend content={renderCustomLegend} />
-                <Bar dataKey="videos" name="Videos" fill="#2196F3" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="engagement" name="Engagement" fill="#a855f7" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="leads" name="Mentions" fill="#4CAF50" radius={[4, 4, 0, 0]} />
+                {/* Engagement - Primary metric with medium width and purple tone */}
+                <Bar
+                  dataKey="engagement"
+                  name="Engagement"
+                  fill={ANALYTICS_COLORS.purple.secondary}
+                  radius={[8, 8, 0, 0]}
+                  barSize={30}
+                />
+                {/* Mentions - Thinner for visual separation when values are equal */}
+                <Bar
+                  dataKey="leads"
+                  name="Mentions"
+                  fill={ANALYTICS_COLORS.accent.green}
+                  radius={[8, 8, 0, 0]}
+                  barSize={28}
+                />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -3474,49 +3574,43 @@ const Overview: React.FC = () => {
           <ChartContainer>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart
-                data={weeklyPerformanceData}
+                data={addSmartOffsets(weeklyPerformanceData)}
                 margin={{ top: 30, right: 30, left: 0, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)} />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(139, 92, 246, 0.1)" />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
                   tickLine={false}
+                  stroke="rgba(139, 92, 246, 0.3)"
                 />
-                <YAxis 
-                  axisLine={false} 
+                <YAxis
+                  axisLine={false}
                   tickLine={false}
+                  stroke="rgba(139, 92, 246, 0.3)"
                 />
                 <Tooltip content={<CustomWeeklyTooltip />} />
                 <Legend content={renderCustomLegend} />
-                <Line
-                  type="monotone"
-                  dataKey="videos"
-                  name="Videos"
-                  stroke="#2196F3"
-                  strokeWidth={3}
-                  dot={{ r: 4, strokeWidth: 0, fill: "#2196F3" }}
-                  activeDot={{ r: 8, strokeWidth: 0, fill: "#2196F3" }}
-                  label={renderMinimalLabel as any}
-                />
+                {/* Engagement: primary metric with purple - slightly thicker */}
                 <Line
                   type="monotone"
                   dataKey="engagement"
                   name="Engagement"
-                  stroke="#a855f7"
-                  strokeWidth={3}
-                  dot={{ r: 4, strokeWidth: 0, fill: "#a855f7" }}
-                  activeDot={{ r: 6, strokeWidth: 0, fill: "#a855f7" }}
+                  stroke={ANALYTICS_COLORS.purple.secondary}
+                  strokeWidth={3.5}
+                  dot={{ r: 5, strokeWidth: 0, fill: ANALYTICS_COLORS.purple.secondary }}
+                  activeDot={{ r: 8, strokeWidth: 0, fill: ANALYTICS_COLORS.purple.secondary }}
                   label={renderMinimalLabel as any}
                 />
+                {/* Mentions: solid line - data offset prevents overlap */}
                 <Line
                   type="monotone"
                   dataKey="leads"
                   name="Mentions"
-                  stroke="#4CAF50"
+                  stroke={ANALYTICS_COLORS.accent.green}
                   strokeWidth={3}
-                  dot={{ r: 4, strokeWidth: 0, fill: "#4CAF50" }}
-                  activeDot={{ r: 6, strokeWidth: 0, fill: "#4CAF50" }}
+                  dot={{ r: 5, strokeWidth: 0, fill: ANALYTICS_COLORS.accent.green }}
+                  activeDot={{ r: 8, strokeWidth: 0, fill: ANALYTICS_COLORS.accent.green }}
                   label={renderMinimalLabel as any}
                 />
               </LineChart>
