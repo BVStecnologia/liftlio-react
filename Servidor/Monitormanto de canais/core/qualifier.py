@@ -190,20 +190,25 @@ class VideoQualifier:
             # ============================================
             logger.info("🧠 Running Claude semantic analysis...")
 
-            qualified_ids = await self.claude.semantic_analysis(
+            # semantic_analysis now returns Dict[video_id, reasoning]
+            analysis_dict = await self.claude.semantic_analysis(
                 videos=enriched_videos,
                 project=project_data
             )
 
-            # Validate qualified IDs
-            validate_qualified_ids(
-                qualified_ids=qualified_ids,
-                available_ids=[v.id for v in enriched_videos]
-            )
-
-            # Filter to only valid IDs
+            # Validate that all video IDs in analysis exist
             available_set = set(v.id for v in enriched_videos)
-            qualified_ids = [vid for vid in qualified_ids if vid in available_set]
+            analysis_dict = {
+                vid: reasoning
+                for vid, reasoning in analysis_dict.items()
+                if vid in available_set
+            }
+
+            # Separate approved videos from rejected/skipped
+            qualified_ids = [
+                vid for vid, reasoning in analysis_dict.items()
+                if "✅ APPROVED" in reasoning
+            ]
 
             # Update final stats
             stats["videos_analyzed"] = len(enriched_videos)
@@ -225,10 +230,17 @@ class VideoQualifier:
             # ============================================
             execution_time = time.time() - start_time
 
+            # Format as "id:reasoning,id:reasoning"
+            # Include ALL videos (approved, rejected, skipped) for full transparency
+            all_videos_with_reasoning = [
+                f"{vid}:{reasoning}"
+                for vid, reasoning in analysis_dict.items()
+            ]
+
             result = QualificationResult(
                 scanner_id=scanner_id,
-                qualified_video_ids=qualified_ids,
-                qualified_video_ids_csv=",".join(qualified_ids),
+                qualified_video_ids=qualified_ids,  # Only approved IDs
+                qualified_video_ids_csv=",".join(all_videos_with_reasoning),  # ALL with reasoning
                 total_analyzed=len(enriched_videos),
                 execution_time_seconds=execution_time,
                 success=True,
