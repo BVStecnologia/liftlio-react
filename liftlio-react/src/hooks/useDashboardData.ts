@@ -440,12 +440,12 @@ export const useDashboardData = () => {
           
           return {
             name: channelName,
-            value: channel.total_leads || 0,
+            value: channel.videos_encontrados || 0,
             color: channelColor,
             engagements: channel.comentarios_reais || 0,
             leads: channel.total_leads || 0,
-            leadPercentage: channel.total_leads > 0 && channel.comentarios_reais > 0 
-              ? (channel.total_leads / channel.comentarios_reais) * 100 
+            leadPercentage: channel.total_leads > 0 && channel.comentarios_reais > 0
+              ? (channel.total_leads / channel.comentarios_reais) * 100
               : 0
           };
         });

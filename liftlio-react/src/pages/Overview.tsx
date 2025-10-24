@@ -3338,7 +3338,7 @@ const Overview: React.FC = () => {
               color: theme.colors.text.secondary,
               opacity: 0.9
             }}>
-              Top Posts by Channel
+              Videos by Channel
             </span>
           </StatCardTitle>
           <ChartContainer style={{ height: '250px' }}>
@@ -3414,7 +3414,7 @@ const Overview: React.FC = () => {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value) => [`${value}`, 'Posts']}
+                  formatter={(value) => [`${value}`, 'Videos']}
                   contentStyle={{
                     background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                     border: `1px solid ${theme.colors.border.primary}`,
@@ -3438,7 +3438,7 @@ const Overview: React.FC = () => {
           </StatCardTitle>
           <ChartContainer style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyPerformanceData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+              <BarChart data={weeklyPerformanceData} margin={{ top: 30, right: 10, left: 0, bottom: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} />
                 <YAxis axisLine={false} tickLine={false} />
@@ -3452,9 +3452,9 @@ const Overview: React.FC = () => {
                   }}
                 />
                 <Legend content={renderCustomLegend} />
-                <Bar dataKey="videos" name="Videos" fill="#1976D2" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="engagement" name="Engagement" fill="#FF5722" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="leads" name="Mentions" fill="#2E7D32" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="videos" name="Videos" fill="#2196F3" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="engagement" name="Engagement" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="leads" name="Mentions" fill="#4CAF50" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -3473,9 +3473,9 @@ const Overview: React.FC = () => {
         <ChartBody>
           <ChartContainer>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart 
-                data={weeklyPerformanceData} 
-                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+              <LineChart
+                data={weeklyPerformanceData}
+                margin={{ top: 30, right: 30, left: 0, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={withOpacity(COLORS.DOMINANT_LIGHTER, 0.5)} />
                 <XAxis 
@@ -3503,10 +3503,10 @@ const Overview: React.FC = () => {
                   type="monotone"
                   dataKey="engagement"
                   name="Engagement"
-                  stroke="#FF7A30"
+                  stroke="#a855f7"
                   strokeWidth={3}
-                  dot={{ r: 4, strokeWidth: 0, fill: "#FF7A30" }}
-                  activeDot={{ r: 6, strokeWidth: 0, fill: "#FF7A30" }}
+                  dot={{ r: 4, strokeWidth: 0, fill: "#a855f7" }}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: "#a855f7" }}
                   label={renderMinimalLabel as any}
                 />
                 <Line
