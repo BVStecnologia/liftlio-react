@@ -3506,16 +3506,35 @@ const Overview: React.FC = () => {
             <IconComponent icon={FaIcons.FaChartBar} />
             Weekly Performance
           </StatCardTitle>
-          <ChartContainer style={{ height: '250px' }}>
+          <ChartContainer style={{ height: '240px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={weeklyPerformanceData}
-                margin={{ top: 30, right: 10, left: 0, bottom: 10 }}
+                margin={{ top: 30, right: 10, left: 0, bottom: 5 }}
                 barGap={8}
                 barCategoryGap="15%"
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(139, 92, 246, 0.1)" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} stroke="rgba(139, 92, 246, 0.3)" />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  stroke="rgba(139, 92, 246, 0.3)"
+                  angle={-45}
+                  textAnchor="end"
+                  height={50}
+                  tick={{ fontSize: 11 }}
+                  tickFormatter={(value) => {
+                    // Remove year from date format: "18/10/2025" -> "18/10"
+                    if (typeof value === 'string' && value.includes('/')) {
+                      const parts = value.split('/');
+                      if (parts.length >= 2) {
+                        return `${parts[0]}/${parts[1]}`;
+                      }
+                    }
+                    return value;
+                  }}
+                />
                 <YAxis axisLine={false} tickLine={false} stroke="rgba(139, 92, 246, 0.3)" />
                 <Tooltip cursor={false} content={<CustomWeeklyTooltip />} />
                 <Legend content={renderCustomLegend} />
@@ -3554,10 +3573,10 @@ const Overview: React.FC = () => {
         
         <ChartBody>
           <ChartContainer>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={290}>
               <LineChart
                 data={addSmartOffsets(weeklyPerformanceData)}
-                margin={{ top: 30, right: 30, left: 0, bottom: 0 }}
+                margin={{ top: 30, right: 30, left: 0, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(139, 92, 246, 0.1)" />
                 <XAxis
@@ -3565,6 +3584,20 @@ const Overview: React.FC = () => {
                   axisLine={false}
                   tickLine={false}
                   stroke="rgba(139, 92, 246, 0.3)"
+                  angle={-45}
+                  textAnchor="end"
+                  height={50}
+                  tick={{ fontSize: 11 }}
+                  tickFormatter={(value) => {
+                    // Remove year from date format: "18/10/2025" -> "18/10"
+                    if (typeof value === 'string' && value.includes('/')) {
+                      const parts = value.split('/');
+                      if (parts.length >= 2) {
+                        return `${parts[0]}/${parts[1]}`;
+                      }
+                    }
+                    return value;
+                  }}
                 />
                 <YAxis
                   axisLine={false}
