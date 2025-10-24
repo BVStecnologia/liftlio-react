@@ -676,15 +676,32 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost' | 'ou
   ${props => {
     if (props.variant === 'primary') {
       return css`
-        background: #8055E0; /* Liftlio purple custom */
-        color: ${COLORS.TEXT.ON_DARK}; /* Text on dark backgrounds */
+        background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%); /* Analytics purple gradient */
+        color: ${COLORS.TEXT.ON_DARK};
         border: none;
-        box-shadow: ${COLORS.SHADOW.LIGHT};
+        box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+          transition: left 0.5s;
+        }
 
         &:hover {
-          background: #6b43d1;
-          box-shadow: ${COLORS.SHADOW.MEDIUM};
+          background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+          box-shadow: 0 6px 24px rgba(139, 92, 246, 0.5);
           transform: translateY(-2px);
+
+          &::before {
+            left: 100%;
+          }
         }
       `;
     } else if (props.variant === 'secondary') {
@@ -3097,10 +3114,10 @@ const Overview: React.FC = () => {
       const dataPoint = weeklyPerformanceData[index];
       if (!dataPoint) return '#FFFFFF';
 
-      // Priorizar a cor da métrica com valor
+      // Cores exatas do Analytics Traffic Sources
       if (dataPoint.videos === value) return ANALYTICS_COLORS.accent.cyan; // Cyan
-      if (dataPoint.engagement === value) return ANALYTICS_COLORS.purple.secondary; // Roxo
-      if (dataPoint.leads === value) return ANALYTICS_COLORS.accent.green; // Verde
+      if (dataPoint.engagement === value) return '#a855f7'; // Analytics secondary
+      if (dataPoint.leads === value) return '#8b5cf6'; // Analytics primary (stronger)
 
       return '#FFFFFF'; // Fallback
     };
@@ -3141,7 +3158,7 @@ const Overview: React.FC = () => {
       title: 'Channels',
       value: statsData.reach.value,
       icon: 'FaBroadcastTower',
-      color: ANALYTICS_COLORS.purple.primary, // Roxo primário - metric principal
+      color: '#8b5cf6', // Analytics primary purple
       description: 'Active channels',
       trend: statsData.reach.trend,
       tooltip: 'YouTube channels being monitored for relevant conversations about your niche'
@@ -3151,7 +3168,7 @@ const Overview: React.FC = () => {
       title: 'Videos',
       value: statsData.activities.value,
       icon: 'FaVideo',
-      color: ANALYTICS_COLORS.accent.cyan, // Cyan - representa conteúdo orgânico/descoberta
+      color: '#a855f7', // Analytics secondary purple
       description: 'Total videos',
       trend: statsData.activities.trend,
       tooltip: 'Total videos discovered where we can engage with the audience'
@@ -3161,7 +3178,7 @@ const Overview: React.FC = () => {
       title: 'Posts',
       value: totalPosts.toString(),
       icon: 'FaStar',
-      color: ANALYTICS_COLORS.purple.secondary, // Roxo secundário - métrica hero
+      color: '#c084fc', // Analytics light purple
       description: 'All posts published',
       trend: null,
       tooltip: `Product mentions: ${statsData.engagements.value} | Engagement: ${statsData.engagement.value}`
@@ -3171,7 +3188,7 @@ const Overview: React.FC = () => {
       title: 'Today',
       value: statsData.leads.value,
       icon: 'FaCalendarDay',
-      color: ANALYTICS_COLORS.accent.green, // Verde - ação/urgência/tempo
+      color: '#7c3aed', // Analytics dark purple
       description: 'Posted today',
       trend: statsData.leads.trend,
       tooltip: 'Product mention comments posted today to maintain consistent presence'
@@ -3484,7 +3501,7 @@ const Overview: React.FC = () => {
                     const x2 = Number(cx) + labelRadius * cos;
                     const y2 = Number(cy) + labelRadius * sin;
                     
-                    return <path d={`M${x1},${y1}L${x2},${y2}`} stroke="#666" strokeDasharray="3,3" />;
+                    return <path d={`M${x1},${y1}L${x2},${y2}`} stroke={ANALYTICS_COLORS.alpha.border} strokeDasharray="3,3" />;
                   }}
                   isAnimationActive={true}
                 >
@@ -3529,31 +3546,25 @@ const Overview: React.FC = () => {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(139, 92, 246, 0.1)" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} stroke="rgba(139, 92, 246, 0.3)" />
                 <YAxis axisLine={false} tickLine={false} stroke="rgba(139, 92, 246, 0.3)" />
-                <Tooltip
-                  contentStyle={{
-                    background: theme.name === 'dark' ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                    border: `1px solid ${ANALYTICS_COLORS.alpha.border}`,
-                    borderRadius: '8px',
-                    boxShadow: `0 4px 12px ${ANALYTICS_COLORS.alpha.bg10}`,
-                    color: theme.colors.text.primary
-                  }}
-                />
+                <Tooltip cursor={false} content={<CustomWeeklyTooltip />} />
                 <Legend content={renderCustomLegend} />
                 {/* Engagement - Primary metric with medium width and purple tone */}
                 <Bar
                   dataKey="engagement"
                   name="Engagement"
-                  fill={ANALYTICS_COLORS.purple.secondary}
+                  fill="#a855f7"
                   radius={[8, 8, 0, 0]}
                   barSize={30}
+                  activeBar={false}
                 />
-                {/* Mentions - Thinner for visual separation when values are equal */}
+                {/* Mentions - Stronger tone (Analytics primary) - Thinner for visual separation */}
                 <Bar
                   dataKey="leads"
                   name="Mentions"
-                  fill={ANALYTICS_COLORS.accent.green}
+                  fill="#8b5cf6"
                   radius={[8, 8, 0, 0]}
                   barSize={28}
+                  activeBar={false}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -3591,26 +3602,26 @@ const Overview: React.FC = () => {
                 />
                 <Tooltip content={<CustomWeeklyTooltip />} />
                 <Legend content={renderCustomLegend} />
-                {/* Engagement: primary metric with purple - slightly thicker */}
+                {/* Engagement: secondary purple - slightly thicker */}
                 <Line
                   type="monotone"
                   dataKey="engagement"
                   name="Engagement"
-                  stroke={ANALYTICS_COLORS.purple.secondary}
+                  stroke="#a855f7"
                   strokeWidth={3.5}
-                  dot={{ r: 5, strokeWidth: 0, fill: ANALYTICS_COLORS.purple.secondary }}
-                  activeDot={{ r: 8, strokeWidth: 0, fill: ANALYTICS_COLORS.purple.secondary }}
+                  dot={{ r: 5, strokeWidth: 0, fill: "#a855f7" }}
+                  activeDot={{ r: 8, strokeWidth: 0, fill: "#a855f7" }}
                   label={renderMinimalLabel as any}
                 />
-                {/* Mentions: solid line - data offset prevents overlap */}
+                {/* Mentions: stronger tone (Analytics primary) - data offset prevents overlap */}
                 <Line
                   type="monotone"
                   dataKey="leads"
                   name="Mentions"
-                  stroke={ANALYTICS_COLORS.accent.green}
+                  stroke="#8b5cf6"
                   strokeWidth={3}
-                  dot={{ r: 5, strokeWidth: 0, fill: ANALYTICS_COLORS.accent.green }}
-                  activeDot={{ r: 8, strokeWidth: 0, fill: ANALYTICS_COLORS.accent.green }}
+                  dot={{ r: 5, strokeWidth: 0, fill: "#8b5cf6" }}
+                  activeDot={{ r: 8, strokeWidth: 0, fill: "#8b5cf6" }}
                   label={renderMinimalLabel as any}
                 />
               </LineChart>

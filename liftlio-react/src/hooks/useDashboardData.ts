@@ -327,126 +327,145 @@ export const useDashboardData = () => {
         
         // Cores vivas e distintas para diferentes plataformas
         // Mapear todas as variações possíveis de nomes de canais para cores consistentes
+        // ANALYTICS_COLORS palette for channel colors - Purple theme consistency
         const channelColors: Record<string, string> = {
-          // Variações de YouTube
-          'YouTube': '#CC0000',
-          'youtube': '#CC0000',
-          'Youtube': '#CC0000',
-          'YOUTUBE': '#CC0000',
-          
-          // Variações de Google
-          'Google': '#1A73E8',
-          'google': '#1A73E8',
-          'GOOGLE': '#1A73E8',
-          
-          // Variações de Facebook
-          'Facebook': '#1F4287',
-          'facebook': '#1F4287',
-          'FACEBOOK': '#1F4287',
-          
-          // Variações de Instagram
-          'Instagram': '#8E2A92',
-          'instagram': '#8E2A92',
-          'INSTAGRAM': '#8E2A92',
-          
-          // Variações de TikTok
-          'TikTok': '#222222',
-          'tiktok': '#222222',
-          'Tiktok': '#222222',
-          'TIKTOK': '#222222',
-          
-          // Variações de Twitter
-          'Twitter': '#0C7ABF',
-          'twitter': '#0C7ABF',
-          'TWITTER': '#0C7ABF',
-          
-          // Variações de LinkedIn
-          'LinkedIn': '#0A66C2',
-          'linkedin': '#0A66C2',
-          'Linkedin': '#0A66C2',
-          'LINKEDIN': '#0A66C2',
-          
-          // Outras plataformas
-          'Pinterest': '#B31B1B',
-          'pinterest': '#B31B1B',
-          'Snapchat': '#CCCC00',
-          'snapchat': '#CCCC00',
-          'Reddit': '#D63900',
-          'reddit': '#D63900',
-          'WhatsApp': '#1BA050',
-          'whatsapp': '#1BA050',
-          'Telegram': '#0065A4',
-          'telegram': '#0065A4',
-          'Discord': '#5865F2',
-          'discord': '#5865F2',
-          'Medium': '#00897B',
-          'medium': '#00897B',
-          'Vimeo': '#165272',
-          'vimeo': '#165272',
-          'Twitch': '#6441A5',
-          'twitch': '#6441A5',
-          'Spotify': '#006450',
-          'spotify': '#006450',
-          'Slack': '#4A154B',
-          'slack': '#4A154B',
-          'Tumblr': '#36465D',
-          'tumblr': '#36465D'
+          // Variações de YouTube - Primary Purple
+          'YouTube': '#8b5cf6',
+          'youtube': '#8b5cf6',
+          'Youtube': '#8b5cf6',
+          'YOUTUBE': '#8b5cf6',
+
+          // Variações de Google - Accent Cyan
+          'Google': '#22d3ee',
+          'google': '#22d3ee',
+          'GOOGLE': '#22d3ee',
+
+          // Variações de Facebook - Secondary Purple
+          'Facebook': '#a855f7',
+          'facebook': '#a855f7',
+          'FACEBOOK': '#a855f7',
+
+          // Variações de Instagram - Light Purple
+          'Instagram': '#c084fc',
+          'instagram': '#c084fc',
+          'INSTAGRAM': '#c084fc',
+
+          // Variações de TikTok - Dark Purple
+          'TikTok': '#7c3aed',
+          'tiktok': '#7c3aed',
+          'Tiktok': '#7c3aed',
+          'TIKTOK': '#7c3aed',
+
+          // Variações de Twitter - Accent Blue
+          'Twitter': '#3b82f6',
+          'twitter': '#3b82f6',
+          'TWITTER': '#3b82f6',
+
+          // Variações de LinkedIn - Lighter Purple
+          'LinkedIn': '#d8b4fe',
+          'linkedin': '#d8b4fe',
+          'Linkedin': '#d8b4fe',
+          'LINKEDIN': '#d8b4fe',
+
+          // Outras plataformas - Mixed purple tones and accents
+          'Pinterest': '#fb923c', // Accent Orange
+          'pinterest': '#fb923c',
+          'Snapchat': '#10b981', // Accent Green
+          'snapchat': '#10b981',
+          'Reddit': '#a855f7', // Secondary Purple
+          'reddit': '#a855f7',
+          'WhatsApp': '#10b981', // Accent Green
+          'whatsapp': '#10b981',
+          'Telegram': '#22d3ee', // Accent Cyan
+          'telegram': '#22d3ee',
+          'Discord': '#8b5cf6', // Primary Purple
+          'discord': '#8b5cf6',
+          'Medium': '#c084fc', // Light Purple
+          'medium': '#c084fc',
+          'Vimeo': '#7c3aed', // Dark Purple
+          'vimeo': '#7c3aed',
+          'Twitch': '#a855f7', // Secondary Purple
+          'twitch': '#a855f7',
+          'Spotify': '#10b981', // Accent Green
+          'spotify': '#10b981',
+          'Slack': '#d8b4fe', // Lighter Purple
+          'slack': '#d8b4fe',
+          'Tumblr': '#3b82f6', // Accent Blue
+          'tumblr': '#3b82f6'
         };
         
         // Usar dados da nova view channel_metrics_dashboard - limitando a 7 canais
         // e organizando por total_leads (Mentions) em vez de weighted_score
-        // Cores vibrantes de fallback para canais não mapeados
+        // ANALYTICS_COLORS palette - Purple theme for consistency with dashboard
         const fallbackColors = [
-          '#1976D2', // Azul escuro
-          '#D32F2F', // Vermelho escuro
-          '#2E7D32', // Verde escuro
-          '#7B1FA2', // Roxo escuro
-          '#C2185B', // Rosa escuro
-          '#0288D1', // Azul claro
-          '#F57F17'  // Amarelo escuro
+          '#8b5cf6', // Primary Purple (ANALYTICS_COLORS.purple.primary)
+          '#a855f7', // Secondary Purple (ANALYTICS_COLORS.purple.secondary)
+          '#c084fc', // Light Purple (ANALYTICS_COLORS.purple.light)
+          '#7c3aed', // Dark Purple (ANALYTICS_COLORS.purple.dark)
+          '#22d3ee', // Accent Cyan (ANALYTICS_COLORS.accent.cyan)
+          '#10b981', // Accent Green (ANALYTICS_COLORS.accent.green)
+          '#d8b4fe', // Lighter Purple (ANALYTICS_COLORS.purple.lighter)
+          '#fb923c', // Accent Orange (ANALYTICS_COLORS.accent.orange)
+          '#3b82f6'  // Accent Blue (ANALYTICS_COLORS.accent.blue)
         ];
         
-        const trafficSourceData: TrafficSource[] = topChannels.map((channel: any, index: number) => {
-          const channelName = channel.nome_canal || '';
-          
-          // Determinar a cor para o canal - tenta várias combinações
-          let channelColor = null;
-          
-          // 1. Tenta encontrar a cor exata para o nome do canal
-          if (channelColors[channelName]) {
-            channelColor = channelColors[channelName];
-          } 
-          // 2. Tenta encontrar a plataforma pelo texto parcial
-          else {
-            // Lista de plataformas para verificar
-            const platforms = ['YouTube', 'Facebook', 'Instagram', 'TikTok', 'Twitter', 
-                             'LinkedIn', 'Pinterest', 'Snapchat', 'Reddit', 'WhatsApp', 
-                             'Telegram', 'Discord', 'Medium', 'Vimeo', 'Twitch', 'Spotify'];
-            
-            for (const platform of platforms) {
-              if (channelName.toLowerCase().includes(platform.toLowerCase())) {
-                channelColor = channelColors[platform];
-                break;
-              }
-            }
+        // First, collect all channels to determine min/max values for color scaling
+        const allChannelsWithVideos = topChannels.map((channel: any) => ({
+          name: channel.nome_canal || '',
+          videos: channel.videos_encontrados || 0,
+          engagements: channel.comentarios_reais || 0,
+          leads: channel.total_leads || 0,
+          leadPercentage: channel.total_leads > 0 && channel.comentarios_reais > 0
+            ? (channel.total_leads / channel.comentarios_reais) * 100
+            : 0
+        }));
+
+        // Find min and max video counts for color gradient
+        const videosCounts = allChannelsWithVideos.map(c => c.videos);
+        const minVideos = Math.min(...videosCounts);
+        const maxVideos = Math.max(...videosCounts);
+
+        // Analytics purple gradient: stronger (dark) for more videos, lighter for fewer videos
+        const getPurpleGradientColor = (videoCount: number): string => {
+          if (maxVideos === minVideos) {
+            // All channels have same number of videos - use primary color
+            return '#8b5cf6'; // Analytics primary
           }
-          
-          // 3. Se ainda não encontrou, usa uma cor de fallback com base no índice
-          if (!channelColor) {
-            channelColor = fallbackColors[index % fallbackColors.length];
-          }
-          
-          console.log(`Canal: ${channelName}, Cor atribuída: ${channelColor}`);
-          
+
+          // Normalize video count to 0-1 range
+          const normalizedValue = (videoCount - minVideos) / (maxVideos - minVideos);
+
+          // Define purple gradient from light to dark (Analytics colors)
+          const purpleGradient = [
+            '#d8b4fe', // Lightest (fewer videos)
+            '#c084fc', // Light
+            '#a855f7', // Medium (Analytics secondary)
+            '#8b5cf6', // Strong (Analytics primary)
+            '#7c3aed'  // Strongest/Darkest (most videos)
+          ];
+
+          // Map normalized value to gradient index
+          const gradientIndex = Math.min(
+            Math.floor(normalizedValue * (purpleGradient.length - 1)),
+            purpleGradient.length - 1
+          );
+
+          return purpleGradient[gradientIndex];
+        };
+
+        const trafficSourceData: TrafficSource[] = allChannelsWithVideos.map((channel) => {
+          // Assign color based on video count (gradient from light to dark)
+          const channelColor = getPurpleGradientColor(channel.videos);
+
+          console.log(`Canal: ${channel.name}, Vídeos: ${channel.videos}, Cor: ${channelColor}`);
+
           return {
-            name: channelName,
-            value: channel.videos_encontrados || 0,
+            name: channel.name,
+            value: channel.videos,
             color: channelColor,
-            engagements: channel.comentarios_reais || 0,
-            leads: channel.total_leads || 0,
-            leadPercentage: channel.total_leads > 0 && channel.comentarios_reais > 0
-              ? (channel.total_leads / channel.comentarios_reais) * 100
-              : 0
+            engagements: channel.engagements,
+            leads: channel.leads,
+            leadPercentage: channel.leadPercentage
           };
         });
         
