@@ -4,6 +4,21 @@
 -- Criado: 2025-01-24
 -- Atualizado: 2025-10-23 - Adicionada verificação de Mentions disponíveis
 --                          Projetos sem Mentions NÃO entram no pipeline
+--
+-- 🚨 CRONS QUE CHAMAM ESTA FUNÇÃO (PROBLEMÁTICO!):
+--    Job 70266: "Cria novas mensagens" - */5 * * * * (a cada 5min) ❌ DELETADO
+--    Job 158971: "Mudar status do projeto para 0" - 0 6 * * * (diário 6h) ✅ DESATIVADO
+--    Job 159028: "Cria novas mensagens" - */5 * * * * (recriado) ⚠️ ATIVO
+--
+-- ⚠️ PROBLEMA IDENTIFICADO (24/10/2025):
+--    Esta função resetava status para 0 em projetos ANTES de completarem (status 0-5)
+--    Causando múltiplas rodadas de scanners (7 vídeos → 12 vídeos → 13 vídeos)
+--    Job 70266 rodava a cada 5min e resetava projetos ainda no pipeline!
+--
+-- ✅ CORREÇÃO APLICADA (25/10/2025):
+--    Adicionada linha 36: AND p.status = '6'
+--    APENAS reseta projetos que JÁ COMPLETARAM o pipeline!
+--    Se status != 6 = ainda está processando = NÃO resetar!
 -- =============================================
 
 CREATE OR REPLACE FUNCTION public.check_and_update_projects_status()
@@ -21,6 +36,7 @@ BEGIN
     SET status = '0'
     WHERE p."Youtube Active" = TRUE
     AND p.integracao_valida = TRUE  -- Validar integração ativa
+    AND p.status = '6'  -- ⭐ APENAS resetar projetos que JÁ COMPLETARAM o pipeline!
     AND EXISTS (
         -- NOVO: Verificar se customer tem Mentions disponíveis
         SELECT 1
