@@ -2185,10 +2185,14 @@ const Settings: React.FC<{}> = () => {
       }
 
       // Update local state
-      setProjectData({
+      const updatedData = {
         ...projectData,
         "Youtube Active": false
-      });
+      };
+      setProjectData(updatedData);
+      setOriginalData(updatedData);
+      setChangedFields({});
+      setShowSaveBar(false);
 
       // Close modal and reset state
       setShowDeactivateModal(false);
@@ -2222,10 +2226,14 @@ const Settings: React.FC<{}> = () => {
       }
 
       // Update local state
-      setProjectData({
+      const updatedData = {
         ...projectData,
         "Youtube Active": true
-      });
+      };
+      setProjectData(updatedData);
+      setOriginalData(updatedData);
+      setChangedFields({});
+      setShowSaveBar(false);
 
       // Close modal and reset state
       setShowActivateModal(false);
