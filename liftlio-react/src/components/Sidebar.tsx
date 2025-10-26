@@ -298,23 +298,22 @@ const UserSection = styled.div`
 const UserInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  justify-content: center;
+  margin-bottom: 6px;
 `;
 
 const UserAvatar = styled.div`
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+  background: rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 18px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
   font-weight: 600;
   flex-shrink: 0;
-  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
   transition: all 0.3s ease;
   
   span {
@@ -373,6 +372,9 @@ const BetaBadge = styled.span<{ isCollapsed?: boolean }>`
 const UserDetails = styled.div`
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 `;
 
 const UserName = styled.div`
@@ -386,15 +388,51 @@ const UserName = styled.div`
 
 const UserEmail = styled.div`
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.5);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: center;
+  width: 100%;
 `;
 
 const UserActions = styled.div`
   display: flex;
   gap: 8px;
+`;
+
+const UsageSection = styled.div`
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const UsageBar = styled.div`
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+`;
+
+const UsageBarFill = styled.div<{ percentage: number; isNearLimit: boolean }>`
+  height: 100%;
+  background: ${props => props.isNearLimit ? '#a78bfa' : '#8b5cf6'};
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  width: ${props => props.percentage}%;
+  box-shadow: ${props => props.isNearLimit ? '0 0 8px rgba(167, 139, 250, 0.6)' : '0 0 4px rgba(139, 92, 246, 0.4)'};
+`;
+
+const UsageCount = styled.div<{ isNearLimit: boolean }>`
+  font-size: 11px;
+  font-weight: 600;
+  color: ${props => props.isNearLimit ? '#a78bfa' : 'rgba(255, 255, 255, 0.5)'};
+  white-space: nowrap;
+  transition: color 0.3s ease;
+  text-align: center;
 `;
 
 const UserButton = styled.button`
@@ -1474,7 +1512,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
   const { currentProject, hasIntegrations } = useProject();
   const { theme } = useTheme();
   const { t, language } = useLanguage();
-  const { user, signOut } = useAuth();
+  const { user, signOut, subscription } = useAuth();
   const { emitter: realtimeEmitter, isConnected } = useRealtime();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [isCollapsedLocal, setIsCollapsedLocal] = useState(isCollapsedProp);
@@ -1856,27 +1894,41 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
           
           {/* User Section */}
           <UserSection>
-            <UserInfo>
-              <UserAvatar>
-                <span>
-                  {(user?.user_metadata?.full_name || user?.email || 'U').charAt(0)}
-                </span>
-              </UserAvatar>
-              {!isCollapsed && (
-                <UserDetails>
-                  <UserName>{user?.user_metadata?.full_name || 'User'}</UserName>
-                  <UserEmail>{user?.email || ''}</UserEmail>
-                </UserDetails>
-              )}
-            </UserInfo>
-            
             {!isCollapsed && (
-              <UserActions>
-                <UserButton onClick={signOut} style={{ width: '100%' }}>
-                  <IconComponent icon={FaIcons.FaSignOutAlt} />
-                  Sign Out
-                </UserButton>
-              </UserActions>
+              <UserInfo>
+                <UserEmail>{user?.email || ''}</UserEmail>
+              </UserInfo>
+            )}
+
+            {/* Usage Section */}
+            {!isCollapsed && subscription?.mentions_available !== undefined && subscription?.subscription?.mentions_limit && (
+              <UsageSection>
+                <UsageBar data-tooltip-id="usage-tooltip">
+                  <UsageBarFill
+                    percentage={((subscription.subscription.mentions_limit - subscription.mentions_available) / subscription.subscription.mentions_limit) * 100}
+                    isNearLimit={(subscription.mentions_available / subscription.subscription.mentions_limit) <= 0.10}
+                  />
+                </UsageBar>
+                <UsageCount isNearLimit={(subscription.mentions_available / subscription.subscription.mentions_limit) <= 0.10}>
+                  {subscription.subscription.mentions_limit - subscription.mentions_available}/{subscription.subscription.mentions_limit}
+                </UsageCount>
+                <ReactTooltip
+                  id="usage-tooltip"
+                  place="top"
+                  style={{
+                    backgroundColor: theme.name === 'dark' ? '#1a1a1a' : '#2d3e50',
+                    color: 'rgba(255, 255, 255, 0.95)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    fontSize: '12px',
+                    maxWidth: '220px',
+                    zIndex: 9999
+                  }}
+                >
+                  Resource consumption: mentions, videos, and AI analysis
+                </ReactTooltip>
+              </UsageSection>
             )}
           </UserSection>
         </SidebarContainer>

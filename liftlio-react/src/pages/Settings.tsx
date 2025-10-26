@@ -5,13 +5,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Card from '../components/Card';
 import { IconContext } from 'react-icons';
 import { IconType } from 'react-icons';
-import { 
-  FaCog, FaUser, FaBell, FaPalette, FaShieldAlt, FaPlus, FaTimes, 
-  FaCheck, FaFont, FaSlidersH, FaMoon, FaSun, FaSave, FaRedo, 
-  FaCloudUploadAlt, FaSearch, FaChevronDown, FaSort, FaDatabase, 
+import {
+  FaCog, FaUser, FaBell, FaPalette, FaShieldAlt, FaPlus, FaTimes,
+  FaCheck, FaFont, FaSlidersH, FaMoon, FaSun, FaSave, FaRedo,
+  FaCloudUploadAlt, FaSearch, FaChevronDown, FaSort, FaDatabase,
   FaTrashAlt, FaExternalLinkAlt, FaInfoCircle, FaToggleOn, FaToggleOff,
   FaYoutube, FaCreditCard, FaCrown, FaCalendarAlt, FaCheckCircle, FaEdit,
-  FaLightbulb
+  FaLightbulb, FaExclamationTriangle
 } from 'react-icons/fa';
 import { IconComponent } from '../utils/IconHelper';
 import { useProject } from '../context/ProjectContext';
@@ -1789,8 +1789,8 @@ const CardBadge = styled.div<{ variant: 'default' | 'primary' }>`
   font-size: 11px;
   font-weight: 600;
   ${props => props.variant === 'default' ? css`
-    background: ${props.theme.name === 'dark' 
-      ? 'rgba(76, 175, 80, 0.2)' 
+    background: ${props.theme.name === 'dark'
+      ? 'rgba(76, 175, 80, 0.2)'
       : 'rgba(76, 175, 80, 0.1)'};
     color: #4CAF50;
     border: 1px solid rgba(76, 175, 80, 0.3);
@@ -1799,6 +1799,53 @@ const CardBadge = styled.div<{ variant: 'default' | 'primary' }>`
     color: ${props.theme.colors.primary};
     border: 1px solid ${props.theme.colors.primary};
   `}
+`;
+
+// Danger Zone Components
+const DangerZone = styled.div`
+  margin-top: 40px;
+  padding: 24px;
+  border: 2px solid ${props => props.theme.colors.error};
+  border-radius: 12px;
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(211, 47, 47, 0.05)'
+    : 'rgba(211, 47, 47, 0.02)'};
+`;
+
+const DangerZoneTitle = styled.h3`
+  font-size: ${props => props.theme.fontSizes.lg};
+  font-weight: ${props => props.theme.fontWeights.semiBold};
+  color: ${props => props.theme.colors.error};
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+
+  svg {
+    margin-right: 10px;
+  }
+`;
+
+const DangerZoneDescription = styled.p`
+  font-size: ${props => props.theme.fontSizes.sm};
+  color: ${props => props.theme.colors.text.secondary};
+  margin-bottom: 20px;
+  line-height: 1.6;
+`;
+
+const DangerButton = styled(ActionButton)`
+  background-color: ${props => props.theme.colors.error};
+
+  &:hover {
+    background-color: #d32f2f;
+  }
+`;
+
+const ActivateButton = styled(ActionButton)`
+  background-color: ${props => props.theme.colors.success};
+
+  &:hover {
+    background-color: #2e7d32;
+  }
 `;
 
 const Settings: React.FC<{}> = () => {
@@ -1846,6 +1893,10 @@ const Settings: React.FC<{}> = () => {
   const [keywordError, setKeywordError] = useState('');
   const [showTooltip, setShowTooltip] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [isDeactivating, setIsDeactivating] = useState(false);
+  const [showActivateModal, setShowActivateModal] = useState(false);
+  const [isActivating, setIsActivating] = useState(false);
   
   // Load project data from Supabase
   useEffect(() => {
@@ -2114,7 +2165,81 @@ const Settings: React.FC<{}> = () => {
       setIsSaving(false);
     }
   };
-  
+
+  const handleDeactivateProject = async () => {
+    if (!currentProject?.id) return;
+
+    try {
+      setIsDeactivating(true);
+
+      const { error } = await supabase
+        .from('Projeto')
+        .update({ "Youtube Active": false })
+        .eq('id', currentProject.id);
+
+      if (error) {
+        console.error('Error deactivating project:', error);
+        alert('Failed to deactivate project. Please try again.');
+        setIsDeactivating(false);
+        return;
+      }
+
+      // Update local state
+      setProjectData({
+        ...projectData,
+        "Youtube Active": false
+      });
+
+      // Close modal and reset state
+      setShowDeactivateModal(false);
+      setIsDeactivating(false);
+
+      // Show success message
+      alert('Project deactivated successfully. YouTube monitoring is now disabled.');
+    } catch (error) {
+      console.error('Error:', error);
+      setIsDeactivating(false);
+      alert('An error occurred. Please try again.');
+    }
+  };
+
+  const handleActivateProject = async () => {
+    if (!currentProject?.id) return;
+
+    try {
+      setIsActivating(true);
+
+      const { error } = await supabase
+        .from('Projeto')
+        .update({ "Youtube Active": true })
+        .eq('id', currentProject.id);
+
+      if (error) {
+        console.error('Error activating project:', error);
+        alert('Failed to activate project. Please try again.');
+        setIsActivating(false);
+        return;
+      }
+
+      // Update local state
+      setProjectData({
+        ...projectData,
+        "Youtube Active": true
+      });
+
+      // Close modal and reset state
+      setShowActivateModal(false);
+      setIsActivating(false);
+
+      // Show success message
+      alert('Project activated successfully. YouTube monitoring is now enabled.');
+    } catch (error) {
+      console.error('Error:', error);
+      setIsActivating(false);
+      alert('An error occurred. Please try again.');
+    }
+  };
+
   const handleAddKeyword = async () => {
     if (!newKeyword.trim()) {
       setKeywordError('Please enter a keyword');
@@ -2343,13 +2468,49 @@ const Settings: React.FC<{}> = () => {
                   {renderIcon(FaDatabase)}
                   {t('settings.keywordScanners')}
                 </SectionTitle>
-                
+
                 {currentProject?.id ? (
                   <KeywordScannersList projectId={currentProject.id} />
                 ) : (
                   <div>{t('settings.selectProject')}</div>
                 )}
               </FormSection>
+
+              {/* Project Status Zone */}
+              <DangerZone style={{
+                borderColor: projectData["Youtube Active"] ? theme.colors.error : theme.colors.success,
+                background: projectData["Youtube Active"]
+                  ? (theme.name === 'dark' ? 'rgba(211, 47, 47, 0.05)' : 'rgba(211, 47, 47, 0.02)')
+                  : (theme.name === 'dark' ? 'rgba(76, 175, 80, 0.05)' : 'rgba(76, 175, 80, 0.02)')
+              }}>
+                <DangerZoneTitle style={{ color: projectData["Youtube Active"] ? theme.colors.error : theme.colors.success }}>
+                  {renderIcon(projectData["Youtube Active"] ? FaExclamationTriangle : FaCheckCircle)}
+                  {projectData["Youtube Active"] ? 'Danger Zone' : 'Activation Zone'}
+                </DangerZoneTitle>
+                <DangerZoneDescription>
+                  {projectData["Youtube Active"]
+                    ? 'Once you deactivate this project, YouTube monitoring will be disabled. All scheduled scans will stop, and no new mentions will be collected.'
+                    : 'Activate this project to enable YouTube monitoring. All scheduled scans will resume, and new mentions will be collected automatically.'}
+                </DangerZoneDescription>
+
+                {projectData["Youtube Active"] ? (
+                  <DangerButton
+                    variant="danger"
+                    onClick={() => setShowDeactivateModal(true)}
+                  >
+                    {renderIcon(FaToggleOff)}
+                    Deactivate Project
+                  </DangerButton>
+                ) : (
+                  <ActivateButton
+                    variant="success"
+                    onClick={() => setShowActivateModal(true)}
+                  >
+                    {renderIcon(FaToggleOn)}
+                    Activate Project
+                  </ActivateButton>
+                )}
+              </DangerZone>
 
             </Card>
           )}
@@ -2568,6 +2729,105 @@ const Settings: React.FC<{}> = () => {
                   onClick={handleAddKeyword}
                 >
                   Add Keyword
+                </ActionButton>
+              </ModalFooter>
+            </ModalContent>
+          </Modal>
+        )}
+
+        {/* Deactivate Project Modal */}
+        {showDeactivateModal && (
+          <Modal onClick={() => setShowDeactivateModal(false)}>
+            <ModalContent onClick={(e) => e.stopPropagation()}>
+              <ModalHeader>
+                <ModalTitle>
+                  {renderIcon(FaExclamationTriangle)}
+                  Deactivate Project
+                </ModalTitle>
+                <CloseButton onClick={() => setShowDeactivateModal(false)}>
+                  {renderIcon(FaTimes)}
+                </CloseButton>
+              </ModalHeader>
+
+              <div style={{ padding: '20px 0' }}>
+                <p style={{ marginBottom: '16px', lineHeight: '1.6' }}>
+                  Are you sure you want to deactivate this project?
+                </p>
+                <p style={{ marginBottom: '16px', lineHeight: '1.6', color: theme.colors.error }}>
+                  <strong>This will:</strong>
+                </p>
+                <ul style={{ marginLeft: '20px', marginBottom: '16px', lineHeight: '1.8' }}>
+                  <li>Stop all YouTube monitoring and scans</li>
+                  <li>Disable automatic mention collection</li>
+                  <li>Pause all scheduled jobs for this project</li>
+                </ul>
+                <p style={{ lineHeight: '1.6', fontSize: '14px', color: theme.colors.text.secondary }}>
+                  You can reactivate this project anytime from the Overview page.
+                </p>
+              </div>
+
+              <ModalFooter>
+                <ActionButton
+                  variant="secondary"
+                  onClick={() => setShowDeactivateModal(false)}
+                  disabled={isDeactivating}
+                >
+                  Cancel
+                </ActionButton>
+                <ActionButton
+                  variant="danger"
+                  onClick={handleDeactivateProject}
+                  disabled={isDeactivating}
+                >
+                  {isDeactivating ? 'Deactivating...' : 'Deactivate Project'}
+                </ActionButton>
+              </ModalFooter>
+            </ModalContent>
+          </Modal>
+        )}
+
+        {/* Activate Project Modal */}
+        {showActivateModal && (
+          <Modal onClick={() => setShowActivateModal(false)}>
+            <ModalContent onClick={(e) => e.stopPropagation()}>
+              <ModalHeader>
+                <ModalTitle>
+                  {renderIcon(FaCheckCircle)}
+                  Activate Project
+                </ModalTitle>
+                <CloseButton onClick={() => setShowActivateModal(false)}>
+                  {renderIcon(FaTimes)}
+                </CloseButton>
+              </ModalHeader>
+
+              <div style={{ padding: '20px 0' }}>
+                <p style={{ marginBottom: '16px', lineHeight: '1.6' }}>
+                  Are you sure you want to activate this project?
+                </p>
+                <p style={{ marginBottom: '16px', lineHeight: '1.6', color: theme.colors.success }}>
+                  <strong>This will:</strong>
+                </p>
+                <ul style={{ marginLeft: '20px', marginBottom: '16px', lineHeight: '1.8' }}>
+                  <li>Start YouTube monitoring and scans</li>
+                  <li>Enable automatic mention collection</li>
+                  <li>Resume all scheduled jobs for this project</li>
+                </ul>
+              </div>
+
+              <ModalFooter>
+                <ActionButton
+                  variant="secondary"
+                  onClick={() => setShowActivateModal(false)}
+                  disabled={isActivating}
+                >
+                  Cancel
+                </ActionButton>
+                <ActionButton
+                  variant="success"
+                  onClick={handleActivateProject}
+                  disabled={isActivating}
+                >
+                  {isActivating ? 'Activating...' : 'Activate Project'}
                 </ActionButton>
               </ModalFooter>
             </ModalContent>
