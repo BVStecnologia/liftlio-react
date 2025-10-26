@@ -2,10 +2,12 @@
 -- Migration: Melhoria do prompt universal para process_engagement_comments_with_claude
 -- Data: 2025-10-17 14:00
 -- Atualizado: 2025-10-25 - Adicionada regra anti-travessão
+-- Atualizado: 2025-10-25 (noite) - Adicionada limpeza de markdown code blocks
 -- Descrição: Simplifica e universaliza o prompt mantendo estrutura eficaz
 --           Remove exemplos específicos de nicho, torna aplicável a qualquer produto
 --           Baseado no prompt antigo que funcionava melhor (mais direto)
 --           + Regra crítica: JAMAIS usar travessões (-) para separar frases
+--           + Fix: Remove ```json ... ``` antes de converter para JSONB
 -- =============================================
 
 DROP FUNCTION IF EXISTS process_engagement_comments_with_claude(INTEGER, INTEGER);
@@ -364,8 +366,14 @@ Respond only with the requested JSON array, with no additional text.',
         RETURN NULL;
     END IF;
 
-    -- Tentar converter para JSONB
+    -- Tentar converter para JSONB com limpeza de markdown
     BEGIN
+        -- Remove markdown code blocks (```json ... ```)
+        v_claude_response := regexp_replace(v_claude_response, '^\s*```json\s*', '', 'i');
+        v_claude_response := regexp_replace(v_claude_response, '\s*```\s*$', '');
+        v_claude_response := trim(v_claude_response);
+
+        -- Agora converte para JSONB
         v_result := v_claude_response::JSONB;
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Erro ao converter resposta do Claude: %', SQLERRM;
@@ -461,4 +469,6 @@ $function$;
 -- ✅ System message simplificado (mais direto)
 -- ✅ Mantida lógica de timestamps e menções naturais
 -- ✅ Adicionada regra anti-travessão (instrução 15 + system message)
+-- ✅ FIX MARKDOWN (2025-10-25 noite): Remove ```json code blocks antes de ::JSONB
+--    Resolve erro "Invalid JSON from Claude" quando Claude retorna markdown
 -- =============================================

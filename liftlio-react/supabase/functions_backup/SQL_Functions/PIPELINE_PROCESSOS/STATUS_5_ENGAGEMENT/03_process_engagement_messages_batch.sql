@@ -24,6 +24,9 @@
 --                          Lock com timeout de 5 minutos (auto-recovery) + liberação manual
 -- Atualizado: 2025-10-18 - Otimização: substituído agendar_postagens_todos_projetos() por
 --                          agendar_postagens_diarias(p_project_id) para agendar apenas o projeto específico
+-- Atualizado: 2025-10-25 - PROTEÇÃO CONTRA LOOP INFINITO: Detecta zero sucessos e para job
+--                          Se processar comentários mas ZERO message_id válidos = para tudo
+--                          Evita gastar créditos em loop infinito quando Claude offline/erro
 -- =============================================
 
 DROP FUNCTION IF EXISTS process_engagement_messages_batch(INTEGER, INTEGER);
@@ -38,6 +41,7 @@ DECLARE
   v_job_exists BOOLEAN;
   v_result RECORD;
   v_processed_count INTEGER := 0;
+  v_success_count INTEGER := 0;  -- Conta sucessos reais (message_id NOT NULL)
   v_job_name TEXT := 'process_engagement_messages_' || p_project_id::text;
 BEGIN
   -- ========================================
@@ -108,6 +112,12 @@ BEGIN
     SELECT * FROM process_and_create_messages_engagement(p_project_id)
   LOOP
     v_processed_count := v_processed_count + 1;
+
+    -- Conta sucessos reais (proteção contra loop infinito)
+    IF v_result.message_id IS NOT NULL THEN
+      v_success_count := v_success_count + 1;
+    END IF;
+
     IF v_processed_count <= 5 THEN -- Limita o log para não ficar muito extenso
       RAISE NOTICE 'Mensagem processada: % para comentário %: %',
         v_result.message_id, v_result.cp_id, v_result.status;
@@ -117,6 +127,27 @@ BEGIN
   END LOOP;
 
   RAISE NOTICE 'Lote processado: % mensagens. Verificando se há mais comentários...', v_processed_count;
+
+  -- ========================================
+  -- PROTEÇÃO CONTRA LOOP INFINITO
+  -- ========================================
+  -- Se processou comentários mas ZERO sucessos = problema sistêmico (Claude offline/erro)
+  IF v_processed_count > 0 AND v_success_count = 0 THEN
+    RAISE WARNING 'ZERO sucessos no lote (% tentativas). Parando para evitar loop infinito.', v_processed_count;
+
+    -- Libera lock
+    UPDATE public."Projeto"
+    SET processing_locked_until = NULL
+    WHERE id = p_project_id;
+
+    -- Remove job se existir
+    IF v_job_exists THEN
+      PERFORM cron.unschedule(v_job_name);
+      RAISE NOTICE 'Job removido devido a zero sucessos';
+    END IF;
+
+    RETURN 'ERROR: Zero sucessos - possível Claude offline ou erro sistemático';
+  END IF;
 
   -- Verifica novamente quantos comentários ainda não foram processados após este lote
   SELECT COUNT(*) INTO v_comentarios_nao_processados
