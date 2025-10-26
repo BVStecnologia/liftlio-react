@@ -22,6 +22,15 @@
 -- Atualizado: 2025-10-23 - Adicionada verificação de Mentions disponíveis antes de agendar
 --                          Proteção: não agenda se Mentions <= 0
 --                          Ajuste: limita posts_por_dia se Mentions < posts_por_dia
+-- Atualizado: 2025-10-26 - Mudança para proporção MEIO A MEIO entre produto/engajamento
+--                          Remove sistema de 3 níveis (0-4, 5-8, >8)
+--                          Divisão: Par=50/50, Ímpar=favorece produtos (+1)
+--                          Proteções: fallback quando tipo zerado ou insuficiente
+--                          BUG CORRIGIDO #1: Nível 3 INVERTIA TIPO (usava v_tipo_alternativo)
+--                          Agora Nível 3 = MESMO TIPO + permite vídeo repetido
+--                          BUG CORRIGIDO #2: Nível 3 filtrava vídeo diferente, impedindo engajamento
+--                          Removido filtro de vídeo no Nível 3 (permite repetição)
+--                          LÓGICA CORRETA: N1/N2=tipo+vídeo_dif, N3=tipo+vídeo_rep, N4=qualquer
 -- =============================================
 
 DROP FUNCTION IF EXISTS agendar_postagens_diarias(BIGINT);
@@ -163,23 +172,55 @@ BEGIN
     RAISE NOTICE 'Material disponível - Produto: %, Engajamento: %, Total: %',
                 v_produto_disponivel, v_engajamento_disponivel, v_total_disponivel;
 
-    -- Calcular quantos produtos agendar hoje (máximo 1 se tiver poucos)
-    IF v_produto_disponivel = 0 THEN
+    -- =============================================
+    -- NOVO: Proporção MEIO A MEIO produto/engajamento
+    -- =============================================
+    IF v_produto_disponivel = 0 AND v_engajamento_disponivel = 0 THEN
+        -- Nenhuma mensagem disponível
         v_produtos_por_dia := 0;
-    ELSIF v_produto_disponivel <= 4 THEN
-        v_produtos_por_dia := LEAST(1, posts_por_dia);  -- Máximo 1 por dia para durar mais
-    ELSIF v_produto_disponivel <= 8 THEN
-        v_produtos_por_dia := LEAST(2, posts_por_dia);  -- Máximo 2 por dia
+        RAISE NOTICE 'AVISO: Nenhuma mensagem disponível (produto=0, engajamento=0)';
+        RETURN 0; -- Encerra função imediatamente
+
+    ELSIF v_produto_disponivel = 0 THEN
+        -- Só engajamento disponível
+        v_produtos_por_dia := 0;
+        RAISE NOTICE 'ESTRATÉGIA: Só engajamento disponível (produto=0)';
+        RAISE NOTICE 'Agendando % posts de engajamento', posts_por_dia;
+
+    ELSIF v_engajamento_disponivel = 0 THEN
+        -- Só produto disponível
+        v_produtos_por_dia := posts_por_dia;
+        RAISE NOTICE 'ESTRATÉGIA: Só produto disponível (engajamento=0)';
+        RAISE NOTICE 'Agendando % posts de produto', posts_por_dia;
+
     ELSE
-        -- Proporção natural mas nunca mais que metade dos posts
-        v_proporcao_produto := v_produto_disponivel::float / v_total_disponivel;
-        v_produtos_por_dia := LEAST(
-            ROUND(posts_por_dia * v_proporcao_produto),
-            posts_por_dia / 2  -- Nunca mais que metade
-        );
+        -- Ambos disponíveis: Divisão meio a meio
+        IF posts_por_dia % 2 = 0 THEN
+            -- Par: divide exato
+            v_produtos_por_dia := posts_por_dia / 2;
+        ELSE
+            -- Ímpar: arredonda para cima para produtos
+            v_produtos_por_dia := (posts_por_dia / 2) + 1;
+        END IF;
+
+        -- Proteção: Se não tiver produtos suficientes para metade
+        IF v_produto_disponivel < v_produtos_por_dia THEN
+            v_produtos_por_dia := v_produto_disponivel;
+            RAISE NOTICE 'AJUSTE: Produtos insuficientes, limitando a %', v_produto_disponivel;
+        END IF;
+
+        -- Proteção: Se não tiver engajamentos suficientes
+        IF v_engajamento_disponivel < (posts_por_dia - v_produtos_por_dia) THEN
+            RAISE NOTICE 'AJUSTE: Engajamentos insuficientes (%)', v_engajamento_disponivel;
+            -- Dá o resto para produtos se possível
+            v_produtos_por_dia := LEAST(
+                v_produto_disponivel,
+                posts_por_dia - v_engajamento_disponivel
+            );
+        END IF;
     END IF;
 
-    RAISE NOTICE 'Estratégia do dia: % produtos e % engajamentos de % posts totais',
+    RAISE NOTICE 'ESTRATÉGIA MEIO A MEIO: % produtos e % engajamentos de % posts totais',
                 v_produtos_por_dia, posts_por_dia - v_produtos_por_dia, posts_por_dia;
 
     -- REMOVIDO: Coleta de vídeos recentes (3 dias) - não é necessário
@@ -290,17 +331,10 @@ BEGIN
             END IF;
         END IF;
 
-        -- NÍVEL 3: Tipo alternativo + Vídeo diferente
+        -- NÍVEL 3: MESMO TIPO desejado + permite vídeo repetido (NÃO inverte tipo!)
         IF NOT v_mensagem_encontrada THEN
             v_tentativa := 3;
-            -- Inverter tipo desejado
-            IF v_tipo_desejado = 'produto' THEN
-                v_tipo_desejado := 'engajamento';
-            ELSE
-                v_tipo_desejado := 'produto';
-            END IF;
-
-            RAISE NOTICE 'Tentativa NÍVEL 3: Tipo ALTERNATIVO=%, Vídeo diferente', v_tipo_desejado;
+            RAISE NOTICE 'Tentativa NÍVEL 3: MESMO TIPO=% (permite vídeo repetido)', v_tipo_desejado;
 
             SELECT
                 m.id,
@@ -316,8 +350,8 @@ BEGIN
             JOIN "Comentarios_Principais" cp ON m."Comentario_Principais" = cp.id
             WHERE m.project_id = projeto_id_param
             AND m.respondido = false
-            AND m.tipo_resposta = v_tipo_desejado
-            AND (videos_usados_hoje IS NULL OR NOT cp.video_id = ANY(videos_usados_hoje))
+            AND m.tipo_resposta = v_tipo_desejado  -- CORREÇÃO CRÍTICA: Mantém tipo desejado!
+            -- REMOVIDO filtro de vídeo diferente - Nível 3 permite repetição
             AND NOT EXISTS (
                 SELECT 1 FROM "Settings messages posts" s
                 WHERE s."Mensagens" = m.id
