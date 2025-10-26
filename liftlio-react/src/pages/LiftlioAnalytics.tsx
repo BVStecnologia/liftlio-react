@@ -691,22 +691,17 @@ const StatsSection = styled.div`
 `;
 
 const StatCard = styled(motion.div)`
-  background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(37, 37, 37, 0.95));
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 24px;
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  background: #1A1A1A;
+  border: none;
+  border-radius: 8px;
+  padding: 28px 24px;
   position: relative;
-  overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #8b5cf6, #a855f7);
+  cursor: help;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.08);
   }
 `;
 
@@ -718,8 +713,11 @@ const StatCardHeader = styled.div`
 `;
 
 const StatCardTitle = styled.div`
-  color: #94a3b8;
-  font-size: 14px;
+  font-size: 11px;
+  color: rgba(139, 92, 246, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 12px;
   font-weight: 500;
 `;
 
@@ -735,22 +733,17 @@ const StatCardIcon = styled.div<{ color: string }>`
 `;
 
 const StatCardValue = styled.div`
-  font-size: 32px;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 8px;
+  font-size: 48px;
+  font-weight: 300;
+  color: ${props => props.theme.colors.text.primary};
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
 `;
 
 const StatCardChange = styled.div<{ $positive?: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  color: ${props => props.$positive ? '#10b981' : '#ef4444'};
-  
-  svg {
-    font-size: 12px;
-  }
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
 `;
 
 // Conversion Chart Layout
@@ -817,11 +810,10 @@ const ChartsGrid = styled.div`
 `;
 
 const ChartCard = styled(motion.div)`
-  background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(37, 37, 37, 0.95));
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
+  background: #1A1A1A;
+  border-radius: 16px;
   padding: 24px;
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 `;
 
 const ChartTitle = styled.div`
@@ -830,12 +822,8 @@ const ChartTitle = styled.div`
   gap: 8px;
   color: white;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 24px;
-
-  svg {
-    color: #8b5cf6;
-  }
 `;
 
 // Top Cities Styles
@@ -850,15 +838,15 @@ const CitiesGrid = styled.div`
 `;
 
 const CityCard = styled.div`
-  background: rgba(139, 92, 246, 0.05);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(161, 161, 170, 0.05);
+  border: 1px solid rgba(161, 161, 170, 0.2);
   border-radius: 12px;
   padding: 16px;
   transition: all 0.3s ease;
 
   &:hover {
-    background: rgba(139, 92, 246, 0.1);
-    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(161, 161, 170, 0.1);
+    border-color: rgba(161, 161, 170, 0.4);
     transform: translateY(-2px);
   }
 `;
@@ -885,11 +873,11 @@ const CityStats = styled.div`
   align-items: center;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid rgba(139, 92, 246, 0.1);
+  border-top: 1px solid rgba(161, 161, 170, 0.1);
 `;
 
 const CityVisits = styled.div`
-  color: #8b5cf6;
+  color: #a1a1aa;
   font-size: 18px;
   font-weight: 700;
 `;
@@ -897,6 +885,73 @@ const CityVisits = styled.div`
 const CityPercentage = styled.div`
   color: #64748b;
   font-size: 12px;
+`;
+
+// Collapsible Section Styles
+const CollapsibleSectionCard = styled(motion.div)`
+  background: #1A1A1A;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 16px;
+  overflow: hidden;
+`;
+
+const CollapsibleHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(161, 161, 170, 0.05);
+  }
+`;
+
+const CollapsibleTitle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #f3f4f6;
+  font-size: 18px;
+  font-weight: 700;
+
+  svg {
+    color: #a1a1aa;
+  }
+`;
+
+const CollapsibleMetrics = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const MetricBadge = styled.div`
+  background: rgba(161, 161, 170, 0.1);
+  border: 1px solid rgba(161, 161, 170, 0.2);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e5e5e5;
+  white-space: nowrap;
+`;
+
+const ExpandIcon = styled(motion.div)`
+  color: #a1a1aa;
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+`;
+
+const CollapsibleContent = styled(motion.div)`
+  overflow: hidden;
+`;
+
+const CollapsibleInner = styled.div`
+  padding: 0 24px 24px 24px;
 `;
 
 // Comparison Section Styles
@@ -915,14 +970,22 @@ const ComparisonTitle = styled.h2`
   font-size: 36px;
   font-weight: 700;
   text-align: center;
-  margin-bottom: 48px;
-  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  
+  margin-bottom: 12px;
+  color: #ffffff;
+
   @media (max-width: 768px) {
     font-size: 28px;
   }
+`;
+
+const ComparisonSubtitle = styled.p`
+  font-size: 16px;
+  color: #a1a1aa;
+  text-align: center;
+  margin-bottom: 48px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
 `;
 
 const ComparisonGrid = styled.div`
@@ -936,34 +999,50 @@ const ComparisonGrid = styled.div`
 `;
 
 const ComparisonCard = styled.div`
-  background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(37, 37, 37, 0.95));
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  background: rgba(26, 26, 26, 0.5);
+  border: 1px solid rgba(161, 161, 170, 0.2);
   border-radius: 20px;
   padding: 32px;
   position: relative;
   overflow: hidden;
-  
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(26, 26, 26, 0.7);
+    border-color: rgba(161, 161, 170, 0.3);
+  }
+
   &::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #8b5cf6, #a855f7);
+    height: 1px;
+    background: rgba(161, 161, 170, 0.2);
   }
 `;
 
 const ComparisonIcon = styled.div`
-  font-size: 48px;
+  font-size: 32px;
   margin-bottom: 16px;
   text-align: center;
+  color: #a1a1aa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: rgba(161, 161, 170, 0.1);
+  border-radius: 12px;
+  margin-left: auto;
+  margin-right: auto;
 `;
 
 const ComparisonCardTitle = styled.h3`
   font-size: 24px;
   font-weight: 600;
-  color: white;
+  color: #d4d4d8;
   text-align: center;
   margin-bottom: 24px;
 `;
@@ -978,11 +1057,189 @@ const ComparisonItem = styled.div<{ isGood?: boolean }>`
   display: flex;
   align-items: center;
   gap: 12px;
-  color: ${props => props.isGood ? '#10b981' : '#ef4444'};
+  color: #e5e5e5;
   font-size: 14px;
-  
+
   svg {
     flex-shrink: 0;
+    color: ${props => props.isGood ? '#a1a1aa' : '#71717a'};
+  }
+`;
+
+// Mini Expandable Card Styles
+const MiniCardContainer = styled.div`
+  background: rgba(26, 26, 26, 0.5);
+  border: 1px solid rgba(161, 161, 170, 0.2);
+  border-radius: 20px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(26, 26, 26, 0.7);
+    border-color: rgba(161, 161, 170, 0.3);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(161, 161, 170, 0.2);
+  }
+`;
+
+const MiniCardHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+`;
+
+const MiniCardIconBox = styled.div`
+  font-size: 24px;
+  color: #a1a1aa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(161, 161, 170, 0.1);
+  border-radius: 12px;
+  flex-shrink: 0;
+`;
+
+const MiniCardTitleArea = styled.div`
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+`;
+
+const MiniCardTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 600;
+  color: #d4d4d8;
+  margin: 0;
+`;
+
+const MiniCardChevron = styled(motion.div)`
+  color: #a1a1aa;
+  font-size: 18px;
+  flex-shrink: 0;
+`;
+
+const MiniCardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const MiniCardBenefit = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: #e5e5e5;
+  font-size: 14px;
+  line-height: 1.6;
+
+  svg {
+    flex-shrink: 0;
+    margin-top: 4px;
+    color: #a1a1aa;
+  }
+`;
+
+const MiniCardComparison = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: #a1a1aa;
+  font-size: 14px;
+  line-height: 1.6;
+
+  svg {
+    flex-shrink: 0;
+    margin-top: 4px;
+    color: #71717a;
+  }
+`;
+
+const MiniCardExpandableContent = styled(motion.div)`
+  overflow: hidden;
+`;
+
+// Getting Started Box Styles (Minimalist with subtle purple)
+const GettingStartedBox = styled.div`
+  text-align: center;
+  padding: 32px;
+  background: rgba(26, 26, 26, 0.3);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 16px;
+  margin-top: 40px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(26, 26, 26, 0.5);
+    border-color: rgba(139, 92, 246, 0.25);
+  }
+`;
+
+const GettingStartedTitle = styled.p`
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+`;
+
+const GettingStartedInner = styled.div`
+  background: rgba(26, 26, 26, 0.5);
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(161, 161, 170, 0.15);
+  max-width: 600px;
+  margin: 0 auto;
+`;
+
+const GettingStartedSubtitle = styled.p`
+  font-size: 16px;
+  line-height: 1.6;
+  color: #a1a1aa;
+  margin-bottom: 16px;
+  text-align: left;
+`;
+
+const GettingStartedList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+`;
+
+const GettingStartedItem = styled.li`
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  color: #e5e5e5;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  svg {
+    color: #a1a1aa;
+    margin-right: 12px;
+    min-width: 20px;
+    transition: color 0.3s ease;
+  }
+
+  &:hover svg {
+    color: rgba(139, 92, 246, 0.6);
   }
 `;
 
@@ -1003,9 +1260,7 @@ const EventsTitle = styled.h2`
   font-weight: 700;
   text-align: center;
   margin-bottom: 16px;
-  background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #ffffff;
 `;
 
 const EventsSubtitle = styled.p`
@@ -1026,36 +1281,37 @@ const EventsGrid = styled.div`
 `;
 
 const EventCategory = styled.div`
-  background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(37, 37, 37, 0.95));
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  background: rgba(26, 26, 26, 0.5);
+  border: 1px solid rgba(161, 161, 170, 0.2);
   border-radius: 16px;
   padding: 24px;
-  transition: all 0.3s;
-  
+  transition: all 0.3s ease;
+
   &:hover {
     transform: translateY(-2px);
-    border-color: rgba(139, 92, 246, 0.3);
-    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.1);
+    background: rgba(26, 26, 26, 0.7);
+    border-color: rgba(161, 161, 170, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   }
 `;
 
 const EventCategoryIcon = styled.div`
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.1));
+  background: rgba(161, 161, 170, 0.1);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24px;
   margin-bottom: 16px;
-  color: #8b5cf6;
+  color: #a1a1aa;
 `;
 
 const EventCategoryTitle = styled.h3`
   font-size: 18px;
   font-weight: 600;
-  color: white;
+  color: #d4d4d8;
   margin-bottom: 12px;
 `;
 
@@ -1070,12 +1326,13 @@ const EventItem = styled.li`
   align-items: center;
   gap: 8px;
   padding: 6px 0;
-  color: #a1a1aa;
+  color: #e5e5e5;
   font-size: 13px;
-  
+
   svg {
-    color: #10b981;
+    color: #a1a1aa;
     font-size: 10px;
+    flex-shrink: 0;
   }
 `;
 
@@ -1268,6 +1525,143 @@ const ConversionToast = styled(motion.div)`
     min-width: auto;
   }
 `;
+
+// Collapsible Section Component
+interface CollapsibleSectionProps {
+  title: string;
+  icon: any;
+  metrics: { label?: string; value: string | number }[];
+  children: React.ReactNode;
+  defaultExpanded?: boolean;
+}
+
+const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
+  title,
+  icon,
+  metrics,
+  children,
+  defaultExpanded = false
+}) => {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  return (
+    <CollapsibleSectionCard
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <CollapsibleHeader onClick={() => setIsExpanded(!isExpanded)}>
+        <CollapsibleTitle>
+          <IconComponent icon={icon} />
+          {title}
+        </CollapsibleTitle>
+        <CollapsibleMetrics>
+          {metrics.map((metric, index) => (
+            <MetricBadge key={index}>
+              {metric.label && `${metric.label} `}{metric.value}
+            </MetricBadge>
+          ))}
+          <ExpandIcon
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <IconComponent icon={FaIcons.FaChevronDown} />
+          </ExpandIcon>
+        </CollapsibleMetrics>
+      </CollapsibleHeader>
+      <AnimatePresence>
+        {isExpanded && (
+          <CollapsibleContent
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <CollapsibleInner>
+              {children}
+            </CollapsibleInner>
+          </CollapsibleContent>
+        )}
+      </AnimatePresence>
+    </CollapsibleSectionCard>
+  );
+};
+
+// Mini Expandable Card Component
+interface MiniExpandableCardProps {
+  icon: any;
+  title: string;
+  benefits: string[];
+  comparisons?: string[];
+  defaultExpanded?: boolean;
+}
+
+const MiniExpandableCard: React.FC<MiniExpandableCardProps> = ({
+  icon,
+  title,
+  benefits,
+  comparisons = [],
+  defaultExpanded = false
+}) => {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  return (
+    <MiniCardContainer onClick={() => setIsExpanded(!isExpanded)}>
+      <MiniCardHeader>
+        <MiniCardIconBox>
+          <IconComponent icon={icon} />
+        </MiniCardIconBox>
+        <MiniCardTitleArea>
+          <MiniCardTitle>{title}</MiniCardTitle>
+          <MiniCardChevron
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <IconComponent icon={FaIcons.FaChevronDown} />
+          </MiniCardChevron>
+        </MiniCardTitleArea>
+      </MiniCardHeader>
+
+      <MiniCardContent>
+        {/* Primeiro benefício sempre visível */}
+        <MiniCardBenefit>
+          <IconComponent icon={FaIcons.FaCheck} />
+          <span>{benefits[0]}</span>
+        </MiniCardBenefit>
+
+        {/* Benefícios e comparações expansíveis */}
+        <AnimatePresence>
+          {isExpanded && (
+            <MiniCardExpandableContent
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '0px' }}>
+                {/* Benefícios restantes */}
+                {benefits.slice(1).map((benefit, index) => (
+                  <MiniCardBenefit key={`benefit-${index}`}>
+                    <IconComponent icon={FaIcons.FaCheck} />
+                    <span>{benefit}</span>
+                  </MiniCardBenefit>
+                ))}
+
+                {/* Comparações negativas */}
+                {comparisons.map((comparison, index) => (
+                  <MiniCardComparison key={`comparison-${index}`}>
+                    <IconComponent icon={FaIcons.FaTimes} />
+                    <span>{comparison}</span>
+                  </MiniCardComparison>
+                ))}
+              </div>
+            </MiniCardExpandableContent>
+          )}
+        </AnimatePresence>
+      </MiniCardContent>
+    </MiniCardContainer>
+  );
+};
 
 const LiftlioAnalytics: React.FC = () => {
   const globeRef = useRef<any>(null);
@@ -1873,15 +2267,9 @@ const LiftlioAnalytics: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <StatCardHeader>
-            <StatCardTitle>Organic Traffic</StatCardTitle>
-            <StatCardIcon color="linear-gradient(135deg, #06b6d4, #0891b2)">
-              <IconComponent icon={FaIcons.FaSearch} />
-            </StatCardIcon>
-          </StatCardHeader>
+          <StatCardTitle>Organic Traffic</StatCardTitle>
           <StatCardValue>{organicTraffic.toLocaleString()}</StatCardValue>
           <StatCardChange $positive>
-            <IconComponent icon={FaIcons.FaArrowUp} />
             +127.3% vs. last month
           </StatCardChange>
         </StatCard>
@@ -1891,15 +2279,9 @@ const LiftlioAnalytics: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <StatCardHeader>
-            <StatCardTitle>Unique Users</StatCardTitle>
-            <StatCardIcon color="linear-gradient(135deg, #8b5cf6, #7c3aed)">
-              <IconComponent icon={FaIcons.FaUsers} />
-            </StatCardIcon>
-          </StatCardHeader>
+          <StatCardTitle>Unique Users</StatCardTitle>
           <StatCardValue>{uniqueUsers.toLocaleString()}</StatCardValue>
           <StatCardChange $positive>
-            <IconComponent icon={FaIcons.FaArrowUp} />
             +89.1% unique visitors
           </StatCardChange>
         </StatCard>
@@ -1909,15 +2291,9 @@ const LiftlioAnalytics: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <StatCardHeader>
-            <StatCardTitle>Conversion Rate</StatCardTitle>
-            <StatCardIcon color="linear-gradient(135deg, #a855f7, #9333ea)">
-              <IconComponent icon={FaIcons.FaRocket} />
-            </StatCardIcon>
-          </StatCardHeader>
+          <StatCardTitle>Conversion Rate</StatCardTitle>
           <StatCardValue>{conversionRate.toFixed(1)}%</StatCardValue>
           <StatCardChange $positive>
-            <IconComponent icon={FaIcons.FaArrowUp} />
             +2.3% from organic traffic
           </StatCardChange>
         </StatCard>
@@ -1927,15 +2303,9 @@ const LiftlioAnalytics: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
-          <StatCardHeader>
-            <StatCardTitle>Avg. Time</StatCardTitle>
-            <StatCardIcon color="linear-gradient(135deg, #10b981, #059669)">
-              <IconComponent icon={FaIcons.FaClock} />
-            </StatCardIcon>
-          </StatCardHeader>
+          <StatCardTitle>Avg. Time</StatCardTitle>
           <StatCardValue>{Math.floor(avgTime / 60)}m {avgTime % 60}s</StatCardValue>
           <StatCardChange $positive>
-            <IconComponent icon={FaIcons.FaArrowUp} />
             +28s on page
           </StatCardChange>
         </StatCard>
@@ -1952,38 +2322,37 @@ const LiftlioAnalytics: React.FC = () => {
           {/* Lado Esquerdo - Gráfico Compacto */}
           <ConversionChartLeft>
             <ChartTitle style={{ marginBottom: '12px' }}>
-              <IconComponent icon={FaIcons.FaTrophy} style={{ color: '#fbbf24' }} />
               Conversion Rate by Traffic Source
             </ChartTitle>
             <p style={{ color: '#94a3b8', marginBottom: '16px', fontSize: '13px' }}>
               Real data from Liftlio customers - comparing different traffic sources
             </p>
-            
+
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart 
+              <BarChart
                 data={[
-                  { source: 'Liftlio', rate: 24.8, visitors: 11580, conversions: 2872, color: '#8b5cf6' },
-                  { source: 'Paid Ads', rate: 3.2, visitors: 514, conversions: 16, color: '#ef4444' },
-                  { source: 'Social', rate: 2.1, visitors: 385, conversions: 8, color: '#3b82f6' },
-                  { source: 'Direct', rate: 1.8, visitors: 385, conversions: 7, color: '#10b981' },
+                  { source: 'Liftlio', rate: 24.8, visitors: 11580, conversions: 2872, color: '#a1a1aa' },
+                  { source: 'Paid Ads', rate: 3.2, visitors: 514, conversions: 16, color: '#71717a' },
+                  { source: 'Social', rate: 2.1, visitors: 385, conversions: 8, color: '#52525b' },
+                  { source: 'Direct', rate: 1.8, visitors: 385, conversions: 7, color: '#3f3f46' },
                 ]}
                 margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 92, 246, 0.1)" />
-                <XAxis 
-                  dataKey="source" 
-                  stroke="#a1a1aa" 
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(161, 161, 170, 0.1)" />
+                <XAxis
+                  dataKey="source"
+                  stroke="#a1a1aa"
                   tick={{ fontSize: 11 }}
                 />
-                <YAxis 
-                  stroke="#a1a1aa" 
+                <YAxis
+                  stroke="#a1a1aa"
                   tick={{ fontSize: 11 }}
-                  label={{ value: 'Rate (%)', angle: -90, position: 'insideLeft', style: { fill: '#a1a1aa', fontSize: 11 } }} 
+                  label={{ value: 'Rate (%)', angle: -90, position: 'insideLeft', style: { fill: '#a1a1aa', fontSize: 11 } }}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    background: 'rgba(26, 26, 26, 0.95)', 
-                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                <Tooltip
+                  contentStyle={{
+                    background: 'rgba(26, 26, 26, 0.95)',
+                    border: '1px solid rgba(161, 161, 170, 0.3)',
                     borderRadius: '8px',
                     fontSize: '12px'
                   }}
@@ -1993,14 +2362,14 @@ const LiftlioAnalytics: React.FC = () => {
                       return (
                         <div style={{
                           background: 'rgba(26, 26, 26, 0.95)',
-                          border: '1px solid rgba(139, 92, 246, 0.3)',
+                          border: '1px solid rgba(161, 161, 170, 0.3)',
                           borderRadius: '8px',
                           padding: '10px'
                         }}>
                           <p style={{ color: '#fff', fontWeight: 'bold', marginBottom: '6px', fontSize: '12px' }}>{label}</p>
                           <p style={{ color: '#a1a1aa', fontSize: '11px', margin: '2px 0' }}>Visitors: {data.visitors.toLocaleString()}</p>
-                          <p style={{ color: '#10b981', fontSize: '11px', margin: '2px 0' }}>Conversions: {data.conversions.toLocaleString()}</p>
-                          <p style={{ color: '#8b5cf6', fontSize: '13px', fontWeight: 'bold', marginTop: '4px' }}>
+                          <p style={{ color: '#a1a1aa', fontSize: '11px', margin: '2px 0' }}>Conversions: {data.conversions.toLocaleString()}</p>
+                          <p style={{ color: '#e5e5e5', fontSize: '13px', fontWeight: 'bold', marginTop: '4px' }}>
                             Rate: {data.rate}%
                           </p>
                         </div>
@@ -2009,12 +2378,12 @@ const LiftlioAnalytics: React.FC = () => {
                     return null;
                   }}
                 />
-                <Bar dataKey="rate" fill="#8b5cf6" barSize={40} radius={[4, 4, 0, 0]}>
+                <Bar dataKey="rate" fill="#a1a1aa" barSize={40} radius={[4, 4, 0, 0]}>
                   {[
-                    { source: 'Liftlio', rate: 24.8, color: '#8b5cf6' },
-                    { source: 'Paid Ads', rate: 3.2, color: '#ef4444' },
-                    { source: 'Social', rate: 2.1, color: '#3b82f6' },
-                    { source: 'Direct', rate: 1.8, color: '#10b981' },
+                    { source: 'Liftlio', rate: 24.8, color: '#a1a1aa' },
+                    { source: 'Paid Ads', rate: 3.2, color: '#71717a' },
+                    { source: 'Social', rate: 2.1, color: '#52525b' },
+                    { source: 'Direct', rate: 1.8, color: '#3f3f46' },
                   ].map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
@@ -2025,52 +2394,91 @@ const LiftlioAnalytics: React.FC = () => {
           
           {/* Lado Direito - Métricas Destacadas */}
           <ConversionMetricsBox>
-            <div style={{ 
+            <div style={{
               textAlign: 'center',
               paddingBottom: '12px',
-              borderBottom: '1px solid rgba(139, 92, 246, 0.1)'
+              borderBottom: '1px solid rgba(161, 161, 170, 0.1)'
             }}>
-              <div style={{ fontSize: '36px', fontWeight: '900', color: '#8b5cf6', lineHeight: '1' }}>24.8%</div>
+              <div style={{ fontSize: '36px', fontWeight: '900', color: '#e5e5e5', lineHeight: '1' }}>24.8%</div>
               <div style={{ color: '#a1a1aa', fontSize: '12px', marginTop: '4px' }}>Liftlio Conversion</div>
             </div>
-            
+
             <div style={{ display: 'flex', justifyContent: 'space-around', gap: '12px' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981' }}>7.7x</div>
-                <div style={{ color: '#a1a1aa', fontSize: '11px' }}>vs Paid Ads</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#a1a1aa' }}>7.7x</div>
+                <div style={{ color: '#71717a', fontSize: '11px' }}>vs Paid Ads</div>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fbbf24' }}>2.8k</div>
-                <div style={{ color: '#a1a1aa', fontSize: '11px' }}>Conversions</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#a1a1aa' }}>2.8k</div>
+                <div style={{ color: '#71717a', fontSize: '11px' }}>Conversions</div>
               </div>
             </div>
-            
+
             <div style={{
               marginTop: '8px',
               padding: '8px',
-              background: 'rgba(139, 92, 246, 0.1)',
+              background: 'rgba(161, 161, 170, 0.05)',
               borderRadius: '8px',
               textAlign: 'center'
             }}>
-              <div style={{ color: '#8b5cf6', fontSize: '11px', fontWeight: '600' }}>
-                💡 Notice the conversion difference
+              <div style={{ color: '#a1a1aa', fontSize: '11px', fontWeight: '600' }}>
+                Notice the conversion difference
               </div>
             </div>
           </ConversionMetricsBox>
         </ConversionChartLayout>
       </ChartCard>
 
-      {/* Top Cities - Mostra sempre para debug */}
-      <ChartCard
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.45 }}
-        style={{ marginBottom: '32px' }}
+      {/* Traffic Growth Chart */}
+      <CollapsibleSection
+        title="Traffic Growth"
+        icon={FaIcons.FaChartLine}
+        metrics={[
+          { value: `${trafficGrowthData[trafficGrowthData.length - 1]?.visitors.toLocaleString() || '0'} visitors` },
+          { value: `Last 7 days` }
+        ]}
+        defaultExpanded={true}
       >
-        <ChartTitle>
-          <IconComponent icon={FaIcons.FaMapMarkerAlt} />
-          Top Cities
-        </ChartTitle>
+        <ResponsiveContainer width="100%" height={300}>
+          <AreaChart data={trafficGrowthData}>
+            <defs>
+              <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+            <XAxis dataKey="day" stroke="#94a3b8" />
+            <YAxis stroke="#94a3b8" />
+            <Tooltip
+              contentStyle={{
+                background: 'rgba(26, 26, 26, 0.95)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                borderRadius: '8px'
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey="visitors"
+              stroke="#8b5cf6"
+              fillOpacity={1}
+              fill="url(#colorGradient)"
+              strokeWidth={2}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </CollapsibleSection>
+
+      {/* Top Cities - Mostra sempre para debug */}
+      <CollapsibleSection
+        title="Top Cities by Visits"
+        icon={FaIcons.FaMapMarkerAlt}
+        metrics={[
+          { value: `${topCities.reduce((sum, city) => sum + city.visit_count, 0).toLocaleString()} visits` },
+          { value: `${topCities.length} cities` }
+        ]}
+        defaultExpanded={false}
+      >
         {loadingCities ? (
           <div style={{ color: '#94a3b8', textAlign: 'center', padding: '40px' }}>
             Loading cities...
@@ -2080,7 +2488,7 @@ const LiftlioAnalytics: React.FC = () => {
             {topCities.map((city, index) => (
               <CityCard key={index}>
                 <CityName>
-                  <IconComponent icon={FaIcons.FaCircle} style={{ fontSize: '8px', color: '#8b5cf6' }} />
+                  <IconComponent icon={FaIcons.FaCircle} style={{ fontSize: '8px', color: '#a1a1aa' }} />
                   {city.city}
                 </CityName>
                 <CityCountry>{city.country}</CityCountry>
@@ -2099,51 +2507,19 @@ const LiftlioAnalytics: React.FC = () => {
             No city data available yet
           </div>
         )}
-      </ChartCard>
-
-      {/* Traffic Growth Chart */}
-      <ChartCard
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-        style={{ marginBottom: '32px' }}
-      >
-        <ChartTitle>
-          <IconComponent icon={FaIcons.FaChartLine} />
-          Traffic Growth
-        </ChartTitle>
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={trafficGrowthData}>
-            <defs>
-              <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-            <XAxis dataKey="day" stroke="#94a3b8" />
-            <YAxis stroke="#94a3b8" />
-            <Tooltip 
-              contentStyle={{ 
-                background: 'rgba(26, 26, 26, 0.95)', 
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-                borderRadius: '8px'
-              }}
-            />
-            <Area 
-              type="monotone" 
-              dataKey="visitors" 
-              stroke="#8b5cf6" 
-              fillOpacity={1} 
-              fill="url(#colorGradient)" 
-              strokeWidth={2}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </ChartCard>
+      </CollapsibleSection>
 
       {/* Charts Grid */}
-      <ChartsGrid>
+      <CollapsibleSection
+        title="Traffic & Performance"
+        icon={FaIcons.FaChartBar}
+        metrics={[
+          { label: 'Liftlio', value: '50' },
+          { value: 'Desktop' }
+        ]}
+        defaultExpanded={false}
+      >
+        <ChartsGrid>
         {/* Traffic Sources */}
         <ChartCard
           initial={{ opacity: 0, y: 20 }}
@@ -2250,14 +2626,19 @@ const LiftlioAnalytics: React.FC = () => {
           </ResponsiveContainer>
         </ChartCard>
       </ChartsGrid>
+      </CollapsibleSection>
 
       {/* Conversion & Engagement Section */}
-      <ChartTitle style={{ fontSize: '24px', marginTop: '40px', marginBottom: '24px' }}>
-        <IconComponent icon={FaIcons.FaChartPie} />
-        Conversion & Engagement
-      </ChartTitle>
-
-      <ChartsGrid>
+      <CollapsibleSection
+        title="Conversion & Engagement"
+        icon={FaIcons.FaChartPie}
+        metrics={[
+          { label: 'Quality', value: '30' },
+          { value: '94% return' }
+        ]}
+        defaultExpanded={false}
+      >
+        <ChartsGrid>
         {/* Engagement Funnel */}
         <ChartCard
           initial={{ opacity: 0, y: 20 }}
@@ -2345,97 +2726,62 @@ const LiftlioAnalytics: React.FC = () => {
           </div>
         </ChartCard>
       </ChartsGrid>
+      </CollapsibleSection>
         </div>
 
         {/* Comparison Section */}
         <ComparisonSection>
           <ComparisonContainer>
             <ComparisonTitle>Why Liftlio Analytics is Different</ComparisonTitle>
-            
+            <ComparisonSubtitle>
+              Built for teams who need actionable insights, not overwhelming dashboards
+            </ComparisonSubtitle>
+
             <ComparisonGrid>
               {/* Card 1 - Focus on Conversion */}
-              <ComparisonCard>
-                <ComparisonIcon>🎯</ComparisonIcon>
-                <ComparisonCardTitle>Conversion-Focused</ComparisonCardTitle>
-                <ComparisonList>
-                  <ComparisonItem isGood>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    Shows what actually converts to sales
-                  </ComparisonItem>
-                  <ComparisonItem isGood>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    Transparent ROI from each video mention
-                  </ComparisonItem>
-                  <ComparisonItem isGood>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    AI-powered insights on what works
-                  </ComparisonItem>
-                  <ComparisonItem>
-                    <IconComponent icon={FaIcons.FaTimesCircle} />
-                    GA4: Overwhelming metrics that don't matter
-                  </ComparisonItem>
-                  <ComparisonItem>
-                    <IconComponent icon={FaIcons.FaTimesCircle} />
-                    Others: Can't connect views to revenue
-                  </ComparisonItem>
-                </ComparisonList>
-              </ComparisonCard>
+              <MiniExpandableCard
+                icon={FaIcons.FaBullseye}
+                title="Conversion-Focused"
+                benefits={[
+                  'Shows what actually converts to sales',
+                  'Transparent ROI from each video mention',
+                  'AI-powered insights on what works'
+                ]}
+                comparisons={[
+                  'GA4: Overwhelming metrics that don\'t matter',
+                  'Others: Can\'t connect views to revenue'
+                ]}
+              />
 
               {/* Card 2 - Instant Setup */}
-              <ComparisonCard>
-                <ComparisonIcon>⚡</ComparisonIcon>
-                <ComparisonCardTitle>Instant Setup</ComparisonCardTitle>
-                <ComparisonList>
-                  <ComparisonItem isGood>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    1-click installation, zero configuration
-                  </ComparisonItem>
-                  <ComparisonItem isGood>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    No developer needed, works instantly
-                  </ComparisonItem>
-                  <ComparisonItem isGood>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    Real-time data from second one
-                  </ComparisonItem>
-                  <ComparisonItem>
-                    <IconComponent icon={FaIcons.FaTimesCircle} />
-                    GA4: Requires technical expertise
-                  </ComparisonItem>
-                  <ComparisonItem>
-                    <IconComponent icon={FaIcons.FaTimesCircle} />
-                    Others: Days or weeks to configure
-                  </ComparisonItem>
-                </ComparisonList>
-              </ComparisonCard>
+              <MiniExpandableCard
+                icon={FaIcons.FaBolt}
+                title="Instant Setup"
+                benefits={[
+                  '1-click installation, zero configuration',
+                  'No developer needed, works instantly',
+                  'Real-time data from second one'
+                ]}
+                comparisons={[
+                  'GA4: Requires technical expertise',
+                  'Others: Days or weeks to configure'
+                ]}
+              />
 
               {/* Card 3 - Privacy First */}
-              <ComparisonCard>
-                <ComparisonIcon>🔒</ComparisonIcon>
-                <ComparisonCardTitle>Privacy-First Approach</ComparisonCardTitle>
-                <ComparisonList>
-                  <ComparisonItem isGood>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    Cookieless tracking technology
-                  </ComparisonItem>
-                  <ComparisonItem isGood>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    GDPR/LGPD compliant by default
-                  </ComparisonItem>
-                  <ComparisonItem isGood>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    No annoying cookie banners needed
-                  </ComparisonItem>
-                  <ComparisonItem>
-                    <IconComponent icon={FaIcons.FaTimesCircle} />
-                    Others: Invasive cookies everywhere
-                  </ComparisonItem>
-                  <ComparisonItem>
-                    <IconComponent icon={FaIcons.FaTimesCircle} />
-                    Competitors: Complex compliance setup
-                  </ComparisonItem>
-                </ComparisonList>
-              </ComparisonCard>
+              <MiniExpandableCard
+                icon={FaIcons.FaLock}
+                title="Privacy-First Approach"
+                benefits={[
+                  'Cookieless tracking technology',
+                  'GDPR/LGPD compliant by default',
+                  'No annoying cookie banners needed'
+                ]}
+                comparisons={[
+                  'Others: Invasive cookies everywhere',
+                  'Competitors: Complex compliance setup'
+                ]}
+              />
             </ComparisonGrid>
           </ComparisonContainer>
         </ComparisonSection>
@@ -2451,257 +2797,148 @@ const LiftlioAnalytics: React.FC = () => {
             
             <EventsGrid>
               {/* E-commerce Tracking */}
-              <EventCategory>
-                <EventCategoryIcon>
-                  <IconComponent icon={FaIcons.FaShoppingCart} />
-                </EventCategoryIcon>
-                <EventCategoryTitle>E-commerce Tracking</EventCategoryTitle>
-                <EventsList>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>add_to_cart</strong> - Track cart additions
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>checkout_start</strong> - Track checkout begins
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>purchase</strong> - Track completed orders
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>product_view</strong> - Track product views
-                  </EventItem>
-                </EventsList>
-              </EventCategory>
+              <MiniExpandableCard
+                icon={FaIcons.FaShoppingCart}
+                title="E-commerce Tracking"
+                benefits={[
+                  'add_to_cart - Track cart additions',
+                  'checkout_start - Track checkout begins',
+                  'purchase - Track completed orders',
+                  'product_view - Track product views'
+                ]}
+              />
 
               {/* User Engagement */}
-              <EventCategory>
-                <EventCategoryIcon>
-                  <IconComponent icon={FaIcons.FaMousePointer} />
-                </EventCategoryIcon>
-                <EventCategoryTitle>User Engagement</EventCategoryTitle>
-                <EventsList>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>form_submit</strong> - Form submissions
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>video_play</strong> - Video interactions
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>download</strong> - File downloads
-                  </EventItem>
-                </EventsList>
-              </EventCategory>
+              <MiniExpandableCard
+                icon={FaIcons.FaMousePointer}
+                title="User Engagement"
+                benefits={[
+                  'form_submit - Form submissions',
+                  'video_play - Video interactions',
+                  'download - File downloads'
+                ]}
+              />
 
               {/* Video Mention Tracking */}
-              <EventCategory>
-                <EventCategoryIcon>
-                  <IconComponent icon={FaIcons.FaVideo} />
-                </EventCategoryIcon>
-                <EventCategoryTitle>Video Mention Tracking</EventCategoryTitle>
-                <EventsList>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>utm_source</strong> - Channel tracking
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>utm_content</strong> - Video ID tracking
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>utm_medium</strong> - Medium type
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>Attribution</strong> - First & last touch
-                  </EventItem>
-                </EventsList>
-              </EventCategory>
+              <MiniExpandableCard
+                icon={FaIcons.FaVideo}
+                title="Video Mention Tracking"
+                benefits={[
+                  'utm_source - Channel tracking',
+                  'utm_content - Video ID tracking',
+                  'utm_medium - Medium type',
+                  'Attribution - First & last touch'
+                ]}
+              />
 
               {/* Platform Integration */}
-              <EventCategory>
-                <EventCategoryIcon>
-                  <IconComponent icon={FaIcons.FaCode} />
-                </EventCategoryIcon>
-                <EventCategoryTitle>Platform Integration</EventCategoryTitle>
-                <EventsList>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>WordPress</strong> - WooCommerce ready
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>React/Next.js</strong> - Hooks support
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>Shopify</strong> - Liquid templates
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>HTML</strong> - Pure JavaScript
-                  </EventItem>
-                </EventsList>
-              </EventCategory>
+              <MiniExpandableCard
+                icon={FaIcons.FaCode}
+                title="Platform Integration"
+                benefits={[
+                  'WordPress - WooCommerce ready',
+                  'React/Next.js - Hooks support',
+                  'Shopify - Liquid templates',
+                  'HTML - Pure JavaScript'
+                ]}
+              />
 
               {/* Automatic Tracking */}
-              <EventCategory>
-                <EventCategoryIcon>
-                  <IconComponent icon={FaIcons.FaChartLine} />
-                </EventCategoryIcon>
-                <EventCategoryTitle>Automatic Tracking</EventCategoryTitle>
-                <EventsList>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>Page Views</strong> - All pages
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>Sessions</strong> - User sessions
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>Referrers</strong> - Traffic sources
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>Device Info</strong> - Browser, OS
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>Geography</strong> - Country, city
-                  </EventItem>
-                </EventsList>
-              </EventCategory>
+              <MiniExpandableCard
+                icon={FaIcons.FaChartLine}
+                title="Automatic Tracking"
+                benefits={[
+                  'Page Views - All pages',
+                  'Sessions - User sessions',
+                  'Referrers - Traffic sources',
+                  'Device Info - Browser, OS',
+                  'Geography - Country, city'
+                ]}
+              />
 
               {/* Custom Events */}
-              <EventCategory>
-                <EventCategoryIcon>
-                  <IconComponent icon={FaIcons.FaCog} />
-                </EventCategoryIcon>
-                <EventCategoryTitle>Custom Events</EventCategoryTitle>
-                <EventsList>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>Any event</strong> - Track anything
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>Server-side</strong> - Backend API
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>Batch events</strong> - Multiple at once
-                  </EventItem>
-                  <EventItem>
-                    <IconComponent icon={FaIcons.FaCheckCircle} />
-                    <strong>Custom props</strong> - Any data
-                  </EventItem>
-                </EventsList>
-              </EventCategory>
+              <MiniExpandableCard
+                icon={FaIcons.FaCog}
+                title="Custom Events"
+                benefits={[
+                  'Any event - Track anything',
+                  'Server-side - Backend API',
+                  'Batch events - Multiple at once',
+                  'Custom props - Any data'
+                ]}
+              />
             </EventsGrid>
 
-            <div style={{ 
-              textAlign: 'center', 
-              padding: '32px', 
-              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(168, 85, 247, 0.05))',
-              border: '1px solid rgba(139, 92, 246, 0.2)',
-              borderRadius: '16px',
-              marginTop: '40px'
-            }}>
-              <p style={{ color: '#8b5cf6', fontSize: '18px', fontWeight: '600', marginBottom: '12px' }}>
+            <GettingStartedBox>
+              <GettingStartedTitle>
                 Getting Started is Simple
-              </p>
-              <div style={{ 
-                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.05))', 
-                padding: '24px', 
-                borderRadius: '12px',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
-                maxWidth: '600px',
-                margin: '0 auto'
-              }}>
-                <p style={{ 
-                  fontSize: '16px', 
-                  lineHeight: '1.6', 
-                  color: '#94a3b8',
-                  marginBottom: '16px',
-                  textAlign: 'left'
-                }}>
+              </GettingStartedTitle>
+              <GettingStartedInner>
+                <GettingStartedSubtitle>
                   After signing up, you'll receive:
-                </p>
-                <ul style={{ 
-                  listStyle: 'none', 
-                  padding: 0,
-                  margin: 0,
-                  textAlign: 'left'
-                }}>
-                  <li style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', color: '#cbd5e1' }}>
-                    <IconComponent icon={FaIcons.FaCheck} style={{ color: '#10b981', marginRight: '12px', minWidth: '20px' }} />
+                </GettingStartedSubtitle>
+                <GettingStartedList>
+                  <GettingStartedItem>
+                    <IconComponent icon={FaIcons.FaCheck} />
                     Your unique tracking code
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', color: '#cbd5e1' }}>
-                    <IconComponent icon={FaIcons.FaCheck} style={{ color: '#10b981', marginRight: '12px', minWidth: '20px' }} />
+                  </GettingStartedItem>
+                  <GettingStartedItem>
+                    <IconComponent icon={FaIcons.FaCheck} />
                     Step-by-step implementation guide
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', color: '#cbd5e1' }}>
-                    <IconComponent icon={FaIcons.FaCheck} style={{ color: '#10b981', marginRight: '12px', minWidth: '20px' }} />
+                  </GettingStartedItem>
+                  <GettingStartedItem>
+                    <IconComponent icon={FaIcons.FaCheck} />
                     24/7 support to help you get started
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', color: '#cbd5e1' }}>
-                    <IconComponent icon={FaIcons.FaCheck} style={{ color: '#10b981', marginRight: '12px', minWidth: '20px' }} />
+                  </GettingStartedItem>
+                  <GettingStartedItem>
+                    <IconComponent icon={FaIcons.FaCheck} />
                     Access to all tracking features immediately
-                  </li>
-                </ul>
-              </div>
-            </div>
+                  </GettingStartedItem>
+                </GettingStartedList>
+              </GettingStartedInner>
+            </GettingStartedBox>
           </EventsContainer>
         </EventsSection>
 
         {/* Setup Section */}
         <SetupSection>
           <SetupContainer>
-            <SetupTitle>Set Up in 60 Seconds</SetupTitle>
-            <SetupSubtitle>No code. No developer. No headaches.</SetupSubtitle>
-            
+            <SetupTitle>Join the Beta Waitlist</SetupTitle>
+            <SetupSubtitle>Be among the first to access powerful video analytics</SetupSubtitle>
+
             <SetupSteps>
               <SetupStep>
                 <SetupStepNumber>1</SetupStepNumber>
-                <SetupStepTitle>Sign Up & Get Your Code</SetupStepTitle>
-                <p style={{ 
-                  color: '#94a3b8', 
-                  fontSize: '15px', 
+                <SetupStepTitle>Request Your Invite</SetupStepTitle>
+                <p style={{
+                  color: '#94a3b8',
+                  fontSize: '15px',
                   lineHeight: '1.6',
                   marginTop: '12px'
                 }}>
-                  Create your free account and instantly receive your personalized tracking code.
-                  We'll guide you through every step.
+                  Join our exclusive waitlist and be first in line when we open new spots.
+                  Priority access for early adopters.
                 </p>
               </SetupStep>
 
               <SetupStep>
                 <SetupStepNumber>2</SetupStepNumber>
-                <SetupStepTitle>Paste on Your Site</SetupStepTitle>
+                <SetupStepTitle>Get Early Access</SetupStepTitle>
                 <SetupStepDescription>
-                  Add before the {`</head>`} tag or use Google Tag Manager.
-                  Works with any website, platform, or framework.
+                  Selected beta users receive instant access to all premium features.
+                  No waiting, full platform access from day one.
                 </SetupStepDescription>
               </SetupStep>
 
               <SetupStep>
                 <SetupStepNumber>3</SetupStepNumber>
-                <SetupStepTitle>Start Tracking</SetupStepTitle>
+                <SetupStepTitle>Priority Onboarding</SetupStepTitle>
                 <SetupStepDescription>
-                  That's it! You're now tracking every visitor, conversion, and ROI metric in real-time.
+                  White-glove setup assistance, dedicated support, and direct feedback channel to our team.
                 </SetupStepDescription>
                 <div style={{ marginTop: '16px', color: '#10b981', fontWeight: '600' }}>
                   <IconComponent icon={FaIcons.FaCircle} style={{ fontSize: '8px', marginRight: '8px' }} />
-                  Live and tracking
+                  Limited beta spots
                 </div>
               </SetupStep>
             </SetupSteps>
@@ -2748,8 +2985,8 @@ const LiftlioAnalytics: React.FC = () => {
               <p style={{ color: '#a1a1aa', marginBottom: '24px', fontSize: '14px' }}>
                 All plans include: Video mentions • Analytics • AI insights • Support
               </p>
-              <CTAButton href="/checkout">
-                Choose Your Plan →
+              <CTAButton href="/waitlist">
+                Request Your Invite →
               </CTAButton>
             </CTABox>
           </SetupContainer>
