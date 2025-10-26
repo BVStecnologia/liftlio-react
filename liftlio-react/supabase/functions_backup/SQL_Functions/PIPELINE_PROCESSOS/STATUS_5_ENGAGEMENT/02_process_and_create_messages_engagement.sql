@@ -18,6 +18,9 @@
 --
 -- Criado: 2025-01-23
 -- Atualizado: 2025-10-02 - Documentação completa e organização
+-- Atualizado: 2025-10-25 (noite) - Adicionada validação de erro do Claude
+--             Defesa em profundidade: valida se resultado é array antes de processar
+--             Detecta objetos de erro {"error": "..."} e retorna mensagem clara
 -- =============================================
 
 DROP FUNCTION IF EXISTS public.process_and_create_messages_engagement(integer);
@@ -49,6 +52,24 @@ BEGIN
     -- Se não há resultado, retornar
     IF v_raw_result IS NULL THEN
         RETURN QUERY SELECT NULL::BIGINT, NULL::TEXT, 'Nenhum comentário pendente ou erro ao processar';
+        RETURN;
+    END IF;
+
+    -- Validar se é um erro do Claude (defesa em profundidade)
+    IF jsonb_typeof(v_raw_result) != 'array' THEN
+        IF v_raw_result ? 'error' THEN
+            RAISE WARNING 'Erro do Claude: %', v_raw_result->>'error';
+            RETURN QUERY SELECT
+                NULL::BIGINT,
+                NULL::TEXT,
+                'Erro ao processar: ' || (v_raw_result->>'error');
+        ELSE
+            RAISE WARNING 'Resposta inválida (não é array): %', v_raw_result;
+            RETURN QUERY SELECT
+                NULL::BIGINT,
+                NULL::TEXT,
+                'Formato inválido do Claude (esperado array)';
+        END IF;
         RETURN;
     END IF;
 

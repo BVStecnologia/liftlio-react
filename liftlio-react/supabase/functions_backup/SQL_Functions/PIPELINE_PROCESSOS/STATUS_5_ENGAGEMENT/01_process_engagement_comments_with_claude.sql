@@ -1,9 +1,13 @@
 -- =============================================
 -- Migration: Melhoria do prompt universal para process_engagement_comments_with_claude
 -- Data: 2025-10-17 14:00
+-- Atualizado: 2025-10-25 - Adicionada regra anti-travessão
+-- Atualizado: 2025-10-25 (noite) - Adicionada limpeza de markdown code blocks
 -- Descrição: Simplifica e universaliza o prompt mantendo estrutura eficaz
 --           Remove exemplos específicos de nicho, torna aplicável a qualquer produto
 --           Baseado no prompt antigo que funcionava melhor (mais direto)
+--           + Regra crítica: JAMAIS usar travessões (-) para separar frases
+--           + Fix: Remove ```json ... ``` antes de converter para JSONB
 -- =============================================
 
 DROP FUNCTION IF EXISTS process_engagement_comments_with_claude(INTEGER, INTEGER);
@@ -210,6 +214,7 @@ Instruções importantes:
 12. Quando usar timestamp sempre use conforme a transcrição, JAMAIS deve inventar ou usar algo que não esteja na transcrição
 13. Para cada resposta, forneça uma justificativa em inglês em primeira pessoa explicando seu raciocínio
 14. IMPORTANTE: Adicione "tipo_resposta" em cada resposta: "produto" se mencionar o produto, "engajamento" caso contrário
+15. CRÍTICO: JAMAIS use travessões (-) para conectar ou separar frases. Use ponto final (.) para separar sentenças
 
 Exemplos dos tipos de respostas (USE TIMESTAMPS DA TRANSCRIÇÃO DE FORMA NATURAL):
 
@@ -335,6 +340,7 @@ Remember:
 - You can ONLY mention product %s in MAXIMUM %s responses
 - Prioritize product mentions for comments marked as "is_lead": true
 - Always include "tipo_resposta" field: "produto" if mentioning product, "engajamento" otherwise
+- CRITICAL: NEVER use dashes (-) to connect sentences. Use periods (.) to separate sentences
 
 Always respond exactly in this structure:
 [
@@ -360,8 +366,14 @@ Respond only with the requested JSON array, with no additional text.',
         RETURN NULL;
     END IF;
 
-    -- Tentar converter para JSONB
+    -- Tentar converter para JSONB com limpeza de markdown
     BEGIN
+        -- Remove markdown code blocks (```json ... ```)
+        v_claude_response := regexp_replace(v_claude_response, '^\s*```json\s*', '', 'i');
+        v_claude_response := regexp_replace(v_claude_response, '\s*```\s*$', '');
+        v_claude_response := trim(v_claude_response);
+
+        -- Agora converte para JSONB
         v_result := v_claude_response::JSONB;
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Erro ao converter resposta do Claude: %', SQLERRM;
@@ -456,4 +468,7 @@ $function$;
 -- ✅ Mantidas validações e controles
 -- ✅ System message simplificado (mais direto)
 -- ✅ Mantida lógica de timestamps e menções naturais
+-- ✅ Adicionada regra anti-travessão (instrução 15 + system message)
+-- ✅ FIX MARKDOWN (2025-10-25 noite): Remove ```json code blocks antes de ::JSONB
+--    Resolve erro "Invalid JSON from Claude" quando Claude retorna markdown
 -- =============================================

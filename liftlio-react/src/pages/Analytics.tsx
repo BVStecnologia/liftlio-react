@@ -120,30 +120,17 @@ const MetricsGrid = styled.div`
 `;
 
 const MetricCard = styled(motion.div)<{ trend?: 'up' | 'down' | 'neutral' }>`
-  background: ${props => props.theme.name === 'dark' 
-    ? props.theme.colors.bg.secondary 
-    : props.theme.colors.background};
-  border-radius: 12px;
-  padding: 20px;
-  border: 1px solid ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.1)' 
-    : props.theme.colors.border};
+  background: ${props => props.theme.name === 'dark' ? '#1A1A1A' : '#fff'};
+  border: none;
+  border-radius: 8px;
+  padding: 28px 24px;
   position: relative;
-  overflow: hidden;
-  transition: transform 0.3s ease;
+  cursor: help;
+  transition: all 0.3s ease;
 
   &:hover {
     transform: translateY(-2px);
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #8b5cf6 0%, #a855f7 50%, #c084fc 100%);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.08);
   }
 `;
 
@@ -155,11 +142,12 @@ const MetricHeader = styled.div`
 `;
 
 const MetricTitle = styled.div`
-  color: ${props => props.theme.colors.text.secondary};
-  font-size: 13px;
+  font-size: 11px;
+  color: rgba(139, 92, 246, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 12px;
   font-weight: 500;
-  text-transform: none;
-  margin-bottom: 8px;
 `;
 
 const MetricIcon = styled.div<{ color?: string }>`
@@ -178,23 +166,17 @@ const MetricIcon = styled.div<{ color?: string }>`
 `;
 
 const MetricValue = styled.div`
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 48px;
+  font-weight: 300;
   color: ${props => props.theme.colors.text.primary};
   margin-bottom: 4px;
+  letter-spacing: -0.02em;
 `;
 
 const MetricChange = styled.div<{ positive?: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  color: ${props => props.positive ? '#10b981' : '#ef4444'};
-
-  svg {
-    font-size: 16px;
-  }
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
 `;
 
 const MetricDescription = styled.div`
@@ -315,10 +297,6 @@ const ChartTitle = styled.h3`
   display: flex;
   align-items: center;
   gap: 8px;
-
-  svg {
-    color: ${props => props.theme.colors.primary};
-  }
 `;
 
 // Top Cities Styles
@@ -435,32 +413,47 @@ const InsightCard = styled(motion.div)`
   }
 `;
 
-// Estilos para o filtro de período
+// Estilos para o filtro de período minimalista
 const PeriodFilter = styled.div`
   display: flex;
   gap: 12px;
   margin-bottom: 32px;
-  padding: 16px;
-  background: ${props => props.theme.colors.bg.secondary};
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   align-items: center;
-  flex-wrap: wrap;
-  
-  @media (max-width: 768px) {
-    padding: 12px;
-    gap: 8px;
-  }
 `;
 
 const FilterLabel = styled.span`
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: ${props => props.theme.colors.text.secondary};
-  margin-right: 8px;
-  
-  @media (max-width: 768px) {
-    display: none;
+`;
+
+const PeriodDropdown = styled.select`
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: ${props => props.theme.colors.text.primary};
+  padding: 8px 32px 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+
+  &:hover {
+    border-color: rgba(139, 92, 246, 0.4);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(139, 92, 246, 0.6);
+  }
+
+  option {
+    background: ${props => props.theme.name === 'dark' ? '#1A1A1A' : '#fff'};
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 
@@ -481,19 +474,19 @@ const InsightText = styled.p`
 `;
 
 const TagImplementation = styled.div`
-  background: ${props => props.theme.name === 'dark' 
-    ? props.theme.colors.bg.secondary 
-    : props.theme.colors.background};
-  border: 1px solid ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.1)' 
-    : props.theme.colors.border};
-  border-radius: 16px;
-  padding: 32px;
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.02)'
+    : 'rgba(0, 0, 0, 0.02)'};
+  border: 0.5px dashed ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.08)'
+    : 'rgba(0, 0, 0, 0.08)'};
+  border-radius: 12px;
+  padding: 16px;
   margin-top: 32px;
 `;
 
 const TagTitle = styled.h3<{ clickable?: boolean }>`
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: ${props => props.theme.colors.text.primary};
   margin-bottom: ${props => props.clickable ? '0' : '24px'};
@@ -505,7 +498,7 @@ const TagTitle = styled.h3<{ clickable?: boolean }>`
   user-select: none;
   transition: all 0.3s ease;
   padding: ${props => props.clickable ? '12px 0' : '0'};
-  
+
   ${props => props.clickable && `
     &:hover {
       color: ${props.theme.colors.primary};
@@ -513,8 +506,8 @@ const TagTitle = styled.h3<{ clickable?: boolean }>`
   `}
 
   svg {
-    color: ${props => props.theme.colors.primary};
-    font-size: 24px;
+    color: ${props => props.theme.colors.text.secondary};
+    font-size: 20px;
   }
 `;
 
@@ -532,6 +525,61 @@ const CollapseIcon = styled.span<{ collapsed: boolean }>`
   transition: transform 0.3s ease;
   transform: ${props => props.collapsed ? 'rotate(0deg)' : 'rotate(180deg)'};
   color: ${props => props.theme.colors.text.secondary};
+`;
+
+const SectionCard = styled.div`
+  background: ${props => props.theme.name === 'dark'
+    ? props.theme.colors.bg.secondary
+    : props.theme.colors.background};
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.1)'
+    : props.theme.colors.border};
+`;
+
+// Minimalist card for documentation sections (lighter than metric sections)
+const DocSectionCard = styled.div`
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.02)'
+    : 'rgba(0, 0, 0, 0.02)'};
+  border-radius: 12px;
+  padding: 16px;
+  border: 0.5px dashed ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.08)'
+    : 'rgba(0, 0, 0, 0.08)'};
+`;
+
+const PreviewBadges = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+  margin-right: 12px;
+
+  @media (max-width: 768px) {
+    gap: 4px;
+    margin-right: 8px;
+  }
+`;
+
+const Badge = styled.span`
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.05)'
+    : 'rgba(0, 0, 0, 0.05)'};
+  color: ${props => props.theme.colors.text.secondary};
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.08)'
+    : 'rgba(0, 0, 0, 0.08)'};
 `;
 
 const ImplementationSteps = styled.div`
@@ -734,19 +782,19 @@ const AlertButton = styled.button`
 
 // Novos componentes para seção avançada
 const AdvancedSection = styled.div`
-  background: ${props => props.theme.name === 'dark' 
-    ? props.theme.colors.bg.secondary 
-    : props.theme.colors.background};
-  border: 1px solid ${props => props.theme.name === 'dark' 
-    ? 'rgba(255, 255, 255, 0.1)' 
-    : props.theme.colors.border};
-  border-radius: 16px;
-  padding: 32px;
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.02)'
+    : 'rgba(0, 0, 0, 0.02)'};
+  border: 0.5px dashed ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.08)'
+    : 'rgba(0, 0, 0, 0.08)'};
+  border-radius: 12px;
+  padding: 16px;
   margin-top: 32px;
 `;
 
 const AdvancedTitle = styled.h3`
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: ${props => props.theme.colors.text.primary};
   margin-bottom: 8px;
@@ -755,8 +803,8 @@ const AdvancedTitle = styled.h3`
   gap: 12px;
 
   svg {
-    color: ${props => props.theme.colors.primary};
-    font-size: 24px;
+    color: ${props => props.theme.colors.text.secondary};
+    font-size: 20px;
   }
 `;
 
@@ -1223,7 +1271,10 @@ const Analytics: React.FC = () => {
   // Iniciar colapsado será definido depois baseado na tag
   const [implementationCollapsed, setImplementationCollapsed] = useState(false);
   const [advancedCollapsed, setAdvancedCollapsed] = useState(true); // Iniciar fechado por padrão
-  
+  const [topCitiesCollapsed, setTopCitiesCollapsed] = useState(true); // Top Cities list collapsed by default
+  const [chartsCollapsed, setChartsCollapsed] = useState(true); // First charts row collapsed by default
+  const [conversionCollapsed, setConversionCollapsed] = useState(true); // Conversion section collapsed by default
+
   // Estado para rastrear eventos verificados
   const [verifiedEvents, setVerifiedEvents] = useState<{
     add_to_cart: boolean;
@@ -2219,95 +2270,95 @@ const Analytics: React.FC = () => {
         enableZoom={false}  // Desabilitado para melhor UX durante scroll
       />
 
-      {/* Tag Connection Status - Compact version below globe */}
+      {/* Tag Connection Status - Minimalist version */}
       {tagStatus.connected && (
-        <TagStatusCard 
-          $connected={tagStatus.connected} 
-          style={{ 
-            marginTop: '24px', 
-            marginBottom: '20px',
-            padding: '12px 20px',
-            background: theme.name === 'dark' 
-              ? 'rgba(139, 92, 246, 0.05)'
-              : 'rgba(139, 92, 246, 0.03)',
-            border: `1px solid ${theme.name === 'dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.15)'}`,
-            borderRadius: '12px'
-          }}
-        >
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '16px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <TagStatusIcon 
-                $connected={tagStatus.connected} 
-                style={{ fontSize: '18px', color: '#8b5cf6' }}
-              >
-                <IconComponent icon={FaIcons.FaCheckCircle} />
-              </TagStatusIcon>
-              <span style={{ 
-                fontSize: '14px', 
+        <div style={{
+          background: '#1A1A1A',
+          border: 'none',
+          borderRadius: '8px',
+          padding: '20px 24px',
+          marginTop: '24px',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '8px',
+              background: 'rgba(139, 92, 246, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              color: '#8b5cf6'
+            }}>
+              <IconComponent icon={FaIcons.FaCheckCircle} />
+            </div>
+            <div>
+              <div style={{
+                fontSize: '14px',
                 fontWeight: 600,
-                color: '#8b5cf6'
+                color: 'rgba(139, 92, 246, 0.9)',
+                marginBottom: '2px'
               }}>
                 Tag Connected
-              </span>
-              <span style={{ 
-                fontSize: '12px', 
-                color: theme.colors.text.secondary,
-                opacity: 0.8
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: 'rgba(255, 255, 255, 0.4)'
               }}>
                 Last seen: {tagStatus.lastSeen ? new Date(tagStatus.lastSeen).toLocaleTimeString() : 'N/A'}
-              </span>
-            </div>
-            
-            <div style={{ 
-              display: 'flex', 
-              gap: '24px',
-              alignItems: 'center'
-            }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ 
-                  fontSize: '18px', 
-                  fontWeight: 700,
-                  color: theme.colors.text.primary
-                }}>
-                  {tagStatus.totalEvents24h}
-                </div>
-                <div style={{ 
-                  fontSize: '10px', 
-                  color: theme.colors.text.secondary,
-                  opacity: 0.7,
-                  marginTop: '2px'
-                }}>
-                  Total Events (24h)
-                </div>
               </div>
-              
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ 
-                  fontSize: '18px', 
-                  fontWeight: 700,
-                  color: theme.colors.text.primary
-                }}>
-                  {tagStatus.pageviews24h}
-                </div>
-                <div style={{ 
-                  fontSize: '10px', 
-                  color: theme.colors.text.secondary,
-                  opacity: 0.7,
-                  marginTop: '2px'
-                }}>
-                  Page Views (24h)
-                </div>
-              </div>
-              
             </div>
           </div>
-        </TagStatusCard>
+
+          <div style={{
+            display: 'flex',
+            gap: '32px',
+            alignItems: 'center'
+          }}>
+            <div>
+              <div style={{
+                fontSize: '24px',
+                fontWeight: 300,
+                color: theme.colors.text.primary,
+                letterSpacing: '-0.02em'
+              }}>
+                {tagStatus.totalEvents24h}
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: 'rgba(255, 255, 255, 0.4)',
+                marginTop: '2px'
+              }}>
+                Total Events (24h)
+              </div>
+            </div>
+
+            <div>
+              <div style={{
+                fontSize: '24px',
+                fontWeight: 300,
+                color: theme.colors.text.primary,
+                letterSpacing: '-0.02em'
+              }}>
+                {tagStatus.pageviews24h}
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: 'rgba(255, 255, 255, 0.4)',
+                marginTop: '2px'
+              }}>
+                Page Views (24h)
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {dataChecked && !hasData && (
@@ -2345,70 +2396,6 @@ const Analytics: React.FC = () => {
         </>
       )}
 
-      {dataChecked && hasData && (
-        <InsightCard
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <InsightTitle>
-            <IconComponent icon={FaIcons.FaGem} /> Liftlio Insight
-          </InsightTitle>
-          <InsightText>
-            {metricsData.organicChange > 0 ? (
-              <>
-                Your organic traffic grew {metricsData.organicChange.toFixed(0)}% this month! 
-                You have {metricsData.uniqueUsers} unique visitors with a {metricsData.conversionRate.toFixed(1)}% conversion rate. 
-                Keep optimizing your content to reach even better results.
-              </>
-            ) : metricsData.uniqueUsers > 0 ? (
-              <>
-                You have {metricsData.uniqueUsers} unique visitors this month with {metricsData.organicTraffic} organic traffic events. 
-                Your conversion rate is {metricsData.conversionRate.toFixed(1)}%. 
-                Keep monitoring your metrics to track growth trends.
-              </>
-            ) : (
-              <>
-                Start tracking your website performance! 
-                Once you have more data, you'll see insights about your organic traffic growth, 
-                unique visitors, and conversion rates.
-              </>
-            )}
-          </InsightText>
-        </InsightCard>
-      )}
-
-      {/* Filtro de período - aparece sempre que há dados ou dados existem no banco */}
-      {dataChecked && (hasData || hasAnyDataInDatabase) && (
-        <PeriodFilter>
-          <FilterLabel>Period:</FilterLabel>
-          <FilterButton 
-            active={period === '7d'} 
-            onClick={() => setPeriod('7d')}
-          >
-            Last 7 days
-          </FilterButton>
-          <FilterButton 
-            active={period === '30d'} 
-            onClick={() => setPeriod('30d')}
-          >
-            Last 30 days
-          </FilterButton>
-          <FilterButton 
-            active={period === '90d'} 
-            onClick={() => setPeriod('90d')}
-          >
-            Last 3 months
-          </FilterButton>
-          <FilterButton 
-            active={period === '365d'} 
-            onClick={() => setPeriod('365d')}
-          >
-            Last year
-          </FilterButton>
-        </PeriodFilter>
-      )}
-
       <MetricsGrid>
         {metrics.map((metric, index) => (
           <MetricCard
@@ -2419,44 +2406,28 @@ const Analytics: React.FC = () => {
             transition={{ duration: 0.5, delay: index * 0.1 }}
             whileHover={{ scale: 1.02 }}
           >
-            <MetricHeader>
-              <div>
-                <MetricTitle>
-                  {metric.title}
-                  {dataChecked && !hasData && (
-                    <span 
-                      title="Real data will appear once the tracking tag is installed"
-                      style={{ 
-                        marginLeft: '8px',
-                        fontSize: '10px',
-                        padding: '2px 6px',
-                        background: 'rgba(139, 92, 246, 0.2)',
-                        borderRadius: '4px',
-                        color: '#8b5cf6',
-                        fontWeight: 600,
-                        verticalAlign: 'middle',
-                        display: 'inline-block',
-                        cursor: 'help'
-                      }}
-                    >
-                      DEMO
-                    </span>
-                  )}
-                </MetricTitle>
-                <MetricValue>{metric.value}</MetricValue>
-                <MetricChange positive={metric.positive}>
-                  {metric.positive ? <IconComponent icon={FaIcons.FaArrowUp} /> : <IconComponent icon={FaIcons.FaArrowDown} />}
-                  {metric.change}
-                  <MetricDescription>{metric.description}</MetricDescription>
-                </MetricChange>
-              </div>
-              <MetricIcon color={metric.color}>
-                {metric.icon}
-              </MetricIcon>
-            </MetricHeader>
+            <MetricTitle>{metric.title}</MetricTitle>
+            <MetricValue>{metric.value}</MetricValue>
+            <MetricChange>{metric.description}</MetricChange>
           </MetricCard>
         ))}
       </MetricsGrid>
+
+      {/* Filtro de período minimalista - abaixo dos cards */}
+      {dataChecked && (hasData || hasAnyDataInDatabase) && (
+        <PeriodFilter>
+          <FilterLabel>Period:</FilterLabel>
+          <PeriodDropdown
+            value={period}
+            onChange={(e) => setPeriod(e.target.value as any)}
+          >
+            <option value="7d">7 days</option>
+            <option value="30d">30 days</option>
+            <option value="90d">3 months</option>
+            <option value="365d">1 year</option>
+          </PeriodDropdown>
+        </PeriodFilter>
+      )}
 
       <ChartSection>
         <ChartCard
@@ -2604,42 +2575,82 @@ const Analytics: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.15 }}
           >
-            <ChartHeader>
+            <ChartHeader style={{ cursor: 'pointer' }} onClick={() => setTopCitiesCollapsed(!topCitiesCollapsed)}>
               <ChartTitle>
-                <IconComponent icon={FaIcons.FaMapMarkerAlt} /> Top Cities by Visits
+                <IconComponent icon={FaIcons.FaMapMarkerAlt} style={{ color: theme.colors.text.secondary }} /> Top Cities by Visits
               </ChartTitle>
+              {topCitiesCollapsed && topCities.length > 0 && (
+                <PreviewBadges>
+                  <Badge>
+                    {topCities.reduce((sum, city) => sum + city.visit_count, 0).toLocaleString()} visits
+                  </Badge>
+                  <Badge>
+                    {topCities.length} cities
+                  </Badge>
+                </PreviewBadges>
+              )}
+              <CollapseIcon collapsed={topCitiesCollapsed}>
+                <IconComponent icon={FaIcons.FaChevronDown} />
+              </CollapseIcon>
             </ChartHeader>
-            {loadingCities ? (
-              <div style={{ color: theme.colors.text.secondary, textAlign: 'center', padding: '40px' }}>
-                Loading cities...
-              </div>
-            ) : (
-              <CitiesGrid>
-                {topCities.map((city, index) => (
-                  <CityCard key={index}>
-                    <CityName>
-                      <IconComponent icon={FaIcons.FaCircle} style={{ fontSize: '8px', color: theme.colors.primary }} />
-                      {city.city}
-                    </CityName>
-                    <CityCountry>{city.country}</CityCountry>
-                    <CityStats>
-                      <div>
-                        <CityVisits>{city.visit_count}</CityVisits>
-                        <div style={{ color: theme.colors.text.secondary, fontSize: '11px' }}>visits</div>
-                      </div>
-                      <CityPercentage>{city.percentage}%</CityPercentage>
-                    </CityStats>
-                  </CityCard>
-                ))}
-              </CitiesGrid>
-            )}
+            <CollapsibleContent collapsed={topCitiesCollapsed}>
+              {loadingCities ? (
+                <div style={{ color: theme.colors.text.secondary, textAlign: 'center', padding: '40px' }}>
+                  Loading cities...
+                </div>
+              ) : (
+                <CitiesGrid>
+                  {topCities.map((city, index) => (
+                    <CityCard key={index}>
+                      <CityName>
+                        <IconComponent icon={FaIcons.FaCircle} style={{ fontSize: '8px', color: theme.colors.primary }} />
+                        {city.city}
+                      </CityName>
+                      <CityCountry>{city.country}</CityCountry>
+                      <CityStats>
+                        <div>
+                          <CityVisits>{city.visit_count}</CityVisits>
+                          <div style={{ color: theme.colors.text.secondary, fontSize: '11px' }}>visits</div>
+                        </div>
+                        <CityPercentage>{city.percentage}%</CityPercentage>
+                      </CityStats>
+                    </CityCard>
+                  ))}
+                </CitiesGrid>
+              )}
+            </CollapsibleContent>
           </ChartCard>
         </ChartSection>
       )}
 
-      <SecondaryChartsGrid>
-        <ChartCard
-          initial={{ opacity: 0, y: 20 }}
+      {/* Traffic & Performance Section */}
+      <ChartSection>
+        <SectionCard>
+          <ChartHeader style={{ cursor: 'pointer' }} onClick={() => setChartsCollapsed(!chartsCollapsed)}>
+            <ChartTitle>
+              <IconComponent icon={FaIcons.FaChartLine} style={{ color: theme.colors.text.secondary }} /> Traffic & Performance
+            </ChartTitle>
+            {chartsCollapsed && sourceData.length > 0 && (
+              <PreviewBadges>
+                <Badge>
+                  {sourceData.reduce((max, item) => item.value > max.value ? item : max, sourceData[0]).name} {sourceData.reduce((max, item) => item.value > max.value ? item : max, sourceData[0]).percentage}
+                </Badge>
+                {deviceData.length > 0 && (
+                  <Badge>
+                    {deviceData.reduce((max, item) => (item.users || 0) > (max.users || 0) ? item : max, deviceData[0]).name}
+                  </Badge>
+                )}
+              </PreviewBadges>
+            )}
+            <CollapseIcon collapsed={chartsCollapsed}>
+              <IconComponent icon={FaIcons.FaChevronDown} />
+            </CollapseIcon>
+          </ChartHeader>
+
+          <CollapsibleContent collapsed={chartsCollapsed}>
+          <SecondaryChartsGrid>
+          <ChartCard
+            initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
@@ -2773,22 +2784,36 @@ const Analytics: React.FC = () => {
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
-      </SecondaryChartsGrid>
+        </SecondaryChartsGrid>
+        </CollapsibleContent>
+        </SectionCard>
+      </ChartSection>
 
       {/* Nova Seção de Conversão e Engajamento */}
-      <div style={{ marginTop: '40px', marginBottom: '40px' }}>
-        <h2 style={{ 
-          fontSize: '24px', 
-          fontWeight: '700',
-          color: chartColors.primary,
-          marginBottom: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-          <IconComponent icon={FaIcons.FaChartLine} />
-          Conversion & Engagement
-        </h2>
+      <ChartSection>
+        <SectionCard>
+          <ChartHeader style={{ cursor: 'pointer' }} onClick={() => setConversionCollapsed(!conversionCollapsed)}>
+            <ChartTitle>
+              <IconComponent icon={FaIcons.FaChartLine} style={{ color: theme.colors.text.secondary }} /> Conversion & Engagement
+            </ChartTitle>
+            {conversionCollapsed && qualityData.length > 0 && (
+              <PreviewBadges>
+                <Badge>
+                  Quality {Math.round(qualityData.reduce((sum, item) => sum + (item.value || 0), 0) / qualityData.length)}
+                </Badge>
+                {returnRateData.length > 1 && (
+                  <Badge>
+                    {returnRateData[1]?.value || 0}% return
+                  </Badge>
+                )}
+              </PreviewBadges>
+            )}
+            <CollapseIcon collapsed={conversionCollapsed}>
+              <IconComponent icon={FaIcons.FaChevronDown} />
+            </CollapseIcon>
+          </ChartHeader>
+
+          <CollapsibleContent collapsed={conversionCollapsed}>
         
         <SecondaryChartsGrid>
           {/* Gráfico 1: Funil de Engajamento */}
@@ -3004,7 +3029,9 @@ const Analytics: React.FC = () => {
             </div>
           </ChartCard>
         </SecondaryChartsGrid>
-      </div>
+        </CollapsibleContent>
+        </SectionCard>
+      </ChartSection>
 
       <TagImplementation id="implementation-guide">
         <TagTitle 
@@ -3020,7 +3047,7 @@ const Analytics: React.FC = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <IconComponent icon={FaIcons.FaCode} /> Implementation Guide
+            <IconComponent icon={FaIcons.FaBook} style={{ color: theme.colors.text.secondary }} /> Implementation Guide
           </div>
           {tagStatus.connected && (
             <CollapseIcon collapsed={implementationCollapsed}>
@@ -3108,11 +3135,11 @@ const Analytics: React.FC = () => {
           onClick={() => setAdvancedCollapsed(!advancedCollapsed)}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <IconComponent icon={FaIcons.FaRocket} /> Advanced Tracking Guide
+            <IconComponent icon={FaIcons.FaBook} style={{ color: theme.colors.text.secondary }} /> Advanced Tracking Guide
             <HelpTooltip>
               <IconComponent icon={FaQuestionCircle} />
               <TooltipContent>
-                These tracking features require the main Liftlio tag to be installed first. 
+                These tracking features require the main Liftlio tag to be installed first.
                 The tag creates the 'liftlio' object that these events use.
               </TooltipContent>
             </HelpTooltip>
