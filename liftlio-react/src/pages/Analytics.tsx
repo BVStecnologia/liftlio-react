@@ -17,26 +17,7 @@ import { supabase } from '../lib/supabaseClient';
 import GlobeVisualizationPro, { globeEventEmitter, GlobeVisualizationHandle } from '../components/GlobeVisualizationPro';
 import { useRealtime } from '../context/RealtimeProvider';
 
-// Animações adicionais
-const shimmer = keyframes`
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-`;
-
-const slideInFromRight = keyframes`
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-`;
+// Animações adicionais (Minimalista - removido shimmer e slideInFromRight)
 
 const Container = styled.div`
   padding: 0;
@@ -49,7 +30,7 @@ const Container = styled.div`
 `;
 
 const Header = styled.div`
-  margin-bottom: 32px;
+  margin-bottom: 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -80,27 +61,26 @@ const FilterGroup = styled.div`
 
 const FilterButton = styled.button<{ active?: boolean }>`
   padding: 10px 20px;
-  border: 1px solid ${props => props.active 
-    ? props.theme.colors.primary 
-    : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.border};
+  border: 1px solid ${props => props.active
+    ? 'rgba(139, 92, 246, 0.4)'
+    : 'rgba(161, 161, 170, 0.2)'};
   background: ${props => {
     if (props.active) {
-      return props.theme.colors.primary;
+      return 'rgba(26, 26, 26, 0.5)';
     }
-    return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'transparent';
+    return 'rgba(26, 26, 26, 0.2)';
   }};
-  color: ${props => props.active 
-    ? 'white' 
-    : props.theme.colors.text.primary};
+  color: ${props => props.active
+    ? '#ffffff'
+    : '#a1a1aa'};
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${props => props.active 
-      ? props.theme.colors.primaryDark 
-      : props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'};
+    background: rgba(26, 26, 26, 0.5);
+    border-color: rgba(139, 92, 246, 0.3);
   }
 `;
 
@@ -108,7 +88,7 @@ const MetricsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 
   @media (max-width: 1400px) {
     grid-template-columns: repeat(2, 1fr);
@@ -120,17 +100,16 @@ const MetricsGrid = styled.div`
 `;
 
 const MetricCard = styled(motion.div)<{ trend?: 'up' | 'down' | 'neutral' }>`
-  background: ${props => props.theme.name === 'dark' ? '#1A1A1A' : '#fff'};
-  border: none;
+  background: rgba(26, 26, 26, 0.3);
+  border: 1px solid rgba(161, 161, 170, 0.2);
   border-radius: 8px;
-  padding: 28px 24px;
+  padding: 24px 20px;
   position: relative;
   cursor: help;
   transition: all 0.3s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.08);
+    border-color: rgba(161, 161, 170, 0.3);
   }
 `;
 
@@ -143,9 +122,9 @@ const MetricHeader = styled.div`
 
 const MetricTitle = styled.div`
   font-size: 11px;
-  color: rgba(139, 92, 246, 0.7);
+  color: #a1a1aa;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
+  letter-spacing: 0.5px;
   margin-bottom: 12px;
   font-weight: 500;
 `;
@@ -166,8 +145,8 @@ const MetricIcon = styled.div<{ color?: string }>`
 `;
 
 const MetricValue = styled.div`
-  font-size: 48px;
-  font-weight: 300;
+  font-size: 42px;
+  font-weight: 400;
   color: ${props => props.theme.colors.text.primary};
   margin-bottom: 4px;
   letter-spacing: -0.02em;
@@ -175,7 +154,7 @@ const MetricValue = styled.div`
 
 const MetricChange = styled.div<{ positive?: boolean }>`
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
+  color: #a1a1aa;
   font-weight: 400;
 `;
 
@@ -292,7 +271,7 @@ const DemoIndicator = styled.span`
 
 const ChartTitle = styled.h3`
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   color: ${props => props.theme.colors.text};
   display: flex;
   align-items: center;
@@ -311,23 +290,22 @@ const CitiesGrid = styled.div`
 `;
 
 const CityCard = styled.div`
-  background: ${props => props.theme.name === 'dark' ? 'rgba(139, 92, 246, 0.05)' : 'rgba(139, 92, 246, 0.1)'};
-  border: 1px solid ${props => props.theme.colors.primary}33;
+  background: rgba(26, 26, 26, 0.3);
+  border: 1px solid rgba(161, 161, 170, 0.15);
   border-radius: 12px;
   padding: 16px;
   transition: all 0.3s ease;
 
   &:hover {
-    background: ${props => props.theme.name === 'dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.15)'};
-    border-color: ${props => props.theme.colors.primary}66;
-    transform: translateY(-2px);
+    background: rgba(26, 26, 26, 0.5);
+    border-color: rgba(161, 161, 170, 0.25);
   }
 `;
 
 const CityName = styled.div`
-  color: ${props => props.theme.colors.text};
+  color: #d4d4d8;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 4px;
   display: flex;
   align-items: center;
@@ -335,7 +313,7 @@ const CityName = styled.div`
 `;
 
 const CityCountry = styled.div`
-  color: ${props => props.theme.colors.textSecondary};
+  color: #a1a1aa;
   font-size: 12px;
   margin-bottom: 8px;
 `;
@@ -346,13 +324,13 @@ const CityStats = styled.div`
   align-items: center;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid ${props => props.theme.colors.primary}1a;
+  border-top: 1px solid rgba(161, 161, 170, 0.15);
 `;
 
 const CityVisits = styled.div`
-  color: ${props => props.theme.colors.primary};
+  color: #ffffff;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
 `;
 
 const CityPercentage = styled.div`
@@ -367,15 +345,15 @@ const ChartOptions = styled.div`
 
 const ChartOption = styled.button<{ active?: boolean }>`
   padding: 6px 12px;
-  border: 1px solid ${props => props.active 
-    ? props.theme.colors.primary 
-    : props.theme.colors.border};
-  background: ${props => props.active 
-    ? props.theme.colors.primary 
-    : props.theme.colors.background};
-  color: ${props => props.active 
-    ? 'white' 
-    : props.theme.colors.textSecondary};
+  border: 1px solid ${props => props.active
+    ? 'rgba(139, 92, 246, 0.4)'
+    : 'rgba(161, 161, 170, 0.2)'};
+  background: ${props => props.active
+    ? 'rgba(26, 26, 26, 0.5)'
+    : 'rgba(26, 26, 26, 0.2)'};
+  color: ${props => props.active
+    ? '#ffffff'
+    : '#a1a1aa'};
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
@@ -383,34 +361,19 @@ const ChartOption = styled.button<{ active?: boolean }>`
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: ${props => props.theme.colors.primary};
+    border-color: rgba(139, 92, 246, 0.3);
   }
 `;
 
 const InsightCard = styled(motion.div)`
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: rgba(26, 26, 26, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 16px;
   padding: 24px;
   color: white;
   margin-bottom: 32px;
   position: relative;
   overflow: hidden;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    animation: pulse 3s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.1); opacity: 0.8; }
-  }
 `;
 
 // Estilos para o filtro de período minimalista
@@ -452,14 +415,14 @@ const PeriodDropdown = styled.select`
   }
 
   option {
-    background: ${props => props.theme.name === 'dark' ? '#1A1A1A' : '#fff'};
-    color: ${props => props.theme.colors.text.primary};
+    background: rgba(26, 26, 26, 0.95);
+    color: #ffffff;
   }
 `;
 
 const InsightTitle = styled.h3`
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 12px;
   position: relative;
   z-index: 1;
@@ -487,7 +450,7 @@ const TagImplementation = styled.div`
 
 const TagTitle = styled.h3<{ clickable?: boolean }>`
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
   margin-bottom: ${props => props.clickable ? '0' : '24px'};
   display: flex;
@@ -694,7 +657,7 @@ const SuccessMessage = styled.div`
 
 const NoDataAlert = styled(motion.div)`
   background: linear-gradient(135deg, 
-    rgba(139, 92, 246, 0.1) 0%, 
+    rgba(0, 0, 0, 0.1) 0%, 
     rgba(168, 85, 247, 0.1) 100%);
   border: 2px dashed ${props => props.theme.colors.primary};
   border-radius: 16px;
@@ -741,7 +704,7 @@ const AlertIcon = styled.div`
 
 const AlertTitle = styled.h2`
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
   margin-bottom: 12px;
 `;
@@ -795,7 +758,7 @@ const AdvancedSection = styled.div`
 
 const AdvancedTitle = styled.h3`
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
   margin-bottom: 8px;
   display: flex;
@@ -826,7 +789,7 @@ const AccordionItem = styled.div`
     ? 'rgba(139, 92, 246, 0.05)'
     : 'rgba(139, 92, 246, 0.03)'};
   border: 1px solid ${props => props.theme.name === 'dark'
-    ? 'rgba(139, 92, 246, 0.2)'
+    ? 'rgba(0, 0, 0, 0.2)'
     : 'rgba(139, 92, 246, 0.15)'};
   border-radius: 12px;
   overflow: hidden;
@@ -834,7 +797,7 @@ const AccordionItem = styled.div`
 
   &:hover {
     border-color: ${props => props.theme.colors.primary};
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 `;
 
@@ -1004,7 +967,7 @@ const TooltipContent = styled.div`
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   border: 1px solid ${props => props.theme.name === 'dark'
     ? 'rgba(139, 92, 246, 0.3)'
-    : 'rgba(139, 92, 246, 0.2)'};
+    : 'rgba(0, 0, 0, 0.2)'};
   z-index: 99999;
   pointer-events: none;
   opacity: 0;
@@ -1041,7 +1004,7 @@ const VerifiedBadge = styled.span<{ $verified: boolean }>`
   background: ${props => props.$verified
     ? props.theme.name === 'dark'
       ? 'rgba(139, 92, 246, 0.15)'
-      : 'rgba(139, 92, 246, 0.1)'
+      : 'rgba(0, 0, 0, 0.1)'
     : props.theme.name === 'dark'
       ? 'rgba(107, 114, 128, 0.15)'
       : 'rgba(107, 114, 128, 0.1)'
@@ -1051,7 +1014,7 @@ const VerifiedBadge = styled.span<{ $verified: boolean }>`
     : props.theme.colors.text.secondary
   };
   border: 1px solid ${props => props.$verified
-    ? 'rgba(139, 92, 246, 0.2)'
+    ? 'rgba(0, 0, 0, 0.2)'
     : 'rgba(107, 114, 128, 0.1)'
   };
   
@@ -1071,7 +1034,7 @@ const TagStatusCard = styled.div<{ $connected: boolean }>`
   };
   border: 1px solid ${props => props.$connected 
     ? props.theme.name === 'dark'
-      ? 'rgba(139, 92, 246, 0.2)'
+      ? 'rgba(0, 0, 0, 0.2)'
       : 'rgba(139, 92, 246, 0.15)'
     : props.theme.name === 'dark'
       ? 'rgba(107, 114, 128, 0.2)'
@@ -1099,7 +1062,7 @@ const TagStatusIcon = styled.div<{ $connected: boolean }>`
   background: ${props => props.$connected 
     ? props.theme.name === 'dark'
       ? 'rgba(139, 92, 246, 0.15)'
-      : 'rgba(139, 92, 246, 0.1)'
+      : 'rgba(0, 0, 0, 0.1)'
     : props.theme.name === 'dark'
       ? 'rgba(107, 114, 128, 0.15)'
       : 'rgba(107, 114, 128, 0.1)'
@@ -1110,7 +1073,7 @@ const TagStatusIcon = styled.div<{ $connected: boolean }>`
   justify-content: center;
   font-size: 24px;
   border: 1px solid ${props => props.$connected 
-    ? 'rgba(139, 92, 246, 0.2)' 
+    ? 'rgba(0, 0, 0, 0.2)' 
     : 'rgba(107, 114, 128, 0.15)'
   };
 `;
@@ -1122,7 +1085,7 @@ const TagStatusText = styled.div`
 const TagStatusTitle = styled.h3<{ $connected: boolean }>`
   color: ${props => props.$connected ? '#8b5cf6' : '#6b7280'};
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   margin: 0 0 4px 0;
   display: flex;
   align-items: center;
@@ -1147,7 +1110,7 @@ const TagMetric = styled.div`
 
 const TagMetricValue = styled.div`
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   color: ${props => props.theme.colors.primary};
 `;
 
@@ -1159,7 +1122,7 @@ const TagMetricLabel = styled.div`
 
 const ImportantNote = styled.div`
   background: linear-gradient(135deg, 
-    rgba(139, 92, 246, 0.1) 0%, 
+    rgba(0, 0, 0, 0.1) 0%, 
     rgba(168, 85, 247, 0.1) 100%);
   border: 2px solid ${props => props.theme.colors.primary};
   border-radius: 12px;
@@ -1184,7 +1147,7 @@ const NoteContent = styled.div`
 const NoteTitle = styled.h4`
   color: ${props => props.theme.colors.text.primary};
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 8px;
 `;
 
@@ -1196,8 +1159,8 @@ const NoteText = styled.p`
   
   code {
     background: ${props => props.theme.name === 'dark'
-      ? 'rgba(139, 92, 246, 0.2)'
-      : 'rgba(139, 92, 246, 0.1)'};
+      ? 'rgba(0, 0, 0, 0.2)'
+      : 'rgba(0, 0, 0, 0.1)'};
     color: ${props => props.theme.colors.primary};
     padding: 2px 6px;
     border-radius: 4px;
@@ -1319,7 +1282,7 @@ const Analytics: React.FC = () => {
     secondary: '#a855f7', // Roxo secundário
     tertiary: '#d8b4fe', // Roxo ainda mais claro
     accent: '#c084fc', // Roxo mais claro
-    grid: theme.name === 'dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)',
+    grid: theme.name === 'dark' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(139, 92, 246, 0.05)',
     text: theme.name === 'dark' ? '#9ca3af' : '#6b7280',
     tooltip: theme.name === 'dark' ? '#1f2937' : '#ffffff'
   };
@@ -2273,8 +2236,8 @@ const Analytics: React.FC = () => {
       {/* Tag Connection Status - Minimalist version */}
       {tagStatus.connected && (
         <div style={{
-          background: '#1A1A1A',
-          border: 'none',
+          background: 'rgba(26, 26, 26, 0.3)',
+          border: '1px solid rgba(161, 161, 170, 0.15)',
           borderRadius: '8px',
           padding: '20px 24px',
           marginTop: '24px',
@@ -2287,15 +2250,14 @@ const Analytics: React.FC = () => {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              background: 'rgba(139, 92, 246, 0.1)',
+              width: '20px',
+              height: '20px',
+              borderRadius: '4px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '18px',
-              color: '#8b5cf6'
+              fontSize: '12px',
+              color: 'rgba(139, 92, 246, 0.7)'
             }}>
               <IconComponent icon={FaIcons.FaCheckCircle} />
             </div>
@@ -2303,7 +2265,7 @@ const Analytics: React.FC = () => {
               <div style={{
                 fontSize: '14px',
                 fontWeight: 600,
-                color: 'rgba(139, 92, 246, 0.9)',
+                color: 'rgba(139, 92, 246, 0.7)',
                 marginBottom: '2px'
               }}>
                 Tag Connected
@@ -2325,7 +2287,7 @@ const Analytics: React.FC = () => {
             <div>
               <div style={{
                 fontSize: '24px',
-                fontWeight: 300,
+                fontWeight: 400,
                 color: theme.colors.text.primary,
                 letterSpacing: '-0.02em'
               }}>
@@ -2343,7 +2305,7 @@ const Analytics: React.FC = () => {
             <div>
               <div style={{
                 fontSize: '24px',
-                fontWeight: 300,
+                fontWeight: 400,
                 color: theme.colors.text.primary,
                 letterSpacing: '-0.02em'
               }}>
@@ -2404,7 +2366,6 @@ const Analytics: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            whileHover={{ scale: 1.02 }}
           >
             <MetricTitle>{metric.title}</MetricTitle>
             <MetricValue>{metric.value}</MetricValue>
@@ -2450,24 +2411,24 @@ const Analytics: React.FC = () => {
             <AreaChart data={trafficData} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
               <defs>
                 <linearGradient id="colorLiftlio" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1}/>
-                  <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                  <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.6}/>
+                  <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.2}/>
                 </linearGradient>
                 <linearGradient id="colorOrganic" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#a855f7" stopOpacity={0.9}/>
-                  <stop offset="100%" stopColor="#a855f7" stopOpacity={0.2}/>
+                  <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.6}/>
+                  <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.2}/>
                 </linearGradient>
                 <linearGradient id="colorAds" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#fb923c" stopOpacity={0.9}/>
-                  <stop offset="100%" stopColor="#fb923c" stopOpacity={0.2}/>
+                  <stop offset="0%" stopColor="#71717a" stopOpacity={0.5}/>
+                  <stop offset="100%" stopColor="#71717a" stopOpacity={0.1}/>
                 </linearGradient>
                 <linearGradient id="colorSocial" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9}/>
-                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                  <stop offset="0%" stopColor="#71717a" stopOpacity={0.5}/>
+                  <stop offset="100%" stopColor="#71717a" stopOpacity={0.1}/>
                 </linearGradient>
                 <linearGradient id="colorDirect" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#e9d5ff" stopOpacity={0.9}/>
-                  <stop offset="100%" stopColor="#e9d5ff" stopOpacity={0.2}/>
+                  <stop offset="0%" stopColor="#a1a1aa" stopOpacity={0.4}/>
+                  <stop offset="100%" stopColor="#a1a1aa" stopOpacity={0.1}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="0" stroke={chartColors.grid} vertical={false} opacity={0.1} />
@@ -2556,11 +2517,11 @@ const Analytics: React.FC = () => {
               <span><strong>Liftlio</strong> - Organic & Social traffic</span>
             </LegendItem>
             <LegendItem>
-              <LegendDot color="#fb923c" />
+              <LegendDot color="#71717a" />
               <span><strong>Paid Ads</strong> - Sponsored traffic</span>
             </LegendItem>
             <LegendItem>
-              <LegendDot color="#e9d5ff" />
+              <LegendDot color="#a1a1aa" />
               <span><strong>Direct</strong> - Direct visits</span>
             </LegendItem>
           </ChartLegend>
@@ -2681,7 +2642,7 @@ const Analytics: React.FC = () => {
                   backgroundColor: theme.name === 'dark' ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                   border: `1px solid ${chartColors.primary}`,
                   borderRadius: '12px',
-                  boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
                   color: theme.colors.text.primary
                 }}
                 formatter={(value: any, name: any, props: any) => [
@@ -2725,7 +2686,7 @@ const Analytics: React.FC = () => {
                   backgroundColor: theme.name === 'dark' ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                   border: `1px solid ${chartColors.primary}`,
                   borderRadius: '12px',
-                  boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
                   color: theme.colors.text.primary
                 }}
               />
@@ -2775,7 +2736,7 @@ const Analytics: React.FC = () => {
                   backgroundColor: theme.name === 'dark' ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                   border: `1px solid ${chartColors.primary}`,
                   borderRadius: '12px',
-                  boxShadow: '0 4px 20px rgba(139, 92, 246, 0.2)',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
                   color: theme.colors.text.primary
                 }}
               />
@@ -3164,7 +3125,7 @@ const Analytics: React.FC = () => {
           padding: '16px',
           background: theme.name === 'dark' ? 'rgba(139, 92, 246, 0.03)' : 'rgba(139, 92, 246, 0.02)',
           borderRadius: '12px',
-          border: `1px solid ${theme.name === 'dark' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(139, 92, 246, 0.1)'}`
+          border: `1px solid ${theme.name === 'dark' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(0, 0, 0, 0.1)'}`
         }}>
           <div style={{ width: '100%', marginBottom: '12px', fontWeight: 600, color: theme.colors.primary }}>
             📊 Event Implementation Status:
