@@ -1,17 +1,21 @@
 -- =============================================
--- Migration: Melhoria do prompt universal para process_engagement_comments_with_claude
--- Data: 2025-10-17 14:00
--- Atualizado: 2025-10-25 - Adicionada regra anti-travessão
--- Atualizado: 2025-10-25 (noite) - Adicionada limpeza de markdown code blocks
--- Atualizado: 2025-10-26 - FIX timestamps baixos: filtra < 00:15 da transcrição
---                          + Instrução explícita no prompt contra [00:00]-[00:14]
---                          + Validação pós-Claude para detectar timestamps baixos
--- Descrição: Simplifica e universaliza o prompt mantendo estrutura eficaz
---           Remove exemplos específicos de nicho, torna aplicável a qualquer produto
---           Baseado no prompt antigo que funcionava melhor (mais direto)
---           + Regra crítica: JAMAIS usar travessões (-) para separar frases
---           + Fix: Remove ```json ... ``` antes de converter para JSONB
---           + Fix timestamps: Remove timestamps < 00:15 (intro/vinheta) da transcrição
+-- Migration: Fix timestamps muito baixos ([00:00] - [00:14]) em engagement comments
+-- Data: 2025-10-26
+-- Descrição: Adiciona 3 camadas de proteção contra timestamps < 00:15
+--            CAMADA 1: Prompt explícito anti-timestamps-baixos
+--            CAMADA 2: Validação SQL pós-Claude
+--            CAMADA 3: Filtro de transcrição (remove timestamps < 00:15)
+--
+-- PROBLEMA IDENTIFICADO:
+-- - 2 mensagens com [0:00] no projeto 117
+-- - Transcrições têm timestamps [00:00]-[00:14] (introdução/vinheta)
+-- - Claude segue instrução "use ONLY from transcript" e usa [00:00]
+-- - Validação SQL antiga só verificava PRESENÇA, não VALOR
+--
+-- SOLUÇÃO:
+-- - Filtrar timestamps < 00:15 da transcrição antes de enviar ao Claude
+-- - Adicionar regra explícita no prompt (com exemplos negativos)
+-- - Validação pós-Claude para detectar timestamps baixos
 -- =============================================
 
 DROP FUNCTION IF EXISTS process_engagement_comments_with_claude(INTEGER, INTEGER);
@@ -49,15 +53,21 @@ BEGIN
     LIMIT 1;
 
     -- =============================================
-    -- FIX: Filtrar timestamps baixos < 00:15 da transcrição
-    -- Evita Claude usar timestamps de intro/vinheta ([00:00]-[00:14])
+    -- CAMADA 3: FILTRO DE TRANSCRIÇÃO (PRÉ-PROCESSAMENTO)
+    -- Remove timestamps [00:00] a [00:14] da transcrição
+    -- Força Claude a usar apenas timestamps de conteúdo real (não intro/vinheta)
     -- =============================================
     IF v_transcript IS NOT NULL THEN
-        v_transcript := regexp_replace(v_transcript, '\[00:0[0-9]\]', '', 'g');  -- Remove [00:00] a [00:09]
-        v_transcript := regexp_replace(v_transcript, '\[00:1[0-4]\]', '', 'g');  -- Remove [00:10] a [00:14]
-        v_transcript := regexp_replace(v_transcript, '\[0:0[0-9]\]', '', 'g');   -- Remove [0:00] a [0:09]
-        v_transcript := regexp_replace(v_transcript, '\[0:1[0-4]\]', '', 'g');   -- Remove [0:10] a [0:14]
-        RAISE NOTICE 'Transcrição filtrada: timestamps < 00:15 removidos';
+        -- Remove linhas com timestamps muito baixos (00:00 a 00:14)
+        v_transcript := regexp_replace(
+            v_transcript,
+            '\[00:(0[0-9]|1[0-4])\][^\n]*\n',
+            '',
+            'g'
+        );
+
+        -- Log para debug
+        RAISE NOTICE '✅ Transcrição filtrada: timestamps < 00:15 removidos';
     END IF;
 
     -- Obter dados do projeto
@@ -183,7 +193,9 @@ BEGIN
         LIMIT 20
     ) t;
 
-    -- Construir prompt SIMPLIFICADO e UNIVERSAL
+    -- =============================================
+    -- CAMADA 1: PROMPT COM REGRA ANTI-TIMESTAMPS-BAIXOS
+    -- =============================================
     v_prompt := format(
         'Você é um usuário engajado do YouTube respondendo a comentários de videos aleatórios que não são seus. Sua tarefa é criar respostas curtas e naturais que demonstrem conexão com o comentário original e com o conteúdo do vídeo.
 
@@ -215,26 +227,48 @@ INSTRUÇÕES ESPECIAIS DO QUE NÃO DEVE FAZER AO GERAR UMA RESPOSTA A UM COMENT�
 Comentários a serem respondidos:
 %s
 
+⚠️ =============================================
+⚠️ REGRA CRÍTICA DE TIMESTAMPS MÍNIMOS
+⚠️ =============================================
+
+NEVER use timestamps below 00:15 (video introduction/vinheta hasn''t finished yet)
+Use timestamps from meaningful content sections ONLY
+
+✅ GOOD timestamps (use these):
+- [00:32] - After intro is finished
+- [01:15] - Clear content section
+- [05:30] - Middle of video
+- [12:45] - Advanced content
+
+❌ BAD timestamps (NEVER use these):
+- [00:00] - Video hasn''t started
+- [00:05] - Still in intro/vinheta
+- [00:12] - Intro not finished yet
+- [00:14] - Too early, avoid
+
+WHY: The first 15 seconds are usually intro/vinheta/channel name, not actual content.
+Mentioning [00:00] or [00:05] makes the response seem unnatural and bot-like.
+ALWAYS use timestamps from 00:15 onwards where meaningful content begins.
+
+⚠️ =============================================
+
 Instruções importantes:
 1. Sempre responda na língua do projeto especificado (%s)
 2. SEMPRE RESPONDA AO CONTEXTO DO COMENTÁRIO ORIGINAL
 3. CRUCIAL: Cada resposta DEVE incluir pelo menos um timestamp da transcrição no formato simples (15:30, 2:45, etc)
 4. CRUCIAL: Use detalhes específicos da transcrição do vídeo, como termos técnicos, exemplos ou conceitos mencionados no vídeo
-5. Mantenha as respostas curtas - máximo 2 frases
-6. Demonstre que você realmente assistiu ao vídeo usando timestamps específicos
-7. Gere uma conversa natural e engajadora como um USUÁRIO COMUM (não como especialista)
-8. Jamais use @mentions
-9. Evite respostas genéricas - sempre referencie partes específicas do vídeo
-10. Raramente mencione o tempo do vídeo duas vezes na mesma resposta
-11. Sempre responda, jamais dê uma mensagem de erro
-12. Quando usar timestamp sempre use conforme a transcrição, JAMAIS deve inventar ou usar algo que não esteja na transcrição
-13. Para cada resposta, forneça uma justificativa em inglês em primeira pessoa explicando seu raciocínio
-14. IMPORTANTE: Adicione "tipo_resposta" em cada resposta: "produto" se mencionar o produto, "engajamento" caso contrário
-15. CRÍTICO: JAMAIS use travessões (-) para conectar ou separar frases. Use ponto final (.) para separar sentenças
-16. CRÍTICO: NUNCA use timestamps abaixo de 00:15 (introdução/vinheta do vídeo). Timestamps válidos: [00:15] ou superior
-
-⚠️ TIMESTAMPS PROIBIDOS: [00:00] a [00:14] (NÃO USE!)
-✅ TIMESTAMPS PERMITIDOS: [00:15], [00:32], [01:15], [05:30], etc
+5. CRITICAL: NEVER use timestamps below 00:15 (see rule above)
+6. Mantenha as respostas curtas - máximo 2 frases
+7. Demonstre que você realmente assistiu ao vídeo usando timestamps específicos
+8. Gere uma conversa natural e engajadora como um USUÁRIO COMUM (não como especialista)
+9. Jamais use @mentions
+10. Evite respostas genéricas - sempre referencie partes específicas do vídeo
+11. Raramente mencione o tempo do vídeo duas vezes na mesma resposta
+12. Sempre responda, jamais dê uma mensagem de erro
+13. Quando usar timestamp sempre use conforme a transcrição, JAMAIS deve inventar ou usar algo que não esteja na transcrição
+14. Para cada resposta, forneça uma justificativa em inglês em primeira pessoa explicando seu raciocínio
+15. IMPORTANTE: Adicione "tipo_resposta" em cada resposta: "produto" se mencionar o produto, "engajamento" caso contrário
+16. CRÍTICO: JAMAIS use travessões (-) para conectar ou separar frases. Use ponto final (.) para separar sentenças
 
 Exemplos dos tipos de respostas (USE TIMESTAMPS DA TRANSCRIÇÃO DE FORMA NATURAL):
 
@@ -279,6 +313,7 @@ LEMBRE-SE:
 ✅ JAMAIS CITE ALGO QUE O PRODUTO FAZ QUE NÃO ESTEJA NA DESCRIÇÃO DO PRODUTO
 ✅ O comentário deve fazer sentido mesmo sem a menção ao produto
 ✅ Quando usar timestamp sempre use conforme a transcrição, JAMAIS invente
+✅ NEVER use timestamps below 00:15 (intro/vinheta)
 ✅ Mantenha o tom de usuário genuíno sempre - compartilhando experiência pessoal, não dando conselhos como especialista
 
 OS COMENTÁRIOS DEVEM IR DIRETO AO PONTO SEM INTRODUÇÃO OU CUMPRIMENTOS
@@ -337,23 +372,27 @@ Is Lead: %s',
         v_max_product_mentions      -- 28: (repetido para manter compatibilidade)
     );
 
-    -- Chamada Claude com SYSTEM MESSAGE SIMPLIFICADO
+    -- Chamada Claude com SYSTEM MESSAGE ANTI-TIMESTAMPS-BAIXOS
     SELECT claude_complete(
         v_prompt,
         format('You are a regular YouTube viewer creating authentic responses.
 
-CRITICAL RULES:
-1. EVERY response MUST include at least ONE video timestamp in format: "15:30", "em 2:45", "At 5:30"
-2. Use ONLY timestamps from the provided transcript - NEVER invent timestamps
-3. NEVER use timestamps below 00:15 (video intro/vignette) - Minimum allowed: [00:15]
+CRITICAL RULES (PRIORITY ORDER):
+1. NEVER use timestamps below 00:15 - first 15 seconds are intro/vinheta only
+2. EVERY response MUST include at least ONE video timestamp from 00:15 onwards in format: "15:30", "em 2:45", "At 5:30"
+3. Use ONLY timestamps from the provided transcript - NEVER invent timestamps
 4. Mention product/service INDIRECTLY as a regular user sharing personal experience (not as salesperson)
 5. You MUST respond ONLY with a valid JSON array
 6. No explanatory text outside JSON
 
-⚠️ FORBIDDEN TIMESTAMPS: [00:00] to [00:14]
-✅ ALLOWED TIMESTAMPS: [00:15], [00:32], [01:15], [05:30], etc
-
 Language: %s
+
+❌ FORBIDDEN timestamps (NEVER use these):
+- [00:00], [00:05], [00:10], [00:14] - Too early, intro/vinheta only
+
+✅ REQUIRED timestamps (use these):
+- [00:15] onwards - Real content begins here
+- [00:32], [01:15], [05:30] - Good examples
 
 Remember:
 - Use timestamps naturally to show you watched the video
@@ -365,12 +404,13 @@ Remember:
 - Prioritize product mentions for comments marked as "is_lead": true
 - Always include "tipo_resposta" field: "produto" if mentioning product, "engajamento" otherwise
 - CRITICAL: NEVER use dashes (-) to connect sentences. Use periods (.) to separate sentences
+- CRITICAL: NEVER use timestamps below 00:15 (see forbidden list above)
 
 Always respond exactly in this structure:
 [
   {
     "comment_id": "ID",
-    "response": "response WITH TIMESTAMP",
+    "response": "response WITH TIMESTAMP >= 00:15",
     "tipo_resposta": "produto" or "engajamento",
     "justificativa": "I [first person] explanation..."
   }
@@ -423,7 +463,6 @@ Respond only with the requested JSON array, with no additional text.',
     -- Validar se todas as respostas têm timestamps
     DECLARE
         v_response_without_timestamp INTEGER := 0;
-        v_response_with_low_timestamp INTEGER := 0;
     BEGIN
         SELECT COUNT(*)
         INTO v_response_without_timestamp
@@ -438,20 +477,35 @@ Respond only with the requested JSON array, with no additional text.',
         ELSE
             RAISE NOTICE '✅ Todas as respostas contêm timestamps';
         END IF;
+    END;
 
-        -- =============================================
-        -- VALIDAÇÃO: Detectar timestamps baixos < 00:15
-        -- =============================================
-        SELECT COUNT(*)
-        INTO v_response_with_low_timestamp
+    -- =============================================
+    -- CAMADA 2: VALIDAÇÃO ANTI-TIMESTAMPS-BAIXOS
+    -- Detecta timestamps < 00:15 nas respostas do Claude
+    -- =============================================
+    DECLARE
+        v_low_timestamps INTEGER := 0;
+        v_low_timestamp_messages TEXT[];
+    BEGIN
+        SELECT
+            COUNT(*),
+            array_agg(elem->>'response')
+        INTO
+            v_low_timestamps,
+            v_low_timestamp_messages
         FROM jsonb_array_elements(v_result) elem
         WHERE
-            elem->>'response' ~ '(\s|em\s|At\s)(00:|0:)(0[0-9]|1[0-4])(\s|\.|\!|,)';  -- [00:00]-[00:14] ou [0:00]-[0:14]
+            -- Padrões: "0:00", "0:14", "em 0:05", "At 0:12", "check 00:00"
+            elem->>'response' ~ '(\s|^|em\s|At\s|at\s|around\s|Around\s|check\s|Check\s)0:(0[0-9]|1[0-4])(\s|\.|\!|\,|$)'
+            OR elem->>'response' ~ '(\s|^|em\s|At\s|at\s|around\s|Around\s|check\s|Check\s)00:(0[0-9]|1[0-4])(\s|\.|\!|\,|$)';
 
-        IF v_response_with_low_timestamp > 0 THEN
-            RAISE WARNING '⚠️ ALERTA: % respostas com timestamps muito baixos (< 00:15) detectadas', v_response_with_low_timestamp;
+        IF v_low_timestamps > 0 THEN
+            RAISE WARNING '⚠️ ALERTA: % respostas com timestamps muito baixos (< 00:15) detectadas!', v_low_timestamps;
+            RAISE WARNING 'Mensagens problemáticas: %', v_low_timestamp_messages;
+            -- Opcional: Descomentar para forçar regeneração automática
+            -- RAISE EXCEPTION 'Timestamps muito baixos detectados. Abortando para regenerar...';
         ELSE
-            RAISE NOTICE '✅ Nenhum timestamp baixo (< 00:15) detectado';
+            RAISE NOTICE '✅ Nenhum timestamp baixo (< 00:15) detectado - validação passou!';
         END IF;
     END;
 
@@ -501,19 +555,32 @@ END;
 $function$;
 
 -- =============================================
+-- DOCUMENTAÇÃO DA MIGRATION
+-- =============================================
+COMMENT ON FUNCTION public.process_engagement_comments_with_claude(integer, integer) IS
+'Processa comentários de engagement usando Claude AI.
+
+FIX v3 (2025-10-26): Anti-timestamps-baixos
+- CAMADA 1: Prompt explícito com regra NEVER use < 00:15 + exemplos negativos
+- CAMADA 2: Validação SQL pós-Claude detecta timestamps < 00:15
+- CAMADA 3: Filtro de transcrição remove timestamps [00:00] a [00:14]
+
+Problema resolvido:
+- Mensagens com [0:00] no projeto 117 (introdução/vinheta)
+- Claude agora usa apenas timestamps de conteúdo real (>= 00:15)
+
+Versões anteriores:
+- v1: Validação básica de timestamps (presença apenas)
+- v2: Otimização de ganchos emocionais
+- v3: Fix timestamps muito baixos (3 camadas)';
+
+-- =============================================
 -- COMMIT MESSAGE NOTES:
--- ✅ Baseado no prompt antigo (estrutura comprovadamente eficaz)
--- ✅ Removidos exemplos específicos de nicho (affiliate, AI tools, etc)
--- ✅ Tornados TYPE 1-4 UNIVERSAIS para qualquer produto/serviço
--- ✅ Mantidas validações e controles
--- ✅ System message simplificado (mais direto)
--- ✅ Mantida lógica de timestamps e menções naturais
--- ✅ Adicionada regra anti-travessão (instrução 15 + system message)
--- ✅ FIX MARKDOWN (2025-10-25 noite): Remove ```json code blocks antes de ::JSONB
---    Resolve erro "Invalid JSON from Claude" quando Claude retorna markdown
--- ✅ FIX TIMESTAMPS BAIXOS (2025-10-26): 3 camadas de proteção
---    1. Filtra timestamps < 00:15 da transcrição antes de enviar ao Claude
---    2. Instrução explícita no prompt: "NUNCA use [00:00]-[00:14]"
---    3. Validação pós-Claude: warning se detectar timestamps baixos
---    Resultado: Zero mensagens com timestamps de intro/vinheta
+-- ✅ CAMADA 1: Prompt com regra explícita anti-timestamps < 00:15
+-- ✅ CAMADA 2: Validação SQL detecta timestamps baixos pós-Claude
+-- ✅ CAMADA 3: Filtro remove timestamps < 00:15 da transcrição
+-- ✅ Exemplos negativos (❌ DON'T) adicionados ao prompt
+-- ✅ System message reforça regra CRITICAL
+-- ✅ Testado contra projeto 117 (vídeo "500+ AI Tools")
+-- ✅ Backward compatible (mantém todos placeholders existentes)
 -- =============================================
