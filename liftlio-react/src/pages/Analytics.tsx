@@ -2446,7 +2446,7 @@ const Analytics: React.FC = () => {
             </ChartTitle>
             {dataChecked && !hasData && <DemoIndicator>Demo Data</DemoIndicator>}
           </ChartHeader>
-          <ResponsiveContainer width="100%" height={400}>
+          <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={trafficData} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
               <defs>
                 <linearGradient id="colorLiftlio" x1="0" y1="0" x2="0" y2="1">
