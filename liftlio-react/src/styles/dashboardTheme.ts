@@ -5,6 +5,15 @@
  * Para editar qualquer aspecto visual, modifique apenas este arquivo
  */
 
+// Liftlio Purple Palette (Minimalista)
+export const LIFTLIO_COLORS = {
+  purple: '#8b5cf6',              // Roxo principal
+  purpleLight: '#a78bfa',         // Hover/destaque
+  purpleDark: '#7c3aed',          // Active state
+  purpleGhost: 'rgba(139, 92, 246, 0.1)',  // 10% opacity background
+  purpleBorder: 'rgba(139, 92, 246, 0.3)', // 30% opacity border
+};
+
 export interface DashboardTheme {
   // Layout Principal
   layout: {
@@ -193,32 +202,32 @@ export const lightTheme: DashboardTheme = {
       border: 'rgba(0, 0, 0, 0.06)',
       shadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
       padding: '16px',
-      borderLeftScheduled: '#FFAA15',
-      borderLeftPublished: '#4CAF50',
+      borderLeftScheduled: '#8b5cf6',
+      borderLeftPublished: '#8b5cf6',
       borderLeftDefault: '#2d3e50'
     }
   },
 
   badges: {
     scheduled: {
-      bg: 'rgba(255, 170, 21, 0.12)',
-      text: '#F57C00',
-      border: 'rgba(255, 170, 21, 0.3)'
+      bg: 'rgba(139, 92, 246, 0.08)',
+      text: '#7c3aed',
+      border: 'rgba(139, 92, 246, 0.2)'
     },
     published: {
-      bg: 'rgba(76, 175, 80, 0.12)',
-      text: '#388E3C',
-      border: 'rgba(76, 175, 80, 0.3)'
+      bg: 'rgba(139, 92, 246, 0.08)',
+      text: '#7c3aed',
+      border: 'rgba(139, 92, 246, 0.2)'
     },
     brand: {
-      bg: 'rgba(33, 150, 243, 0.12)',
-      text: '#1976D2',
-      border: 'rgba(33, 150, 243, 0.3)'
+      bg: 'transparent',
+      text: '#8b5cf6',
+      border: '#8b5cf6'
     },
     quality: {
-      bg: 'rgba(156, 39, 176, 0.12)',
-      text: '#7B1FA2',
-      border: 'rgba(156, 39, 176, 0.3)'
+      bg: 'rgba(139, 92, 246, 0.1)',
+      text: '#7c3aed',
+      border: '#8b5cf6'
     }
   },
 
@@ -333,32 +342,32 @@ export const darkTheme: DashboardTheme = {
       border: 'rgba(255, 255, 255, 0.08)',
       shadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
       padding: '16px',
-      borderLeftScheduled: 'rgba(255, 183, 77, 0.5)',
-      borderLeftPublished: 'rgba(102, 187, 106, 0.5)',
+      borderLeftScheduled: 'rgba(139, 92, 246, 0.6)',
+      borderLeftPublished: 'rgba(139, 92, 246, 0.6)',
       borderLeftDefault: 'rgba(255, 255, 255, 0.3)'
     }
   },
 
   badges: {
     scheduled: {
-      bg: 'rgba(255, 183, 77, 0.15)',
-      text: '#FFB74D',
-      border: 'rgba(255, 183, 77, 0.4)'
+      bg: 'rgba(167, 139, 250, 0.15)',
+      text: '#a78bfa',
+      border: 'rgba(167, 139, 250, 0.3)'
     },
     published: {
-      bg: 'rgba(102, 187, 106, 0.15)',
-      text: '#66BB6A',
-      border: 'rgba(102, 187, 106, 0.4)'
+      bg: 'rgba(167, 139, 250, 0.15)',
+      text: '#a78bfa',
+      border: 'rgba(167, 139, 250, 0.3)'
     },
     brand: {
-      bg: 'rgba(66, 165, 245, 0.15)',
-      text: '#42A5F5',
-      border: 'rgba(66, 165, 245, 0.4)'
+      bg: 'transparent',
+      text: '#a78bfa',
+      border: '#a78bfa'
     },
     quality: {
-      bg: 'rgba(186, 104, 200, 0.15)',
-      text: '#BA68C8',
-      border: 'rgba(186, 104, 200, 0.4)'
+      bg: 'rgba(139, 92, 246, 0.2)',
+      text: '#a78bfa',
+      border: '#8b5cf6'
     }
   },
 

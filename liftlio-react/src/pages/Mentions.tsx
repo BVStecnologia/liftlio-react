@@ -828,34 +828,20 @@ const subtleFill = keyframes`
   to { width: var(--fill-width); }
 `;
 
-// Componente clean para o score
+// Componente clean para o score (minimalista)
 const ScoreCardContainer = styled.div`
   width: 120px;
-  background: ${props => {
-    const dt = useDashboardTheme(props.theme.name);
-    return dt.cards.comment.bg;
-  }};
+  background: transparent;
   border-radius: ${props => {
     const dt = useDashboardTheme(props.theme.name);
     return dt.layout.borderRadius.small;
   }};
-  padding: 10px;
-  box-shadow: ${props => {
-    const dt = useDashboardTheme(props.theme.name);
-    return dt.shadows.small;
-  }};
+  padding: 12px;
   border: 1px solid ${props => {
     const dt = useDashboardTheme(props.theme.name);
     return dt.borders.light;
   }};
   transition: all 0.2s ease;
-  
-  &:hover {
-    box-shadow: ${props => {
-      const dt = useDashboardTheme(props.theme.name);
-      return dt.shadows.medium;
-    }};
-  }
 `;
 
 const ScoreLabel = styled.div`
@@ -878,12 +864,14 @@ const TypeBadge = styled.span<{ type: string }>`
   background: ${props => {
     const dt = useDashboardTheme(props.theme.name);
     if (props.type === 'BRAND') return dt.badges.brand.bg;
+    if (props.type === 'MENTION') return dt.badges.brand.bg;
     if (props.type === 'QUALITY') return dt.badges.quality.bg;
     return dt.borders.light;
   }};
   color: ${props => {
     const dt = useDashboardTheme(props.theme.name);
     if (props.type === 'BRAND') return dt.badges.brand.text;
+    if (props.type === 'MENTION') return dt.badges.brand.text;
     if (props.type === 'QUALITY') return dt.badges.quality.text;
     return dt.text.secondary;
   }};
@@ -891,6 +879,7 @@ const TypeBadge = styled.span<{ type: string }>`
   border: 1px solid ${props => {
     const dt = useDashboardTheme(props.theme.name);
     if (props.type === 'BRAND') return dt.badges.brand.border;
+    if (props.type === 'MENTION') return dt.badges.brand.border;
     if (props.type === 'QUALITY') return dt.badges.quality.border;
     return 'transparent';
   }};
@@ -904,13 +893,9 @@ const ScoreValueRow = styled.div`
 `;
 
 const ScoreValue = styled.div<{ score: number }>`
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
-  color: ${props => {
-    if (props.score >= 70) return '#4CAF50';
-    if (props.score >= 40) return '#FFB74D';
-    return '#FF5252';
-  }};
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const ScoreQualityBadge = styled.div<{ score: number }>`
@@ -936,11 +921,7 @@ const ScoreMeterContainer = styled.div`
 const ScoreMeterFill = styled.div<{ score: number }>`
   height: 100%;
   width: var(--fill-width);
-  background: ${props => {
-    if (props.score >= 70) return '#4CAF50';
-    if (props.score >= 40) return '#FFB74D';
-    return '#FF5252';
-  }};
+  background: #8b5cf6;
   border-radius: 2px;
   animation: ${subtleFill} 0.6s ease-out;
 `;
@@ -1018,10 +999,10 @@ const CommentAuthor = styled.div`
   margin-bottom: 4px;
   display: flex;
   align-items: center;
-  
+
   svg {
     margin-right: 6px;
-    color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.colors.text.secondary};
   }
 `;
 
@@ -1045,14 +1026,16 @@ const CommentEngagement = styled.div`
 `;
 
 const EngagementBadge = styled.div`
-  background: ${props => withOpacity(props.theme.colors.tertiary, 0.1)};
-  color: ${props => props.theme.colors.primary};
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.1)'
+    : 'rgba(0, 0, 0, 0.05)'};
+  color: ${props => props.theme.colors.text.secondary};
   font-size: ${props => props.theme.fontSizes.xs};
   padding: 4px 8px;
   border-radius: ${props => props.theme.radius.pill};
   display: flex;
   align-items: center;
-  
+
   svg {
     margin-right: 4px;
     font-size: 10px;
@@ -1079,17 +1062,17 @@ const CommentText = styled.div`
   &::before {
     content: '\\201C';
     font-size: 1.5rem;
-    color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.colors.text.secondary};
     opacity: 0.3;
     position: absolute;
     left: -10px;
     top: -5px;
   }
-  
+
   &::after {
     content: '\\201D';
     font-size: 1.5rem;
-    color: ${props => props.theme.colors.primary};
+    color: ${props => props.theme.colors.text.secondary};
     opacity: 0.3;
     position: absolute;
     right: -10px;
@@ -1433,7 +1416,7 @@ const ResponseDate = styled.div<{ status?: string }>`
 `;
 
 const SeeMoreLink = styled.a`
-  color: ${props => props.theme.colors.primary};
+  color: #8b5cf6;
   font-size: ${props => props.theme.fontSizes.sm};
   font-weight: ${props => props.theme.fontWeights.medium};
   cursor: pointer;
@@ -1945,17 +1928,17 @@ const PageInfo = styled.div`
 
 const PageButton = styled.button<{ active?: boolean; disabled?: boolean }>`
   background: ${props => {
-    if (props.active) return props.theme.colors.primary;
+    if (props.active) return '#8b5cf6';
     return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'white';
   }};
   color: ${props => {
     if (props.active) return 'white';
     if (props.disabled) return props.theme.colors.text.secondary;
-    return props.theme.colors.primary;
+    return '#8b5cf6';
   }};
   border: 1px solid ${props => {
-    if (props.active) return props.theme.colors.primary;
-    return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : props.theme.colors.border.primary;
+    if (props.active) return '#8b5cf6';
+    return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(139, 92, 246, 0.3)';
   }};
   border-radius: ${props => props.theme.radius.md};
   width: 36px;
@@ -1966,11 +1949,11 @@ const PageButton = styled.button<{ active?: boolean; disabled?: boolean }>`
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   transition: all 0.2s ease;
   opacity: ${props => props.disabled ? 0.5 : 1};
-  
+
   &:hover {
     background: ${props => {
       if (props.disabled) return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'white';
-      if (props.active) return props.theme.colors.primary;
+      if (props.active) return '#7c3aed';
       return props.theme.name === 'dark' ? 'rgba(255, 255, 255, 0.2)' : '#f0f0f5';
     }};
     transform: ${props => props.disabled ? 'none' : 'translateY(-2px)'};
@@ -3214,9 +3197,9 @@ const Mentions: React.FC = () => {
                   <strong>Canal:</strong> {selectedMention.video.channel}
                 </div>
                 <div style={{ marginTop: 'auto' }}>
-                  <button 
-                    style={{ 
-                      background: theme.colors.text.primary,
+                  <button
+                    style={{
+                      background: '#8b5cf6',
                       border: 'none',
                       padding: '8px 16px',
                       borderRadius: '20px',
@@ -3225,9 +3208,12 @@ const Mentions: React.FC = () => {
                       gap: '8px',
                       cursor: 'pointer',
                       marginTop: '15px',
-                      color: theme.colors.bg.primary,
-                      boxShadow: theme.shadows.md
+                      color: 'white',
+                      boxShadow: theme.shadows.md,
+                      transition: 'all 0.2s ease'
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#7c3aed'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = '#8b5cf6'}
                     onClick={() => window.open(`https://www.youtube.com/watch?v=${selectedMention.video.youtube_id}`, '_blank')}
                   >
                     <IconComponent icon={FaIcons.FaYoutube} /> View on YouTube
@@ -3301,16 +3287,16 @@ const Mentions: React.FC = () => {
                 </DetailPopupSectionTitle>
                 
                 <DetailPopupResponse>
-                  <div style={{ 
+                  <div style={{
                     display: 'inline-block',
                     padding: '4px 10px',
-                    background: activeTab === 'posted' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 170, 21, 0.1)',
-                    color: activeTab === 'posted' ? COLORS.SUCCESS : COLORS.WARNING,
+                    background: activeTab === 'posted' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(167, 139, 250, 0.1)',
+                    color: activeTab === 'posted' ? '#8b5cf6' : '#a78bfa',
                     borderRadius: '4px',
                     fontSize: '12px',
                     fontWeight: 'bold',
                     marginBottom: '10px',
-                    border: `1px solid ${activeTab === 'posted' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 170, 21, 0.2)'}`
+                    border: `1px solid ${activeTab === 'posted' ? 'rgba(139, 92, 246, 0.3)' : 'rgba(167, 139, 250, 0.3)'}`
                   }}>
                     <IconComponent icon={activeTab === 'posted' ? FaIcons.FaCheck : FaIcons.FaClock} />
                     {' '}
@@ -3320,19 +3306,19 @@ const Mentions: React.FC = () => {
                   <p style={{ margin: '0 0 15px 0', lineHeight: '1.6' }}>{selectedMention.response.text}</p>
                   
                   {selectedMention.response.date && (
-                    <div style={{ 
-                      fontSize: '12px', 
+                    <div style={{
+                      fontSize: '12px',
                       display: 'inline-flex',
                       alignItems: 'center',
                       padding: '4px 10px',
                       borderRadius: '12px',
                       marginTop: '8px',
-                      background: activeTab === 'posted' ? 
-                        'rgba(76, 175, 80, 0.1)' : 
-                        'rgba(255, 170, 21, 0.1)',
+                      background: activeTab === 'posted' ?
+                        'rgba(139, 92, 246, 0.1)' :
+                        'rgba(167, 139, 250, 0.1)',
                       color: activeTab === 'posted' ?
-                        COLORS.SUCCESS :
-                        COLORS.WARNING
+                        '#8b5cf6' :
+                        '#a78bfa'
                     }}>
                       <IconComponent 
                         icon={activeTab === 'posted' ? 
@@ -3363,9 +3349,9 @@ const Mentions: React.FC = () => {
                 </DetailPopupResponse>
                 
                 <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
-                  <button 
-                    style={{ 
-                      background: `${COLORS.GRADIENT.PRIMARY}`,
+                  <button
+                    style={{
+                      background: '#8b5cf6',
                       border: 'none',
                       padding: '10px 20px',
                       borderRadius: '8px',
@@ -3375,8 +3361,11 @@ const Mentions: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      boxShadow: '0 4px 12px rgba(45, 62, 80, 0.3)'
+                      boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
+                      transition: 'all 0.2s ease'
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#7c3aed'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = '#8b5cf6'}
                     onClick={() => {
                       setSelectedMention(null);
                       setCurrentMention(selectedMention);

@@ -125,7 +125,7 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
           likes: parseInt(item.video_likes) || 0,
           channel: item.video_channel || 'Unknown channel'
         },
-        type: item.msg_type === 1 ? 'LED' : item.msg_type === 2 ? 'BRAND' : 'Outro',
+        type: item.msg_type === 1 ? 'MENTION' : item.msg_type === 2 ? 'BRAND' : 'Outro',
         score: parseFloat(item.comment_lead_score || '0'),
         comment: {
           author: item.comment_author || 'Anonymous',
