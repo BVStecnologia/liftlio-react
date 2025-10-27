@@ -475,44 +475,67 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       let prompt = '';
 
       if (contentType === 'keywords') {
-        prompt = `Generate exactly 3 search keywords that people interested in this product/service would use to find solutions to their problems.
+        prompt = `Generate 3 YouTube search keywords that capture what people search for when they have this problem.
 
-Project Information:
-- Project Name: ${projectForm.name}
-- Company Name: ${projectForm.company}
-- Target Audience: ${projectForm.audience}
+PROJECT INFO:
+Name: ${projectForm.name}
+Company: ${projectForm.company}
+Audience: ${projectForm.audience}
 
-CRITICAL RULES:
-1. Focus on the PRODUCT/SERVICE being offered, NOT on "YouTube" or any platform
-2. Think about what PROBLEMS this solves for the target audience
-3. Use NATURAL language (2-4 words per keyword)
-4. Mix different types:
-   - 1 BROAD keyword: main category/solution
-   - 1 SPECIFIC keyword: what it does exactly
-   - 1 INTENT keyword: problem being solved or action being taken
+MINDSET: Think as the CUSTOMER with the problem, not the vendor selling the solution.
 
-5. Keywords should help FIND PEOPLE interested in this type of solution
-6. Avoid platform names (YouTube, social media, etc) unless the product IS about that platform
-7. Focus on the VALUE PROPOSITION and TARGET AUDIENCE needs
+KEYWORD FORMULA (3-5 words each):
+[action verb] + [desired result] + [method/context]
 
-LANGUAGE:
 ${language === 'pt'
-  ? '- Generate keywords in PORTUGUESE (Brazilian Portuguese)\n- Natural terms people would search'
-  : '- Generate keywords in ENGLISH\n- Natural terms people would search'}
+  ? `IDIOMA: PORTUGUÊS BRASILEIRO
 
-EXAMPLES:
+PALAVRAS PROIBIDAS (nunca use):
+❌ ferramenta, software, plataforma, automação, sistema, solução, tecnologia, app
 
-Project: "AI chatbot for customer support"
-Audience: "E-commerce companies needing 24/7 support"
-✅ GOOD: "customer support automation, AI chatbot for ecommerce, automate customer service"
-❌ BAD: "youtube chatbot tutorial, how to build chatbot youtube, chatbot youtube"
+PALAVRAS OBRIGATÓRIAS (sempre use):
+✅ Verbos: aumentar, conseguir, crescer, melhorar, vender, ganhar
+✅ Resultados: vendas, clientes, tráfego, leads, usuários
+✅ Métodos: rápido, grátis, orgânico, fácil, sem gastar, sem anúncios
 
-Project: "Marketing automation for B2B companies"
-Audience: "Marketing managers in tech companies"
-✅ GOOD: "B2B marketing automation, lead generation software, automate email campaigns"
-❌ BAD: "youtube marketing automation, marketing youtube tutorial, youtube B2B"
+FORMATO: verbo + resultado + método
+Exemplo: "aumentar vendas shopify orgânico"
 
-Respond ONLY with the 3 keywords separated by commas, without any introduction or explanation.`;
+EXEMPLOS CORRETOS:
+✅ "aumentar vendas loja online"
+✅ "conseguir clientes sem gastar"
+✅ "crescer negócio rápido orgânico"
+
+EXEMPLOS ERRADOS:
+❌ "ferramenta vendas automação"
+❌ "software marketing digital"
+❌ "plataforma ecommerce automática"`
+  : `LANGUAGE: ENGLISH
+
+FORBIDDEN WORDS (never use):
+❌ tool, software, platform, automation, system, solution, technology, app
+
+REQUIRED WORDS (always use):
+✅ Verbs: increase, get, grow, improve, sell, gain, boost
+✅ Results: sales, customers, traffic, leads, users
+✅ Methods: fast, free, organic, easy, without ads, without spending
+
+FORMAT: verb + result + method
+Example: "increase shopify sales organic"
+
+CORRECT EXAMPLES:
+✅ "increase online sales fast"
+✅ "get customers without ads"
+✅ "grow business organic free"
+
+WRONG EXAMPLES:
+❌ "sales automation tool"
+❌ "digital marketing software"
+❌ "ecommerce platform automated"`}
+
+CRITICAL: Each keyword must answer "What would I search if I had this problem?" NOT "What is this product called?"
+
+Return ONLY 3 keywords separated by commas. No explanations.`;
       } else {
         // Construir a URL correta
         let url = projectForm.link;
