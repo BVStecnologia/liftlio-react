@@ -296,5 +296,61 @@ WHERE id = {project_id};
 
 ---
 
-**Última Atualização**: 2025-01-30
-**Versão**: 1.0
+## ⚙️ CONFIGURAÇÕES DINÂMICAS POR PROJETO
+
+### Campo: `percentual_mencoes_produto`
+**Tipo**: `INTEGER` (0-100)
+**Default**: `50` (50% menções produto, 50% apenas engajamento - balanceado)
+**Localização**: Tabela `Projeto`
+
+**Descrição**:
+Controla quantos % das mensagens de engajamento devem mencionar o produto/serviço.
+**Quanto MAIOR o percentual → MAIS mensagens tipo "produto"**
+**Quanto MENOR o percentual → MAIS mensagens tipo "engajamento"**
+
+**Criação do campo** (via migration):
+```sql
+-- Criar campo de percentual (processing_locked_until permanece para batch lock)
+ALTER TABLE "Projeto"
+ADD COLUMN IF NOT EXISTS percentual_mencoes_produto INTEGER DEFAULT 50
+CHECK (percentual_mencoes_produto >= 0 AND percentual_mencoes_produto <= 100);
+
+COMMENT ON COLUMN "Projeto".percentual_mencoes_produto IS
+'Percentual (0-100) de mensagens que devem mencionar o produto.
+Quanto MAIOR → mais produto | Quanto MENOR → mais engajamento
+Ex: 50 = 50% produto, 50% engajamento (default balanceado)';
+```
+
+**Nota**: O campo `processing_locked_until` é **separado** e usado pelo batch processing para evitar race conditions.
+
+**Impacto no STATUS 5 (Engagement Messages)**:
+- Função `process_engagement_comments_with_claude()` usa este valor
+- Calcula: `CEIL(total_comentarios_processados * percentual / 100)`
+- **Controle total**: Sem limites automáticos, percentual define quantidade exata
+
+**Exemplos Práticos**:
+
+| Percentual | Comentários | Produto | Engajamento | Uso Recomendado |
+|------------|-------------|---------|-------------|-----------------|
+| 10% | 10 | 1 | 9 | Vídeos grandes (500+ comentários) - sutil |
+| 30% | 10 | 3 | 7 | Vídeos médios (100-500 comentários) - moderado |
+| 50% | 10 | 5 | 5 | **DEFAULT** - Balanceado para maioria dos casos |
+| 70% | 10 | 7 | 3 | Vídeos pequenos (10-100 comentários) - agressivo |
+| 100% | 10 | 10 | 0 | Apenas quando TODOS comentários são leads qualificados |
+
+**⚠️ AVISOS IMPORTANTES**:
+1. **Default 50% é balanceado** - metade produto, metade engajamento
+2. **Percentuais >70% podem parecer spam** - use com cuidado
+3. **Recomendado**: 30-70% para engajamento autêntico
+4. **Sem limites automáticos**: Controle total via percentual
+5. **Ajuste baseado no vídeo**: Vídeos maiores = % menor | Vídeos menores = % maior
+
+**Logs gerados**:
+```
+✅ Vídeo: 50 comentários totais | Processando: 10 comentários | Percentual configurado: 50% | Menções produto: 5
+```
+
+---
+
+**Última Atualização**: 2025-10-27
+**Versão**: 1.2 - Configuração de percentual de menções dinâmico (sem proteção anti-spam)
