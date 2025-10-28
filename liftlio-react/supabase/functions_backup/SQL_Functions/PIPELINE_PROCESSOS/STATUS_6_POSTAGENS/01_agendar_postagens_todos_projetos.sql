@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS public.agendar_postagens_todos_projetos();
+
 CREATE OR REPLACE FUNCTION public.agendar_postagens_todos_projetos()
  RETURNS integer
  LANGUAGE plpgsql
@@ -10,18 +12,18 @@ BEGIN
     -- Log inicial
     RAISE NOTICE 'Iniciando agendamento para todos os projetos ativos';
 
-    -- Buscar projetos ativos sem agendamentos pendentes E com mensagens n�o respondidas
+    -- Buscar projetos ativos com menos de 2 agendamentos pendentes E com mensagens n�o respondidas
     FOR projeto_record IN (
         SELECT p.id
         FROM "Projeto" p
         WHERE p."Youtube Active" = true
         AND p.integracao_valida = true  -- Validar integra��o ativa
-        AND NOT EXISTS (
-            SELECT 1
+        AND (
+            SELECT COUNT(*)
             FROM "Settings messages posts" smp
             WHERE smp."Projeto" = p.id
             AND smp.status = 'pending'
-        )
+        ) < 2  -- ← Mantém no máximo 2 pending (buffer de postagens)
         AND EXISTS (
             SELECT 1
             FROM "Mensagens" m

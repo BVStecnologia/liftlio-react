@@ -31,6 +31,7 @@
 --                          BUG CORRIGIDO #2: Nível 3 filtrava vídeo diferente, impedindo engajamento
 --                          Removido filtro de vídeo no Nível 3 (permite repetição)
 --                          LÓGICA CORRETA: N1/N2=tipo+vídeo_dif, N3=tipo+vídeo_rep, N4=qualquer
+-- Atualizado: 2025-10-28 - FIX: Agendar para AMANHÃ se já passou das 22h (evita posts no passado)
 -- =============================================
 
 DROP FUNCTION IF EXISTS agendar_postagens_diarias(BIGINT);
@@ -57,6 +58,7 @@ DECLARE
     comentario_selecionado bigint;
     insert_id bigint;
     data_local date;
+    data_alvo date;  -- Data para agendar (hoje ou amanhã, depende da hora)
 
     -- NOVO: Variáveis para proporção dinâmica
     v_produto_disponivel integer;
@@ -138,19 +140,28 @@ BEGIN
     data_local := (CURRENT_DATE AT TIME ZONE 'UTC' AT TIME ZONE fuso_horario_projeto)::date;
     RAISE NOTICE 'Data local no fuso %: %', fuso_horario_projeto, data_local;
 
-    -- Verificar se já existem postagens agendadas para hoje (NA DATA LOCAL DO USUÁRIO)
+    -- Determinar data alvo: se passou das 22h, agenda para AMANHÃ
+    IF EXTRACT(HOUR FROM (NOW() AT TIME ZONE 'UTC' AT TIME ZONE fuso_horario_projeto)) >= 22 THEN
+        data_alvo := data_local + INTERVAL '1 day';
+        RAISE NOTICE '⏰ Hora >= 22h, data alvo: AMANHÃ (%)', data_alvo;
+    ELSE
+        data_alvo := data_local;
+        RAISE NOTICE '⏰ Hora < 22h, data alvo: HOJE (%)', data_alvo;
+    END IF;
+
+    -- Verificar se já existem postagens agendadas para DATA ALVO
     SELECT EXISTS (
         SELECT 1
         FROM "Settings messages posts"
         WHERE "Projeto" = projeto_id_param
-        AND DATE(proxima_postagem AT TIME ZONE 'UTC' AT TIME ZONE fuso_horario_projeto) = data_local
+        AND DATE(proxima_postagem AT TIME ZONE 'UTC' AT TIME ZONE fuso_horario_projeto) = data_alvo
     ) INTO ja_agendado_hoje;
 
-    RAISE NOTICE 'Já agendado hoje (data local): %', ja_agendado_hoje;
+    RAISE NOTICE 'Já agendado para %: %', data_alvo, ja_agendado_hoje;
 
-    -- Se já tiver agendado hoje, encerrar
+    -- Se já tiver agendado para data alvo, encerrar
     IF ja_agendado_hoje THEN
-        RAISE NOTICE 'Já existem agendamentos para hoje (fuso local), retornando 0';
+        RAISE NOTICE 'Já existem agendamentos para % (fuso local), retornando 0', data_alvo;
         RETURN 0;
     END IF;
 
@@ -457,8 +468,8 @@ BEGIN
 
         RAISE NOTICE 'Minutos calculados: %', minutos_base;
 
-        -- Criar timestamp no fuso horário local e converter para UTC para armazenamento
-        proxima_data := data_local +
+        -- Usar data_alvo (já determinada no início: hoje ou amanhã)
+        proxima_data := data_alvo +
                        (hora_base * INTERVAL '1 hour') +
                        (minutos_base * INTERVAL '1 minute');
 
