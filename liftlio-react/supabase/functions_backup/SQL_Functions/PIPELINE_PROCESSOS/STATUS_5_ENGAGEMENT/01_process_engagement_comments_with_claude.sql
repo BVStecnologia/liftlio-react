@@ -11,6 +11,18 @@
 --                          + Regra de relevância: responder pergunta específica
 --                          + Variáveis de validação movidas para topo
 --                          + Logging melhorado de duplicatas e problemas
+-- Atualizado: 2025-10-27 - PERCENTUAL DINÂMICO: Campo percentual_mencoes_produto
+--                          + Lê percentual da tabela Projeto (default 50% = metade/metade)
+--                          + Calcula: CEIL(comentarios_processados * percentual / 100)
+--                          + REMOVIDA proteção anti-spam (20% max) - controle total via campo
+--                          + Maior % = mais produto | Menor % = mais engajamento
+--                          + Logging detalhado do percentual aplicado
+-- Atualizado: 2025-10-27 - INSTRUÇÃO ROBUSTA: Prompt obrigatório de proporção exata
+--                          + Mudou "NO MÁXIMO" → "EXATAMENTE X produto + Y engajamento"
+--                          + Especifica % configurado no projeto (transparência)
+--                          + Estratégia clara: leads primeiro, depois completa proporção
+--                          + Reforço no system message: proporção é OBRIGATÓRIA
+--                          + Claude agora entende que DEVE respeitar configuração exata
 -- Descrição: Simplifica e universaliza o prompt mantendo estrutura eficaz
 --           Remove exemplos específicos de nicho, torna aplicável a qualquer produto
 --           Baseado no prompt antigo que funcionava melhor (mais direto)
@@ -49,6 +61,9 @@ DECLARE
     v_duplicate_count INTEGER := 0;
     v_total_responses INTEGER := 0;
     v_unique_comment_ids INTEGER := 0;
+    -- Variáveis para percentual dinâmico
+    v_percentual_mencoes INTEGER;
+    v_total_comentarios_processados INTEGER;
 BEGIN
     -- Obter a transcrição do vídeo
     SELECT vt.trancription INTO v_transcript
@@ -71,7 +86,7 @@ BEGIN
         RAISE NOTICE 'Transcrição filtrada: timestamps < 00:15 removidos';
     END IF;
 
-    -- Obter dados do projeto
+    -- Obter dados do projeto (incluindo percentual de menções)
     WITH project_data AS (
         SELECT
             "País",
@@ -81,7 +96,8 @@ BEGIN
             ) as product_name,
             "description service",
             "Keywords",
-            prompt_user
+            prompt_user,
+            COALESCE(percentual_mencoes_produto, 50) as percentual_mencoes  -- Default 50% (metade/metade)
         FROM "Projeto"
         WHERE id = p_project_id
     )
@@ -90,13 +106,15 @@ BEGIN
         product_name,
         "description service",
         "Keywords",
-        prompt_user
+        prompt_user,
+        percentual_mencoes
     INTO
         v_project_country,
         v_product_name,
         v_project_description,
         v_project_keywords,
-        v_user_special_instructions
+        v_user_special_instructions,
+        v_percentual_mencoes
     FROM project_data;
 
     -- Obter comentários e contar total do vídeo
@@ -157,17 +175,22 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    -- Calcular limite de menções baseado no tamanho do vídeo
-    v_max_product_mentions := CASE
-        WHEN v_video_comment_count < 30 THEN 1
-        WHEN v_video_comment_count < 100 THEN 2
-        WHEN v_video_comment_count < 500 THEN 5
-        WHEN v_video_comment_count < 1000 THEN 8
-        ELSE 10
-    END;
+    -- =============================================
+    -- CÁLCULO DINÂMICO DE MENÇÕES (baseado em percentual configurado)
+    -- =============================================
 
-    RAISE NOTICE 'Vídeo tem % comentários. Limite de menções: %',
-                 v_video_comment_count, v_max_product_mentions;
+    -- Contar quantos comentários vamos processar
+    SELECT jsonb_array_length(v_comments) INTO v_total_comentarios_processados;
+
+    -- Calcular menções baseado APENAS no percentual do projeto (sem limite anti-spam)
+    v_max_product_mentions := GREATEST(
+        1,  -- Mínimo sempre 1 menção
+        CEIL(v_total_comentarios_processados * v_percentual_mencoes / 100.0)
+    );
+
+    -- Logging detalhado
+    RAISE NOTICE '✅ Vídeo: % comentários totais | Processando: % comentários | Percentual configurado: %%% | Menções produto: %',
+                 v_video_comment_count, v_total_comentarios_processados, v_percentual_mencoes, v_max_product_mentions;
 
     -- Obter templates de mensagens
     SELECT string_agg(mensagem, E'\\n')
@@ -198,11 +221,33 @@ BEGIN
     v_prompt := format(
         'Você é um usuário engajado do YouTube respondendo a comentários de videos aleatórios que não são seus. Sua tarefa é criar respostas curtas e naturais que demonstrem conexão com o comentário original e com o conteúdo do vídeo.
 
-REGRA CRÍTICA DE MENÇÕES AO PRODUTO:
+REGRA OBRIGATÓRIA DE PROPORÇÃO - LEIA COM ATENÇÃO:
+Você receberá %s comentários para analisar.
 Este vídeo tem %s comentários totais.
-Você DEVE mencionar o produto %s em NO MÁXIMO %s respostas.
-Priorize mencionar o produto para comentários marcados como "is_lead": true.
-Para as demais respostas, foque apenas em engajamento sem mencionar o produto.
+Configuração deste projeto: %s%%%% produto + %s%%%% engajamento
+
+OBRIGATÓRIO - Você DEVE responder TODOS os comentários com EXATAMENTE esta distribuição:
+→ %s respostas tipo "produto" (menciona produto %s naturalmente)
+→ %s respostas tipo "engajamento" (apenas engajamento, SEM mencionar produto)
+
+ESTRATÉGIA OBRIGATÓRIA DE DISTRIBUIÇÃO:
+1. SEMPRE use tipo "produto" para comentários com "is_lead": true PRIMEIRO
+   (são comentários com maior potencial de conversão - já foram analisados pelo sistema PICS)
+
+2. Se houver MENOS leads que slots de produto disponíveis:
+   - Use tipo "produto" em TODOS os leads
+   - Complete os slots restantes de produto com não-leads que demonstrem maior interesse/problema
+
+3. Se houver MAIS leads que slots de produto disponíveis:
+   - Priorize leads com contexto mais forte de problema/necessidade específica
+   - Use tipo "engajamento" nos leads menos qualificados
+
+4. Use tipo "engajamento" nos comentários restantes:
+   - Foque em criar conexão genuína SEM mencionar o produto
+   - Demonstre que assistiu ao vídeo usando timestamps e contexto
+
+NÃO É "NO MÁXIMO". É EXATAMENTE %s produto + %s engajamento.
+VOCÊ DEVE RESPONDER TODOS OS %s COMENTÁRIOS RECEBIDOS.
 
 Contexto do Produto (use naturalmente quando relevante):
 Nome: %s
@@ -311,19 +356,26 @@ Envie exatamente nesta estrutura:
 ]
 
 Respond only with the requested JSON, with no additional text.',
-        -- ARGUMENTOS NA ORDEM CORRETA (28 no total):
-        v_video_comment_count,     -- 1: Este vídeo tem %s comentários
-        v_product_name,             -- 2: mencionar o produto %s
-        v_max_product_mentions,     -- 3: em NO MÁXIMO %s respostas
-        v_product_name,             -- 4: Nome: %s
-        v_project_description,      -- 5: Descrição: %s
-        v_project_keywords,         -- 6: Nicho/Keywords: %s
-        replace(v_comments->0->>'video_title', '"', ''''),       -- 7: Título: %s
-        replace(v_comments->0->>'video_description', '"', ''''), -- 8: Descrição: %s
-        COALESCE(v_transcript, 'Transcrição não disponível'),    -- 9: Transcrição: %s
-        COALESCE(replace(v_template_messages, '"', ''''), 'Sem exemplos disponíveis'),           -- 10: exemplos: %s
-        COALESCE(replace(v_user_liked_examples, '"', ''''), 'Sem exemplos adicionais'),          -- 11: respostas que gostou: %s
-        COALESCE(replace(v_user_special_instructions, '"', ''''), 'Sem instruções especiais'),   -- 12: instruções especiais: %s
+        -- ARGUMENTOS NA ORDEM CORRETA (36 no total agora):
+        v_total_comentarios_processados,  -- 1: Você receberá %s comentários
+        v_video_comment_count,            -- 2: Este vídeo tem %s comentários totais
+        v_percentual_mencoes,             -- 3: Configuração: %s%% produto
+        (100 - v_percentual_mencoes),     -- 4: + %s%% engajamento
+        v_max_product_mentions,           -- 5: %s respostas tipo "produto"
+        v_product_name,                   -- 6: menciona produto %s
+        (v_total_comentarios_processados - v_max_product_mentions),  -- 7: %s respostas tipo "engajamento"
+        v_max_product_mentions,           -- 8: EXATAMENTE %s produto
+        (v_total_comentarios_processados - v_max_product_mentions),  -- 9: + %s engajamento
+        v_total_comentarios_processados,  -- 10: TODOS OS %s COMENTÁRIOS
+        v_product_name,                   -- 11: Nome: %s (Contexto do Produto)
+        v_project_description,            -- 12: Descrição: %s
+        v_project_keywords,               -- 13: Nicho/Keywords: %s
+        replace(v_comments->0->>'video_title', '"', ''''),       -- 14: Título: %s
+        replace(v_comments->0->>'video_description', '"', ''''), -- 15: Descrição: %s
+        COALESCE(v_transcript, 'Transcrição não disponível'),    -- 16: Transcrição: %s
+        COALESCE(replace(v_template_messages, '"', ''''), 'Sem exemplos disponíveis'),           -- 17: exemplos: %s
+        COALESCE(replace(v_user_liked_examples, '"', ''''), 'Sem exemplos adicionais'),          -- 18: respostas que gostou: %s
+        COALESCE(replace(v_user_special_instructions, '"', ''''), 'Sem instruções especiais'),   -- 19: instruções especiais: %s
         (SELECT string_agg(
             format(
                 'Comment %s:
@@ -336,22 +388,22 @@ Is Lead: %s',
                 c->>'is_lead'
             ),
             E'\\n\\n'
-        ) FROM jsonb_array_elements(v_comments) c),              -- 13: Comentários: %s
-        COALESCE(v_project_country, 'Português'),                -- 14: língua: %s
-        v_product_name,             -- 15: TYPE 1: Tenho usado %s
-        v_product_name,             -- 16: TYPE 2: Comecei a usar %s
-        v_product_name,             -- 17: TYPE 3: %s tem me ajudado
-        v_product_name,             -- 18: MENCIONE %s naturalmente
-        v_project_keywords,         -- 19: conexão genuína com keywords: %s
-        v_product_name,             -- 20: Tenho usado %s
-        v_product_name,             -- 21: Experimentei %s
-        v_product_name,             -- 22: resultados com %s
-        v_product_name,             -- 23: %s tem me ajudado
-        v_max_product_mentions,     -- 24: limite de %s menções
-        v_max_product_mentions,     -- 25: Respeite limite de %s menções
-        v_max_product_mentions,     -- 26: ✅ Respeite o limite de %s menções (LEMBRE-SE)
-        v_max_product_mentions,     -- 27: (repetido para manter compatibilidade)
-        v_max_product_mentions      -- 28: (repetido para manter compatibilidade)
+        ) FROM jsonb_array_elements(v_comments) c),              -- 20: Comentários: %s
+        COALESCE(v_project_country, 'Português'),                -- 21: língua: %s
+        v_product_name,             -- 22: TYPE 1: Tenho usado %s
+        v_product_name,             -- 23: TYPE 2: Comecei a usar %s
+        v_product_name,             -- 24: TYPE 3: %s tem me ajudado
+        v_product_name,             -- 25: MENCIONE %s naturalmente
+        v_project_keywords,         -- 26: conexão genuína com keywords: %s
+        v_product_name,             -- 27: Tenho usado %s
+        v_product_name,             -- 28: Experimentei %s
+        v_product_name,             -- 29: resultados com %s
+        v_product_name,             -- 30: %s tem me ajudado
+        v_max_product_mentions,     -- 31: limite de %s menções
+        v_max_product_mentions,     -- 32: Respeite limite de %s menções
+        v_max_product_mentions,     -- 33: ✅ Respeite o limite de %s menções (LEMBRE-SE)
+        v_max_product_mentions,     -- 34: (repetido para manter compatibilidade)
+        v_max_product_mentions      -- 35: (repetido para manter compatibilidade)
     );
 
     -- Chamada Claude com SYSTEM MESSAGE SIMPLIFICADO
@@ -372,14 +424,21 @@ CRITICAL RULES:
 
 Language: %s
 
+CRITICAL PROPORTION RULE:
+- You MUST respond to ALL comments received
+- EXACTLY %s responses tipo "produto" (mentioning %s)
+- EXACTLY %s responses tipo "engajamento" (NO product mention)
+- This is NOT "maximum". This is MANDATORY EXACT distribution.
+
 Remember:
 - Use timestamps naturally to show you watched the video
 - Keep responses short (max 2 sentences)
 - Never use @mentions
 - GO DIRECTLY TO THE POINT without introductions or greetings
 - Include justification in FIRST PERSON explaining your reasoning
-- You can ONLY mention product %s in MAXIMUM %s responses
-- Prioritize product mentions for comments marked as "is_lead": true
+- ALWAYS use tipo "produto" for comments with "is_lead": true FIRST
+- Complete remaining "produto" slots with non-leads showing interest/problem
+- Use tipo "engajamento" for remaining comments
 - Always include "tipo_resposta" field: "produto" if mentioning product, "engajamento" otherwise
 - CRITICAL: NEVER use dashes (-) to connect sentences. Use periods (.) to separate sentences
 
@@ -394,9 +453,11 @@ Always respond exactly in this structure:
 ]
 
 Respond only with the requested JSON array, with no additional text.',
-               COALESCE(v_project_country, 'Português'),
-               v_product_name,
-               v_max_product_mentions),
+               COALESCE(v_project_country, 'Português'),  -- Language
+               v_max_product_mentions,                     -- EXACTLY %s responses tipo "produto"
+               v_product_name,                             -- mentioning %s
+               (v_total_comentarios_processados - v_max_product_mentions)  -- EXACTLY %s tipo "engajamento"
+        ),
         4000,
         0.7
     ) INTO v_claude_response;
@@ -568,4 +629,19 @@ $function$;
 --    3. Refactor validações: variáveis movidas para topo (DECLARE único)
 --    4. Logging melhorado: avisos de duplicatas, respostas irrelevantes
 --    Resultado: Zero duplicatas, respostas sempre relevantes ao comentário
+-- ✅ PERCENTUAL DINÂMICO (2025-10-27): Controle total de menções ao produto
+--    1. Campo percentual_mencoes_produto (0-100, default 50) na tabela Projeto
+--    2. Calcula: CEIL(comentarios_processados * percentual / 100)
+--    3. REMOVIDA proteção anti-spam (20% max) - controle 100% via campo
+--    4. Maior % = mais produto | Menor % = mais engajamento
+--    5. Logging: mostra percentual configurado + menções calculadas
+--    Resultado: Flexibilidade total, sem limites automáticos, default balanceado (50/50)
+-- ✅ INSTRUÇÃO ROBUSTA (2025-10-27): Prompt obrigatório e transparente
+--    1. REMOVIDO: "NO MÁXIMO X respostas" (era vago, Claude podia usar menos)
+--    2. ADICIONADO: "EXATAMENTE X produto + Y engajamento" (obrigatório)
+--    3. Especifica % do projeto no prompt (ex: "50% produto + 50% engajamento")
+--    4. Estratégia clara de distribuição (leads primeiro → completa proporção)
+--    5. Reforço no system message: proporção é MANDATÓRIA, não opcional
+--    6. Exemplo prático no prompt mostrando como distribuir
+--    Resultado: Claude SEMPRE respeita proporção configurada, zero desperdício
 -- =============================================
