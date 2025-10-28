@@ -49,3 +49,4 @@ yarn-error.log*
 # Supabase local
 supabase/.env.local
 supabase/.temp/
+deploy.log
