@@ -263,6 +263,62 @@ Procurar por:
 
 ---
 
-**Última Atualização:** 28/10/2025 14:30
+---
+
+## ✅ PROBLEMA RESOLVIDO (28/10/2025 - 16:45)
+
+### Correções Aplicadas na Edge Function
+
+**Versão:** 12 (slug: `Retornar-Ids-do-youtube`)
+**Deploy:** 28/10/2025 16:40
+
+#### 1. Timeout Aumentado
+- **Antes:** 90s
+- **Depois:** 240s (4 minutos)
+- **Motivo:** API Python pode levar até 94s + margem de segurança
+
+#### 2. Error Handling Robusto
+```typescript
+// ANTES:
+error.message  // ❌ Causava "Cannot read properties of undefined"
+
+// DEPOIS:
+error?.message || error?.toString() || "Unknown error"  // ✅ Robusto
+```
+
+### Testes Realizados
+
+#### Teste 1: Servidor Python Direto ✅
+```bash
+curl http://173.249.22.2:8000/search -d '{"scannerId": 584}'
+```
+- **Resultado:** SUCESSO
+- **Tempo:** 15 segundos
+- **IDs retornados:** `sGnHyLfw68A,IW-KDOrrggY`
+
+#### Teste 2: Edge Function no Supabase ✅
+```bash
+curl https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/Retornar-Ids-do-youtube \
+  -H "Authorization: Bearer $ANON_KEY" \
+  -d '{"scannerId": 584}'
+```
+- **Resultado:** SUCESSO
+- **Tempo:** 94.6 segundos (1:34)
+- **IDs retornados:** `sGnHyLfw68A,paqM6_tzqGQ`
+- **Campo text:** `"sGnHyLfw68A,paqM6_tzqGQ"` ✅
+
+### Conclusão
+
+✅ **Servidor Python:** Funcionando perfeitamente (15s)
+✅ **Edge Function:** Funcionando perfeitamente (94s)
+✅ **Timeout 240s:** SUFICIENTE (margem de 145s)
+✅ **Error Handling:** Robusto e sem erros
+✅ **Retorna 2 IDs:** Confirmado
+
+**Sistema está 100% funcional e pronto para o pipeline continuar!**
+
+---
+
+**Última Atualização:** 28/10/2025 16:45
 **Responsável:** Claude Code + Valdair
-**Status:** ⚠️ PAUSADO - Aguardando correção de timeout
+**Status:** ✅ RESOLVIDO - Edge Function corrigida e testada
