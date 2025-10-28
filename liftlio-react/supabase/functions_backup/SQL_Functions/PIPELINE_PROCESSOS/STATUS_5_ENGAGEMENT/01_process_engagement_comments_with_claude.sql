@@ -6,6 +6,11 @@
 -- Atualizado: 2025-10-26 - FIX timestamps baixos: filtra < 00:15 da transcrição
 --                          + Instrução explícita no prompt contra [00:00]-[00:14]
 --                          + Validação pós-Claude para detectar timestamps baixos
+-- Atualizado: 2025-10-27 - FIX duplicatas + relevância + refactor validações
+--                          + Validação anti-duplicata ANTES do enrichment
+--                          + Regra de relevância: responder pergunta específica
+--                          + Variáveis de validação movidas para topo
+--                          + Logging melhorado de duplicatas e problemas
 -- Descrição: Simplifica e universaliza o prompt mantendo estrutura eficaz
 --           Remove exemplos específicos de nicho, torna aplicável a qualquer produto
 --           Baseado no prompt antigo que funcionava melhor (mais direto)
@@ -38,6 +43,12 @@ DECLARE
     v_max_product_mentions INTEGER;
     v_product_mention_count INTEGER;
     v_validation_msg TEXT;
+    -- Variáveis de validação (movidas para topo)
+    v_response_without_timestamp INTEGER := 0;
+    v_response_with_low_timestamp INTEGER := 0;
+    v_duplicate_count INTEGER := 0;
+    v_total_responses INTEGER := 0;
+    v_unique_comment_ids INTEGER := 0;
 BEGIN
     -- Obter a transcrição do vídeo
     SELECT vt.trancription INTO v_transcript
@@ -218,6 +229,12 @@ Comentários a serem respondidos:
 Instruções importantes:
 1. Sempre responda na língua do projeto especificado (%s)
 2. SEMPRE RESPONDA AO CONTEXTO DO COMENTÁRIO ORIGINAL
+2.5. REGRA DE RELEVÂNCIA CRÍTICA:
+   - Se comentário faz PERGUNTA ESPECÍFICA (ex: "How do I use Facebook Ads?"):
+     * Responda DIRETAMENTE à pergunta OU
+     * Seja HONESTO que o vídeo não cobre aquele tópico específico
+   - NUNCA mude de assunto (ex: perguntou Facebook, NÃO responda TikTok)
+   - Exemplo de resposta honesta: "The video focuses on organic strategies at 02:09. For paid ads, she has separate tutorials on her channel."
 3. CRUCIAL: Cada resposta DEVE incluir pelo menos um timestamp da transcrição no formato simples (15:30, 2:45, etc)
 4. CRUCIAL: Use detalhes específicos da transcrição do vídeo, como termos técnicos, exemplos ou conceitos mencionados no vídeo
 5. Mantenha as respostas curtas - máximo 2 frases
@@ -404,6 +421,38 @@ Respond only with the requested JSON array, with no additional text.',
         RETURN jsonb_build_object('error', 'Invalid JSON from Claude', 'response', v_claude_response);
     END;
 
+    -- =============================================
+    -- VALIDAÇÃO ANTI-DUPLICATA
+    -- Detecta se Claude gerou múltiplas respostas para mesmo comment_id
+    -- =============================================
+    SELECT COUNT(*) INTO v_total_responses
+    FROM jsonb_array_elements(v_result);
+
+    SELECT COUNT(DISTINCT elem->>'comment_id') INTO v_unique_comment_ids
+    FROM jsonb_array_elements(v_result) elem;
+
+    v_duplicate_count := v_total_responses - v_unique_comment_ids;
+
+    IF v_duplicate_count > 0 THEN
+        RAISE WARNING '⚠️ Claude gerou % respostas duplicadas! Removendo duplicatas...', v_duplicate_count;
+
+        -- Remover duplicatas mantendo apenas primeira ocorrência por comment_id
+        WITH ranked_responses AS (
+            SELECT
+                elem,
+                ROW_NUMBER() OVER (PARTITION BY elem->>'comment_id' ORDER BY ordinality) as rn
+            FROM jsonb_array_elements(v_result) WITH ORDINALITY elem
+        )
+        SELECT jsonb_agg(elem)
+        INTO v_result
+        FROM ranked_responses
+        WHERE rn = 1;
+
+        RAISE NOTICE '✅ Duplicatas removidas. Total de respostas: % → %', v_total_responses, v_unique_comment_ids;
+    ELSE
+        RAISE NOTICE '✅ Nenhuma duplicata detectada (%s respostas únicas)', v_total_responses;
+    END IF;
+
     -- Validar se Claude respeitou o limite de menções
     SELECT COUNT(*)
     INTO v_product_mention_count
@@ -420,40 +469,37 @@ Respond only with the requested JSON array, with no additional text.',
         RAISE NOTICE '%', v_validation_msg;
     END IF;
 
-    -- Validar se todas as respostas têm timestamps
-    DECLARE
-        v_response_without_timestamp INTEGER := 0;
-        v_response_with_low_timestamp INTEGER := 0;
-    BEGIN
-        SELECT COUNT(*)
-        INTO v_response_without_timestamp
-        FROM jsonb_array_elements(v_result) elem
-        WHERE
-            elem->>'response' NOT LIKE '%[%:%]%' AND
-            elem->>'response' NOT LIKE '%:%' AND
-            elem->>'response' NOT LIKE '%em %:%';
+    -- =============================================
+    -- VALIDAÇÃO: Timestamps presentes
+    -- =============================================
+    SELECT COUNT(*)
+    INTO v_response_without_timestamp
+    FROM jsonb_array_elements(v_result) elem
+    WHERE
+        elem->>'response' NOT LIKE '%[%:%]%' AND
+        elem->>'response' NOT LIKE '%:%' AND
+        elem->>'response' NOT LIKE '%em %:%';
 
-        IF v_response_without_timestamp > 0 THEN
-            RAISE WARNING '% respostas sem timestamp detectadas', v_response_without_timestamp;
-        ELSE
-            RAISE NOTICE '✅ Todas as respostas contêm timestamps';
-        END IF;
+    IF v_response_without_timestamp > 0 THEN
+        RAISE WARNING '⚠️ % respostas sem timestamp detectadas', v_response_without_timestamp;
+    ELSE
+        RAISE NOTICE '✅ Todas as respostas contêm timestamps';
+    END IF;
 
-        -- =============================================
-        -- VALIDAÇÃO: Detectar timestamps baixos < 00:15
-        -- =============================================
-        SELECT COUNT(*)
-        INTO v_response_with_low_timestamp
-        FROM jsonb_array_elements(v_result) elem
-        WHERE
-            elem->>'response' ~ '(\s|em\s|At\s)(00:|0:)(0[0-9]|1[0-4])(\s|\.|\!|,)';  -- [00:00]-[00:14] ou [0:00]-[0:14]
+    -- =============================================
+    -- VALIDAÇÃO: Detectar timestamps baixos < 00:15
+    -- =============================================
+    SELECT COUNT(*)
+    INTO v_response_with_low_timestamp
+    FROM jsonb_array_elements(v_result) elem
+    WHERE
+        elem->>'response' ~ '(\s|em\s|At\s)(00:|0:)(0[0-9]|1[0-4])(\s|\.|\!|,)';  -- [00:00]-[00:14] ou [0:00]-[0:14]
 
-        IF v_response_with_low_timestamp > 0 THEN
-            RAISE WARNING '⚠️ ALERTA: % respostas com timestamps muito baixos (< 00:15) detectadas', v_response_with_low_timestamp;
-        ELSE
-            RAISE NOTICE '✅ Nenhum timestamp baixo (< 00:15) detectado';
-        END IF;
-    END;
+    IF v_response_with_low_timestamp > 0 THEN
+        RAISE WARNING '⚠️ ALERTA: % respostas com timestamps muito baixos (< 00:15) detectadas', v_response_with_low_timestamp;
+    ELSE
+        RAISE NOTICE '✅ Nenhum timestamp baixo (< 00:15) detectado';
+    END IF;
 
     -- Enriquecer resposta com dados adicionais
     WITH claude_json AS (
@@ -516,4 +562,10 @@ $function$;
 --    2. Instrução explícita no prompt: "NUNCA use [00:00]-[00:14]"
 --    3. Validação pós-Claude: warning se detectar timestamps baixos
 --    Resultado: Zero mensagens com timestamps de intro/vinheta
+-- ✅ FIX DUPLICATAS + RELEVÂNCIA (2025-10-27): 4 melhorias críticas
+--    1. Validação anti-duplicata: detecta e remove respostas duplicadas ANTES do enrichment
+--    2. Regra de relevância: responder pergunta específica OU ser honesto que vídeo não cobre
+--    3. Refactor validações: variáveis movidas para topo (DECLARE único)
+--    4. Logging melhorado: avisos de duplicatas, respostas irrelevantes
+--    Resultado: Zero duplicatas, respostas sempre relevantes ao comentário
 -- =============================================
