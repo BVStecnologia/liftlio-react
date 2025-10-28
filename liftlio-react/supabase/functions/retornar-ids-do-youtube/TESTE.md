@@ -172,7 +172,7 @@ curl -X POST \
 | **Processing overhead** | ~5-8s |
 | **TOTAL** | **50-60 segundos** |
 
-**Timeout configurado:** 120s (margem de segurança de 60s)
+**Timeout configurado:** 240s (4 minutos - margem de segurança de 180s)
 
 ---
 

@@ -23,8 +23,10 @@
  *
  * Tempo de resposta normal: 50-60 segundos (devido às chamadas ao Claude)
  *
- * CHANGELOG V2 (28/10/2025):
- * - Timeout aumentado: 50s → 120s (API leva ~56s)
+ * CHANGELOG V3 (28/10/2025 - 14:30):
+ * - Timeout aumentado: 120s → 240s (4 minutos - margem muito segura)
+ * - Corrigido erro: "Cannot read properties of undefined (reading 'error')"
+ * - Adicionado tratamento robusto de erros com error?.message
  * - Sistema agora retorna 2 vídeos ao invés de 1
  */
 
@@ -77,7 +79,7 @@ Deno.serve(async (req) => {
         "Cache-Control": "no-cache"
       },
       body: JSON.stringify({ scannerId }),
-      signal: AbortSignal.timeout(120000)  // FIX: 50s → 120s (API leva ~56s)
+      signal: AbortSignal.timeout(240000)  // FIX: 120s → 240s (4 minutos - margem segura)
     });
 
     const pythonResponseTime = Date.now() - pythonStartTime;
@@ -143,13 +145,19 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     const errorTime = Date.now() - startTime;
-    console.error(`[${requestId}] ERROR after ${errorTime}ms:`, error.message);
+
+    // FIX: Garantir que error.message existe (evita "Cannot read properties of undefined")
+    const errorMessage = error?.message || error?.toString() || "Unknown error";
+    console.error(`[${requestId}] ERROR after ${errorTime}ms:`, errorMessage);
+    console.error(`[${requestId}] Error type:`, typeof error);
+    console.error(`[${requestId}] Error object:`, error);
 
     // Resposta de erro compatível
     return new Response(JSON.stringify({
       text: "",
       success: false,
-      error: error.message,
+      error: errorMessage,
+      error_type: typeof error,
       request_id: requestId,
       processing_time_ms: errorTime
     }), {
