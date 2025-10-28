@@ -221,12 +221,42 @@ CRITÉRIOS DE SELEÇÃO (em ordem de prioridade):
    - Pessoa parece ter orçamento/autoridade?
    - Urgência alta, média ou baixa?
 
-REGRAS IMPORTANTES:
-- Priorize QUALIDADE sobre quantidade
-- Evite comentários genéricos ("legal", "bom vídeo")
-- Evite comentários sobre outros produtos/concorrentes
+🚨 REGRAS ANTI-SPAM (CRÍTICO - REJEITAR IMEDIATAMENTE):
+
+❌ **SPAM PROMOCIONAL** - Rejeitar comentários que:
+   - Promovem ferramentas/serviços específicos ("use X", "Y é ótimo", "Z funciona bem")
+   - Mencionam produtos concorrentes ou alternativas
+   - Têm tom de anúncio disfarçado ("descobri essa ferramenta incrível...")
+   - Exemplos de spam comum: Rumora, Lyftgram, Advislo, ClickUp, Notion, Airtable
+
+❌ **ENGAGEMENT BAIT** - Rejeitar comentários que:
+   - Têm likes MUITO acima da média (suspeita de bot farm)
+   - São genéricos mas têm centenas/milhares de likes (manipulação)
+   - Falam de trading/investimento em vídeos não relacionados
+   - Padrão típico: "Tive perdas, como ganhar dinheiro?" com 1000+ likes
+
+❌ **OFF-TOPIC SUSPEITO** - Rejeitar comentários que:
+   - Não têm relação com o tema do vídeo
+   - Mudam completamente de assunto
+   - Parecem copiados/colados de outros vídeos
+
+❌ **GENÉRICOS SEM VALOR** - Rejeitar comentários tipo:
+   - "Ótimo vídeo!", "Obrigado!", "Legal!"
+   - Elogios vazios sem contexto ou pergunta
+   - Comentários de uma palavra ou emoji apenas
+
+✅ **COMENTÁRIOS IDEAIS** - Priorizar comentários que:
+   - Fazem perguntas específicas relacionadas ao tema
+   - Compartilham experiências pessoais genuínas
+   - Demonstram frustração com problema real (não genérico)
+   - Têm tom conversacional natural (não roteirizado)
+   - Engagement (likes) condizente com idade e conteúdo
+
+REGRAS FINAIS:
+- Se TODOS os comentários forem spam/suspeitos, retorne array vazio []
 - Selecione EXATAMENTE %s comentários (não mais, não menos)
-- Se não houver %s comentários realmente bons, selecione os melhores disponíveis
+- Se não houver %s comentários genuínos, selecione os melhores disponíveis
+- SEMPRE adicione red_flags quando detectar algo suspeito
 
 OUTPUT:
 Retorne JSON array com top %s comentários no formato:
@@ -288,7 +318,7 @@ Responda APENAS com o JSON array, sem texto adicional.',
     -- 8. Chamar Claude
     SELECT claude_complete(
         v_prompt,
-        format('You are an expert in YouTube comment curation for marketing strategies.
+        format('You are an expert in YouTube comment curation for marketing strategies with STRICT anti-spam enforcement.
 
 CRITICAL RULES:
 1. You MUST return a valid JSON array
@@ -297,6 +327,14 @@ CRITICAL RULES:
 4. Each comment must have detailed reasoning
 5. Scores must be realistic and justified
 6. Return exactly %s comments, no more, no less
+
+🚨 ANTI-SPAM ENFORCEMENT:
+- REJECT promotional comments mentioning tools/services (Rumora, Lyftgram, etc)
+- REJECT engagement bait with abnormal likes (>500 likes on old comments)
+- REJECT off-topic comments (trading on AI videos, etc)
+- REJECT generic praise without substance
+- If ALL comments are spam, return empty array []
+- ALWAYS flag suspicious patterns in red_flags field
 
 Language: %s
 
