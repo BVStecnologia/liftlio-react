@@ -308,8 +308,19 @@ Gere 5 queries SIMPLES e EFETIVAS. Retorne APENAS as queries, uma por linha."""
                     json={"p_project_id": project_id}
                 )
                 result = response.json()
-                # Retorna set para lookup O(1) - muito rápido
-                return set(result) if result else set()
+
+                # Se retornar lista de dicts, extrair channel_id
+                if isinstance(result, list) and len(result) > 0:
+                    if isinstance(result[0], dict):
+                        # Extrair channel_id de cada dict
+                        channel_ids = [item.get('channel_id', item.get('youtube_channel_id', ''))
+                                     for item in result if item]
+                        return set(channel_ids)
+                    else:
+                        # Lista de strings simples
+                        return set(result)
+
+                return set()
         except Exception as e:
             print(f"Erro ao buscar canais bloqueados: {e}")
             return set()
@@ -363,25 +374,583 @@ Gere 5 queries SIMPLES e EFETIVAS. Retorne APENAS as queries, uma por linha."""
                 order='relevance',
                 textFormat='plainText'
             ).execute()
-            
+
             comments = []
             for item in comments_response.get('items', []):
                 comment_text = item['snippet']['topLevelComment']['snippet']['textDisplay']
                 comments.append(comment_text[:200])
-            
-            return comments[:10]  # Máximo 10 comentários
-            
+
+            return comments[:20]  # MELHORIA #1: Dobrado de 10 para 20 comentários
+
         except Exception:
             return []
-    
+
+    def get_video_channel_map(self, video_data_list: List[Dict]) -> Dict:
+        """Mapeia channel_id → lista de índices de vídeos"""
+        channel_map = {}
+        for idx, video in enumerate(video_data_list):
+            channel_id = video.get('channel_id', '')
+            if channel_id not in channel_map:
+                channel_map[channel_id] = []
+            channel_map[channel_id].append(idx)
+        return channel_map
+
+    def apply_channel_diversification(self, video_list: List[Dict]) -> List[Dict]:
+        """Mantém apenas 1 vídeo por canal (maior view_count)"""
+        channel_map = self.get_video_channel_map(video_list)
+
+        selected_videos = []
+        for channel_id, indices in channel_map.items():
+            if len(indices) == 1:
+                selected_videos.append(video_list[indices[0]])
+            else:
+                # Múltiplos vídeos do mesmo canal - pegar o com maior view_count
+                best_video = max(
+                    [video_list[i] for i in indices],
+                    key=lambda v: v.get('details', {}).get('view_count', 0)
+                )
+                selected_videos.append(best_video)
+
+        before_count = len(video_list)
+        after_count = len(selected_videos)
+        print(f"   🎯 Diversificação de canais: {before_count} → {after_count} vídeos")
+
+        return selected_videos
+
+    async def extract_project_intelligence(self, project_description: str, search_keyword: str) -> Dict:
+        """
+        FASE 1: Extrai inteligência DINÂMICA da descrição do projeto usando Haiku.
+
+        Retorna perfil completo: problema, público-alvo, sinais de fundo de funil, semânticas.
+        """
+        if not project_description or len(project_description) < 50:
+            # Fallback GENÉRICO se não tiver descrição
+            return {
+                'problema_central': f'Necessidades relacionadas a {search_keyword}',
+                'publico_alvo': ['pessoas interessadas em ' + search_keyword, 'usuários potenciais'],
+                'dores_especificas': ['precisa de solução', 'buscando ajuda'],
+                'sinais_fundo_funil': ['preciso', 'vou', 'quero', 'como faço', 'onde encontro'],
+                'sinais_urgencia_temporal': ['agora', 'urgente', 'hoje', 'amanhã'],
+                'sinais_implementacao': ['estou', 'vou', 'começando', 'tentando'],
+                'semanticas_relacionadas': [search_keyword]
+            }
+
+        prompt = f"""Analise esta descrição de projeto e extraia PERFIL DE PÚBLICO-ALVO para buscar comentários relevantes no YouTube.
+
+DESCRIÇÃO DO PROJETO:
+{project_description[:1500]}
+
+PALAVRA-CHAVE PRINCIPAL: {search_keyword}
+
+Retorne JSON (sem markdown) com:
+{{
+  "problema_central": "QUAL problema este projeto resolve? (1 frase curta)",
+  "publico_alvo": ["tipo1", "tipo2", "tipo3"],  // Ex: "donos de ecommerce", "criadores SaaS"
+  "dores_especificas": ["dor1", "dor2"],  // Ex: "CAC alto", "sem tráfego"
+  "sinais_fundo_funil": ["palavra1", "palavra2", "frase1"],  // Ex: "vou lançar", "preciso urgente", "semana que vem"
+  "sinais_urgencia_temporal": ["temporal1", "temporal2"],  // Ex: "amanhã", "hoje", "agora"
+  "sinais_implementacao": ["acao1", "acao2"],  // Ex: "estou criando", "montando", "começando"
+  "semanticas_relacionadas": ["termo1", "termo2", "termo3"]  // Variações do problema
+}}
+
+CRÍTICO: Extraia DINAMI CAMENTE do texto, não invente! Se não encontrar, retorne array vazio.
+"""
+
+        try:
+            response = self.claude.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=800,
+                temperature=0.2,
+                messages=[{"role": "user", "content": prompt}]
+            )
+
+            result_text = response.content[0].text.strip()
+
+            # Remove markdown
+            if result_text.startswith('```'):
+                result_text = re.sub(r'^```(?:json)?\n', '', result_text)
+                result_text = re.sub(r'\n```$', '', result_text)
+
+            intelligence = json.loads(result_text)
+            print(f"\n   🧠 Inteligência extraída:")
+            print(f"      • Problema: {intelligence.get('problema_central', 'N/A')[:60]}...")
+            print(f"      • Público-alvo: {len(intelligence.get('publico_alvo', []))} perfis")
+            print(f"      • Sinais fundo funil: {len(intelligence.get('sinais_fundo_funil', []))} sinais")
+
+            return intelligence
+
+        except Exception as e:
+            print(f"   ⚠️ Erro ao extrair inteligência: {e}")
+            # Fallback GENÉRICO em caso de erro
+            return {
+                'problema_central': f'Necessidades relacionadas a {search_keyword}',
+                'publico_alvo': ['pessoas interessadas em ' + search_keyword, 'usuários potenciais'],
+                'dores_especificas': ['precisa de solução', 'buscando ajuda'],
+                'sinais_fundo_funil': ['preciso', 'vou', 'quero', 'como faço', 'onde encontro'],
+                'sinais_urgencia_temporal': ['agora', 'urgente', 'hoje', 'amanhã'],
+                'sinais_implementacao': ['estou', 'vou', 'começando', 'tentando'],
+                'semanticas_relacionadas': [search_keyword]
+            }
+
+    async def pre_check_video_quality(self, video: Dict, intelligence: Dict) -> Dict:
+        """
+        🚪 GATE #1: Pre-check de qualidade ANTES de gastar dinheiro com Haiku.
+
+        Rejeita vídeos educacionais longos, engagement baixo e comentários vazios.
+        Economiza ~60% dos custos em scanners ruins.
+
+        Returns: {"should_analyze": bool, "rejection_reason": str}
+        """
+        duration = video['details'].get('duration_seconds', 0)
+        title = video['title'].lower()
+        description = video.get('description', '').lower()
+        engagement_rate = video.get('engagement_rate', 0)
+
+        # === RED FLAG #1: Cursos educacionais muito longos ===
+        # Atraem ESTUDANTES, não COMPRADORES
+        educational_keywords = [
+            'complete course', 'full course', 'masterclass',
+            'complete tutorial', 'full tutorial',
+            'step by step guide', 'from scratch',
+            'for beginners', 'beginner guide',
+            'everything you need to know',
+            'curso completo', 'tutorial completo'
+        ]
+
+        if duration > 7200:  # >2 horas
+            if any(kw in title or kw in description for kw in educational_keywords):
+                return {
+                    "should_analyze": False,
+                    "rejection_reason": f"Educational course (>{duration/3600:.1f}h) - attracts students, not buyers"
+                }
+
+        if duration > 3600:  # >1 hora
+            # Mais permissivo, mas filtrar cursos completos
+            strict_keywords = ['complete course', 'full course', 'masterclass', 'curso completo']
+            if any(kw in title for kw in strict_keywords):
+                return {
+                    "should_analyze": False,
+                    "rejection_reason": f"Long masterclass ({duration/3600:.1f}h) - low buyer intent"
+                }
+
+        # === RED FLAG #2: Engagement muito baixo ===
+        if engagement_rate < 1.5:
+            return {
+                "should_analyze": False,
+                "rejection_reason": f"Low engagement ({engagement_rate:.2f}%) - passive audience"
+            }
+
+        # === RED FLAG #3: Comentários muito curtos (gratidão vazia) ===
+        sample_comments = video.get('sample_comments', [])
+        if len(sample_comments) >= 3:
+            avg_length = sum(len(c) for c in sample_comments) / len(sample_comments)
+
+            if avg_length < 25:  # Média <25 chars
+                # Verificar se são só gratidão
+                gratitude_keywords = ['thank', 'thanks', 'obrigado', 'great', 'amazing', 'awesome', 'love']
+                gratitude_count = sum(1 for c in sample_comments[:5]
+                                    if any(kw in c.lower() for kw in gratitude_keywords)
+                                    and len(c) < 50)
+
+                if gratitude_count >= 3:  # >=3 de 5 são gratidão curta
+                    return {
+                        "should_analyze": False,
+                        "rejection_reason": f"Comments too short (avg {avg_length:.0f} chars) + high gratitude rate ({gratitude_count}/5)"
+                    }
+
+        # === GREEN LIGHT: Vale a pena gastar Haiku ===
+        return {
+            "should_analyze": True,
+            "rejection_reason": None
+        }
+
+    async def filter_and_diversify_with_haiku(
+        self,
+        video_data_list: List[Dict],
+        search_keyword: str,
+        project_id: str,
+        project_description: str,
+        max_videos: int = 10
+    ) -> List[Dict]:
+        """
+        FASE 3: Usa Claude Haiku 4.5 para filtrar vídeos baseado em análise DINÂMICA de comentários.
+
+        Returns: Lista de dicts de vídeos (preserva estrutura original - CRÍTICO!)
+        """
+        if len(video_data_list) <= max_videos:
+            return video_data_list
+
+        # FASE 1: Extrair inteligência do projeto
+        print(f"\n   🧠 [Fase 1] Extraindo inteligência do projeto...")
+        project_intel = await self.extract_project_intelligence(project_description, search_keyword)
+
+        # FASE 2: Buscar e pré-filtrar comentários (Python) + Pre-check de qualidade
+        print(f"\n   📝 [Fase 2] Buscando comentários de {len(video_data_list)} vídeos...")
+
+        videos_to_analyze = []
+        skipped_videos = 0
+
+        for video in video_data_list:
+            if 'sample_comments' not in video:
+                raw_comments = await self.fetch_video_comments(video['id'], max_comments=20)
+
+                # Pré-filtro Python: Remove spam, muito curtos, links
+                filtered = []
+                for comment in raw_comments:
+                    # Limpar texto
+                    text = comment.strip()
+
+                    # Filtros básicos
+                    if len(text) < 20:  # Muito curto
+                        continue
+
+                    # MELHORIA #1: Filtro expandido de spam (crypto, investment, engagement bait)
+                    spam_keywords = [
+                        # Links e mentions
+                        'http://', 'https://', 'www.', '@', 'bit.ly',
+                        # Crypto/Investment spam
+                        'bitcoin', 'btc', 'crypto', 'cryptocurrency',
+                        'meme coin', 'memecoin', 'shiba', 'doge',
+                        'investment opportunity', 'trading', 'forex',
+                        'retirement', 'i pray that', 'multi millionaire',
+                        'make money fast', 'passive income',
+                        # Engagement bait
+                        'click here', 'check out', 'dm me',
+                        'whatsapp', 'telegram', 'signal',
+                        # Scam patterns
+                        'work for 42', 'lost my money', 'gained $'
+                    ]
+                    if any(spam in text.lower() for spam in spam_keywords):
+                        continue
+
+                    if text.count('!') > 3 or text.count('?') > 3:  # Excesso de pontuação (spam)
+                        continue
+
+                    filtered.append(text)
+
+                video['sample_comments'] = filtered[:12]  # MELHORIA #1: Aumentado de 8 para 12 comentários
+
+            # 🚪 MELHORIA #3: Pre-check de qualidade ANTES de gastar Haiku
+            pre_check = await self.pre_check_video_quality(video, project_intel)
+
+            if not pre_check['should_analyze']:
+                print(f"   ⏭️  Skipping video {video['id']}: {pre_check['rejection_reason']}")
+                skipped_videos += 1
+                continue
+
+            # Vídeo passou no pre-check, adicionar à lista
+            videos_to_analyze.append(video)
+
+        print(f"   ✅ Pre-check concluído: {len(videos_to_analyze)} vídeos aprovados, {skipped_videos} rejeitados")
+
+        # Se não sobrou nenhum vídeo, retornar vazio
+        if not videos_to_analyze:
+            print("   ⚠️  Nenhum vídeo passou no pre-check!")
+            return []
+
+        # FASE 3: Análise inteligente com Haiku (apenas vídeos aprovados no pre-check)
+        print(f"\n   🔍 [Fase 3] Análise inteligente dos comentários com Haiku...")
+
+        # Criar resumo COM análise de comentários (apenas vídeos que passaram no pre-check)
+        video_summary = []
+        for video in videos_to_analyze:
+            comments_sample = video.get('sample_comments', [])[:12]  # MELHORIA #1: Dobrado de 6 para 12
+
+            summary = {
+                'video_id': video['id'],
+                'channel_id': video.get('channel_id', ''),
+                'title': video['title'][:100],
+                'view_count': video.get('details', {}).get('view_count', 0),
+                'comment_count': video.get('details', {}).get('comment_count', 0),
+                'engagement_rate': video.get('engagement_rate', 0),
+                'sample_comments': comments_sample
+            }
+            video_summary.append(summary)
+
+        # Serializar vídeos separadamente (SOLUÇÃO: evita f-string com JSON complexo)
+        videos_json_str = json.dumps(video_summary, ensure_ascii=False, indent=2)
+
+        # Prompt INTELIGENTE baseado no perfil extraído
+        haiku_prompt = f"""Você é um agente especialista em encontrar PÚBLICO-ALVO CORRETO no YouTube.
+
+🎯 PERFIL DO PÚBLICO-ALVO (extraído dinamicamente):
+
+PROBLEMA QUE O PRODUTO RESOLVE:
+{project_intel.get('problema_central', 'N/A')}
+
+PÚBLICO-ALVO IDEAL:
+{', '.join(project_intel.get('publico_alvo', []))}
+
+DORES ESPECÍFICAS QUE TÊM:
+{', '.join(project_intel.get('dores_especificas', []))}
+
+SINAIS DE FUNDO DE FUNIL (procure nos comentários):
+• Urgência temporal: {', '.join(project_intel.get('sinais_urgencia_temporal', []))}
+• Fase de implementação: {', '.join(project_intel.get('sinais_implementacao', []))}
+• Linguagem de necessidade: {', '.join(project_intel.get('sinais_fundo_funil', []))}
+
+SEMÂNTICAS RELACIONADAS:
+{', '.join(project_intel.get('semanticas_relacionadas', []))}
+
+────────────────────────────────────────────────────────────
+
+VÍDEOS PARA ANALISAR ({len(videos_to_analyze)} total, após pre-check):
+{videos_json_str}
+
+────────────────────────────────────────────────────────────
+
+🎯 MISSÃO: Selecione os {max_videos} MELHORES vídeos com comentários do PÚBLICO-ALVO CORRETO.
+
+CRITÉRIOS DE SELEÇÃO (prioridade):
+
+1. **PÚBLICO-ALVO CORRETO** (40 pontos):
+   - Comentários de pessoas que SÃO o público-alvo?
+   - Não curiosos genéricos ou elogios vazios
+
+2. **SINAIS DE FUNDO DE FUNIL** (35 pontos):
+   - Urgência temporal? ("vou lançar semana que vem", "começando agora")
+   - Fase de ação? ("estou criando", "montando", "precisava disso")
+   - Linguagem de necessidade forte? ("preciso", "quero fazer", "como faço")
+
+3. **PROBLEMA/DOR ESPECÍFICA** (20 pontos):
+   - Comentários mencionam dores que o produto resolve?
+   - Problema claro e específico?
+
+4. **DIVERSIDADE DE CANAIS** (5 pontos):
+   - Max 1 vídeo por channel_id
+
+❌ REJEITAR IMEDIATAMENTE (mesmo se órfão ou alta relevância):
+
+1. **GRATIDÃO VAZIA** - Rejeitar se comentário é APENAS:
+   - "thank you" / "obrigado" SEM contexto de negócio ou ação
+   - "great video" / "ótimo vídeo" / "love this" SEM pergunta
+   - "amazing" / "incrível" / "awesome" SEM aplicação
+   - Elogios genéricos sem substância estratégica
+
+2. **FASE DE CONSUMO** (NÃO é fundo de funil):
+   - "I learned" / "aprendi" SEM "vou implementar"
+   - "I understood" / "entendi" SEM ação futura
+   - "saved to watch later" / "salvei para depois" = fase de PESQUISA
+   - "I watch your videos" / "assisto seus vídeos" = espectador passivo
+   - "makes sense" / "faz sentido" SEM contexto de implementar
+
+3. **FEEDBACK EDUCACIONAL** (sem valor estratégico):
+   - "explained well" / "explicou bem" SEM dúvida ou aplicação
+   - "easy to understand" / "fácil de entender" SEM contexto de negócio
+   - Comentários sobre QUALIDADE do vídeo (não sobre resolver problema)
+
+4. **INTERESSE NO VLOGGER** (não no problema):
+   - Pessoas interessadas no CURSO/PRODUTO do criador
+   - Perguntas sobre "onde comprar seu curso"
+   - Elogios ao criador sem mencionar problema próprio
+
+5. **SPAM/OFF-TOPIC**:
+   - Crypto, investimento, trading (já filtrado no Python)
+   - Promoções de ferramentas
+   - Completamente fora do tema
+
+🎯 REGRA DE OURO:
+   Se comentário = (gratidão OU feedback educacional) E NÃO tem (problema OU dúvida OU "vou fazer"):
+   → REJEITAR sem exceção
+
+✅ EXEMPLO BOM vs RUIM:
+   ❌ "Thank you! Great explanation!" → Gratidão vazia
+   ✅ "Thank you! I'm launching my store next week, this helped!" → Gratidão + AÇÃO + URGÊNCIA
+
+   ❌ "I always learn from your videos" → Espectador passivo
+   ✅ "I'm struggling with cold calls like you mentioned, any tips?" → Dor específica + pedido
+
+✅ EXEMPLO DE COMENTÁRIO PERFEITO:
+"precisava dessa informação, vou começar/lançar [projeto] na semana que vem"
+(Motivo: urgência temporal + fase de ação + necessidade clara)
+
+Outros exemplos válidos:
+- "estou começando agora, preciso urgente dessa solução"
+- "tenho esse problema há meses, onde posso encontrar ajuda?"
+- "vou implementar isso amanhã na minha empresa"
+
+────────────────────────────────────────────────────────────
+
+🚨 MELHORIA #1 - CONFIDENCE CHECK OBRIGATÓRIO:
+
+Você está analisando {len(video_summary[0].get('sample_comments', []))} comentários por vídeo.
+CRÍTICO: Julgue APENAS os comentários fornecidos.
+NÃO assuma que existam melhores comentários fora desta amostra.
+NÃO invente que "pessoas estão implementando" se você NÃO VIU isso explicitamente.
+
+Para CADA vídeo aprovado, você DEVE:
+1. Identificar QUANTOS comentários são realmente bons (APPROVE)
+2. Se <25% são bons → REJEITAR o vídeo (sample insuficiente)
+3. Para cada comentário aprovado, CITAR a frase literal que justifica
+
+Formato de análise por vídeo:
+- Total de comentários analisados: X
+- Comentários aprovados: Y (Y/X = Z%)
+- Se Z < 25% → REJEITAR vídeo automaticamente
+
+────────────────────────────────────────────────────────────
+
+🕒 MELHORIA #7 - SCORING DE URGÊNCIA TEMPORAL:
+
+Classifique cada comentário bom por nível de urgência:
+
+**URGÊNCIA MÁXIMA (35 pontos):**
+- "hoje", "agora", "neste momento"
+- "amanhã", "esta semana"
+- "começando hoje", "lançando amanhã"
+
+**URGÊNCIA ALTA (25 pontos):**
+- "semana que vem", "próxima semana"
+- "em breve", "nos próximos dias"
+- "vou começar", "vou lançar" (sem data específica)
+
+**URGÊNCIA MÉDIA (15 pontos):**
+- "este mês", "próximo mês"
+- "estou criando" (sem deadline)
+- "planejando para" + data futura
+
+**URGÊNCIA FRACA (5 pontos):**
+- "em alguns meses", "no futuro"
+- "pensando em", "considerando"
+- "algum dia", "eventualmente"
+
+**SEM URGÊNCIA (0 pontos):**
+- Sem menção temporal
+- "já fiz", "fiz há X tempo" (passado)
+
+PRIORIDADE: Vídeos com mais comentários de urgência MÁXIMA/ALTA devem ser selecionados primeiro.
+
+────────────────────────────────────────────────────────────
+
+Responda JSON (sem markdown):
+{{
+  "selected_video_ids": ["id1", "id2", ...],
+  "reasoning": "1-2 frases explicando POR QUE estes vídeos (cite evidências literais)",
+  "videos_analysis": [
+    {{
+      "video_id": "id",
+      "total_comments_analyzed": 12,
+      "approved_comments": 4,
+      "approval_rate": 0.33,
+      "decision": "APPROVE ou REJECT",
+      "best_comments_with_urgency": [
+        {{
+          "text": "citação literal do comentário",
+          "urgency_level": "MÁXIMA/ALTA/MÉDIA/FRACA/SEM",
+          "urgency_score": 35,
+          "reason": "urgência temporal + fase de implementação"
+        }}
+      ]
+    }}
+  ]
+}}
+
+"""
+
+        try:
+            # SOLUÇÃO: Usar prefill com "{" para forçar JSON válido (Anthropic best practice)
+            response = self.claude.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=8000,  # FIX: Aumentado de 1500 → 8000 para evitar truncamento de JSON (Haiku 4.5 suporta 64k)
+                temperature=0.3,
+                messages=[
+                    {"role": "user", "content": haiku_prompt},
+                    {"role": "assistant", "content": "{"}  # Prefill: força JSON desde o início
+                ]
+            )
+
+            # Reconstruir JSON completo (prefill + resposta)
+            result_text = "{" + response.content[0].text.strip()
+
+            # Salvar JSON bruto para debug (APENAS se houver erro)
+            raw_json_for_debug = result_text
+
+            # Remover markdown code blocks se existir (improvável com prefill)
+            if result_text.startswith('```'):
+                result_text = re.sub(r'^```(?:json)?\n', '', result_text)
+                result_text = re.sub(r'\n```$', '', result_text)
+
+            # Tentar parsing direto
+            try:
+                result = json.loads(result_text)
+            except json.JSONDecodeError as parse_error:
+                # Fallback: sanitização adicional
+                print(f"   ⚠️ JSON parse error na primeira tentativa (posição {parse_error.pos})")
+                print(f"   📄 Salvando JSON bruto em debug_haiku_response.json para análise...")
+
+                # Salvar para debug
+                with open('debug_haiku_response.json', 'w', encoding='utf-8') as f:
+                    f.write(raw_json_for_debug)
+
+                # Tentar sanitização
+                sanitized_text = result_text.replace('\r\n', ' ').replace('\n', ' ').replace('\r', ' ')
+                sanitized_text = re.sub(r'\s+', ' ', sanitized_text)  # Normalizar espaços
+
+                try:
+                    result = json.loads(sanitized_text)
+                    print(f"   ✅ Recuperado com sanitização de espaços!")
+                except json.JSONDecodeError as second_error:
+                    # Último recurso: capturar até onde é válido
+                    print(f"   ❌ Falha na sanitização. Erro: {second_error}")
+                    raise ValueError(f"JSON inválido mesmo após sanitização. Verifique debug_haiku_response.json")
+            selected_ids = result.get('selected_video_ids', [])
+            reasoning = result.get('reasoning', 'N/A')
+
+            # Mapear IDs de volta para vídeos originais (apenas dos aprovados no pre-check!)
+            selected_videos = []
+            for video_id in selected_ids:
+                for video in videos_to_analyze:
+                    if video['id'] == video_id:
+                        selected_videos.append(video)
+                        break
+
+            # Calcular custo (estimativa)
+            input_tokens = len(json.dumps(video_summary)) // 4
+            output_tokens = len(result_text) // 4
+            haiku_cost = (input_tokens * 0.00025 / 1000) + (output_tokens * 0.00125 / 1000)
+
+            print(f"   🟡 Haiku selecionou: {len(selected_videos)} vídeos diversos")
+            print(f"   💡 Raciocínio: {reasoning}")
+            print(f"   💰 Custo Haiku: ${haiku_cost:.4f}")
+
+            return selected_videos
+
+        except Exception as e:
+            print(f"   ⚠️ Erro no Haiku (fallback para view_count): {e}")
+            # Fallback: aplicar diversificação e ordenar por view_count (apenas videos aprovados)
+            diversified = self.apply_channel_diversification(videos_to_analyze)
+            sorted_videos = sorted(
+                diversified,
+                key=lambda x: x.get('details', {}).get('view_count', 0),
+                reverse=True
+            )
+            return sorted_videos[:max_videos]
+
     async def analyze_with_claude(self, videos: List[Dict], project_data: Dict) -> List[str]:
-        """Claude analisa e seleciona o MELHOR vídeo"""
+        """Claude analisa e seleciona o MELHOR vídeo (com camada Haiku de diversificação)"""
         if len(videos) <= 1:
             return [v['id'] for v in videos]
-        
-        # Buscar comentários para análise
+
+        # NOVA CAMADA HAIKU: Filtragem INTELIGENTE com análise dinâmica (se >10 vídeos)
+        if len(videos) > 10:
+            print(f"\n   🟡 [Camada Haiku Inteligente] Filtrando {len(videos)} vídeos → 10 melhores")
+            palavra_chave = project_data.get('palavra_chave', '')
+            projeto_id = project_data.get('projeto_id', '')
+            projeto_descricao = project_data.get('descricao_projeto', '')
+
+            videos = await self.filter_and_diversify_with_haiku(
+                video_data_list=videos,
+                search_keyword=palavra_chave,
+                project_id=projeto_id,
+                project_description=projeto_descricao,
+                max_videos=10
+            )
+            print(f"   ✅ Haiku retornou: {len(videos)} vídeos com público-alvo correto\n")
+
+        # Buscar comentários para análise do Sonnet (se ainda não tiver)
         for video in videos:
-            video['sample_comments'] = await self.fetch_video_comments(video['id'])
+            if 'sample_comments' not in video:
+                video['sample_comments'] = await self.fetch_video_comments(video['id'])
         
         # Preparar informações para Claude
         videos_info = []
@@ -403,18 +972,20 @@ Amostras de comentários:
         
         palavra_chave = project_data.get('palavra_chave', '')
         descricao = project_data.get('descricao_projeto', '')
-        
+
         prompt = f"""Analise os vídeos e selecione o MELHOR para o projeto:
 
-PROJETO:
-- Palavra-chave: {palavra_chave}
-- Descrição: {descricao[:500]}
+CONTEXTO COMPLETO DO PROJETO:
+{descricao if descricao else f'Projeto relacionado a: {palavra_chave}'}
+
+PALAVRA-CHAVE: {palavra_chave}
 
 CRITÉRIOS (em ordem de importância):
-1. RELEVÂNCIA: Deve ser ESPECIFICAMENTE sobre "{palavra_chave}"
-2. LOCALIZAÇÃO: Priorize vídeos brasileiros/portugueses
-3. INTENÇÃO COMERCIAL: Comentários indicam interesse em comprar/criar
-4. ENGAJAMENTO: Taxa de engajamento alta
+1. PÚBLICO-ALVO CORRETO: Os comentários devem ser de pessoas que são o PÚBLICO-ALVO deste projeto (leia o contexto!)
+2. DORES/PROBLEMAS: Comentários mostram PROBLEMAS que este projeto resolve
+3. INTENÇÃO COMERCIAL: Comentários indicam NECESSIDADE da solução, interesse em comprar/investir
+4. QUALIDADE DOS LEADS: Comentários de empreendedores/negócios, não curiosos genéricos
+5. ENGAJAMENTO: Taxa de engajamento alta
 
 VÍDEOS:
 {''.join(videos_info)}
