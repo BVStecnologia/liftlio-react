@@ -927,8 +927,8 @@ Responda JSON (sem markdown):
             return sorted_videos[:max_videos]
 
     async def analyze_with_claude(self, videos: List[Dict], project_data: Dict) -> List[str]:
-        """Claude analisa e seleciona o MELHOR vídeo (com camada Haiku de diversificação)"""
-        if len(videos) <= 1:
+        """Claude analisa e seleciona os 2 MELHORES vídeos (com camada Haiku de diversificação)"""
+        if len(videos) <= 2:
             return [v['id'] for v in videos]
 
         # NOVA CAMADA HAIKU: Filtragem INTELIGENTE com análise dinâmica (se >10 vídeos)
@@ -973,7 +973,7 @@ Amostras de comentários:
         palavra_chave = project_data.get('palavra_chave', '')
         descricao = project_data.get('descricao_projeto', '')
 
-        prompt = f"""Analise os vídeos e selecione o MELHOR para o projeto:
+        prompt = f"""Analise os vídeos e selecione os 2 MELHORES para o projeto:
 
 CONTEXTO COMPLETO DO PROJETO:
 {descricao if descricao else f'Projeto relacionado a: {palavra_chave}'}
@@ -990,11 +990,11 @@ CRITÉRIOS (em ordem de importância):
 VÍDEOS:
 {''.join(videos_info)}
 
-Retorne APENAS o ID do melhor vídeo."""
+Retorne os IDs dos 2 melhores vídeos, um por linha."""
 
         response = self.claude.messages.create(
             model="claude-sonnet-4-5-20250929",
-            max_tokens=200,
+            max_tokens=300,
             temperature=0.2,
             messages=[{"role": "user", "content": prompt}]
         )
