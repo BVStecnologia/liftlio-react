@@ -1011,11 +1011,11 @@ Retorne APENAS o ID do melhor vídeo."""
                     selected_ids.append(video_id)
 
         # Fallback se não encontrou
-        if len(selected_ids) < 1:
+        if len(selected_ids) < 2:
             sorted_videos = sorted(videos, key=lambda x: x['engagement_rate'], reverse=True)
-            selected_ids = [v['id'] for v in sorted_videos[:1]]
+            selected_ids = [v['id'] for v in sorted_videos[:2]]
 
-        return selected_ids[:1]
+        return selected_ids[:2]
     
     async def search_videos(self, scanner_id: int) -> Dict:
         """Executa o processo completo de busca"""
