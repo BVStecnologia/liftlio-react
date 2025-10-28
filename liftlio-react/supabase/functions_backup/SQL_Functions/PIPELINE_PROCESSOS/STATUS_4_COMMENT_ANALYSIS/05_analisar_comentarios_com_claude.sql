@@ -5,6 +5,11 @@
 -- Atualizado: 2025-10-15 - Sincronizado com Supabase main (LIMIT 20/15, timeout 300s)
 -- Atualizado: 2025-10-16 - max_tokens aumentado 4000->16000 para evitar truncamento JSON
 -- Atualizado: 2025-10-17 - max_tokens reduzido 16000->8000 (limite do modelo Sonnet 4.5 é 8192)
+-- Atualizado: 2025-10-28 - REMOVIDO campo Keywords do prompt
+--                          Claude agora analisa APENAS pela descrição do produto
+--                          Keywords eram obsoletas e confundiam análise (ex: "AI marketing platform"
+--                          mas produto serve para e-commerce/DTC)
+--                          Agora foca 100% em description service + contexto do vídeo
 -- =============================================
 
 DROP FUNCTION IF EXISTS analisar_comentarios_com_claude(integer, integer);
@@ -109,7 +114,6 @@ BEGIN
         ) LOOP
             prompt_claude := prompt_claude || ' ## CONTEXTO DO PRODUTO ## ' ||
                 'Descricao do produto/servico: ' || replace(project_data."description service", '"', '''') || ' ' ||
-                'Keywords/Nicho: ' || replace(project_data."Keywords", '"', '''') || ' ' ||
                 '## CONTEXTO DO VIDEO ## ' ||
                 'ID do Video: ' || video_data.video_id || ' ' ||
                 'Titulo: ' || replace(video_data.video_title, '"', '''') || ' ' ||
@@ -168,7 +172,6 @@ BEGIN
         ) LOOP
             prompt_claude := prompt_claude || ' ## CONTEXTO DO PRODUTO ## ' ||
                 'Descricao do produto/servico: ' || replace(project_data."description service", '"', '''') || ' ' ||
-                'Keywords/Nicho: ' || replace(project_data."Keywords", '"', '''') || ' ' ||
                 '## CONTEXTO DO VIDEO ## ' ||
                 'ID do Video: ' || video_data.video_id || ' ' ||
                 'Titulo: ' || replace(video_data.video_title, '"', '''') || ' ' ||
