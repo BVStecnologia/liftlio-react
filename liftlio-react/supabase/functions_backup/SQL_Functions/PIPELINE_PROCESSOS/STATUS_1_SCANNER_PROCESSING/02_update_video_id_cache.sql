@@ -14,7 +14,7 @@ AS $function$
       edge_response json;
       video_ids text := '';
       request_body text;
-      timeout_ms integer := 60000; -- 60 segundos em milissegundos
+      timeout_seconds integer := 180; -- 180 segundos (3 minutos de folga)
   BEGIN
       -- Verifica se o scanner existe
       IF NOT EXISTS (SELECT 1 FROM public."Scanner de videos do youtube" WHERE id = scanner_id) THEN
@@ -24,8 +24,8 @@ AS $function$
       -- Prepara o corpo da requisição
       request_body := jsonb_build_object('scannerId', scanner_id::text)::text;
 
-      -- Configura o timeout
-      PERFORM http_set_curlopt('CURLOPT_TIMEOUT_MS', timeout_ms::text);
+      -- Configura o timeout em segundos
+      PERFORM http_set_curlopt('CURLOPT_TIMEOUT', timeout_seconds::text);
 
       -- Faz a chamada à Edge Function CORRETA: Retornar-Ids-do-youtube
       SELECT * INTO http_response
