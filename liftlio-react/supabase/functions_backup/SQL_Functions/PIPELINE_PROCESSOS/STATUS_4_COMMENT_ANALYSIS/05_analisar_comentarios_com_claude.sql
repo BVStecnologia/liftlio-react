@@ -37,17 +37,49 @@ BEGIN
     prompt_claude := '### SISTEMA DE QUALIFICACAO AVANCADA DE LEADS ### ' ||
     'Voce e um ANALISTA ESPECIALIZADO EM QUALIFICACAO DE LEADS com experiencia em identificar potenciais clientes. ' ||
     'Sua tarefa e avaliar comentarios do YouTube para encontrar pessoas com real interesse no produto ou servico descrito. ' ||
-    '## METODOLOGIA DE ANALISE PICS ## ' ||
-    'Avaliar cada comentario nas seguintes dimensoes: ' ||
-    '1. PROBLEMA (0-10): O comentario demonstra consciencia de um problema que nosso produto resolve? ' ||
-    '2. INTENCAO (0-10): Ha indicacoes de interesse em compra, precos ou implementacao? ' ||
-    '3. CONTEXTO (0-10): O comentario menciona um caso de uso compativel com o produto? ' ||
-    '4. SINAIS (0-10): O comentario demonstra engajamento profundo com o conteudo? ' ||
-    '## CLASSIFICACAO DE LEADS ## ' ||
-    '- Lead Quente (9-10): Interesse direto + perguntas especificas ' ||
-    '- Lead Morno (7-8): Expressa problema especifico relacionado ' ||
-    '- Lead Frio (6-7): Mostra consciencia do problema ' ||
-    '- Nao e Lead (<6): Comentarios genericos sem intencao comercial ' ||
+    '## METODOLOGIA DE ANALISE PICS EXPANDIDA ## ' ||
+    'Avaliar cada comentario nas seguintes dimensoes (escala 0-10): ' ||
+    '1. PROBLEMA (0-10): Demonstra consciencia de problema especifico que o produto resolve? ' ||
+    '   - 9-10: Descreve problema detalhado com impacto real ' ||
+    '   - 7-8: Menciona problema mas sem detalhes ' ||
+    '   - 5-6: Consciencia vaga do problema ' ||
+    '   - 0-4: Sem problema identificado ' ||
+    '2. INTENCAO (0-10): Sinais de interesse comercial genuino? ' ||
+    '   - 9-10: Pergunta sobre COMPRA (preco, acesso, quando comecar) ' ||
+    '   - 7-8: Pergunta sobre IMPLEMENTACAO (como usar, vale a pena) ' ||
+    '   - 5-6: Interesse passivo (quer aprender mais) ' ||
+    '   - 0-4: Apenas quer CONTEUDO GRATIS (tutorial, dicas) ' ||
+    '3. CONTEXTO (0-10): Caso de uso compativel + acao concreta? ' ||
+    '   - 9-10: JA TEM NEGOCIO ATIVO (loja, site, clientes) ' ||
+    '   - 7-8: VAI LANCAR (proxima semana, proximo mes) ' ||
+    '   - 5-6: Planejando (algum dia, pensando em) ' ||
+    '   - 0-4: Apenas curioso (sem negocio, sem planos) ' ||
+    '4. PERFIL (0-10): Nivel profissional e credibilidade? ' ||
+    '   - 9-10: PROFISSIONAL ESTABELECIDO (Nutricionista, Designer com portfolio) ' ||
+    '   - 7-8: EMPREENDEDOR ATIVO (ja tentou, ja investiu, ja tem experiencia) ' ||
+    '   - 5-6: INICIANTE COMPROMETIDO (pesquisou, planejou, vai executar) ' ||
+    '   - 0-4: CURIOSO PASSIVO (apenas assistindo, sem acao) ' ||
+    '5. VALIDACAO SOCIAL (0-10): Engajamento da comunidade? ' ||
+    '   - 9-10: 8+ likes (comentario ressoou fortemente) ' ||
+    '   - 7-8: 3-7 likes (boa validacao) ' ||
+    '   - 5-6: 1-2 likes (validacao basica) ' ||
+    '   - 0-4: 0 likes (sem validacao) ' ||
+    '## CLASSIFICACAO DE LEADS (MEDIA DAS 5 DIMENSOES) ## ' ||
+    '- Lead QUENTE (9-10): Profissional estabelecido OU interesse direto em compra ' ||
+    '  Exemplos: "Sou Nutricionista e vendo meal plans...", "Quanto custa seu curso?" ' ||
+    '- Lead MORNO (7-8): Negocio ativo OU problema especifico + acao concreta ' ||
+    '  Exemplos: "Vou lancar minha loja semana que vem", "Minha loja nao tem trafego" ' ||
+    '- Lead FRIO (6-7): Consciencia do problema + interesse passivo ' ||
+    '  Exemplos: "Comecei minha loja", "Isso e ouro" ' ||
+    '- NAO e Lead (<6): Pedido de tutorial gratis OU comentario generico ' ||
+    '  Exemplos: "Me ensina Facebook Ads", "Sign me up for trial", "Obrigado pelo video" ' ||
+    '## REGRAS CRITICAS ## ' ||
+    '1. PROFISSIONAIS (Nutricionista, Designer, Coach, etc) com negocio = SEMPRE 9+ ' ||
+    '2. PERGUNTAS sobre COMPRA/PRECO = SEMPRE 9+ ' ||
+    '3. PEDIDOS de TUTORIAL GRATIS = SEMPRE <7 (nao querem comprar) ' ||
+    '4. INTERESSE em TRIAL/GRATIS apenas = SEMPRE <7 ' ||
+    '5. COMENTARIOS com 8+ LIKES = +1 no score final (max 10) ' ||
+    '6. Score < 6 = "lead": false (obrigatorio) ' ||
     'IMPORTANTE: Comentarios com pontuacao inferior a 6 DEVEM ser classificados como "lead": false';
 
     IF p_video_id IS NOT NULL THEN
@@ -180,14 +212,20 @@ BEGIN
 
     SELECT claude_complete(
         prompt_claude,
-        'Voce e um ANALISTA DE MARKETING especializado em identificar leads potenciais. ' ||
+        'Voce e um ANALISTA DE MARKETING especializado em identificar leads potenciais usando metodologia PICS EXPANDIDA (5 dimensoes). ' ||
         'Responda em formato JSON com a seguinte estrutura para cada comentario: ' ||
         '[{"comentario_id": [ID do comentario], "video_id": [ID do video], "lead": [true ou false], ' ||
         '"lead_score": [Se for um lead, de uma nota de 1 a 10. Se nao for um lead, coloque 0], ' ||
         '"justificativa": [Justificativa para a classificacao em ' || v_idioma || ']}] ' ||
-        'IMPORTANTE: Comentarios com pontuacao inferior a 6 DEVEM ser marcados como "lead": false. ' ||
-        'A justificativa deve explicar o raciocinio, referenciar elementos do contexto e ser concisa (100-150 caracteres). ' ||
-        'Responda somente com o JSON solicitado, sem texto adicional',
+        'REGRAS CRITICAS OBRIGATORIAS: ' ||
+        '1. PROFISSIONAIS estabelecidos (Nutricionista, Designer, etc) com negocio = Score 9+ ' ||
+        '2. PERGUNTAS sobre COMPRA/PRECO = Score 9+ ' ||
+        '3. PEDIDOS de TUTORIAL GRATIS = Score <7 (nao sao compradores) ' ||
+        '4. INTERESSE apenas em TRIAL/GRATIS = Score <7 ' ||
+        '5. COMENTARIOS com 8+ likes = +1 bonus no score final ' ||
+        '6. Score < 6 = "lead": false (OBRIGATORIO) ' ||
+        'A justificativa deve explicar o raciocinio destacando: perfil profissional (se houver), sinais de intencao comercial vs apenas interesse em conteudo gratis, e contexto de negocio ativo. ' ||
+        'Seja concisa (100-150 caracteres). Responda somente com o JSON solicitado, sem texto adicional',
         8000,
         0.3,
         300000
