@@ -68,4 +68,5 @@ tmp/
 
 # Test files (NÃO COMMITAR!)
 test_unified_pipeline.py
-test_results_*.jsonvenv_test/
+test_results_*.json
+venv_test/
