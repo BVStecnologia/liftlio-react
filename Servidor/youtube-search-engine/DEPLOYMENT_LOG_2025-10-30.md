@@ -51,19 +51,23 @@
    ```
 4. ✅ Verificação de status (container healthy)
 
-### ⚠️ Pendência Identificada: YouTube API Key Expirada
+### ✅ Problema Resolvido: YouTube API Key
 
-**Erro no teste produção**:
-```
-API key expired. Please renew the API key.
-Key: AIzaSyD9PWLCoomqo4CyvzlqLBiYWyWflQXd8U0
-```
+**Problema Inicial**: VPS estava usando chave expirada (`...8U0`)
+**Solução**: Atualizado `.env` com chave válida do ambiente local (`...VORcE`)
+**Comando**: `docker-compose down && docker-compose up -d` (restart não carrega novas env vars)
 
-**Localização**: `/opt/youtube-search-engine/.env` no servidor VPS
+### 🎉 Teste de Produção Bem-Sucedido
 
-**Solução**: Atualizar `.env` no VPS com nova chave válida do YouTube Data API v3
+**Scanner 583** ("increase shopify sales"):
+- ✅ **Video IDs**: `QAG3ZNTPJII`, `IBt1KSPq8f8`
+- ✅ **Tempo**: 75.6s (1m 15s) - **12% mais rápido que local!**
+- ✅ **Vídeos analisados**: 20
+- ✅ **Paralelização**: Funcionando perfeitamente
 
-**Nota**: O código está funcionando perfeitamente, apenas precisa de uma chave de API válida para buscar vídeos do YouTube.
+**Vídeos Retornados**:
+1. "Easiest Way to Start Dropshipping in 2026" (Andy Stauring, 83k views)
+2. "How To Build A Branded Dropshipping Store With AI" (THE ECOM KING, 13k views)
 
 ### Endpoint de Produção
 - **URL**: http://173.249.22.2:8000
