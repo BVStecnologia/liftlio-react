@@ -135,8 +135,9 @@ Gere 5 queries SIMPLES e EFETIVAS. Retorne APENAS as queries, uma por linha."""
             temperature=0.3,
             messages=[{"role": "user", "content": prompt}]
         )
-        
+
         queries_text = response.content[0].text.strip()
+        print(f"   📊 Chamadas Claude (geração queries): 1 (Sonnet)")  # 📊 Log Sonnet
         return [q.strip() for q in queries_text.split('\n') if q.strip()][:5]
     
     async def search_youtube(self, query: str, project_data: Dict) -> List[Dict]:
@@ -587,13 +588,16 @@ CRÍTICO: Extraia DINAMI CAMENTE do texto, não invente! Se não encontrar, reto
         # FASE 2: Buscar e pré-filtrar comentários (Python) + Pre-check de qualidade
         print(f"\n   📝 [Fase 2] Buscando comentários de {len(video_data_list)} vídeos...")
 
-        videos_to_analyze = []
-        skipped_videos = 0
+        # ✅ OTIMIZAÇÃO: Buscar comentários em PARALELO
+        videos_without_comments = [v for v in video_data_list if 'sample_comments' not in v]
 
-        for video in video_data_list:
-            if 'sample_comments' not in video:
-                raw_comments = await self.fetch_video_comments(video['id'], max_comments=20)
+        if videos_without_comments:
+            print(f"   🚀 Buscando comentários de {len(videos_without_comments)} vídeos em PARALELO...")
+            comment_tasks = [self.fetch_video_comments(v['id'], max_comments=20) for v in videos_without_comments]
+            comments_results = await asyncio.gather(*comment_tasks)
 
+            # Processar comentários em batch
+            for video, raw_comments in zip(videos_without_comments, comments_results):
                 # Pré-filtro Python: Remove spam, muito curtos, links
                 filtered = []
                 for comment in raw_comments:
@@ -630,18 +634,38 @@ CRÍTICO: Extraia DINAMI CAMENTE do texto, não invente! Se não encontrar, reto
 
                 video['sample_comments'] = filtered[:12]  # MELHORIA #1: Aumentado de 8 para 12 comentários
 
-            # 🚪 MELHORIA #3: Pre-check de qualidade ANTES de gastar Haiku
-            pre_check = await self.pre_check_video_quality(video, project_intel)
+            print(f"   ✅ Comentários buscados em paralelo!")
 
-            if not pre_check['should_analyze']:
-                print(f"   ⏭️  Skipping video {video['id']}: {pre_check['rejection_reason']}")
-                skipped_videos += 1
-                continue
+        videos_to_analyze = []
+        skipped_videos = 0
+        claude_precheck_calls = 0  # 📊 Contador de chamadas Claude
 
-            # Vídeo passou no pre-check, adicionar à lista
-            videos_to_analyze.append(video)
+        # ✅ OTIMIZAÇÃO: Pre-check em BATCHES PARALELOS (5 por vez)
+        print(f"\n   🤖 Pre-check de qualidade com Claude Haiku (PARALELO)...")
+        batch_size = 5
+        batches = [video_data_list[i:i+batch_size] for i in range(0, len(video_data_list), batch_size)]
+
+        for batch_idx, batch in enumerate(batches):
+            print(f"   🚀 Batch {batch_idx+1}/{len(batches)}: Analisando {len(batch)} vídeos em paralelo...")
+
+            # Executar pre-check em PARALELO para o batch
+            precheck_tasks = [self.pre_check_video_quality(video, project_intel) for video in batch]
+            precheck_results = await asyncio.gather(*precheck_tasks)
+
+            claude_precheck_calls += len(batch)  # 📊 Incrementa contador
+
+            # Processar resultados
+            for video, pre_check in zip(batch, precheck_results):
+                if not pre_check['should_analyze']:
+                    print(f"   ⏭️  Skipping video {video['id']}: {pre_check['rejection_reason']}")
+                    skipped_videos += 1
+                    continue
+
+                # Vídeo passou no pre-check, adicionar à lista
+                videos_to_analyze.append(video)
 
         print(f"   ✅ Pre-check concluído: {len(videos_to_analyze)} vídeos aprovados, {skipped_videos} rejeitados")
+        print(f"   📊 Chamadas Claude (pre-check): {claude_precheck_calls} em {len(batches)} batches paralelos")
 
         # Se não sobrou nenhum vídeo, retornar vazio
         if not videos_to_analyze:
@@ -650,6 +674,7 @@ CRÍTICO: Extraia DINAMI CAMENTE do texto, não invente! Se não encontrar, reto
 
         # FASE 3: Análise inteligente com Haiku (apenas vídeos aprovados no pre-check)
         print(f"\n   🔍 [Fase 3] Análise inteligente dos comentários com Haiku...")
+        claude_analysis_calls = 0  # 📊 Contador de análise final
 
         # Criar resumo COM análise de comentários (apenas vídeos que passaram no pre-check)
         video_summary = []
@@ -858,6 +883,7 @@ Responda JSON (sem markdown):
                     {"role": "assistant", "content": "{"}  # Prefill: força JSON desde o início
                 ]
             )
+            claude_analysis_calls += 1  # 📊 Incrementa contador análise
 
             # Reconstruir JSON completo (prefill + resposta)
             result_text = "{" + response.content[0].text.strip()
@@ -912,6 +938,17 @@ Responda JSON (sem markdown):
             print(f"   🟡 Haiku selecionou: {len(selected_videos)} vídeos diversos")
             print(f"   💡 Raciocínio: {reasoning}")
             print(f"   💰 Custo Haiku: ${haiku_cost:.4f}")
+            print(f"   📊 Chamadas Claude (análise final): {claude_analysis_calls}")
+
+            # 📊 RESUMO TOTAL DE CURADORIA CLAUDE
+            total_claude_calls = claude_precheck_calls + claude_analysis_calls
+            print(f"\n   📊 ══════════════════════════════════════")
+            print(f"   📊 CURADORIA CLAUDE - RESUMO COMPLETO")
+            print(f"   📊 ══════════════════════════════════════")
+            print(f"   🔍 Pre-check: {claude_precheck_calls} vídeos analisados")
+            print(f"   🤖 Análise final: {claude_analysis_calls} chamada(s)")
+            print(f"   📊 TOTAL: {total_claude_calls} chamadas Claude")
+            print(f"   📊 ══════════════════════════════════════\n")
 
             return selected_videos
 
@@ -1019,10 +1056,13 @@ Retorne os IDs dos 2 melhores vídeos, um por linha."""
     
     async def search_videos(self, scanner_id: int) -> Dict:
         """Executa o processo completo de busca"""
+        import time
+        start_time = time.time()  # ⏱️ Timer global
+
         print(f"\n{'='*80}")
-        print("🚀 YOUTUBE SEARCH ENGINE V5 - PROCESSO COMPLETO")
+        print("🚀 YOUTUBE SEARCH ENGINE V5 - PROCESSO COMPLETO (PARALELO)")
         print(f"{'='*80}\n")
-        
+
         # Etapa 1: Buscar dados do projeto
         print("📋 [Etapa 1/5] Buscando dados do projeto...")
         project_data = await self.get_project_data(scanner_id)
@@ -1040,13 +1080,17 @@ Retorne os IDs dos 2 melhores vídeos, um por linha."""
         region = project_data.get('regiao', 'BR')
         print(f"   📍 Região: {region}")
         
+        # ✅ OTIMIZAÇÃO: Buscar TODAS queries em PARALELO
+        print(f"   🚀 Buscando {len(queries)} queries em PARALELO...")
+        tasks = [self.search_youtube(query, project_data) for query in queries]
+        results = await asyncio.gather(*tasks)
+
         all_videos = []
-        for query in queries:
-            videos = await self.search_youtube(query, project_data)
+        for i, videos in enumerate(results):
             all_videos.extend(videos)
-            print(f"   • Query '{query}': {len(videos)} vídeos")
-        
-        print(f"   ✅ Total: {len(all_videos)} vídeos encontrados")
+            print(f"   • Query '{queries[i][:50]}...': {len(videos)} vídeos")
+
+        print(f"   ✅ Total: {len(all_videos)} vídeos encontrados (busca paralela)")
 
         # Filtrar canais bloqueados (anti-spam)
         project_id = project_data.get('projeto_id')
@@ -1112,11 +1156,20 @@ Retorne os IDs dos 2 melhores vídeos, um por linha."""
             print(f"   URL: https://youtube.com/watch?v={video['id']}")
         
         print(f"\n🎯 IDs para o Supabase: {','.join(selected_ids)}")
-        
+
+        # ⏱️ Tempo total de execução
+        end_time = time.time()
+        duration = end_time - start_time
+
+        print(f"\n{'='*80}")
+        print(f"⏱️  TEMPO TOTAL: {duration:.1f}s ({duration/60:.1f} min)")
+        print(f"{'='*80}\n")
+
         return {
             'success': True,
             'video_ids': selected_ids,
             'video_ids_string': ','.join(selected_ids),
+            'duration_seconds': round(duration, 1),
             'selected_videos': selected_videos,
             'total_analyzed': len(filtered_videos)
         }

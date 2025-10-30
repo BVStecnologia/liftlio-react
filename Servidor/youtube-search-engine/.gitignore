@@ -65,3 +65,7 @@ htmlcov/
 temp/
 tmp/
 *.tmp
+
+# Test files (NÃO COMMITAR!)
+test_unified_pipeline.py
+test_results_*.json
