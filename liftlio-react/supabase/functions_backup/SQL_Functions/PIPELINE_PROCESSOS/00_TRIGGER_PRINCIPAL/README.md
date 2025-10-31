@@ -124,6 +124,81 @@ SELECT cron.schedule(
 
 ---
 
+## 🧠 ARQUITETURA DO PIPELINE (STATUS 1→2 e 2→3)
+
+### ⚠️ IMPORTANTE: Dois Estágios Distintos
+
+**STATUS 1→2** e **STATUS 2→3** são **SEPARADOS** e têm responsabilidades diferentes:
+
+#### 📡 **STATUS 1→2: Busca de IDs (Python + Claude AI)**
+**Função**: `process_next_project_scanner(project_id)`
+**Executa**: Uma vez por scanner (ex: 3 scanners = 3 execuções)
+
+**O que faz**:
+1. ✅ Chama Edge Function `Retornar-Ids-do-youtube`
+2. ✅ Edge Function chama **Python YouTube Search Engine V5** (VPS 173.249.22.2:8000)
+3. ✅ Python busca ~20 vídeos via YouTube API
+4. ✅ **Claude AI (Haiku)** analisa e filtra vídeos relevantes (pré-curadoria)
+5. ✅ Retorna apenas **IDs** dos vídeos aprovados (ex: "abc123,def456")
+6. ✅ Salva IDs em campo **"ID cache videos"**
+7. ✅ Marca scanner como processado: **`rodada = NULL`** (não `rodada = 2`!)
+
+**📌 Campos Atualizados**:
+- `"ID cache videos"` = IDs encontrados (ex: "qQBIYdo7Ubs,Oqh09ROE_q8")
+- `rodada` = NULL (scanner processado)
+
+**🚨 NÃO insere vídeos na tabela `Videos`! Só salva IDs no cache!**
+
+---
+
+#### 📹 **STATUS 2→3: Inserção de Vídeos (YouTube Data API)**
+**Função**: `update_video_stats(project_id)`
+**Executa**: Uma única vez (processa TODOS vídeos do cache)
+
+**O que faz**:
+1. ✅ Lê campo **"ID cache videos"** de cada scanner
+2. ✅ Para cada ID, chama **YouTube Data API v3** para buscar:
+   - Título, descrição, tags
+   - View count, like count, comment count
+   - Channel info, thumbnails
+3. ✅ **INSERT** na tabela `Videos` com todos dados coletados
+4. ✅ Busca comentários principais (via YouTube API)
+5. ✅ Busca transcrições (via serviço externo)
+6. ✅ Atualiza **"ID Verificado"** com IDs já processados
+7. ✅ Muda status do projeto para `'3'`
+
+**📌 Campos Atualizados**:
+- Tabela `Videos`: Novos registros inseridos
+- `"ID Verificado"` = IDs já processados e inseridos
+- `Projeto.status` = '3'
+
+---
+
+#### 🔍 **Diferença Entre Campos**
+
+| Campo | O que armazena | Quando é preenchido | Exemplo |
+|-------|----------------|---------------------|---------|
+| **"ID cache videos"** | IDs encontrados pelo Python+Claude | STATUS 1→2 | `"qQBIYdo7Ubs,Oqh09ROE_q8"` |
+| **"ID Verificado"** | IDs já inseridos na tabela Videos | STATUS 2→3 | `"qQBIYdo7Ubs,Oqh09ROE_q8"` |
+| **rodada** | Estado do scanner | STATUS 0→1: `1`<br>STATUS 1→2: `NULL` | `1` ou `NULL` |
+
+**💡 Fluxo Visual**:
+```
+STATUS 0→1: atualizar_scanner_rodada()
+    ↓ Scanner.rodada = 1 (todos de uma vez)
+
+STATUS 1→2: process_next_project_scanner() × N scanners
+    ↓ Python + Claude → "ID cache videos" = "abc,def,ghi"
+    ↓ Scanner.rodada = NULL (um por vez)
+
+STATUS 2→3: update_video_stats()
+    ↓ YouTube API → INSERT Videos (título, stats, etc)
+    ↓ Scanner."ID Verificado" = "abc,def,ghi"
+    ↓ Projeto.status = '3'
+```
+
+---
+
 ## 🔧 COMO FUNCIONA INTERNAMENTE
 
 ### 1. Trigger é Disparado
