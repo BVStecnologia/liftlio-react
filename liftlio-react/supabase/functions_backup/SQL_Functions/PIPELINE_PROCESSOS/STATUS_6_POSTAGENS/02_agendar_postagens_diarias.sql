@@ -32,6 +32,14 @@
 --                          Removido filtro de vídeo no Nível 3 (permite repetição)
 --                          LÓGICA CORRETA: N1/N2=tipo+vídeo_dif, N3=tipo+vídeo_rep, N4=qualquer
 -- Atualizado: 2025-10-28 - FIX: Agendar para AMANHÃ se já passou das 22h (evita posts no passado)
+-- Atualizado: 2025-10-31 - BUFFER SYSTEM: Distribuição multi-dia com limite per-day
+--                          Remove "all or nothing" logic (já agendado hoje = skip total)
+--                          NOVO: Preenche dias até alcançar meta de posts criados
+--                          Respeita Postagem_dia como LIMITE POR DIA (não por batch)
+--                          Loop WHILE com offset de dias (tenta até 14 dias futuros)
+--                          Cada dia: verifica slots disponíveis, agenda até preencher
+--                          Se dia cheio (posts >= Postagem_dia) → pula para próximo dia
+--                          Garante distribuição natural ao longo de múltiplos dias
 -- =============================================
 
 DROP FUNCTION IF EXISTS agendar_postagens_diarias(BIGINT);
@@ -59,6 +67,18 @@ DECLARE
     insert_id bigint;
     data_local date;
     data_alvo date;  -- Data para agendar (hoje ou amanhã, depende da hora)
+
+    -- NOVO: Variáveis para distribuição multi-dia
+    v_data_agendamento date;
+    v_dia_offset integer := 0;
+    v_max_dias_tentar integer := 14;  -- Tenta até 14 dias no futuro
+    v_posts_nesse_dia integer;
+    v_slots_disponiveis integer;
+    v_posts_para_esse_dia integer;
+    v_max_posts_por_dia integer;
+    v_posts_a_criar integer;
+    v_posts_pending integer;  -- NOVO: Contador de posts pending atuais
+    v_buffer_target integer := 2;  -- NOVO: Buffer desejado (sempre 2 posts pending)
 
     -- NOVO: Variáveis para proporção dinâmica
     v_produto_disponivel integer;
@@ -136,33 +156,43 @@ BEGIN
     RAISE NOTICE 'Agendando % posts com % Mentions disponíveis',
                  posts_por_dia, v_mentions_disponiveis;
 
+    -- =============================================
+    -- NOVO: BUFFER SYSTEM - Manter sempre 2 posts pending
+    -- =============================================
+    SELECT COUNT(*) INTO v_posts_pending
+    FROM "Settings messages posts"
+    WHERE "Projeto" = projeto_id_param
+    AND status = 'pending';
+
+    RAISE NOTICE '📊 BUFFER CHECK: % posts pending de meta %', v_posts_pending, v_buffer_target;
+
+    -- Calcular quantos posts criar para atingir buffer de 2
+    v_posts_a_criar := GREATEST(0, v_buffer_target - v_posts_pending);
+
+    IF v_posts_a_criar = 0 THEN
+        RAISE NOTICE '✅ BUFFER OK: Já tem % posts pending (meta: %), não precisa criar mais',
+                     v_posts_pending, v_buffer_target;
+        RETURN 0;
+    END IF;
+
+    RAISE NOTICE '🎯 BUFFER INSUFICIENTE: Criando % posts para atingir meta de %',
+                 v_posts_a_criar, v_buffer_target;
+
+    -- Guardar o limite diário (Postagem_dia)
+    v_max_posts_por_dia := posts_por_dia;
+    RAISE NOTICE 'Limite por dia: %, Total a criar: %', v_max_posts_por_dia, v_posts_a_criar;
+
     -- Obter data local no fuso horário do projeto
     data_local := (CURRENT_DATE AT TIME ZONE 'UTC' AT TIME ZONE fuso_horario_projeto)::date;
     RAISE NOTICE 'Data local no fuso %: %', fuso_horario_projeto, data_local;
 
-    -- Determinar data alvo: se passou das 22h, agenda para AMANHÃ
+    -- Determinar data inicial: se passou das 22h, começa a partir de AMANHÃ
     IF EXTRACT(HOUR FROM (NOW() AT TIME ZONE 'UTC' AT TIME ZONE fuso_horario_projeto)) >= 22 THEN
         data_alvo := data_local + INTERVAL '1 day';
-        RAISE NOTICE '⏰ Hora >= 22h, data alvo: AMANHÃ (%)', data_alvo;
+        RAISE NOTICE '⏰ Hora >= 22h, data inicial: AMANHÃ (%)', data_alvo;
     ELSE
         data_alvo := data_local;
-        RAISE NOTICE '⏰ Hora < 22h, data alvo: HOJE (%)', data_alvo;
-    END IF;
-
-    -- Verificar se já existem postagens agendadas para DATA ALVO
-    SELECT EXISTS (
-        SELECT 1
-        FROM "Settings messages posts"
-        WHERE "Projeto" = projeto_id_param
-        AND DATE(proxima_postagem AT TIME ZONE 'UTC' AT TIME ZONE fuso_horario_projeto) = data_alvo
-    ) INTO ja_agendado_hoje;
-
-    RAISE NOTICE 'Já agendado para %: %', data_alvo, ja_agendado_hoje;
-
-    -- Se já tiver agendado para data alvo, encerrar
-    IF ja_agendado_hoje THEN
-        RAISE NOTICE 'Já existem agendamentos para % (fuso local), retornando 0', data_alvo;
-        RETURN 0;
+        RAISE NOTICE '⏰ Hora < 22h, data inicial: HOJE (%)', data_alvo;
     END IF;
 
     -- =============================================
@@ -246,9 +276,50 @@ BEGIN
 
     RAISE NOTICE 'Horas usadas nos últimos 7 dias: %', horas_usadas;
 
-    -- Criar postagens diárias
-    FOR i IN 1..posts_por_dia LOOP
-        RAISE NOTICE '========== Criando postagem % de % ==========', i, posts_por_dia;
+    -- =============================================
+    -- NOVO: Distribuição multi-dia com limite per-day
+    -- =============================================
+    RAISE NOTICE '========== INICIANDO DISTRIBUIÇÃO MULTI-DIA ==========';
+    RAISE NOTICE 'Meta: criar % posts totais', v_posts_a_criar;
+    RAISE NOTICE 'Limite por dia: % posts', v_max_posts_por_dia;
+
+    WHILE posts_criados < v_posts_a_criar AND v_dia_offset < v_max_dias_tentar LOOP
+        -- Determinar data de agendamento para esta iteração
+        v_data_agendamento := data_alvo + (v_dia_offset * INTERVAL '1 day');
+
+        RAISE NOTICE '========== Analisando dia: % (offset: %) ==========',
+                     v_data_agendamento, v_dia_offset;
+
+        -- 🛡️ ANTI-SPAM PER-DAY: Contar posts JÁ agendados para este dia específico
+        SELECT COUNT(*) INTO v_posts_nesse_dia
+        FROM "Settings messages posts"
+        WHERE "Projeto" = projeto_id_param
+        AND status = 'pending'
+        AND DATE(proxima_postagem AT TIME ZONE 'UTC' AT TIME ZONE fuso_horario_projeto) = v_data_agendamento;
+
+        RAISE NOTICE 'Posts já agendados para %: %', v_data_agendamento, v_posts_nesse_dia;
+
+        -- Verificar se este dia já está cheio
+        IF v_posts_nesse_dia >= v_max_posts_por_dia THEN
+            RAISE NOTICE '⚠️ Dia % CHEIO (%/%), pulando para próximo dia',
+                         v_data_agendamento, v_posts_nesse_dia, v_max_posts_por_dia;
+            v_dia_offset := v_dia_offset + 1;
+            CONTINUE;  -- Pula para o próximo dia
+        END IF;
+
+        -- Calcular quantos slots estão disponíveis neste dia
+        v_slots_disponiveis := v_max_posts_por_dia - v_posts_nesse_dia;
+
+        -- Calcular quantos posts criar para este dia (menor entre slots disponíveis e posts restantes)
+        v_posts_para_esse_dia := LEAST(v_slots_disponiveis, v_posts_a_criar - posts_criados);
+
+        RAISE NOTICE '✅ Dia % tem % slots disponíveis, criando % posts',
+                     v_data_agendamento, v_slots_disponiveis, v_posts_para_esse_dia;
+
+        -- Criar posts para este dia específico
+        FOR i IN 1..v_posts_para_esse_dia LOOP
+            RAISE NOTICE '========== Criando postagem %/%  para dia % ==========',
+                         posts_criados + 1, v_posts_a_criar, v_data_agendamento;
 
         -- =============================================
         -- NOVO: Sistema de seleção em 4 níveis
@@ -468,8 +539,8 @@ BEGIN
 
         RAISE NOTICE 'Minutos calculados: %', minutos_base;
 
-        -- Usar data_alvo (já determinada no início: hoje ou amanhã)
-        proxima_data := data_alvo +
+        -- Usar v_data_agendamento (data específica desta iteração do loop)
+        proxima_data := v_data_agendamento +
                        (hora_base * INTERVAL '1 hour') +
                        (minutos_base * INTERVAL '1 minute');
 
@@ -529,7 +600,13 @@ BEGIN
                 RAISE NOTICE 'Erro na transação: %', SQLERRM;
                 RAISE NOTICE 'Rollback automático executado';
         END;
-    END LOOP;
+        END LOOP;  -- Fim do FOR i IN 1..v_posts_para_esse_dia
+
+        -- Avançar para o próximo dia
+        v_dia_offset := v_dia_offset + 1;
+        RAISE NOTICE 'Avançando para próximo dia (offset: %)', v_dia_offset;
+
+    END LOOP;  -- Fim do WHILE posts_criados < v_posts_a_criar
 
     -- Resumo final
     RAISE NOTICE '========== RESUMO FINAL ==========';
