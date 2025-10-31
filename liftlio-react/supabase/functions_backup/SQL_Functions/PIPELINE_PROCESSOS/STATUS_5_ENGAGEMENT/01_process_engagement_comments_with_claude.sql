@@ -340,15 +340,22 @@ Instruções importantes:
    - Comentário compartilhando experiência → compartilhe a sua também
    - Pergunta direta → responda diretamente, timestamp opcional
    - ADAPTE ao contexto! Nem toda resposta precisa seguir o mesmo padrão
-4. TIMESTAMPS (use APENAS da lista válida, NUNCA invente):
-   - Use timestamps QUANDO FIZER SENTIDO contextualmente
-   - NÃO force timestamp em toda resposta (artificial!)
+4. TIMESTAMPS - USO ESTRATÉGICO (use APENAS da lista válida, NUNCA invente):
+   - NÃO é obrigatório em todas as respostas
+   - USE estrategicamente quando:
+     • Responder pergunta sobre parte específica do vídeo
+     • Adicionar credibilidade à resposta (mostrar que assistiu)
+     • Referenciar exemplo/dado concreto mencionado no vídeo
+     • Comentário técnico que beneficia de referência exata
+   - NÃO use quando:
+     • Comentário muito simples ("obrigado!", "concordo")
+     • Resposta curta de concordância
+     • Não adiciona valor ao contexto
    - Varie a estrutura quando usar:
      ✓ "At 12:30 she mentions..." (início)
      ✓ "She talks about this at 12:30..." (meio)
      ✓ "That''s exactly what she said at 12:30" (fim)
      ✓ "Around 12:30..." (casual)
-     ✓ Ou sem timestamp se não fizer sentido no contexto
 5. VARIAÇÃO DE TAMANHO:
    - Algumas respostas: 1 frase curta
    - Algumas respostas: 2 frases
@@ -430,10 +437,16 @@ Is Lead: %s',
 CRITICAL RULES:
 1. 🚫 NEVER mention platform names (YouTube, Instagram, TikTok, Facebook, Twitter, etc.)
 2. 🚫 NEVER mention social media or platform references
-3. Timestamps are OPTIONAL - use only when contextually relevant:
-   - Simple comments → simple response (may not need timestamp)
-   - Technical questions → timestamp can help reference specific part
-   - ADAPT to comment context, don''t force patterns
+3. Timestamps - STRATEGIC USE (NOT mandatory in all responses):
+   - USE strategically when:
+     • Answering question about specific video part
+     • Adding credibility (showing you watched)
+     • Referencing concrete example/data from video
+     • Technical comment that benefits from exact reference
+   - DON''T use when:
+     • Very simple comment ("thanks!", "agreed")
+     • Short agreement response
+     • Doesn''t add value to context
 4. When using timestamps:
    - Use ONLY from VALID TIMESTAMPS LIST provided - NEVER invent
    - NEVER use timestamps below 00:15 (video intro)
@@ -467,7 +480,7 @@ CRITICAL PROPORTION RULE - READ CAREFULLY:
 
 Remember:
 - 🚫 NEVER mention platform names or social media
-- Timestamps OPTIONAL - use only when contextually relevant
+- Timestamps = STRATEGIC USE (not mandatory, use when adds value)
 - When using timestamps: pick from VALID LIST ONLY, vary structures
 - VARY response length and style based on original comment context
 - Keep responses natural (1-2 sentences usually, but adapt!)
@@ -477,6 +490,7 @@ Remember:
 - ALWAYS use tipo "produto" for comments with "is_lead": true FIRST
 - CRITICAL: Generate EXACTLY %s product mentions, no more, no less
 - Behave like NORMAL USER, not bot with rigid patterns
+- Use timestamps STRATEGICALLY to add credibility when contextually relevant
 
 Always respond exactly in this structure:
 [
