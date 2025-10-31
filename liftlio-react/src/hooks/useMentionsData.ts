@@ -126,7 +126,12 @@ export const useMentionsData = (activeTab: TabType = 'all') => {
           channel: item.video_channel || 'Unknown channel'
         },
         type: item.msg_type === 1 ? 'MENTION' : item.msg_type === 2 ? 'BRAND' : 'Outro',
-        score: parseFloat(item.comment_lead_score || '0'),
+        // Normalize score: if <= 10, multiply by 10 (old scale 0-10)
+        // if > 10, keep as is (new scale 0-100)
+        score: (() => {
+          const rawScore = parseFloat(item.comment_lead_score || '0');
+          return rawScore <= 10 ? rawScore * 10 : rawScore;
+        })(),
         comment: {
           author: item.comment_author || 'Anonymous',
           date: item.comment_published_at_formatted || '',
