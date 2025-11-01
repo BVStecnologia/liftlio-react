@@ -277,6 +277,14 @@ url = ""
 # If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
 skip_nonce_check = false
 
+# Google OAuth Provider
+[auth.external.google]
+enabled = true
+client_id = "360636127290-1k591hbvpen81oipjur2bsb1a7a6jo2o.apps.googleusercontent.com"
+secret = "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"
+# Skip nonce check for local development
+skip_nonce_check = true
+
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.
 # You can configure "web3" rate limit in the [auth.rate_limit] section and set up [auth.captcha] if self-hosting.
 [auth.web3.solana]

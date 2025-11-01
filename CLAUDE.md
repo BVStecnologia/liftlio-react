@@ -67,11 +67,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Blog**: https://blog.liftlio.com (Cloudways)
 - **LinkedIn**: `/LINKEDIN_CONTENT/` (system + strategy)
 
-## 🌿 Supabase Branching Workflow (Atualizado 13/10/2025)
+## 🌿 Supabase Branching Workflow (Atualizado 01/11/2025)
 
 ### Estrutura de Branches com Sincronização Automática
 - **main** (`suqjifkhmekcdflwowiw`): Produção, apenas updates manuais, 100% estável
 - **dev** (`cdnzajygbcujwcaoswpi`): Staging persistente, auto-deploy via migrations, ambiente de teste real
+- **dev-supabase-local** (Git branch): Desenvolvimento 100% local, Supabase rodando via Docker (localhost)
 
 ### 🔄 Sistema de Sincronização Git ↔ Supabase
 **Script Automático**: `./switch-branch.sh [dev|main|status]`
@@ -98,6 +99,38 @@ b) Deploy via MCP na DEV primeiro
 c) Testar invocação
 d) Deploy manual no LIVE quando aprovado
 ```
+
+### 💻 Ambiente Local (Branch: dev-supabase-local)
+
+**Setup Completo:**
+- **Supabase Local**: Docker rodando 9 containers (973MB RAM - otimizado M2 8GB)
+- **300 Funções SQL**: Importadas do LIVE via `supabase db dump`
+- **React App**: Conecta em http://127.0.0.1:54321 (variáveis em `.env.local`)
+- **Edge Functions**: Secrets configurados em `supabase/.env`
+- **Studio**: http://127.0.0.1:54323
+
+**Como Usar:**
+```bash
+# 1. Trocar para branch local
+git checkout dev-supabase-local
+
+# 2. Iniciar Supabase (se não estiver rodando)
+cd supabase && supabase start
+
+# 3. Iniciar React
+cd .. && npm start
+
+# App abre em: http://localhost:3000
+# Conectado em: http://127.0.0.1:54321 (local)
+```
+
+**Documentação Completa:** `/liftlio-react/supabase/SETUP_COMPLETO.md`
+
+**Vantagens:**
+- ✅ Zero risco ao ambiente LIVE
+- ✅ Testes de schema/funções isolados
+- ✅ Desenvolvimento offline
+- ✅ Dados de teste sem afetar produção
 
 ### Versionamento e Controle
 
