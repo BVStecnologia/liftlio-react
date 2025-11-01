@@ -41,17 +41,27 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
--- 2. CRIAR TRIGGER NA TABELA WAITLIST
-DROP TRIGGER IF EXISTS notify_admin_new_waitlist_signup ON public.waitlist;
+-- 2. CRIAR TRIGGER NA TABELA WAITLIST (ONLY IF TABLE EXISTS)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'waitlist'
+    ) THEN
+        DROP TRIGGER IF EXISTS notify_admin_new_waitlist_signup ON public.waitlist;
 
-CREATE TRIGGER notify_admin_new_waitlist_signup
-    AFTER INSERT ON public.waitlist
-    FOR EACH ROW
-    EXECUTE FUNCTION public.trigger_notify_admin_new_waitlist_signup();
+        CREATE TRIGGER notify_admin_new_waitlist_signup
+            AFTER INSERT ON public.waitlist
+            FOR EACH ROW
+            EXECUTE FUNCTION public.trigger_notify_admin_new_waitlist_signup();
+
+        RAISE NOTICE 'Trigger notify_admin_new_waitlist_signup created successfully';
+    ELSE
+        RAISE NOTICE 'Table waitlist does not exist - skipping trigger creation';
+    END IF;
+END $$;
 
 -- 3. COMENTÁRIOS DESCRITIVOS
 COMMENT ON FUNCTION public.trigger_notify_admin_new_waitlist_signup() IS
 'Trigger function that sends admin notification email when a new user signs up for the waitlist';
-
-COMMENT ON TRIGGER notify_admin_new_waitlist_signup ON public.waitlist IS
-'Automatically sends email notification to admins (valdair3d@gmail.com and steven@stevenjwilson.com) when a new user is added to the waitlist';

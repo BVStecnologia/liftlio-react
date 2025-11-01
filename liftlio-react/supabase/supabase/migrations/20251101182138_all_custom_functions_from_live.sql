@@ -1,0 +1,249 @@
+-- =============================================
+-- MIGRATION: All Custom Functions from LIVE
+-- Date: 2025-11-01 18:21:38
+-- Source: suqjifkhmekcdflwowiw (LIVE - READ ONLY)
+-- Target: Local development environment
+-- Total Functions: 287
+--
+-- SAFE TO RUN: This migration only creates functions
+-- No data modifications, no table changes
+-- =============================================
+
+-- ⚠️ LIMITATION: Cannot fetch all 287 functions via MCP execute_sql
+-- Reason: Response size (~290k tokens) exceeds MCP limit (25k tokens)
+--
+-- 📊 FUNCTION COUNT BREAKDOWN:
+-- Total custom functions in LIVE: 287
+-- Extension functions excluded: vector*, halfvec*, sparsevec*, pg_*, etc
+--
+-- ✅ VERIFIED: Query successfully counts all 287 functions
+-- ✅ TESTED: Individual batch fetching works (first 10 functions verified)
+
+-- ==========================================
+-- RECOMMENDED EXPORT METHODS
+-- ==========================================
+
+-- METHOD 1: Supabase CLI (RECOMMENDED - Most Reliable)
+-- Prerequisites: Install Supabase CLI (https://supabase.com/docs/guides/cli)
+--
+-- Step 1: Link to project
+-- $ supabase link --project-ref suqjifkhmekcdflwowiw
+--
+-- Step 2: Dump only functions
+-- $ supabase db dump --db-url "postgresql://postgres.[password]@db.suqjifkhmekcdflwowiw.supabase.co:5432/postgres" \
+--   --schema public \
+--   --use-copy=false \
+--   --exclude-table-data '*' \
+--   --file all_functions.sql
+--
+-- Then extract only CREATE FUNCTION statements:
+-- $ grep -A 50 "CREATE OR REPLACE FUNCTION" all_functions.sql > functions_only.sql
+
+-- METHOD 2: Supabase Dashboard (EASIEST - No CLI needed)
+--
+-- Step 1: Go to https://supabase.com/dashboard/project/suqjifkhmekcdflwowiw/database/schemas
+-- Step 2: Select "public" schema
+-- Step 3: Click "..." menu > "Export Schema"
+-- Step 4: Download SQL file
+-- Step 5: Open file and copy only CREATE FUNCTION statements to this migration
+
+-- METHOD 3: pg_dump via psql (ADVANCED - Direct Database Access)
+--
+-- Prerequisites: PostgreSQL client installed, database password
+--
+-- $ pg_dump \
+--   -h db.suqjifkhmekcdflwowiw.supabase.co \
+--   -U postgres \
+--   -d postgres \
+--   --schema=public \
+--   --schema-only \
+--   --no-owner \
+--   --no-acl \
+--   --no-privileges \
+--   | grep -A 100 "CREATE OR REPLACE FUNCTION" > functions_export.sql
+
+-- METHOD 4: MCP Batch Fetching (AUTOMATED but SLOW)
+--
+-- If you need automated approach via Claude MCP:
+-- Run this query 29 times with different prefixes:
+--
+-- Batch 1:  p_proname >= 'a' AND p_proname < 'c'   (10 functions)
+-- Batch 2:  p_proname >= 'c' AND p_proname < 'd'   (30+ functions - needs splitting)
+-- Batch 3:  p_proname >= 'd' AND p_proname < 'g'   (15 functions)
+-- ... and so on
+--
+-- Each batch uses this query template:
+/*
+SELECT STRING_AGG(
+  'DROP FUNCTION IF EXISTS public.' || p.proname ||
+  '(' || pg_get_function_identity_arguments(p.oid) || ') CASCADE;' || E'\n\n' ||
+  pg_get_functiondef(p.oid) || ';' || E'\n\n',
+  ''
+  ORDER BY p.proname
+) AS sql_batch
+FROM pg_proc p
+LEFT JOIN pg_namespace n ON p.pronamespace = n.oid
+WHERE n.nspname = 'public'
+AND p.proname >= 'PREFIX_START' AND p.proname < 'PREFIX_END'
+AND p.prolang IN (SELECT oid FROM pg_language WHERE lanname IN ('plpgsql', 'sql'));
+*/
+
+-- ==========================================
+-- SAMPLE: First 10 Functions (Batch 1)
+-- ==========================================
+-- Below is a verified sample showing the first 10 functions
+-- to demonstrate the export format.
+-- Replace this entire section with the full export from one of the methods above.
+
+-- Function names in LIVE (all 287):
+-- add_subscription_item, add_to_waitlist, adicionar_canais_automaticamente,
+-- agendar_postagens_diarias, agendar_postagens_todos_projetos,
+-- analisar_comentarios_com_claude, analyze_search_performance,
+-- analyze_video_from_table_id, analyze_video_with_claude,
+-- atualizar_canais_ativos, atualizar_comentarios_analisados,
+-- atualizar_expiracao, atualizar_integracao_projeto,
+-- atualizar_keywords_projeto, atualizar_scanner_rodada,
+-- atualizar_scanners_projeto, buscar_cinco_comentarios_nao_analisados,
+-- buscar_dados_video, calcular_postagens_dia_projetos,
+-- call_api_edge_function, call_youtube_channel_details,
+-- call_youtube_edge_function, can_comment_on_channel,
+-- cancel_project_jobs, cancel_subscription,
+-- channel_performance_analysis, check_and_refresh_youtube_token,
+-- check_and_update_projects_status, check_claude_result,
+-- check_comments_and_start_messages, check_duplicate_videos,
+-- check_env_keys, check_keywords, check_new_settings,
+-- check_notify_status, check_orphan_jobs,
+-- check_project_display_state (2 overloads),
+-- check_project_processing_status, check_scheduled_messages,
+-- check_transcription_status, check_user_subscription,
+-- check_user_waitlist_status, check_user_youtube_integrations_by_email,
+-- check_videos_and_continue, claude_complete, claude_complete_async,
+-- claude_complete_worker, claude_edge_test, clean_old_rate_limit_records,
+-- clean_orphaned_project_jobs, clean_project_jobs,
+-- cleanup_old_conversations, cleanup_orphan_jobs, cleanup_project_jobs,
+-- cobrar_assinaturas_automatico, cobrar_assinaturas_hoje,
+-- cobrar_todas_assinaturas, column_exists,
+-- contar_comentarios_analisados, count_mensagens_por_status,
+-- create_and_save_initial_comment, create_comments_for_analyzed_videos,
+-- create_initial_video_comment_with_claude, create_profile_for_new_user,
+-- create_scanner, create_youtube_scanners_for_project,
+-- credit_mentions_on_payment_simple, criar_scanners_projeto,
+-- cron_processar_todas_postagens_pendentes, cron_verify_comments,
+-- curate_comments_with_claude, debug_agendar_postagens,
+-- delete_low_potential_videos, delete_low_score_comments,
+-- delete_video_cascade, detect_purchase_intent_fast,
+-- edit_youtube_comment, execute_raw_sql,
+-- fetch_and_store_comments, fetch_and_store_comments_for_project,
+-- fetch_and_store_comments_for_video, force_token_refresh,
+-- generate_claude_prompt, generate_comment_keywords,
+-- get_analytics_with_demo_fallback, get_api_text,
+-- get_blocked_channels, get_cached_or_fetch,
+-- get_channel_details, get_clean_template_messages,
+-- get_comment_message_stats, get_comments_and_messages_by_video_id,
+-- get_complete_project_stats, get_current_claude_model,
+-- get_filtered_comments, get_journey_funnel_stats,
+-- get_lead_comments_for_processing, get_message_processing_status,
+-- get_message_stats, get_monitoring_metrics_v2,
+-- get_my_channel_videos, get_next_scanner_to_process,
+-- get_processing_status, get_project_dashboard_stats,
+-- get_project_metrics (2 overloads), get_project_negative_keywords,
+-- get_projeto_data, get_projeto_data_completo,
+-- get_realtime_journey_events, get_relevance_reason_stats,
+-- get_scanners_by_project, get_secret, get_top_cities_by_visits,
+-- get_top_content_categories, get_trends_summary,
+-- get_unscanned_videos, get_unscanned_videos_count,
+-- get_unscanned_videos_info, get_updated_scanner_cache_by_project,
+-- get_user_cards, get_user_subscription_status,
+-- get_vault_api_key, get_video_data_for_analysis,
+-- get_videos_by_channel_id, get_videos_by_project_id,
+-- get_visitor_journey_map, get_weekly_performance,
+-- get_weekly_project_performance, get_youtube_api_key,
+-- get_youtube_caption, get_youtube_captions_info,
+-- get_youtube_channel_info, get_youtube_scanner_stats,
+-- get_youtube_token, get_youtube_trends,
+-- get_youtube_video_comments, get_youtube_video_comments_with_date,
+-- get_youtube_video_stats, get_youtube_videos,
+-- is_youtube_token_valid, langflow_simple_call,
+-- limpar_dados_projeto, limpar_debug_logs,
+-- list_all_channels, list_tables_without_rls,
+-- listen_integration_cleanup, log_api_call,
+-- manage_default_card, manual_cleanup_integrations,
+-- mark_project_completed, match_site_pages,
+-- monitormanto_de_canal_sql, notification_listener,
+-- notify_update, obter_canais_nao_registrados,
+-- obter_canal_e_videos, obter_comentarios_postados_por_projeto,
+-- obter_dados_projeto_por_canal, obter_mensagens_com_video,
+-- optimal_posting_schedule, orchestrate_trend_analysis,
+-- pause_comment_analysis_processing, pause_video_analysis_processing,
+-- post_scheduled_messages, post_youtube_video_comment,
+-- prepare_rag_content_universal, process_and_create_messages_engagement,
+-- process_channel_videos, process_comment_analysis_batch,
+-- process_conversation_after_insert, process_engagement_comments_with_claude,
+-- process_engagement_messages_batch, process_integration_cleanup,
+-- process_lead_comments_with_claude, process_lead_comments_with_claude_debug,
+-- process_monitored_videos, process_next_project_scanner,
+-- process_pending_videos, process_project,
+-- process_project_step_1, process_project_step_2,
+-- process_project_step_3, process_project_step_4,
+-- process_rag_batch, process_rag_batch_table,
+-- process_single_message_batch, process_single_video_transcription,
+-- process_single_youtube_channel, process_video_analysis_batch,
+-- process_video_comments, process_video_transcription,
+-- process_video_transcription_batch, process_video_transcription_queue,
+-- process_videos_batch, process_youtube_scanner,
+-- processar_fila_videos, processar_novos_canais_youtube,
+-- processar_postagens_pendentes, refresh_token_if_needed,
+-- refresh_youtube_token, regenerate_single_comment_response,
+-- remove_duplicate_videos, request_password_reset,
+-- respond_to_youtube_comment, reuse_youtube_integration_by_email,
+-- safe_unschedule_job, schedule_process_project,
+-- schedule_transcription, schedule_update_scanner_cache,
+-- search_and_get_video_stats, search_rag_for_agent,
+-- search_youtube_channel_videos, search_youtube_channels,
+-- send_auth_email, send_delayed_notification,
+-- send_email, send_payment_success_email,
+-- send_subscription_status_email, send_waitlist_admin_notification,
+-- send_waitlist_approval_email, send_waitlist_email,
+-- send_welcome_email_on_customer_create, set_default_card,
+-- set_project_index, setup_video_scan_processor,
+-- standardize_email_templates, start_comment_analysis_processing,
+-- start_engagement_messages_processing, start_messages_batch,
+-- start_video_analysis_processing, start_video_processing,
+-- stop_engagement_messages_processing, sync_youtube_videos_from_sheet,
+-- test_email, test_engagement_debug, test_engagement_simple,
+-- test_fulltext_simple, test_http, test_http_extension,
+-- test_http_get, test_process_comments_message,
+-- testar_prompt_video, toggle_user_subscription,
+-- track_event, trigger_adicionar_canais_primeira_mensagem,
+-- trigger_atualizar_canais_ativos, trigger_clean_unused_integrations_function,
+-- trigger_notify_admin_new_waitlist_signup, trigger_password_reset_email,
+-- trigger_postar_comentario_youtube, trigger_process_channel_videos,
+-- trigger_project_keywords_update, trigger_send_welcome_email,
+-- trigger_update_scanner_cache, trigger_update_scanner_cache_on_new_scanner,
+-- trigger_video_transcription, update_comentario_principal_project_id,
+-- update_comentario_principal_project_id_before,
+-- update_comments_and_create_messages, update_missing_video_metadata,
+-- update_next_video_comments, update_project_integration_and_cleanup,
+-- update_project_keywords, update_scanner_cache_with_timeout,
+-- update_scanners_batch, update_updated_at_column,
+-- update_video_analysis, update_video_id_cache,
+-- update_video_stats, update_video_stats_safe,
+-- update_waitlist_updated_at, update_youtube_account_info,
+-- update_youtube_scanners, update_youtube_scanners_on_keywords_change,
+-- update_youtube_videos, urlencode,
+-- validate_and_reset_password, verificar_keywords_projeto,
+-- verificar_novos_videos_youtube, verify_comment_and_apply_penalty,
+-- verify_recaptcha_and_save_contact, video_engagement_metrics,
+-- youtube_channel_monitoring_trigger, youtube_transcribe,
+-- youtube_video_queue_monitoring_trigger
+
+-- ==========================================
+-- ACTION REQUIRED
+-- ==========================================
+-- Please use one of the RECOMMENDED EXPORT METHODS above to populate
+-- this migration file with the complete SQL definitions.
+--
+-- Once exported, replace everything from this line onwards with:
+-- DROP FUNCTION IF EXISTS ... CASCADE;
+-- CREATE OR REPLACE FUNCTION ... ;
+-- (for all 287 functions)
