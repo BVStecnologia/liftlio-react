@@ -20,7 +20,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. **Contexto Primeiro**: Ler arquivos relevantes ANTES de fazer mudanças
 3. **Incremental**: Fazer mudanças pequenas e testáveis
 4. **TodoWrite**: Usar SEMPRE para tarefas com 3+ etapas
-5. **Delegação MCP**: SEMPRE delegar ferramentas Supabase MCP para agente especializado
+5. **Delegação de Agentes Supabase**:
+   - **LOCAL**: Usar `supabase-local-expert` para desenvolvimento local (Docker, VSCode, testes)
+   - **LIVE**: Usar `supabase-mcp-expert` APENAS para produção/deploy remoto
 6. **Validação**: Após mudanças críticas, explicar O QUÊ mudou e POR QUÊ
 
 ## 📋 PADRÕES DE CÓDIGO
@@ -67,6 +69,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Blog**: https://blog.liftlio.com (Cloudways)
 - **LinkedIn**: `/LINKEDIN_CONTENT/` (system + strategy)
 
+## 🤖 Agentes Especializados Supabase (Atualizado 26/01/2025)
+
+### supabase-local-expert (DESENVOLVIMENTO LOCAL)
+**Quando usar:** SEMPRE que estiver desenvolvendo localmente
+- ✅ Criar/testar funções SQL no Docker local (porta 54322)
+- ✅ Executar queries direto via `docker exec`
+- ✅ Criar arquivos .sql e .test.sql
+- ✅ Debugging com VSCode PostgreSQL Extension
+- ✅ BEGIN/ROLLBACK para testes seguros
+- ✅ Usa ultrathink para análises complexas
+- ✅ Acesso total: Docker, Bash, Read, Write, Edit
+
+**Comando:** `Task → supabase-local-expert → "cria função X localmente"`
+
+### supabase-mcp-expert (PRODUÇÃO/LIVE)
+**Quando usar:** APENAS para operações remotas em produção
+- ✅ Deploy no Supabase LIVE (project_id: suqjifkhmekcdflwowiw)
+- ✅ Verificar logs de produção
+- ✅ Operações que PRECISAM ser remotas via MCP
+- ❌ NUNCA para desenvolvimento local
+- ❌ NUNCA quando trabalhando com Docker local
+
+**Comando:** `Task → supabase-mcp-expert → "deploy função X no LIVE"`
+
+### Workflow Recomendado:
+1. **Desenvolver LOCAL** com `supabase-local-expert`
+2. **Testar LOCAL** com Docker + VSCode
+3. **Commit no Git** quando aprovado
+4. **Deploy LIVE** com `supabase-mcp-expert`
+
 ## 🌿 Supabase Branching Workflow (Atualizado 01/11/2025)
 
 ### Estrutura de Branches com Sincronização Automática
@@ -109,6 +141,13 @@ d) Deploy manual no LIVE quando aprovado
 - **Edge Functions**: Secrets configurados em `supabase/.env`
 - **Studio**: http://127.0.0.1:54323
 
+**🛡️ Sistema de Proteção de Ambientes:**
+- **`.env.local`**: Arquivo EXCLUSIVO para desenvolvimento local (prioridade máxima no React)
+- **Isolamento Total**: Quando existe `.env.local`, React ignora outros `.env` files
+- **Docker Local**: Todas URLs apontam para localhost (impossível afetar produção)
+- **Gitignored**: `.env.local` nunca vai para o GitHub
+- **Failsafe**: Mesmo com erro de configuração, sempre usa localhost
+
 **Como Usar:**
 ```bash
 # 1. Trocar para branch local
@@ -118,7 +157,7 @@ git checkout dev-supabase-local
 cd supabase && supabase start
 
 # 3. Iniciar React
-cd .. && npm start
+cd .. && npm start  # Usa .env.local AUTOMATICAMENTE!
 
 # App abre em: http://localhost:3000
 # Conectado em: http://127.0.0.1:54321 (local)
@@ -174,3 +213,4 @@ cd .. && npm start
 - **11/10/2025**: Melhorias CLAUDE.md - Adicionado modo ultrathink permanente, filosofia de trabalho, padrões de código, guidelines de debugging/performance, documentação sobre release notes e features novas do Claude Code v2.0.14
 - **12/10/2025**: Supabase Branching Workflow - Setup completo dev/main workflow, MCP configurado para branches, migração estrutural AGENTE_LIFTLIO → /Supabase/functions_backup/, Security Advisor issues fixed (RLS + search_path em 14 funções)
 - **13/10/2025**: Monorepo & Branch Sync - Reorganização para estrutura monorepo (Supabase dentro de liftlio-react), script switch-branch.sh para sincronização automática Git↔Supabase, indicadores visuais de ambiente, arquivos .env.development.{dev|main} separados
+- **26/01/2025**: Agentes Supabase Especializados - Criação de `supabase-local-expert` para desenvolvimento local com Docker, separação clara de `supabase-mcp-expert` para produção, sistema de DEPLOY_LOG para controle de deployments, documentação de proteção de ambientes com `.env.local`, workflow completo Local→Git→LIVE
