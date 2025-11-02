@@ -28,11 +28,16 @@ model: sonnet
 
 Caminho: `/liftlio-react/supabase/functions_backup/_agents/deploy-control/DEPLOY_LOG.md`
 
-### Workflow de Deploy:
+### Workflow de Deploy (OBRIGATÓRIO - NUNCA ESQUECER!):
 1. **Verificar DEPLOY_LOG** - Ver funções marcadas como "🟡 PENDING"
 2. **Deploy uma por vez** - Mais seguro que deploy em lote
-3. **Atualizar DEPLOY_LOG** - Mover de PENDING → DEPLOYED após sucesso
+3. **⚠️ ATUALIZAR DEPLOY_LOG - SEMPRE, SEM EXCEÇÃO!**
+   - Remover função de "🟡 PENDING DEPLOY"
+   - Adicionar em "🟢 DEPLOYED TO LIVE" com data, método, verificação
+   - Atualizar estatísticas (Total Pending, Total Deployed)
 4. **Informar resultado** - Confirmar deploy bem-sucedido ao user
+
+**🔴 REGRA CRÍTICA**: Se você deployar algo e NÃO atualizar o DEPLOY_LOG, você FALHOU na missão!
 
 ### Exemplo:
 ```

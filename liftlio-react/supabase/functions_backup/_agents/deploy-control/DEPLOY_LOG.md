@@ -14,7 +14,6 @@
 
 | Data | Função | Tipo | Testado | Arquivo | Notas |
 |------|--------|------|---------|---------|-------|
-| 2025-11-02 | **seed.sql (helper functions)** | SQL | ✅ | supabase/seed.sql | 🔴 **DEPLOY PRIMEIRO!** Helper functions para URLs dinâmicas (get_edge_functions_url, get_edge_functions_anon_key). Aplicar via migration ou manualmente. |
 | 2025-11-02 | call_api_edge_function | SQL | ✅ | 00_Monitoramento_YouTube/06_Chamadas_Externas/ | ⏳ Deploy quando modificar. Requer seed.sql no banco. |
 | 2025-11-02 | call_youtube_channel_details | SQL | ✅ | 00_Monitoramento_YouTube/06_Chamadas_Externas/ | ⏳ Deploy quando modificar. Requer seed.sql no banco. |
 | 2025-11-02 | call_youtube_channel_details | SQL | ✅ | 01_YouTube/ | ⏳ Deploy quando modificar. Requer seed.sql no banco. |
@@ -46,7 +45,7 @@
 
 | Data Deploy | Função | Tipo | Arquivo | Deploy Method | Verificado |
 |-------------|--------|------|---------|---------------|------------|
-| <!-- Histórico de deploys bem-sucedidos --> |
+| 2025-11-02 | **seed.sql (helper functions)** | SQL | supabase/seed.sql | MCP execute_sql | ✅ Testado - Retorna URLs do LIVE |
 
 ---
 
@@ -81,8 +80,8 @@ Task → supabase-mcp-expert → "Deploy função X no LIVE"
 
 ## 📊 Estatísticas
 
-- **Total Pending**: 16 (1 helper + 15 SQL Functions)
-- **Total Deployed**: 0
+- **Total Pending**: 15 SQL Functions
+- **Total Deployed**: 1 (seed.sql helper functions)
 - **Última Atualização**: 2025-11-02
-- **Prioridade Alta**: seed.sql (🔴 Deploy primeiro!)
 - **Git Commit**: 5a1c32f (branch: dev-supabase-local)
+- **Status**: ✅ Helper functions deployadas, 15 SQL Functions prontas para deploy futuro
