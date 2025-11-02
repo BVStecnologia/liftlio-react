@@ -260,7 +260,7 @@ supabase secrets list
 # Deve mostrar: YOUTUBE_API_KEY, OPENAI_API_KEY, CLAUDE_API_KEY
 
 # Se estiver vazio, re-adicionar:
-supabase secrets set YOUTUBE_API_KEY=AIzaSyC-_USzd0Nl9VMCtQTmAWVE-50GUkVORcE
+supabase secrets set YOUTUBE_API_KEY=your-youtube-api-key-here
 ```
 
 ---
