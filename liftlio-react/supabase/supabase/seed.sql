@@ -18,7 +18,8 @@ BEGIN
     -- Caso contrário, retorna URL do LIVE
     IF EXISTS (SELECT 1 FROM pg_database WHERE datname = 'postgres' AND pg_database_size('postgres') < 1000000000) THEN
         -- Database pequeno = ambiente local
-        RETURN 'http://127.0.0.1:54321/functions/v1';
+        -- IMPORTANTE: PostgreSQL roda em Docker, precisa usar host.docker.internal
+        RETURN 'http://host.docker.internal:54321/functions/v1';
     ELSE
         -- Database grande = LIVE
         RETURN 'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1';
