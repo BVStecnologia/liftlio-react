@@ -1,0 +1,83 @@
+{
+  "SQL Test Suite Template": {
+    "prefix": "sqltest",
+    "body": [
+      "-- =============================================",
+      "-- TESTES: ${1:function_name}",
+      "-- Descrição: Suite de testes",
+      "-- =============================================",
+      "",
+      "-- 🧪 TESTE 1: Dry Run (não altera banco)",
+      "BEGIN;",
+      "    SELECT ${1:function_name}(${2:param}) as resultado;",
+      "ROLLBACK;",
+      "",
+      "-- 🚀 TESTE 2: Execução Real",
+      "SELECT ${1:function_name}(${2:param}) as resultado;",
+      "",
+      "-- 📊 TESTE 3: Verificar resultado",
+      "SELECT * FROM ${3:table_name}",
+      "WHERE ${4:condition}",
+      "LIMIT 10;",
+      "$0"
+    ],
+    "description": "Template completo de suite de testes SQL"
+  },
+
+  "SQL Dry Run Test": {
+    "prefix": "dryrun",
+    "body": [
+      "BEGIN;",
+      "    ${1:-- Executar query}",
+      "    $0",
+      "ROLLBACK;  -- Desfaz tudo"
+    ],
+    "description": "Bloco BEGIN/ROLLBACK para testes não-destrutivos"
+  },
+
+  "SQL Function Call": {
+    "prefix": "callfn",
+    "body": [
+      "SELECT ${1:function_name}(${2:params}) as ${3:result_name};"
+    ],
+    "description": "Chamar função SQL"
+  },
+
+  "SQL Check Function Exists": {
+    "prefix": "checkfn",
+    "body": [
+      "SELECT",
+      "    proname as function_name,",
+      "    pg_get_function_identity_arguments(oid) as arguments",
+      "FROM pg_proc",
+      "WHERE proname = '${1:function_name}'",
+      "AND pronamespace = 'public'::regnamespace;"
+    ],
+    "description": "Verificar se função existe"
+  },
+
+  "SQL List Projects": {
+    "prefix": "listprojects",
+    "body": [
+      "SELECT",
+      "    id,",
+      "    \"Nome projeto\",",
+      "    \"Youtube Active\",",
+      "    \"Postagem_dia\"",
+      "FROM \"Projeto\"",
+      "WHERE \"Youtube Active\" = true",
+      "LIMIT 10;"
+    ],
+    "description": "Listar projetos ativos"
+  },
+
+  "SQL Transaction Block": {
+    "prefix": "transaction",
+    "body": [
+      "BEGIN;",
+      "    $0",
+      "COMMIT;  -- Ou ROLLBACK para desfazer"
+    ],
+    "description": "Bloco de transação SQL"
+  }
+}
