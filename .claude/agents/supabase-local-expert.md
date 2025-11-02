@@ -88,6 +88,102 @@ ls -la supabase/functions/nome-funcao/
 - **Password**: postgres
 - **Database principal**: postgres (onde estão as tabelas do projeto)
 
+## 🚀 INICIAR AMBIENTE LOCAL COMPLETO
+
+**IMPORTANTE: Supabase local TEM 2 COMPONENTES SEPARADOS!**
+
+### Componente 1: Database + SQL Functions (Auto-start)
+```bash
+cd /Users/valdair/Documents/Projetos/Liftlio/liftlio-react/supabase
+supabase start
+```
+
+**O que inicia automaticamente:**
+- ✅ PostgreSQL (porta 54322)
+- ✅ 300 SQL Functions (via migrations)
+- ✅ Supabase Studio (http://127.0.0.1:54323)
+- ✅ REST API (http://127.0.0.1:54321)
+- ✅ Configurações dinâmicas (seed.sql aplica URLs locais para Edge Functions)
+
+### Componente 2: Edge Functions Server (Manual start - OBRIGATÓRIO!)
+```bash
+# EM OUTRO TERMINAL! (ou rodar em background)
+cd /Users/valdair/Documents/Projetos/Liftlio/liftlio-react/supabase
+supabase functions serve --env-file .env --no-verify-jwt
+```
+
+**O que inicia:**
+- ✅ Deno runtime (v2.1.4)
+- ✅ 16 Edge Functions locais
+- ✅ HTTP endpoints em http://127.0.0.1:54321/functions/v1/NOME
+- ✅ Hot reload (mudanças aplicam automaticamente)
+
+### Verificar que tudo está rodando:
+```bash
+# Terminal 1: Verificar Supabase
+supabase status
+
+# Terminal 2: Verificar Edge Functions
+# (deve mostrar "Serving functions on http://127.0.0.1:54321...")
+curl http://127.0.0.1:54321/functions/v1/Canal_youtube_dados \
+  -H "Content-Type: application/json" \
+  -d '{"channelId": "UCX6OQ3DkcsbYNE6H8uQQuVA"}'
+```
+
+### 🔧 Workflow Completo de Inicialização:
+
+**Passo 1: Iniciar Supabase (Terminal 1)**
+```bash
+cd supabase
+supabase start
+# Aguardar até ver "Started supabase local development setup"
+```
+
+**Passo 2: Iniciar Edge Functions (Terminal 2)**
+```bash
+cd supabase
+supabase functions serve --env-file .env --no-verify-jwt
+# Aguardar até ver "Serving functions on http://127.0.0.1:54321..."
+```
+
+**Passo 3: Iniciar React App (Terminal 3)**
+```bash
+cd /Users/valdair/Documents/Projetos/Liftlio/liftlio-react
+npm start
+# App abre em http://localhost:3000
+```
+
+### ⚠️ ERRO COMUM:
+```
+❌ "Edge Function não encontrada" ou "Connection refused"
+```
+
+**Causa:** Edge Functions server NÃO foi iniciado!
+
+**Solução:** Rodar `supabase functions serve` em terminal separado.
+
+### 🎯 URLs Dinâmicas - Sistema Automático
+
+**Como funciona:**
+1. `seed.sql` configura PostgreSQL com URLs locais:
+   ```sql
+   app.edge_functions_url = 'http://127.0.0.1:54321/functions/v1'
+   app.edge_functions_anon_key = 'sb_publishable_...'
+   ```
+
+2. SQL Functions usam `current_setting()` para pegar URLs:
+   ```sql
+   base_url := COALESCE(
+       current_setting('app.edge_functions_url', true),
+       'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1' -- fallback LIVE
+   );
+   ```
+
+3. **Resultado:**
+   - LOCAL: SQL Functions chamam `http://127.0.0.1:54321` ✅
+   - LIVE: SQL Functions chamam `https://...supabase.co` ✅
+   - **ZERO mudança de código entre ambientes!**
+
 ---
 
 ## 🛠️ ARSENAL DE FERRAMENTAS

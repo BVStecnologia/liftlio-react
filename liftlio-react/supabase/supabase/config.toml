@@ -48,6 +48,22 @@ max_client_conn = 100
 # [db.vault]
 # secret_key = "env(SECRET_VALUE)"
 
+# =============================================
+# LIFTLIO CUSTOM SETTINGS - Edge Functions URLs
+# =============================================
+# IMPORTANTE: Para SQL Functions chamarem Edge Functions localmente,
+# configurar estas variáveis no PostgreSQL via migrations ou seed.sql
+#
+# Adicionar no seed.sql ou criar migration:
+# ALTER DATABASE postgres SET app.edge_functions_url = 'http://127.0.0.1:54321/functions/v1';
+# ALTER DATABASE postgres SET app.edge_functions_anon_key = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
+#
+# SQL Functions podem usar assim:
+# COALESCE(current_setting('app.edge_functions_url', true), 'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1')
+#
+# Isso permite troca automática LOCAL <-> LIVE sem alterar código!
+# =============================================
+
 [db.migrations]
 # If disabled, migrations will be skipped during a db push or reset.
 enabled = true

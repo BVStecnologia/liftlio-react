@@ -148,20 +148,37 @@ d) Deploy manual no LIVE quando aprovado
 - **Gitignored**: `.env.local` nunca vai para o GitHub
 - **Failsafe**: Mesmo com erro de configuração, sempre usa localhost
 
-**Como Usar:**
+**Como Usar (Workflow Completo - 3 Terminais):**
 ```bash
-# 1. Trocar para branch local
+# TERMINAL 1: Trocar branch e iniciar Supabase
 git checkout dev-supabase-local
-
-# 2. Iniciar Supabase (se não estiver rodando)
 cd supabase && supabase start
+# Aguardar até ver "Started supabase local development setup"
+# ✅ PostgreSQL + 300 SQL Functions rodando
 
-# 3. Iniciar React
-cd .. && npm start  # Usa .env.local AUTOMATICAMENTE!
+# TERMINAL 2: Iniciar Edge Functions (OBRIGATÓRIO!)
+cd supabase
+supabase functions serve --env-file .env --no-verify-jwt
+# Aguardar até ver "Serving functions on http://127.0.0.1:54321..."
+# ✅ 16 Edge Functions rodando com hot reload
 
-# App abre em: http://localhost:3000
-# Conectado em: http://127.0.0.1:54321 (local)
+# TERMINAL 3: Iniciar React App
+cd /Users/valdair/Documents/Projetos/Liftlio/liftlio-react
+npm start  # Usa .env.local AUTOMATICAMENTE!
+# ✅ App abre em http://localhost:3000
+# ✅ Conectado em http://127.0.0.1:54321 (tudo local!)
 ```
+
+**⚠️ IMPORTANTE: Edge Functions requerem servidor separado!**
+- `supabase start` → Inicia PostgreSQL + SQL Functions (300 funções)
+- `supabase functions serve` → Inicia Deno + Edge Functions (16 funções)
+- Ambos são necessários para ambiente local completo!
+
+**Sistema de URLs Dinâmicas:**
+- `seed.sql` configura automaticamente URLs locais no PostgreSQL
+- SQL Functions chamam Edge Functions locais via `current_setting()`
+- Zero mudança de código entre LOCAL ↔ LIVE
+- Fallback automático para LIVE se configuração não existir
 
 **Documentação Completa:** `/liftlio-react/supabase/SETUP_COMPLETO.md`
 
@@ -214,3 +231,4 @@ cd .. && npm start  # Usa .env.local AUTOMATICAMENTE!
 - **12/10/2025**: Supabase Branching Workflow - Setup completo dev/main workflow, MCP configurado para branches, migração estrutural AGENTE_LIFTLIO → /Supabase/functions_backup/, Security Advisor issues fixed (RLS + search_path em 14 funções)
 - **13/10/2025**: Monorepo & Branch Sync - Reorganização para estrutura monorepo (Supabase dentro de liftlio-react), script switch-branch.sh para sincronização automática Git↔Supabase, indicadores visuais de ambiente, arquivos .env.development.{dev|main} separados
 - **26/01/2025**: Agentes Supabase Especializados - Criação de `supabase-local-expert` para desenvolvimento local com Docker, separação clara de `supabase-mcp-expert` para produção, sistema de DEPLOY_LOG para controle de deployments, documentação de proteção de ambientes com `.env.local`, workflow completo Local→Git→LIVE
+- **02/11/2025**: Sistema de URLs Dinâmicas para Edge Functions - Criação de `seed.sql` com configurações automáticas para PostgreSQL (`app.edge_functions_url` + `app.edge_functions_anon_key`), atualização completa de documentação (CLAUDE.md + supabase-local-expert.md) com workflow de 3 terminais, reorganização de Edge Functions para estrutura oficial Supabase CLI (`supabase/supabase/functions/`), sistema que permite SQL Functions chamarem Edge Functions locais automaticamente via `current_setting()`, zero mudança de código entre LOCAL↔LIVE
