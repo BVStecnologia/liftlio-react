@@ -11,9 +11,11 @@ model: sonnet
 **🟢 QUANDO USAR ESTE AGENTE:**
 - Desenvolvimento no Supabase Local (Docker, porta 54322)
 - Criação e teste de SQL Functions localmente
+- Criação e teste de Edge Functions localmente
 - Debugging com VSCode + PostgreSQL Extension
 - Execução de queries direto via Docker
 - Criação de arquivos .sql e .test.sql
+- Verificação de sincronização LOCAL vs LIVE
 - Análises complexas com ultrathink
 
 **❌ NUNCA USE PARA:**
@@ -33,6 +35,47 @@ model: sonnet
 - Otimizações complexas
 
 ---
+
+## 🔴 VERIFICAÇÃO OBRIGATÓRIA ANTES DE ALTERAR FUNÇÕES
+
+### ⚠️ CRÍTICO: SEMPRE VERIFICAR SINCRONIZAÇÃO
+
+**ANTES de alterar QUALQUER função (SQL ou Edge), OBRIGATÓRIO:**
+
+1. **Para SQL Functions - Verificar versão no banco local:**
+```bash
+# SEMPRE executar ANTES de alterar
+docker exec -i supabase_db_Supabase psql -U postgres -d postgres << 'EOF'
+SELECT
+    proname as function_name,
+    pg_get_functiondef(oid) as current_definition
+FROM pg_proc
+WHERE proname = 'nome_da_funcao'
+AND pronamespace = 'public'::regnamespace;
+EOF
+```
+
+2. **Comparar com arquivo local:**
+```bash
+# Se diferente, AVISAR o user IMEDIATAMENTE:
+# "⚠️ ATENÇÃO: Função no banco está DIFERENTE do arquivo local!"
+# "Qual versão usar? [banco/arquivo/merge]"
+```
+
+3. **Para Edge Functions - Verificar se existe localmente:**
+```bash
+# Verificar se existe em supabase/functions/
+ls -la supabase/functions/nome-funcao/
+
+# Se não existir, AVISAR:
+# "❌ Edge Function não existe localmente!"
+# "Preciso baixar do LIVE primeiro? [sim/não]"
+```
+
+### 🚨 REGRA DE OURO:
+**NUNCA alterar uma função sem verificar se arquivo local = banco postgres**
+- Já houve casos de dessincronização que causaram problemas
+- SEMPRE use ultrathink se houver diferenças para analisar qual versão é correta
 
 ## 💻 AMBIENTE LOCAL
 
@@ -344,7 +387,120 @@ docker logs supabase_db_Supabase --tail 50
 docker exec -i supabase_db_Supabase psql -U postgres -d postgres -c "SELECT * FROM pg_stat_activity WHERE state != 'idle';"
 ```
 
-### 3️⃣ Comparar com LIVE
+### 3️⃣ Edge Functions - Desenvolvimento Local
+
+**ATENÇÃO: Temos 20 Edge Functions no LIVE, apenas 3 locais!**
+
+#### Status de Sincronização (CRÍTICO):
+```
+LIVE (20 funções) vs LOCAL (3 funções):
+❌ 17 Edge Functions FALTANDO localmente!
+
+Funções presentes:
+✅ Canal_youtube_dados
+✅ retornar-ids-do-youtube
+✅ video-qualifier-wrapper
+
+Funções FALTANDO (precisa sincronizar):
+❌ claude-proxy, stripe-payment, integracao-validacao
+❌ Dados-da-url, bright-function, Positive-trends
+❌ negative-trends, analyze-url, save-card
+❌ process-payment, create-checkout, agente-liftlio
+❌ generate-embedding, process-rag-batch
+❌ email-automation-engine, update-youtube-info
+❌ upload-image-to-storage
+```
+
+#### Criar Nova Edge Function:
+```bash
+# 1. Estrutura obrigatória
+cd supabase/functions
+mkdir nome-funcao
+cd nome-funcao
+
+# 2. Criar index.ts
+cat > index.ts << 'EOF'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { corsHeaders } from '../_shared/cors.ts'
+
+serve(async (req) => {
+  // CORS para desenvolvimento
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    const { param1, param2 } = await req.json()
+
+    // Lógica aqui
+    const result = {
+      message: "Hello from Edge Function!",
+      data: { param1, param2 }
+    }
+
+    return new Response(
+      JSON.stringify(result),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200
+      }
+    )
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500
+      }
+    )
+  }
+})
+EOF
+```
+
+#### Testar Edge Function Localmente:
+```bash
+# 1. Servir função
+cd /Users/valdair/Documents/Projetos/Liftlio/liftlio-react/supabase
+supabase functions serve nome-funcao --debug
+
+# 2. Testar com curl (outro terminal)
+curl -i --location --request POST \
+  'http://127.0.0.1:54321/functions/v1/nome-funcao' \
+  --header 'Authorization: Bearer sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' \
+  --header 'Content-Type: application/json' \
+  --data '{"param1": "teste", "param2": 123}'
+
+# 3. Ver logs em tempo real (aparece no terminal do serve)
+```
+
+#### Secrets para Edge Functions:
+```bash
+# Criar arquivo supabase/.env.local
+echo "MY_SECRET=valor" >> supabase/.env.local
+echo "YOUTUBE_API_KEY=AIzaSyBA9xgJVdkGmy1zUS7knY3qnmJxExqPY6A" >> supabase/.env.local
+
+# No index.ts usar:
+const secret = Deno.env.get('MY_SECRET')
+const youtubeKey = Deno.env.get('YOUTUBE_API_KEY')
+```
+
+#### SEMPRE após criar/testar Edge Function:
+```bash
+# 1. Salvar backup
+cp supabase/functions/nome-funcao/index.ts \
+   supabase/functions_backup/Edge_Functions/nome-funcao.ts
+
+# 2. Atualizar DEPLOY_LOG
+echo "| $(date +%Y-%m-%d) | nome-funcao | Edge | ⏳ | Edge_Functions/nome-funcao.ts | descrição |" \
+  >> supabase/functions_backup/_agents/deploy-control/DEPLOY_LOG.md
+
+# 3. Git commit
+git add .
+git commit -m "feat: Add nome-funcao edge function (tested locally)"
+```
+
+### 4️⃣ Comparar com LIVE
 
 **Ver diferenças:**
 ```bash
