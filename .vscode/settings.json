@@ -1,5 +1,10 @@
 {
     "kiroAgent.configureMCP": "Disabled",
     "python-envs.defaultEnvManager": "ms-python.python:system",
-    "python-envs.pythonProjects": []
+    "python-envs.pythonProjects": [],
+    "vscode-postgres.defaultConnection": "Supabase Local",
+    "vscode-postgres.defaultDatabase": "postgres",
+    "vscode-postgres.showExplorer": true,
+    "vscode-postgres.prettyPrintJSONfields": true,
+    "vscode-postgres.tableColumnSortOrder": "db-order"
 }
