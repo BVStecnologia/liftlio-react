@@ -23,10 +23,14 @@ CREATE OR REPLACE FUNCTION public.send_email(
 AS $function$
 DECLARE
     auth_key TEXT;
+    base_url TEXT;
     http_response http_response;
     request_body JSONB;
     recipients JSONB;
 BEGIN
+    -- Obter URLs dinâmicas (LOCAL ou LIVE automaticamente)
+    base_url := get_edge_functions_url();
+
     -- Preparar array de destinatários
     IF recipient_email LIKE '[%' THEN
         -- É um array JSON
@@ -35,58 +39,62 @@ BEGIN
         -- É um email único
         recipients := to_jsonb(ARRAY[recipient_email]);
     END IF;
-    
-    -- Obter chave de autenticação
+
+    -- Obter chave de autenticação com fallback para helper function
     BEGIN
         auth_key := current_setting('app.settings.supabase_service_role_key', true);
         IF auth_key IS NULL THEN
             auth_key := current_setting('app.settings.supabase_anon_key', true);
         END IF;
         IF auth_key IS NULL THEN
-            -- Use sua chave anon como fallback
-            auth_key := 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I';
+            -- Usar helper function como fallback
+            auth_key := get_edge_functions_anon_key();
         END IF;
     EXCEPTION WHEN OTHERS THEN
-        auth_key := 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I';
+        -- Usar helper function em caso de erro
+        auth_key := get_edge_functions_anon_key();
     END;
-    
+
     -- Montar corpo da requisição
     request_body := jsonb_build_object(
         'to', recipients,
         'subject', email_subject,
         'complexity', complexity
     );
-    
+
     -- Adicionar campos opcionais
     IF email_html IS NOT NULL THEN
         request_body := request_body || jsonb_build_object('html', email_html);
     END IF;
-    
+
     IF email_text IS NOT NULL THEN
         request_body := request_body || jsonb_build_object('text', email_text);
     END IF;
-    
+
     IF template_id IS NOT NULL THEN
         request_body := request_body || jsonb_build_object('templateId', template_id);
     END IF;
-    
+
     IF variables IS NOT NULL THEN
         request_body := request_body || jsonb_build_object('variables', variables);
     END IF;
-    
+
     IF actions IS NOT NULL THEN
         request_body := request_body || jsonb_build_object('actions', actions);
     END IF;
-    
+
     IF attachments IS NOT NULL THEN
         request_body := request_body || jsonb_build_object('attachments', attachments);
     END IF;
-    
+
+    -- Log para depuração
+    RAISE NOTICE 'Ambiente: % | Enviando email para: %', base_url, recipients;
+
     -- Chamar Edge Function
     SELECT * INTO http_response
     FROM http((
         'POST',
-        'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/email-automation-engine',
+        base_url || '/email-automation-engine',
         ARRAY[
             http_header('Content-Type', 'application/json'),
             http_header('Authorization', 'Bearer ' || auth_key)

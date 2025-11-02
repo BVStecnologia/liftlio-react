@@ -26,7 +26,12 @@ DECLARE
     http_response http_response;
     request_body JSONB;
     recipients JSONB;
+    base_url TEXT;
+    auth_key TEXT;
 BEGIN
+    -- Obter URLs dinâmicas (LOCAL ou LIVE automaticamente)
+    base_url := get_edge_functions_url();
+    auth_key := get_edge_functions_anon_key();
     -- Preparar array de destinatários
     IF recipient_email LIKE '[%' THEN
         -- É um array JSON
@@ -86,7 +91,7 @@ BEGIN
     SELECT * INTO http_response
     FROM http((
         'POST',
-        'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/email-automation-engine',
+        base_url || '/email-automation-engine',
         ARRAY[
             http_header('Content-Type', 'application/json'),
             http_header('Authorization', 'Bearer ' || auth_key)

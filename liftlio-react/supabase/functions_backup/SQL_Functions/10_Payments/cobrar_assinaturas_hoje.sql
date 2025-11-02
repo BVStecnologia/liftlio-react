@@ -25,7 +25,13 @@ DECLARE
     request_body TEXT;
     timeout_ms INTEGER := 30000; -- 30 segundos
     v_next_billing_date DATE;
+    base_url TEXT;
+    auth_key TEXT;
 BEGIN
+    -- Obter URLs dinâmicas (LOCAL ou LIVE automaticamente)
+    base_url := get_edge_functions_url();
+    auth_key := get_edge_functions_anon_key();
+
     -- Buscar assinaturas para cobrar hoje
     FOR v_sub IN
         SELECT
@@ -82,17 +88,17 @@ BEGIN
             -- Configurar timeout
             PERFORM http_set_curlopt('CURLOPT_TIMEOUT_MS', timeout_ms::text);
 
-            -- Log para debug (comentar em produção)
-            RAISE NOTICE 'Processando assinatura %: %', v_sub.id, request_body;
+            -- Log para debug
+            RAISE NOTICE 'Ambiente: % | Processando assinatura %: %', base_url, v_sub.id, request_body;
 
             -- Chamar Edge Function process-payment
             SELECT * INTO http_response
             FROM http((
                 'POST',
-                'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/process-payment',
+                base_url || '/process-payment',
                 ARRAY[
                     http_header('Content-Type', 'application/json'),
-                    http_header('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyNjUwOTM0NCwiZXhwIjoyMDQyMDg1MzQ0fQ.O-RO8VMAjfxZzZmDcyJeKABJJ2cn9OfIpapuxDENH8c')
+                    http_header('Authorization', 'Bearer ' || auth_key)
                 ]::http_header[],
                 'application/json',
                 request_body

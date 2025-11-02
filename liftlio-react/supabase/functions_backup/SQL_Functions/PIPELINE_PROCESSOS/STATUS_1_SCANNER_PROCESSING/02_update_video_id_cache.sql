@@ -15,7 +15,13 @@ AS $function$
       video_ids text := '';
       request_body text;
       timeout_seconds integer := 180; -- 180 segundos (3 minutos de folga)
+      base_url TEXT;
+      auth_key TEXT;
   BEGIN
+      -- Obter URLs dinâmicas (LOCAL ou LIVE automaticamente)
+      base_url := get_edge_functions_url();
+      auth_key := get_edge_functions_anon_key();
+
       -- Verifica se o scanner existe
       IF NOT EXISTS (SELECT 1 FROM public."Scanner de videos do youtube" WHERE id = scanner_id) THEN
           RETURN 'Scanner ID ' || scanner_id || ' não encontrado';
@@ -27,14 +33,17 @@ AS $function$
       -- Configura o timeout em segundos
       PERFORM http_set_curlopt('CURLOPT_TIMEOUT', timeout_seconds::text);
 
+      -- Log para depuração
+      RAISE NOTICE 'Ambiente: % | Enviando requisição: %', base_url, request_body;
+
       -- Faz a chamada à Edge Function CORRETA: Retornar-Ids-do-youtube
       SELECT * INTO http_response
       FROM http((
           'POST',
-          'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/Retornar-Ids-do-youtube',
+          base_url || '/Retornar-Ids-do-youtube',
           ARRAY[
               http_header('Content-Type', 'application/json'),
-              http_header('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I')
+              http_header('Authorization', 'Bearer ' || auth_key)
           ]::http_header[],
           'application/json',
           request_body

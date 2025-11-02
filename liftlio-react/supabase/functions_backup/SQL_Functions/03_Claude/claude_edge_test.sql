@@ -1,13 +1,16 @@
-CREATE OR REPLACE FUNCTION public.claude_edge_test(user_prompt text, system_prompt text DEFAULT 'você é um professor'::text)
+CREATE OR REPLACE FUNCTION public.claude_edge_test(user_prompt text, system_prompt text DEFAULT 'vocï¿½ ï¿½ um professor'::text)
  RETURNS text
  LANGUAGE plpgsql
 AS $function$
 DECLARE
     response JSONB;
     http_response http_response;
-    url TEXT := 'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/claude-teste';
-    auth_token TEXT := 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I';
+    url TEXT;
+    auth_token TEXT;
 BEGIN
+    -- Obter URLs dinÃ¢micas (LOCAL ou LIVE automaticamente)
+    url := get_edge_functions_url() || '/claude-teste';
+    auth_token := get_edge_functions_anon_key();
     SELECT * INTO http_response
     FROM http((
         'POST',

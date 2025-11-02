@@ -10,7 +10,12 @@ CREATE OR REPLACE FUNCTION public.orchestrate_trend_analysis()
 AS $function$
 DECLARE
     start_time timestamp;
+    base_url TEXT;
+    auth_key TEXT;
 BEGIN
+    -- Obter URLs dinâmicas (LOCAL ou LIVE automaticamente)
+    base_url := get_edge_functions_url();
+    auth_key := get_edge_functions_anon_key();
     start_time := clock_timestamp();
 
     -- Disparar Positive Trends (fire and forget)
@@ -22,10 +27,10 @@ BEGIN
         -- Fazer a chamada
         PERFORM http((
             'POST',
-            'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/Positive-trends',
+            base_url || '/Positive-trends',
             ARRAY[
                 http_header('Content-Type', 'application/json'),
-                http_header('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I')
+                http_header('Authorization', 'Bearer ' || auth_key)
             ]::http_header[],
             'application/json',
             '{
@@ -56,10 +61,10 @@ BEGIN
         -- Fazer a chamada
         PERFORM http((
             'POST',
-            'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/negative-trends',
+            base_url || '/negative-trends',
             ARRAY[
                 http_header('Content-Type', 'application/json'),
-                http_header('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I')
+                http_header('Authorization', 'Bearer ' || auth_key)
             ]::http_header[],
             'application/json',
             '{

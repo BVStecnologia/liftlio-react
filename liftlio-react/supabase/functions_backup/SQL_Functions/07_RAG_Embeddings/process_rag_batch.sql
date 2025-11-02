@@ -9,7 +9,12 @@ DECLARE
     v_failed INTEGER := 0;
     v_start_time TIMESTAMP := clock_timestamp();
     v_errors JSONB := '[]'::JSONB;
+    base_url TEXT;
+    auth_key TEXT;
 BEGIN
+    -- Obter URLs dinÃ¢micas (LOCAL ou LIVE automaticamente)
+    base_url := get_edge_functions_url();
+    auth_key := get_edge_functions_anon_key();
     -- USAR A VIEW v_rag_pending_data
     FOR v_record IN
         SELECT *
@@ -18,7 +23,7 @@ BEGIN
         LIMIT p_batch_size
     LOOP
         BEGIN
-            -- 1. Preparar conteúdo
+            -- 1. Preparar conteï¿½do
             v_content := prepare_rag_content_universal(
                 v_record.table_name,
                 v_record.record_id,
@@ -49,10 +54,10 @@ BEGIN
                 )
             FROM http((
                 'POST',
-                'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/generate-embedding',
+                base_url || '/generate-embedding',
                 ARRAY[
                     http_header('Content-Type', 'application/json'),
-                    http_header('Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I')
+                    http_header('Authorization', 'Bearer ' || auth_key)
                 ]::http_header[],
                 'application/json',
                 jsonb_build_object('text', v_content)::text
@@ -64,7 +69,7 @@ BEGIN
                 embedding = EXCLUDED.embedding,
                 updated_at = NOW();
 
-            -- 3. Marcar como processado (UPDATE específico por tabela)
+            -- 3. Marcar como processado (UPDATE especï¿½fico por tabela)
             CASE v_record.table_name
                 WHEN 'Mensagens' THEN
                     UPDATE "Mensagens"
@@ -111,8 +116,8 @@ BEGIN
                     SET rag_processed = TRUE, rag_processed_at = NOW()
                     WHERE id = v_record.record_id;
 
-                WHEN 'Integrações' THEN
-                    UPDATE "Integrações"
+                WHEN 'Integraï¿½ï¿½es' THEN
+                    UPDATE "Integraï¿½ï¿½es"
                     SET rag_processed = TRUE, rag_processed_at = NOW()
                     WHERE id = v_record.record_id;
 
