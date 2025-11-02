@@ -2,7 +2,7 @@
 -- Função: check_user_subscription
 -- Descrição: Verifica status da assinatura do usuário E waitlist
 -- Criado: 2025-01-23
--- Atualizado: 2025-01-19 - Adicionado verificação de waitlist
+-- Atualizado: 2025-11-01 - BUGFIX: Corrigido c."Mentions" → c.mentions (case-sensitive)
 -- Lógica: Subscription PRIMEIRO, depois waitlist
 -- =============================================
 
@@ -52,7 +52,7 @@ BEGIN
         s.is_production,
         s.cancelled_at,
         s.created_at,
-        c."Mentions" as mentions_available,
+        c.mentions as mentions_available,  -- ✅ FIXED: was c."Mentions" (case-sensitive bug)
         -- Lógica completa de ativo
         CASE
             WHEN s.status = 'active' AND s.next_billing_date >= CURRENT_DATE THEN true
