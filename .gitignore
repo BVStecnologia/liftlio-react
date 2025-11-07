@@ -28,3 +28,7 @@ Servidor/**/*.pyd
 Servidor/**/.pytest_cache/
 Servidor/**/.coverage
 Servidor/**/htmlcov/
+
+# MCP Configuration (CONTAINS SENSITIVE KEYS!)
+.mcp.json
+*.mcp.json
