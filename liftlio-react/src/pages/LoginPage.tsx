@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import Login from '../components/Login'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import styled, { keyframes } from 'styled-components'
 import WaveParticles3D from '../components/WaveParticles3D'
 import { supabase } from '../lib/supabaseClient'
-import LocalhostAuthFallback from '../components/LocalhostAuthFallback'
-import { isLocalhost } from '../lib/localhostAuthHelper'
 
 // Componente de ícone personalizado
 const SpinnerIcon = () => <span className="icon-spinner">⟳</span>;
@@ -266,17 +264,6 @@ const LoadingText = styled.p`
 const LoginPage: React.FC = () => {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
-  const [showAuthFallback, setShowAuthFallback] = useState(false)
-
-  // Auto-show fallback on localhost after a delay if not authenticated
-  useEffect(() => {
-    if (isLocalhost() && !loading && !user) {
-      const timer = setTimeout(() => {
-        setShowAuthFallback(true)
-      }, 5000) // Show after 5 seconds if login hasn't succeeded
-      return () => clearTimeout(timer)
-    }
-  }, [loading, user])
 
   useEffect(() => {
     // Se o usuário já estiver autenticado, verificar estado antes de redirecionar
@@ -348,14 +335,6 @@ const LoginPage: React.FC = () => {
       <ContentWrapper>
         <Login />
       </ContentWrapper>
-
-      {/* Show auth fallback helper on localhost when OAuth might be failing */}
-      {isLocalhost() && showAuthFallback && (
-        <LocalhostAuthFallback
-          visible={showAuthFallback}
-          onClose={() => setShowAuthFallback(false)}
-        />
-      )}
     </LoginPageContainer>
   )
 }
