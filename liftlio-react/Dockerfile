@@ -1,5 +1,14 @@
 FROM node:20 as build
 WORKDIR /app
+
+# Declarar ARGs para pegar secrets do Fly.io durante o build
+ARG REACT_APP_SUPABASE_URL
+ARG REACT_APP_SUPABASE_ANON_KEY
+
+# Tornar disponíveis como ENV durante o build
+ENV REACT_APP_SUPABASE_URL=$REACT_APP_SUPABASE_URL
+ENV REACT_APP_SUPABASE_ANON_KEY=$REACT_APP_SUPABASE_ANON_KEY
+
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
 COPY . .
