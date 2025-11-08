@@ -1017,6 +1017,7 @@ const AuthCallback = () => {
   const { user, loading } = useAuth();
   const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
   const [isProcessing, setIsProcessing] = React.useState(true);
+  const [authError, setAuthError] = React.useState<string | null>(null);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -1027,35 +1028,102 @@ const AuthCallback = () => {
       const isLocalhost = window.location.hostname === 'localhost' ||
                          window.location.hostname === '127.0.0.1';
 
+      // Clear any stale auth data on localhost to avoid conflicts
+      if (isLocalhost) {
+        console.log('[AuthCallback] Localhost detected, clearing stale auth data');
+        // Clear multiple storage keys that might have stale tokens
+        ['supabase.auth.token', 'supabase.auth.token.local', 'sb-auth-token'].forEach(key => {
+          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
+        });
+      }
+
       // Extract tokens from URL (both hash and query params)
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const searchParams = new URLSearchParams(window.location.search);
 
+      // Check for PKCE flow params (code) first, then implicit flow (access_token)
+      const code = searchParams.get('code');
       const access_token = hashParams.get('access_token') || searchParams.get('access_token');
       const refresh_token = hashParams.get('refresh_token') || searchParams.get('refresh_token');
+      const error_description = hashParams.get('error_description') || searchParams.get('error_description');
 
-      if (access_token && isLocalhost) {
-        console.log('[AuthCallback] Found OAuth tokens on localhost, manually setting session');
+      // Handle OAuth errors
+      if (error_description) {
+        console.error('[AuthCallback] OAuth error:', error_description);
+        setAuthError(error_description);
+        hideGlobalLoader();
+        setIsProcessing(false);
+        return;
+      }
+
+      // For PKCE flow (preferred for localhost)
+      if (code && isLocalhost) {
+        console.log('[AuthCallback] PKCE authorization code detected, exchanging for session');
 
         try {
-          // Manually set the session for localhost
-          const { data, error } = await supabase.auth.setSession({
-            access_token,
-            refresh_token: refresh_token || ''
-          });
+          // Let Supabase handle the code exchange automatically
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
           if (error) {
-            console.error('[AuthCallback] Error setting session:', error);
-            // Continue to normal flow, let Supabase handle it
+            console.error('[AuthCallback] Error exchanging code:', error);
+            setAuthError(error.message);
           } else if (data?.session) {
-            console.log('[AuthCallback] Session manually set successfully');
+            console.log('[AuthCallback] Session established via PKCE flow');
             // Clean the URL
             window.history.replaceState({}, document.title, window.location.pathname);
-            // Force a small delay to ensure session is fully established
-            await new Promise(resolve => setTimeout(resolve, 500));
           }
         } catch (error) {
-          console.error('[AuthCallback] Exception setting session:', error);
+          console.error('[AuthCallback] Exception in PKCE flow:', error);
+          setAuthError('Failed to establish session. Please try again.');
+        }
+      }
+      // For implicit flow (fallback or production)
+      else if (access_token) {
+        console.log('[AuthCallback] Implicit flow tokens detected');
+
+        // Only manually set session on localhost if automatic detection fails
+        if (isLocalhost) {
+          console.log('[AuthCallback] Attempting manual session setup for localhost');
+
+          // Wait a bit for Supabase's automatic detection
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          // Check if session was automatically set
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+
+          if (!currentSession) {
+            console.log('[AuthCallback] No automatic session, manually setting');
+
+            try {
+              // Try to manually set the session as a last resort
+              const { data, error } = await supabase.auth.setSession({
+                access_token,
+                refresh_token: refresh_token || ''
+              });
+
+              if (error) {
+                console.error('[AuthCallback] Error setting session:', error);
+
+                // If it's a clock skew error, provide specific guidance
+                if (error.message?.includes('issued in the future')) {
+                  setAuthError('Clock synchronization issue detected. Please sync your system time and try again.');
+                } else {
+                  setAuthError(error.message);
+                }
+              } else if (data?.session) {
+                console.log('[AuthCallback] Session manually set successfully');
+              }
+            } catch (error) {
+              console.error('[AuthCallback] Exception setting session:', error);
+              setAuthError('Failed to establish session. Please try again.');
+            }
+          } else {
+            console.log('[AuthCallback] Session was automatically set by Supabase');
+          }
+
+          // Clean the URL regardless
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
       }
 
@@ -1092,6 +1160,49 @@ const AuthCallback = () => {
       }
     }
   }, [user, loading, isProcessing, navigate]);
+
+  // Show error message if auth failed
+  if (authError) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        padding: '20px',
+        backgroundColor: '#0a0a0a',
+        color: '#ffffff'
+      }}>
+        <div style={{
+          maxWidth: '500px',
+          padding: '30px',
+          backgroundColor: '#1a1a1a',
+          borderRadius: '12px',
+          border: '1px solid #333',
+          textAlign: 'center'
+        }}>
+          <h2 style={{ color: '#ff4444', marginBottom: '20px' }}>Authentication Error</h2>
+          <p style={{ marginBottom: '20px', lineHeight: '1.6' }}>{authError}</p>
+          <button
+            onClick={() => window.location.href = '/login'}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#8b5cf6',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: '500'
+            }}
+          >
+            Return to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Loading global está sendo mostrado
   return null;

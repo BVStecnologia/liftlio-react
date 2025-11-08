@@ -39,16 +39,30 @@ const isLocalhost = typeof window !== 'undefined' &&
   (window.location.hostname === 'localhost' ||
    window.location.hostname === '127.0.0.1');
 
-// Create Supabase client with OAuth configuration
+// Create Supabase client with improved OAuth configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     detectSessionInUrl: true,  // Automatically detect and handle OAuth callbacks
     autoRefreshToken: true,
     persistSession: storageConfig.persistSession,
-    flowType: 'implicit', // Hash-based OAuth redirect
+    // Use PKCE flow instead of implicit for better security and localhost compatibility
+    flowType: isLocalhost ? 'pkce' : 'implicit',
     ...(storageConfig.storage && { storage: storageConfig.storage }),
     // Add debug mode for localhost
-    debug: isLocalhost && process.env.NODE_ENV === 'development'
+    debug: isLocalhost && process.env.NODE_ENV === 'development',
+    // Additional OAuth configuration for localhost
+    ...(isLocalhost && {
+      // Increase timeout for OAuth operations
+      storageKey: 'supabase.auth.token.local',
+      // Use sessionStorage on localhost to avoid persistence issues
+      persistSession: false
+    })
+  },
+  // Add global configuration for better localhost handling
+  global: {
+    headers: {
+      'X-Client-Info': 'liftlio-react-localhost'
+    }
   }
 })
 
