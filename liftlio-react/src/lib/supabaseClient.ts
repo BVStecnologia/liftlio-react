@@ -51,12 +51,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     // Add debug mode for localhost
     debug: isLocalhost && process.env.NODE_ENV === 'development',
     // Additional OAuth configuration for localhost
-    ...(isLocalhost && {
-      // Increase timeout for OAuth operations
-      storageKey: 'supabase.auth.token.local',
-      // Use sessionStorage on localhost to avoid persistence issues
-      persistSession: false
-    })
+// DISABLED PKCE FIX:     ...(isLocalhost && {
+// DISABLED PKCE FIX:       // Increase timeout for OAuth operations
+// DISABLED PKCE FIX:       storageKey: 'supabase.auth.token.local',
+// DISABLED PKCE FIX:       // Use sessionStorage on localhost to avoid persistence issues
+// DISABLED PKCE FIX:       persistSession: false
+// DISABLED PKCE FIX:     })
   },
   // Add global configuration for better localhost handling
   global: {

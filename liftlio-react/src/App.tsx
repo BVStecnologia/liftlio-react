@@ -1028,15 +1028,19 @@ const AuthCallback = () => {
       const isLocalhost = window.location.hostname === 'localhost' ||
                          window.location.hostname === '127.0.0.1';
 
-      // Clear any stale auth data on localhost to avoid conflicts
-      if (isLocalhost) {
-        console.log('[AuthCallback] Localhost detected, clearing stale auth data');
-        // Clear multiple storage keys that might have stale tokens
-        ['supabase.auth.token', 'supabase.auth.token.local', 'sb-auth-token'].forEach(key => {
-          localStorage.removeItem(key);
-          sessionStorage.removeItem(key);
-        });
-      }
+      // ⚠️ FIXED (2025-11-08): Removed localStorage clearing that was breaking PKCE flow
+      // The code below was deleting the code_verifier needed for OAuth PKCE exchange,
+      // causing error: "both auth code and code verifier should be non-empty"
+
+// DISABLED:       // Clear any stale auth data on localhost to avoid conflicts
+// DISABLED:       if (isLocalhost) {
+// DISABLED:         console.log('[AuthCallback] Localhost detected, clearing stale auth data');
+// DISABLED:         // Clear multiple storage keys that might have stale tokens
+// DISABLED:         ['supabase.auth.token', 'supabase.auth.token.local', 'sb-auth-token'].forEach(key => {
+// DISABLED:           localStorage.removeItem(key);
+// DISABLED:           sessionStorage.removeItem(key);
+// DISABLED:         });
+// DISABLED:       }
 
       // Extract tokens from URL (both hash and query params)
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -1057,27 +1061,35 @@ const AuthCallback = () => {
         return;
       }
 
-      // For PKCE flow (preferred for localhost)
-      if (code && isLocalhost) {
-        console.log('[AuthCallback] PKCE authorization code detected, exchanging for session');
+      // ⚠️ FIXED (2025-11-08): Removed manual PKCE exchange - Supabase does it automatically!
+      // With detectSessionInUrl: true in supabaseClient.ts, Supabase automatically:
+      // 1. Detects code in URL
+      // 2. Retrieves code_verifier from storage
+      // 3. Exchanges code for session
+      // 4. Saves session and triggers SIGNED_IN
+      // Our code should just wait and check session, not do exchange again!
 
-        try {
-          // Let Supabase handle the code exchange automatically
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-          if (error) {
-            console.error('[AuthCallback] Error exchanging code:', error);
-            setAuthError(error.message);
-          } else if (data?.session) {
-            console.log('[AuthCallback] Session established via PKCE flow');
-            // Clean the URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        } catch (error) {
-          console.error('[AuthCallback] Exception in PKCE flow:', error);
-          setAuthError('Failed to establish session. Please try again.');
-        }
-      }
+// DISABLED AUTO EXCHANGE:       // For PKCE flow (preferred for localhost)
+// DISABLED AUTO EXCHANGE:       if (code && isLocalhost) {
+// DISABLED AUTO EXCHANGE:         console.log('[AuthCallback] PKCE authorization code detected, exchanging for session');
+// DISABLED AUTO EXCHANGE: 
+// DISABLED AUTO EXCHANGE:         try {
+// DISABLED AUTO EXCHANGE:           // Let Supabase handle the code exchange automatically
+// DISABLED AUTO EXCHANGE:           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+// DISABLED AUTO EXCHANGE: 
+// DISABLED AUTO EXCHANGE:           if (error) {
+// DISABLED AUTO EXCHANGE:             console.error('[AuthCallback] Error exchanging code:', error);
+// DISABLED AUTO EXCHANGE:             setAuthError(error.message);
+// DISABLED AUTO EXCHANGE:           } else if (data?.session) {
+// DISABLED AUTO EXCHANGE:             console.log('[AuthCallback] Session established via PKCE flow');
+// DISABLED AUTO EXCHANGE:             // Clean the URL
+// DISABLED AUTO EXCHANGE:             window.history.replaceState({}, document.title, window.location.pathname);
+// DISABLED AUTO EXCHANGE:           }
+// DISABLED AUTO EXCHANGE:         } catch (error) {
+// DISABLED AUTO EXCHANGE:           console.error('[AuthCallback] Exception in PKCE flow:', error);
+// DISABLED AUTO EXCHANGE:           setAuthError('Failed to establish session. Please try again.');
+// DISABLED AUTO EXCHANGE:         }
+// DISABLED AUTO EXCHANGE:       }
       // For implicit flow (fallback or production)
       else if (access_token) {
         console.log('[AuthCallback] Implicit flow tokens detected');
