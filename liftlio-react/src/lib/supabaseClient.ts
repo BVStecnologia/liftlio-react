@@ -1,6 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { retryNetworkRequest } from '../utils/networkErrorHandler'
 import { safeFetch, detectExtensionIssues } from '../utils/fetchWrapper'
+import { getStorageConfig } from './clockSkewStorage'
 
 // Read from environment variables (supports .env.development for DEV and .env.production for LIVE)
 export const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!
@@ -30,8 +31,26 @@ if (typeof window !== 'undefined') {
   detectExtensionIssues();
 }
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Get storage configuration (with clock skew tolerance for localhost)
+const storageConfig = getStorageConfig();
+
+// Determine if we're on localhost
+const isLocalhost = typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' ||
+   window.location.hostname === '127.0.0.1');
+
+// Create Supabase client with OAuth configuration
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    detectSessionInUrl: true,  // Automatically detect and handle OAuth callbacks
+    autoRefreshToken: true,
+    persistSession: storageConfig.persistSession,
+    flowType: 'implicit', // Hash-based OAuth redirect
+    ...(storageConfig.storage && { storage: storageConfig.storage }),
+    // Add debug mode for localhost
+    debug: isLocalhost && process.env.NODE_ENV === 'development'
+  }
+})
 
 // Função auxiliar para chamar RPCs enquanto o TypeScript é atualizado
 export async function callRPC(functionName: string, params: Record<string, any>) {
@@ -39,9 +58,9 @@ export async function callRPC(functionName: string, params: Record<string, any>)
     // Obter o token do usuário atual se disponível
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token || supabaseAnonKey;
-    
+
     console.log(`Chamando RPC ${functionName} com token:`, session ? 'Token do usuário' : 'Token anônimo');
-    
+
     const response = await safeFetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
       method: 'POST',
       headers: {
@@ -52,13 +71,13 @@ export async function callRPC(functionName: string, params: Record<string, any>)
       body: JSON.stringify(params),
       timeout: 30000
     });
-    
+
     // Verificar se a resposta HTTP foi bem-sucedida
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Error ${response.status}: ${errorText}`);
     }
-    
+
     const data = await response.json();
     return data;
   }, 3, 1000);
@@ -70,10 +89,10 @@ export async function callEdgeFunction(functionName: string, params: Record<stri
     // Obter o token do usuário atual se disponível
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token || supabaseAnonKey;
-    
+
     console.log(`Chamando Edge Function ${functionName} com:`, params);
     console.log('Token usado:', token ? 'Token do usuário' : 'Token anônimo');
-    
+
     const response = await safeFetch(`${supabaseUrl}/functions/v1/${functionName}`, {
       method: 'POST',
       headers: {
@@ -83,7 +102,7 @@ export async function callEdgeFunction(functionName: string, params: Record<stri
       body: JSON.stringify(params),
       timeout: 60000
     });
-    
+
     // Para erro 429, retornar a resposta em vez de lançar erro
     if (response.status === 429) {
       const errorData = await response.json();
@@ -93,11 +112,11 @@ export async function callEdgeFunction(functionName: string, params: Record<stri
         error: errorData.error || errorData.message || 'Rate limit exceeded'
       };
     }
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`Edge Function ${functionName} erro ${response.status}:`, errorText);
-      
+
       // Tentar parsear erro JSON se possível
       try {
         const errorJson = JSON.parse(errorText);
@@ -106,7 +125,7 @@ export async function callEdgeFunction(functionName: string, params: Record<stri
         throw new Error(`Error ${response.status}: ${errorText}`);
       }
     }
-    
+
     const data = await response.json();
     return data;
   }, 3, 1000);

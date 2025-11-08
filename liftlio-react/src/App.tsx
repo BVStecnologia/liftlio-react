@@ -275,33 +275,8 @@ const AppContent: React.FC = () => {
     }
   };
 
-  // Root-level authentication handling
-  // This handles tokens that arrive on any path, not just the callback path
-  useEffect(() => {
-    // Check if we have an auth token in the URL hash
-    if (window.location.hash && window.location.hash.includes('access_token')) {
-      console.log('Detected auth token, processing directly...');
-      
-      // Load the Supabase client here to process the token
-      import('./lib/supabaseClient').then(({ supabase }) => {
-        // The hash contains the session information - let's process it
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        
-        if (accessToken) {
-          console.log('Found access token, setting session...');
-          
-          // Let Supabase handle the token
-          supabase.auth.getSession().then(({ data }) => {
-            console.log('Session checked:', data.session ? 'Found' : 'Not found');
-            
-            // If we got a session, all is good - no redirect needed
-            // The auth provider will handle the user state
-          });
-        }
-      });
-    }
-  }, []);
+  // OAuth handling is now automatic via detectSessionInUrl: true in supabaseClient.ts
+  // No manual processing needed - Supabase handles it automatically
 
   return (
     <>
@@ -1040,66 +1015,84 @@ const AuthCallback = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading } = useAuth();
-  const { showGlobalLoader } = useGlobalLoading();
-  
+  const { showGlobalLoader, hideGlobalLoader } = useGlobalLoading();
+  const [isProcessing, setIsProcessing] = React.useState(true);
+
   useEffect(() => {
-    // Mostrar loading global durante callback
-    showGlobalLoader('Authenticating', 'Verifying your credentials');
-    
-    // Log all details for debugging
-    console.log('AuthCallback: Running authentication callback handler');
-    console.log('Current location:', window.location.href);
-    console.log('User state:', user ? 'Logged in' : 'Not logged in');
-    console.log('Loading state:', loading);
-    
-    // Check if there's an access token in the URL hash (direct hash redirect)
-    if (window.location.hash && window.location.hash.includes('access_token')) {
-      console.log('Found access token in URL hash, processing...');
-      
-      try {
-        // Need to manually process the hash for Supabase
-        const hashParams = new URLSearchParams(
-          window.location.hash.substring(1) // remove the # character
-        );
-        
-        if (hashParams.get('access_token')) {
-          console.log('Successfully extracted access token');
-          
-          // Let Supabase handle the token
-          import('./lib/supabaseClient').then(({ supabase }) => {
-            // Check current session
-            supabase.auth.getSession().then(({ data: sessionData }) => {
-              if (sessionData.session) {
-                console.log('Active session found, redirecting to dashboard');
-                navigate('/dashboard', { replace: true });
-              } else {
-                console.log('No active session, trying to establish one...');
-                
-                // Force a refresh based on the URL tokens
-                setTimeout(() => {
-                  navigate('/dashboard', { replace: true });
-                }, 1000);
-              }
-            });
+    const handleCallback = async () => {
+      // Show loading during authentication
+      showGlobalLoader('Authenticating', 'Verifying your credentials');
+
+      // Check if we're on localhost and need special handling
+      const isLocalhost = window.location.hostname === 'localhost' ||
+                         window.location.hostname === '127.0.0.1';
+
+      // Extract tokens from URL (both hash and query params)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const searchParams = new URLSearchParams(window.location.search);
+
+      const access_token = hashParams.get('access_token') || searchParams.get('access_token');
+      const refresh_token = hashParams.get('refresh_token') || searchParams.get('refresh_token');
+
+      if (access_token && isLocalhost) {
+        console.log('[AuthCallback] Found OAuth tokens on localhost, manually setting session');
+
+        try {
+          // Manually set the session for localhost
+          const { data, error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token: refresh_token || ''
           });
+
+          if (error) {
+            console.error('[AuthCallback] Error setting session:', error);
+            // Continue to normal flow, let Supabase handle it
+          } else if (data?.session) {
+            console.log('[AuthCallback] Session manually set successfully');
+            // Clean the URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            // Force a small delay to ensure session is fully established
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        } catch (error) {
+          console.error('[AuthCallback] Exception setting session:', error);
         }
-      } catch (error) {
-        console.error('Error processing auth callback:', error);
+      }
+
+      // Now check the auth state
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session) {
+        console.log('[AuthCallback] Session confirmed, redirecting to dashboard');
+        hideGlobalLoader();
+        navigate('/dashboard', { replace: true });
+      } else if (!loading) {
+        // Only redirect to login if we're not still loading
+        console.log('[AuthCallback] No session after callback, redirecting to login');
+        hideGlobalLoader();
         navigate('/login', { replace: true });
       }
-    } else {
-      // Normal callback handling
-      if (!loading) {
-        console.log('Standard callback flow, user:', user ? 'Found' : 'Not found');
-        if (user) {
-          navigate('/dashboard', { replace: true });
-        } else {
-          navigate('/login', { replace: true });
-        }
+
+      setIsProcessing(false);
+    };
+
+    // Run the callback handler
+    handleCallback();
+  }, [navigate, showGlobalLoader, hideGlobalLoader]);
+
+  // Keep checking auth state changes
+  useEffect(() => {
+    if (!isProcessing && !loading) {
+      if (user) {
+        console.log('[AuthCallback] User detected after processing, redirecting to dashboard');
+        navigate('/dashboard', { replace: true });
+      } else {
+        console.log('[AuthCallback] No user after processing, redirecting to login');
+        navigate('/login', { replace: true });
       }
     }
-  }, [user, loading, navigate, location, showGlobalLoader]);
-  
+  }, [user, loading, isProcessing, navigate]);
+
   // Loading global está sendo mostrado
   return null;
 };
