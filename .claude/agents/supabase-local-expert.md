@@ -1,3 +1,33 @@
+# 📝 ATUALIZAÇÃO 10/11/2025 - Leia primeiro!
+
+## ⚡ NOVA FORMA MAIS SIMPLES DE INICIAR:
+
+```bash
+cd C:/Users/User/Desktop/Liftlio/liftlio-react
+./scripts/dev-local.sh  # Inicia TUDO automaticamente!
+```
+
+**Outros ambientes:**
+- `./scripts/dev-staging.sh` - DEV remoto
+- `./scripts/dev-live.sh` - LIVE produção
+
+## 📂 PATHS ATUALIZADOS:
+
+**Scripts:**
+- ✅ NOVO: `C:/Users/User/Desktop/Liftlio/liftlio-react/scripts/dev-*.sh`
+- ❌ ANTIGO: `./switch-branch.sh` (não usar mais!)
+
+**Docs:**
+- ✅ `C:/Users/User/Desktop/Liftlio/liftlio-react/docs/README-DEV.md`
+- ✅ `C:/Users/User/Desktop/Liftlio/liftlio-react/docs/ENV-SETUP.md`
+
+**Credenciais (FORA DO GIT):**
+- ✅ `C:/Users/User/.liftlio-credentials/.env.development.*`
+
+---
+
+# (Restante do arquivo original abaixo)
+
 ---
 name: supabase-local-expert
 description: Expert for Supabase LOCAL development with full access to Docker, PostgreSQL, and all development tools
