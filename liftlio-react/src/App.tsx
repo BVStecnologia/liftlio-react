@@ -1067,25 +1067,17 @@ const AuthCallback = () => {
       // 2. Retrieves code_verifier from storage
       // 3. Exchanges code for session
       // 4. Saves session and triggers SIGNED_IN
-      // For implicit flow (now the primary flow)
-      if (access_token) {
-        console.log('[AuthCallback] Implicit flow tokens detected');
-        console.log('[AuthCallback] Waiting for Supabase to process implicit flow tokens...');
+      // DON'T DO MANUAL EXCHANGE - Supabase handles automatically with detectSessionInUrl: true
+      if (code || access_token) {
+        if (code) {
+          console.log('[AuthCallback] PKCE code detected, letting Supabase handle automatically');
+        } else {
+          console.log('[AuthCallback] Implicit flow tokens detected');
+        }
 
-        // With detectSessionInUrl: true, Supabase automatically handles the tokens
-        // Just wait a bit for processing
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Clean the URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-      // For PKCE flow (currently disabled due to Dashboard configuration issues)
-      else if (code) {
-        console.log('[AuthCallback] PKCE code detected but using implicit flow');
-        console.log('[AuthCallback] Waiting for redirect...');
-
-        // Wait a moment for any processing
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Just wait for Supabase to complete the automatic processing
+        console.log('[AuthCallback] Waiting for Supabase automatic session detection...');
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
         // Clean the URL
         window.history.replaceState({}, document.title, window.location.pathname);
