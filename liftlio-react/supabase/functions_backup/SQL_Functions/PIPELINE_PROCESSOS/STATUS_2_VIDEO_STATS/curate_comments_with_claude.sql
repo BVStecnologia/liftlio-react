@@ -1,10 +1,12 @@
 -- =============================================
 -- Função: curate_comments_with_claude
--- Descrição: Usa Claude AI para curar os 100 melhores comentários e selecionar
---            quantidade ADAPTATIVA baseada em lógica anti-spam
+-- Descrição: Usa Claude AI para curar os melhores comentários e selecionar
+--            quantidade ADAPTATIVA baseada em lógica anti-spam.
+--            DELETA comentários não curados para manter apenas os selecionados.
 -- Criado: 2025-10-27
--- Atualizado: 2025-10-27 - Adicionada lógica anti-spam adaptativa
+-- Atualizado: 2025-11-11 - Sincronizado com código DEV (adicionados DELETEs)
 -- Dependências: get_filtered_comments(), claude_complete()
+-- ⚠️ ATENÇÃO: Esta função DELETA comentários permanentemente!
 -- =============================================
 
 DROP FUNCTION IF EXISTS curate_comments_with_claude(bigint);
@@ -142,7 +144,7 @@ BEGIN
     RAISE NOTICE '🤖 Chamando Claude: Filtrados (%) > Max respostas (%), selecionando top %',
                  v_total_filtrados, v_max_respostas, v_max_respostas;
 
-    -- 6. Buscar dados do projeto (produto/serviço)
+    -- 5. Buscar dados do projeto (produto/serviço)
     SELECT jsonb_build_object(
         'project_id', p.id,
         'product_name', COALESCE(
@@ -171,7 +173,7 @@ BEGIN
         );
     END IF;
 
-    -- 7. Construir prompt para Claude com quantidade ADAPTATIVA
+    -- 6. Construir prompt para Claude com quantidade ADAPTATIVA
     v_prompt := format(
         'Você é um especialista em curadoria de comentários do YouTube para estratégias de marketing e engajamento.
 
@@ -315,7 +317,7 @@ Responda APENAS com o JSON array, sem texto adicional.',
         v_max_respostas
     );
 
-    -- 8. Chamar Claude
+    -- 7. Chamar Claude
     SELECT claude_complete(
         v_prompt,
         format('You are an expert in YouTube comment curation for marketing strategies with STRICT anti-spam enforcement.
@@ -364,7 +366,7 @@ Respond only with the requested JSON array.',
         0.3    -- temperature (mais focado)
     ) INTO v_claude_response;
 
-    -- 6. Validar resposta do Claude
+    -- 8. Validar resposta do Claude
     IF v_claude_response IS NULL THEN
         RAISE NOTICE 'Claude retornou NULL';
         RETURN jsonb_build_object(
@@ -373,7 +375,7 @@ Respond only with the requested JSON array.',
         );
     END IF;
 
-    -- 7. Converter resposta para JSONB (limpar markdown se necessário)
+    -- 9. Converter resposta para JSONB (limpar markdown se necessário)
     BEGIN
         v_claude_response := regexp_replace(v_claude_response, '^\s*```json\s*', '', 'i');
         v_claude_response := regexp_replace(v_claude_response, '\s*```\s*$', '');
@@ -388,7 +390,7 @@ Respond only with the requested JSON array.',
         );
     END;
 
-    -- 9. Enriquecer resultado com metadados (incluindo dados anti-spam)
+    -- 10. Enriquecer resultado com metadados (incluindo dados anti-spam)
     v_result := jsonb_build_object(
         'video_id', video_id_param,
         'video_title', v_video_data->>'title',
@@ -403,9 +405,10 @@ Respond only with the requested JSON array.',
         'curated_comments', v_result
     );
 
-    -- 10. DELETAR comentários não curados (manter apenas os selecionados por Claude)
+    -- 11. 🗑️ DELETAR comentários não curados (manter apenas os selecionados por Claude)
     RAISE NOTICE '🗑️ Iniciando limpeza de comentários não curados...';
 
+    -- Deletar Settings relacionados
     WITH curated_ids AS (
         SELECT (elem->>'comment_id')::bigint as id
         FROM jsonb_array_elements(v_result->'curated_comments') elem
@@ -414,6 +417,7 @@ Respond only with the requested JSON array.',
     WHERE "Videos" = video_id_param
     AND "Comentarios_Principal" NOT IN (SELECT id FROM curated_ids);
 
+    -- Deletar respostas dos comentários não curados
     WITH curated_ids AS (
         SELECT (elem->>'comment_id')::bigint as id
         FROM jsonb_array_elements(v_result->'curated_comments') elem
@@ -426,6 +430,7 @@ Respond only with the requested JSON array.',
         AND cp.id NOT IN (SELECT id FROM curated_ids)
     );
 
+    -- Deletar comentários principais não curados
     WITH curated_ids AS (
         SELECT (elem->>'comment_id')::bigint as id
         FROM jsonb_array_elements(v_result->'curated_comments') elem
@@ -434,6 +439,7 @@ Respond only with the requested JSON array.',
     WHERE video_id = video_id_param
     AND id NOT IN (SELECT id FROM curated_ids);
 
+    -- Atualizar comment_count do vídeo
     UPDATE "Videos"
     SET comment_count = (
         SELECT COUNT(*)
@@ -462,6 +468,9 @@ $function$;
 -- =============================================
 -- SELECT curate_comments_with_claude(28591);
 --
+-- ⚠️ ATENÇÃO: Esta função DELETA comentários permanentemente!
+-- Apenas os comentários selecionados por Claude serão mantidos.
+--
 -- Retorna JSON com comentários curados (quantidade adaptativa anti-spam):
 -- {
 --   "video_id": 28591,
@@ -474,18 +483,7 @@ $function$;
 --   "max_safe_responses": 6,
 --   "curation_mode": "claude_adaptive",
 --   "curated_at": "2025-10-27T...",
---   "curated_comments": [
---     {
---       "comment_id": "abc123",
---       "rank": 1,
---       "score_total": 95,
---       "scores": {...},
---       "reasoning": "...",
---       "estrategia_sugerida": "...",
---       "red_flags": null
---     },
---     ...
---   ]
+--   "curated_comments": [...]
 -- }
 --
 -- LÓGICA ANTI-SPAM:
