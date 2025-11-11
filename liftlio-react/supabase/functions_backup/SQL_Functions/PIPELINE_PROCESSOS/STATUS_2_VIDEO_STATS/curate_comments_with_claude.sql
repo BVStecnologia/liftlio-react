@@ -403,6 +403,48 @@ Respond only with the requested JSON array.',
         'curated_comments', v_result
     );
 
+    -- 10. DELETAR comentários não curados (manter apenas os selecionados por Claude)
+    RAISE NOTICE '🗑️ Iniciando limpeza de comentários não curados...';
+
+    WITH curated_ids AS (
+        SELECT (elem->>'comment_id')::bigint as id
+        FROM jsonb_array_elements(v_result->'curated_comments') elem
+    )
+    DELETE FROM "Settings messages posts"
+    WHERE "Videos" = video_id_param
+    AND "Comentarios_Principal" NOT IN (SELECT id FROM curated_ids);
+
+    WITH curated_ids AS (
+        SELECT (elem->>'comment_id')::bigint as id
+        FROM jsonb_array_elements(v_result->'curated_comments') elem
+    )
+    DELETE FROM "Respostas_Comentarios"
+    WHERE comment_id IN (
+        SELECT cp.id
+        FROM "Comentarios_Principais" cp
+        WHERE cp.video_id = video_id_param
+        AND cp.id NOT IN (SELECT id FROM curated_ids)
+    );
+
+    WITH curated_ids AS (
+        SELECT (elem->>'comment_id')::bigint as id
+        FROM jsonb_array_elements(v_result->'curated_comments') elem
+    )
+    DELETE FROM "Comentarios_Principais"
+    WHERE video_id = video_id_param
+    AND id NOT IN (SELECT id FROM curated_ids);
+
+    UPDATE "Videos"
+    SET comment_count = (
+        SELECT COUNT(*)
+        FROM "Comentarios_Principais"
+        WHERE video_id = video_id_param
+    )
+    WHERE id = video_id_param;
+
+    RAISE NOTICE '✅ Limpeza concluída: mantidos apenas % comentários curados',
+                 jsonb_array_length(v_result->'curated_comments');
+
     RETURN v_result;
 
 EXCEPTION

@@ -1067,76 +1067,28 @@ const AuthCallback = () => {
       // 2. Retrieves code_verifier from storage
       // 3. Exchanges code for session
       // 4. Saves session and triggers SIGNED_IN
-      // Our code should just wait and check session, not do exchange again!
-
-// DISABLED AUTO EXCHANGE:       // For PKCE flow (preferred for localhost)
-// DISABLED AUTO EXCHANGE:       if (code && isLocalhost) {
-// DISABLED AUTO EXCHANGE:         console.log('[AuthCallback] PKCE authorization code detected, exchanging for session');
-// DISABLED AUTO EXCHANGE: 
-// DISABLED AUTO EXCHANGE:         try {
-// DISABLED AUTO EXCHANGE:           // Let Supabase handle the code exchange automatically
-// DISABLED AUTO EXCHANGE:           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-// DISABLED AUTO EXCHANGE: 
-// DISABLED AUTO EXCHANGE:           if (error) {
-// DISABLED AUTO EXCHANGE:             console.error('[AuthCallback] Error exchanging code:', error);
-// DISABLED AUTO EXCHANGE:             setAuthError(error.message);
-// DISABLED AUTO EXCHANGE:           } else if (data?.session) {
-// DISABLED AUTO EXCHANGE:             console.log('[AuthCallback] Session established via PKCE flow');
-// DISABLED AUTO EXCHANGE:             // Clean the URL
-// DISABLED AUTO EXCHANGE:             window.history.replaceState({}, document.title, window.location.pathname);
-// DISABLED AUTO EXCHANGE:           }
-// DISABLED AUTO EXCHANGE:         } catch (error) {
-// DISABLED AUTO EXCHANGE:           console.error('[AuthCallback] Exception in PKCE flow:', error);
-// DISABLED AUTO EXCHANGE:           setAuthError('Failed to establish session. Please try again.');
-// DISABLED AUTO EXCHANGE:         }
-// DISABLED AUTO EXCHANGE:       }
-      // For implicit flow (fallback or production)
-      else if (access_token) {
+      // For implicit flow (now the primary flow)
+      if (access_token) {
         console.log('[AuthCallback] Implicit flow tokens detected');
+        console.log('[AuthCallback] Waiting for Supabase to process implicit flow tokens...');
 
-        // Only manually set session on localhost if automatic detection fails
-        if (isLocalhost) {
-          console.log('[AuthCallback] Attempting manual session setup for localhost');
+        // With detectSessionInUrl: true, Supabase automatically handles the tokens
+        // Just wait a bit for processing
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-          // Wait a bit for Supabase's automatic detection
-          await new Promise(resolve => setTimeout(resolve, 1000));
+        // Clean the URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+      // For PKCE flow (currently disabled due to Dashboard configuration issues)
+      else if (code) {
+        console.log('[AuthCallback] PKCE code detected but using implicit flow');
+        console.log('[AuthCallback] Waiting for redirect...');
 
-          // Check if session was automatically set
-          const { data: { session: currentSession } } = await supabase.auth.getSession();
+        // Wait a moment for any processing
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-          if (!currentSession) {
-            console.log('[AuthCallback] No automatic session, manually setting');
-
-            try {
-              // Try to manually set the session as a last resort
-              const { data, error } = await supabase.auth.setSession({
-                access_token,
-                refresh_token: refresh_token || ''
-              });
-
-              if (error) {
-                console.error('[AuthCallback] Error setting session:', error);
-
-                // If it's a clock skew error, provide specific guidance
-                if (error.message?.includes('issued in the future')) {
-                  setAuthError('Clock synchronization issue detected. Please sync your system time and try again.');
-                } else {
-                  setAuthError(error.message);
-                }
-              } else if (data?.session) {
-                console.log('[AuthCallback] Session manually set successfully');
-              }
-            } catch (error) {
-              console.error('[AuthCallback] Exception setting session:', error);
-              setAuthError('Failed to establish session. Please try again.');
-            }
-          } else {
-            console.log('[AuthCallback] Session was automatically set by Supabase');
-          }
-
-          // Clean the URL regardless
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
+        // Clean the URL
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
 
       // Now check the auth state

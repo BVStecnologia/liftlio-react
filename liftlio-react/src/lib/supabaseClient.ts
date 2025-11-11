@@ -45,8 +45,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,  // Automatically detect and handle OAuth callbacks
     autoRefreshToken: true,
     persistSession: storageConfig.persistSession,
-    // Use PKCE flow instead of implicit for better security and localhost compatibility
-    flowType: isLocalhost ? 'pkce' : 'implicit',
+    // Using implicit flow temporarily - PKCE requires specific Dashboard configuration
+    // TODO: Switch back to PKCE after configuring Supabase Dashboard redirect URLs
+    flowType: 'implicit',
     ...(storageConfig.storage && { storage: storageConfig.storage }),
     // Add debug mode for localhost
     debug: isLocalhost && process.env.NODE_ENV === 'development',
