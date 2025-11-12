@@ -3,9 +3,21 @@
 -- Tipo: Função BASE (não faz INSERT)
 --
 -- Descrição:
---   Gera o texto de um comentário autêntico para vídeo do YouTube usando Claude AI.
---   Analisa transcrição, dados do projeto, exemplos de mensagens aprovadas e instruções
---   específicas do usuário para criar um comentário natural e contextualizado.
+--   Gera comentário EGO-FIRST para vídeo do YouTube usando Strategy #4.
+--   ZERO menção a produto/serviço - foco 100% em ego boost + pergunta estratégica.
+--   Pergunta é construída para ABRIR espaço para reply mencionar produto naturalmente.
+--
+-- Estratégia (Comment Pair - Part 1):
+--   1. Analisa transcrição para identificar pain point que produto resolve
+--   2. Cria ego boost sobre esse ponto específico (com timestamp)
+--   3. Faz pergunta sobre como creator ESCALA/RESOLVE esse desafio
+--   4. Adiciona variabilidade (tom casual 6-9/10, imperfeições naturais)
+--
+-- Archetypes Psicológicos (escolhido dinamicamente):
+--   - RECOGNITION: Elogia clareza + pergunta sobre dificuldades comuns
+--   - CURIOSITY: Reflexão "what if" + pergunta exploratória
+--   - ALIGNMENT: Concordância forte + pergunta sobre processo
+--   - APPRECIATION: Agradecimento + pergunta sobre detalhe crítico
 --
 -- Entrada:
 --   p_project_id INTEGER - ID do projeto (busca país, produto, keywords, instruções)
@@ -13,7 +25,7 @@
 --
 -- Saída:
 --   JSONB contendo:
---   - comment: texto do comentário gerado
+--   - comment: texto do comentário (EGO + PERGUNTA, zero produto)
 --   - justificativa: explicação do raciocínio usado
 --   - youtube_video_id: ID do vídeo no YouTube
 --   - debug_info: informações de debug de cada etapa
@@ -25,6 +37,7 @@
 -- Criado: 2025-01-23
 -- Atualizado: 2025-10-01 - Documentação melhorada
 -- Atualizado: 2025-10-24 - JSON parsing robusto com regex cleanup + erro propagado
+-- Atualizado: 2025-01-12 - REDESIGN: Strategy #4 (ego-first, zero produto, pergunta estratégica)
 -- =============================================
 
 DROP FUNCTION IF EXISTS create_initial_video_comment_with_claude(INTEGER, INTEGER);
@@ -47,9 +60,37 @@ DECLARE
     v_user_special_instructions TEXT;
     v_video_data JSONB;
     v_debug_info JSONB := '{}';
+
+    -- Variáveis de randomização para anti-spam detection
+    v_tone_variance INTEGER;
+    v_target_word_count INTEGER;
+    v_imperfection_type TEXT;
+    v_use_emoji BOOLEAN;
 BEGIN
     -- Registrar início da execução
     v_debug_info := v_debug_info || jsonb_build_object('step', 'start', 'timestamp', clock_timestamp());
+
+    -- Randomizar variáveis para anti-spam detection
+    v_tone_variance := floor(random() * 4) + 6;           -- Tom casual: 6-9
+    v_target_word_count := floor(random() * 9) + 16;      -- Palavras: 16-24
+    v_use_emoji := (random() > 0.65);                     -- 35% chance de emoji
+
+    -- Selecionar tipo de imperfeição aleatoriamente
+    v_imperfection_type := CASE floor(random() * 5)
+        WHEN 0 THEN 'honestly'
+        WHEN 1 THEN 'kind of'
+        WHEN 2 THEN 'lowkey'
+        WHEN 3 THEN 'pretty wild'
+        ELSE 'none'
+    END;
+
+    v_debug_info := v_debug_info || jsonb_build_object(
+        'step', 'randomization',
+        'tone_variance', v_tone_variance,
+        'target_word_count', v_target_word_count,
+        'imperfection_type', v_imperfection_type,
+        'use_emoji', v_use_emoji
+    );
 
     -- Obter a transcrição do vídeo
     BEGIN
@@ -145,95 +186,115 @@ BEGIN
         v_user_liked_examples := 'Sem exemplos disponíveis';
     END;
 
-    -- Criar o prompt para o Claude com instruções do usuário como restrições específicas
+    -- Criar o prompt NOVO (Strategy #4: Ego-First + Smart Question)
     BEGIN
         v_prompt := format(
-            'Você é um usuário engajado do YouTube que acabou de assistir a um vídeo recém-lançado. Crie um comentário inicial autêntico, interessante e natural que demonstre que você realmente assistiu ao vídeo completo.
+            '🎯 STRATEGY #4: EGO-FIRST COMMENT (Zero Product Mention)
 
-Contexto do Produto (mencione naturalmente apenas quando extremamente relevante):
-Nome: %s
-Descrição: %s
-Nicho/Keywords: %s
+You are creating the FIRST comment in a two-part engagement strategy.
+This comment will later be replied to with a second comment that mentions the product.
 
-Contexto do Vídeo:
-Título: %s
-Descrição: %s
-Categoria: %s
+═══════════════════════════════════════════════════════════════
+
+📹 VIDEO CONTEXT:
+Title: %s
+Category: %s
 Tags: %s
 
-Transcrição do Vídeo:
+📝 TRANSCRIPT (analyze for pain points):
 %s
 
-Exemplos de mensagens que o usuário gostou (use como inspiração):
+🛠️ PRODUCT/SERVICE CONTEXT (DO NOT MENTION - Use only to guide question strategy):
+What it does: %s
+This helps you identify pain points in the video that the product solves.
+
+💡 APPROVED EXAMPLES (tone/style reference only):
 %s
 
-### INSTRUÇÕES ESPECÍFICAS DO USUÁRIO (O QUE NÃO FAZER AO GERAR O COMENTÁRIO) ###
+🚫 USER RESTRICTIONS (what NOT to do):
 %s
-### FIM DAS INSTRUÇÕES ESPECÍFICAS DO USUÁRIO ###
 
-Instruções gerais:
-1. Sempre comente na língua do projeto especificado (%s)
-2. CRUCIAL: Seu comentário DEVE incluir pelo menos um timestamp da transcrição no formato simples (15:30, 2:45, etc.)
-3. CRUCIAL: Use detalhes específicos da transcrição, como termos técnicos, exemplos ou conceitos mencionados no vídeo
-4. Demonstre que você realmente assistiu ao vídeo inteiro usando elementos específicos do conteúdo
-5. O comentário deve parecer escrito por um usuário comum do YouTube - natural, pessoal e autêntico
-6. Mantenha o comentário entre 2-3 frases (máximo 300 caracteres)
-7. Evite formalismos, introduções desnecessárias ou linguagem corporativa
-8. Jamais use @mentions
-9. JAMAIS pareça que está tentando vender ou promover algo
-10. Evite frases clichês como "Excelente vídeo!" ou "Obrigado por compartilhar!"
-11. Evite cumprimentos como "Olá" ou "Bom dia" - vá direto ao ponto
-12. Utilize uma das duas estruturas recomendadas:
-   a) Mencione um ponto específico do vídeo com timestamp + compartilhe uma experiência pessoal relacionada (potencialmente mencionando o produto)
-   b) Faça uma pergunta específica sobre algo mencionado no vídeo + compartilhe sua experiência (potencialmente mencionando o produto)
+═══════════════════════════════════════════════════════════════
 
-Regras de Menção ao Produto:
-1. APENAS mencione %s naturalmente quando:
-   - O vídeo fala sobre criação de conteúdo, marketing, IA, automação, ou temas DIRETAMENTE relacionados ao produto
-   - Você consegue criar uma conexão genuína entre o conteúdo do vídeo e sua experiência com o produto
-   - A menção parece totalmente natural e não forçada
+🎯 YOUR TASK:
 
-2. Formas naturais de mencionar:
-   - "Esse ponto em 12:45 me lembrou quando comecei a usar %s e percebi exatamente isso..."
-   - "No minuto 8:30 você mencionou X, que resolvi recentemente com %s"
-   - "Esse problema que você explicou em 15:20 era exatamente o que eu tinha antes de encontrar %s"
+1️⃣ ANALYZE TRANSCRIPT:
+   - Identify ONE pain point, challenge, or scaling issue mentioned
+   - This should be something the product helps solve (but DON''T mention it!)
+   - Find a REAL timestamp from the transcript where this is discussed
+   - CRITICAL: Use ONLY timestamps that actually appear in the transcript provided
+   - DO NOT invent or guess timestamps - extract them from the transcript text
 
-3. NÃO mencione o produto quando:
-   - Não houver conexão clara com o conteúdo do vídeo
-   - Parecer promocional ou não-autêntico
-   - O vídeo não tiver relação direta com o nicho do produto
+2️⃣ CREATE EGO-FIRST COMMENT:
+   Structure: [Ego Boost] + [Strategic Question]
 
-LEMBRE-SE:
-✅ Priorize autenticidade absoluta - melhor não mencionar o produto do que forçar uma menção
-✅ JAMAIS CITE FUNCIONALIDADES QUE O PRODUTO NÃO POSSUI (conforme a descrição)
-✅ O comentário deve soar como um usuário genuíno compartilhando sua experiência pessoal
-✅ Use apenas timestamps de momentos reais da transcrição
-✅ Seja específico sobre o conteúdo do vídeo para demonstrar que realmente assistiu
-✅ Vá direto ao ponto - comentários no YouTube são diretos e informais
-✅ IMPORTANTE: Siga as instruções específicas do usuário como restrições do que NÃO fazer ao gerar o comentário - se estiverem vazias, desconsidere
+   Sentence 1: Ego boost about that specific point (with timestamp)
+   Sentence 2: Question about how creator SCALES/SOLVES that challenge
 
-Envie exatamente nesta estrutura:
+3️⃣ ARCHETYPE SELECTION (choose one dynamically):
+
+   🏆 RECOGNITION (best for educational/tutorial videos):
+   "This breakdown was spot-on at 12:45. How often do you think people overlook that detail?"
+
+   🤔 CURIOSITY (best for innovative/experimental content):
+   "This got me wondering how results change when that process runs in reverse."
+
+   🤝 ALIGNMENT (best for opinion/mindset videos):
+   "Couldn''t agree more with this approach. What pushed you toward focusing on it that way?"
+
+   🙏 APPRECIATION (best for problem-solving videos):
+   "Really appreciate this breakdown. What usually makes it click for people the first time?"
+
+═══════════════════════════════════════════════════════════════
+
+⚙️ VARIABILITY PARAMETERS (randomize to avoid spam detection):
+- Tone casual level: %s/10
+- Target word count: %s words (±3)
+- Add imperfection: "%s" (if not "none", use it naturally)
+- Emoji allowed: %s
+
+═══════════════════════════════════════════════════════════════
+
+✅ RULES:
+1. Language: %s
+2. ZERO product/service mentions (critical!)
+3. MUST include timestamp that EXISTS in the transcript (format: 12:45, 8:30, etc.)
+   → Extract it directly from the transcript text, DO NOT invent timestamps
+4. MUST reference specific detail from transcript (quote, term, concept mentioned)
+5. Question should OPEN space for reply to mention product naturally
+6. 2 sentences maximum
+7. Natural, casual YouTube tone
+8. No greetings, no clichés, no @mentions
+9. Go straight to the point
+
+❌ BAD EXAMPLE:
+"Great video! What tools do you use?" (generic, obvious setup)
+
+✅ GOOD EXAMPLE:
+"That point at 12:45 about manual data entry hit hard. How do you handle this when you scale to 1000+ entries?"
+(specific detail from transcript, REAL timestamp extracted from transcript, opens for "we use tool X")
+
+═══════════════════════════════════════════════════════════════
+
+RETURN JSON (only this, no extra text):
 {
-  "comment": "Seu comentário inicial autêntico aqui que segue todas as instruções acima",
-  "justificativa": "Explicação em inglês (primeira pessoa) do seu raciocínio e como o comentário segue as instruções"
+  "comment": "Your ego-first comment here",
+  "justificativa": "I identified pain point X at timestamp Y, chose [archetype] because..."
 }
 
-CRITICAL: Your response MUST be ONLY the JSON object above, with absolutely no additional text before or after. Do not include explanations, greetings, code blocks, or markdown formatting. Start your response with { and end with }.',
-            v_product_name,
-            v_project_description,
-            v_project_keywords,
+CRITICAL: Start response with { and end with }. No markdown, no code blocks, no extra text.',
             v_video_data->>'video_title',
-            v_video_data->>'video_description',
             v_video_data->>'content_category',
             v_video_data->>'video_tags',
             COALESCE(v_transcript, 'Transcrição não disponível'),
+            v_project_description,
             COALESCE(v_user_liked_examples, 'Sem exemplos disponíveis'),
             COALESCE(v_user_special_instructions, 'Sem instruções específicas'),
-            COALESCE(v_project_country, 'Português'),
-            v_product_name,
-            v_product_name,
-            v_product_name,
-            v_product_name
+            v_tone_variance,
+            v_target_word_count,
+            v_imperfection_type,
+            CASE WHEN v_use_emoji THEN 'yes' ELSE 'no' END,
+            COALESCE(v_project_country, 'Português')
         );
 
         v_debug_info := v_debug_info || jsonb_build_object('step', 'prompt_creation', 'success', true);
@@ -242,32 +303,46 @@ CRITICAL: Your response MUST be ONLY the JSON object above, with absolutely no a
         RAISE;
     END;
 
-    -- Chamada Claude com sistema de instruções ajustado para tratar as instruções do usuário como restrições
+    -- Chamada Claude com NOVO system message (Strategy #4)
     BEGIN
         v_debug_info := v_debug_info || jsonb_build_object('step', 'before_claude_call', 'timestamp', clock_timestamp());
 
         SELECT claude_complete(
             v_prompt,
-            format('You are a genuine YouTube user creating an initial comment on a newly released video.
+            format('You are an expert at creating ego-first YouTube comments that activate positive reciprocity.
 
-Your goal is to create an authentic-sounding comment that:
-1. References specific timestamps from the video transcript
-2. Shows you actually watched the video by mentioning specific content
-3. Appears completely natural and not promotional
-4. Subtly mentions the product ONLY when extremely relevant and natural
-5. Uses the format and style of real YouTube comments
+STRATEGY: Comment Pair System (Part 1 of 2)
+- This is the FIRST comment (ego boost + strategic question)
+- A SECOND comment (reply) will mention the product later
+- Your comment must PREPARE the ground for that reply
 
-IMPORTANT NOTE ABOUT USER INSTRUCTIONS: If there are specific user instructions (prompt_user field), treat them as restrictions or guidelines about what NOT to do when generating the comment. These are specific adjustments the user wants you to make, but do not replace the core task of creating an authentic YouTube comment.
+CORE OBJECTIVES:
+1. Make creator feel SEEN and RESPECTED (ego trigger)
+2. Ask strategic question that OPENS space for product mention in reply
+3. Use REAL timestamp from transcript + specific detail to prove you watched
+   → CRITICAL: Extract timestamp directly from transcript, do NOT invent
+4. Zero promotional tone - 100%% authentic community member
+5. Variability built-in to avoid spam detection
 
-Always respond in %s. Keep your comment short (2-3 sentences max). Include a justification in FIRST PERSON explaining your reasoning in English.
+ARCHETYPE SELECTION:
+- Recognition: Educational content → compliment clarity
+- Curiosity: Innovative content → wonder about possibilities
+- Alignment: Opinion content → agree and ask about process
+- Appreciation: Problem-solving → thank and ask about key details
 
-Your response must be in this JSON format:
+CRITICAL RULES:
+- Language: %s
+- ZERO product mentions (this is part 1!)
+- Timestamp required
+- 2 sentences max
+- Casual tone with natural imperfections
+- Question should invite discussion about scaling/challenges
+
+JSON FORMAT (only this, no extra text):
 {
-  "comment": "Your authentic comment here that follows all instructions",
-  "justificativa": "I used a specific timestamp and mentioned a technical term from the video to establish authenticity..."
-}
-
-Respond only with the requested JSON, with no additional text.',
+  "comment": "Your ego-first comment here",
+  "justificativa": "I identified pain point X at Y timestamp, chose Z archetype because..."
+}',
                    COALESCE(v_project_country, 'Português')),
             4000,
             0.7
