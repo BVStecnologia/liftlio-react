@@ -451,6 +451,23 @@ Respond only with the requested JSON array.',
     RAISE NOTICE '✅ Limpeza concluída: mantidos apenas % comentários curados',
                  jsonb_array_length(v_result->'curated_comments');
 
+    -- 12. ✅ ATUALIZAR comentários curados com LED=true e lead_score
+    UPDATE "Comentarios_Principais" cp
+    SET
+        led = TRUE,
+        lead_score = (elem->>'score_total')::float
+    FROM (
+        SELECT
+            (elem->>'comment_id')::bigint as comment_id,
+            elem->>'score_total' as score_total
+        FROM jsonb_array_elements(v_result->'curated_comments') elem
+    ) AS curated
+    WHERE cp.id = curated.comment_id
+      AND cp.video_id = video_id_param;
+
+    RAISE NOTICE '✅ Marcados % comentários como LED com lead_score',
+                 jsonb_array_length(v_result->'curated_comments');
+
     RETURN v_result;
 
 EXCEPTION
