@@ -239,13 +239,13 @@ BEGIN
     -- =============================================
     -- DISPARA CURADORIA ASYNC VIA TRIGGER
     -- =============================================
-    -- Ativa trigger dblink async (não bloqueia!)
-    -- Trigger dispara em ~10ms e retorna imediatamente
-    -- curate_comments_with_claude roda em background
-    UPDATE "Videos"
-    SET curadoria_trigger = 1
-    WHERE id = video_id_param;
+    -- ❌ TEMPORARIAMENTE DESABILITADO (2025-11-13)
+    -- Coluna curadoria_trigger não existe na tabela Videos
+    -- TODO: Criar coluna ou remover funcionalidade
+    -- UPDATE "Videos"
+    -- SET curadoria_trigger = 1
+    -- WHERE id = video_id_param;
 
-    RAISE NOTICE '🎯 Curadoria async agendada para vídeo %', video_id_param;
+    RAISE NOTICE '⚠️ Curadoria async desabilitada (coluna não existe) para vídeo %', video_id_param;
 END;
 $function$;
