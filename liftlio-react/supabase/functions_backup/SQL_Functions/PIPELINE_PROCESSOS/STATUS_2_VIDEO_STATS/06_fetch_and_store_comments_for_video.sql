@@ -7,8 +7,9 @@
 --                          Problema: Chamada API estava no FINAL do loop, então só processava 1ª página (50 comentários)
 --                          Solução: Movida chamada API para INÍCIO do loop, agora processa TODAS as páginas
 --                          + Contador corrigido: conta apenas comentários NOVOS (não duplicados)
---                          + REMOVIDA chamada get_filtered_comments (deletava 150 comentários!)
 --                          Limite: 200 comentários principais NOVOS por execução
+-- Atualizado: 2025-11-13 - REATIVADO get_filtered_comments após salvar comentários
+--                          Filtra para 50 melhores + dispara curadoria Claude async
 -- VERSÃO EM USO NO SUPABASE
 -- =============================================
 
@@ -170,9 +171,8 @@ BEGIN
             "comentarios_desativados" = FALSE
         WHERE "VIDEO" = p_video_id;
 
-        -- ⚠️ REMOVIDO: PERFORM get_filtered_comments(v_video_db_id);
-        -- Motivo: get_filtered_comments DELETA comentários, mantendo apenas os 50 melhores
-        -- Essa função deve ser chamada SEPARADAMENTE quando necessário
+        -- ✅ REATIVADO: Filtra comentários (mantém 50 melhores) e dispara curadoria async
+        PERFORM get_filtered_comments(v_video_db_id);
 
         -- Mensagem de retorno detalhada
         IF v_main_comments_processed >= max_main_comments THEN
