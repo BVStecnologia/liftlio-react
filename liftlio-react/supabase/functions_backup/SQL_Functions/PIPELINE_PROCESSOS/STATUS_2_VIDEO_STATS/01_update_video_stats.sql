@@ -1,8 +1,10 @@
 -- =============================================
--- Função: update_video_stats
--- Descrição: Atualiza estatísticas de vídeos do YouTube para um projeto
+-- Funï¿½ï¿½o: update_video_stats
+-- Descriï¿½ï¿½o: Atualiza estatï¿½sticas de vï¿½deos do YouTube para um projeto
 -- Criado: 2025-01-24
 -- =============================================
+
+DROP FUNCTION IF EXISTS update_video_stats(bigint);
 
 CREATE OR REPLACE FUNCTION public.update_video_stats(project_id bigint)
  RETURNS text
@@ -29,7 +31,7 @@ BEGIN
     SELECT pg_try_advisory_lock(project_id) INTO lock_acquired;
 
     IF NOT lock_acquired THEN
-        RETURN 'Projeto ' || project_id || ' já está sendo processado por outra instância.';
+        RETURN 'Projeto ' || project_id || ' jï¿½ estï¿½ sendo processado por outra instï¿½ncia.';
     END IF;
 
     log_message := 'Iniciando update_video_stats para o projeto ' || project_id || ' em ' || now() || E'\n';
@@ -47,7 +49,7 @@ BEGIN
             current_scanner_id := scanner_record.id;
             log_message := log_message || 'Processando scanner ID: ' || current_scanner_id || E'\n';
 
-            -- Extrair IDs de vídeos
+            -- Extrair IDs de vï¿½deos
             video_ids := string_to_array(scanner_record."ID cache videos", ',');
 
             -- Verificar palavras-chave SQL
@@ -69,7 +71,7 @@ BEGIN
                 CONTINUE;
             END IF;
 
-            -- Remover IDs já verificados
+            -- Remover IDs jï¿½ verificados
             IF scanner_record."ID Verificado" IS NOT NULL AND scanner_record."ID Verificado" <> '' THEN
                 already_exists_ids := string_to_array(scanner_record."ID Verificado", ',');
                 SELECT array_agg(id)
@@ -81,7 +83,7 @@ BEGIN
                 ) AS unique_ids;
             END IF;
 
-            -- Continuar se não há IDs para processar
+            -- Continuar se nï¿½o hï¿½ IDs para processar
             IF video_ids IS NULL OR array_length(video_ids, 1) = 0 THEN
                 log_message := log_message || 'Nenhum novo ID para processar' || E'\n';
                 CONTINUE;
@@ -106,16 +108,16 @@ BEGIN
                     array_to_string(video_ids, ',')
                 );
 
-                -- Verificar se a resposta contém vídeos
+                -- Verificar se a resposta contï¿½m vï¿½deos
                 IF api_response->'videos' IS NOT NULL AND jsonb_array_length(api_response->'videos') > 0 THEN
-                    -- Processar cada vídeo retornado
+                    -- Processar cada vï¿½deo retornado
                     FOR i IN 0..jsonb_array_length(api_response->'videos')-1 LOOP
                         video_data := api_response->'videos'->i;
                         each_video_id := video_data->>'videoId';
 
-                        -- Verificar se o vídeo já existe
+                        -- Verificar se o vï¿½deo jï¿½ existe
                         IF NOT EXISTS (SELECT 1 FROM "Videos" WHERE "VIDEO" = each_video_id) THEN
-                            -- Inserir o vídeo com dados já processados
+                            -- Inserir o vï¿½deo com dados jï¿½ processados
                             BEGIN
                                 INSERT INTO "Videos" (
                                     "VIDEO",
@@ -145,17 +147,17 @@ BEGIN
                                 RETURNING id INTO new_video_id;
 
                                 processed_count := processed_count + 1;
-                                log_message := log_message || 'Vídeo inserido: ' || each_video_id || ' (ID: ' || new_video_id || ')' || E'\n';
+                                log_message := log_message || 'Vï¿½deo inserido: ' || each_video_id || ' (ID: ' || new_video_id || ')' || E'\n';
                             EXCEPTION
                                 WHEN OTHERS THEN
-                                    log_message := log_message || 'Erro ao inserir vídeo ' || each_video_id || ': ' || SQLERRM || E'\n';
+                                    log_message := log_message || 'Erro ao inserir vï¿½deo ' || each_video_id || ': ' || SQLERRM || E'\n';
                             END;
                         ELSE
-                            log_message := log_message || 'Vídeo ' || each_video_id || ' já existe na tabela' || E'\n';
+                            log_message := log_message || 'Vï¿½deo ' || each_video_id || ' jï¿½ existe na tabela' || E'\n';
                         END IF;
                     END LOOP;
                 ELSE
-                    log_message := log_message || 'Nenhum vídeo retornado da API' || E'\n';
+                    log_message := log_message || 'Nenhum vï¿½deo retornado da API' || E'\n';
                 END IF;
             EXCEPTION
                 WHEN OTHERS THEN
@@ -182,7 +184,7 @@ BEGIN
 
         log_message := log_message || 'Status do projeto atualizado para 3' || E'\n';
 
-        -- Iniciar processamento de comentários se necessário
+        -- Iniciar processamento de comentï¿½rios se necessï¿½rio
         IF processed_count > 0 OR EXISTS (
             SELECT 1
             FROM "Videos" v
@@ -191,7 +193,7 @@ BEGIN
               AND v.comentarios_atualizados = false
         ) THEN
             PERFORM start_video_processing(project_id::INTEGER);
-            log_message := log_message || 'Iniciando processamento de comentários' || E'\n';
+            log_message := log_message || 'Iniciando processamento de comentï¿½rios' || E'\n';
         END IF;
 
         -- Liberar bloqueio
