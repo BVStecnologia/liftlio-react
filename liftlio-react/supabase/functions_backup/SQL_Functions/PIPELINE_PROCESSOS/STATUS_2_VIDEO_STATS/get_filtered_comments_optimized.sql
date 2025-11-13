@@ -5,6 +5,13 @@
 -- Atualizado: 2025-01-26 - Adiciona palavras-chave personalizadas e otimização 30x
 -- Atualizado: 2025-10-27 - Melhorias: sweet spot timing (14-30 dias),
 --                          bonus visibilidade (órfãos), deduplicação inteligente
+-- Atualizado: 2025-11-11 - CRÍTICO: Adiciona chamada curate_comments_with_claude
+--                          para curadoria final 50→2-10 comentários LED
+-- Atualizado: 2025-11-12 - OTIMIZAÇÃO: Reduz LIMIT de 100→50 para evitar timeout
+-- Atualizado: 2025-11-12 - SÍNCRONO: Curadoria Claude roda de forma síncrona
+--                          50 comentários completam em ~90-120s (OK com timeout 180s)
+-- Atualizado: 2025-11-12 - CRÍTICO: Removida chamada curate_comments_with_claude
+--                          (causava loop/timeout quando chamada diretamente)
 -- =============================================
 
 DROP FUNCTION IF EXISTS get_filtered_comments(bigint);
@@ -128,7 +135,7 @@ BEGIN
         SELECT id
         FROM ranked_comments
         ORDER BY relevance_score DESC, published_at DESC
-        LIMIT 100
+        LIMIT 50
     );
 
     -- 2. Deletar registros em Settings se existirem
@@ -169,6 +176,9 @@ BEGIN
     UPDATE "Videos"
     SET comment_count = total_comments
     WHERE id = video_id_param;
+
+    -- 🚨 REMOVIDO: Chamada curate_comments_with_claude (causava loop/timeout)
+    -- AGORA: curate_comments_with_claude chama get_filtered_comments (não o contrário!)
 
     -- 6. Retornar resultados priorizando intenção de compra
     RETURN QUERY
