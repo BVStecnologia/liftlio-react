@@ -58,8 +58,9 @@ BEGIN
     );
 
     -- Construir o corpo da requisição com modelo CORRETO
+    -- USA get_current_claude_model() para centralizar versão (claude-sonnet-4-5-20250929)
     request_body := json_build_object(
-        'model', 'claude-sonnet-4-20250514',  -- ✅ Modelo correto (Claude Sonnet 4)
+        'model', get_current_claude_model(),
         'max_tokens', max_tokens,
         'temperature', temperature,
         'system', system_prompt,
