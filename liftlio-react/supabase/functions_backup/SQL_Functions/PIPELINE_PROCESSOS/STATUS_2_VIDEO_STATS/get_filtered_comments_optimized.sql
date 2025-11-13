@@ -12,6 +12,8 @@
 --                          50 comentários completam em ~90-120s (OK com timeout 180s)
 -- Atualizado: 2025-11-12 - CRÍTICO: Removida chamada curate_comments_with_claude
 --                          (causava loop/timeout quando chamada diretamente)
+-- Atualizado: 2025-11-13 - ASYNC: Adiciona trigger dblink via UPDATE curadoria_trigger
+--                          Dispara curate em background (~10ms sem bloqueio)
 -- =============================================
 
 DROP FUNCTION IF EXISTS get_filtered_comments(bigint);
@@ -233,5 +235,17 @@ BEGIN
     LEFT JOIN comment_replies_final crf ON crf.main_comment_id = cp.id
     WHERE cp.id = ANY(selected_ids)
     ORDER BY comment_relevance_score DESC, comment_published_at DESC;
+
+    -- =============================================
+    -- DISPARA CURADORIA ASYNC VIA TRIGGER
+    -- =============================================
+    -- Ativa trigger dblink async (não bloqueia!)
+    -- Trigger dispara em ~10ms e retorna imediatamente
+    -- curate_comments_with_claude roda em background
+    UPDATE "Videos"
+    SET curadoria_trigger = 1
+    WHERE id = video_id_param;
+
+    RAISE NOTICE '🎯 Curadoria async agendada para vídeo %', video_id_param;
 END;
 $function$;
