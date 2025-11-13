@@ -275,10 +275,10 @@ const StatsGrid = styled.div`
 
 const StatCard = styled(motion.div)`
   background: rgba(139, 92, 246, 0.05);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px) saturate(200%);
   border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: 20px;
+  padding: 28px;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -353,10 +353,10 @@ const TrendsGrid = styled.div`
 
 const TrendCard = styled(motion.div)`
   background: rgba(139, 92, 246, 0.05);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px) saturate(200%);
   border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: 20px;
+  padding: 28px;
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -500,10 +500,10 @@ const HowItWorksGrid = styled.div`
 
 const HowItWorksCard = styled.div`
   background: rgba(139, 92, 246, 0.05);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px) saturate(200%);
   border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: 20px;
+  padding: 28px;
   text-align: center;
   transition: all 0.3s ease;
 
@@ -573,15 +573,15 @@ const CategoryGrid = styled.div`
 
 const CategoryCard = styled(motion.div)`
   background: ${theme.gradient};
-  padding: 20px;
-  border-radius: 12px;
+  padding: 24px;
+  border-radius: 20px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
 
   &:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 16px rgba(139, 92, 246, 0.3);
   }
 
   h3 {
@@ -987,8 +987,8 @@ const LiftlioTrends: React.FC = () => {
                         <div style={{
                           background: 'rgba(139, 92, 246, 0.05)',
                           border: '1px solid rgba(139, 92, 246, 0.2)',
-                          borderRadius: '8px',
-                          padding: '12px',
+                          borderRadius: '12px',
+                          padding: '16px',
                           marginBottom: '10px'
                         }}>
                           <div style={{ fontSize: '0.8rem', color: theme.primary, fontWeight: '600', marginBottom: '8px' }}>
@@ -1105,8 +1105,8 @@ const LiftlioTrends: React.FC = () => {
                         <div style={{
                           background: 'rgba(139, 92, 246, 0.05)',
                           border: '1px solid rgba(139, 92, 246, 0.2)',
-                          borderRadius: '8px',
-                          padding: '12px',
+                          borderRadius: '12px',
+                          padding: '16px',
                           marginBottom: '10px'
                         }}>
                           <div style={{ fontSize: '0.8rem', color: theme.primary, fontWeight: '600', marginBottom: '8px' }}>
@@ -1185,8 +1185,8 @@ const LiftlioTrends: React.FC = () => {
               <div style={{
                 background: 'rgba(139, 92, 246, 0.05)',
                 border: '1px solid rgba(139, 92, 246, 0.2)',
-                borderRadius: '12px',
-                padding: '20px',
+                borderRadius: '20px',
+                padding: '24px',
                 textAlign: 'center',
                 minHeight: '220px'
               }}>
@@ -1200,8 +1200,8 @@ const LiftlioTrends: React.FC = () => {
               <div style={{
                 background: 'rgba(139, 92, 246, 0.05)',
                 border: '1px solid rgba(139, 92, 246, 0.2)',
-                borderRadius: '12px',
-                padding: '20px',
+                borderRadius: '20px',
+                padding: '24px',
                 textAlign: 'center',
                 minHeight: '220px'
               }}>
@@ -1215,8 +1215,8 @@ const LiftlioTrends: React.FC = () => {
               <div style={{
                 background: 'rgba(139, 92, 246, 0.05)',
                 border: '1px solid rgba(139, 92, 246, 0.2)',
-                borderRadius: '12px',
-                padding: '20px',
+                borderRadius: '20px',
+                padding: '24px',
                 textAlign: 'center',
                 minHeight: '220px'
               }}>
@@ -1230,8 +1230,8 @@ const LiftlioTrends: React.FC = () => {
               <div style={{
                 background: 'rgba(139, 92, 246, 0.05)',
                 border: '1px solid rgba(139, 92, 246, 0.2)',
-                borderRadius: '12px',
-                padding: '20px',
+                borderRadius: '20px',
+                padding: '24px',
                 textAlign: 'center',
                 minHeight: '220px'
               }}>
