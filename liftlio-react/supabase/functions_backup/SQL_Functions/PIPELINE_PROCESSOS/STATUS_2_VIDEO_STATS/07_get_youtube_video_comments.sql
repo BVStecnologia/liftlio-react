@@ -1,10 +1,10 @@
 -- =============================================
--- Função: get_youtube_video_comments
--- Descrição: Busca comentários de um vídeo do YouTube via API
+-- Funï¿½ï¿½o: get_youtube_video_comments
+-- Descriï¿½ï¿½o: Busca comentï¿½rios de um vï¿½deo do YouTube via API
 -- Criado: 2025-01-23
 -- =============================================
 
-CREATE OR REPLACE FUNCTION public.get_youtube_video_comments(project_id integer, video_id text, max_results integer DEFAULT 50, page_token text DEFAULT NULL::text)
+CREATE OR REPLACE FUNCTION public.get_youtube_video_comments(project_id integer, video_id text, max_results integer DEFAULT 100, page_token text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
 AS $function$
@@ -17,20 +17,20 @@ BEGIN
     -- Obter a API key do YouTube
     api_key := get_youtube_api_key();
 
-    -- Construir a URL base com a API key
+    -- Construir a URL base com a API key (order=time para paginaÃ§Ã£o mais confiÃ¡vel)
     api_url := format(
-        'https://www.googleapis.com/youtube/v3/commentThreads?part=snippet,replies&videoId=%s&maxResults=%s&key=%s',
+        'https://www.googleapis.com/youtube/v3/commentThreads?part=snippet,replies&videoId=%s&maxResults=%s&order=time&key=%s',
         urlencode(video_id),
         max_results::text,
         api_key
     );
 
-    -- Adicionar token de página se fornecido
+    -- Adicionar token de pï¿½gina se fornecido
     IF page_token IS NOT NULL THEN
         api_url := api_url || '&pageToken=' || urlencode(page_token);
     END IF;
 
-    -- Fazer a chamada à API do YouTube sem cabeçalho de autorização Bearer
+    -- Fazer a chamada ï¿½ API do YouTube sem cabeï¿½alho de autorizaï¿½ï¿½o Bearer
     SELECT * INTO http_response
     FROM http((
         'GET',
