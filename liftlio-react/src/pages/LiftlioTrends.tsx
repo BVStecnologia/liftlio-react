@@ -17,11 +17,11 @@ import AnimatedBars3D from '../components/AnimatedBars3D';
 // Global Styles
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-  
+
   * {
     box-sizing: border-box;
   }
-  
+
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     margin: 0;
@@ -32,13 +32,20 @@ const GlobalStyle = createGlobalStyle`
     color: #ffffff;
     overflow-x: hidden;
   }
-  
+
   /* Force remove any green/turquoise colors */
   html, body, #root {
     background: #0a0a0a !important;
     background-color: #0a0a0a !important;
     background-image: none !important;
     filter: none !important;
+  }
+
+  /* Responsive 2-column grid */
+  @media (max-width: 768px) {
+    .responsive-2col {
+      grid-template-columns: 1fr !important;
+    }
   }
 `;
 
@@ -253,10 +260,11 @@ const HeroSubtitle = styled(motion.p)`
   z-index: 2;
 `;
 
+// Different grid layouts for variety
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
-  gap: 30px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
   width: 100%;
 
   @media (max-width: 1024px) {
@@ -265,52 +273,78 @@ const StatsGrid = styled.div`
 
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
-    gap: 15px;
   }
 `;
 
+const TwoColumnGrid = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  width: 100%;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ThreeColumnGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+// Analytics-style metric cards with colored icons
 const StatCard = styled(motion.div)`
-  background: rgba(139, 92, 246, 0.05);
-  backdrop-filter: blur(10px) saturate(200%);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: 20px;
-  padding: 28px;
-  text-align: center;
+  background: rgba(26, 26, 26, 0.3);
+  border: 1px solid rgba(161, 161, 170, 0.2);
+  border-radius: 12px;
+  padding: 20px;
   position: relative;
-  overflow: hidden;
   transition: all 0.3s ease;
 
   &:hover {
-    border-color: rgba(139, 92, 246, 0.4);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(139, 92, 246, 0.1);
+    border-color: rgba(161, 161, 170, 0.3);
   }
 `;
 
-const StatIcon = styled.div`
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 15px;
+const StatIcon = styled.div<{ color?: string }>`
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${theme.gradient};
-  border-radius: 15px;
+  background: ${props => props.color || theme.primary};
+  border-radius: 12px;
   font-size: 24px;
+  color: white;
 `;
 
 const StatValue = styled.div`
-  font-size: 2.2rem;
-  font-weight: 700;
-  margin-bottom: 5px;
-  background: linear-gradient(135deg, #ffffff, #e0e0e0);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-size: 2.5rem;
+  font-weight: 400;
+  color: #ffffff;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
 `;
 
 const StatLabel = styled.div`
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  margin-bottom: 8px;
+`;
+
+const StatSubtitle = styled.div`
+  font-size: 12px;
+  color: #a1a1aa;
+  font-weight: 400;
 `;
 
 const TrendsSection = styled.section`
@@ -478,59 +512,52 @@ const HowItWorksSection = styled.section`
   }
 `;
 
+// 2x2 grid for more visual impact (like Analytics)
 const HowItWorksGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  max-width: 1400px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 1200px;
   margin: 0 auto;
-  
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
 `;
 
 const HowItWorksCard = styled.div`
-  background: rgba(139, 92, 246, 0.05);
-  backdrop-filter: blur(10px) saturate(200%);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: 20px;
-  padding: 28px;
-  text-align: center;
+  background: rgba(26, 26, 26, 0.3);
+  border: 1px solid rgba(161, 161, 170, 0.2);
+  border-radius: 16px;
+  padding: 32px;
   transition: all 0.3s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    border-color: rgba(139, 92, 246, 0.4);
-    box-shadow: 0 8px 16px rgba(139, 92, 246, 0.1);
+    border-color: rgba(161, 161, 170, 0.3);
   }
 
   h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin: 15px 0 10px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 20px 0 12px;
     color: #ffffff;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
+    gap: 10px;
   }
 
   p {
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     color: rgba(255, 255, 255, 0.7);
-    line-height: 1.5;
-    margin-bottom: 15px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    font-style: italic;
   }
-  
+
   > div:last-child {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: ${theme.primary};
-    line-height: 1.4;
+    line-height: 1.5;
   }
 `;
 
@@ -559,47 +586,51 @@ const CategorySection = styled.section`
   }
 `;
 
+// Analytics-style city cards for categories
 const CategoryGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
   max-width: 1200px;
   margin: 0 auto;
-  justify-items: center;
 `;
 
 const CategoryCard = styled.div`
-  background: rgba(139, 92, 246, 0.05);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(26, 26, 26, 0.3);
+  border: 1px solid rgba(161, 161, 170, 0.15);
   padding: 20px;
   border-radius: 12px;
-  text-align: center;
   transition: all 0.3s ease;
-  width: 100%;
-  max-width: 200px;
 
   &:hover {
-    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(26, 26, 26, 0.5);
+    border-color: rgba(161, 161, 170, 0.25);
   }
 
   h3 {
-    font-size: 0.85rem;
+    font-size: 1rem;
     font-weight: 500;
-    margin: 0 0 12px 0;
-    color: rgba(255, 255, 255, 0.5);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    margin: 0 0 4px 0;
+    color: #d4d4d8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   p {
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 600;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.9);
+    margin: 12px 0 0 0;
+    padding-top: 12px;
+    border-top: 1px solid rgba(161, 161, 170, 0.15);
+    color: #ffffff;
   }
 
   span {
-    display: none;
+    font-size: 0.75rem;
+    color: #a1a1aa;
+    display: block;
+    margin-top: 4px;
   }
 `;
 
@@ -715,12 +746,13 @@ const LiftlioTrends: React.FC = () => {
   const risingTrends = trends.filter(t => t.growth > 0);
   const decliningTrends = trends.filter(t => t.growth < 0);
   
+  // Different colored icons like Analytics
   const stats = [
     {
       icon: React.createElement(FaRocket as any),
       label: 'Active Trends',
       value: trends.length,
-      color: theme.primary,
+      color: '#8b5cf6',
       subtitle: 'monitoring now'
     },
     {
@@ -734,14 +766,14 @@ const LiftlioTrends: React.FC = () => {
       icon: React.createElement(FaBolt as any),
       label: 'Heat Index',
       value: `${((summary?.by_status?.BLAZING || 0) + (summary?.by_status?.['ON FIRE'] || 0) + (summary?.by_status?.HOT || 0)).toString()}`,
-      color: theme.accent,
+      color: '#f59e0b',
       subtitle: 'blazing trends'
     },
     {
       icon: React.createElement(FaBrain as any),
       label: 'Sentiment Score',
       value: summary ? `${(summary.avg_sentiment * 100).toFixed(0)}%` : '0%',
-      color: theme.secondary,
+      color: '#ec4899',
       subtitle: 'emotional analysis'
     }
   ];
@@ -792,13 +824,11 @@ const LiftlioTrends: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                 >
-                  <StatIcon>{stat.icon}</StatIcon>
-                  <StatValue>{stat.value}</StatValue>
                   <StatLabel>{stat.label}</StatLabel>
+                  <StatIcon color={stat.color}>{stat.icon}</StatIcon>
+                  <StatValue>{stat.value}</StatValue>
                   {stat.subtitle && (
-                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>
-                      {stat.subtitle}
-                    </div>
+                    <StatSubtitle>{stat.subtitle}</StatSubtitle>
                   )}
                 </StatCard>
               ))}
@@ -1137,7 +1167,22 @@ const LiftlioTrends: React.FC = () => {
               <CategoryGrid>
                 {summary.categories.map((category, index) => (
                   <CategoryCard key={index}>
-                    <h3>{category.category}</h3>
+                    <h3>
+                      <span style={{
+                        display: 'inline-block',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '6px',
+                        background: `rgba(139, 92, 246, ${0.9 - (index * 0.1)})`,
+                        textAlign: 'center',
+                        lineHeight: '24px',
+                        fontSize: '0.75rem',
+                        fontWeight: '600'
+                      }}>
+                        {index + 1}
+                      </span>
+                      {category.category}
+                    </h3>
                     <p>{category.count}</p>
                     <span>active trends</span>
                   </CategoryCard>
@@ -1154,68 +1199,61 @@ const LiftlioTrends: React.FC = () => {
             
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '20px',
-              maxWidth: '1400px',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '24px',
+              maxWidth: '1200px',
               margin: '40px auto'
-            }}>
+            }}
+            className="responsive-2col"
+            >
               <div style={{
-                background: 'rgba(139, 92, 246, 0.05)',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
-                borderRadius: '20px',
-                padding: '24px',
-                textAlign: 'center',
-                minHeight: '220px'
+                background: 'rgba(26, 26, 26, 0.3)',
+                border: '1px solid rgba(161, 161, 170, 0.2)',
+                borderRadius: '16px',
+                padding: '32px'
               }}>
-                <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>Multi-Dimensional<br/>Analysis</h3>
-                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
-                  We analyze <span style={{ color: theme.secondary, fontWeight: '600' }}>47 dimensions</span>: 
+                <h3 style={{ color: '#8b5cf6', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>Multi-Dimensional Analysis</h3>
+                <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>
+                  We analyze <span style={{ color: '#a855f7', fontWeight: '600' }}>47 dimensions</span>:
                   velocity, momentum, sentiment, engagement, and more.
                 </p>
               </div>
-              
+
               <div style={{
-                background: 'rgba(139, 92, 246, 0.05)',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
-                borderRadius: '20px',
-                padding: '24px',
-                textAlign: 'center',
-                minHeight: '220px'
+                background: 'rgba(26, 26, 26, 0.3)',
+                border: '1px solid rgba(161, 161, 170, 0.2)',
+                borderRadius: '16px',
+                padding: '32px'
               }}>
-                <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>Early Detection</h3>
-                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
-                  Detect patterns <span style={{ color: '#10b981', fontWeight: '600' }}>7-14 days before</span> explosion. 
+                <h3 style={{ color: '#10b981', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>Early Detection</h3>
+                <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>
+                  Detect patterns <span style={{ color: '#10b981', fontWeight: '600' }}>7-14 days before</span> explosion.
                   When others see it, it's too late.
                 </p>
               </div>
-              
+
               <div style={{
-                background: 'rgba(139, 92, 246, 0.05)',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
-                borderRadius: '20px',
-                padding: '24px',
-                textAlign: 'center',
-                minHeight: '220px'
+                background: 'rgba(26, 26, 26, 0.3)',
+                border: '1px solid rgba(161, 161, 170, 0.2)',
+                borderRadius: '16px',
+                padding: '32px'
               }}>
-                <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>Surgical Precision</h3>
-                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
-                  Confidence score on every prediction. 
+                <h3 style={{ color: '#f59e0b', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>Surgical Precision</h3>
+                <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>
+                  Confidence score on every prediction.
                   <span style={{ color: '#f59e0b', fontWeight: '600' }}>92% accuracy</span>.
                 </p>
               </div>
-              
+
               <div style={{
-                background: 'rgba(139, 92, 246, 0.05)',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
-                borderRadius: '20px',
-                padding: '24px',
-                textAlign: 'center',
-                minHeight: '220px'
+                background: 'rgba(26, 26, 26, 0.3)',
+                border: '1px solid rgba(161, 161, 170, 0.2)',
+                borderRadius: '16px',
+                padding: '32px'
               }}>
-                <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>Temporal Vision</h3>
-                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
-                  See past, present, and future. Know
-                  <span style={{ color: theme.accent, fontWeight: '600' }}>what</span> trends and <span style={{ color: theme.accent, fontWeight: '600' }}>when</span> they stop.
+                <h3 style={{ color: '#ec4899', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>Temporal Vision</h3>
+                <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>
+                  See past, present, and future. Know <span style={{ color: '#ec4899', fontWeight: '600' }}>what</span> trends and <span style={{ color: '#ec4899', fontWeight: '600' }}>when</span> they stop.
                 </p>
               </div>
             </div>
