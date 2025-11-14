@@ -5,7 +5,10 @@
 --            DELETA comentários não curados para manter apenas os selecionados.
 -- Criado: 2025-10-27
 -- Atualizado: 2025-11-11 - Sincronizado com código DEV (adicionados DELETEs)
--- Dependências: get_filtered_comments(), claude_complete()
+-- Atualizado: 2025-11-13 - Remove chamada get_filtered_comments (lê direto da tabela)
+--                          Adiciona UPDATE Videos.curate = 'curated'
+--                          CORREÇÃO: linha 469 - usar curated.score_total ao invés de elem
+-- Dependências: claude_complete()
 -- ⚠️ ATENÇÃO: Esta função DELETA comentários permanentemente!
 -- =============================================
 
@@ -42,26 +45,30 @@ BEGIN
              WHERE vt.id = v.transcript),
             'Transcrição não disponível'
         )
-    ), v.comment_count
+    ), v.comment_count_youtube
     INTO v_video_data, v_total_original
     FROM "Videos" v
     WHERE v.id = video_id_param;
 
-    -- 2. Buscar os 100 comentários já filtrados pela função get_filtered_comments
+    -- 2. Buscar comentários direto da tabela (get_filtered_comments já rodou antes)
     SELECT jsonb_agg(
         jsonb_build_object(
-            'comment_id', comment_id,
-            'youtube_id', comment_youtube_id,
-            'text', comment_text,
-            'author', comment_author,
-            'published_at', comment_published_at,
-            'likes', comment_likes,
-            'score', comment_relevance_score,
-            'age_days', EXTRACT(DAY FROM NOW() - comment_published_at)::integer
-        ) ORDER BY comment_relevance_score DESC
+            'comment_id', cp.id,
+            'youtube_id', cp.id_do_comentario,
+            'text', cp.text_display,
+            'author', cp.author_name,
+            'published_at', cp.published_at,
+            'likes', cp.like_count,
+            'score', (cp.like_count * 0.5 +
+                     CASE WHEN LENGTH(cp.text_display) > 50 THEN 10 ELSE 5 END +
+                     CASE WHEN cp.published_at > NOW() - INTERVAL '30 days' THEN 15 ELSE 5 END
+                    )::float,
+            'age_days', EXTRACT(DAY FROM NOW() - cp.published_at)::integer
+        ) ORDER BY cp.like_count DESC
     )
     INTO v_filtered_comments
-    FROM get_filtered_comments(video_id_param);
+    FROM "Comentarios_Principais" cp
+    WHERE cp.video_id = video_id_param;
 
     -- Se não houver comentários, retornar NULL
     IF v_filtered_comments IS NULL OR jsonb_array_length(v_filtered_comments) = 0 THEN
@@ -106,6 +113,11 @@ BEGIN
     IF v_total_filtrados <= v_max_respostas THEN
         RAISE NOTICE '✅ Economia: Filtrados (%) <= Max respostas (%), retornando TODOS sem Claude',
                      v_total_filtrados, v_max_respostas;
+
+        -- Marcar vídeo como curado
+        UPDATE "Videos"
+        SET curate = 'curated'
+        WHERE id = video_id_param;
 
         -- Retorna todos filtrados formatados como curados (sem gastar com Claude)
         RETURN jsonb_build_object(
@@ -452,10 +464,11 @@ Respond only with the requested JSON array.',
                  jsonb_array_length(v_result->'curated_comments');
 
     -- 12. ✅ ATUALIZAR comentários curados com LED=true e lead_score
+    -- 🔴 CORREÇÃO: Usar curated.score_total ao invés de elem->>'score_total'
     UPDATE "Comentarios_Principais" cp
     SET
         led = TRUE,
-        lead_score = (elem->>'score_total')::float
+        lead_score = curated.score_total::float
     FROM (
         SELECT
             (elem->>'comment_id')::bigint as comment_id,
@@ -467,6 +480,11 @@ Respond only with the requested JSON array.',
 
     RAISE NOTICE '✅ Marcados % comentários como LED com lead_score',
                  jsonb_array_length(v_result->'curated_comments');
+
+    -- Marcar vídeo como curado
+    UPDATE "Videos"
+    SET curate = 'curated'
+    WHERE id = video_id_param;
 
     RETURN v_result;
 

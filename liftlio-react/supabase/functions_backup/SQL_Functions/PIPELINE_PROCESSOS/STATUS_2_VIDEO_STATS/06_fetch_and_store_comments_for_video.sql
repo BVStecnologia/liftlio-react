@@ -3,8 +3,13 @@
 -- Descrição: Busca e armazena comentários de um vídeo do YouTube
 -- Dependência de: process_pending_videos
 -- Criado: 2025-01-27
--- Atualizado: 2025-10-25 - Adicionado limite global de 200 comentários por vídeo
---                          para evitar timeout em vídeos virais (50k+ comentários)
+-- Atualizado: 2025-11-13 - CORREÇÃO CRÍTICA: Bug de paginação corrigido!
+--                          Problema: Chamada API estava no FINAL do loop, então só processava 1ª página (50 comentários)
+--                          Solução: Movida chamada API para INÍCIO do loop, agora processa TODAS as páginas
+--                          + Contador corrigido: conta apenas comentários NOVOS (não duplicados)
+--                          Limite: 200 comentários principais NOVOS por execução
+-- Atualizado: 2025-11-13 - REATIVADO get_filtered_comments após salvar comentários
+--                          Filtra para 50 melhores + dispara curadoria Claude async
 -- VERSÃO EM USO NO SUPABASE
 -- =============================================
 
@@ -18,8 +23,10 @@ DECLARE
     v_video_db_id BIGINT;
     v_comment_id BIGINT;
     v_comments_disabled BOOLEAN := FALSE;
-    v_comments_processed INTEGER := 0;
-    max_comments_per_video INTEGER := 200;  -- ⭐ LIMITE GLOBAL: máximo de comentários coletados por vídeo
+    v_main_comments_processed INTEGER := 0;  -- ⭐ Conta APENAS comentários principais NOVOS
+    v_total_replies_processed INTEGER := 0;  -- ℹ️ Contador informativo de respostas
+    v_was_inserted BOOLEAN;  -- 🆕 Flag para saber se foi INSERT ou UPDATE
+    max_main_comments INTEGER := 200;  -- ⭐ LIMITE: máximo de comentários PRINCIPAIS por vídeo
 BEGIN
     -- Obter o ID do vídeo na tabela Videos
     SELECT id INTO v_video_db_id
@@ -31,33 +38,26 @@ BEGIN
     END IF;
 
     BEGIN
-        -- Tenta chamar a API do YouTube para buscar comentários
-        api_response := get_youtube_video_comments(
-            project_id := project_id,
-            video_id := p_video_id,
-            max_results := 50,
-            page_token := next_page_token
-        );
-
-        -- Verifica se a resposta da API indica que os comentários estão desativados
-        IF api_response->>'error' IS NOT NULL AND
-           api_response#>>'{error,errors,0,reason}' = 'commentsDisabled' THEN
-            v_comments_disabled := TRUE;
-            -- Atualiza a tabela Videos para marcar comentários como desativados
-            UPDATE "Videos"
-            SET "comentarios_atualizados" = TRUE,
-                "comentarios_desativados" = TRUE
-            WHERE "VIDEO" = p_video_id;
-            RETURN 'Comentários desativados para o vídeo ' || p_video_id;
-        END IF;
-
         -- Se chegou aqui, os comentários estão ativos. Continua com o processamento normal
         LOOP
-            -- ⭐ Verificar se já atingiu o limite global
-            IF v_comments_processed >= max_comments_per_video THEN
-                RAISE NOTICE 'Limite de % comentários atingido para vídeo %. Parando coleta.',
-                    max_comments_per_video, p_video_id;
-                EXIT;
+            -- ⭐ Chamada API no INÍCIO do loop (correção do bug de paginação)
+            api_response := get_youtube_video_comments(
+                project_id := project_id,
+                video_id := p_video_id,
+                max_results := 100,  -- Máximo permitido pela API (otimizado de 50 para 100)
+                page_token := next_page_token
+            );
+
+            -- Verifica se a resposta da API indica que os comentários estão desativados
+            IF api_response->>'error' IS NOT NULL AND
+               api_response#>>'{error,errors,0,reason}' = 'commentsDisabled' THEN
+                v_comments_disabled := TRUE;
+                -- Atualiza a tabela Videos para marcar comentários como desativados
+                UPDATE "Videos"
+                SET "comentarios_atualizados" = TRUE,
+                    "comentarios_desativados" = TRUE
+                WHERE "VIDEO" = p_video_id;
+                RETURN 'Comentários desativados para o vídeo ' || p_video_id;
             END IF;
 
             -- Verifica se a resposta da API é válida
@@ -68,47 +68,52 @@ BEGIN
             -- Processa cada thread de comentário na resposta
             FOR comment_thread IN SELECT jsonb_array_elements(api_response->'items')
             LOOP
-                -- ⭐ Parar se atingir limite no meio da página
-                EXIT WHEN v_comments_processed >= max_comments_per_video;
+                -- ⭐ Parar se atingiu limite de comentários PRINCIPAIS NOVOS
+                EXIT WHEN v_main_comments_processed >= max_main_comments;
 
-                -- Tenta inserir o comentário principal
-                INSERT INTO "Comentarios_Principais" (
-                    "video_id",
-                    "id_do_comentario",
-                    "author_name",
-                    "author_channel_id",
-                    "text_display",
-                    "text_original",
-                    "like_count",
-                    "published_at",
-                    "updated_at",
-                    "total_reply_count"
-                ) VALUES (
-                    v_video_db_id,
-                    (comment_thread#>>'{snippet,topLevelComment,id}'),
-                    (comment_thread#>>'{snippet,topLevelComment,snippet,authorDisplayName}'),
-                    (comment_thread#>>'{snippet,topLevelComment,snippet,authorChannelId,value}'),
-                    (comment_thread#>>'{snippet,topLevelComment,snippet,textDisplay}'),
-                    (comment_thread#>>'{snippet,topLevelComment,snippet,textOriginal}'),
-                    (comment_thread#>>'{snippet,topLevelComment,snippet,likeCount}')::INTEGER,
-                    (comment_thread#>>'{snippet,topLevelComment,snippet,publishedAt}')::TIMESTAMP,
-                    (comment_thread#>>'{snippet,topLevelComment,snippet,updatedAt}')::TIMESTAMP,
-                    (comment_thread#>>'{snippet,totalReplyCount}')::INTEGER
-                )
-                ON CONFLICT (id_do_comentario)
-                DO UPDATE SET
-                    "total_reply_count" = EXCLUDED.total_reply_count,
-                    "updated_at" = EXCLUDED.updated_at
-                RETURNING id INTO v_comment_id;
+                -- 🔍 Verificar se comentário já existe ANTES de tentar inserir
+                SELECT id INTO v_comment_id
+                FROM "Comentarios_Principais"
+                WHERE "id_do_comentario" = (comment_thread#>>'{snippet,topLevelComment,id}');
 
-                -- Se o comentário principal não foi inserido (devido a conflito), busca o ID existente
-                IF v_comment_id IS NULL THEN
-                    SELECT id INTO v_comment_id
-                    FROM "Comentarios_Principais"
-                    WHERE "id_do_comentario" = (comment_thread#>>'{snippet,topLevelComment,id}');
+                v_was_inserted := (v_comment_id IS NULL);
+
+                -- Se não existe, insere novo comentário
+                IF v_was_inserted THEN
+                    INSERT INTO "Comentarios_Principais" (
+                        "video_id",
+                        "id_do_comentario",
+                        "author_name",
+                        "author_channel_id",
+                        "text_display",
+                        "text_original",
+                        "like_count",
+                        "published_at",
+                        "updated_at",
+                        "total_reply_count"
+                    ) VALUES (
+                        v_video_db_id,
+                        (comment_thread#>>'{snippet,topLevelComment,id}'),
+                        (comment_thread#>>'{snippet,topLevelComment,snippet,authorDisplayName}'),
+                        (comment_thread#>>'{snippet,topLevelComment,snippet,authorChannelId,value}'),
+                        (comment_thread#>>'{snippet,topLevelComment,snippet,textDisplay}'),
+                        (comment_thread#>>'{snippet,topLevelComment,snippet,textOriginal}'),
+                        (comment_thread#>>'{snippet,topLevelComment,snippet,likeCount}')::INTEGER,
+                        (comment_thread#>>'{snippet,topLevelComment,snippet,publishedAt}')::TIMESTAMP,
+                        (comment_thread#>>'{snippet,topLevelComment,snippet,updatedAt}')::TIMESTAMP,
+                        (comment_thread#>>'{snippet,totalReplyCount}')::INTEGER
+                    )
+                    RETURNING id INTO v_comment_id;
+
+                    -- ⭐ Incrementa contador APENAS se for comentário NOVO
+                    v_main_comments_processed := v_main_comments_processed + 1;
+                ELSE
+                    -- Se já existe, apenas atualiza (NÃO incrementa contador)
+                    UPDATE "Comentarios_Principais"
+                    SET "total_reply_count" = (comment_thread#>>'{snippet,totalReplyCount}')::INTEGER,
+                        "updated_at" = (comment_thread#>>'{snippet,topLevelComment,snippet,updatedAt}')::TIMESTAMP
+                    WHERE id = v_comment_id;
                 END IF;
-
-                v_comments_processed := v_comments_processed + 1;
 
                 -- Processa as respostas, se houver
                 IF (comment_thread#>>'{snippet,totalReplyCount}')::INTEGER > 0 THEN
@@ -141,23 +146,23 @@ BEGIN
                             )
                             ON CONFLICT DO NOTHING;
 
-                            v_comments_processed := v_comments_processed + 1;
+                            -- ℹ️ Incrementa contador informativo de respostas (NÃO afeta limite)
+                            v_total_replies_processed := v_total_replies_processed + 1;
                         END IF;
                     END LOOP;
                 END IF;
             END LOOP;
 
-            -- Verifica se há mais páginas
+            -- ⭐ Verifica se atingiu o limite APÓS processar a página completa
+            IF v_main_comments_processed >= max_main_comments THEN
+                RAISE NOTICE 'Limite de % comentários principais atingido para vídeo %. Total respostas: %. Parando coleta.',
+                    max_main_comments, p_video_id, v_total_replies_processed;
+                EXIT;
+            END IF;
+
+            -- Verifica se há mais páginas para continuar o loop
             next_page_token := api_response->>'nextPageToken';
             EXIT WHEN next_page_token IS NULL;
-
-            -- Busca a próxima página de comentários
-            api_response := get_youtube_video_comments(
-                project_id := project_id,
-                video_id := p_video_id,
-                max_results := 50,
-                page_token := next_page_token
-            );
         END LOOP;
 
         -- Atualiza a tabela Videos para marcar que os comentários foram processados
@@ -166,17 +171,16 @@ BEGIN
             "comentarios_desativados" = FALSE
         WHERE "VIDEO" = p_video_id;
 
-        -- Executa a função get_filtered_comments com o ID do vídeo
+        -- ✅ REATIVADO: Filtra comentários (mantém 50 melhores) e dispara curadoria async
         PERFORM get_filtered_comments(v_video_db_id);
 
-        -- Mensagem de retorno com informação sobre limite
-        IF v_comments_processed >= max_comments_per_video THEN
-            RETURN 'Processo concluído com LIMITE ATINGIDO para o vídeo ' || p_video_id ||
-                   '. Total de comentários processados: ' || v_comments_processed::TEXT ||
-                   ' (potencialmente mais comentários disponíveis)';
+        -- Mensagem de retorno detalhada
+        IF v_main_comments_processed >= max_main_comments THEN
+            RETURN '✅ LIMITE ATINGIDO: ' || v_main_comments_processed::TEXT ||
+                   ' comentários novos, ' || v_total_replies_processed::TEXT || ' respostas';
         ELSE
-            RETURN 'Processo concluído com sucesso para o vídeo ' || p_video_id ||
-                   '. Total de comentários processados: ' || v_comments_processed::TEXT;
+            RETURN '✅ COMPLETO: ' || v_main_comments_processed::TEXT ||
+                   ' comentários novos, ' || v_total_replies_processed::TEXT || ' respostas';
         END IF;
 
     EXCEPTION

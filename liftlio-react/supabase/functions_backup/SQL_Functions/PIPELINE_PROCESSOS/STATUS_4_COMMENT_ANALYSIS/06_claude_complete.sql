@@ -11,7 +11,7 @@
 --   system_prompt TEXT - Prompt do sistema (default: 'você é um professor')
 --   max_tokens INTEGER - Máximo de tokens na resposta (default: 4000)
 --   temperature DOUBLE PRECISION - Temperatura do modelo (default: 0.1)
---   timeout_ms INTEGER - Timeout em milissegundos (default: 30000)
+--   timeout_ms INTEGER - Timeout em milissegundos (default: 180000 = 3 minutos)
 --
 -- Saída:
 --   TEXT - Resposta do Claude
@@ -24,6 +24,7 @@
 -- Atualizado: 2025-01-10 - Migrado para usar get_current_claude_model() wrapper
 --             2025-10-02 - Recuperado do Supabase e salvo localmente
 --             2025-10-17 - Melhorado error logging (NOTICE → WARNING, propaga exceções)
+--             2025-11-13 - SINCRONIZADO COM LIVE: timeout 180s, modelo hardcoded, exception RETURN NULL
 -- =============================================
 
 DROP FUNCTION IF EXISTS claude_complete(TEXT, TEXT, INTEGER, DOUBLE PRECISION, INTEGER);
@@ -33,7 +34,7 @@ CREATE OR REPLACE FUNCTION public.claude_complete(
     system_prompt text DEFAULT 'você é um professor'::text,
     max_tokens integer DEFAULT 4000,
     temperature double precision DEFAULT 0.1,
-    timeout_ms integer DEFAULT 30000
+    timeout_ms integer DEFAULT 180000
 )
 RETURNS text
 LANGUAGE plpgsql
@@ -56,8 +57,8 @@ BEGIN
         jsonb_build_object('role', 'user', 'content', user_prompt)
     );
 
-    -- Construir o corpo da requisição
-    -- MODELO: Usa get_current_claude_model() para centralizar versão
+    -- Construir o corpo da requisição com modelo CORRETO
+    -- USA get_current_claude_model() para centralizar versão (claude-sonnet-4-5-20250929)
     request_body := json_build_object(
         'model', get_current_claude_model(),
         'max_tokens', max_tokens,
@@ -65,9 +66,6 @@ BEGIN
         'system', system_prompt,
         'messages', messages
     )::text;
-
-    -- Log para debug (opcional)
-    RAISE NOTICE 'Request body: %', request_body;
 
     -- Fazer a chamada à API do Claude
     SELECT * INTO http_response
@@ -85,7 +83,6 @@ BEGIN
 
     -- Verificar o status da resposta
     IF http_response.status != 200 THEN
-        RAISE WARNING 'Claude API Error! Status: %, Body: %', http_response.status, http_response.content;
         RAISE EXCEPTION 'API request failed. Status: %, Body: %', http_response.status, http_response.content;
     END IF;
 
@@ -101,9 +98,7 @@ EXCEPTION
     WHEN others THEN
         -- Garantir que as opções CURL sejam resetadas mesmo em caso de erro
         PERFORM http_reset_curlopt();
-        -- ✅ MUDANÇA: RAISE WARNING ao invés de NOTICE
-        RAISE WARNING 'claude_complete EXCEPTION: %, SQLSTATE: %', SQLERRM, SQLSTATE;
-        -- ✅ MUDANÇA: Propagar erro ao invés de retornar NULL
-        RAISE;
+        RAISE NOTICE 'An error occurred: %', SQLERRM;
+        RETURN NULL;
 END;
 $function$

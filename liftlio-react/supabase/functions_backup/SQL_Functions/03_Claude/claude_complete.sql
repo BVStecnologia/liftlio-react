@@ -4,11 +4,12 @@
 -- Criado: 2025-01-23
 -- Atualizado: 2025-01-10 - Migrado para usar get_current_claude_model() wrapper
 --             Sistema completo de integração com Claude API
+-- Atualizado: 2025-11-12 - OTIMIZAÇÃO: Aumenta timeout de 30s→180s (3min)
 -- =============================================
 
 DROP FUNCTION IF EXISTS claude_complete(text, text, integer, double precision, integer);
 
-CREATE OR REPLACE FUNCTION public.claude_complete(user_prompt text, system_prompt text DEFAULT 'você é um professor'::text, max_tokens integer DEFAULT 4000, temperature double precision DEFAULT 0.1, timeout_ms integer DEFAULT 30000)
+CREATE OR REPLACE FUNCTION public.claude_complete(user_prompt text, system_prompt text DEFAULT 'você é um professor'::text, max_tokens integer DEFAULT 4000, temperature double precision DEFAULT 0.1, timeout_ms integer DEFAULT 180000)
  RETURNS text
  LANGUAGE plpgsql
 AS $function$
