@@ -35,6 +35,18 @@ BEGIN
       AND v.comentarios_atualizados = false
       AND v.comentarios_desativados = false
   ) THEN
+    -- Verifica se o job já existe antes de criar
+    SELECT EXISTS (
+      SELECT 1
+      FROM cron.job
+      WHERE jobname = 'process_videos_' || project_id::text
+    ) INTO job_exists;
+
+    -- Remove o job existente para recriar com novos parâmetros
+    IF job_exists THEN
+      PERFORM cron.unschedule('process_videos_' || project_id::text);
+    END IF;
+
     -- Agenda a próxima execução
     PERFORM cron.schedule(
       'process_videos_' || project_id::text,
