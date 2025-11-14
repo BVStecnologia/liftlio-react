@@ -382,19 +382,16 @@ const TrendsGrid = styled.div`
 `;
 
 const TrendCard = styled(motion.div)`
-  background: rgba(139, 92, 246, 0.05);
-  backdrop-filter: blur(10px) saturate(200%);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: 20px;
-  padding: 28px;
+  background: rgba(26, 26, 26, 0.3);
+  border: 1px solid rgba(161, 161, 170, 0.2);
+  border-radius: 16px;
+  padding: 24px;
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    border-color: rgba(139, 92, 246, 0.4);
-    box-shadow: 0 8px 16px rgba(139, 92, 246, 0.1);
+    border-color: rgba(161, 161, 170, 0.3);
   }
 `;
 
@@ -421,33 +418,21 @@ const TrendStatus = styled.span<{ $status: string }>`
   padding: 4px 12px;
   border-radius: 6px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: ${props => {
-    switch(props.$status) {
-      case 'BLAZING': return 'linear-gradient(135deg, #ff6b6b, #ffd93d)';
-      case 'ON FIRE': return 'linear-gradient(135deg, #ef4444, #dc2626)';
-      case 'HOT': return 'linear-gradient(135deg, #f59e0b, #f97316)';
-      case 'WARMING': return 'linear-gradient(135deg, #fbbf24, #f59e0b)';
-      case 'HEATING UP': return 'linear-gradient(135deg, #84cc16, #fbbf24)';
-      case 'MODERATE': return 'linear-gradient(135deg, #6b7280, #9ca3af)';
-      case 'COOLING': return 'linear-gradient(135deg, #60a5fa, #3b82f6)';
-      case 'COLD': return 'linear-gradient(135deg, #3b82f6, #1e40af)';
-      case 'FROZEN': return 'linear-gradient(135deg, #1e3a8a, #1e293b)';
-      default: return 'rgba(139, 92, 246, 0.2)';
-    }
-  }};
-  color: #ffffff;
+  background: rgba(26, 26, 26, 0.5);
+  border: 1px solid rgba(161, 161, 170, 0.2);
+  color: #a1a1aa;
 `;
 
 const TrendGrowth = styled.div<{ $positive: boolean }>`
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
-  color: ${props => props.$positive ? '#10b981' : '#ef4444'};
+  color: ${props => props.$positive ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.7)'};
 `;
 
 const TrendStats = styled.div`
@@ -462,10 +447,10 @@ const TrendStat = styled.div`
   align-items: center;
   gap: 8px;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6);
 
   svg {
-    color: ${theme.primary};
+    color: #a1a1aa;
   }
 `;
 
@@ -478,7 +463,7 @@ const TrendChart = styled.div`
 const TrendInsights = styled.div`
   margin-top: 15px;
   padding-top: 15px;
-  border-top: 1px solid rgba(139, 92, 246, 0.2);
+  border-top: 1px solid rgba(161, 161, 170, 0.15);
 `;
 
 const TrendInsight = styled.div`
@@ -494,7 +479,7 @@ const TrendInsight = styled.div`
   }
 
   svg {
-    color: ${theme.secondary};
+    color: #a1a1aa;
     flex-shrink: 0;
   }
 `;
@@ -974,22 +959,22 @@ const LiftlioTrends: React.FC = () => {
                           <AreaChart data={historicalData}>
                             <defs>
                               <linearGradient id={`gradient-${trend.id}`} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor={theme.primary} stopOpacity={0.8} />
-                                <stop offset="100%" stopColor={theme.primary} stopOpacity={0.1} />
+                                <stop offset="0%" stopColor="#a1a1aa" stopOpacity={0.5} />
+                                <stop offset="100%" stopColor="#a1a1aa" stopOpacity={0.05} />
                               </linearGradient>
                             </defs>
                             <Tooltip
                               contentStyle={{
-                                background: 'rgba(0,0,0,0.8)',
-                                border: `1px solid ${theme.primary}`,
+                                background: 'rgba(0,0,0,0.9)',
+                                border: '1px solid rgba(161, 161, 170, 0.3)',
                                 borderRadius: '8px'
                               }}
-                              labelStyle={{ color: theme.primary }}
+                              labelStyle={{ color: '#a1a1aa' }}
                             />
                             <Area
                               type="monotone"
                               dataKey="value"
-                              stroke={theme.primary}
+                              stroke="#d4d4d8"
                               strokeWidth={2}
                               fill={`url(#gradient-${trend.id})`}
                             />
@@ -999,24 +984,24 @@ const LiftlioTrends: React.FC = () => {
 
                       <TrendInsights>
                         <div style={{
-                          background: 'rgba(139, 92, 246, 0.05)',
-                          border: '1px solid rgba(139, 92, 246, 0.2)',
+                          background: 'rgba(26, 26, 26, 0.3)',
+                          border: '1px solid rgba(161, 161, 170, 0.15)',
                           borderRadius: '12px',
                           padding: '16px',
                           marginBottom: '10px'
                         }}>
-                          <div style={{ fontSize: '0.8rem', color: theme.primary, fontWeight: '600', marginBottom: '8px' }}>
+                          <div style={{ fontSize: '0.8rem', color: '#a1a1aa', fontWeight: '600', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                             Insights
                           </div>
-                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
-                            • Growth pattern: <span style={{ color: '#10b981' }}>+{trend.growth.toFixed(0)}%</span>{trend.velocity && trend.velocity !== 0 ? <> with acceleration of <span style={{ color: theme.secondary }}>{trend.velocity.toFixed(1)}/day</span></> : null}<br/>
-                            • Momentum score: <span style={{ color: theme.primary }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'Strong' : 'Moderate'})<br/>
-                            • Engagement rate: <span style={{ color: '#f59e0b' }}>{(trend.engagement_rate * 100).toFixed(1)}%</span> - {trend.engagement_rate > 0.05 ? 'Above average' : 'Normal'}
+                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', lineHeight: '1.5' }}>
+                            • Growth pattern: <span style={{ color: 'rgba(255,255,255,0.9)' }}>+{trend.growth.toFixed(0)}%</span>{trend.velocity && trend.velocity !== 0 ? <> with acceleration of <span style={{ color: 'rgba(255,255,255,0.9)' }}>{trend.velocity.toFixed(1)}/day</span></> : null}<br/>
+                            • Momentum score: <span style={{ color: 'rgba(255,255,255,0.9)' }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'Strong' : 'Moderate'})<br/>
+                            • Engagement rate: <span style={{ color: 'rgba(255,255,255,0.9)' }}>{(trend.engagement_rate * 100).toFixed(1)}%</span> - {trend.engagement_rate > 0.05 ? 'Above average' : 'Normal'}
                           </div>
                         </div>
                         {trend.temporal_data && (
-                          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-                            Opportunity window: <span style={{ color: '#10b981', fontWeight: '600' }}>Open</span><br/>
+                          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+                            Opportunity window: <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: '600' }}>Open</span><br/>
                             Trending for {trend.temporal_data.days_trending} days<br/>
                             {trend.scores?.saturation < 50 && (
                               <>Enter now before saturation</>
@@ -1091,22 +1076,22 @@ const LiftlioTrends: React.FC = () => {
                           <AreaChart data={historicalData}>
                             <defs>
                               <linearGradient id={`gradient-decline-${trend.id}`} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.8} />
-                                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.1} />
+                                <stop offset="0%" stopColor="#a1a1aa" stopOpacity={0.5} />
+                                <stop offset="100%" stopColor="#a1a1aa" stopOpacity={0.05} />
                               </linearGradient>
                             </defs>
                             <Tooltip
                               contentStyle={{
-                                background: 'rgba(0,0,0,0.8)',
-                                border: '1px solid #ef4444',
+                                background: 'rgba(0,0,0,0.9)',
+                                border: '1px solid rgba(161, 161, 170, 0.3)',
                                 borderRadius: '8px'
                               }}
-                              labelStyle={{ color: '#ef4444' }}
+                              labelStyle={{ color: '#a1a1aa' }}
                             />
                             <Area
                               type="monotone"
                               dataKey="value"
-                              stroke="#ef4444"
+                              stroke="#d4d4d8"
                               strokeWidth={2}
                               fill={`url(#gradient-decline-${trend.id})`}
                             />
@@ -1116,24 +1101,24 @@ const LiftlioTrends: React.FC = () => {
 
                       <TrendInsights>
                         <div style={{
-                          background: 'rgba(139, 92, 246, 0.05)',
-                          border: '1px solid rgba(139, 92, 246, 0.2)',
+                          background: 'rgba(26, 26, 26, 0.3)',
+                          border: '1px solid rgba(161, 161, 170, 0.15)',
                           borderRadius: '12px',
                           padding: '16px',
                           marginBottom: '10px'
                         }}>
-                          <div style={{ fontSize: '0.8rem', color: theme.primary, fontWeight: '600', marginBottom: '8px' }}>
+                          <div style={{ fontSize: '0.8rem', color: '#a1a1aa', fontWeight: '600', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                             Insights
                           </div>
-                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
-                            • Growth pattern: <span style={{ color: '#10b981' }}>+{trend.growth.toFixed(0)}%</span>{trend.velocity && trend.velocity !== 0 ? <> with acceleration of <span style={{ color: theme.secondary }}>{trend.velocity.toFixed(1)}/day</span></> : null}<br/>
-                            • Momentum score: <span style={{ color: theme.primary }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'Strong' : 'Moderate'})<br/>
-                            • Engagement rate: <span style={{ color: '#f59e0b' }}>{(trend.engagement_rate * 100).toFixed(1)}%</span> - {trend.engagement_rate > 0.05 ? 'Above average' : 'Normal'}
+                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', lineHeight: '1.5' }}>
+                            • Growth pattern: <span style={{ color: 'rgba(255,255,255,0.9)' }}>+{trend.growth.toFixed(0)}%</span>{trend.velocity && trend.velocity !== 0 ? <> with acceleration of <span style={{ color: 'rgba(255,255,255,0.9)' }}>{trend.velocity.toFixed(1)}/day</span></> : null}<br/>
+                            • Momentum score: <span style={{ color: 'rgba(255,255,255,0.9)' }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'Strong' : 'Moderate'})<br/>
+                            • Engagement rate: <span style={{ color: 'rgba(255,255,255,0.9)' }}>{(trend.engagement_rate * 100).toFixed(1)}%</span> - {trend.engagement_rate > 0.05 ? 'Above average' : 'Normal'}
                           </div>
                         </div>
                         {trend.temporal_data && (
-                          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-                            Opportunity window: <span style={{ color: '#10b981', fontWeight: '600' }}>Open</span><br/>
+                          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+                            Opportunity window: <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: '600' }}>Open</span><br/>
                             Trending for {trend.temporal_data.days_trending} days<br/>
                             {trend.scores?.saturation < 50 && (
                               <>Enter now before saturation</>
