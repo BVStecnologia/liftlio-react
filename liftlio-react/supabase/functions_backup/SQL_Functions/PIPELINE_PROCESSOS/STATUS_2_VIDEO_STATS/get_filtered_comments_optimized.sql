@@ -12,8 +12,14 @@
 --                          50 comentários completam em ~90-120s (OK com timeout 180s)
 -- Atualizado: 2025-11-12 - CRÍTICO: Removida chamada curate_comments_with_claude
 --                          (causava loop/timeout quando chamada diretamente)
--- Atualizado: 2025-11-13 - ASYNC: Adiciona trigger dblink via UPDATE curadoria_trigger
---                          Dispara curate em background (~10ms sem bloqueio)
+-- Atualizado: 2025-11-13 - ASYNC: Adiciona pg_net.http_post para disparar curate-async
+--                          Edge Function roda curate_comments_with_claude em background (~2s timeout)
+-- Atualizado: 2025-11-13 - FIX FILTROS: Remove @ do regex (permite mentions legítimos)
+--                          Permite até 3 comentários por autor (melhor diversidade)
+-- Atualizado: 2025-11-13 - ASYNC: Usa pg_net → Edge Function curate-async
+--                          get_filtered_comments retorna imediatamente (~1s)
+--                          Edge Function aguarda 2s e executa curate_comments_with_claude (30-120s)
+-- Atualizado: 2025-11-13 - FIX CREDENTIALS: Usa credenciais hardcoded (current_setting falha)
 -- =============================================
 
 DROP FUNCTION IF EXISTS get_filtered_comments(bigint);
@@ -36,6 +42,8 @@ DECLARE
     project_id bigint;
     project_keywords text;
     search_query tsquery;
+    supabase_url text := 'https://suqjifkhmekcdflwowiw.supabase.co';
+    supabase_anon_key text := 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I';
 BEGIN
     -- Buscar projeto e palavras-chave através do primeiro comentário
     SELECT DISTINCT cp.project_id, p.palavras_chaves_p_comments
@@ -111,10 +119,10 @@ BEGIN
                 cp.video_id = video_id_param
                 AND cp.text_display IS NOT NULL
                 AND LENGTH(TRIM(cp.text_display)) > 20
-                -- Otimização: usar regex único ao invés de múltiplos ILIKE (30x mais rápido)
-                AND cp.text_display !~ 'https?://|www\.|@'
-                -- DEDUPLICAÇÃO INTELIGENTE: mantém melhor comentário por autor (não o primeiro)
-                AND cp.id = (
+                -- Anti-spam: bloqueia URLs mas PERMITE @mentions legítimos
+                AND cp.text_display !~ 'https?://|www\.'
+                -- DEDUPLICAÇÃO SUAVE: permite até 3 comentários por autor (diversidade)
+                AND cp.id IN (
                     SELECT cp2.id
                     FROM "Comentarios_Principais" cp2
                     WHERE cp2.video_id = video_id_param
@@ -131,7 +139,7 @@ BEGIN
                         LENGTH(cp2.text_display) DESC,
                         -- Depois por likes
                         cp2.like_count DESC
-                    LIMIT 1
+                    LIMIT 3  -- Permite até 3 comentários do mesmo autor
                 )
         )
         SELECT id
@@ -179,10 +187,31 @@ BEGIN
     SET comment_count = total_comments
     WHERE id = video_id_param;
 
-    -- 🚨 REMOVIDO: Chamada curate_comments_with_claude (causava loop/timeout)
-    -- AGORA: curate_comments_with_claude chama get_filtered_comments (não o contrário!)
+    -- =============================================
+    -- 6. DISPARA CURADORIA EM BACKGROUND (pg_net → Edge Function)
+    -- =============================================
+    BEGIN
+        -- Dispara Edge Function curate-async via pg_net (fire-and-forget)
+        PERFORM net.http_post(
+            url := supabase_url || '/functions/v1/curate-async',
+            headers := jsonb_build_object(
+                'Content-Type', 'application/json',
+                'Authorization', 'Bearer ' || supabase_anon_key
+            ),
+            body := jsonb_build_object('video_id', video_id_param),
+            timeout_milliseconds := 5000  -- Timeout baixo (só dispara)
+        );
 
-    -- 6. Retornar resultados priorizando intenção de compra
+        RAISE NOTICE '🚀 Curadoria disparada via Edge Function para vídeo % - retornando imediatamente',
+            video_id_param;
+
+    EXCEPTION WHEN OTHERS THEN
+        -- Se pg_net falhar, ignora erro e continua
+        RAISE WARNING '⚠️ Falha ao disparar Edge Function para vídeo %: % (ignorando)',
+            video_id_param, SQLERRM;
+    END;
+
+    -- 7. Retornar resultados priorizando intenção de compra
     RETURN QUERY
     WITH comment_replies_final AS (
         SELECT
@@ -235,17 +264,5 @@ BEGIN
     LEFT JOIN comment_replies_final crf ON crf.main_comment_id = cp.id
     WHERE cp.id = ANY(selected_ids)
     ORDER BY comment_relevance_score DESC, comment_published_at DESC;
-
-    -- =============================================
-    -- DISPARA CURADORIA ASYNC VIA TRIGGER
-    -- =============================================
-    -- ❌ TEMPORARIAMENTE DESABILITADO (2025-11-13)
-    -- Coluna curadoria_trigger não existe na tabela Videos
-    -- TODO: Criar coluna ou remover funcionalidade
-    -- UPDATE "Videos"
-    -- SET curadoria_trigger = 1
-    -- WHERE id = video_id_param;
-
-    RAISE NOTICE '⚠️ Curadoria async desabilitada (coluna não existe) para vídeo %', video_id_param;
 END;
 $function$;
