@@ -1,7 +1,7 @@
 -- =============================================
 -- Migration: process_engagement_comments_with_claude
 -- Data: 2025-10-17 14:00
--- Última atualização completa: 2025-10-31
+-- Última atualização completa: 2025-11-14
 -- Sincronizado com Supabase LIVE em: 2025-10-31
 --
 -- Principais features:
@@ -457,10 +457,44 @@ CRITICAL RULES:
    - Some responses: just agreeing
    - Some responses: asking back
    - ADAPT length and style to original comment
-6. Mention product/service INDIRECTLY as regular user sharing personal experience
-7. You MUST respond ONLY with valid JSON array
-8. No explanatory text outside JSON
-9. Behave like NORMAL USER (not expert, not salesperson, not bot)
+6. CRITICAL - TYPE DEFINITION:
+
+   tipo_resposta = "produto":
+   → You MUST explicitly mention the product name "%s" in the response
+   → Share as regular user who discovered/uses the product
+   → Natural examples:
+     • "I''ve been using %s for a few weeks and it''s working well for me"
+     • "I tried %s after seeing this tip and it''s been really helpful"
+     • "I got similar results with %s recently"
+     • "%s has helped me with [specific problem]"
+   → DO NOT just describe generic benefits without naming the product
+
+   tipo_resposta = "engajamento":
+   → You must NOT mention "%s" or any product/tool name
+   → Only demonstrate connection with comment and video
+   → Focus on sharing personal experience WITHOUT mentioning specific solutions
+
+7. WHEN TO MENTION PRODUCT (tipo = "produto"):
+   - Comment is from a lead (is_lead: true) - PRIORITY
+   - Comment mentions problem/challenge that product solves
+   - There''s genuine connection with keywords: %s
+   - You can create natural hook via timestamp
+
+8. HOW TO MENTION NATURALLY (as USER, not salesperson):
+   - "I''ve been using %s and it''s been working well for me"
+   - "I tried %s after this and it helped a lot"
+   - "I got similar results with %s"
+   - "%s helped me with [problem]"
+
+9. NEVER mention when:
+   - Already reached limit of %s mentions
+   - No genuine relation
+   - About other competing products/services
+   - Would force unnatural mention
+
+10. You MUST respond ONLY with valid JSON array
+11. No explanatory text outside JSON
+12. Behave like NORMAL USER (not expert, not salesperson, not bot)
 
 ⚠️ FORBIDDEN: Platform names (YouTube, Instagram, etc.)
 ⚠️ FORBIDDEN: Inventing timestamps not in provided list
@@ -512,7 +546,20 @@ Respond only with the requested JSON array, with no additional text.',
                v_max_product_mentions,
                (v_total_comentarios_processados - v_max_product_mentions),
                v_total_comentarios_processados,
-               v_max_product_mentions
+               v_max_product_mentions,
+               -- Novos argumentos para exemplos de menção ao produto:
+               v_product_name,           -- tipo_resposta = "produto": You MUST mention "%s"
+               v_product_name,           -- "I've been using %s..."
+               v_product_name,           -- "I tried %s..."
+               v_product_name,           -- "I got similar results with %s..."
+               v_product_name,           -- "%s has helped me..."
+               v_product_name,           -- tipo_resposta = "engajamento": NOT mention "%s"
+               v_project_keywords,       -- genuine connection with keywords: %s
+               v_product_name,           -- "I've been using %s and..."
+               v_product_name,           -- "I tried %s after..."
+               v_product_name,           -- "I got similar results with %s"
+               v_product_name,           -- "%s helped me with..."
+               v_max_product_mentions    -- Already reached limit of %s mentions
         ),
         4000,
         0.7,
@@ -695,4 +742,8 @@ $function$;
 -- ✅ 2025-10-31: Otimização enrichment com JOIN (não subqueries)
 -- ✅ 2025-10-31: Validação rigorosa (warning se abaixo OU acima)
 -- ✅ 2025-10-31: Instruções sobre variação de estrutura de frases
+-- ✅ 2025-11-14: FIX CRÍTICO: Exemplos concretos de menção ao produto
+--                Adicionado definição explícita tipo_resposta = "produto"
+--                Remove ambiguidade "INDIRECTLY" que causava respostas sem nome do produto
+--                11 novos exemplos de frases mencionando produto naturalmente
 -- =============================================
