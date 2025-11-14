@@ -187,16 +187,17 @@ BEGIN
         log_message := log_message || 'Status do projeto atualizado para 3' || E'\n';
 
         -- Iniciar processamento de coment�rios se necess�rio
-        IF processed_count > 0 OR EXISTS (
-            SELECT 1
-            FROM "Videos" v
-            JOIN "Scanner de videos do youtube" s ON v.scanner_id = s.id
-            WHERE s."Projeto_id" = project_id
-              AND v.comentarios_atualizados = false
-        ) THEN
-            PERFORM start_video_processing(project_id::INTEGER);
-            log_message := log_message || 'Iniciando processamento de coment�rios' || E'\n';
-        END IF;
+        -- ⚠️ COMENTADO PARA TESTE MANUAL (evita erro de job não encontrado)
+        -- IF processed_count > 0 OR EXISTS (
+        --     SELECT 1
+        --     FROM "Videos" v
+        --     JOIN "Scanner de videos do youtube" s ON v.scanner_id = s.id
+        --     WHERE s."Projeto_id" = project_id
+        --       AND v.comentarios_atualizados = false
+        -- ) THEN
+        --     PERFORM start_video_processing(project_id::INTEGER);
+        --     log_message := log_message || 'Iniciando processamento de coment�rios' || E'\n';
+        -- END IF;
 
         -- Liberar bloqueio
         PERFORM pg_advisory_unlock(project_id);
