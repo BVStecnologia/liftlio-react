@@ -237,11 +237,7 @@ const HeroTitle = styled(motion.h1)`
   font-weight: 700;
   margin: 0 auto 20px;
   max-width: 900px;
-  background: ${theme.gradient};
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: ${gradientShift} 12s ease infinite;
+  color: #ffffff;
   line-height: 1.2;
   padding: 0 20px;
   position: relative;
@@ -571,36 +567,36 @@ const CategoryGrid = styled.div`
   margin: 0 auto;
 `;
 
-const CategoryCard = styled(motion.div)`
-  background: ${theme.gradient};
-  padding: 24px;
-  border-radius: 20px;
+const CategoryCard = styled.div`
+  background: rgba(139, 92, 246, 0.05);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  padding: 20px;
+  border-radius: 12px;
   text-align: center;
-  cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 8px 16px rgba(139, 92, 246, 0.3);
+    border-color: rgba(139, 92, 246, 0.4);
   }
 
   h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin: 0 0 5px 0;
-    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   p {
-    font-size: 1.8rem;
-    font-weight: 800;
+    font-size: 2rem;
+    font-weight: 700;
     margin: 0;
-    color: rgba(255, 255, 255, 0.9);
+    color: ${theme.primary};
   }
 
   span {
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.7);
+    display: none;
   }
 `;
 
@@ -784,28 +780,14 @@ const LiftlioTrends: React.FC = () => {
                 Patterns the human eye could never detect. Trends being born at this very moment.
               </HeroSubtitle>
             
-            <div style={{
-              display: 'inline-block',
-              padding: '8px 20px',
-              background: 'rgba(139, 92, 246, 0.1)',
-              border: '1px solid rgba(139, 92, 246, 0.2)',
-              borderRadius: '12px',
-              marginTop: '20px',
-              fontSize: '0.9rem',
-              color: 'rgba(255,255,255,0.8)'
-            }}>
-              <span style={{ color: '#10b981', marginRight: '8px' }}>●</span>
-              Neural Engine Active • Real-Time Analysis
-            </div>
             
             <StatsGrid>
               {stats.map((stat, index) => (
                 <StatCard
                   key={index}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
                 >
                   <StatIcon>{stat.icon}</StatIcon>
                   <StatValue>{stat.value}</StatValue>
@@ -897,10 +879,9 @@ const LiftlioTrends: React.FC = () => {
                   return (
                     <TrendCard
                       key={trend.id}
-                      initial={{ opacity: 0, y: 30 }}
+                      initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      whileHover={{ scale: 1.02 }}
+                      transition={{ duration: 0.4, delay: index * 0.1 }}
                     >
                       <TrendHeader>
                         <TrendInfo>
@@ -1002,7 +983,7 @@ const LiftlioTrends: React.FC = () => {
                         </div>
                         {trend.temporal_data && (
                           <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-                            Opportunity window: <span style={{ color: '#10b981', fontWeight: 'bold' }}>Open</span><br/>
+                            Opportunity window: <span style={{ color: '#10b981', fontWeight: '600' }}>Open</span><br/>
                             Trending for {trend.temporal_data.days_trending} days<br/>
                             {trend.scores?.saturation < 50 && (
                               <>Enter now before saturation</>
@@ -1040,10 +1021,9 @@ const LiftlioTrends: React.FC = () => {
                   return (
                     <TrendCard
                       key={trend.id}
-                      initial={{ opacity: 0, y: 30 }}
+                      initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      whileHover={{ scale: 1.02 }}
+                      transition={{ duration: 0.4, delay: index * 0.1 }}
                     >
                       <TrendHeader>
                         <TrendInfo>
@@ -1120,7 +1100,7 @@ const LiftlioTrends: React.FC = () => {
                         </div>
                         {trend.temporal_data && (
                           <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
-                            Opportunity window: <span style={{ color: '#10b981', fontWeight: 'bold' }}>Open</span><br/>
+                            Opportunity window: <span style={{ color: '#10b981', fontWeight: '600' }}>Open</span><br/>
                             Trending for {trend.temporal_data.days_trending} days<br/>
                             {trend.scores?.saturation < 50 && (
                               <>Enter now before saturation</>
@@ -1148,18 +1128,12 @@ const LiftlioTrends: React.FC = () => {
                 color: 'rgba(255,255,255,0.6)',
                 fontSize: '1rem'
               }}>
-                Our AI identified that <span style={{ color: theme.primary, fontWeight: 'bold' }}>
+                Our AI identified that <span style={{ color: theme.primary, fontWeight: '600' }}>
                 {summary.categories[0].category}</span> is dominating with {Math.round((summary.categories[0].count / trends.length) * 100)}% of trends.
               </p>
               <CategoryGrid>
                 {summary.categories.map((category, index) => (
-                  <CategoryCard
-                    key={index}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                    whileHover={{ scale: 1.05 }}
-                  >
+                  <CategoryCard key={index}>
                     <h3>{category.category}</h3>
                     <p>{category.count}</p>
                     <span>active trends</span>
@@ -1192,7 +1166,7 @@ const LiftlioTrends: React.FC = () => {
               }}>
                 <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>Multi-Dimensional<br/>Analysis</h3>
                 <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
-                  We analyze <span style={{ color: theme.secondary, fontWeight: 'bold' }}>47 dimensions</span>: 
+                  We analyze <span style={{ color: theme.secondary, fontWeight: '600' }}>47 dimensions</span>: 
                   velocity, momentum, sentiment, engagement, and more.
                 </p>
               </div>
@@ -1207,7 +1181,7 @@ const LiftlioTrends: React.FC = () => {
               }}>
                 <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>Early Detection</h3>
                 <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
-                  Detect patterns <span style={{ color: '#10b981', fontWeight: 'bold' }}>7-14 days before</span> explosion. 
+                  Detect patterns <span style={{ color: '#10b981', fontWeight: '600' }}>7-14 days before</span> explosion. 
                   When others see it, it's too late.
                 </p>
               </div>
@@ -1223,7 +1197,7 @@ const LiftlioTrends: React.FC = () => {
                 <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>Surgical Precision</h3>
                 <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
                   Confidence score on every prediction. 
-                  <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>92% accuracy</span>.
+                  <span style={{ color: '#f59e0b', fontWeight: '600' }}>92% accuracy</span>.
                 </p>
               </div>
               
@@ -1238,7 +1212,7 @@ const LiftlioTrends: React.FC = () => {
                 <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>Temporal Vision</h3>
                 <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
                   See past, present, and future. Know
-                  <span style={{ color: theme.accent, fontWeight: 'bold' }}> WHAT</span> trends and <span style={{ color: theme.accent, fontWeight: 'bold' }}>WHEN</span> they stop.
+                  <span style={{ color: theme.accent, fontWeight: '600' }}>what</span> trends and <span style={{ color: theme.accent, fontWeight: '600' }}>when</span> they stop.
                 </p>
               </div>
             </div>
@@ -1247,9 +1221,9 @@ const LiftlioTrends: React.FC = () => {
             {analytics && (
               <StatsGrid style={{ marginTop: '40px' }}>
                 <StatCard
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
+                  transition={{ duration: 0.4 }}
                 >
                   <StatIcon>{React.createElement(FaUsers as any)}</StatIcon>
                   <StatValue>{formatNumber(analytics.visitor_count)}</StatValue>
@@ -1339,71 +1313,23 @@ const LiftlioTrends: React.FC = () => {
                 margin: '0 auto',
                 lineHeight: '1.6'
               }}>
-                While you read this page, <span style={{ color: theme.primary, fontWeight: 'bold' }}>
-                {Math.floor(Math.random() * 20) + 10}</span> new trends were detected. 
-                <span style={{ color: '#10b981', fontWeight: 'bold' }}> {Math.floor(Math.random() * 50) + 100}</span> creators 
-                are already taking action. The future of YouTube is being written now. 
-                <span style={{ color: theme.secondary, fontWeight: 'bold' }}> And we're reading every line.</span>
+                Real-time YouTube trend analysis powered by AI. Monitor emerging patterns before they explode.
               </p>
               
               <div style={{
                 marginTop: '40px',
-                padding: '20px',
-                background: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                borderRadius: '12px',
+                padding: '16px 24px',
+                background: 'rgba(139, 92, 246, 0.05)',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                borderRadius: '8px',
                 maxWidth: '500px',
-                margin: '40px auto 0'
+                margin: '40px auto 0',
+                fontSize: '0.85rem',
+                color: 'rgba(255,255,255,0.6)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '10px' }}>
-                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981' }}></span>
-                  <span style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 'bold' }}>SYSTEM ACTIVE</span>
-                </div>
-                <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.7)' }}>{summary?.total_active || 0}</span> trends monitored • 
-                  <span style={{ color: 'rgba(255,255,255,0.7)' }}> {formatNumber(summary?.total_videos || 0)}</span> signals processed • 
-                  <span style={{ color: 'rgba(255,255,255,0.7)' }}> {formatNumber(summary?.total_channels || 0)}</span> channels analyzed
-                </div>
+                {summary?.total_active || 0} trends • {formatNumber(summary?.total_videos || 0)} signals • {formatNumber(summary?.total_channels || 0)} channels
               </div>
               
-              <div style={{
-                marginTop: '40px',
-                display: 'flex',
-                gap: '12px',
-                justifyContent: 'center',
-                flexWrap: 'wrap'
-              }}>
-                <div style={{
-                  padding: '8px 16px',
-                  background: 'rgba(139, 92, 246, 0.1)',
-                  border: '1px solid rgba(139, 92, 246, 0.2)',
-                  borderRadius: '12px',
-                  fontSize: '0.85rem',
-                  color: 'rgba(255,255,255,0.8)'
-                }}>
-                  Neural Network Processing
-                </div>
-                <div style={{
-                  padding: '8px 16px',
-                  background: 'rgba(139, 92, 246, 0.1)',
-                  border: '1px solid rgba(139, 92, 246, 0.2)',
-                  borderRadius: '12px',
-                  fontSize: '0.85rem',
-                  color: 'rgba(255,255,255,0.8)'
-                }}>
-                  Real-Time Analysis
-                </div>
-                <div style={{
-                  padding: '8px 16px',
-                  background: 'rgba(139, 92, 246, 0.1)',
-                  border: '1px solid rgba(139, 92, 246, 0.2)',
-                  borderRadius: '12px',
-                  fontSize: '0.85rem',
-                  color: 'rgba(255,255,255,0.8)'
-                }}>
-                  Multi-Dimensional Scanning
-                </div>
-              </div>
             </div>
           </div>
         </MainContainer>
