@@ -565,6 +565,7 @@ const CategoryGrid = styled.div`
   gap: 20px;
   max-width: 1200px;
   margin: 0 auto;
+  justify-items: center;
 `;
 
 const CategoryCard = styled.div`
@@ -574,25 +575,27 @@ const CategoryCard = styled.div`
   border-radius: 12px;
   text-align: center;
   transition: all 0.3s ease;
+  width: 100%;
+  max-width: 200px;
 
   &:hover {
-    border-color: rgba(139, 92, 246, 0.4);
+    border-color: rgba(139, 92, 246, 0.3);
   }
 
   h3 {
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin: 0 0 8px 0;
-    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0 0 12px 0;
+    color: rgba(255, 255, 255, 0.5);
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
 
   p {
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 600;
     margin: 0;
-    color: ${theme.primary};
+    color: rgba(255, 255, 255, 0.9);
   }
 
   span {
