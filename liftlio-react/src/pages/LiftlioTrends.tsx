@@ -234,7 +234,7 @@ const HeroContent = styled.div`
 
 const HeroTitle = styled(motion.h1)`
   font-size: clamp(1.8rem, 6vw, 3.5rem);
-  font-weight: 900;
+  font-weight: 700;
   margin: 0 auto 20px;
   max-width: 900px;
   background: ${theme.gradient};
@@ -305,7 +305,7 @@ const StatIcon = styled.div`
 
 const StatValue = styled.div`
   font-size: 2.2rem;
-  font-weight: 800;
+  font-weight: 700;
   margin-bottom: 5px;
   background: linear-gradient(135deg, #ffffff, #e0e0e0);
   -webkit-background-clip: text;
@@ -332,7 +332,7 @@ const TrendsSection = styled.section`
 
 const SectionTitle = styled.h2`
   font-size: clamp(1.8rem, 5vw, 2.5rem);
-  font-weight: 800;
+  font-weight: 700;
   text-align: center;
   margin-bottom: 40px;
   background: ${theme.gradient};
@@ -413,7 +413,7 @@ const TrendStatus = styled.span<{ $status: string }>`
 
 const TrendGrowth = styled.div<{ $positive: boolean }>`
   font-size: 2rem;
-  font-weight: 800;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -789,7 +789,7 @@ const LiftlioTrends: React.FC = () => {
               padding: '8px 20px',
               background: 'rgba(139, 92, 246, 0.1)',
               border: '1px solid rgba(139, 92, 246, 0.2)',
-              borderRadius: '8px',
+              borderRadius: '12px',
               marginTop: '20px',
               fontSize: '0.9rem',
               color: 'rgba(255,255,255,0.8)'
@@ -996,7 +996,7 @@ const LiftlioTrends: React.FC = () => {
                           </div>
                           <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
                             • Growth pattern: <span style={{ color: '#10b981' }}>+{trend.growth.toFixed(0)}%</span>{trend.velocity && trend.velocity !== 0 ? <> with acceleration of <span style={{ color: theme.secondary }}>{trend.velocity.toFixed(1)}/day</span></> : null}<br/>
-                            • Momentum score: <span style={{ color: theme.primary }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'STRONG' : 'MODERATE'})<br/>
+                            • Momentum score: <span style={{ color: theme.primary }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'Strong' : 'Moderate'})<br/>
                             • Engagement rate: <span style={{ color: '#f59e0b' }}>{(trend.engagement_rate * 100).toFixed(1)}%</span> - {trend.engagement_rate > 0.05 ? 'Above average' : 'Normal'}
                           </div>
                         </div>
@@ -1114,7 +1114,7 @@ const LiftlioTrends: React.FC = () => {
                           </div>
                           <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
                             • Growth pattern: <span style={{ color: '#10b981' }}>+{trend.growth.toFixed(0)}%</span>{trend.velocity && trend.velocity !== 0 ? <> with acceleration of <span style={{ color: theme.secondary }}>{trend.velocity.toFixed(1)}/day</span></> : null}<br/>
-                            • Momentum score: <span style={{ color: theme.primary }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'STRONG' : 'MODERATE'})<br/>
+                            • Momentum score: <span style={{ color: theme.primary }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'Strong' : 'Moderate'})<br/>
                             • Engagement rate: <span style={{ color: '#f59e0b' }}>{(trend.engagement_rate * 100).toFixed(1)}%</span> - {trend.engagement_rate > 0.05 ? 'Above average' : 'Normal'}
                           </div>
                         </div>
@@ -1162,7 +1162,7 @@ const LiftlioTrends: React.FC = () => {
                   >
                     <h3>{category.category}</h3>
                     <p>{category.count}</p>
-                    <span>active trends 🔥</span>
+                    <span>active trends</span>
                   </CategoryCard>
                 ))}
               </CategoryGrid>
@@ -1299,7 +1299,7 @@ const LiftlioTrends: React.FC = () => {
               
               <h2 style={{
                 fontSize: 'clamp(2rem, 5vw, 3rem)',
-                fontWeight: '900',
+                fontWeight: '700',
                 marginBottom: '20px',
                 background: theme.gradient,
                 WebkitBackgroundClip: 'text',
@@ -1321,7 +1321,7 @@ const LiftlioTrends: React.FC = () => {
                 display: 'inline-block',
                 padding: '12px 32px',
                 background: theme.gradient,
-                borderRadius: '8px',
+                borderRadius: '12px',
                 fontSize: '1rem',
                 fontWeight: '600',
                 color: 'white',
@@ -1377,7 +1377,7 @@ const LiftlioTrends: React.FC = () => {
                   padding: '8px 16px',
                   background: 'rgba(139, 92, 246, 0.1)',
                   border: '1px solid rgba(139, 92, 246, 0.2)',
-                  borderRadius: '8px',
+                  borderRadius: '12px',
                   fontSize: '0.85rem',
                   color: 'rgba(255,255,255,0.8)'
                 }}>
@@ -1387,7 +1387,7 @@ const LiftlioTrends: React.FC = () => {
                   padding: '8px 16px',
                   background: 'rgba(139, 92, 246, 0.1)',
                   border: '1px solid rgba(139, 92, 246, 0.2)',
-                  borderRadius: '8px',
+                  borderRadius: '12px',
                   fontSize: '0.85rem',
                   color: 'rgba(255,255,255,0.8)'
                 }}>
@@ -1397,7 +1397,7 @@ const LiftlioTrends: React.FC = () => {
                   padding: '8px 16px',
                   background: 'rgba(139, 92, 246, 0.1)',
                   border: '1px solid rgba(139, 92, 246, 0.2)',
-                  borderRadius: '8px',
+                  borderRadius: '12px',
                   fontSize: '0.85rem',
                   color: 'rgba(255,255,255,0.8)'
                 }}>
