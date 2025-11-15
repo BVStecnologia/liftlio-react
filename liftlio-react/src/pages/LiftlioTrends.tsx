@@ -219,7 +219,7 @@ const BackgroundCanvas = styled.canvas`
 `;
 
 const HeroSection = styled.section`
-  padding: 100px 60px 60px;
+  padding: 100px 60px 80px;
   text-align: center;
   position: relative;
   width: 100%;
@@ -264,7 +264,7 @@ const HeroSubtitle = styled(motion.p)`
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 24px;
   width: 100%;
 
   @media (max-width: 1024px) {
@@ -279,7 +279,7 @@ const StatsGrid = styled.div`
 const TwoColumnGrid = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 20px;
+  gap: 24px;
   width: 100%;
 
   @media (max-width: 1024px) {
@@ -290,38 +290,39 @@ const TwoColumnGrid = styled.div`
 const ThreeColumnGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 24px;
 
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
   }
 `;
 
-// Analytics-style metric cards with colored icons
+// Minimalist metric cards with outline icons
 const StatCard = styled(motion.div)`
   background: rgba(26, 26, 26, 0.3);
   border: 1px solid rgba(161, 161, 170, 0.2);
   border-radius: 12px;
-  padding: 20px;
+  padding: 28px;
   position: relative;
   transition: all 0.3s ease;
 
   &:hover {
-    border-color: rgba(161, 161, 170, 0.3);
+    border-color: rgba(139, 92, 246, 0.3);
   }
 `;
 
 const StatIcon = styled.div<{ color?: string }>`
   width: 48px;
   height: 48px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${props => props.color || theme.primary};
+  background: transparent;
+  border: 2px solid ${props => props.color || theme.primary};
   border-radius: 12px;
-  font-size: 24px;
-  color: white;
+  font-size: 22px;
+  color: ${props => props.color || theme.primary};
 `;
 
 const StatValue = styled.div`
@@ -485,7 +486,7 @@ const TrendInsight = styled.div`
 `;
 
 const HowItWorksSection = styled.section`
-  padding: 80px 60px;
+  padding: 100px 60px;
   border-top: 1px solid rgba(139, 92, 246, 0.1);
 
   @media (max-width: 1200px) {
@@ -744,21 +745,21 @@ const LiftlioTrends: React.FC = () => {
       icon: React.createElement(FaChartLine as any),
       label: 'Average Growth',
       value: summary ? `+${summary.avg_growth.toFixed(0)}%` : '0%',
-      color: '#10b981',
+      color: '#8b5cf6',
       subtitle: 'last 30 days'
     },
     {
       icon: React.createElement(FaBolt as any),
       label: 'Heat Index',
       value: `${((summary?.by_status?.BLAZING || 0) + (summary?.by_status?.['ON FIRE'] || 0) + (summary?.by_status?.HOT || 0)).toString()}`,
-      color: '#f59e0b',
+      color: '#8b5cf6',
       subtitle: 'blazing trends'
     },
     {
       icon: React.createElement(FaBrain as any),
       label: 'Sentiment Score',
       value: summary ? `${(summary.avg_sentiment * 100).toFixed(0)}%` : '0%',
-      color: '#ec4899',
+      color: '#8b5cf6',
       subtitle: 'emotional analysis'
     }
   ];
@@ -796,8 +797,8 @@ const LiftlioTrends: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                While you read this, our algorithms process millions of invisible signals. 
-                Patterns the human eye could never detect. Trends being born at this very moment.
+                Real-time YouTube trend analysis. 
+                Catch emerging patterns before they explode. 
               </HeroSubtitle>
             
             
@@ -1210,9 +1211,9 @@ const LiftlioTrends: React.FC = () => {
                 borderRadius: '16px',
                 padding: '32px'
               }}>
-                <h3 style={{ color: '#10b981', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>Early Detection</h3>
+                <h3 style={{ color: '#8b5cf6', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>Early Detection</h3>
                 <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>
-                  Detect patterns <span style={{ color: '#10b981', fontWeight: '600' }}>7-14 days before</span> explosion.
+                  Detect patterns <span style={{ color: '#8b5cf6', fontWeight: '600' }}>7-14 days before</span> explosion.
                   When others see it, it's too late.
                 </p>
               </div>
@@ -1223,10 +1224,10 @@ const LiftlioTrends: React.FC = () => {
                 borderRadius: '16px',
                 padding: '32px'
               }}>
-                <h3 style={{ color: '#f59e0b', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>Surgical Precision</h3>
+                <h3 style={{ color: '#8b5cf6', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>Surgical Precision</h3>
                 <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>
                   Confidence score on every prediction.
-                  <span style={{ color: '#f59e0b', fontWeight: '600' }}>92% accuracy</span>.
+                  <span style={{ color: '#8b5cf6', fontWeight: '600' }}>92% accuracy</span>.
                 </p>
               </div>
 
@@ -1236,9 +1237,9 @@ const LiftlioTrends: React.FC = () => {
                 borderRadius: '16px',
                 padding: '32px'
               }}>
-                <h3 style={{ color: '#ec4899', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>Temporal Vision</h3>
+                <h3 style={{ color: '#8b5cf6', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>Temporal Vision</h3>
                 <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>
-                  See past, present, and future. Know <span style={{ color: '#ec4899', fontWeight: '600' }}>what</span> trends and <span style={{ color: '#ec4899', fontWeight: '600' }}>when</span> they stop.
+                  See past, present, and future. Know <span style={{ color: '#8b5cf6', fontWeight: '600' }}>what</span> trends and <span style={{ color: '#8b5cf6', fontWeight: '600' }}>when</span> they stop.
                 </p>
               </div>
             </div>
