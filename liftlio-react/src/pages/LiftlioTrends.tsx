@@ -433,7 +433,7 @@ const TrendGrowth = styled.div<{ $positive: boolean }>`
   display: flex;
   align-items: center;
   gap: 8px;
-  color: ${props => props.$positive ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.7)'};
+  color: ${props => props.$positive ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'};
 `;
 
 const TrendStats = styled.div`
@@ -960,8 +960,8 @@ const LiftlioTrends: React.FC = () => {
                           <AreaChart data={historicalData}>
                             <defs>
                               <linearGradient id={`gradient-${trend.id}`} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#a1a1aa" stopOpacity={0.5} />
-                                <stop offset="100%" stopColor="#a1a1aa" stopOpacity={0.05} />
+                                <stop offset="0%" stopColor={trend.growth > 0 ? "#10b981" : "#ef4444"} stopOpacity={0.5} />
+                                <stop offset="100%" stopColor={trend.growth > 0 ? "#10b981" : "#ef4444"} stopOpacity={0.05} />
                               </linearGradient>
                             </defs>
                             <Tooltip
@@ -975,7 +975,7 @@ const LiftlioTrends: React.FC = () => {
                             <Area
                               type="monotone"
                               dataKey="value"
-                              stroke="#d4d4d8"
+                              stroke={trend.growth > 0 ? "rgba(16, 185, 129, 0.6)" : "rgba(239, 68, 68, 0.6)"}
                               strokeWidth={2}
                               fill={`url(#gradient-${trend.id})`}
                             />
