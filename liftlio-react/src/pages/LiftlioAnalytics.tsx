@@ -839,7 +839,7 @@ const CitiesGrid = styled.div`
 
 const CityCard = styled.div`
   background: rgba(161, 161, 170, 0.05);
-  border: 1px solid rgba(161, 161, 170, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: 12px;
   padding: 16px;
   transition: all 0.3s ease;
@@ -930,7 +930,7 @@ const CollapsibleMetrics = styled.div`
 
 const MetricBadge = styled.div`
   background: rgba(161, 161, 170, 0.1);
-  border: 1px solid rgba(161, 161, 170, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: 8px;
   padding: 6px 12px;
   font-size: 13px;
@@ -1000,7 +1000,7 @@ const ComparisonGrid = styled.div`
 
 const ComparisonCard = styled.div`
   background: rgba(26, 26, 26, 0.5);
-  border: 1px solid rgba(161, 161, 170, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: 20px;
   padding: 32px;
   position: relative;
@@ -1009,7 +1009,7 @@ const ComparisonCard = styled.div`
 
   &:hover {
     background: rgba(26, 26, 26, 0.7);
-    border-color: rgba(161, 161, 170, 0.3);
+    border-color: rgba(139, 92, 246, 0.35);
   }
 
   &::before {
@@ -1069,7 +1069,7 @@ const ComparisonItem = styled.div<{ isGood?: boolean }>`
 // Mini Expandable Card Styles
 const MiniCardContainer = styled.div`
   background: rgba(26, 26, 26, 0.5);
-  border: 1px solid rgba(161, 161, 170, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: 20px;
   padding: 24px;
   position: relative;
@@ -1079,7 +1079,7 @@ const MiniCardContainer = styled.div`
 
   &:hover {
     background: rgba(26, 26, 26, 0.7);
-    border-color: rgba(161, 161, 170, 0.3);
+    border-color: rgba(139, 92, 246, 0.35);
   }
 
   &::before {
@@ -1089,7 +1089,7 @@ const MiniCardContainer = styled.div`
     left: 0;
     right: 0;
     height: 1px;
-    background: rgba(161, 161, 170, 0.2);
+    background: rgba(139, 92, 246, 0.15);
   }
 `;
 
@@ -1102,13 +1102,13 @@ const MiniCardHeader = styled.div`
 
 const MiniCardIconBox = styled.div`
   font-size: 24px;
-  color: #a1a1aa;
+  color: rgba(139, 92, 246, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
   width: 48px;
   height: 48px;
-  background: rgba(161, 161, 170, 0.1);
+  background: rgba(139, 92, 246, 0.1);
   border-radius: 12px;
   flex-shrink: 0;
 `;
@@ -1201,7 +1201,7 @@ const GettingStartedInner = styled.div`
   background: rgba(26, 26, 26, 0.5);
   padding: 24px;
   border-radius: 12px;
-  border: 1px solid rgba(161, 161, 170, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   max-width: 600px;
   margin: 0 auto;
 `;
@@ -1282,7 +1282,7 @@ const EventsGrid = styled.div`
 
 const EventCategory = styled.div`
   background: rgba(26, 26, 26, 0.5);
-  border: 1px solid rgba(161, 161, 170, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: 16px;
   padding: 24px;
   transition: all 0.3s ease;
@@ -1290,7 +1290,7 @@ const EventCategory = styled.div`
   &:hover {
     transform: translateY(-2px);
     background: rgba(26, 26, 26, 0.7);
-    border-color: rgba(161, 161, 170, 0.3);
+    border-color: rgba(139, 92, 246, 0.35);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   }
 `;
