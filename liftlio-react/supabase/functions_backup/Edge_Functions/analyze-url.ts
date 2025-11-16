@@ -291,7 +291,7 @@ Return this exact JSON structure with these EXACT numbers:
 }`;
     console.log('Calling Claude API with requested language:', language);
     const claudePayload = {
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-5-20250929',
       messages: [
         {
           role: 'user',
