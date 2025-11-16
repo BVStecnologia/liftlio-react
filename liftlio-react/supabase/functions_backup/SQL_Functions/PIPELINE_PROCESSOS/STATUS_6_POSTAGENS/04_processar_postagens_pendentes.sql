@@ -20,17 +20,19 @@
 --   Atualiza AMBAS as tabelas após sucesso:
 --   - Settings messages posts (status = 'posted')
 --   - Mensagens (respondido = true)
---   - Customers (Mentions = Mentions - 1) - Controle de consumo
+--   - Customers (Mentions = Mentions - 1) - APENAS para tipo 'produto'
 --
 -- Criado: Data desconhecida
 -- Atualizado: 2025-10-21 - Adicionado decremento de Mentions
+-- Atualizado: 2025-01-14 - FIX CRÍTICO: Decrementar Mentions apenas para tipo produto
 -- =============================================
 
 -- Remover versões anteriores
 DROP FUNCTION IF EXISTS public.processar_postagens_pendentes(INT);
 DROP FUNCTION IF EXISTS public.processar_postagens_pendentes();
+DROP FUNCTION IF EXISTS public.processar_postagens_pendentes(BIGINT);
 
-CREATE OR REPLACE FUNCTION public.processar_postagens_pendentes(projeto_id_param integer DEFAULT NULL::integer)
+CREATE OR REPLACE FUNCTION public.processar_postagens_pendentes(projeto_id_param bigint DEFAULT NULL::bigint)
  RETURNS TABLE(total_processados integer, sucessos integer, falhas integer, status_mensagem text)
  LANGUAGE plpgsql
 AS $function$
@@ -48,6 +50,7 @@ DECLARE
     v_limite_processamento integer := 15;
     v_contador integer := 0;
     v_current_time_local timestamp;
+    v_tipo_resposta text; -- NOVO: Armazenar tipo da mensagem
 BEGIN
     -- Verificar projetos a processar (um específico ou todos)
     FOR v_registro IN (
@@ -57,6 +60,7 @@ BEGIN
             smp."Mensagens" as mensagem_id,  -- IMPORTANTE: Este campo é usado no UPDATE
             smp."Comentarios_Principal" as comentario_id,
             m.mensagem as texto_mensagem,
+            m.tipo_resposta,  -- NOVO: Capturar tipo da mensagem
             cp.id_do_comentario as parent_comment_id,
             p.fuso_horario,
             smp.proxima_postagem
@@ -106,12 +110,13 @@ BEGIN
         -- Dados necessários para a postagem
         v_mensagem_texto := v_registro.texto_mensagem;
         v_parent_comment_id := v_registro.parent_comment_id;
+        v_tipo_resposta := v_registro.tipo_resposta; -- NOVO: Armazenar tipo
 
         -- Tentativa de postar o comentário usando a função existente
         BEGIN
             -- Log para diagnóstico
-            RAISE NOTICE 'Tentando responder ao comentário: projeto_id=%, parent_comment_id=%, texto=%',
-                         v_registro.projeto_id, v_parent_comment_id, v_mensagem_texto;
+            RAISE NOTICE 'Tentando responder ao comentário: projeto_id=%, parent_comment_id=%, texto=%, tipo=%',
+                         v_registro.projeto_id, v_parent_comment_id, v_mensagem_texto, v_tipo_resposta;
 
             -- Capturar resposta da API com a conversão explícita para INT
             v_resposta := respond_to_youtube_comment(
@@ -144,13 +149,18 @@ BEGIN
                 RAISE NOTICE 'CORREÇÃO APLICADA: Mensagem % marcada como respondida=true', v_registro.mensagem_id;
 
                 -- 3. NOVO: Decrementar Mentions do customer (consumo de quota)
-                UPDATE customers c
-                SET "Mentions" = GREATEST(COALESCE("Mentions", 0) - 1, 0)
-                FROM "Projeto" p
-                WHERE p.id = v_registro.projeto_id
-                AND c.user_id = p."User id";
+                -- CORREÇÃO CRÍTICA: Decrementa APENAS para tipo 'produto'
+                IF v_tipo_resposta = 'produto' THEN
+                    UPDATE customers c
+                    SET "Mentions" = GREATEST(COALESCE("Mentions", 0) - 1, 0)
+                    FROM "Projeto" p
+                    WHERE p.id = v_registro.projeto_id
+                    AND c.user_id = p."User id";
 
-                RAISE NOTICE 'Mentions decrementado para projeto ID=%', v_registro.projeto_id;
+                    RAISE NOTICE 'Mentions decrementado para projeto ID=% (tipo: produto)', v_registro.projeto_id;
+                ELSE
+                    RAISE NOTICE 'Mentions NÃO decrementado para projeto ID=% (tipo: %)', v_registro.projeto_id, v_tipo_resposta;
+                END IF;
 
                 v_sucessos := v_sucessos + 1;
                 RAISE NOTICE 'Postagem bem-sucedida para ID=% (Mensagem ID=%)', v_registro.id, v_registro.mensagem_id;

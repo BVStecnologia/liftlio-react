@@ -17,11 +17,11 @@ import AnimatedBars3D from '../components/AnimatedBars3D';
 // Global Styles
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-  
+
   * {
     box-sizing: border-box;
   }
-  
+
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     margin: 0;
@@ -32,13 +32,20 @@ const GlobalStyle = createGlobalStyle`
     color: #ffffff;
     overflow-x: hidden;
   }
-  
+
   /* Force remove any green/turquoise colors */
   html, body, #root {
     background: #0a0a0a !important;
     background-color: #0a0a0a !important;
     background-image: none !important;
     filter: none !important;
+  }
+
+  /* Responsive 2-column grid */
+  @media (max-width: 768px) {
+    .responsive-2col {
+      grid-template-columns: 1fr !important;
+    }
   }
 `;
 
@@ -145,149 +152,12 @@ const SignInButton = styled.a`
   }
 `;
 
-// Footer Components
-const Footer = styled.footer`
-  background: #0a0a0a;
-  border-top: 1px solid #27272a;
-  padding: 60px 0 40px;
-  margin-top: 80px;
-`;
+// Footer removed - keeping page minimal like Overview dashboard
 
-const FooterContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-`;
-
-const FooterContent = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 40px;
-  margin-bottom: 40px;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-`;
-
-const FooterBrand = styled.div`
-  max-width: 300px;
-`;
-
-const FooterLogo = styled.div`
-  font-size: 24px;
-  font-weight: 900;
-  letter-spacing: -1px;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const FooterDescription = styled.p`
-  color: rgba(255, 255, 255, 0.6);
-  line-height: 1.6;
-  margin-bottom: 24px;
-`;
-
-const SocialLinks = styled.div`
-  display: flex;
-  gap: 16px;
-`;
-
-const SocialLink = styled.a`
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.6);
-  transition: all 0.3s;
-  
-  &:hover {
-    background: rgba(139, 92, 246, 0.1);
-    border-color: ${theme.primary};
-    color: ${theme.primary};
-    transform: translateY(-2px);
-  }
-`;
-
-const FooterColumn = styled.div``;
-
-const FooterTitle = styled.h3`
-  font-size: 14px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 16px;
-`;
-
-const FooterLinks = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`;
-
-const FooterLink = styled.a`
-  color: rgba(255, 255, 255, 0.6);
-  text-decoration: none;
-  transition: all 0.3s;
-  font-size: 14px;
-  
-  &:hover {
-    color: ${theme.primary};
-  }
-`;
-
-const FooterBottom = styled.div`
-  border-top: 1px solid rgba(139, 92, 246, 0.1);
-  padding-top: 32px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 16px;
-    text-align: center;
-  }
-`;
-
-const Copyright = styled.p`
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 14px;
-`;
-
-// Animations
-const float = keyframes`
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(5deg); }
-`;
-
-const pulse = keyframes`
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.05); }
-`;
-
+// Animations - Minimalist approach
 const gradientShift = keyframes`
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
-`;
-
-const glow = keyframes`
-  0%, 100% { 
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3),
-                0 0 40px rgba(139, 92, 246, 0.2);
-  }
-  50% { 
-    box-shadow: 0 0 30px rgba(139, 92, 246, 0.5),
-                0 0 60px rgba(139, 92, 246, 0.3);
-  }
 `;
 
 const spin = keyframes`
@@ -349,10 +219,9 @@ const BackgroundCanvas = styled.canvas`
 `;
 
 const HeroSection = styled.section`
-  padding: 100px 60px 60px;
+  padding: 100px 60px 80px;
   text-align: center;
   position: relative;
-  background: linear-gradient(180deg, rgba(139, 92, 246, 0.05) 0%, transparent 100%);
   width: 100%;
   overflow: hidden;
 
@@ -372,14 +241,10 @@ const HeroContent = styled.div`
 
 const HeroTitle = styled(motion.h1)`
   font-size: clamp(1.8rem, 6vw, 3.5rem);
-  font-weight: 900;
+  font-weight: 700;
   margin: 0 auto 20px;
   max-width: 900px;
-  background: ${theme.gradient};
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: ${gradientShift} 12s ease infinite;
+  color: #ffffff;
   line-height: 1.2;
   padding: 0 20px;
   position: relative;
@@ -395,10 +260,11 @@ const HeroSubtitle = styled(motion.p)`
   z-index: 2;
 `;
 
+// Different grid layouts for variety
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
-  gap: 30px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
   width: 100%;
 
   @media (max-width: 1024px) {
@@ -407,64 +273,79 @@ const StatsGrid = styled.div`
 
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
-    gap: 15px;
   }
 `;
 
+const TwoColumnGrid = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  width: 100%;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ThreeColumnGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+// Minimalist metric cards with outline icons
 const StatCard = styled(motion.div)`
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  border-radius: 20px;
-  padding: 30px;
-  text-align: center;
+  background: rgba(26, 26, 26, 0.3);
+  border: 1px solid rgba(161, 161, 170, 0.2);
+  border-radius: 12px;
+  padding: 28px;
   position: relative;
-  overflow: hidden;
-  animation: ${glow} 3s ease infinite;
+  transition: all 0.3s ease;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: ${theme.gradient};
-    border-radius: 20px;
-    opacity: 0;
-    transition: opacity 0.3s;
-    z-index: -1;
-  }
-
-  &:hover::before {
-    opacity: 0.3;
+  &:hover {
+    border-color: rgba(139, 92, 246, 0.3);
   }
 `;
 
-const StatIcon = styled.div`
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 15px;
+const StatIcon = styled.div<{ color?: string }>`
+  width: 48px;
+  height: 48px;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${theme.gradient};
-  border-radius: 15px;
-  font-size: 24px;
+  background: transparent;
+  border: 2px solid ${props => props.color || theme.primary};
+  border-radius: 12px;
+  font-size: 22px;
+  color: ${props => props.color || theme.primary};
 `;
 
 const StatValue = styled.div`
-  font-size: 2.2rem;
-  font-weight: 800;
-  margin-bottom: 5px;
-  background: linear-gradient(135deg, #ffffff, #e0e0e0);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-size: 2.5rem;
+  font-weight: 400;
+  color: #ffffff;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
 `;
 
 const StatLabel = styled.div`
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  margin-bottom: 8px;
+`;
+
+const StatSubtitle = styled.div`
+  font-size: 12px;
+  color: #a1a1aa;
+  font-weight: 400;
 `;
 
 const TrendsSection = styled.section`
@@ -482,7 +363,7 @@ const TrendsSection = styled.section`
 
 const SectionTitle = styled.h2`
   font-size: clamp(1.8rem, 5vw, 2.5rem);
-  font-weight: 800;
+  font-weight: 700;
   text-align: center;
   margin-bottom: 40px;
   background: ${theme.gradient};
@@ -502,19 +383,16 @@ const TrendsGrid = styled.div`
 `;
 
 const TrendCard = styled(motion.div)`
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: 20px;
-  padding: 25px;
+  background: rgba(26, 26, 26, 0.3);
+  border: 1px solid rgba(161, 161, 170, 0.2);
+  border-radius: 16px;
+  padding: 24px;
   position: relative;
   overflow: hidden;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
 
   &:hover {
-    transform: translateY(-5px);
-    border-color: rgba(139, 92, 246, 0.5);
-    box-shadow: 0 10px 40px rgba(139, 92, 246, 0.2);
+    border-color: rgba(161, 161, 170, 0.3);
   }
 `;
 
@@ -541,33 +419,21 @@ const TrendStatus = styled.span<{ $status: string }>`
   padding: 4px 12px;
   border-radius: 6px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: ${props => {
-    switch(props.$status) {
-      case 'BLAZING': return 'linear-gradient(135deg, #ff6b6b, #ffd93d)';
-      case 'ON FIRE': return 'linear-gradient(135deg, #ef4444, #dc2626)';
-      case 'HOT': return 'linear-gradient(135deg, #f59e0b, #f97316)';
-      case 'WARMING': return 'linear-gradient(135deg, #fbbf24, #f59e0b)';
-      case 'HEATING UP': return 'linear-gradient(135deg, #84cc16, #fbbf24)';
-      case 'MODERATE': return 'linear-gradient(135deg, #6b7280, #9ca3af)';
-      case 'COOLING': return 'linear-gradient(135deg, #60a5fa, #3b82f6)';
-      case 'COLD': return 'linear-gradient(135deg, #3b82f6, #1e40af)';
-      case 'FROZEN': return 'linear-gradient(135deg, #1e3a8a, #1e293b)';
-      default: return 'rgba(139, 92, 246, 0.2)';
-    }
-  }};
-  color: #ffffff;
+  background: rgba(26, 26, 26, 0.5);
+  border: 1px solid rgba(161, 161, 170, 0.2);
+  color: #a1a1aa;
 `;
 
 const TrendGrowth = styled.div<{ $positive: boolean }>`
   font-size: 2rem;
-  font-weight: 800;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
-  color: ${props => props.$positive ? '#10b981' : '#ef4444'};
+  color: ${props => props.$positive ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'};
 `;
 
 const TrendStats = styled.div`
@@ -582,10 +448,10 @@ const TrendStat = styled.div`
   align-items: center;
   gap: 8px;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6);
 
   svg {
-    color: ${theme.primary};
+    color: #a1a1aa;
   }
 `;
 
@@ -598,7 +464,7 @@ const TrendChart = styled.div`
 const TrendInsights = styled.div`
   margin-top: 15px;
   padding-top: 15px;
-  border-top: 1px solid rgba(139, 92, 246, 0.2);
+  border-top: 1px solid rgba(161, 161, 170, 0.15);
 `;
 
 const TrendInsight = styled.div`
@@ -614,17 +480,15 @@ const TrendInsight = styled.div`
   }
 
   svg {
-    color: ${theme.secondary};
+    color: #a1a1aa;
     flex-shrink: 0;
   }
 `;
 
 const HowItWorksSection = styled.section`
-  padding: 80px 60px;
-  background: rgba(139, 92, 246, 0.02);
+  padding: 100px 60px;
   border-top: 1px solid rgba(139, 92, 246, 0.1);
-  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
-  
+
   @media (max-width: 1200px) {
     padding: 60px 40px;
   }
@@ -634,59 +498,52 @@ const HowItWorksSection = styled.section`
   }
 `;
 
+// 2x2 grid for more visual impact (like Analytics)
 const HowItWorksGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  max-width: 1400px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 1200px;
   margin: 0 auto;
-  
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
 `;
 
 const HowItWorksCard = styled.div`
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(26, 26, 26, 0.3);
+  border: 1px solid rgba(161, 161, 170, 0.2);
   border-radius: 16px;
-  padding: 25px 20px;
-  text-align: center;
-  transition: all 0.3s;
+  padding: 32px;
+  transition: all 0.3s ease;
 
   &:hover {
-    transform: translateY(-5px);
-    border-color: rgba(139, 92, 246, 0.5);
-    box-shadow: 0 20px 40px rgba(139, 92, 246, 0.2);
+    border-color: rgba(161, 161, 170, 0.3);
   }
 
   h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin: 15px 0 10px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 20px 0 12px;
     color: #ffffff;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
+    gap: 10px;
   }
 
   p {
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     color: rgba(255, 255, 255, 0.7);
-    line-height: 1.5;
-    margin-bottom: 15px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    font-style: italic;
   }
-  
+
   > div:last-child {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: ${theme.primary};
-    line-height: 1.4;
+    line-height: 1.5;
   }
 `;
 
@@ -715,44 +572,51 @@ const CategorySection = styled.section`
   }
 `;
 
+// Analytics-style city cards for categories
 const CategoryGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
   max-width: 1200px;
   margin: 0 auto;
 `;
 
-const CategoryCard = styled(motion.div)`
-  background: ${theme.gradient};
+const CategoryCard = styled.div`
+  background: rgba(26, 26, 26, 0.3);
+  border: 1px solid rgba(161, 161, 170, 0.15);
   padding: 20px;
   border-radius: 12px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
 
   &:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+    background: rgba(26, 26, 26, 0.5);
+    border-color: rgba(161, 161, 170, 0.25);
   }
 
   h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin: 0 0 5px 0;
-    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0 0 4px 0;
+    color: #d4d4d8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   p {
-    font-size: 1.8rem;
-    font-weight: 800;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 12px 0 0 0;
+    padding-top: 12px;
+    border-top: 1px solid rgba(161, 161, 170, 0.15);
+    color: #ffffff;
   }
 
   span {
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.75rem;
+    color: #a1a1aa;
+    display: block;
+    margin-top: 4px;
   }
 `;
 
@@ -820,18 +684,7 @@ const getSentimentIcon = (score: number) => {
   return '😡';
 };
 
-// Animations
-const pulseAnimation = keyframes`
-  0% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
-  100% { opacity: 0.6; transform: scale(1); }
-`;
-
-const glowAnimation = keyframes`
-  0% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
-  50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.8), 0 0 60px rgba(168, 85, 247, 0.6); }
-  100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
-`;
+// Removed excessive animations for minimalist design
 
 // Main Component
 const LiftlioTrends: React.FC = () => {
@@ -879,33 +732,34 @@ const LiftlioTrends: React.FC = () => {
   const risingTrends = trends.filter(t => t.growth > 0);
   const decliningTrends = trends.filter(t => t.growth < 0);
   
+  // Different colored icons like Analytics
   const stats = [
     {
       icon: React.createElement(FaRocket as any),
       label: 'Active Trends',
       value: trends.length,
-      color: theme.primary,
+      color: '#8b5cf6',
       subtitle: 'monitoring now'
     },
     {
       icon: React.createElement(FaChartLine as any),
       label: 'Average Growth',
       value: summary ? `+${summary.avg_growth.toFixed(0)}%` : '0%',
-      color: '#10b981',
+      color: '#8b5cf6',
       subtitle: 'last 30 days'
     },
     {
       icon: React.createElement(FaBolt as any),
       label: 'Heat Index',
       value: `${((summary?.by_status?.BLAZING || 0) + (summary?.by_status?.['ON FIRE'] || 0) + (summary?.by_status?.HOT || 0)).toString()}`,
-      color: theme.accent,
+      color: '#8b5cf6',
       subtitle: 'blazing trends'
     },
     {
       icon: React.createElement(FaBrain as any),
       label: 'Sentiment Score',
       value: summary ? `${(summary.avg_sentiment * 100).toFixed(0)}%` : '0%',
-      color: theme.secondary,
+      color: '#8b5cf6',
       subtitle: 'emotional analysis'
     }
   ];
@@ -943,38 +797,24 @@ const LiftlioTrends: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                While you read this, our algorithms process millions of invisible signals. 
-                Patterns the human eye could never detect. Trends being born at this very moment.
+                Real-time YouTube trend analysis. 
+                Catch emerging patterns before they explode. 
               </HeroSubtitle>
             
-            <div style={{
-              display: 'inline-block',
-              padding: '8px 20px',
-              background: 'rgba(139, 92, 246, 0.2)',
-              border: '1px solid rgba(139, 92, 246, 0.5)',
-              borderRadius: '30px',
-              marginTop: '20px'
-            }}>
-              <span style={{ color: '#10b981', marginRight: '8px' }}>●</span>
-              🧠 NEURAL ENGINE ACTIVE • REAL-TIME ANALYSIS
-            </div>
             
             <StatsGrid>
               {stats.map((stat, index) => (
                 <StatCard
                   key={index}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
                 >
-                  <StatIcon>{stat.icon}</StatIcon>
-                  <StatValue>{stat.value}</StatValue>
                   <StatLabel>{stat.label}</StatLabel>
+                  <StatIcon color={stat.color}>{stat.icon}</StatIcon>
+                  <StatValue>{stat.value}</StatValue>
                   {stat.subtitle && (
-                    <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>
-                      {stat.subtitle}
-                    </div>
+                    <StatSubtitle>{stat.subtitle}</StatSubtitle>
                   )}
                 </StatCard>
               ))}
@@ -1039,8 +879,7 @@ const LiftlioTrends: React.FC = () => {
           {risingTrends.length > 0 && (
             <TrendsSection>
               <SectionTitle>
-                <span style={{ fontSize: '2rem', marginRight: '10px' }}>💥</span>
-                BLAZING & ON FIRE
+                Blazing & On Fire
               </SectionTitle>
               <p style={{ 
                 textAlign: 'center', 
@@ -1059,10 +898,9 @@ const LiftlioTrends: React.FC = () => {
                   return (
                     <TrendCard
                       key={trend.id}
-                      initial={{ opacity: 0, y: 30 }}
+                      initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      whileHover={{ scale: 1.02 }}
+                      transition={{ duration: 0.4, delay: index * 0.1 }}
                     >
                       <TrendHeader>
                         <TrendInfo>
@@ -1122,22 +960,22 @@ const LiftlioTrends: React.FC = () => {
                           <AreaChart data={historicalData}>
                             <defs>
                               <linearGradient id={`gradient-${trend.id}`} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor={theme.primary} stopOpacity={0.8} />
-                                <stop offset="100%" stopColor={theme.primary} stopOpacity={0.1} />
+                                <stop offset="0%" stopColor={trend.growth > 0 ? "#10b981" : "#ef4444"} stopOpacity={0.5} />
+                                <stop offset="100%" stopColor={trend.growth > 0 ? "#10b981" : "#ef4444"} stopOpacity={0.05} />
                               </linearGradient>
                             </defs>
                             <Tooltip
                               contentStyle={{
-                                background: 'rgba(0,0,0,0.8)',
-                                border: `1px solid ${theme.primary}`,
+                                background: 'rgba(0,0,0,0.9)',
+                                border: '1px solid rgba(161, 161, 170, 0.3)',
                                 borderRadius: '8px'
                               }}
-                              labelStyle={{ color: theme.primary }}
+                              labelStyle={{ color: '#a1a1aa' }}
                             />
                             <Area
                               type="monotone"
                               dataKey="value"
-                              stroke={theme.primary}
+                              stroke={trend.growth > 0 ? "rgba(16, 185, 129, 0.6)" : "rgba(239, 68, 68, 0.6)"}
                               strokeWidth={2}
                               fill={`url(#gradient-${trend.id})`}
                             />
@@ -1146,28 +984,28 @@ const LiftlioTrends: React.FC = () => {
                       </TrendChart>
 
                       <TrendInsights>
-                        <div style={{ 
-                          background: 'rgba(139, 92, 246, 0.1)', 
-                          border: '1px solid rgba(139, 92, 246, 0.3)',
-                          borderRadius: '8px',
-                          padding: '10px',
+                        <div style={{
+                          background: 'rgba(26, 26, 26, 0.3)',
+                          border: '1px solid rgba(161, 161, 170, 0.15)',
+                          borderRadius: '12px',
+                          padding: '16px',
                           marginBottom: '10px'
                         }}>
-                          <div style={{ fontSize: '0.8rem', color: theme.primary, fontWeight: 'bold', marginBottom: '5px' }}>
-                            🧠 NEURAL INSIGHTS:
+                          <div style={{ fontSize: '0.8rem', color: '#a1a1aa', fontWeight: '600', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Insights
                           </div>
-                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
-                            • Growth pattern: <span style={{ color: '#10b981' }}>+{trend.growth.toFixed(0)}%</span>{trend.velocity && trend.velocity !== 0 ? <> with acceleration of <span style={{ color: theme.secondary }}>{trend.velocity.toFixed(1)}/day</span></> : null}<br/>
-                            • Momentum score: <span style={{ color: theme.primary }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'STRONG' : 'MODERATE'})<br/>
-                            • Engagement rate: <span style={{ color: '#f59e0b' }}>{(trend.engagement_rate * 100).toFixed(1)}%</span> - {trend.engagement_rate > 0.05 ? 'Above average' : 'Normal'}
+                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', lineHeight: '1.5' }}>
+                            • Growth pattern: <span style={{ color: 'rgba(255,255,255,0.9)' }}>+{trend.growth.toFixed(0)}%</span>{trend.velocity && trend.velocity !== 0 ? <> with acceleration of <span style={{ color: 'rgba(255,255,255,0.9)' }}>{trend.velocity.toFixed(1)}/day</span></> : null}<br/>
+                            • Momentum score: <span style={{ color: 'rgba(255,255,255,0.9)' }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'Strong' : 'Moderate'})<br/>
+                            • Engagement rate: <span style={{ color: 'rgba(255,255,255,0.9)' }}>{(trend.engagement_rate * 100).toFixed(1)}%</span> - {trend.engagement_rate > 0.05 ? 'Above average' : 'Normal'}
                           </div>
                         </div>
                         {trend.temporal_data && (
                           <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
-                            <span style={{ color: theme.secondary }}>⚡</span> Opportunity window: <span style={{ color: '#10b981', fontWeight: 'bold' }}>OPEN</span><br/>
-                            <span style={{ color: theme.secondary }}>📅</span> Trending for {trend.temporal_data.days_trending} days<br/>
+                            Opportunity window: <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: '600' }}>Open</span><br/>
+                            Trending for {trend.temporal_data.days_trending} days<br/>
                             {trend.scores?.saturation < 50 && (
-                              <><span style={{ color: '#f59e0b' }}>⏰</span> Enter now before saturation!</>
+                              <>Enter now before saturation</>
                             )}
                           </div>
                         )}
@@ -1181,10 +1019,9 @@ const LiftlioTrends: React.FC = () => {
 
           {/* Declining Trends */}
           {decliningTrends.length > 0 && (
-            <TrendsSection style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(139, 92, 246, 0.05))' }}>
+            <TrendsSection>
               <SectionTitle>
-                <span style={{ fontSize: '2rem', marginRight: '10px' }}>📉</span>
-                COOLING & FROZEN
+                Cooling & Frozen
               </SectionTitle>
               <p style={{ 
                 textAlign: 'center', 
@@ -1203,10 +1040,9 @@ const LiftlioTrends: React.FC = () => {
                   return (
                     <TrendCard
                       key={trend.id}
-                      initial={{ opacity: 0, y: 30 }}
+                      initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                      whileHover={{ scale: 1.02 }}
+                      transition={{ duration: 0.4, delay: index * 0.1 }}
                     >
                       <TrendHeader>
                         <TrendInfo>
@@ -1241,22 +1077,22 @@ const LiftlioTrends: React.FC = () => {
                           <AreaChart data={historicalData}>
                             <defs>
                               <linearGradient id={`gradient-decline-${trend.id}`} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.8} />
-                                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.1} />
+                                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.5} />
+                                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.05} />
                               </linearGradient>
                             </defs>
                             <Tooltip
                               contentStyle={{
-                                background: 'rgba(0,0,0,0.8)',
-                                border: '1px solid #ef4444',
+                                background: 'rgba(0,0,0,0.9)',
+                                border: '1px solid rgba(161, 161, 170, 0.3)',
                                 borderRadius: '8px'
                               }}
-                              labelStyle={{ color: '#ef4444' }}
+                              labelStyle={{ color: '#a1a1aa' }}
                             />
                             <Area
                               type="monotone"
                               dataKey="value"
-                              stroke="#ef4444"
+                              stroke="rgba(239, 68, 68, 0.6)"
                               strokeWidth={2}
                               fill={`url(#gradient-decline-${trend.id})`}
                             />
@@ -1265,28 +1101,28 @@ const LiftlioTrends: React.FC = () => {
                       </TrendChart>
 
                       <TrendInsights>
-                        <div style={{ 
-                          background: 'rgba(139, 92, 246, 0.1)', 
-                          border: '1px solid rgba(139, 92, 246, 0.3)',
-                          borderRadius: '8px',
-                          padding: '10px',
+                        <div style={{
+                          background: 'rgba(26, 26, 26, 0.3)',
+                          border: '1px solid rgba(161, 161, 170, 0.15)',
+                          borderRadius: '12px',
+                          padding: '16px',
                           marginBottom: '10px'
                         }}>
-                          <div style={{ fontSize: '0.8rem', color: theme.primary, fontWeight: 'bold', marginBottom: '5px' }}>
-                            🧠 NEURAL INSIGHTS:
+                          <div style={{ fontSize: '0.8rem', color: '#a1a1aa', fontWeight: '600', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Insights
                           </div>
-                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>
-                            • Growth pattern: <span style={{ color: '#10b981' }}>+{trend.growth.toFixed(0)}%</span>{trend.velocity && trend.velocity !== 0 ? <> with acceleration of <span style={{ color: theme.secondary }}>{trend.velocity.toFixed(1)}/day</span></> : null}<br/>
-                            • Momentum score: <span style={{ color: theme.primary }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'STRONG' : 'MODERATE'})<br/>
-                            • Engagement rate: <span style={{ color: '#f59e0b' }}>{(trend.engagement_rate * 100).toFixed(1)}%</span> - {trend.engagement_rate > 0.05 ? 'Above average' : 'Normal'}
+                          <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', lineHeight: '1.5' }}>
+                            • Growth pattern: <span style={{ color: 'rgba(255,255,255,0.9)' }}>+{trend.growth.toFixed(0)}%</span>{trend.velocity && trend.velocity !== 0 ? <> with acceleration of <span style={{ color: 'rgba(255,255,255,0.9)' }}>{trend.velocity.toFixed(1)}/day</span></> : null}<br/>
+                            • Momentum score: <span style={{ color: 'rgba(255,255,255,0.9)' }}>{trend.momentum?.toFixed(0) || 0}</span> ({trend.momentum > 50 ? 'Strong' : 'Moderate'})<br/>
+                            • Engagement rate: <span style={{ color: 'rgba(255,255,255,0.9)' }}>{(trend.engagement_rate * 100).toFixed(1)}%</span> - {trend.engagement_rate > 0.05 ? 'Above average' : 'Normal'}
                           </div>
                         </div>
                         {trend.temporal_data && (
                           <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
-                            <span style={{ color: theme.secondary }}>⚡</span> Opportunity window: <span style={{ color: '#10b981', fontWeight: 'bold' }}>OPEN</span><br/>
-                            <span style={{ color: theme.secondary }}>📅</span> Trending for {trend.temporal_data.days_trending} days<br/>
+                            Opportunity window: <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: '600' }}>Open</span><br/>
+                            Trending for {trend.temporal_data.days_trending} days<br/>
                             {trend.scores?.saturation < 50 && (
-                              <><span style={{ color: '#f59e0b' }}>⏰</span> Enter now before saturation!</>
+                              <>Enter now before saturation</>
                             )}
                           </div>
                         )}
@@ -1302,8 +1138,7 @@ const LiftlioTrends: React.FC = () => {
           {summary?.categories && summary.categories.length > 0 && (
             <CategorySection>
               <SectionTitle>
-                <span style={{ fontSize: '2rem', marginRight: '10px' }}>🎯</span>
-                YOUTUBE TERRITORIES NOW
+                YouTube Territories Now
               </SectionTitle>
               <p style={{ 
                 textAlign: 'center', 
@@ -1312,21 +1147,30 @@ const LiftlioTrends: React.FC = () => {
                 color: 'rgba(255,255,255,0.6)',
                 fontSize: '1rem'
               }}>
-                Our AI identified that <span style={{ color: theme.primary, fontWeight: 'bold' }}>
+                Our AI identified that <span style={{ color: theme.primary, fontWeight: '600' }}>
                 {summary.categories[0].category}</span> is dominating with {Math.round((summary.categories[0].count / trends.length) * 100)}% of trends.
               </p>
               <CategoryGrid>
                 {summary.categories.map((category, index) => (
-                  <CategoryCard
-                    key={index}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    <h3>{category.category}</h3>
+                  <CategoryCard key={index}>
+                    <h3>
+                      <span style={{
+                        display: 'inline-block',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '6px',
+                        background: `rgba(139, 92, 246, ${0.9 - (index * 0.1)})`,
+                        textAlign: 'center',
+                        lineHeight: '24px',
+                        fontSize: '0.75rem',
+                        fontWeight: '600'
+                      }}>
+                        {index + 1}
+                      </span>
+                      {category.category}
+                    </h3>
                     <p>{category.count}</p>
-                    <span>active trends 🔥</span>
+                    <span>active trends</span>
                   </CategoryCard>
                 ))}
               </CategoryGrid>
@@ -1334,80 +1178,68 @@ const LiftlioTrends: React.FC = () => {
           )}
 
           {/* Métricas de Credibilidade */}
-          <TrendsSection style={{ background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(168, 85, 247, 0.05))' }}>
+          <TrendsSection>
             <SectionTitle>
-              <span style={{ fontSize: '2rem', marginRight: '10px' }}>🔬</span>
-              WHY OUR DATA IS DIFFERENT
+              Why Our Data Is Different
             </SectionTitle>
             
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '20px',
-              maxWidth: '1400px',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '24px',
+              maxWidth: '1200px',
               margin: '40px auto'
-            }}>
+            }}
+            className="responsive-2col"
+            >
               <div style={{
-                background: 'rgba(139, 92, 246, 0.05)',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
-                borderRadius: '12px',
-                padding: '20px',
-                textAlign: 'center',
-                minHeight: '220px'
+                background: 'rgba(26, 26, 26, 0.3)',
+                border: '1px solid rgba(161, 161, 170, 0.2)',
+                borderRadius: '16px',
+                padding: '32px'
               }}>
-                <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🧬</div>
-                <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>MULTI-DIMENSIONAL<br/>ANALYSIS</h3>
-                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
-                  We analyze <span style={{ color: theme.secondary, fontWeight: 'bold' }}>47 dimensions</span>: 
+                <h3 style={{ color: '#8b5cf6', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>Multi-Dimensional Analysis</h3>
+                <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>
+                  We analyze <span style={{ color: '#a855f7', fontWeight: '600' }}>47 dimensions</span>:
                   velocity, momentum, sentiment, engagement, and more.
                 </p>
               </div>
-              
+
               <div style={{
-                background: 'rgba(139, 92, 246, 0.05)',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
-                borderRadius: '12px',
-                padding: '20px',
-                textAlign: 'center',
-                minHeight: '220px'
+                background: 'rgba(26, 26, 26, 0.3)',
+                border: '1px solid rgba(161, 161, 170, 0.2)',
+                borderRadius: '16px',
+                padding: '32px'
               }}>
-                <div style={{ fontSize: '2rem', marginBottom: '10px' }}>⚡</div>
-                <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>EARLY DETECTION</h3>
-                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
-                  Detect patterns <span style={{ color: '#10b981', fontWeight: 'bold' }}>7-14 days before</span> explosion. 
+                <h3 style={{ color: '#8b5cf6', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>Early Detection</h3>
+                <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>
+                  Detect patterns <span style={{ color: '#8b5cf6', fontWeight: '600' }}>7-14 days before</span> explosion.
                   When others see it, it's too late.
                 </p>
               </div>
-              
+
               <div style={{
-                background: 'rgba(139, 92, 246, 0.05)',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
-                borderRadius: '12px',
-                padding: '20px',
-                textAlign: 'center',
-                minHeight: '220px'
+                background: 'rgba(26, 26, 26, 0.3)',
+                border: '1px solid rgba(161, 161, 170, 0.2)',
+                borderRadius: '16px',
+                padding: '32px'
               }}>
-                <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🎯</div>
-                <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>SURGICAL PRECISION</h3>
-                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
-                  Confidence score on every prediction. 
-                  <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>92% accuracy</span>.
+                <h3 style={{ color: '#8b5cf6', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>Surgical Precision</h3>
+                <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>
+                  Confidence score on every prediction.
+                  <span style={{ color: '#8b5cf6', fontWeight: '600' }}>92% accuracy</span>.
                 </p>
               </div>
-              
+
               <div style={{
-                background: 'rgba(139, 92, 246, 0.05)',
-                border: '1px solid rgba(139, 92, 246, 0.2)',
-                borderRadius: '12px',
-                padding: '20px',
-                textAlign: 'center',
-                minHeight: '220px'
+                background: 'rgba(26, 26, 26, 0.3)',
+                border: '1px solid rgba(161, 161, 170, 0.2)',
+                borderRadius: '16px',
+                padding: '32px'
               }}>
-                <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🔮</div>
-                <h3 style={{ color: theme.primary, marginBottom: '10px', fontSize: '1rem' }}>TEMPORAL VISION</h3>
-                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.4' }}>
-                  See past, present, and future. Know
-                  <span style={{ color: theme.accent, fontWeight: 'bold' }}> WHAT</span> trends and <span style={{ color: theme.accent, fontWeight: 'bold' }}>WHEN</span> they stop.
+                <h3 style={{ color: '#8b5cf6', marginBottom: '12px', fontSize: '1.2rem', fontWeight: '600' }}>Temporal Vision</h3>
+                <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6' }}>
+                  See past, present, and future. Know <span style={{ color: '#8b5cf6', fontWeight: '600' }}>what</span> trends and <span style={{ color: '#8b5cf6', fontWeight: '600' }}>when</span> they stop.
                 </p>
               </div>
             </div>
@@ -1416,9 +1248,9 @@ const LiftlioTrends: React.FC = () => {
             {analytics && (
               <StatsGrid style={{ marginTop: '40px' }}>
                 <StatCard
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
+                  transition={{ duration: 0.4 }}
                 >
                   <StatIcon>{React.createElement(FaUsers as any)}</StatIcon>
                   <StatValue>{formatNumber(analytics.visitor_count)}</StatValue>
@@ -1457,8 +1289,7 @@ const LiftlioTrends: React.FC = () => {
           {/* Call to Action Final */}
           <div style={{
             padding: '80px 20px',
-            background: `linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1))`,
-            borderTop: '1px solid rgba(139, 92, 246, 0.3)',
+            borderTop: '1px solid rgba(139, 92, 246, 0.1)',
             marginTop: '60px'
           }}>
             <div style={{
@@ -1466,22 +1297,16 @@ const LiftlioTrends: React.FC = () => {
               margin: '0 auto',
               textAlign: 'center'
             }}>
-              <div style={{
-                fontSize: '3rem',
-                marginBottom: '20px'
-              }}>
-                🚀
-              </div>
               
               <h2 style={{
                 fontSize: 'clamp(2rem, 5vw, 3rem)',
-                fontWeight: '900',
+                fontWeight: '700',
                 marginBottom: '20px',
                 background: theme.gradient,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent'
               }}>
-                EARLY ACCESS - BETA SYSTEM
+                Early Access - Beta System
               </h2>
               
               <p style={{
@@ -1495,16 +1320,16 @@ const LiftlioTrends: React.FC = () => {
               
               <div style={{
                 display: 'inline-block',
-                padding: '15px 40px',
+                padding: '12px 32px',
                 background: theme.gradient,
-                borderRadius: '30px',
-                fontSize: '1.1rem',
-                fontWeight: 'bold',
+                borderRadius: '12px',
+                fontSize: '1rem',
+                fontWeight: '600',
                 color: 'white',
                 marginBottom: '30px',
-                boxShadow: '0 10px 30px rgba(139, 92, 246, 0.4)'
+                boxShadow: '0 4px 12px rgba(139, 92, 246, 0.2)'
               }}>
-                🔥 FEATURE COMING SOON
+                Feature Coming Soon
               </div>
               
               <p style={{
@@ -1515,68 +1340,23 @@ const LiftlioTrends: React.FC = () => {
                 margin: '0 auto',
                 lineHeight: '1.6'
               }}>
-                While you read this page, <span style={{ color: theme.primary, fontWeight: 'bold' }}>
-                {Math.floor(Math.random() * 20) + 10}</span> new trends were detected. 
-                <span style={{ color: '#10b981', fontWeight: 'bold' }}> {Math.floor(Math.random() * 50) + 100}</span> creators 
-                are already taking action. The future of YouTube is being written now. 
-                <span style={{ color: theme.secondary, fontWeight: 'bold' }}> And we're reading every line.</span>
+                Real-time YouTube trend analysis powered by AI. Monitor emerging patterns before they explode.
               </p>
               
               <div style={{
                 marginTop: '40px',
-                padding: '20px',
-                background: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                borderRadius: '12px',
+                padding: '16px 24px',
+                background: 'rgba(139, 92, 246, 0.05)',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                borderRadius: '8px',
                 maxWidth: '500px',
-                margin: '40px auto 0'
+                margin: '40px auto 0',
+                fontSize: '0.85rem',
+                color: 'rgba(255,255,255,0.6)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '10px' }}>
-                  <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981' }}></span>
-                  <span style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 'bold' }}>SYSTEM ACTIVE</span>
-                </div>
-                <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.7)' }}>{summary?.total_active || 0}</span> trends monitored • 
-                  <span style={{ color: 'rgba(255,255,255,0.7)' }}> {formatNumber(summary?.total_videos || 0)}</span> signals processed • 
-                  <span style={{ color: 'rgba(255,255,255,0.7)' }}> {formatNumber(summary?.total_channels || 0)}</span> channels analyzed
-                </div>
+                {summary?.total_active || 0} trends • {formatNumber(summary?.total_videos || 0)} signals • {formatNumber(summary?.total_channels || 0)} channels
               </div>
               
-              <div style={{
-                marginTop: '40px',
-                display: 'flex',
-                gap: '20px',
-                justifyContent: 'center',
-                flexWrap: 'wrap'
-              }}>
-                <div style={{
-                  padding: '8px 16px',
-                  background: 'rgba(139, 92, 246, 0.2)',
-                  border: '1px solid rgba(139, 92, 246, 0.4)',
-                  borderRadius: '20px',
-                  fontSize: '0.85rem'
-                }}>
-                  🤖 NEURAL NETWORK PROCESSING
-                </div>
-                <div style={{
-                  padding: '8px 16px',
-                  background: 'rgba(139, 92, 246, 0.2)',
-                  border: '1px solid rgba(139, 92, 246, 0.4)',
-                  borderRadius: '20px',
-                  fontSize: '0.85rem'
-                }}>
-                  ⚡ REAL-TIME ANALYSIS
-                </div>
-                <div style={{
-                  padding: '8px 16px',
-                  background: 'rgba(139, 92, 246, 0.2)',
-                  border: '1px solid rgba(139, 92, 246, 0.4)',
-                  borderRadius: '20px',
-                  fontSize: '0.85rem'
-                }}>
-                  🔬 MULTI-DIMENSIONAL SCANNING
-                </div>
-              </div>
             </div>
           </div>
         </MainContainer>
