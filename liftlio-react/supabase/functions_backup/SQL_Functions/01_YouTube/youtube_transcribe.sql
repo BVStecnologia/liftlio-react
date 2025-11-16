@@ -2,6 +2,7 @@
 -- Fun��o: youtube_transcribe
 -- Descri��o: Obt�m transcri��o de v�deos do YouTube (limita a 30 minutos)
 -- Criado: 2025-01-23
+-- Atualizado: 2025-11-16 - Corrigido regex para aceitar formato [MM:SS] (antes esperava [HH:MM:SS])
 -- =============================================
 
 CREATE OR REPLACE FUNCTION public.youtube_transcribe(video_id text)
@@ -12,7 +13,7 @@ DECLARE
     http_response http_response;
     video_url TEXT;
     full_transcription TEXT;
-    timestamp_pattern TEXT := '\[([0-9]{2}):([0-9]{2}):([0-9]{2})\]';
+    timestamp_pattern TEXT := '\[([0-9]{1,2}):([0-9]{2})\]';
     timestamp_matches TEXT[];
     current_line TEXT;
     result TEXT := '';
@@ -55,10 +56,10 @@ BEGIN
 
         -- Se encontrou timestamp, verificar se � < 30 minutos
         IF array_length(timestamp_matches, 1) > 0 THEN
-            -- Converter horas, minutos, segundos para total de segundos
-            IF (timestamp_matches[1]::integer * 3600 +
-                timestamp_matches[2]::integer * 60 +
-                timestamp_matches[3]::integer) <= 1800 THEN -- 30 minutos = 1800 segundos
+            -- Converter minutos e segundos para total de segundos
+            -- timestamp_matches[1] = minutos, timestamp_matches[2] = segundos
+            IF (timestamp_matches[1]::integer * 60 +
+                timestamp_matches[2]::integer) <= 1800 THEN -- 30 minutos = 1800 segundos
                 -- Adicionar linha ao resultado se estiver dentro do limite de 30 minutos
                 result := result || current_line || E'\n';
             ELSE
