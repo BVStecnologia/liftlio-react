@@ -1077,8 +1077,8 @@ const LiftlioTrends: React.FC = () => {
                           <AreaChart data={historicalData}>
                             <defs>
                               <linearGradient id={`gradient-decline-${trend.id}`} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#a1a1aa" stopOpacity={0.5} />
-                                <stop offset="100%" stopColor="#a1a1aa" stopOpacity={0.05} />
+                                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.5} />
+                                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.05} />
                               </linearGradient>
                             </defs>
                             <Tooltip
@@ -1092,7 +1092,7 @@ const LiftlioTrends: React.FC = () => {
                             <Area
                               type="monotone"
                               dataKey="value"
-                              stroke="#d4d4d8"
+                              stroke="rgba(239, 68, 68, 0.6)"
                               strokeWidth={2}
                               fill={`url(#gradient-decline-${trend.id})`}
                             />
