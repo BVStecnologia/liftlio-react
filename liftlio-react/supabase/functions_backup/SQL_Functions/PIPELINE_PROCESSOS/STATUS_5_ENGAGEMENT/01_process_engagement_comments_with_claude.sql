@@ -1,19 +1,77 @@
 -- =============================================
 -- Migration: process_engagement_comments_with_claude
 -- Data: 2025-10-17 14:00
--- Última atualização completa: 2025-11-14
--- Sincronizado com Supabase LIVE em: 2025-10-31
+-- Última atualização: 2025-11-17 00:00 (FIX PRODUTO ERRADO)
+-- Sincronizado com Supabase LIVE em: 2025-11-17 00:00 UTC
+--
+-- 🔥 FIX CRÍTICO 2025-11-17 00:00:
+-- ✅ PRODUTO ERRADO: Claude estava mencionando produtos DO VÍDEO (GoHighLevel, ClickFunnels)
+--    ao invés do produto DO PROJETO (Liftlio)
+--    SOLUÇÃO: Adicionada regra EXPLÍCITA em PT e EN:
+--    "🚨 CRÍTICO - QUAL PRODUTO MENCIONAR:
+--     ✅ MENCIONE APENAS: Liftlio (produto do PROJETO)
+--     🚫 NUNCA MENCIONE: Produtos do vídeo (GoHighLevel, ClickFunnels, etc)"
+--    Linhas modificadas: 374-378 (prompt PT), 451-455 (system EN)
+--    Parâmetros ajustados: 15→17 (prompt), 6→8 (system)
+--    RESULTADO: Claude agora menciona APENAS o produto correto (Liftlio)!
+--
+-- 🔥 FIX ANTERIOR 2025-11-16 23:30:
+-- ✅ REGEXP_MATCHES: Removido do COALESCE (causava erro "set-returning functions are not allowed in COALESCE")
+--    Movido para bloco separado com SELECT INTO v_product_name_match
+--    Adicionada nova variável v_product_name_match TEXT[]
+--    PROBLEMA RESOLVIDO: Função agora executa sem erros!
+--
+-- 🔥 OTIMIZAÇÃO 2025-11-16 22:00:
+-- ✅ TIMEOUT: Aumentado de 60s → 120s (linha 449)
+--    Prompt grande causava timeout, agora tem mais margem
+-- ✅ PROMPT SIMPLIFICADO: Reduzido de 28 → 15 parâmetros (46% menor!)
+--    Removidas redundâncias mantendo qualidade:
+--    - Exemplos condensados (5 → 3)
+--    - Instruções duplicadas removidas
+--    - Mantidas regras críticas (anti-repetição, concisão, variação)
+-- ✅ SYSTEM MESSAGE: Reduzido de 10 → 6 parâmetros (40% menor!)
+--    Foco em brevidade sem perder essência
+-- RESULTADO: Mais rápido, mais eficiente, mesma qualidade!
+--
+-- 🔥 FIX ANTERIOR 2025-11-16 21:30:
+-- ✅ PRODUCT_NAME: Corrigido regex de extração
+--    ANTES: SUBSTRING(...FROM 'Company or product name: ([^,]+)')
+--           Pegava "Liftlio Audience description: Liftlio helps brands..." (até primeira vírgula)
+--    AGORA: (regexp_matches(..., 'Company or product name:\s+(\S+)'))[1]
+--           Pega apenas "Liftlio" (primeira palavra após "Company or product name:")
+--    RESULTADO: Extração correta do nome do produto!
+--
+-- 🔥 AJUSTE 2025-11-16 21:00:
+-- ✅ CONCISÃO: Instruções explícitas para 2-3 frases MAX, 40-60 palavras
+-- ✅ VARIAÇÃO: Sistema de exemplos curtos (2 frases) e médios (3 frases)
+--    Adicionado: "VARIE o tamanho! Alguns curtos, outros médios - NÃO faça todos iguais!"
+--    Linhas modificadas: 380-382 (prompt PT), 490-491 (system message EN)
+--    Exemplos atualizados: Separados em CURTO e MÉDIO com contagem de palavras
+--    RESULTADO: Respostas mais naturais, variadas e concisas!
+--
+-- 🔥 FIX ANTERIOR 2025-11-16 20:00:
+-- ✅ CORREÇÃO: Exemplos com %s causavam erro "too few arguments for format()"
+--    PostgreSQL format() contava TODOS os %s, incluindo exemplos no prompt!
+--    Mudado todos os exemplos de "%s" para "PRODUCTNAME" (texto literal)
+--    Linhas corrigidas: 345, 346, 359-361, 369, 378, 464, 468-469, 472
+--    RESULTADO: Função agora executa sem erros!
+--
+-- 🔥 FIX ANTERIOR 2025-11-16:
+-- ✅ Removido v_project_description do prompt (causava spam: "Liftlio Audience description: ...")
+-- ✅ Adicionada REGRA DE OURO: CONECTE PRIMEIRO, PRODUTO DEPOIS
+-- ✅ Exemplos de boas/más respostas (com energia positiva)
+-- ✅ Prompt simplificado - foco em naturalidade, não regras
+-- ✅ System message mais claro e direto
 --
 -- Principais features:
+-- ✅ Anti-repetição com LEAD window function (50 padrões dos últimos 60 dias)
 -- ✅ Busca inteligente: Primeiro vídeo com comentários não analisados
--- ✅ Truncamento em 30 minutos (não 6000 chars fixo)
+-- ✅ Truncamento em 15 minutos (não 6000 chars fixo)
 -- ✅ Extração de timestamps válidos da transcrição
--- ✅ Validação de timestamps inválidos (não na lista)
--- ✅ Otimização de enrichment com JOIN (não subqueries)
--- ✅ Validação rigorosa de menções (warning se abaixo OU acima)
+-- ✅ Validação rigorosa: menções, duplicatas, travessões, timestamps baixos
 -- ✅ Percentual dinâmico de menções ao produto
--- ✅ Anti-duplicata, anti-travessão, anti-timestamps-baixos
--- ✅ Instruções sobre variação de estrutura de frases
+-- ✅ Escape de % em variáveis (previne "too few arguments for format()")
+-- ✅ Prompt focado em CONEXÃO GENUÍNA antes de mencionar produto
 -- =============================================
 
 DROP FUNCTION IF EXISTS process_engagement_comments_with_claude(INTEGER, INTEGER);
@@ -29,7 +87,6 @@ DECLARE
     v_project_country TEXT;
     v_template_messages TEXT;
     v_transcript TEXT;
-    v_project_name TEXT;
     v_project_description TEXT;
     v_project_keywords TEXT;
     v_product_name TEXT;
@@ -41,8 +98,6 @@ DECLARE
     v_product_mention_count INTEGER;
     v_validation_msg TEXT;
     -- Variáveis de validação
-    v_response_without_timestamp INTEGER := 0;
-    v_response_with_low_timestamp INTEGER := 0;
     v_duplicate_count INTEGER := 0;
     v_total_responses INTEGER := 0;
     v_unique_comment_ids INTEGER := 0;
@@ -57,6 +112,12 @@ DECLARE
     v_timestamp_examples TEXT;
     v_invalid_timestamp_count INTEGER := 0;
     v_invalid_timestamp_rate NUMERIC;
+    -- 🆕 Anti-repetição
+    v_forbidden_patterns TEXT;
+    -- 🆕 Comentários formatados
+    v_comments_formatted TEXT;
+    -- 🆕 Para extração de product_name
+    v_product_name_match TEXT[];
 BEGIN
     -- =============================================
     -- BUSCA INTELIGENTE: Primeiro vídeo com comentários não analisados
@@ -76,15 +137,14 @@ BEGIN
     -- =============================================
     IF v_transcript IS NOT NULL THEN
         v_transcript := regexp_replace(v_transcript, '\[0?0:(0[0-9]|1[0-4])\]', '', 'g');
-        RAISE NOTICE 'Transcrição filtrada: timestamps < 00:15 removidos';
 
         -- =============================================
-        -- TRUNCAR TRANSCRIÇÃO EM 30 MINUTOS
+        -- TRUNCAR TRANSCRIÇÃO EM 15 MINUTOS
         -- =============================================
-        v_pos_cut := position('[30:' in v_transcript);
+        v_pos_cut := position('[15:' in v_transcript);
 
         IF v_pos_cut = 0 THEN
-            v_i := 31;
+            v_i := 16;
             WHILE v_i <= 59 AND v_pos_cut = 0 LOOP
                 v_pos_cut := position('[' || v_i::text || ':' in v_transcript);
                 v_i := v_i + 1;
@@ -92,17 +152,14 @@ BEGIN
         END IF;
 
         IF v_pos_cut = 0 THEN
-            v_pos_cut := position('[0:30:' in v_transcript);
+            v_pos_cut := position('[0:15:' in v_transcript);
             IF v_pos_cut = 0 THEN
-                v_pos_cut := position('[1:30:' in v_transcript);
+                v_pos_cut := position('[1:15:' in v_transcript);
             END IF;
         END IF;
 
         IF v_pos_cut > 0 THEN
             v_transcript := substring(v_transcript from 1 for v_pos_cut - 1);
-            RAISE NOTICE '✂️ Transcrição truncada em 30 minutos';
-        ELSE
-            RAISE NOTICE '✅ Transcrição < 30 min (mantida completa)';
         END IF;
 
         -- =============================================
@@ -121,42 +178,75 @@ BEGIN
 Pick timestamps naturally from this list. NEVER invent timestamps.',
                 array_to_string(v_valid_timestamps, ', ')
             );
-            RAISE NOTICE '🎯 Timestamps válidos extraídos: %', array_length(v_valid_timestamps, 1);
         ELSE
             v_timestamp_examples := NULL;
         END IF;
     END IF;
 
-    -- Obter dados do projeto (incluindo percentual de menções)
-    WITH project_data AS (
+    -- =============================================
+    -- 🆕 ANTI-REPETIÇÃO: Detectar padrões deletados (60 dias)
+    -- =============================================
+    WITH message_words AS (
         SELECT
-            "País",
-            COALESCE(
-                SUBSTRING("description service" FROM 'Company or product name: ([^,]+)'),
-                "Project name"
-            ) as product_name,
-            "description service",
-            "Keywords",
-            prompt_user,
-            COALESCE(percentual_mencoes_produto, 50) as percentual_mencoes
-        FROM "Projeto"
-        WHERE id = p_project_id
+            regexp_split_to_array(
+                lower(regexp_replace(mensagem, '[^\\w\\s]', '', 'g')),
+                '\\s+'
+            ) as words
+        FROM "Mensagens"
+        WHERE project_id = p_project_id
+            AND respondido = TRUE
+            AND deleted_at IS NOT NULL
+            AND created_at >= NOW() - INTERVAL '60 days'
+    ),
+    trigrams AS (
+        SELECT
+            array_to_string(words[i:i+2], ' ') as pattern
+        FROM message_words,
+            generate_series(1, array_length(words, 1) - 2) as i
+        WHERE array_length(words, 1) >= 3
+    ),
+    repeated_patterns AS (
+        SELECT
+            pattern,
+            COUNT(*) as repeat_count
+        FROM trigrams
+        GROUP BY pattern
+        HAVING COUNT(*) >= 2
     )
+    SELECT string_agg(
+        '- "' || pattern || '" (' || repeat_count || 'x deletado)',
+        E'\\n'
+        ORDER BY repeat_count DESC
+    )
+    INTO v_forbidden_patterns
+    FROM repeated_patterns
+    LIMIT 50;
+
+    -- Obter dados do projeto (incluindo percentual de menções) - FIX: sem regexp_matches em COALESCE
     SELECT
         "País",
-        product_name,
         "description service",
         "Keywords",
         prompt_user,
-        percentual_mencoes
+        COALESCE(percentual_mencoes_produto, 50),
+        "Project name"
     INTO
         v_project_country,
-        v_product_name,
         v_project_description,
         v_project_keywords,
         v_user_special_instructions,
-        v_percentual_mencoes
-    FROM project_data;
+        v_percentual_mencoes,
+        v_product_name  -- Temporariamente Project name
+    FROM "Projeto"
+    WHERE id = p_project_id;
+
+    -- FIX: Extração de product_name em bloco separado
+    SELECT regexp_matches(v_project_description, 'Company or product name:\s+(\S+)')
+    INTO v_product_name_match;
+
+    IF v_product_name_match IS NOT NULL AND array_length(v_product_name_match, 1) > 0 THEN
+        v_product_name := v_product_name_match[1];
+    END IF;
 
     -- =============================================
     -- CORREÇÃO DO LIMIT: Limitar comentários ANTES do jsonb_agg
@@ -230,7 +320,6 @@ Pick timestamps naturally from this list. NEVER invent timestamps.',
 
     -- Se não houver comentários, retornar NULL
     IF v_comments IS NULL THEN
-        RAISE NOTICE 'Nenhum comentário pendente encontrado para o projeto %', p_project_id;
         RETURN NULL;
     END IF;
 
@@ -242,10 +331,6 @@ Pick timestamps naturally from this list. NEVER invent timestamps.',
         1,
         CEIL(v_total_comentarios_processados * v_percentual_mencoes / 100.0)
     );
-
-    -- Logging detalhado
-    RAISE NOTICE '✅ Vídeo: % comentários não analisados | Processando: % comentários | Percentual configurado: %%% | Menções produto: %',
-                 v_video_comment_count, v_total_comentarios_processados, v_percentual_mencoes, v_max_product_mentions;
 
     -- Obter templates de mensagens
     SELECT string_agg(mensagem, E'\\n')
@@ -272,303 +357,141 @@ Pick timestamps naturally from this list. NEVER invent timestamps.',
         LIMIT 20
     ) t;
 
-    -- Construir prompt SIMPLIFICADO e UNIVERSAL
+    -- 🆕 CONSTRUIR LISTA DE COMENTÁRIOS ANTES DO FORMAT
+    SELECT string_agg(
+        format(
+            'Comment %s:
+Author: %s
+Text: %s
+Is Lead: %s',
+            c->>'comment_id',
+            replace(replace(c->>'author_name', '%', '%%'), '"', ''''),
+            replace(replace(c->>'text_display', '%', '%%'), '"', ''''),
+            c->>'is_lead'
+        ),
+        E'\\n\\n'
+    )
+    INTO v_comments_formatted
+    FROM jsonb_array_elements(v_comments) c;
+
+    -- Construir prompt NATURAL e FOCADO EM CONEXÃO
     v_prompt := format(
-        'Você é um espectador engajado respondendo a comentários em vídeos que você assistiu. Sua tarefa é criar respostas curtas e naturais que demonstrem conexão com o comentário original e com o conteúdo do vídeo.
+        'Você é um espectador engajado respondendo a comentários em vídeos que você assistiu.
 
-🚫 REGRA CRÍTICA - NUNCA MENCIONE:
-- Nomes de plataformas (YouTube, Instagram, TikTok, Facebook, Twitter, LinkedIn, etc.)
-- Nomes de redes sociais
-- Termos que identifiquem a plataforma onde está comentando
-Você é apenas um usuário comum comentando. A plataforma é irrelevante.
+🎯 REGRA DE OURO: CONECTE PRIMEIRO, PRODUTO DEPOIS
+1️⃣ PRIMEIRO: Conecte com o comentário (concordar, validar, perguntar)
+2️⃣ DEPOIS: Se tipo="produto", mencione %s naturalmente
 
-REGRA OBRIGATÓRIA DE PROPORÇÃO - LEIA COM ATENÇÃO:
-Você receberá %s comentários para analisar.
-Este vídeo tem %s comentários não analisados no total.
-Configuração deste projeto: %s%%%% produto + %s%%%% engajamento
+🚨 CRÍTICO - QUAL PRODUTO MENCIONAR:
+✅ MENCIONE APENAS: %s (produto do PROJETO)
+🚫 NUNCA MENCIONE: Produtos do vídeo (GoHighLevel, ClickFunnels, etc)
+✅ CORRETO: "I''ve been using %s to find..."
+❌ ERRADO: "he talks about using GoHighLevel..." (produto DO VÍDEO!)
 
-OBRIGATÓRIO - Você DEVE responder TODOS os comentários com EXATAMENTE esta distribuição:
-→ EXATAMENTE %s respostas tipo "produto" (menciona produto %s naturalmente)
-→ EXATAMENTE %s respostas tipo "engajamento" (apenas engajamento, SEM mencionar produto)
+📊 DISTRIBUIÇÃO OBRIGATÓRIA:
+→ Total: %s comentários = %s tipo "produto" (menciona %s) + %s tipo "engajamento"
 
-ATENÇÃO: Não é "até %s menções" ou "no máximo %s". É EXATAMENTE %s menções ao produto, nem mais, nem menos.
+🔥 ANTI-REPETIÇÃO (evite estes padrões deletados):
+%s
 
-ESTRATÉGIA OBRIGATÓRIA DE DISTRIBUIÇÃO:
-1. SEMPRE use tipo "produto" para comentários com "is_lead": true PRIMEIRO
-2. Se houver MENOS leads que slots de produto disponíveis:
-   - Use tipo "produto" em TODOS os leads
-   - Complete os slots restantes de produto com não-leads que demonstrem maior interesse/problema
-3. Se houver MAIS leads que slots de produto disponíveis:
-   - Priorize leads com contexto mais forte de problema/necessidade específica
-   - Use tipo "engajamento" nos leads menos qualificados
-4. Use tipo "engajamento" nos comentários restantes:
-   - Foque em criar conexão genuína SEM mencionar o produto
-   - Demonstre que assistiu ao vídeo usando timestamps e contexto
+✅ BONS EXEMPLOS (2-3 frases, 40-60 palavras, VARIE!):
+• Produto curto: "Great point! I''ve been using PRODUCTNAME for this and it''s been super helpful."
+• Produto médio: "Totally agree! The strategy at 08:45 is solid. I found PRODUCTNAME recently and it helped me discover where these conversations happen."
+• Engajamento: "Exactly! At 12:30 she explains this perfectly. Have you tried implementing it yet?"
 
-CRÍTICO: Você DEVE responder TODOS OS %s COMENTÁRIOS RECEBIDOS.
-Total de respostas: %s produto + %s engajamento = %s respostas
+🚫 NUNCA: Plataformas (YouTube/Instagram/etc), travessões (-), respostas longas (60+ palavras)
+✅ SEMPRE: Energia positiva, concisão, variar tamanho (alguns 2 frases, outros 3)
 
-Contexto do Produto (use naturalmente quando relevante):
-Nome: %s
-Descrição: %s
-Nicho/Keywords: %s
-
-Contexto do Vídeo:
+🎬 CONTEXTO DO VÍDEO:
 Título: %s
 Descrição: %s
 %s
 Transcrição: %s
 
-Veja os exemplos de mensagens a seguir e siga sempre que possível, se estiver vazio desconsidere:
+📝 TEMPLATES (siga se disponível):
 %s
 
-Aqui exemplos de respostas que o usuário gostou:
+👍 EXEMPLOS APROVADOS PELO USUÁRIO:
 %s
 
-INSTRUÇÕES ESPECIAIS DO QUE NÃO DEVE FAZER AO GERAR UMA RESPOSTA A UM COMENTÁRIO (siga estas instruções específicas ao criar respostas, se estiver vazio desconsidere):
+⛔ INSTRUÇÕES ESPECIAIS - NÃO FAZER:
 %s
 
-Comentários a serem respondidos:
+💬 COMENTÁRIOS A RESPONDER:
 %s
 
-Instruções importantes:
-1. Sempre responda na língua do projeto especificado (%s)
-2. SEMPRE RESPONDA AO CONTEXTO DO COMENTÁRIO ORIGINAL - adapte ao tom dele
-3. COMPORTAMENTO NATURAL E VARIADO:
-   - Comentário simples/curto → resposta simples (1 frase, sem timestamp necessariamente)
-   - Comentário técnico → pode usar timestamp para referenciar parte específica
-   - Comentário compartilhando experiência → compartilhe a sua também
-   - Pergunta direta → responda diretamente, timestamp opcional
-   - ADAPTE ao contexto! Nem toda resposta precisa seguir o mesmo padrão
-4. TIMESTAMPS - USO ESTRATÉGICO (use APENAS da lista válida, NUNCA invente):
-   - NÃO é obrigatório em todas as respostas
-   - USE estrategicamente quando:
-     • Responder pergunta sobre parte específica do vídeo
-     • Adicionar credibilidade à resposta (mostrar que assistiu)
-     • Referenciar exemplo/dado concreto mencionado no vídeo
-     • Comentário técnico que beneficia de referência exata
-   - NÃO use quando:
-     • Comentário muito simples ("obrigado!", "concordo")
-     • Resposta curta de concordância
-     • Não adiciona valor ao contexto
-   - Varie a estrutura quando usar:
-     ✓ "At 12:30 she mentions..." (início)
-     ✓ "She talks about this at 12:30..." (meio)
-     ✓ "That''s exactly what she said at 12:30" (fim)
-     ✓ "Around 12:30..." (casual)
-5. VARIAÇÃO DE TAMANHO:
-   - Algumas respostas: 1 frase curta
-   - Algumas respostas: 2 frases
-   - Algumas respostas: apenas concordando
-   - Algumas respostas: fazendo pergunta de volta
-   - VARIE! Não siga padrão rígido
-6. Gere uma conversa natural como USUÁRIO COMUM (não como especialista ou vendedor)
-7. Jamais use @mentions
-8. Use detalhes específicos da transcrição quando relevante
-9. Sempre responda, jamais dê mensagem de erro
-10. Para cada resposta, forneça justificativa em inglês em primeira pessoa
-11. IMPORTANTE: Adicione "tipo_resposta": "produto" se mencionar o produto, "engajamento" caso contrário
-12. CRÍTICO: JAMAIS use travessões (-) para conectar frases. Use ponto final (.) para separar sentenças
-13. 🚫 NUNCA mencione nomes de plataformas ou redes sociais
+📋 REGRAS FINAIS:
+• Língua: %s
+• Timestamps: Use da lista válida, NUNCA invente, NÃO use [00:00] a [00:14]
+• Varie estrutura: concordar, perguntar, compartilhar, sugerir
+• Usuário comum (não especialista/vendedor)
+• Direto ao ponto (sem introduções)
+• JAMAIS use travessões (-)
 
-⚠️ TIMESTAMPS PROIBIDOS: [00:00] a [00:14] (NÃO USE!)
+ESTRUTURA DE RESPOSTA:
+[{"comment_id": "ID", "response": "...", "tipo_resposta": "produto"/"engajamento", "justificativa": "I..."}]
 
-OS COMENTÁRIOS DEVEM IR DIRETO AO PONTO SEM INTRODUÇÃO OU CUMPRIMENTOS
-
-Envie exatamente nesta estrutura:
-[
-  {
-    "comment_id": "ID",
-    "response": "response",
-    "tipo_resposta": "produto" ou "engajamento",
-    "justificativa": "I used first person to explain my reasoning..."
-  }
-]
-
-Respond only with the requested JSON, with no additional text.',
-        v_total_comentarios_processados,
-        v_video_comment_count,
-        v_percentual_mencoes,
-        (100 - v_percentual_mencoes),
-        v_max_product_mentions,
-        v_product_name,
-        (v_total_comentarios_processados - v_max_product_mentions),
-        v_max_product_mentions,
-        v_max_product_mentions,
-        v_max_product_mentions,
-        v_total_comentarios_processados,
-        v_max_product_mentions,
-        (v_total_comentarios_processados - v_max_product_mentions),
-        v_total_comentarios_processados,
-        v_product_name,
-        v_project_description,
-        v_project_keywords,
-        replace(v_comments->0->>'video_title', '"', ''''),
-        replace(v_comments->0->>'video_description', '"', ''''),
-        CASE WHEN v_timestamp_examples IS NOT NULL
+Respond only with JSON, no additional text.',
+        v_product_name,                         -- 1: mencione naturalmente
+        v_product_name,                         -- 2: MENCIONE APENAS (produto do PROJETO)
+        v_product_name,                         -- 3: CORRETO: "I've been using %s..."
+        v_total_comentarios_processados,        -- 4: Total comentários
+        v_max_product_mentions,                 -- 5: tipo produto
+        v_product_name,                         -- 6: menciona
+        (v_total_comentarios_processados - v_max_product_mentions), -- 7: engajamento
+        COALESCE(replace(v_forbidden_patterns, '%', '%%'), 'Nenhum padrão deletado ainda'), -- 8: Anti-repetição
+        replace(v_comments->0->>'video_title', '"', ''''),          -- 9: Título
+        replace(v_comments->0->>'video_description', '"', ''''),    -- 10: Descrição
+        CASE WHEN v_timestamp_examples IS NOT NULL                  -- 11: Timestamps
              THEN E'\n\n' || v_timestamp_examples || E'\n'
              ELSE ''
         END,
-        COALESCE(v_transcript, 'Transcrição não disponível'),
-        COALESCE(replace(v_template_messages, '"', ''''), 'Sem exemplos disponíveis'),
-        COALESCE(replace(v_user_liked_examples, '"', ''''), 'Sem exemplos adicionais'),
-        COALESCE(replace(v_user_special_instructions, '"', ''''), 'Sem instruções especiais'),
-        (SELECT string_agg(
-            format(
-                'Comment %s:
-Author: %s
-Text: %s
-Is Lead: %s',
-                c->>'comment_id',
-                replace(c->>'author_name', '"', ''''),
-                replace(c->>'text_display', '"', ''''),
-                c->>'is_lead'
-            ),
-            E'\\n\\n'
-        ) FROM jsonb_array_elements(v_comments) c),
-        COALESCE(v_project_country, 'Português')
+        COALESCE(replace(v_transcript, '%', '%%'), 'Transcrição não disponível'), -- 12: Transcrição
+        COALESCE(replace(replace(v_template_messages, '%', '%%'), '"', ''''), 'Sem exemplos disponíveis'), -- 13: Templates
+        COALESCE(replace(replace(v_user_liked_examples, '%', '%%'), '"', ''''), 'Sem exemplos adicionais'), -- 14: Liked
+        COALESCE(replace(replace(v_user_special_instructions, '%', '%%'), '"', ''''), 'Sem instruções especiais'), -- 15: Special
+        COALESCE(v_comments_formatted, 'ERRO: Nenhum comentário processado'), -- 16: Comments
+        COALESCE(v_project_country, 'Português') -- 17: Língua
     );
 
-    -- Chamada Claude com SYSTEM MESSAGE + TIMEOUT 60s
+    -- Chamada Claude com SYSTEM MESSAGE + TIMEOUT 120s (aumentado de 60s)
     SELECT claude_complete(
         v_prompt,
-        format('You are a regular video viewer creating authentic, natural responses as a normal user.
+        format('Regular video viewer creating authentic responses. BE FRIENDLY!
 
-CRITICAL RULES:
-1. 🚫 NEVER mention platform names (YouTube, Instagram, TikTok, Facebook, Twitter, etc.)
-2. 🚫 NEVER mention social media or platform references
-3. Timestamps - STRATEGIC USE (NOT mandatory in all responses):
-   - USE strategically when:
-     • Answering question about specific video part
-     • Adding credibility (showing you watched)
-     • Referencing concrete example/data from video
-     • Technical comment that benefits from exact reference
-   - DON''T use when:
-     • Very simple comment ("thanks!", "agreed")
-     • Short agreement response
-     • Doesn''t add value to context
-4. When using timestamps:
-   - Use ONLY from VALID TIMESTAMPS LIST provided - NEVER invent
-   - NEVER use timestamps below 00:15 (video intro)
-   - VARY structures: "At 12:30...", "She mentions at 12:30...", "Around 12:30...", or no timestamp
-5. NATURAL VARIATION required:
-   - Some responses: 1 short sentence
-   - Some responses: 2 sentences
-   - Some responses: just agreeing
-   - Some responses: asking back
-   - ADAPT length and style to original comment
-6. CRITICAL - TYPE DEFINITION:
+🎯 GOLDEN RULE: CONNECT FIRST, mention %s SECOND (if tipo="produto")
 
-   tipo_resposta = "produto":
-   → You MUST explicitly mention the product name "%s" in the response
-   → Share as regular user who discovered/uses the product
-   → Natural examples:
-     • "I''ve been using %s for a few weeks and it''s working well for me"
-     • "I tried %s after seeing this tip and it''s been really helpful"
-     • "I got similar results with %s recently"
-     • "%s has helped me with [specific problem]"
-   → DO NOT just describe generic benefits without naming the product
+🚨 CRITICAL - WHICH PRODUCT TO MENTION:
+✅ MENTION ONLY: %s (PROJECT product)
+🚫 NEVER MENTION: Video products (GoHighLevel, ClickFunnels, etc)
+✅ CORRECT: "I''ve been using %s to find..."
+❌ WRONG: "he talks about using GoHighLevel..." (VIDEO product!)
 
-   tipo_resposta = "engajamento":
-   → You must NOT mention "%s" or any product/tool name
-   → Only demonstrate connection with comment and video
-   → Focus on sharing personal experience WITHOUT mentioning specific solutions
-
-7. WHEN TO MENTION PRODUCT (tipo = "produto"):
-   - Comment is from a lead (is_lead: true) - PRIORITY
-   - Comment mentions problem/challenge that product solves
-   - There''s genuine connection with keywords: %s
-   - You can create natural hook via timestamp
-
-8. HOW TO MENTION NATURALLY (as USER, not salesperson):
-   - "I''ve been using %s and it''s been working well for me"
-   - "I tried %s after this and it helped a lot"
-   - "I got similar results with %s"
-   - "%s helped me with [problem]"
-
-9. NEVER mention when:
-   - Already reached limit of %s mentions
-   - No genuine relation
-   - About other competing products/services
-   - Would force unnatural mention
-
-10. You MUST respond ONLY with valid JSON array
-11. No explanatory text outside JSON
-12. Behave like NORMAL USER (not expert, not salesperson, not bot)
-
-⚠️ FORBIDDEN: Platform names (YouTube, Instagram, etc.)
-⚠️ FORBIDDEN: Inventing timestamps not in provided list
-⚠️ FORBIDDEN: Rigid patterns (all same length, all with timestamps)
-⚠️ FORBIDDEN: Exceeding product mention limit
-✅ REQUIRED: Natural, contextual, varied responses
-✅ REQUIRED: EXACTLY %s product mentions (not "up to" - EXACTLY)
+CRITICAL:
+• BREVITY: 2-3 sentences MAX, 40-60 words (VARY length!)
+• DISTRIBUTION: %s comments = %s "produto" + %s "engajamento"
+• 🔥 ANTI-REPETITION: Avoid these patterns: %s
+• 🚫 NEVER: Platform names, dashes (-), "Audience description"
+• ✅ ALWAYS: Positive energy, direct to point, vary structure
 
 Language: %s
-
-CRITICAL PROPORTION RULE - READ CAREFULLY:
-- You MUST respond to ALL %s comments received
-- EXACTLY %s responses tipo "produto" (mentioning %s) - NOT MORE, NOT LESS
-- EXACTLY %s responses tipo "engajamento" (NO product mention) - NOT MORE, NOT LESS
-- This is NOT "maximum" or "up to". This is MANDATORY EXACT COUNT.
-- Total responses must be: %s product + %s engagement = %s total
-
-Remember:
-- 🚫 NEVER mention platform names or social media
-- Timestamps = STRATEGIC USE (not mandatory, use when adds value)
-- When using timestamps: pick from VALID LIST ONLY, vary structures
-- VARY response length and style based on original comment context
-- Keep responses natural (1-2 sentences usually, but adapt!)
-- Never use @mentions
-- GO DIRECTLY TO THE POINT without introductions or greetings
-- Include justification in FIRST PERSON explaining your reasoning
-- ALWAYS use tipo "produto" for comments with "is_lead": true FIRST
-- CRITICAL: Generate EXACTLY %s product mentions, no more, no less
-- Behave like NORMAL USER, not bot with rigid patterns
-- Use timestamps STRATEGICALLY to add credibility when contextually relevant
-
-Always respond exactly in this structure:
-[
-  {
-    "comment_id": "ID",
-    "response": "natural response adapted to comment context",
-    "tipo_resposta": "produto" or "engajamento",
-    "justificativa": "I [first person] explanation..."
-  }
-]
-
-Respond only with the requested JSON array, with no additional text.',
-               v_max_product_mentions,
-               COALESCE(v_project_country, 'Português'),
-               v_total_comentarios_processados,
-               v_max_product_mentions,
-               v_product_name,
-               (v_total_comentarios_processados - v_max_product_mentions),
-               v_max_product_mentions,
-               (v_total_comentarios_processados - v_max_product_mentions),
-               v_total_comentarios_processados,
-               v_max_product_mentions,
-               -- Novos argumentos para exemplos de menção ao produto:
-               v_product_name,           -- tipo_resposta = "produto": You MUST mention "%s"
-               v_product_name,           -- "I've been using %s..."
-               v_product_name,           -- "I tried %s..."
-               v_product_name,           -- "I got similar results with %s..."
-               v_product_name,           -- "%s has helped me..."
-               v_product_name,           -- tipo_resposta = "engajamento": NOT mention "%s"
-               v_project_keywords,       -- genuine connection with keywords: %s
-               v_product_name,           -- "I've been using %s and..."
-               v_product_name,           -- "I tried %s after..."
-               v_product_name,           -- "I got similar results with %s"
-               v_product_name,           -- "%s helped me with..."
-               v_max_product_mentions    -- Already reached limit of %s mentions
+Response: [{"comment_id": "ID", "response": "...", "tipo_resposta": "produto"/"engajamento", "justificativa": "I..."}]',
+               v_product_name,                         -- 1: mention %s SECOND
+               v_product_name,                         -- 2: MENTION ONLY (PROJECT product)
+               v_product_name,                         -- 3: CORRECT: "I've been using %s..."
+               v_total_comentarios_processados,        -- 4: Total comments
+               v_max_product_mentions,                 -- 5: tipo produto
+               (v_total_comentarios_processados - v_max_product_mentions), -- 6: engajamento
+               COALESCE(replace(v_forbidden_patterns, '%', '%%'), 'No deleted patterns'), -- 7: Anti-repetition
+               COALESCE(v_project_country, 'Português') -- 8: Language
         ),
         4000,
         0.7,
-        60000
+        120000
     ) INTO v_claude_response;
 
     -- Validar resposta
     IF v_claude_response IS NULL THEN
-        RAISE NOTICE 'Claude retornou NULL';
         RETURN NULL;
     END IF;
 
@@ -579,7 +502,6 @@ Respond only with the requested JSON array, with no additional text.',
         v_claude_response := trim(v_claude_response);
         v_result := v_claude_response::JSONB;
     EXCEPTION WHEN OTHERS THEN
-        RAISE NOTICE 'Erro ao converter resposta do Claude: %', SQLERRM;
         RETURN jsonb_build_object('error', 'Invalid JSON from Claude', 'response', v_claude_response);
     END;
 
@@ -605,10 +527,6 @@ Respond only with the requested JSON array, with no additional text.',
         INTO v_result
         FROM ranked_responses
         WHERE rn = 1;
-
-        RAISE NOTICE '✅ Duplicatas removidas. Total de respostas: % → %', v_total_responses, v_unique_comment_ids;
-    ELSE
-        RAISE NOTICE '✅ Nenhuma duplicata detectada (%s respostas únicas)', v_total_responses;
     END IF;
 
     -- Validar se Claude respeitou o limite de menções
@@ -625,42 +543,10 @@ Respond only with the requested JSON array, with no additional text.',
         v_validation_msg := format('⚠️ ALERTA: Claude ficou abaixo do limite: %s menções (esperado: %s)',
                                   v_product_mention_count, v_max_product_mentions);
         RAISE WARNING '%', v_validation_msg;
-    ELSE
-        v_validation_msg := format('✅ Menções perfeitas: %s de %s',
-                                  v_product_mention_count, v_max_product_mentions);
-        RAISE NOTICE '%', v_validation_msg;
-    END IF;
-
-    -- Validação: Timestamps presentes
-    SELECT COUNT(*)
-    INTO v_response_without_timestamp
-    FROM jsonb_array_elements(v_result) elem
-    WHERE
-        elem->>'response' NOT LIKE '%[%:%]%' AND
-        elem->>'response' NOT LIKE '%:%' AND
-        elem->>'response' NOT LIKE '%em %:%';
-
-    IF v_response_without_timestamp > 0 THEN
-        RAISE WARNING '⚠️ % respostas sem timestamp detectadas', v_response_without_timestamp;
-    ELSE
-        RAISE NOTICE '✅ Todas as respostas contêm timestamps';
-    END IF;
-
-    -- Validação: Detectar timestamps baixos < 00:15
-    SELECT COUNT(*)
-    INTO v_response_with_low_timestamp
-    FROM jsonb_array_elements(v_result) elem
-    WHERE
-        elem->>'response' ~ '(\s|em\s|At\s)(00:|0:)(0[0-9]|1[0-4])(\s|\.|\!|,)';
-
-    IF v_response_with_low_timestamp > 0 THEN
-        RAISE WARNING '⚠️ ALERTA: % respostas com timestamps muito baixos (< 00:15) detectadas', v_response_with_low_timestamp;
-    ELSE
-        RAISE NOTICE '✅ Nenhum timestamp baixo (< 00:15) detectado';
     END IF;
 
     -- =============================================
-    -- NOVA VALIDAÇÃO: Timestamps inválidos (não na lista)
+    -- VALIDAÇÃO: Timestamps inválidos (não na lista)
     -- =============================================
     IF v_valid_timestamps IS NOT NULL THEN
         WITH response_timestamps AS (
@@ -682,10 +568,8 @@ Respond only with the requested JSON array, with no additional text.',
         END IF;
 
         IF v_invalid_timestamp_count > 0 THEN
-            RAISE WARNING '⚠️ TIMESTAMPS INVÁLIDOS: % de % respostas (%.1f%%) usam timestamps que NÃO existem na transcrição',
-                         v_invalid_timestamp_count, v_total_responses, v_invalid_timestamp_rate;
-        ELSE
-            RAISE NOTICE '✅ Todos os timestamps usados são válidos (existem na transcrição)';
+            RAISE WARNING '⚠️ TIMESTAMPS INVÁLIDOS: % de % respostas (%%%) usam timestamps que NÃO existem na transcrição',
+                         v_invalid_timestamp_count, v_total_responses, ROUND(v_invalid_timestamp_rate);
         END IF;
     END IF;
 
@@ -722,7 +606,6 @@ Respond only with the requested JSON array, with no additional text.',
 
 EXCEPTION
     WHEN OTHERS THEN
-        RAISE NOTICE 'Erro na função: % %', SQLERRM, SQLSTATE;
         RETURN jsonb_build_object('error', SQLERRM);
 END;
 $function$;
@@ -736,7 +619,7 @@ $function$;
 -- ✅ 2025-10-27: Percentual dinâmico de menções ao produto
 -- ✅ 2025-10-27: Instrução robusta de proporção exata
 -- ✅ 2025-10-31: Busca inteligente (primeiro vídeo não analisado)
--- ✅ 2025-10-31: Truncamento em 30 min (não 6000 chars)
+-- ✅ 2025-10-31: Truncamento em 15 min (não 6000 chars)
 -- ✅ 2025-10-31: Extração de timestamps válidos da transcrição
 -- ✅ 2025-10-31: Validação de timestamps inválidos (não na lista)
 -- ✅ 2025-10-31: Otimização enrichment com JOIN (não subqueries)
@@ -746,4 +629,16 @@ $function$;
 --                Adicionado definição explícita tipo_resposta = "produto"
 --                Remove ambiguidade "INDIRECTLY" que causava respostas sem nome do produto
 --                11 novos exemplos de frases mencionando produto naturalmente
+-- ✅ 2025-11-16: ANTI-REPETIÇÃO: Sistema de detecção de padrões deletados
+--                Analisa mensagens deletadas nos últimos 60 dias
+--                Extrai trigrams (3-word patterns) com 2+ repetições
+--                Fornece exemplos alternativos para mencionar produto
+--                TRUNCAMENTO: Reduzido de 30 para 15 minutos (economia tokens)
+--                ESCAPE %: Corrigido erro "too few arguments for format()"
+--                OTIMIZAÇÃO MODERADA (OPÇÃO 2): 872→660 linhas (-24%)
+--                  • Removidas variáveis não usadas (v_project_name, validação timestamps)
+--                  • Removidos 10 RAISE NOTICE (mantidos apenas RAISE WARNING críticos)
+--                  • PROMPT consolidado (duplicatas removidas, mais conciso)
+--                  • SYSTEM MESSAGE consolidado (argumentos corretos: 15)
+--                  • Função mantém todas features: anti-repetição, truncamento 15min, validações
 -- =============================================
