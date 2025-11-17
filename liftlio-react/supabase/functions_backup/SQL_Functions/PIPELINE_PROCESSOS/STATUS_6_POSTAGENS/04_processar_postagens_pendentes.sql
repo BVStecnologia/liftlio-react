@@ -38,7 +38,7 @@ CREATE OR REPLACE FUNCTION public.processar_postagens_pendentes(projeto_id_param
 AS $function$
 DECLARE
     v_total_processados integer := 0;
-    v_sucessos integer := 0;
+    v_sucessos integer := 0;./.claude-images/image_20251115_113724_001.png./.claude-images/image_20251115_141838_001.png
     v_falhas integer := 0;
     v_status_mensagem text := '';
     v_registro RECORD;
