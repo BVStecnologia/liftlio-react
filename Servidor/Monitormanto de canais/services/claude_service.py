@@ -1,6 +1,6 @@
 """
 Claude Service
-Handles semantic analysis using Claude Sonnet 4.5
+Handles semantic analysis using Claude Sonnet 4.5 with 2-stage filtering
 """
 
 from typing import List, Dict
@@ -13,9 +13,47 @@ from models import VideoData, ProjectData
 
 
 # ============================================
-# System Prompt (UPDATED: Now returns JSON with reasoning)
+# STAGE 1: Pre-filter Prompt (no transcript)
 # ============================================
-SYSTEM_PROMPT_TEMPLATE = """TAREFA: Determinar se vídeos são EXTREMAMENTE relevantes para o produto/serviço descrito.
+STAGE1_PROMPT_TEMPLATE = """TAREFA: Pré-filtro rápido - Determinar se vídeos PODEM SER relevantes com base APENAS em metadados (título, descrição, tags).
+
+REGRAS DE PRÉ-FILTRO:
+1. APROVAR (PASS) se houver QUALQUER INDICAÇÃO de que o vídeo pode abordar o nicho/função do produto
+2. REJEITAR apenas casos ÓBVIOS de incompatibilidade:
+   - Nicho completamente diferente (ex: culinária vs. software)
+   - Idioma incompatível (se o produto tem target específico)
+   - Conteúdo claramente infantil/entretenimento quando produto é B2B
+   - Spam, clickbait sem relação
+
+IMPORTANTE:
+- Este é um FILTRO INICIAL - seja PERMISSIVO
+- Na dúvida, APROVE (deixe para Stage 2 decidir)
+- REJEITE apenas quando CERTAMENTE irrelevante
+
+RESPOSTA OBRIGATÓRIA (JSON):
+Retorne um objeto JSON onde cada chave é o video_id e o valor é:
+- "PASS" se aprovado para análise completa
+- "PRE_FILTER_REJECT: [motivo breve, max 80 chars]" se claramente irrelevante
+
+Exemplo:
+{{
+  "abc123": "PASS",
+  "xyz789": "PRE_FILTER_REJECT: Vídeo sobre culinária; produto é SaaS B2B",
+  "def456": "PASS"
+}}
+
+ATENÇÃO: Use EXATAMENTE o prefixo "PRE_FILTER_REJECT:" (não use "REJECT:")
+Isso indica que o vídeo foi rejeitado no pré-filtro (Stage 1) antes da análise completa.
+
+Nome do produto ou serviço: {nome_produto}
+
+Descrição do produto ou serviço: {descricao_servico}"""
+
+
+# ============================================
+# STAGE 2: Full Analysis Prompt (with transcript)
+# ============================================
+STAGE2_PROMPT_TEMPLATE = """TAREFA: Determinar se vídeos são EXTREMAMENTE relevantes para o produto/serviço descrito.
 
 REGRAS ESTRITAS DE AVALIAÇÃO:
 1. O vídeo DEVE abordar EXATAMENTE o mesmo nicho/função descrito na seção "Nome do produto ou serviço" abaixo
@@ -64,7 +102,7 @@ Descrição do produto ou serviço: {descricao_servico}"""
 
 
 class ClaudeService:
-    """Service for Claude AI semantic analysis"""
+    """Service for Claude AI semantic analysis with 2-stage filtering"""
 
     def __init__(self):
         """Initialize Anthropic client"""
@@ -73,15 +111,34 @@ class ClaudeService:
         self.model = settings.claude_model
         logger.info(f"✅ Claude AI client initialized (model: {self.model})")
 
-    def _format_video_for_prompt(self, video: VideoData) -> str:
+    def _format_video_light(self, video: VideoData) -> str:
         """
-        Format a single video for Claude prompt
+        Format a single video for Stage 1 (pre-filter) - NO TRANSCRIPT
 
         Args:
             video: VideoData object
 
         Returns:
-            Formatted string with video info
+            Formatted string with video metadata only
+        """
+        return f"""ID: {video.id}
+Título: {video.title}
+Descrição: {video.description[:500]}...
+Canal: {video.channel_title or 'N/A'}
+Publicado: {video.published_at}
+Duração: {video.duration}
+Views: {video.view_count:,} | Likes: {video.like_count:,} | Comments: {video.comment_count:,}
+Tags: {', '.join(video.tags[:10]) if video.tags else 'N/A'}"""
+
+    def _format_video_full(self, video: VideoData) -> str:
+        """
+        Format a single video for Stage 2 (full analysis) - WITH TRANSCRIPT
+
+        Args:
+            video: VideoData object
+
+        Returns:
+            Formatted string with video info + transcript
         """
         # Truncate transcript to avoid token limits (~2000 chars)
         transcript = video.transcript[:2000] if video.transcript else "N/A"
@@ -96,13 +153,112 @@ Views: {video.view_count:,} | Likes: {video.like_count:,} | Comments: {video.com
 Tags: {', '.join(video.tags[:10]) if video.tags else 'N/A'}
 Transcrição: {transcript}..."""
 
+    async def _pre_filter_stage(
+        self,
+        videos: List[VideoData],
+        project: ProjectData
+    ) -> Dict[str, str]:
+        """
+        STAGE 1: Pre-filter videos using metadata only (no transcript)
+
+        Args:
+            videos: List of VideoData objects
+            project: ProjectData with product context
+
+        Returns:
+            Dict mapping video_id -> "PASS" or "PRE_FILTER_REJECT: motivo"
+
+        Raises:
+            Exception: If Claude API fails
+        """
+        try:
+            logger.info(f"🔍 [STAGE 1] Pre-filtering {len(videos)} videos (metadata only)...")
+
+            # Format system prompt with product context
+            system_prompt = STAGE1_PROMPT_TEMPLATE.format(
+                nome_produto=project.nome_produto,
+                descricao_servico=project.descricao_servico
+            )
+
+            # Format videos for user prompt (WITHOUT transcript)
+            videos_text = "\n---\n".join([
+                self._format_video_light(v) for v in videos
+            ])
+
+            user_prompt = f"""VÍDEOS PARA PRÉ-FILTRO:
+
+{videos_text}
+
+Lembre-se: responda APENAS com o JSON no formato especificado.
+Para cada vídeo, retorne "PASS" ou "PRE_FILTER_REJECT: motivo breve"."""
+
+            # Call Claude API
+            logger.debug("Sending Stage 1 request to Claude API...")
+            response = self.client.messages.create(
+                model=self.model,
+                max_tokens=800,  # Stage 1 needs fewer tokens
+                system=system_prompt,
+                messages=[
+                    {"role": "user", "content": user_prompt}
+                ]
+            )
+
+            # Extract response
+            result = response.content[0].text.strip()
+
+            logger.debug(f"Stage 1 raw response: {result[:200]}...")
+
+            # Parse JSON response
+            try:
+                # Remove markdown code blocks if present
+                if result.startswith("```"):
+                    result = result.split("```")[1]
+                    if result.startswith("json"):
+                        result = result[4:]
+                    result = result.strip()
+
+                result_dict = json.loads(result)
+
+                # Count pass/reject
+                pass_count = sum(1 for r in result_dict.values() if r == "PASS")
+                reject_count = len(result_dict) - pass_count
+
+                logger.success(
+                    f"✅ [STAGE 1] Pre-filter complete: "
+                    f"{pass_count} passed, {reject_count} rejected"
+                )
+
+                # Log tokens used
+                input_tokens = response.usage.input_tokens
+                output_tokens = response.usage.output_tokens
+                estimated_cost = (input_tokens / 1_000_000 * 3) + (output_tokens / 1_000_000 * 15)
+
+                logger.info(
+                    f"[STAGE 1] Tokens: {input_tokens:,} input + {output_tokens:,} output "
+                    f"(~${estimated_cost:.4f})"
+                )
+
+                return result_dict
+
+            except json.JSONDecodeError as e:
+                logger.error(f"❌ [STAGE 1] Failed to parse JSON response: {e}")
+                logger.error(f"Raw response was: {result}")
+                raise
+
+        except Exception as e:
+            logger.error(f"❌ [STAGE 1] Error in pre-filter: {e}")
+            raise
+
     async def semantic_analysis(
         self,
         videos: List[VideoData],
         project: ProjectData
     ) -> Dict[str, str]:
         """
-        Analyze videos semantically to determine relevance to product/service
+        Analyze videos semantically using 2-stage filtering
+
+        STAGE 1: Pre-filter based on metadata only (fast, cheap)
+        STAGE 2: Full analysis with transcript (only for approved videos)
 
         Args:
             videos: List of enriched VideoData objects (with transcripts)
@@ -117,19 +273,53 @@ Transcrição: {transcript}..."""
         """
         try:
             logger.info(
-                f"Analyzing {len(videos)} videos with Claude Sonnet 4.5 "
-                f"for product: {project.nome_produto}"
+                f"🎯 Starting 2-stage analysis for {len(videos)} videos "
+                f"(product: {project.nome_produto})"
             )
 
+            # ============================================
+            # STAGE 1: Pre-filter (metadata only)
+            # ============================================
+            stage1_results = await self._pre_filter_stage(videos, project)
+
+            # Separate approved and rejected videos
+            approved_videos = []
+            final_results = {}
+
+            for video in videos:
+                stage1_decision = stage1_results.get(video.id, "PASS")
+
+                if stage1_decision == "PASS":
+                    approved_videos.append(video)
+                else:
+                    # Extract rejection reason (handle both REJECT: and PRE_FILTER_REJECT:)
+                    if stage1_decision.startswith("PRE_FILTER_REJECT:"):
+                        reject_reason = stage1_decision.replace("PRE_FILTER_REJECT: ", "")
+                    else:
+                        reject_reason = stage1_decision.replace("REJECT: ", "")
+                    final_results[video.id] = f"❌ REJECTED: {reject_reason}"
+
+            # If no videos passed Stage 1, return early
+            if not approved_videos:
+                logger.warning("⚠️ No videos passed Stage 1 pre-filter")
+                return final_results
+
+            logger.info(f"✅ {len(approved_videos)} videos approved for Stage 2 analysis")
+
+            # ============================================
+            # STAGE 2: Full analysis (WITH transcript)
+            # ============================================
+            logger.info(f"🔍 [STAGE 2] Analyzing {len(approved_videos)} videos with full context...")
+
             # Format system prompt with product context
-            system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
+            system_prompt = STAGE2_PROMPT_TEMPLATE.format(
                 nome_produto=project.nome_produto,
                 descricao_servico=project.descricao_servico
             )
 
-            # Format videos for user prompt
+            # Format videos for user prompt (WITH transcript)
             videos_text = "\n---\n".join([
-                self._format_video_for_prompt(v) for v in videos
+                self._format_video_full(v) for v in approved_videos
             ])
 
             user_prompt = f"""VÍDEOS PARA ANÁLISE:
@@ -140,7 +330,7 @@ Lembre-se: responda APENAS com o JSON no formato especificado.
 Para cada vídeo, forneça uma justificativa clara em PT-BR usando os prefixos ✅ APPROVED, ❌ REJECTED ou ⚠️ SKIPPED."""
 
             # Call Claude API
-            logger.debug("Sending request to Claude API...")
+            logger.debug("Sending Stage 2 request to Claude API...")
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=1500,  # Increased for detailed reasoning
@@ -153,7 +343,7 @@ Para cada vídeo, forneça uma justificativa clara em PT-BR usando os prefixos �
             # Extract response
             result = response.content[0].text.strip()
 
-            logger.info(f"Claude raw response: {result[:200]}...")
+            logger.debug(f"Stage 2 raw response: {result[:200]}...")
 
             # Parse JSON response
             try:
@@ -164,31 +354,30 @@ Para cada vídeo, forneça uma justificativa clara em PT-BR usando os prefixos �
                         result = result[4:]
                     result = result.strip()
 
-                result_dict = json.loads(result)
+                stage2_dict = json.loads(result)
 
                 # Check if response is "NOT" (no videos qualified)
-                if "result" in result_dict and result_dict["result"] == "NOT":
-                    logger.info("❌ No videos qualified (all rejected/skipped)")
-                    return {}
+                if "result" in stage2_dict and stage2_dict["result"] == "NOT":
+                    logger.info("❌ [STAGE 2] No videos qualified (all rejected/skipped)")
+                    return final_results
 
                 # Sanitize reasoning values (remove problematic characters)
-                sanitized_dict = {}
-                for video_id, reasoning in result_dict.items():
+                for video_id, reasoning in stage2_dict.items():
                     # Replace commas and colons that could break CSV format
                     clean_reasoning = reasoning.replace(',', ';').replace(':', '｜', 1)
                     # Replace any additional colons with semicolon
                     clean_reasoning = clean_reasoning.replace(':', ';')
                     # Truncate to 120 chars max
                     clean_reasoning = clean_reasoning[:120]
-                    sanitized_dict[video_id] = clean_reasoning
+                    final_results[video_id] = clean_reasoning
 
-                # Count approved videos
-                approved_count = sum(1 for r in sanitized_dict.values() if "✅ APPROVED" in r)
-                rejected_count = sum(1 for r in sanitized_dict.values() if "❌ REJECTED" in r)
-                skipped_count = sum(1 for r in sanitized_dict.values() if "⚠️ SKIPPED" in r)
+                # Count final results
+                approved_count = sum(1 for r in final_results.values() if "✅ APPROVED" in r)
+                rejected_count = sum(1 for r in final_results.values() if "❌ REJECTED" in r)
+                skipped_count = sum(1 for r in final_results.values() if "⚠️ SKIPPED" in r)
 
                 logger.success(
-                    f"✅ Claude analysis complete: "
+                    f"✅ [STAGE 2] Full analysis complete: "
                     f"{approved_count} approved, {rejected_count} rejected, {skipped_count} skipped"
                 )
 
@@ -198,20 +387,26 @@ Para cada vídeo, forneça uma justificativa clara em PT-BR usando os prefixos �
                 estimated_cost = (input_tokens / 1_000_000 * 3) + (output_tokens / 1_000_000 * 15)
 
                 logger.info(
-                    f"Tokens used: {input_tokens:,} input + {output_tokens:,} output "
+                    f"[STAGE 2] Tokens: {input_tokens:,} input + {output_tokens:,} output "
                     f"(~${estimated_cost:.4f})"
                 )
 
-                return sanitized_dict
+                # Summary
+                logger.success(
+                    f"🎯 2-STAGE ANALYSIS COMPLETE: "
+                    f"{approved_count} approved | {rejected_count} rejected | {skipped_count} skipped"
+                )
+
+                return final_results
 
             except json.JSONDecodeError as e:
-                logger.error(f"❌ Failed to parse Claude JSON response: {e}")
+                logger.error(f"❌ [STAGE 2] Failed to parse Claude JSON response: {e}")
                 logger.error(f"Raw response was: {result}")
-                # Fallback: return empty dict
-                return {}
+                # Return Stage 1 results if Stage 2 fails
+                return final_results
 
         except Exception as e:
-            logger.error(f"❌ Error in Claude analysis: {e}")
+            logger.error(f"❌ Error in 2-stage analysis: {e}")
             raise
 
 
