@@ -1,4 +1,4 @@
-﻿# main.py
+# main.py
 import os
 import logging
 import time
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 PROXY_LOGIN = os.getenv("DATAIMPULSE_LOGIN", "")
 PROXY_PASSWORD = os.getenv("DATAIMPULSE_PASSWORD", "")
 PROXY_HOST = os.getenv("DATAIMPULSE_HOST", "gw.dataimpulse.com")
-PROXY_PORT = os.getenv("DATAIMPULSE_PORT", "10000")  # Sticky session recomendada
+PROXY_PORT = os.getenv("DATAIMPULSE_PORT", "10000")
 
 # Inicializar proxy config se credenciais estiverem disponíveis
 PROXY_CONFIG = None
@@ -28,10 +28,32 @@ if PROXY_LOGIN and PROXY_PASSWORD:
 else:
     logger.warning("Proxy DataImpulse não configurado - usando conexão direta")
 
+# ============================================
+# Supabase Cache Configuration
+# ============================================
+SUPABASE_ENABLED = False
+supabase_client = None
+
+try:
+    from supabase import create_client, Client
+
+    SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+    SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+
+    if SUPABASE_URL and SUPABASE_SERVICE_KEY:
+        supabase_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+        SUPABASE_ENABLED = True
+        logger.info(f"Supabase cache HABILITADO")
+    else:
+        logger.warning("Supabase cache DESABILITADO (credenciais não configuradas)")
+except ImportError:
+    logger.warning("Supabase cache DESABILITADO (biblioteca supabase não instalada)")
+except Exception as e:
+    logger.error(f"Erro ao inicializar Supabase (funcionando sem cache): {e}")
+
 def get_transcript_with_retry(video_id, max_retries=3):
     for attempt in range(max_retries):
         try:
-            # Primeiro tenta obter em português ou inglês
             try:
                 transcript = YouTubeTranscriptApi.get_transcript(
                     video_id,
@@ -41,16 +63,13 @@ def get_transcript_with_retry(video_id, max_retries=3):
                 logger.info(f"Transcrição obtida em PT/EN para {video_id}")
                 return transcript
             except:
-                # Se não encontrar PT/EN, tenta listar todas as transcrições
                 try:
                     transcript_list = YouTubeTranscriptApi(proxies=PROXY_CONFIG).list_transcripts(video_id)
                     available_languages = []
 
-                    # Coleta todos os idiomas disponíveis
                     for t in transcript_list:
                         available_languages.append(t.language_code)
 
-                        # Se encontrar português ou inglês, usa diretamente
                         if t.language_code in ['pt', 'pt-BR', 'en', 'en-US']:
                             try:
                                 result = t.fetch()
@@ -61,9 +80,7 @@ def get_transcript_with_retry(video_id, max_retries=3):
 
                     logger.info(f"Idiomas disponíveis: {available_languages}")
 
-                    # Se não encontrou PT/EN, tenta qualquer idioma disponível
                     if available_languages:
-                        # Tenta obter diretamente especificando o primeiro idioma disponível
                         transcript = YouTubeTranscriptApi.get_transcript(
                             video_id,
                             languages=[available_languages[0]],
@@ -77,7 +94,6 @@ def get_transcript_with_retry(video_id, max_retries=3):
                 except Exception as list_error:
                     logger.warning(f"Erro ao listar transcrições: {str(list_error)}")
 
-                    # Última tentativa: pega qualquer transcrição disponível
                     try:
                         transcript = YouTubeTranscriptApi.get_transcript(
                             video_id,
@@ -101,13 +117,53 @@ def format_timestamp(seconds):
     return f"{minutes:02d}:{remaining_seconds:02d}"
 
 def check_video_exists(video_id):
-    # Removido verificação do Supabase - sempre retorna False para processar
-    return False, None
+    if not SUPABASE_ENABLED:
+        return False, None
+
+    try:
+        logger.debug(f"Verificando cache para video_id: {video_id}")
+
+        result = supabase_client.table("Videos_trancricao").select("video_id, trancription, contem").eq("video_id", video_id).order("created_at", desc=True).limit(1).execute()
+
+        if result.data and len(result.data) > 0:
+            cached_item = result.data[0]
+
+            if cached_item.get("contem") and cached_item.get("trancription"):
+                logger.info(f"CACHE HIT: {video_id}")
+                return True, cached_item
+            else:
+                logger.info(f"Cache encontrado mas vazio para {video_id}")
+                return False, None
+
+        logger.info(f"CACHE MISS: {video_id}")
+        return False, None
+
+    except Exception as e:
+        logger.warning(f"Erro ao verificar cache (continuando sem cache): {e}")
+        return False, None
 
 def save_to_supabase(video_id, transcription, contem):
-    # Removido salvamento no Supabase
-    logger.info(f"Transcrição processada para o vídeo {video_id}")
-    return None
+    if not SUPABASE_ENABLED:
+        logger.debug(f"Cache desabilitado")
+        return None
+
+    try:
+        logger.debug(f"Salvando em cache: {video_id}")
+
+        data = {
+            "video_id": video_id,
+            "trancription": transcription,
+            "contem": contem
+        }
+
+        supabase_client.table("Videos_trancricao").upsert(data, on_conflict="video_id").execute()
+
+        logger.info(f"CACHE SAVED: {video_id}")
+        return True
+
+    except Exception as e:
+        logger.warning(f"Erro ao salvar cache: {e}")
+        return None
 
 def process_video(url):
     try:
@@ -117,12 +173,13 @@ def process_video(url):
 
         exists, existing_data = check_video_exists(video_id)
         if exists:
-            logger.info(f"Vídeo {video_id} já existe no banco de dados")
+            logger.info(f"Vídeo {video_id} retornado do CACHE")
             return {
                 "video_id": video_id,
                 "transcription": existing_data["trancription"],
                 "contem": existing_data["contem"],
-                "message": "Vídeo já processado anteriormente"
+                "message": "Vídeo já processado anteriormente",
+                "from_cache": True
             }
 
         try:
@@ -150,7 +207,8 @@ ID: {video_id}
             return {
                 "video_id": video_id,
                 "transcription": final_text,
-                "contem": True
+                "contem": True,
+                "from_cache": False
             }
 
         except Exception as e:
@@ -161,7 +219,8 @@ ID: {video_id}
                 "transcription": "",
                 "contem": False,
                 "error": str(e),
-                "message": "Nenhuma transcrição disponível em nenhum idioma"
+                "message": "Nenhuma transcrição disponível em nenhum idioma",
+                "from_cache": False
             }
 
     except Exception as e:

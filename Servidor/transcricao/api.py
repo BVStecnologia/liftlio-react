@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from main import process_video, check_video_exists
 import asyncio
@@ -22,7 +22,8 @@ async def process_video_endpoint(request: VideoRequest):
             return {
                 "status": "completed",
                 "message": "Vídeo já transcrito",
-                "data": data
+                "data": data,
+                "from_cache": True
             }
         
         # Executar process_video em thread separada para não bloquear
@@ -43,7 +44,8 @@ async def transcribe_video_endpoint(request: VideoRequest):
         return {
             "transcription": result.get("transcription", ""),
             "video_id": result.get("video_id", ""),
-            "contem": result.get("contem", False)
+            "contem": result.get("contem", False),
+            "from_cache": result.get("from_cache", False)
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
