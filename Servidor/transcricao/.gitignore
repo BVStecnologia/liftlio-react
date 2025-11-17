@@ -3,3 +3,9 @@
 .env
 .env.*
 venv/
+
+# Backup files
+*.original
+*.backup
+*.bak
+*~
