@@ -10,7 +10,7 @@
 -- Estratégia (Comment Pair - Part 1):
 --   1. Analisa transcrição para identificar pain point que produto resolve
 --   2. Cria ego boost sobre esse ponto específico (com timestamp)
---   3. Faz pergunta sobre como creator ESCALA/RESOLVE esse desafio
+--   3. Faz pergunta sobre como creator LIDA/ABORDA esse desafio
 --   4. Adiciona variabilidade (tom casual 6-9/10, imperfeições naturais)
 --
 -- Archetypes Psicológicos (escolhido dinamicamente):
@@ -38,6 +38,7 @@
 -- Atualizado: 2025-10-01 - Documentação melhorada
 -- Atualizado: 2025-10-24 - JSON parsing robusto com regex cleanup + erro propagado
 -- Atualizado: 2025-01-12 - REDESIGN: Strategy #4 (ego-first, zero produto, pergunta estratégica)
+-- Atualizado: 2025-01-17 - Anti-spam improvements: removed business triggers, casual language
 -- =============================================
 
 DROP FUNCTION IF EXISTS create_initial_video_comment_with_claude(INTEGER, INTEGER);
@@ -186,7 +187,7 @@ BEGIN
         v_user_liked_examples := 'Sem exemplos disponíveis';
     END;
 
-    -- Criar o prompt NOVO (Strategy #4: Ego-First + Smart Question)
+    -- Criar o prompt MELHORADO (Strategy #4: Ego-First + Anti-Spam)
     BEGIN
         v_prompt := format(
             '🎯 STRATEGY #4: EGO-FIRST COMMENT (Zero Product Mention)
@@ -219,31 +220,47 @@ This helps you identify pain points in the video that the product solves.
 🎯 YOUR TASK:
 
 1️⃣ ANALYZE TRANSCRIPT:
-   - Identify ONE pain point, challenge, or scaling issue mentioned
+   - Identify ONE pain point, challenge, or workflow issue mentioned
    - This should be something the product helps solve (but DON''T mention it!)
    - Find a REAL timestamp from the transcript where this is discussed
    - CRITICAL: Use ONLY timestamps that actually appear in the transcript provided
    - DO NOT invent or guess timestamps - extract them from the transcript text
 
 2️⃣ CREATE EGO-FIRST COMMENT:
-   Structure: [Ego Boost] + [Strategic Question]
+   Structure: [Ego Boost] + [Casual Question]
 
    Sentence 1: Ego boost about that specific point (with timestamp)
-   Sentence 2: Question about how creator SCALES/SOLVES that challenge
+   Sentence 2: Casual question about creator''s experience/approach
+   
+   ⚠️ ANTI-SPAM RULES (CRITICAL):
+   NEVER use these business/sales terms:
+   - scale, scaling, scaled
+   - optimize, optimization
+   - ROI, metrics, KPIs
+   - clients, customers, accounts
+   - agencies, businesses
+   - track, tracking
+   - prove, proof, results
+   - Numbers + nouns (50+ clients, 1000+ entries, 100 accounts, etc.)
+   
+   ALWAYS use personal/experiential language:
+   - "How do you...", "When did you...", "What helped you..."
+   - "Have you tried...", "Did you find...", "Would you..."
+   - Focus on creator''s EXPERIENCE, not business metrics
 
 3️⃣ ARCHETYPE SELECTION (choose one dynamically):
 
    🏆 RECOGNITION (best for educational/tutorial videos):
-   "This breakdown was spot-on at 12:45. How often do you think people overlook that detail?"
+   "This breakdown at 12:45 really clarified things. Do most people miss that detail?"
 
    🤔 CURIOSITY (best for innovative/experimental content):
-   "This got me wondering how results change when that process runs in reverse."
+   "Never thought about doing it in reverse. Have you tried that approach?"
 
    🤝 ALIGNMENT (best for opinion/mindset videos):
-   "Couldn''t agree more with this approach. What pushed you toward focusing on it that way?"
+   "Totally agree with your take. What made you land on this approach?"
 
    🙏 APPRECIATION (best for problem-solving videos):
-   "Really appreciate this breakdown. What usually makes it click for people the first time?"
+   "This explanation at 8:30 helped a lot. When did it finally click for you?"
 
 ═══════════════════════════════════════════════════════════════
 
@@ -261,18 +278,28 @@ This helps you identify pain points in the video that the product solves.
 3. MUST include timestamp that EXISTS in the transcript (format: 12:45, 8:30, etc.)
    → Extract it directly from the transcript text, DO NOT invent timestamps
 4. MUST reference specific detail from transcript (quote, term, concept mentioned)
-5. Question should OPEN space for reply to mention product naturally
+5. Question should be CASUAL and EXPERIENTIAL (not business-focused)
 6. 2 sentences maximum
 7. Natural, casual YouTube tone
 8. No greetings, no clichés, no @mentions
 9. Go straight to the point
+10. Sound like a regular viewer, not a consultant/marketer
 
-❌ BAD EXAMPLE:
+❌ BAD EXAMPLES (avoid these patterns):
 "Great video! What tools do you use?" (generic, obvious setup)
+"How do you handle this when you scale to 1000+ entries?" (business language + numbers)
+"What''s your ROI on this approach?" (sales terminology)
+"How do you prove this to clients?" (business context)
 
-✅ GOOD EXAMPLE:
-"That point at 12:45 about manual data entry hit hard. How do you handle this when you scale to 1000+ entries?"
-(specific detail from transcript, REAL timestamp extracted from transcript, opens for "we use tool X")
+✅ GOOD EXAMPLES (follow these patterns):
+"That point at 12:45 about manual work hit different. How did you used to handle this?"
+(specific timestamp, casual tone, experiential question)
+
+"The way you explained that at 8:30 makes so much sense. When did you figure this out?"
+(timestamp, personal question about their journey)
+
+"Never thought about it from that angle at 15:20. Have you always done it this way?"
+(timestamp, curiosity about their experience)
 
 ═══════════════════════════════════════════════════════════════
 
@@ -303,40 +330,51 @@ CRITICAL: Start response with { and end with }. No markdown, no code blocks, no 
         RAISE;
     END;
 
-    -- Chamada Claude com NOVO system message (Strategy #4)
+    -- Chamada Claude com SYSTEM MESSAGE MELHORADO (Anti-Spam)
     BEGIN
         v_debug_info := v_debug_info || jsonb_build_object('step', 'before_claude_call', 'timestamp', clock_timestamp());
 
         SELECT claude_complete(
             v_prompt,
-            format('You are an expert at creating ego-first YouTube comments that activate positive reciprocity.
+            format('You are an expert at creating authentic, casual YouTube comments that avoid spam detection.
 
 STRATEGY: Comment Pair System (Part 1 of 2)
-- This is the FIRST comment (ego boost + strategic question)
+- This is the FIRST comment (ego boost + casual question)
 - A SECOND comment (reply) will mention the product later
-- Your comment must PREPARE the ground for that reply
+- Your comment must sound like a REGULAR VIEWER, not a marketer
 
 CORE OBJECTIVES:
 1. Make creator feel SEEN and RESPECTED (ego trigger)
-2. Ask strategic question that OPENS space for product mention in reply
+2. Ask EXPERIENTIAL question (about their journey/experience)
 3. Use REAL timestamp from transcript + specific detail to prove you watched
    → CRITICAL: Extract timestamp directly from transcript, do NOT invent
 4. Zero promotional tone - 100%% authentic community member
-5. Variability built-in to avoid spam detection
+5. Avoid ALL business/sales language that triggers spam filters
+
+SPAM FILTER AVOIDANCE (CRITICAL):
+YouTube filters comments via API more aggressively. NEVER use:
+❌ Business terms: scale, optimize, ROI, metrics, clients, agencies, tracking
+❌ Numbers + nouns: "50+ clients", "1000+ entries", "100 accounts"
+❌ Sales language: prove, results, performance, conversion
+✅ Use instead: Personal questions about their experience/journey
 
 ARCHETYPE SELECTION:
-- Recognition: Educational content → compliment clarity
-- Curiosity: Innovative content → wonder about possibilities
-- Alignment: Opinion content → agree and ask about process
-- Appreciation: Problem-solving → thank and ask about key details
+- Recognition: Educational content → compliment clarity + ask about common mistakes
+- Curiosity: Innovative content → express wonder + ask if they tried variations
+- Alignment: Opinion content → agree + ask what led them to this view
+- Appreciation: Problem-solving → thank + ask when it clicked for them
 
 CRITICAL RULES:
 - Language: %s
 - ZERO product mentions (this is part 1!)
-- Timestamp required
+- ZERO business terminology
+- Timestamp required (from transcript)
 - 2 sentences max
-- Casual tone with natural imperfections
-- Question should invite discussion about scaling/challenges
+- Casual, imperfect tone (like real person)
+- Experiential questions only ("How did you...", "When did...", "Have you...")
+
+TONE: Sound like someone who genuinely watched and found value, asking about
+the creator''s personal experience - NOT a marketer doing outreach.
 
 JSON FORMAT (only this, no extra text):
 {
