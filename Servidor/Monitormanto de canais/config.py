@@ -34,7 +34,7 @@ class Settings(BaseSettings):
         min_length=30
     )
     claude_model: str = Field(
-        default="claude-sonnet-4-5-20250929",
+        default="claude-haiku-4-5-20251001",
         description="Claude model to use"
     )
 
@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     # Transcription API
     # ============================================
     transcript_api_url: str = Field(
-        default="http://173.249.22.2:8081",
+        default="https://transcricao.liftlio.com",
         description="Transcription API base URL"
     )
 
