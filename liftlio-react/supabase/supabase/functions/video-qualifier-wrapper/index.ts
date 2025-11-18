@@ -1,6 +1,9 @@
 // =============================================
 // Edge Function: Video Qualifier Wrapper V2
 // BILINGUAL VERSION: Returns enhanced JSONB array
+// VERSION 16 - FIXES:
+// - indexOf() instead of split() destructuring (preserves full reasons)
+// - Word boundaries in translation (fixes "inicAIl" bug)
 // =============================================
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
@@ -160,28 +163,32 @@ Deno.serve(async (req) => {
       const entries = resultsText.split(',');
 
       resultsArray = entries.map((entry: string) => {
-        const [videoId, rest] = entry.split(':');
+        // ✅ FIX: Use indexOf() to preserve EVERYTHING after first colon
+        const colonIndex = entry.indexOf(':');
+        const videoId = colonIndex > 0 ? entry.substring(0, colonIndex).trim() : entry.trim();
+        const rest = colonIndex > 0 ? entry.substring(colonIndex + 1).trim() : '';
+
         let status: 'APPROVED' | 'REJECTED' | 'SKIPPED' = 'REJECTED';
         let motivo = rest || 'Sem análise';
 
         if (rest?.includes('✅ APPROVED')) {
           status = 'APPROVED';
-          motivo = rest.replace('✅ APPROVED｜', '').replace('✅ APPROVED:', '');
+          motivo = rest.replace('✅ APPROVED｜', '').replace('✅ APPROVED:', '').trim();
         } else if (rest?.includes('❌ REJECTED')) {
           status = 'REJECTED';
-          motivo = rest.replace('❌ REJECTED｜', '').replace('❌ REJECTED:', '');
+          motivo = rest.replace('❌ REJECTED｜', '').replace('❌ REJECTED:', '').trim();
         } else if (rest?.includes('⚠️ SKIPPED')) {
           status = 'SKIPPED';
-          motivo = rest.replace('⚠️ SKIPPED｜', '').replace('⚠️ SKIPPED:', '');
+          motivo = rest.replace('⚠️ SKIPPED｜', '').replace('⚠️ SKIPPED:', '').trim();
         }
 
         // Generate English translation (basic conversion)
         const reason = translateToEnglish(motivo);
 
         return {
-          id: videoId.trim(),
+          id: videoId,
           status,
-          motivo: motivo.trim().substring(0, 120),
+          motivo: motivo.substring(0, 120),
           reason: reason.substring(0, 120),
           analyzed_at: currentTimestamp,
           score: status === 'APPROVED' ? 0.8 : 0.2,
@@ -233,6 +240,7 @@ Deno.serve(async (req) => {
 });
 
 // Helper function to translate Portuguese to English (basic)
+// ✅ FIX: Use word boundaries to prevent replacing letters inside words
 function translateToEnglish(motivo: string): string {
   // Basic keyword translation for common terms
   const translations: Record<string, string> = {
@@ -251,8 +259,6 @@ function translateToEnglish(motivo: string): string {
     'específico': 'specific',
     'B2B': 'B2B',
     'B2C': 'B2C',
-    'AI': 'AI',
-    'IA': 'AI',
     'digital': 'digital',
     'tutorial': 'tutorial',
     'curso': 'course',
@@ -260,9 +266,15 @@ function translateToEnglish(motivo: string): string {
   };
 
   let result = motivo;
+
+  // Apply translations
   for (const [pt, en] of Object.entries(translations)) {
     result = result.replace(new RegExp(pt, 'gi'), en);
   }
+
+  // ✅ FIX: Only replace standalone AI/IA with word boundaries
+  result = result.replace(/\bIA\b/g, 'AI');  // "IA" → "AI"
+  result = result.replace(/\bAI\b/g, 'AI');  // Keep "AI" as is
 
   // If no translation was made, prefix with generic indicator
   if (result === motivo && !motivo.includes('B2B') && !motivo.includes('AI')) {
@@ -282,7 +294,7 @@ function extractTags(text: string): string[] {
     { pattern: /\bb2b\b/i, tag: 'b2b' },
     { pattern: /\bb2c\b/i, tag: 'b2c' },
     { pattern: /marketing/i, tag: 'marketing' },
-    { pattern: /ai|ia|inteligência artificial|artificial intelligence/i, tag: 'ai' },
+    { pattern: /\bai\b|\bia\b|inteligência artificial|artificial intelligence/i, tag: 'ai' },
     { pattern: /tutorial/i, tag: 'tutorial' },
     { pattern: /curso|course/i, tag: 'course' },
     { pattern: /empresa|enterprise|corporate/i, tag: 'enterprise' },
@@ -313,7 +325,7 @@ function extractTags(text: string): string[] {
         "id": "abc123",
         "status": "APPROVED",
         "motivo": "Vídeo sobre AI marketing B2B; público enterprise",
-        "reason": "Video about B2B AI marketing; enterprise audience",
+        "reason": "Video about AI marketing B2B; enterprise audience",
         "analyzed_at": "2025-01-24T10:30:00Z",
         "score": 0.92,
         "tags": ["b2b", "marketing", "ai", "enterprise"]
