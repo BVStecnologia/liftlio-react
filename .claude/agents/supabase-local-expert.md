@@ -77,6 +77,37 @@ ls -la supabase/functions/nome-funcao/
 - Já houve casos de dessincronização que causaram problemas
 - SEMPRE use ultrathink se houver diferenças para analisar qual versão é correta
 
+---
+
+## 📊 DOCUMENTAÇÃO VISUAL (Obrigatório para Funções Críticas)
+
+**SEMPRE criar mapa mental visual ao trabalhar com funções importantes:**
+
+**Quando criar documentação visual:**
+- Criar/modificar SQL Functions que afetam pipeline principal
+- Criar/modificar Edge Functions complexas
+- Implementar otimizações de performance
+- Resolver bugs arquiteturais
+
+**Estrutura obrigatória do documento:**
+1. **TL;DR**: Resumo em 1 linha do problema/solução
+2. **Fluxo Atual**: Diagrama Mermaid mostrando processo atual (problemas em vermelho)
+3. **Fluxo Otimizado**: Diagrama Mermaid mostrando processo ideal (melhorias em verde)
+4. **Análise Detalhada**: Tabelas comparativas (O que faz vs O que NÃO faz)
+5. **Impacto Quantificado**: Métricas de desperdício e ROI esperado
+6. **Solução Proposta**: Código SQL/TypeScript exato + passos de implementação
+7. **Referências Técnicas**: Links de docs, exemplos de API, campos importantes
+8. **Checklist**: Lista de tarefas sequenciais com critérios de aceitação
+9. **Resultado Esperado**: Diagrama pie/bar chart com comparação Antes vs Depois
+
+**Localização dos mapas:**
+- SQL Functions: `/liftlio-react/supabase/functions_backup/SQL_Functions/docs/nome_funcao_visual.md`
+- Edge Functions: `/liftlio-react/supabase/functions_backup/Edge_Functions/docs/nome_funcao_visual.md`
+
+**Referência**: Ver `CLAUDE.md` seção "DOCUMENTAÇÃO VISUAL" para template completo
+
+---
+
 ## 💻 AMBIENTE LOCAL
 
 **Configuração do Supabase Local:**

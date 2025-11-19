@@ -25,6 +25,69 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - **LIVE**: Usar `supabase-mcp-expert` APENAS para produção/deploy remoto
 6. **Validação**: Após mudanças críticas, explicar O QUÊ mudou e POR QUÊ
 
+## 📊 DOCUMENTAÇÃO VISUAL (Obrigatório para Funções Críticas)
+
+**SEMPRE criar mapa mental visual quando:**
+- Criar/modificar funções SQL ou Edge Functions importantes
+- Implementar features complexas com múltiplas etapas
+- Otimizar pipelines ou workflows existentes
+- Debuggar problemas de arquitetura
+
+**Estrutura do Mapa Mental:**
+```markdown
+# ❓ Título da Pergunta/Problema
+
+## Resposta: ✅/❌ Status
+
+> **TL;DR**: Resumo em 1 linha do problema/solução
+
+---
+
+## 🎯 Fluxo Atual (Diagrama Mermaid)
+- Mostrar processo atual com problemas destacados em vermelho
+- Usar style fill para destacar gargalos
+
+## 🆚 Fluxo Otimizado (Diagrama Mermaid)
+- Mostrar processo ideal com melhorias em verde
+- Comparar lado a lado com o atual
+
+## 📋 Análise Detalhada
+- Tabelas comparativas (O que faz vs O que NÃO faz)
+- Prioridades e custos
+
+## 💰 Impacto Quantificado
+- Métricas de desperdício atual
+- ROI esperado da otimização
+- Benefícios mensuráveis
+
+## 🔧 Solução Proposta
+- Código SQL/TypeScript exato
+- Passos de implementação
+- Testes necessários
+
+## 📚 Referências Técnicas
+- Links de documentação
+- Exemplos de API
+- Campos importantes
+
+## ✅ Checklist de Implementação
+- [ ] Lista de tarefas sequenciais
+- [ ] Com critérios de aceitação
+
+## 🎯 Resultado Esperado
+- Diagrama pie/bar chart com métricas
+- Comparação Antes vs Depois
+```
+
+**Localização dos Mapas:**
+- Funções SQL: `/Supabase/supabase/migrations/docs/nome_funcao.md`
+- Edge Functions: `/Supabase/supabase/functions/nome/docs/visual_flow.md`
+- Features: `/liftlio-react/project-docs/features/nome_feature.md`
+
+**Exemplo Real:** Ver `visual_flow.md.resolved` criado para análise de comentários do YouTube
+
+---
+
 ## 📋 PADRÕES DE CÓDIGO
 - **TypeScript**: Tipos explícitos (evitar `any`, preferir `unknown`)
 - **React**: Functional components com hooks
@@ -232,3 +295,4 @@ npm start  # Usa .env.local AUTOMATICAMENTE!
 - **13/10/2025**: Monorepo & Branch Sync - Reorganização para estrutura monorepo (Supabase dentro de liftlio-react), script switch-branch.sh para sincronização automática Git↔Supabase, indicadores visuais de ambiente, arquivos .env.development.{dev|main} separados
 - **26/01/2025**: Agentes Supabase Especializados - Criação de `supabase-local-expert` para desenvolvimento local com Docker, separação clara de `supabase-mcp-expert` para produção, sistema de DEPLOY_LOG para controle de deployments, documentação de proteção de ambientes com `.env.local`, workflow completo Local→Git→LIVE
 - **02/11/2025**: Sistema de URLs Dinâmicas para Edge Functions - Criação de `seed.sql` com configurações automáticas para PostgreSQL (`app.edge_functions_url` + `app.edge_functions_anon_key`), atualização completa de documentação (CLAUDE.md + supabase-local-expert.md) com workflow de 3 terminais, reorganização de Edge Functions para estrutura oficial Supabase CLI (`supabase/supabase/functions/`), sistema que permite SQL Functions chamarem Edge Functions locais automaticamente via `current_setting()`, zero mudança de código entre LOCAL↔LIVE
+- **19/01/2025**: Sistema de Documentação Visual Automática - Configuração de mapas mentais obrigatórios para funções críticas com diagramas Mermaid, análises quantificadas de impacto, checklists de implementação e resultados esperados. Template padronizado adicionado no CLAUDE.md com estrutura completa (TL;DR, Fluxo Atual vs Otimizado, Impacto $$$, Solução com código, Referências técnicas). Instruções integradas nos agentes `supabase-mcp-expert` e `supabase-local-expert` para criar documentação visual automaticamente ao trabalhar com SQL/Edge Functions importantes. Exemplo real: `visual_flow.md.resolved` (221 linhas) documentando otimização de verificação de comentários no YouTube
