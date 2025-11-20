@@ -1,6 +1,6 @@
 -- =============================================
 -- Função: call_api_edge_function
--- Atualizado: 2025-01-18 (SINCRONIZADO 100% COM LIVE)
+-- Atualizado: 2025-01-19 (CHECK: comentários desativados)
 -- =============================================
 
 DROP FUNCTION IF EXISTS public.call_api_edge_function(text);
@@ -24,6 +24,7 @@ DECLARE
     v_title TEXT;
     v_description TEXT;
     v_channel_title TEXT;
+    v_comment_count TEXT;
     v_transcript TEXT;
     v_claude_prompt TEXT;
     v_claude_response TEXT;
@@ -63,7 +64,7 @@ BEGIN
             v_metadata := get_youtube_video_stats(
                 project_id := v_projeto_id::INTEGER,
                 video_ids := v_video_id,
-                parts := 'snippet,contentDetails'
+                parts := 'snippet,contentDetails,statistics'
             );
 
             v_video_item := v_metadata->'items'->0;
@@ -78,6 +79,14 @@ BEGIN
             v_title := v_video_item->'snippet'->>'title';
             v_description := v_video_item->'snippet'->>'description';
             v_channel_title := v_video_item->'snippet'->>'channelTitle';
+            v_comment_count := v_video_item->'statistics'->>'commentCount';
+
+            -- Check se comentários estão desativados
+            IF v_comment_count IS NULL THEN
+                v_resultado := jsonb_build_object('id', v_video_id, 'status', 'REJECTED', 'motivo', 'Comentarios desativados', 'reason', 'Comments disabled', 'score', 0.0);
+                v_resultados_array := v_resultados_array || jsonb_build_array(v_resultado);
+                CONTINUE;
+            END IF;
 
             v_hours := 0; v_minutes := 0; v_seconds := 0;
 
