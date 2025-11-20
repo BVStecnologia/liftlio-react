@@ -1,44 +1,45 @@
 -- =============================================
--- Função: create_initial_video_comment_with_claude
--- Tipo: Função BASE (não faz INSERT)
+-- Funcao: create_initial_video_comment_with_claude
+-- Tipo: Funcao BASE (nao faz INSERT)
 --
--- Descrição:
---   Gera comentário EGO-FIRST para vídeo do YouTube usando Strategy #4.
---   ZERO menção a produto/serviço - foco 100% em ego boost + pergunta estratégica.
---   Pergunta é construída para ABRIR espaço para reply mencionar produto naturalmente.
+-- Descricao:
+--   Gera comentario EGO-FIRST para video do YouTube usando Strategy #4.
+--   ZERO mencao a produto/servico - foco 100% em ego boost + pergunta estrategica.
+--   Pergunta e construida para ABRIR espaco para reply mencionar produto naturalmente.
 --
--- Estratégia (Comment Pair - Part 1):
---   1. Analisa transcrição para identificar pain point que produto resolve
---   2. Cria ego boost sobre esse ponto específico (com timestamp)
+-- Estrategia (Comment Pair - Part 1):
+--   1. Analisa transcricao para identificar pain point que produto resolve
+--   2. Cria ego boost sobre esse ponto especifico (com timestamp)
 --   3. Faz pergunta sobre como creator LIDA/ABORDA esse desafio
---   4. Adiciona variabilidade (tom casual 6-9/10, imperfeições naturais)
+--   4. Adiciona variabilidade (tom casual 6-9/10, imperfeicoes naturais)
 --
--- Archetypes Psicológicos (escolhido dinamicamente):
+-- Archetypes Psicologicos (escolhido dinamicamente):
 --   - RECOGNITION: Elogia clareza + pergunta sobre dificuldades comuns
---   - CURIOSITY: Reflexão "what if" + pergunta exploratória
---   - ALIGNMENT: Concordância forte + pergunta sobre processo
---   - APPRECIATION: Agradecimento + pergunta sobre detalhe crítico
+--   - CURIOSITY: Reflexao "what if" + pergunta exploratoria
+--   - ALIGNMENT: Concordancia forte + pergunta sobre processo
+--   - APPRECIATION: Agradecimento + pergunta sobre detalhe critico
 --
 -- Entrada:
---   p_project_id INTEGER - ID do projeto (busca país, produto, keywords, instruções)
---   p_video_id INTEGER   - ID do vídeo (busca título, descrição, transcrição, categoria)
+--   p_project_id INTEGER - ID do projeto (busca pais, produto, keywords, instrucoes)
+--   p_video_id INTEGER   - ID do video (busca titulo, descricao, transcricao, categoria)
 --
--- Saída:
+-- Saida:
 --   JSONB contendo:
---   - comment: texto do comentário (EGO + PERGUNTA, zero produto)
---   - justificativa: explicação do raciocínio usado
---   - youtube_video_id: ID do vídeo no YouTube
---   - debug_info: informações de debug de cada etapa
+--   - comment: texto do comentario (EGO + PERGUNTA, zero produto)
+--   - justificativa: explicacao do raciocinio usado
+--   - youtube_video_id: ID do video no YouTube
+--   - debug_info: informacoes de debug de cada etapa
 --
--- Conexões:
---   → Chamada por: 02_create_and_save_initial_comment (que faz o INSERT)
---   → NÃO faz INSERT - apenas retorna o texto gerado
+-- Conexoes:
+--    Chamada por: 02_create_and_save_initial_comment (que faz o INSERT)
+--    NAO faz INSERT - apenas retorna o texto gerado
 --
 -- Criado: 2025-01-23
--- Atualizado: 2025-10-01 - Documentação melhorada
+-- Atualizado: 2025-10-01 - Documentacao melhorada
 -- Atualizado: 2025-10-24 - JSON parsing robusto com regex cleanup + erro propagado
--- Atualizado: 2025-01-12 - REDESIGN: Strategy #4 (ego-first, zero produto, pergunta estratégica)
+-- Atualizado: 2025-01-12 - REDESIGN: Strategy #4 (ego-first, zero produto, pergunta estrategica)
 -- Atualizado: 2025-01-17 - Anti-spam improvements: removed business triggers, casual language
+-- Atualizado: 2025-01-20 - Anti-repetition system (60 dias, trigrams, padroes deletados)
 -- =============================================
 
 DROP FUNCTION IF EXISTS create_initial_video_comment_with_claude(INTEGER, INTEGER);
@@ -67,6 +68,9 @@ DECLARE
     v_target_word_count INTEGER;
     v_imperfection_type TEXT;
     v_use_emoji BOOLEAN;
+
+    -- 🆕 Anti-repetição (60 dias)
+    v_forbidden_patterns TEXT;
 BEGIN
     -- Registrar início da execução
     v_debug_info := v_debug_info || jsonb_build_object('step', 'start', 'timestamp', clock_timestamp());
@@ -93,7 +97,47 @@ BEGIN
         'use_emoji', v_use_emoji
     );
 
-    -- Obter a transcrição do vídeo
+    -- =============================================
+    -- 🆕 ANTI-REPETIÇÃO: Detectar padrões deletados (60 dias)
+    -- =============================================
+    WITH message_words AS (
+        SELECT
+            regexp_split_to_array(
+                lower(regexp_replace(mensagem, '[^\w\s]', '', 'g')),
+                '\s+'
+            ) as words
+        FROM "Mensagens"
+        WHERE project_id = p_project_id
+            AND respondido = TRUE
+            AND deleted_at IS NOT NULL
+            AND created_at >= NOW() - INTERVAL '60 days'
+    ),
+    trigrams AS (
+        SELECT
+            array_to_string(words[i:i+2], ' ') as pattern
+        FROM message_words,
+            generate_series(1, array_length(words, 1) - 2) as i
+        WHERE array_length(words, 1) >= 3
+    ),
+    repeated_patterns AS (
+        SELECT
+            pattern,
+            COUNT(*) as repeat_count
+        FROM trigrams
+        GROUP BY pattern
+        HAVING COUNT(*) >= 2
+    )
+    SELECT string_agg(
+        '- "' || pattern || '" (' || repeat_count || 'x deletado)',
+        E'
+'
+        ORDER BY repeat_count DESC
+    )
+    INTO v_forbidden_patterns
+    FROM repeated_patterns
+    LIMIT 50;
+
+    -- Obter a transcricao do video
     BEGIN
         SELECT vt.trancription INTO v_transcript
         FROM "Videos" v
@@ -144,7 +188,7 @@ BEGIN
         RAISE;
     END;
 
-    -- Obter informações do vídeo
+    -- Obter informações do video
     BEGIN
         SELECT jsonb_build_object(
             'video_id', v.id,
@@ -164,7 +208,7 @@ BEGIN
         RAISE;
     END;
 
-    -- Obter exemplos de mensagens que o usuário gostou
+    -- Obter exemplos de mensagens que o usuario gostou
     BEGIN
         SELECT string_agg(CONCAT('Mensagem: ', mensagem, E'\nJustificativa: ', justificativa), E'\n\n')
         INTO v_user_liked_examples
@@ -214,6 +258,12 @@ This helps you identify pain points in the video that the product solves.
 
 🚫 USER RESTRICTIONS (what NOT to do):
 %s
+
+🔥 ANTI-REPETITION (avoid these deleted patterns from last 60 days):
+%s
+
+CRITICAL: Do NOT use these word combinations - they were repeatedly deleted!
+
 
 ═══════════════════════════════════════════════════════════════
 
@@ -317,6 +367,7 @@ CRITICAL: Start response with { and end with }. No markdown, no code blocks, no 
             v_project_description,
             COALESCE(v_user_liked_examples, 'Sem exemplos disponíveis'),
             COALESCE(v_user_special_instructions, 'Sem instruções específicas'),
+            COALESCE(replace(v_forbidden_patterns, '%', '%%'), 'Nenhum padrão deletado ainda'), -- 🆕 Anti-repetição
             v_tone_variance,
             v_target_word_count,
             v_imperfection_type,
