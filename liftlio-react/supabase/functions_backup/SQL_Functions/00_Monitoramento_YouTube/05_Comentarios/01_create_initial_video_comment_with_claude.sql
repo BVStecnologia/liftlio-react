@@ -71,6 +71,8 @@ DECLARE
 
     -- 🆕 Anti-repetição (60 dias)
     v_forbidden_patterns TEXT;
+    -- 🆕 Anti-repetição de aberturas (primeiras 5 palavras)
+    v_forbidden_openings TEXT;
 BEGIN
     -- Registrar início da execução
     v_debug_info := v_debug_info || jsonb_build_object('step', 'start', 'timestamp', clock_timestamp());
@@ -138,6 +140,36 @@ BEGIN
     LIMIT 50;
 
     -- Obter a transcricao do video
+    -- =============================================
+    -- 🆕 ANTI-REPETIÇÃO: Detectar padrões de abertura (últimas 20 mensagens)
+    -- =============================================
+    WITH recent_openings AS (
+        SELECT
+            ARRAY_TO_STRING(
+                (STRING_TO_ARRAY(mensagem, ' '))[1:5],
+                ' '
+            ) as opening_pattern
+        FROM "Mensagens"
+        WHERE project_id = p_project_id
+            AND "Comentario_Principais" IS NULL
+        ORDER BY created_at DESC
+        LIMIT 20
+    ),
+    unique_openings AS (
+        SELECT
+            opening_pattern,
+            COUNT(*) as usage_count
+        FROM recent_openings
+        GROUP BY opening_pattern
+    )
+    SELECT string_agg(
+        '- "' || opening_pattern || '" (' || usage_count || 'x usado)',
+        E'
+'
+        ORDER BY usage_count DESC
+    )
+    INTO v_forbidden_openings
+    FROM unique_openings;
     BEGIN
         SELECT vt.trancription INTO v_transcript
         FROM "Videos" v
@@ -264,6 +296,11 @@ This helps you identify pain points in the video that the product solves.
 
 CRITICAL: Do NOT use these word combinations - they were repeatedly deleted!
 
+🎭 PADRÕES DE ABERTURA PROIBIDOS (NÃO comece com estes - usados nas últimas 20 mensagens):
+%s
+
+CRÍTICO: Escolha uma estrutura de abertura COMPLETAMENTE DIFERENTE!
+
 
 ═══════════════════════════════════════════════════════════════
 
@@ -368,6 +405,7 @@ CRITICAL: Start response with { and end with }. No markdown, no code blocks, no 
             COALESCE(v_user_liked_examples, 'Sem exemplos disponíveis'),
             COALESCE(v_user_special_instructions, 'Sem instruções específicas'),
             COALESCE(replace(v_forbidden_patterns, '%', '%%'), 'Nenhum padrão deletado ainda'), -- 🆕 Anti-repetição
+            COALESCE(v_forbidden_openings, 'Nenhum padrão de abertura detectado ainda'),
             v_tone_variance,
             v_target_word_count,
             v_imperfection_type,
