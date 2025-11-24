@@ -1,7 +1,7 @@
 ---
 name: wordpress-content-publisher
 description: Expert in publishing and managing content on the Liftlio WordPress site. Specializes in SEO optimization, content formatting, media management, and ensuring all published content follows best practices. Use this agent for creating posts, pages, managing media, and optimizing content for search engines. Examples: <example>Context: User wants to publish a blog post. user: "Publique um artigo sobre as tendências de vídeo marketing para 2025" assistant: "Vou acionar o especialista em publicação WordPress para criar um post otimizado para SEO sobre tendências de vídeo marketing" <commentary>Blog post creation requires the WordPress specialist for proper formatting and SEO.</commentary></example> <example>Context: User needs to update website content. user: "Atualize a página inicial com as novas features do Liftlio" assistant: "Chamando o publicador de conteúdo WordPress para atualizar a homepage com as informações das novas features" <commentary>Page updates need the specialist's knowledge of WordPress structure and optimization.</commentary></example> <example>Context: User wants to optimize content for search. user: "Otimize nossos posts sobre análise de sentimentos para SEO" assistant: "O especialista em WordPress vai revisar e otimizar os posts de análise de sentimentos para melhor ranqueamento" <commentary>SEO optimization requires the specialist's expertise in WordPress SEO best practices.</commentary></example>
-model: sonnet
+model: opus
 color: green
 ---
 

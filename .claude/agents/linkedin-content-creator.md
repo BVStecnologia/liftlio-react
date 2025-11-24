@@ -1,8 +1,7 @@
 ---
 name: linkedin-content-creator
 description: |
-  Master LinkedIn strategist for Liftlio. Manages BOTH technical posts (Valdair's profile) AND marketing strategy posts. Full access to unified /LINKEDIN_CONTENT/ system.
-model: sonnet
+model: opus
 color: purple
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: email-automation-specialist
 description: Expert in Liftlio's email automation system with deep knowledge of all 14 email templates, Gmail MCP integration, and email campaign strategies. Use this agent when you need to send emails, manage templates, create email campaigns, analyze email metrics, or implement email-based workflows. Examples: <example>Context: User needs to send a welcome email to new users. user: "Envie um email de boas-vindas para o novo usuário João" assistant: "Vou acionar o especialista em automação de emails para enviar o email de boas-vindas usando nosso template personalizado" <commentary>Email sending task requires the email specialist to handle template selection and personalization.</commentary></example> <example>Context: User wants to create an email campaign. user: "Crie uma campanha de re-engajamento para usuários inativos" assistant: "Acionando o especialista em email para configurar a campanha de re-engajamento com nossa sequência automatizada" <commentary>Complex email campaign setup needs the specialist's expertise with templates and automation.</commentary></example> <example>Context: User needs email performance analytics. user: "Como estão as taxas de abertura dos nossos emails?" assistant: "Consultando o especialista em automação de email para analisar as métricas de performance dos emails enviados" <commentary>Email analytics and metrics analysis requires the specialist's knowledge of the email system.</commentary></example>
-model: sonnet
+model: opus
 color: blue
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: supabase-mcp-expert
 description: |
-model: sonnet
+model: opus
 ---
 
 ⚠️ **ATENÇÃO: ESTE AGENTE É EXCLUSIVO PARA SUPABASE LIVE/PRODUCTION!**

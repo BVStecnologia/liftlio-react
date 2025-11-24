@@ -1,7 +1,7 @@
 ---
 name: supabase-local-expert
 description: Expert for Supabase LOCAL development with full access to Docker, PostgreSQL, and all development tools
-model: sonnet
+model: opus
 ---
 
 # 🚀 Supabase Local Development Expert

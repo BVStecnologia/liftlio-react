@@ -1,7 +1,7 @@
 ---
 name: trello-epic-creator
 description: |
-model: sonnet
+model: opus
 color: purple
 ---
 
