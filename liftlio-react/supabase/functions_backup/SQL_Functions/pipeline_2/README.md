@@ -2,6 +2,72 @@
 
 **Ultima Atualizacao:** 2025-11-25
 **Status:** EM PRODUCAO
+**Branch:** main
+**Supabase Project:** suqjifkhmekcdflwowiw
+
+---
+
+## CONTEXTO PARA CLAUDE (Leia isto primeiro!)
+
+Este README contem TODO o contexto necessario para trabalhar com o Pipeline 2.
+Quando iniciar uma nova conversa, leia este arquivo para entender o sistema.
+
+### O que e o Pipeline 2?
+
+Sistema de processamento automatico de videos do YouTube que:
+1. Busca IDs de videos via keywords (scanners)
+2. Cria registros na tabela Videos
+3. Busca comentarios do YouTube
+4. Cura comentarios com Claude AI
+5. Analisa sentimentos (PICS score)
+6. Cria mensagens de engajamento
+
+### Diferenca do Pipeline 1 (DESATIVADO)
+
+| Aspecto | Pipeline 1 (antigo) | Pipeline 2 (atual) |
+|---------|--------------------|--------------------|
+| Processamento | Por projeto (sequencial) | Por video (paralelo) |
+| Historico | Nenhum | Completo em `pipeline_processing` |
+| Retry | Manual | Automatico |
+| Debugging | Dificil | Facil (ver step de cada video) |
+| Cron | Por projeto | Global (todos projetos) |
+
+### Tabelas Principais
+
+1. **pipeline_processing** - Tracking de cada video (step atual, erros, timestamps)
+2. **Scanner de videos do youtube** - Keywords e cache de IDs
+3. **Videos** - Videos processados
+4. **Projeto** - Status geral (0-6)
+
+### Campos Importantes do Scanner
+
+- `ID cache videos`: IDs recem-buscados do YouTube (temporario)
+- `ID Verificado`: IDs ja processados (permanente, NUNCA apagar)
+- `rodada`: Flag para buscar novos IDs (1 = buscar, NULL = ja buscou)
+- `Ativa?`: Se scanner esta ativo
+
+### Como Funciona o Fluxo
+
+```
+1. Usuario muda Projeto.status para 0
+2. Trigger dispara imediatamente (03_trigger)
+3. Orquestrador marca scanners com rodada=1, muda status para 1
+4. Cron (30s) chama process_all_projects_pipeline2()
+5. Para cada scanner com rodada=1: busca IDs do YouTube
+6. IDs vao para "ID cache videos"
+7. initialize_scanner_processing() cria linhas em pipeline_processing
+8. IDs movem de "ID cache videos" para "ID Verificado"
+9. process_scanner_videos() processa cada video pelos steps 0-5
+10. Quando todos videos completos, status vai para 6
+```
+
+### Regras de Ouro
+
+1. **NUNCA apagar "ID Verificado"** - Historico permanente
+2. **"ID cache videos" e temporario** - Limpo apos inicializacao
+3. **Historico em pipeline_processing** - Preservar sempre
+4. **Cron roda a cada 30 segundos** - Nao precisa intervencao manual
+5. **Trigger status 0** - Inicio imediato (nao espera cron)
 
 ---
 
@@ -252,6 +318,91 @@ AND proname IN (
 );
 -- Esperado: 21 funcoes
 ```
+
+---
+
+## Comandos Uteis
+
+### Iniciar processamento de um projeto
+```sql
+-- Muda status para 0, trigger dispara automaticamente
+UPDATE "Projeto" SET status = '0' WHERE id = 117;
+```
+
+### Ver progresso em tempo real
+```sql
+SELECT
+    pp.video_youtube_id,
+    pp.current_step,
+    pp.pipeline_completo,
+    pp.video_error,
+    pp.created_at
+FROM pipeline_processing pp
+WHERE pp.project_id = 117
+ORDER BY pp.id DESC;
+```
+
+### Ver logs do cron
+```sql
+SELECT * FROM cron.job_run_details
+WHERE jobname = 'pipeline2_fast'
+ORDER BY start_time DESC
+LIMIT 20;
+```
+
+### Resetar um scanner (uso manual)
+```sql
+SELECT reset_scanner_processing(584);
+```
+
+### Alternar velocidade do cron
+```sql
+SELECT toggle_pipeline2_cron_speed(TRUE);  -- 30 segundos (fast)
+SELECT toggle_pipeline2_cron_speed(FALSE); -- 5 minutos (normal)
+```
+
+---
+
+## Troubleshooting
+
+### Videos nao processam
+1. Verificar se cron esta ativo: `SELECT * FROM cron.job WHERE jobname = 'pipeline2_fast'`
+2. Verificar status do projeto: `SELECT status FROM "Projeto" WHERE id = X`
+3. Verificar erros: `SELECT * FROM pipeline_processing WHERE video_error IS NOT NULL`
+
+### IDs nao aparecem no cache
+1. Verificar se scanner esta ativo: `SELECT "Ativa?" FROM "Scanner de videos do youtube" WHERE id = X`
+2. Verificar rodada: `SELECT rodada FROM "Scanner de videos do youtube" WHERE id = X`
+3. Verificar quota YouTube API
+
+### Pipeline para no meio
+1. Ver step atual: `SELECT current_step, video_error FROM pipeline_processing WHERE video_youtube_id = 'XXX'`
+2. Se erro, verificar logs da Edge Function correspondente
+3. Cron vai tentar novamente automaticamente
+
+---
+
+## Edge Functions Chamadas
+
+| Step | Edge Function | O que faz |
+|------|---------------|-----------|
+| 0 | `get-youtube-video-details` | Busca detalhes do video |
+| 1 | `fetch-youtube-comments` | Busca comentarios |
+| 2 | `curate-video-async` | Cura com Claude AI |
+| 3 | `analyze-comments-sentiment` | Analisa PICS score |
+| 4 | `create-engagement-messages` | Cria mensagens |
+
+---
+
+## Historico de Mudancas
+
+| Data | Mudanca |
+|------|---------|
+| 25/11/2025 | Pipeline 2 em producao, Pipeline 1 desativado |
+| 25/11/2025 | Removido DELETE de initialize_scanner_processing (preserva historico) |
+| 25/11/2025 | Criado trigger para inicio imediato (status 0) |
+| 25/11/2025 | Arquivos renumerados 00-19 na ordem de execucao |
+| 25/11/2025 | Adicionada PARTE 2 em pipeline2_process_project (fix videos parando) |
 
 ---
 
