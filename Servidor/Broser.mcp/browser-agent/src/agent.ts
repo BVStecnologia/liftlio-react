@@ -4,11 +4,21 @@
  * Uses Claude Haiku (claude-haiku-4-5-20251001) for cost-effective browser control.
  * Receives natural language tasks and executes them step by step.
  *
+ * Includes behavioral anti-detection system:
+ * - Each task records patterns used
+ * - Next tasks choose DIFFERENT patterns
+ * - Avoids repetitive behavior that triggers detection
+ *
  * Cost: ~$0.80/1M input tokens, ~$4.00/1M output tokens
  */
 
 import Anthropic from '@anthropic-ai/sdk';
 import { BrowserManager } from './browser-manager';
+import {
+  BehaviorProfile,
+  createTaskBehavior,
+  saveBehavior
+} from './humanization';
 
 // Types for tool use
 interface ToolUseBlock {
@@ -42,6 +52,9 @@ interface AgentConfig {
   maxIterations?: number;
   verbose?: boolean;
   onProgress?: (progress: TaskProgress) => void;
+  // For humanization anti-detection
+  projectId?: number;
+  taskId?: string;
 }
 
 // Task progress callback
@@ -61,6 +74,7 @@ interface TaskResult {
   result: string;
   iterations: number;
   actions: string[];
+  behaviorUsed?: BehaviorProfile;
 }
 
 // Task list result
@@ -211,6 +225,9 @@ export class BrowserAgent {
   private maxIterations: number;
   private verbose: boolean;
   private onProgress?: (progress: TaskProgress) => void;
+  private projectId?: number;
+  private taskId?: string;
+  private currentBehavior?: BehaviorProfile;
 
   constructor(browserManager: BrowserManager, config: AgentConfig = {}) {
     this.client = new Anthropic({
@@ -221,6 +238,16 @@ export class BrowserAgent {
     this.maxIterations = config.maxIterations || 30; // Increased default for longer tasks
     this.verbose = config.verbose || false;
     this.onProgress = config.onProgress;
+    this.projectId = config.projectId;
+    this.taskId = config.taskId;
+  }
+
+  /**
+   * Set project and task IDs for behavior tracking
+   */
+  setTaskContext(projectId: number, taskId: string): void {
+    this.projectId = projectId;
+    this.taskId = taskId;
   }
 
   /**
@@ -312,6 +339,19 @@ export class BrowserAgent {
       await this.browserManager.initialize();
     }
 
+    // Setup humanization behavior profile (anti-detection)
+    if (this.projectId) {
+      try {
+        this.currentBehavior = await createTaskBehavior(this.projectId);
+        this.browserManager.setBehaviorProfile(this.currentBehavior);
+        console.log(`🎭 Anti-detection: Using behavior profile different from last ${5} tasks`);
+        console.log(`   Mouse: ${this.currentBehavior.mouse}, Typing: ${this.currentBehavior.typing}`);
+        console.log(`   Scroll: ${this.currentBehavior.scroll}, Delay: ${this.currentBehavior.delay}`);
+      } catch (e) {
+        console.log('⚠️ Could not setup behavior profile, using defaults');
+      }
+    }
+
     while (iterations < this.maxIterations && !taskCompleted) {
       iterations++;
 
@@ -398,11 +438,22 @@ export class BrowserAgent {
       }
     }
 
+    // Save behavior profile to database for anti-detection tracking
+    if (this.taskId && this.currentBehavior) {
+      try {
+        await saveBehavior(this.taskId, this.currentBehavior);
+        console.log(`💾 Saved behavior profile to task ${this.taskId}`);
+      } catch (e) {
+        console.log('⚠️ Could not save behavior profile');
+      }
+    }
+
     return {
       success: taskCompleted || finalResult.length > 0,
       result: finalResult,
       iterations,
-      actions
+      actions,
+      behaviorUsed: this.currentBehavior
     };
   }
 

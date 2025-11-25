@@ -1,10 +1,20 @@
 /**
  * Browser Manager
  * Manages Playwright browser instances with persistent Chrome profiles
+ * Includes humanization to avoid detection
  */
 
 import { chromium, Browser, BrowserContext, Page } from 'playwright';
 import { ProxyConfig, createProxyConfig, getDataImpulseConfig } from './proxy-config';
+import {
+  BehaviorProfile,
+  humanClick,
+  humanType,
+  humanScroll,
+  humanDelay,
+  humanMouseMove,
+  getDelay
+} from './humanization';
 import path from 'path';
 import fs from 'fs';
 
@@ -27,6 +37,7 @@ export class BrowserManager {
   private page: Page | null = null;
   private config: BrowserManagerConfig;
   private proxyConfig: ProxyConfig | null = null;
+  private behaviorProfile: BehaviorProfile | null = null;
 
   constructor(config: BrowserManagerConfig) {
     this.config = config;
@@ -118,7 +129,22 @@ export class BrowserManager {
   }
 
   /**
-   * Click on element
+   * Set behavior profile for humanization
+   */
+  setBehaviorProfile(profile: BehaviorProfile): void {
+    this.behaviorProfile = profile;
+    console.log(`Behavior profile set: mouse=${profile.mouse}, typing=${profile.typing}, scroll=${profile.scroll}, delay=${profile.delay}`);
+  }
+
+  /**
+   * Get current behavior profile
+   */
+  getBehaviorProfile(): BehaviorProfile | null {
+    return this.behaviorProfile;
+  }
+
+  /**
+   * Click on element (humanized if profile is set)
    */
   async click(selector: string): Promise<BrowserSnapshot> {
     if (!this.page) {
@@ -127,14 +153,28 @@ export class BrowserManager {
 
     console.log(`Clicking: ${selector}`);
 
-    await this.page.click(selector, { timeout: 10000 });
+    // Use humanized click if behavior profile is set
+    if (this.behaviorProfile) {
+      try {
+        await humanClick(this.page, selector, this.behaviorProfile);
+        // Add human delay after click
+        await humanDelay(this.behaviorProfile.delay);
+      } catch (e) {
+        // Fallback to direct click if humanized fails
+        console.log('Humanized click failed, using direct click');
+        await this.page.click(selector, { timeout: 10000 });
+      }
+    } else {
+      await this.page.click(selector, { timeout: 10000 });
+    }
+
     await this.page.waitForLoadState('networkidle');
 
     return this.getSnapshot();
   }
 
   /**
-   * Type text into element
+   * Type text into element (humanized if profile is set)
    */
   async type(selector: string, text: string): Promise<BrowserSnapshot> {
     if (!this.page) {
@@ -143,7 +183,40 @@ export class BrowserManager {
 
     console.log(`Typing into: ${selector}`);
 
-    await this.page.fill(selector, text);
+    // Use humanized typing if behavior profile is set
+    if (this.behaviorProfile) {
+      try {
+        await humanType(this.page, selector, text, this.behaviorProfile);
+        // Add human delay after typing
+        await humanDelay(this.behaviorProfile.delay);
+      } catch (e) {
+        // Fallback to direct fill if humanized fails
+        console.log('Humanized typing failed, using direct fill');
+        await this.page.fill(selector, text);
+      }
+    } else {
+      await this.page.fill(selector, text);
+    }
+
+    return this.getSnapshot();
+  }
+
+  /**
+   * Scroll the page (humanized if profile is set)
+   */
+  async scroll(direction: 'up' | 'down', amount: number = 500): Promise<BrowserSnapshot> {
+    if (!this.page) {
+      throw new Error('Browser not initialized');
+    }
+
+    console.log(`Scrolling ${direction} by ${amount}px`);
+
+    if (this.behaviorProfile) {
+      await humanScroll(this.page, direction, amount, this.behaviorProfile.scroll);
+    } else {
+      const scrollAmount = direction === 'down' ? amount : -amount;
+      await this.page.mouse.wheel(0, scrollAmount);
+    }
 
     return this.getSnapshot();
   }

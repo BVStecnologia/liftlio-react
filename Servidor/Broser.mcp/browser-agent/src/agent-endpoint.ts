@@ -25,7 +25,7 @@ export function setupAgentEndpoint(
    */
   app.post('/agent/task', async (req, res) => {
     try {
-      const { task, model, verbose } = req.body;
+      const { task, model, verbose, taskId, projectId: reqProjectId } = req.body;
 
       if (!task) {
         return res.status(400).json({ error: 'Task is required' });
@@ -53,18 +53,27 @@ export function setupAgentEndpoint(
         setBrowserManager(browserManager);
       }
 
-      // Create and run agent
+      // Parse projectId (can come from config or request)
+      const numericProjectId = reqProjectId
+        ? parseInt(reqProjectId, 10)
+        : parseInt(config.projectId, 10);
+
+      // Create and run agent with humanization context
       const agent = new BrowserAgent(browserManager, {
         model: model || 'claude-haiku-4-5-20251001',
         maxIterations: req.body.maxIterations || 30,
         verbose: verbose || false,
         onProgress: (progress) => {
           broadcastEvent('agent_progress', progress);
-        }
+        },
+        // Pass context for anti-detection behavior tracking
+        projectId: isNaN(numericProjectId) ? undefined : numericProjectId,
+        taskId: taskId || undefined
       });
 
       console.log(`Starting AI agent task: "${task.slice(0, 100)}..."`);
-      broadcastEvent('agent_started', { task });
+      if (taskId) console.log(`Task ID: ${taskId}, Project ID: ${numericProjectId}`);
+      broadcastEvent('agent_started', { task, taskId });
 
       const result = await agent.runTask(task);
 
@@ -74,7 +83,8 @@ export function setupAgentEndpoint(
         success: result.success,
         result: result.result,
         iterations: result.iterations,
-        actions: result.actions
+        actions: result.actions,
+        behaviorUsed: result.behaviorUsed
       });
     } catch (error: any) {
       console.error('Agent task failed:', error);
