@@ -53,10 +53,11 @@ export async function authenticateLocalhost(options: LocalAuthOptions) {
 
     // Option 2: Use magic link as fallback
     console.log('[LocalAuth] Sending magic link to email');
+    const port = window.location.port || '3000';
     const { error: magicLinkError } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: 'http://localhost:3000/auth/callback'
+        emailRedirectTo: `http://localhost:${port}/auth/callback`
       }
     });
 
