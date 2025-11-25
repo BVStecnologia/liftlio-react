@@ -1,0 +1,39 @@
+# Environment variables (NEVER commit)
+.env
+.env.local
+.env.production
+
+# Node modules
+node_modules/
+browser-agent/node_modules/
+orchestrator/node_modules/
+
+# Build outputs
+dist/
+build/
+*.js.map
+
+# Docker volumes (local data)
+profiles/
+data/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+
+# TypeScript cache
+*.tsbuildinfo

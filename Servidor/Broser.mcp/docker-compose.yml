@@ -1,0 +1,113 @@
+version: '3.8'
+
+# ===========================================
+# Browser MCP - Full Orchestration Stack
+# ===========================================
+#
+# Architecture:
+#   Orchestrator → Creates/Manages → Browser Agent containers
+#   Each project gets its own container with:
+#     - Playwright + Chromium browser
+#     - Persistent Chrome profile (keeps logins)
+#     - Residential IP via DataImpulse
+#     - MCP endpoint for control
+#
+# Usage:
+#   1. Copy .env.example to .env and fill in values
+#   2. Build: docker-compose build
+#   3. Start: docker-compose up -d
+#   4. Create container: POST http://localhost:8080/containers { "projectId": "abc" }
+#
+
+services:
+  # ===========================================
+  # ORCHESTRATOR
+  # Creates and manages Browser Agent containers
+  # ===========================================
+  orchestrator:
+    build:
+      context: ./orchestrator
+      dockerfile: Dockerfile
+    container_name: browser-orchestrator
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - API_SECRET_KEY=${API_SECRET_KEY}
+      - BROWSER_AGENT_IMAGE=liftlio/browser-agent:latest
+      - MCP_BASE_PORT=10100
+      - MAX_CONTAINERS=${MAX_CONTAINERS:-6}
+      - SESSION_TIMEOUT_MINUTES=${SESSION_TIMEOUT_MINUTES:-30}
+      - CLEANUP_INTERVAL_MINUTES=5
+      - HOST_IP=${HOST_IP:-173.249.22.2}
+      # DataImpulse proxy credentials (passed to containers)
+      - DATAIMPULSE_LOGIN=${DATAIMPULSE_LOGIN}
+      - DATAIMPULSE_PASSWORD=${DATAIMPULSE_PASSWORD}
+      - DATAIMPULSE_HOST=${DATAIMPULSE_HOST:-gw.dataimpulse.com}
+      - DATAIMPULSE_STICKY_BASE_PORT=${DATAIMPULSE_STICKY_BASE_PORT:-10000}
+    ports:
+      - "8080:8080"  # Orchestrator API
+    volumes:
+      # Docker socket for container management
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - browser-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================
+  # BROWSER AGENT (Template)
+  # This is NOT started directly - Orchestrator creates instances
+  # Build this image first: docker-compose build browser-agent
+  # ===========================================
+  browser-agent:
+    build:
+      context: ./browser-agent
+      dockerfile: Dockerfile
+    image: liftlio/browser-agent:latest
+    profiles:
+      - build-only  # Don't start with docker-compose up
+    environment:
+      - NODE_ENV=production
+      - MCP_PORT=3000
+      - PROJECT_ID=template
+      - PROJECT_INDEX=0
+      - PROFILES_DIR=/data/profiles
+      - HEADLESS=true
+    networks:
+      - browser-network
+
+# ===========================================
+# VOLUMES
+# Shared across all browser agent containers
+# ===========================================
+volumes:
+  # Stores Chrome profiles (cookies, logins, etc.)
+  browser-profiles:
+    name: liftlio-browser-profiles
+
+  # Stores screenshots taken by browser agents
+  browser-screenshots:
+    name: liftlio-browser-screenshots
+
+# ===========================================
+# NETWORKS
+# ===========================================
+networks:
+  browser-network:
+    name: liftlio-browser-network
+    driver: bridge
