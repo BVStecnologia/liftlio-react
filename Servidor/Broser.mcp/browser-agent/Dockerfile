@@ -1,7 +1,7 @@
 # Browser Agent with Playwright MCP
 # Base: Microsoft Playwright with Chromium
 
-FROM mcr.microsoft.com/playwright:v1.40.0-jammy
+FROM mcr.microsoft.com/playwright:v1.56.1-jammy
 
 # Set working directory
 WORKDIR /app

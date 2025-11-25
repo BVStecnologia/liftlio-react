@@ -124,6 +124,12 @@ export async function createContainer(options: CreateContainerOptions): Promise<
         `PROFILES_DIR=/data/profiles`,
         `HEADLESS=true`,
         `API_SECRET_KEY=${process.env.API_SECRET_KEY || ''}`,
+        // Claude API for AI agent
+        `CLAUDE_API_KEY=${process.env.CLAUDE_API_KEY || ''}`,
+        // Supabase for behavior tracking
+        `SUPABASE_URL=${process.env.SUPABASE_URL || ''}`,
+        `SUPABASE_ANON_KEY=${process.env.SUPABASE_ANON_KEY || ''}`,
+        // DataImpulse proxy
         `DATAIMPULSE_LOGIN=${process.env.DATAIMPULSE_LOGIN || ''}`,
         `DATAIMPULSE_PASSWORD=${process.env.DATAIMPULSE_PASSWORD || ''}`,
         `DATAIMPULSE_HOST=${process.env.DATAIMPULSE_HOST || 'gw.dataimpulse.com'}`,

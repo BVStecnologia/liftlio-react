@@ -102,6 +102,9 @@ CREATE TABLE browser_tasks (
   completed_at TIMESTAMPTZ,
   container_port INT,
 
+  -- Anti-detection: Padroes comportamentais usados nesta task
+  behavior_used JSONB,          -- { mouse, typing, scroll, delay, click_offset }
+
   -- Meta
   created_at TIMESTAMPTZ,
   created_by UUID
@@ -132,6 +135,61 @@ VALUES (
   }
 }
 ```
+
+### Sistema de Humanização Anti-Detecção
+
+O browser usa um sistema sofisticado para parecer humano e evitar detecção:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    ANTI-DETECTION: BEHAVIORAL MEMORY                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   Task 1 (projeto 58) → grava behavior_used                                 │
+│   { mouse: "bezier_smooth", typing: "fast", scroll: "stepped" }             │
+│                                                                             │
+│                           ↓                                                 │
+│                                                                             │
+│   Task 2 (projeto 58) → CONSULTA últimas 5 tasks                            │
+│   "Já usaram bezier_smooth... vou usar OVERSHOOT"                           │
+│   { mouse: "overshoot", typing: "slow", scroll: "smooth" }                  │
+│                                                                             │
+│                           ↓                                                 │
+│                                                                             │
+│   Task 3 (projeto 58) → CONSULTA últimas 5 tasks                            │
+│   "Já usaram bezier_smooth, overshoot... vou usar ZIGZAG"                   │
+│   { mouse: "zigzag_subtle", typing: "burst", scroll: "fast_scan" }          │
+│                                                                             │
+│   ✅ RESULTADO: Cada sessão parece um humano diferente!                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Padrões Disponíveis:**
+
+| Categoria | Padrões                                                    |
+|-----------|-----------------------------------------------------------|
+| Mouse     | bezier_smooth, bezier_fast, overshoot, zigzag_subtle, linear_jitter |
+| Digitação | hunt_peck, touch_typist, variable, burst, with_typos      |
+| Scroll    | smooth, stepped, fast_scan, mouse_wheel                   |
+| Delay     | impatient (500-1500ms), thoughtful (2-4s), erratic, natural |
+
+**Exemplo de behavior_used salvo:**
+```json
+{
+  "mouse": "overshoot",
+  "typing": "burst",
+  "scroll": "smooth",
+  "delay": "erratic",
+  "click_offset": {"x": 3, "y": -2},
+  "typing_speed_ms": 120
+}
+```
+
+**Benefícios:**
+- ✅ Anti-ML: Impossível treinar modelo contra padrões que sempre mudam
+- ✅ Por Projeto: Cada "usuário virtual" evolui independentemente
+- ✅ Auditável: Log completo de comportamentos no campo `behavior_used`
+- ✅ Realista: Humanos reais também variam comportamento
 
 ### 2. Edge Function `browser-dispatch`
 
@@ -390,3 +448,66 @@ Servidor/Broser.mcp/
 | Supabase | Ja incluso no plano atual |
 
 **Estimativa por tarefa:** $0.001 - $0.01 dependendo da complexidade
+
+## SSH Access - Deploy
+
+### Dados do Servidor
+- **IP**: 173.249.22.2
+- **Usuario**: root
+- **Porta**: 22
+- **Chave SSH**: `C:/c/Users/User/.ssh/contabo_key_new`
+
+### Comando SSH (Windows)
+```bash
+ssh -i "C:/c/Users/User/.ssh/contabo_key_new" root@173.249.22.2
+```
+
+### Deploy Rapido
+```bash
+# 1. Conectar
+ssh -i "C:/c/Users/User/.ssh/contabo_key_new" root@173.249.22.2
+
+# 2. No servidor:
+cd /opt/browser-mcp
+docker-compose down
+docker-compose up -d --build
+
+# 3. Verificar
+docker ps
+curl http://localhost:3001/health
+```
+
+### Copiar arquivos (SCP)
+```bash
+# Copiar arquivo especifico
+scp -i "C:/c/Users/User/.ssh/contabo_key_new" arquivo.ts root@173.249.22.2:/opt/browser-mcp/browser-agent/src/
+
+# Copiar pasta inteira
+scp -i "C:/c/Users/User/.ssh/contabo_key_new" -r browser-agent/src/ root@173.249.22.2:/opt/browser-mcp/browser-agent/
+```
+
+### Comandos Uteis
+```bash
+# Ver logs
+ssh -i "C:/c/Users/User/.ssh/contabo_key_new" root@173.249.22.2 "docker logs browser-agent-1 --tail 50"
+
+# Ver containers
+ssh -i "C:/c/Users/User/.ssh/contabo_key_new" root@173.249.22.2 "docker ps"
+
+# Restart container
+ssh -i "C:/c/Users/User/.ssh/contabo_key_new" root@173.249.22.2 "cd /opt/browser-mcp && docker-compose restart"
+```
+
+### Testar Task
+```bash
+curl -X POST "http://173.249.22.2:3001/agent/task" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task": "Acesse google.com e me diga o titulo da pagina",
+    "projectId": 58,
+    "taskId": "test-123"
+  }'
+```
+
+### Problemas SSH?
+Ver documentacao completa: `/Servidor/ACESSO_SSH_WINDOWS.md`

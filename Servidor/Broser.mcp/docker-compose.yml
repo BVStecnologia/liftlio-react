@@ -40,6 +40,11 @@ services:
       - SESSION_TIMEOUT_MINUTES=${SESSION_TIMEOUT_MINUTES:-30}
       - CLEANUP_INTERVAL_MINUTES=5
       - HOST_IP=${HOST_IP:-173.249.22.2}
+      # Claude API for AI agent (passed to containers)
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      # Supabase for behavior tracking (passed to containers)
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
       # DataImpulse proxy credentials (passed to containers)
       - DATAIMPULSE_LOGIN=${DATAIMPULSE_LOGIN}
       - DATAIMPULSE_PASSWORD=${DATAIMPULSE_PASSWORD}
