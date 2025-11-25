@@ -1,7 +1,8 @@
 -- =============================================
--- Função: process_next_project_scanner
--- Descrição: Orquestrador de Projeto - processa próximo scanner em rotação circular
+-- Funcao: process_next_project_scanner
+-- Descricao: Orquestrador de Projeto - processa proximo scanner em rotacao circular
 -- Criado: 2025-11-14
+-- Atualizado: 2025-11-25 - Adicionado sync de status (MAX + nunca retrocede)
 -- =============================================
 
 DROP FUNCTION IF EXISTS process_next_project_scanner(BIGINT);
@@ -15,6 +16,7 @@ DECLARE
     v_cache_ids TEXT;
     v_init_result TEXT;
     v_process_result TEXT;
+    v_status_result TEXT;
 BEGIN
     -- Buscar próximo scanner a processar (rotação circular)
     SELECT get_next_scanner_to_process(project_id_param) INTO v_next_scanner_id;
@@ -50,16 +52,24 @@ BEGIN
         RAISE NOTICE 'Inicialização: %', v_init_result;
     END IF;
 
-    -- Processar vídeos do scanner
-    RAISE NOTICE '⚙️ Processando vídeos do scanner %', v_next_scanner_id;
+    -- Processar videos do scanner
+    RAISE NOTICE 'Processando videos do scanner %', v_next_scanner_id;
     SELECT process_scanner_videos(v_next_scanner_id) INTO v_process_result;
 
-    -- Retornar resultado
+    -- =============================================
+    -- SYNC STATUS: Atualiza Projeto.status baseado no Pipeline 2
+    -- Usa MAX (video mais avancado) + nunca retrocede
+    -- =============================================
+    SELECT update_project_status_from_pipeline(project_id_param) INTO v_status_result;
+    RAISE NOTICE 'Status sync: %', v_status_result;
+
+    -- Retornar resultado com status
     RETURN format(
-        'Projeto %s → Scanner %s: %s',
+        'Projeto %s -> Scanner %s: %s | %s',
         project_id_param,
         v_next_scanner_id,
-        v_process_result
+        v_process_result,
+        v_status_result
     );
 END;
 $function$;

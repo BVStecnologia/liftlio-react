@@ -1,48 +1,124 @@
 # SQL Functions - Liftlio
 
-**Última atualização**: 2025-01-15
-**Total**: 27 SQL Functions + 5 Edge Functions
-**Pipeline**: 7 stages (STATUS 0-6) | ~2 minutos total
+**Última atualização**: 2025-11-25
+**Status**: Pipeline 2 em produção (Pipeline 1 desativado)
 
 ---
 
-## 📊 VISÃO GERAL DO SISTEMA
+## ⚠️ AVISO IMPORTANTE - MUDANÇA DE SISTEMA
 
-### Pipeline Liftlio - Fluxo Completo
+### Pipeline 1 (DESATIVADO - 25/11/2025)
+
+O sistema antigo (Pipeline 1) foi **DESATIVADO** em 25/11/2025.
+
+**Funções do Pipeline 1 (NÃO USAR):**
+- `atualizar_scanner_rodada()` - Substituído por `pipeline2_process_project()`
+- `process_project()` - Substituído
+- `process_project_step_1/2/3/4()` - Substituído
+- `process_youtube_scanner()` - Substituído
+- `schedule_process_project()` - Substituído
+
+**Motivos da desativação:**
+- Processamento sequencial lento (STATUS 0→6 em série)
+- Sem histórico de processamento por vídeo
+- Difícil debugging quando falhava
+- Não escalava bem com múltiplos projetos
+
+---
+
+### Pipeline 2 (ATIVO - 25/11/2025)
+
+O novo sistema (Pipeline 2) está **EM PRODUÇÃO** desde 25/11/2025.
+
+**Documentação completa:** `pipeline_2/README.md`
+
+**Principais melhorias:**
+- Processamento por vídeo (não por projeto)
+- Histórico completo em `pipeline_processing`
+- Cron de 30 segundos para todos projetos
+- Trigger de início imediato (status 0)
+- Retry automático de erros
+- Rotação circular de scanners
+
+**Funções principais do Pipeline 2:**
+```
+01_process_all_projects_pipeline2() ← CRON 30s
+02_pipeline2_process_project()      ← Orquestrador principal
+03_trigger_pipeline2_status_0()     ← Início imediato
+04_initialize_scanner_processing()  ← Cache → Pipeline
+05_process_scanner_videos()         ← Por scanner
+06_process_pipeline_step_for_video()← Router de steps
+07-11_process_step_X_*()            ← Steps 1-5
+12_update_project_status_from_pipeline()
+```
+
+**Cron ativo:**
+```sql
+SELECT cron.schedule('pipeline2_fast', '30 seconds', 'SELECT process_all_projects_pipeline2()');
+```
+
+---
+
+## 📊 VISÃO GERAL DO SISTEMA (Pipeline 2)
+
+### Fluxo do Pipeline 2
 
 ```
-STATUS 0 → 1: INICIALIZAÇÃO (~1s)
-  └─> atualizar_scanner_rodada()
-
-STATUS 1 → 2: SCANNER PROCESSING (~20s)
-  └─> process_next_project_scanner()
-      └─> update_video_id_cache()
-      └─> get_youtube_channel_videos() [Edge Function]
-
-STATUS 2 → 3: VIDEO STATS & COMMENTS (~30s)
-  └─> update_video_stats()
-  └─> start_video_processing()
-      └─> process_videos_batch()
-      └─> fetch_and_store_comments_for_video()
-
-STATUS 3 → 4: VIDEO ANALYSIS (~20s)
-  └─> start_video_analysis_processing()
-      └─> process_video_analysis_batch()
-      └─> analyze_video_with_claude() [Edge Function]
-
-STATUS 4 → 5: COMMENT ANALYSIS (~30s)
-  └─> start_comment_analysis_processing()
-      └─> process_comment_analysis_batch()
-      └─> analisar_comentarios_com_claude() [Edge Function]
-
-STATUS 5 → 6: ENGAGEMENT MESSAGES (~20s)
-  └─> start_engagement_messages_processing()
-      └─> process_engagement_messages_batch()
-      └─> process_engagement_comments_with_claude() [Edge Function]
-      └─> agendar_postagens_todos_projetos()
+CRON (30 segundos)
+       │
+       ▼
+┌──────────────────────────────────────────────────────────┐
+│  process_all_projects_pipeline2()                        │
+│      Loop: todos projetos com status 0-5                 │
+│                         │                                │
+│                         ▼                                │
+│  pipeline2_process_project(project_id)                   │
+│      │                                                   │
+│      ├─ STATUS 0: Marca scanners, muda status→1         │
+│      ├─ RODADA=1: Busca IDs do YouTube                  │
+│      ├─ PARTE 1: initialize_scanner_processing()        │
+│      └─ PARTE 2: process_scanner_videos()               │
+│                         │                                │
+│                         ▼                                │
+│      ┌───────────────────────────────────────────────┐  │
+│      │  process_pipeline_step_for_video()            │  │
+│      │                                               │  │
+│      │  Step 0 → Criar vídeo na tabela Videos       │  │
+│      │  Step 1 → Buscar comentários do YouTube      │  │
+│      │  Step 2 → Curar comentários com Claude AI    │  │
+│      │  Step 3 → Analisar sentimentos (PICS)        │  │
+│      │  Step 4 → Criar mensagens orientadas         │  │
+│      │  Step 5 → pipeline_completo = TRUE           │  │
+│      └───────────────────────────────────────────────┘  │
+│                         │                                │
+│      update_project_status_from_pipeline()              │
+└──────────────────────────────────────────────────────────┘
 ```
 
-### 🎯 Sistema Dual de Mensagens
+---
+
+## 📁 Estrutura de Pastas
+
+```
+/SQL_Functions
+├── pipeline_2/                    # ✅ SISTEMA ATIVO (Pipeline 2)
+│   ├── 00_ALTER_TABLE_*.sql       # Schema
+│   ├── 01-12_*.sql                # Fluxo principal
+│   ├── 13-19_*.sql                # Auxiliares
+│   └── README.md                  # Documentação completa
+│
+├── 00_Monitoramento_YouTube/      # ⚠️ Pipeline 1 (desativado)
+├── 01_Canais/                     # ⚠️ Pipeline 1 (desativado)
+├── 02_Videos/                     # ⚠️ Pipeline 1 (desativado)
+├── 03_Claude/                     # Integração Claude AI (compartilhado)
+├── 04_Mensagens/                  # Sistema de mensagens (compartilhado)
+├── 05_Projetos/                   # Gestão de projetos (compartilhado)
+└── README.md                      # Este arquivo
+```
+
+---
+
+## 🎯 Sistema Dual de Mensagens
 
 **SISTEMA 1: DESCOBERTA (99.7%)**
 - 2.238 mensagens de RESPOSTA a comentários
