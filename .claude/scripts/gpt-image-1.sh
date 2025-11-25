@@ -46,7 +46,7 @@ RESPONSE=$(curl -s -X POST https://api.openai.com/v1/images/generations \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $API_KEY" \
   -d "{
-    \"model\": \"gpt-image-1\",
+    \"model\": \"dall-e-3\",
     \"prompt\": \"$PROMPT\",
     \"n\": 1,
     \"size\": \"$SIZE\",

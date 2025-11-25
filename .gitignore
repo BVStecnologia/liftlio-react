@@ -32,3 +32,7 @@ Servidor/**/htmlcov/
 # MCP Configuration (CONTAINS SENSITIVE KEYS!)
 .mcp.json
 *.mcp.json
+
+# Browser MCP (only in Agente.browser branch)
+Servidor/Broser.mcp/
+Servidor/transcricao/

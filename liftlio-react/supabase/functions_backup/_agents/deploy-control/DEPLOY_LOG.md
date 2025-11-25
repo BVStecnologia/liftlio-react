@@ -45,6 +45,7 @@
 
 | Data Deploy | Função | Tipo | Arquivo | Deploy Method | Verificado |
 |-------------|--------|------|---------|---------------|------------|
+| 2025-11-14 | **get_next_scanner_to_process** | SQL | pipeline_2/01_get_next_scanner_to_process.sql | MCP apply_migration | ✅ Testado - Retorna scanner 583 (primeiro ativo do projeto 117) |
 | 2025-11-02 | **seed.sql (helper functions)** | SQL | supabase/seed.sql | MCP execute_sql | ✅ Testado - Retorna URLs do LIVE |
 
 ---
@@ -81,7 +82,7 @@ Task → supabase-mcp-expert → "Deploy função X no LIVE"
 ## 📊 Estatísticas
 
 - **Total Pending**: 15 SQL Functions
-- **Total Deployed**: 1 (seed.sql helper functions)
-- **Última Atualização**: 2025-11-02
-- **Git Commit**: 5a1c32f (branch: dev-supabase-local)
-- **Status**: ✅ Helper functions deployadas, 15 SQL Functions prontas para deploy futuro
+- **Total Deployed**: 2 (seed.sql + get_next_scanner_to_process)
+- **Última Atualização**: 2025-11-14
+- **Git Commit**: main (deploying pipeline_2 functions)
+- **Status**: ✅ Pipeline 2.0 iniciado - Função 01 deployada com sucesso
