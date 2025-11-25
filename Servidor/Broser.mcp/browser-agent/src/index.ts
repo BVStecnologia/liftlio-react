@@ -215,7 +215,7 @@ app.post('/mcp/type', async (req, res) => {
 });
 
 /**
- * MCP Tool: Take screenshot
+ * MCP Tool: Take screenshot (POST - saves to file)
  */
 app.post('/mcp/screenshot', async (req, res) => {
   try {
@@ -228,6 +228,36 @@ app.post('/mcp/screenshot', async (req, res) => {
     broadcastEvent('screenshot', { path: screenshotPath });
 
     res.json({ success: true, path: screenshotPath });
+  } catch (error: any) {
+    console.error('Screenshot failed:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * MCP Tool: Get screenshot as base64 (GET - returns image data)
+ */
+app.get('/mcp/screenshot', async (req, res) => {
+  try {
+    if (!browserManager?.isRunning()) {
+      return res.status(400).json({ error: 'Browser not initialized' });
+    }
+
+    const page = browserManager.getPage();
+    if (!page) {
+      return res.status(400).json({ error: 'No page available' });
+    }
+
+    // Take screenshot as buffer and return as base64
+    const screenshotBuffer = await page.screenshot({ fullPage: false });
+    const base64Screenshot = screenshotBuffer.toString('base64');
+
+    res.json({
+      success: true,
+      screenshot: base64Screenshot,
+      url: page.url(),
+      timestamp: new Date().toISOString()
+    });
   } catch (error: any) {
     console.error('Screenshot failed:', error);
     res.status(500).json({ success: false, error: error.message });

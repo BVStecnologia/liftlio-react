@@ -628,7 +628,9 @@ const LiftlioBrowser: React.FC = () => {
     try {
       const response = await fetch(`http://${BROWSER_AGENT_HOST}:${BROWSER_ORCHESTRATOR_PORT}/containers`);
       if (response.ok) {
-        const containers = await response.json();
+        const data = await response.json();
+        // Handle both array and {containers: []} response format
+        const containers = Array.isArray(data) ? data : (data.containers || []);
         const myContainer = containers.find((c: any) =>
           String(c.projectId) === String(currentProject.id)
         );
@@ -636,7 +638,7 @@ const LiftlioBrowser: React.FC = () => {
         if (myContainer) {
           setContainerInfo({
             projectId: myContainer.projectId,
-            port: myContainer.port,
+            port: myContainer.mcpPort || myContainer.port,
             status: 'running',
             createdAt: myContainer.createdAt,
             lastActivity: myContainer.lastActivity
@@ -669,9 +671,11 @@ const LiftlioBrowser: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
+        // Handle both container and nested container response
+        const containerData = data.container || data;
         setContainerInfo({
-          projectId: data.projectId,
-          port: data.port,
+          projectId: containerData.projectId,
+          port: containerData.mcpPort || containerData.port,
           status: 'running'
         });
         setConnectionStatus('connected');
