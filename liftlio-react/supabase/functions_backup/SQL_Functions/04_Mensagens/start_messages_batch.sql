@@ -9,7 +9,7 @@ BEGIN
     -- Processa um lote de mensagens
     PERFORM start_comments_message_processing(project_id, batch_size);
 
-    -- Verifica se há mais mensagens para processar
+    -- Verifica se hï¿½ mais mensagens para processar
     IF EXISTS (
         SELECT 1
         FROM "Comentarios_Principais" c
@@ -18,7 +18,7 @@ BEGIN
         WHERE s."Projeto_id" = project_id
         AND c.mensagem_gerada = false
     ) THEN
-        -- Agenda próximo lote
+        -- Agenda prï¿½ximo lote
         PERFORM cron.schedule(
             'process_messages_' || project_id::text,
             '30 seconds',
@@ -31,7 +31,7 @@ EXCEPTION WHEN OTHERS THEN
     -- Re-agenda em caso de erro
     PERFORM cron.schedule(
         'process_messages_' || project_id::text,
-        '1 minute',
+        '60 seconds',
         format('SELECT start_messages_batch(%s, %s)', project_id, batch_size)
     );
 END;
