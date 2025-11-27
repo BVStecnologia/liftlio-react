@@ -38,6 +38,62 @@ let browserManager: BrowserManager | null = null;
 // SSE clients
 const sseClients: Map<string, express.Response> = new Map();
 
+// ============================================
+// VNC Auto-Timeout System
+// ============================================
+let vncInactivityTimer: NodeJS.Timeout | null = null;
+let vncLastActivity: Date | null = null;
+const VNC_TIMEOUT_MS = parseInt(process.env.VNC_TIMEOUT_MINUTES || '5') * 60 * 1000; // Default 5 min
+
+/**
+ * Stop VNC services (internal function for auto-timeout)
+ */
+async function stopVncServicesInternal(): Promise<void> {
+  try {
+    console.log('Auto-stopping VNC services due to inactivity...');
+    await execAsync('supervisorctl stop novnc').catch(() => {});
+    await execAsync('supervisorctl stop x11vnc').catch(() => {});
+    console.log('VNC services auto-stopped');
+  } catch (error) {
+    console.error('Error auto-stopping VNC:', error);
+  }
+}
+
+/**
+ * Reset VNC inactivity timer - call this on any VNC activity
+ */
+function resetVncTimer(): void {
+  vncLastActivity = new Date();
+
+  if (vncInactivityTimer) {
+    clearTimeout(vncInactivityTimer);
+  }
+
+  vncInactivityTimer = setTimeout(async () => {
+    console.log(`VNC timeout (${VNC_TIMEOUT_MS / 60000} min) - auto-stopping`);
+    await stopVncServicesInternal();
+    vncInactivityTimer = null;
+    vncLastActivity = null;
+    // Note: broadcastEvent will be called after it's defined
+    try {
+      broadcastEvent('vnc_stopped', { reason: 'inactivity_timeout' });
+    } catch (e) { /* broadcastEvent not ready yet */ }
+  }, VNC_TIMEOUT_MS);
+
+  console.log(`VNC timer reset - auto-stop in ${VNC_TIMEOUT_MS / 60000} min`);
+}
+
+/**
+ * Clear VNC timer (when manually stopped)
+ */
+function clearVncTimer(): void {
+  if (vncInactivityTimer) {
+    clearTimeout(vncInactivityTimer);
+    vncInactivityTimer = null;
+  }
+  vncLastActivity = null;
+}
+
 /**
  * Send event to all SSE clients
  */
@@ -690,7 +746,16 @@ app.get('/vnc/status', async (req, res) => {
         enabled: x11vncRunning && novncRunning,
         x11vnc: x11vncRunning ? 'running' : 'stopped',
         novnc: novncRunning ? 'running' : 'stopped',
-        port: process.env.NOVNC_PORT || '6080'
+        port: process.env.NOVNC_PORT || '6080',
+        // Auto-timeout info
+        autoTimeout: {
+          active: vncInactivityTimer !== null,
+          timeoutMinutes: VNC_TIMEOUT_MS / 60000,
+          lastActivity: vncLastActivity?.toISOString() || null,
+          nextTimeoutAt: vncLastActivity
+            ? new Date(vncLastActivity.getTime() + VNC_TIMEOUT_MS).toISOString()
+            : null
+        }
       }
     });
   } catch (error: any) {
@@ -733,15 +798,23 @@ app.post('/vnc/start', async (req, res) => {
     
     if (x11vncRunning && novncRunning) {
       console.log('VNC services started successfully');
-      broadcastEvent('vnc_started', { port: process.env.NOVNC_PORT || '6080' });
-      
+
+      // Start auto-timeout timer
+      resetVncTimer();
+
+      broadcastEvent('vnc_started', {
+        port: process.env.NOVNC_PORT || '6080',
+        timeoutMinutes: VNC_TIMEOUT_MS / 60000
+      });
+
       res.json({
         success: true,
         message: 'VNC started',
         vnc: {
           enabled: true,
           port: process.env.NOVNC_PORT || '6080',
-          url: `/vnc/` // Relative URL for iframe
+          url: `/vnc/`, // Relative URL for iframe
+          autoTimeoutMinutes: VNC_TIMEOUT_MS / 60000
         }
       });
     } else {
@@ -761,17 +834,20 @@ app.post('/vnc/start', async (req, res) => {
  */
 app.post('/vnc/stop', async (req, res) => {
   try {
-    console.log('Stopping VNC services...');
-    
+    console.log('Stopping VNC services (manual)...');
+
+    // Clear auto-timeout timer
+    clearVncTimer();
+
     // Stop noVNC first
     await execAsync('supervisorctl stop novnc').catch(() => {});
-    
+
     // Stop x11vnc
     await execAsync('supervisorctl stop x11vnc').catch(() => {});
-    
+
     console.log('VNC services stopped');
-    broadcastEvent('vnc_stopped', {});
-    
+    broadcastEvent('vnc_stopped', { reason: 'manual' });
+
     res.json({
       success: true,
       message: 'VNC stopped',
@@ -784,6 +860,32 @@ app.post('/vnc/stop', async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message
+    });
+  }
+});
+
+/**
+ * VNC Heartbeat - Reset inactivity timer (call from frontend periodically)
+ */
+app.post('/vnc/heartbeat', (req, res) => {
+  if (vncInactivityTimer) {
+    resetVncTimer();
+    res.json({
+      success: true,
+      message: 'Heartbeat received',
+      vnc: {
+        lastActivity: vncLastActivity?.toISOString(),
+        timeoutMinutes: VNC_TIMEOUT_MS / 60000,
+        nextTimeoutAt: new Date(Date.now() + VNC_TIMEOUT_MS).toISOString()
+      }
+    });
+  } else {
+    res.json({
+      success: false,
+      message: 'VNC not running or no active timer',
+      vnc: {
+        enabled: false
+      }
     });
   }
 });

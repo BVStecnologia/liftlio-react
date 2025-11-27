@@ -859,6 +859,23 @@ const LiftlioBrowser: React.FC = () => {
     }
   }, [connectionStatus, containerInfo?.port, connectSSE, captureScreenshot]);
 
+  // VNC Heartbeat - Keep VNC alive (auto-timeout is 5 min on backend)
+  useEffect(() => {
+    if (connectionStatus === 'connected' && containerInfo?.port) {
+      const sendHeartbeat = async () => {
+        try {
+          await fetch(`http://localhost:${containerInfo.port}/vnc/heartbeat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+        } catch (e) { /* VNC not running */ }
+      };
+      const interval = setInterval(sendHeartbeat, 60000);
+      sendHeartbeat();
+      return () => clearInterval(interval);
+    }
+  }, [connectionStatus, containerInfo?.port]);
+
   // Fetch tasks
   useEffect(() => {
     if (!currentProject?.id) return;
