@@ -18,13 +18,16 @@ export interface DataImpulseConfig {
 
 /**
  * Creates a proxy configuration for a specific project
- * Each project gets a unique sticky port = unique residential IP
+ * The orchestrator already calculates the sticky port (base + projectIndex)
+ * so we use stickyBasePort directly without adding projectIndex again
  */
 export function createProxyConfig(
   config: DataImpulseConfig,
   projectIndex: number
 ): ProxyConfig {
-  const stickyPort = config.stickyBasePort + projectIndex;
+  // Note: stickyBasePort already includes the project offset from orchestrator
+  // (orchestrator passes DATAIMPULSE_STICKY_BASE_PORT = 823 + portIndex)
+  const stickyPort = config.stickyBasePort;
 
   return {
     server: `http://${config.host}:${stickyPort}`,

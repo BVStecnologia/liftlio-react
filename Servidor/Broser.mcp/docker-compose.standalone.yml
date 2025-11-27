@@ -36,11 +36,11 @@ services:
       # Supabase for task tracking
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-      # DataImpulse proxy (optional)
+      # DataImpulse proxy (optional) - Port 10000+ for sticky sessions
       - DATAIMPULSE_LOGIN=${DATAIMPULSE_LOGIN}
       - DATAIMPULSE_PASSWORD=${DATAIMPULSE_PASSWORD}
       - DATAIMPULSE_HOST=${DATAIMPULSE_HOST:-gw.dataimpulse.com}
-      - DATAIMPULSE_PORT=${DATAIMPULSE_PORT:-823}
+      - DATAIMPULSE_STICKY_BASE_PORT=${DATAIMPULSE_STICKY_BASE_PORT:-10000}
     ports:
       - "3001:3000"
     volumes:

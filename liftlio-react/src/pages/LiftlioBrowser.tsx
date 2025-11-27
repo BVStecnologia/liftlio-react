@@ -625,6 +625,30 @@ const LiftlioBrowser: React.FC = () => {
     return containerInfo?.port || null;
   }, [currentProject?.id, containerInfo]);
 
+  // Initialize browser in container
+  const initializeBrowser = useCallback(async (port: number) => {
+    try {
+      console.log('[LiftlioBrowser] Initializing browser on port', port);
+      const response = await fetch(`http://localhost:${port}/browser/init`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: String(currentProject?.id) })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[LiftlioBrowser] Browser initialized:', data);
+        return true;
+      } else {
+        console.error('[LiftlioBrowser] Failed to initialize browser:', await response.text());
+        return false;
+      }
+    } catch (err) {
+      console.error('[LiftlioBrowser] Error initializing browser:', err);
+      return false;
+    }
+  }, [currentProject?.id]);
+
   // Check container status
   const checkContainerStatus = useCallback(async () => {
     if (!currentProject?.id) return;
@@ -645,14 +669,30 @@ const LiftlioBrowser: React.FC = () => {
         );
 
         if (myContainer) {
+          const port = myContainer.mcpPort || myContainer.port;
           setContainerInfo({
             projectId: myContainer.projectId,
-            port: myContainer.mcpPort || myContainer.port,
+            port: port,
             status: 'running',
             createdAt: myContainer.createdAt,
             lastActivity: myContainer.lastActivity
           });
           setConnectionStatus('connected');
+
+          // Auto-initialize browser if not running
+          try {
+            const healthRes = await fetch(`http://localhost:${port}/health`);
+            if (healthRes.ok) {
+              const healthData = await healthRes.json();
+              if (!healthData.browserRunning) {
+                console.log('[LiftlioBrowser] Browser not running, initializing...');
+                await initializeBrowser(port);
+              }
+            }
+          } catch (healthErr) {
+            console.log('[LiftlioBrowser] Could not check health, trying to init browser anyway');
+            await initializeBrowser(port);
+          }
         } else {
           setContainerInfo(null);
           setConnectionStatus('disconnected');
@@ -662,7 +702,7 @@ const LiftlioBrowser: React.FC = () => {
       console.error('Error checking container status:', err);
       setConnectionStatus('disconnected');
     }
-  }, [currentProject?.id]);
+  }, [currentProject?.id, initializeBrowser]);
 
   // Create container for project
   const createContainer = useCallback(async () => {
@@ -855,7 +895,12 @@ const LiftlioBrowser: React.FC = () => {
         console.log('Browser task update:', payload);
 
         if (payload.eventType === 'INSERT') {
-          setTasks(prev => [payload.new as BrowserTask, ...prev]);
+          // Only add if not already in the list (avoid duplicates from optimistic updates)
+          setTasks(prev => {
+            const exists = prev.some(t => t.id === (payload.new as BrowserTask).id);
+            if (exists) return prev;
+            return [payload.new as BrowserTask, ...prev];
+          });
         } else if (payload.eventType === 'UPDATE') {
           setTasks(prev => prev.map(t =>
             t.id === payload.new.id ? payload.new as BrowserTask : t
@@ -897,6 +942,12 @@ const LiftlioBrowser: React.FC = () => {
 
       if (error) throw error;
 
+      // Add task to UI immediately (optimistic update)
+      if (insertedTask) {
+        setTasks(prev => [insertedTask as BrowserTask, ...prev]);
+        setSelectedTask(insertedTask as BrowserTask);
+      }
+
       // Call browser agent directly (local development)
       if (BROWSER_ORCHESTRATOR_URL && containerInfo?.status === 'running') {
         try {
@@ -920,38 +971,74 @@ const LiftlioBrowser: React.FC = () => {
 
           if (agentResponse.ok) {
             const result = await agentResponse.json();
-            // Update task with result
+            const updatedTask = {
+              ...insertedTask,
+              status: result.success ? 'completed' : 'failed',
+              completed_at: new Date().toISOString(),
+              response: { result: result.result, success: result.success },
+              iterations_used: result.iterations,
+              actions_taken: result.actions,
+              error_message: result.success ? null : result.result
+            } as BrowserTask;
+
+            // Update local state immediately
+            setTasks(prev => prev.map(t => t.id === insertedTask.id ? updatedTask : t));
+            setSelectedTask(updatedTask);
+
+            // Update in database
             await supabase
               .from('browser_tasks')
               .update({
-                status: result.success ? 'completed' : 'failed',
-                completed_at: new Date().toISOString(),
-                response: { result: result.result, success: result.success },
-                iterations_used: result.iterations,
-                actions_taken: result.actions,
-                error_message: result.success ? null : result.result
+                status: updatedTask.status,
+                completed_at: updatedTask.completed_at,
+                response: updatedTask.response,
+                iterations_used: updatedTask.iterations_used,
+                actions_taken: updatedTask.actions_taken,
+                error_message: updatedTask.error_message
               })
               .eq('id', insertedTask.id);
           } else {
             const errorText = await agentResponse.text();
+            const failedTask = {
+              ...insertedTask,
+              status: 'failed' as const,
+              completed_at: new Date().toISOString(),
+              error_message: `Agent error: ${errorText}`
+            } as BrowserTask;
+
+            // Update local state immediately
+            setTasks(prev => prev.map(t => t.id === insertedTask.id ? failedTask : t));
+            setSelectedTask(failedTask);
+
             await supabase
               .from('browser_tasks')
               .update({
                 status: 'failed',
-                completed_at: new Date().toISOString(),
-                error_message: `Agent error: ${errorText}`
+                completed_at: failedTask.completed_at,
+                error_message: failedTask.error_message
               })
               .eq('id', insertedTask.id);
           }
         } catch (agentErr) {
           console.error('Error calling browser agent:', agentErr);
+          const failedTask = {
+            ...insertedTask,
+            status: 'failed' as const,
+            completed_at: new Date().toISOString(),
+            error_message: agentErr instanceof Error ? agentErr.message : 'Unknown error'
+          } as BrowserTask;
+
+          // Update local state immediately
+          setTasks(prev => prev.map(t => t.id === insertedTask.id ? failedTask : t));
+          setSelectedTask(failedTask);
+
           // Update task as failed
           await supabase
             .from('browser_tasks')
             .update({
               status: 'failed',
-              completed_at: new Date().toISOString(),
-              error_message: agentErr instanceof Error ? agentErr.message : 'Unknown error'
+              completed_at: failedTask.completed_at,
+              error_message: failedTask.error_message
             })
             .eq('id', insertedTask.id);
         }
@@ -965,9 +1052,18 @@ const LiftlioBrowser: React.FC = () => {
     }
   };
 
-  // Delete task
+  // Delete task with optimistic update
   const handleDeleteTask = async (taskId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+
+    // Optimistic update: remove from UI immediately
+    const previousTasks = tasks;
+    setTasks(prev => prev.filter(t => t.id !== taskId));
+
+    // Clear selected task if it was deleted
+    if (selectedTask?.id === taskId) {
+      setSelectedTask(null);
+    }
 
     try {
       const { error } = await supabase
@@ -975,7 +1071,11 @@ const LiftlioBrowser: React.FC = () => {
         .delete()
         .eq('id', taskId);
 
-      if (error) throw error;
+      if (error) {
+        // Rollback on error
+        setTasks(previousTasks);
+        throw error;
+      }
     } catch (err) {
       console.error('Error deleting task:', err);
     }

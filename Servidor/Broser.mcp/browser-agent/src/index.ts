@@ -311,7 +311,11 @@ app.get('/mcp/screenshot', async (req, res) => {
     }
 
     // Take screenshot as buffer and return as base64
-    const screenshotBuffer = await page.screenshot({ fullPage: false });
+    const screenshotBuffer = await page.screenshot({
+      fullPage: false,
+      timeout: 10000,
+      animations: 'disabled'
+    });
     const base64Screenshot = screenshotBuffer.toString('base64');
 
     res.json({

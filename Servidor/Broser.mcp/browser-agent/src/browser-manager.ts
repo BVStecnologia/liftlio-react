@@ -49,7 +49,8 @@ export class BrowserManager {
     const dataImpulseConfig = getDataImpulseConfig();
     if (dataImpulseConfig) {
       this.proxyConfig = createProxyConfig(dataImpulseConfig, config.projectIndex);
-      console.log(`Proxy configured for project ${config.projectId}: port ${dataImpulseConfig.stickyBasePort + config.projectIndex}`);
+      // Note: stickyBasePort already includes project offset from orchestrator
+      console.log(`Proxy configured for project ${config.projectId}: port ${dataImpulseConfig.stickyBasePort}`);
     }
   }
 
@@ -474,7 +475,12 @@ export class BrowserManager {
 
     const screenshotsDir = this.getScreenshotsDir();
     const screenshotPath = path.join(screenshotsDir, `${this.config.projectId}_${Date.now()}.png`);
-    await this.page.screenshot({ path: screenshotPath, fullPage: false });
+    await this.page.screenshot({
+      path: screenshotPath,
+      fullPage: false,
+      timeout: 10000,
+      animations: 'disabled'
+    });
 
     return screenshotPath;
   }
@@ -487,7 +493,11 @@ export class BrowserManager {
       throw new Error('Browser not initialized');
     }
 
-    const buffer = await this.page.screenshot({ fullPage: false });
+    const buffer = await this.page.screenshot({
+      fullPage: false,
+      timeout: 10000,  // 10 second timeout to avoid font loading hangs
+      animations: 'disabled'
+    });
     return buffer.toString('base64');
   }
 
