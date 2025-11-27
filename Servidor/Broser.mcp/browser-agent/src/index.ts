@@ -24,6 +24,7 @@ const PROJECT_ID = process.env.PROJECT_ID || 'default';
 const PROJECT_INDEX = parseInt(process.env.PROJECT_INDEX || '0');
 const PROFILES_DIR = process.env.PROFILES_DIR || '/data/profiles';
 const HEADLESS = process.env.HEADLESS !== 'false';
+const DEFAULT_URL = process.env.DEFAULT_URL || 'https://www.google.com';
 
 // Middleware
 app.use(helmet({
@@ -242,9 +243,13 @@ app.post('/browser/init', async (req, res) => {
 
     await browserManager.initialize();
 
-    broadcastEvent('browser_initialized', { projectId: PROJECT_ID });
+    // Navigate to default URL (google.com) when no task is active
+    console.log(`Navigating to default URL: ${DEFAULT_URL}`);
+    await browserManager.navigate(DEFAULT_URL);
 
-    res.json({ success: true, message: 'Browser initialized' });
+    broadcastEvent('browser_initialized', { projectId: PROJECT_ID, defaultUrl: DEFAULT_URL });
+
+    res.json({ success: true, message: 'Browser initialized', defaultUrl: DEFAULT_URL });
   } catch (error: any) {
     console.error('Failed to initialize browser:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -620,7 +625,7 @@ app.post('/browser/close', async (req, res) => {
  */
 app.post('/mcp/init', async (req, res) => {
   try {
-    const { projectId, headless } = req.body;
+    const { projectId, headless, skipDefaultNavigation } = req.body;
     const useHeadless = headless !== undefined ? headless : HEADLESS;
 
     if (browserManager?.isRunning()) {
@@ -636,9 +641,15 @@ app.post('/mcp/init', async (req, res) => {
 
     await browserManager.initialize();
 
-    broadcastEvent('browser_initialized', { projectId: projectId || PROJECT_ID });
+    // Navigate to default URL unless explicitly skipped (e.g., by agent)
+    if (!skipDefaultNavigation) {
+      console.log(`Navigating to default URL: ${DEFAULT_URL}`);
+      await browserManager.navigate(DEFAULT_URL);
+    }
 
-    res.json({ success: true, message: 'Browser initialized' });
+    broadcastEvent('browser_initialized', { projectId: projectId || PROJECT_ID, defaultUrl: skipDefaultNavigation ? null : DEFAULT_URL });
+
+    res.json({ success: true, message: 'Browser initialized', defaultUrl: skipDefaultNavigation ? null : DEFAULT_URL });
   } catch (error: any) {
     console.error('Failed to initialize browser:', error);
     res.status(500).json({ success: false, error: error.message });
