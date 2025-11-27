@@ -7,12 +7,16 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { v4 as uuidv4 } from 'uuid';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import { BrowserManager, BrowserSnapshot } from './browser-manager';
 import dotenv from 'dotenv';
 import { setupAgentEndpoint } from './agent-endpoint';
 
 // Load environment variables
 dotenv.config();
+
+const execAsync = promisify(exec);
 
 const app = express();
 const PORT = parseInt(process.env.MCP_PORT || '3000');
@@ -663,6 +667,125 @@ app.get('/mcp/tools', (req, res) => {
       }
     ]
   });
+});
+
+
+// ============================================
+// VNC On-Demand Control Endpoints
+// ============================================
+
+/**
+ * VNC Status - Check if VNC services are running
+ */
+app.get('/vnc/status', async (req, res) => {
+  try {
+    const { stdout } = await execAsync('supervisorctl status x11vnc novnc 2>/dev/null || echo "supervisor not available"');
+    
+    const x11vncRunning = stdout.includes('x11vnc') && stdout.includes('RUNNING');
+    const novncRunning = stdout.includes('novnc') && stdout.includes('RUNNING');
+    
+    res.json({
+      success: true,
+      vnc: {
+        enabled: x11vncRunning && novncRunning,
+        x11vnc: x11vncRunning ? 'running' : 'stopped',
+        novnc: novncRunning ? 'running' : 'stopped',
+        port: process.env.NOVNC_PORT || '6080'
+      }
+    });
+  } catch (error: any) {
+    console.error('VNC status check failed:', error);
+    res.json({
+      success: true,
+      vnc: {
+        enabled: false,
+        x11vnc: 'unknown',
+        novnc: 'unknown',
+        error: error.message
+      }
+    });
+  }
+});
+
+/**
+ * VNC Start - Start VNC services on demand
+ */
+app.post('/vnc/start', async (req, res) => {
+  try {
+    console.log('Starting VNC services...');
+    
+    // Start x11vnc first
+    await execAsync('supervisorctl start x11vnc');
+    
+    // Wait a moment for x11vnc to initialize
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Start noVNC
+    await execAsync('supervisorctl start novnc');
+    
+    // Wait for noVNC to be ready
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Verify status
+    const { stdout } = await execAsync('supervisorctl status x11vnc novnc');
+    const x11vncRunning = stdout.includes('x11vnc') && stdout.includes('RUNNING');
+    const novncRunning = stdout.includes('novnc') && stdout.includes('RUNNING');
+    
+    if (x11vncRunning && novncRunning) {
+      console.log('VNC services started successfully');
+      broadcastEvent('vnc_started', { port: process.env.NOVNC_PORT || '6080' });
+      
+      res.json({
+        success: true,
+        message: 'VNC started',
+        vnc: {
+          enabled: true,
+          port: process.env.NOVNC_PORT || '6080',
+          url: `/vnc/` // Relative URL for iframe
+        }
+      });
+    } else {
+      throw new Error('VNC services failed to start properly');
+    }
+  } catch (error: any) {
+    console.error('Failed to start VNC:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * VNC Stop - Stop VNC services to save resources
+ */
+app.post('/vnc/stop', async (req, res) => {
+  try {
+    console.log('Stopping VNC services...');
+    
+    // Stop noVNC first
+    await execAsync('supervisorctl stop novnc').catch(() => {});
+    
+    // Stop x11vnc
+    await execAsync('supervisorctl stop x11vnc').catch(() => {});
+    
+    console.log('VNC services stopped');
+    broadcastEvent('vnc_stopped', {});
+    
+    res.json({
+      success: true,
+      message: 'VNC stopped',
+      vnc: {
+        enabled: false
+      }
+    });
+  } catch (error: any) {
+    console.error('Failed to stop VNC:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 // Graceful shutdown
