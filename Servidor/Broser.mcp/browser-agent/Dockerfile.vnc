@@ -1,0 +1,67 @@
+# Browser Agent with Playwright MCP + noVNC
+# Streaming ao vivo do browser
+
+FROM mcr.microsoft.com/playwright:v1.56.1-jammy
+
+# Set working directory
+WORKDIR /app
+
+# Set noninteractive mode to prevent tzdata prompt
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Install VNC and noVNC dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    dumb-init \
+    xvfb \
+    x11vnc \
+    fluxbox \
+    novnc \
+    websockify \
+    supervisor \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy source code
+COPY dist/ ./dist/
+
+# Create directories
+RUN mkdir -p /data/profiles /data/screenshots /var/log/supervisor
+
+# Copy supervisor config
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy startup script
+COPY start-vnc.sh /start-vnc.sh
+RUN chmod +x /start-vnc.sh
+
+# Environment variables
+ENV NODE_ENV=production
+ENV MCP_PORT=3000
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV DISPLAY=:99
+ENV VNC_PORT=5900
+ENV NOVNC_PORT=6080
+ENV VNC_PASSWORD=liftlio
+ENV SCREEN_WIDTH=1920
+ENV SCREEN_HEIGHT=1080
+ENV SCREEN_DEPTH=24
+
+# Expose ports
+EXPOSE 3000 5900 6080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Use dumb-init for proper signal handling
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start all services via supervisor
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

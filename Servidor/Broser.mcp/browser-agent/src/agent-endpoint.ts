@@ -61,7 +61,7 @@ export function setupAgentEndpoint(
       // Create and run agent with humanization context
       const agent = new BrowserAgent(browserManager, {
         model: model || 'claude-haiku-4-5-20251001',
-        maxIterations: req.body.maxIterations || 30,
+        maxIterations: req.body.maxIterations || 1000,
         verbose: verbose || false,
         onProgress: (progress) => {
           broadcastEvent('agent_progress', progress);
@@ -129,7 +129,7 @@ export function setupAgentEndpoint(
       // Create agent with progress callback for SSE updates
       const agent = new BrowserAgent(browserManager, {
         model: model || 'claude-haiku-4-5-20251001',
-        maxIterations: maxIterationsPerTask || 30,
+        maxIterations: maxIterationsPerTask || 1000,
         verbose: verbose || false,
         onProgress: (progress) => {
           broadcastEvent('agent_progress', progress);

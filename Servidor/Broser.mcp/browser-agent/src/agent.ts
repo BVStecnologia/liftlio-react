@@ -180,6 +180,14 @@ const BROWSER_TOOLS = [
     }
   },
   {
+    name: 'auto_handle_consent',
+    description: 'Automatically detect and dismiss GDPR/cookie consent dialogs in any language. Call this if you see a consent popup blocking the page.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {}
+    }
+  },
+  {
     name: 'task_complete',
     description: 'Call this when you have completed the task. Provide your final answer.',
     input_schema: {
@@ -199,13 +207,14 @@ const BROWSER_TOOLS = [
 const SYSTEM_PROMPT = `You are a browser automation agent. Your job is to complete tasks by controlling a web browser.
 
 Available tools:
-- browser_navigate: Go to a URL
+- browser_navigate: Go to a URL (automatically handles consent dialogs after navigation)
 - browser_click: Click elements (by text or selector)
 - browser_type: Type into input fields
 - browser_get_content: Read page content
 - browser_screenshot: Take a screenshot
 - browser_back: Go back in history
-- task_complete: Report your final answer
+- auto_handle_consent: Manually trigger consent dialog handling if needed
+- task_complete: Report your final answer with ALL collected data
 
 Guidelines:
 1. Start by navigating to the relevant website
@@ -216,7 +225,44 @@ Guidelines:
 6. Be concise and efficient - minimize unnecessary actions
 7. If something fails, try an alternative approach
 
-Important: Always call task_complete when done with your final answer.`;
+CRITICAL - Handle Cookie Consent & Popups Automatically:
+Before starting any task, ALWAYS check for and dismiss cookie consent dialogs, privacy notices, or blocking popups.
+Common accept buttons to click (try in order until one works):
+- "Accept all" / "Accept All" / "Alle akzeptieren" / "Aceitar tudo" / "Akzeptieren"
+- "I agree" / "Ich stimme zu" / "Concordo" / "Agree"
+- "Got it" / "OK" / "Continue" / "Weiter"
+- "Allow all cookies" / "Alle Cookies erlauben"
+- Any button that dismisses the dialog to proceed
+
+If you see a consent dialog or popup:
+1. Immediately click the accept/agree button
+2. Wait for the dialog to close
+3. Then continue with the actual task
+
+CRITICAL - Data Collection Tasks:
+When the user asks you to collect data (read comments, get video info, extract text, etc.):
+1. Use browser_get_content to read the actual content from the page
+2. Parse and extract the requested information
+3. In task_complete, include ALL the data you collected in a structured format
+4. Never just say "task completed" - always include the actual collected data
+
+Example responses for task_complete:
+- If asked to read comments: Include the actual comments text in your result
+- If asked to get video info: Include title, views, likes, channel name, etc.
+- If asked to find information: Include the specific information found
+- For multi-step tasks: Report what was accomplished at each step
+
+Format your result clearly with sections like:
+## Summary
+Brief overview of what was done
+
+## Collected Data
+The actual data/content extracted from the page
+
+## Actions Taken
+List of steps completed
+
+Important: Always call task_complete when done with your final answer containing all collected data.`;
 
 export class BrowserAgent {
   private client: Anthropic;
@@ -235,7 +281,7 @@ export class BrowserAgent {
     });
     this.browserManager = browserManager;
     this.model = config.model || 'claude-haiku-4-5-20251001';
-    this.maxIterations = config.maxIterations || 30; // Increased default for longer tasks
+    this.maxIterations = config.maxIterations || 200; // High default for long tasks (can take hours)
     this.verbose = config.verbose || false;
     this.onProgress = config.onProgress;
     this.projectId = config.projectId;
@@ -258,7 +304,23 @@ export class BrowserAgent {
       switch (name) {
         case 'browser_navigate': {
           const snapshot = await this.browserManager.navigate(input.url);
-          return `Navigated to ${input.url}. Page title: ${snapshot.title}`;
+
+          // Automatically try to handle consent dialogs after navigation
+          const consentResult = await this.browserManager.autoHandleConsent();
+          const consentMsg = consentResult.handled
+            ? ` [Auto-dismissed consent dialog: "${consentResult.buttonClicked}"]`
+            : '';
+
+          return `Navigated to ${input.url}. Page title: ${snapshot.title}${consentMsg}`;
+        }
+
+        case 'auto_handle_consent': {
+          const result = await this.browserManager.autoHandleConsent();
+          if (result.handled) {
+            return `Successfully dismissed consent dialog by clicking "${result.buttonClicked}"`;
+          } else {
+            return 'No consent dialog found or all attempts failed';
+          }
         }
 
         case 'browser_click': {

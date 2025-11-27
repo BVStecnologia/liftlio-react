@@ -17,6 +17,7 @@ import {
 } from './humanization';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 
 export interface BrowserManagerConfig {
   projectId: string;
@@ -33,11 +34,13 @@ export interface BrowserSnapshot {
 }
 
 export class BrowserManager {
+  private browser: Browser | null = null;
   private context: BrowserContext | null = null;
   private page: Page | null = null;
   private config: BrowserManagerConfig;
   private proxyConfig: ProxyConfig | null = null;
   private behaviorProfile: BehaviorProfile | null = null;
+  private resourceBlockingEnabled: boolean = false;
 
   constructor(config: BrowserManagerConfig) {
     this.config = config;
@@ -72,8 +75,6 @@ export class BrowserManager {
   async initialize(): Promise<void> {
     console.log(`Initializing browser for project: ${this.config.projectId}`);
 
-    const profilePath = this.getProfilePath();
-
     const launchOptions: any = {
       headless: this.config.headless,
       args: [
@@ -83,7 +84,9 @@ export class BrowserManager {
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-accelerated-2d-canvas',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-http2',
+        '--mute-audio', // Mute audio to prevent issues with video playback
       ]
     };
 
@@ -92,9 +95,16 @@ export class BrowserManager {
       launchOptions.proxy = this.proxyConfig;
     }
 
-    // Launch persistent context (keeps profile data)
-    this.context = await chromium.launchPersistentContext(profilePath, {
-      ...launchOptions,
+    // Add proxy log
+    if (this.proxyConfig) {
+      console.log(`Using proxy: ${this.proxyConfig.server}`);
+    }
+
+    // Launch browser (not persistent context - better proxy compatibility)
+    this.browser = await chromium.launch(launchOptions);
+
+    // Create context with browser settings
+    this.context = await this.browser.newContext({
       viewport: { width: 1920, height: 1080 },
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       locale: 'en-US',
@@ -103,15 +113,229 @@ export class BrowserManager {
       ignoreHTTPSErrors: true
     });
 
-    // Get or create page
-    const pages = this.context.pages();
-    this.page = pages.length > 0 ? pages[0] : await this.context.newPage();
+    // Create page
+    this.page = await this.context.newPage();
+
+    // Set default timeouts
+    this.page.setDefaultTimeout(60000); // 60s for operations
+    this.page.setDefaultNavigationTimeout(90000); // 90s for navigation
+
+    // Add stealth scripts to hide automation
+    await this.setupStealthMode();
+
+    // Setup automatic cookie consent handlers using addLocatorHandler
+    await this.setupAutoConsentHandlers();
+
+    // Setup resource blocking for better performance (optional, call enableResourceBlocking() to activate)
+    await this.setupResourceBlocking();
 
     console.log(`Browser initialized for project: ${this.config.projectId}`);
   }
 
   /**
-   * Navigate to URL
+   * Setup stealth mode to avoid detection
+   */
+  private async setupStealthMode(): Promise<void> {
+    if (!this.page) return;
+
+    // Override navigator.webdriver and other detection points
+    await this.page.addInitScript(() => {
+      // Remove webdriver property
+      Object.defineProperty(navigator, 'webdriver', {
+        get: () => undefined,
+      });
+
+      // Override plugins to look like a real browser
+      Object.defineProperty(navigator, 'plugins', {
+        get: () => [1, 2, 3, 4, 5],
+      });
+
+      // Override languages
+      Object.defineProperty(navigator, 'languages', {
+        get: () => ['en-US', 'en', 'de', 'pt-BR'],
+      });
+
+      // Override permissions query
+      const originalQuery = window.navigator.permissions.query;
+      window.navigator.permissions.query = (parameters: any) =>
+        parameters.name === 'notifications'
+          ? Promise.resolve({ state: Notification.permission } as PermissionStatus)
+          : originalQuery(parameters);
+
+      // Override Chrome runtime
+      (window as any).chrome = {
+        runtime: {},
+      };
+    });
+
+    console.log('Stealth mode enabled');
+  }
+
+  /**
+   * Setup automatic cookie consent handlers using Playwright's addLocatorHandler
+   * These handlers fire automatically when the consent dialog appears
+   */
+  private async setupAutoConsentHandlers(): Promise<void> {
+    if (!this.page) return;
+
+    console.log('Setting up automatic consent handlers...');
+
+    // Common consent button texts in multiple languages
+    const consentTexts = [
+      // German (most common for EU proxies)
+      'Alle akzeptieren',
+      'Alle Cookies akzeptieren',
+      'Akzeptieren',
+      'Zustimmen',
+      // English
+      'Accept all',
+      'Accept All',
+      'Accept all cookies',
+      'I agree',
+      'Agree',
+      'Accept',
+      'Allow all',
+      'Allow All Cookies',
+      'Got it',
+      'OK',
+      // Portuguese
+      'Aceitar tudo',
+      'Aceitar todos',
+      'Concordo',
+      'Aceitar',
+      // Spanish
+      'Aceptar todo',
+      'Aceptar todas',
+      'Acepto',
+      // French
+      'Tout accepter',
+      'Accepter tout',
+      "J'accepte",
+    ];
+
+    // Register handler for each consent text
+    for (const text of consentTexts) {
+      try {
+        await this.page.addLocatorHandler(
+          this.page.getByRole('button', { name: text }),
+          async (button) => {
+            console.log(`[AUTO-CONSENT] Found and clicking: "${text}"`);
+            await button.click();
+            console.log(`[AUTO-CONSENT] Clicked: "${text}"`);
+          },
+          { times: 1, noWaitAfter: true }
+        );
+      } catch (e) {
+        // Handler registration failed, continue
+      }
+    }
+
+    // Also register handlers for common CSS selectors
+    const consentSelectors = [
+      '#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll', // CookieBot
+      '#onetrust-accept-btn-handler', // OneTrust
+      '.cc-accept', // Cookie Consent
+      '[data-testid="cookie-accept-all"]',
+      '[data-testid="accept-btn"]',
+      '[data-testid="GDPR-accept"]',
+      'button[id*="accept"][id*="cookie" i]',
+      'button[class*="accept"][class*="cookie" i]',
+      '[aria-label*="accept" i][aria-label*="cookie" i]',
+    ];
+
+    for (const selector of consentSelectors) {
+      try {
+        await this.page.addLocatorHandler(
+          this.page.locator(selector).first(),
+          async (button) => {
+            console.log(`[AUTO-CONSENT] Found by selector and clicking: ${selector}`);
+            await button.click();
+            console.log(`[AUTO-CONSENT] Clicked: ${selector}`);
+          },
+          { times: 1, noWaitAfter: true }
+        );
+      } catch (e) {
+        // Handler registration failed, continue
+      }
+    }
+
+    console.log('Automatic consent handlers registered');
+  }
+
+  /**
+   * Setup resource blocking to improve performance
+   * Call enableResourceBlocking() to activate
+   */
+  private async setupResourceBlocking(): Promise<void> {
+    if (!this.page) return;
+
+    // Block heavy resources by default for performance
+    await this.page.route('**/*', async (route) => {
+      if (!this.resourceBlockingEnabled) {
+        await route.continue();
+        return;
+      }
+
+      const resourceType = route.request().resourceType();
+      const url = route.request().url();
+
+      // Block video streaming (YouTube, etc.)
+      if (url.includes('googlevideo.com') ||
+          url.includes('videoplayback') ||
+          url.includes('.mp4') ||
+          url.includes('.webm') ||
+          url.includes('.m3u8')) {
+        console.log(`[BLOCKED] Video: ${url.substring(0, 80)}...`);
+        await route.abort();
+        return;
+      }
+
+      // Block heavy resource types
+      const blockedTypes = ['media']; // Only block media, keep images for screenshots
+      if (blockedTypes.includes(resourceType)) {
+        console.log(`[BLOCKED] ${resourceType}: ${url.substring(0, 50)}...`);
+        await route.abort();
+        return;
+      }
+
+      // Block analytics and trackers
+      const blockedDomains = [
+        'googletagmanager.com',
+        'google-analytics.com',
+        'facebook.net',
+        'doubleclick.net',
+        'hotjar.com',
+        'mixpanel.com',
+      ];
+
+      if (blockedDomains.some(domain => url.includes(domain))) {
+        await route.abort();
+        return;
+      }
+
+      await route.continue();
+    });
+  }
+
+  /**
+   * Enable resource blocking for better performance on video-heavy sites
+   */
+  enableResourceBlocking(): void {
+    this.resourceBlockingEnabled = true;
+    console.log('Resource blocking enabled');
+  }
+
+  /**
+   * Disable resource blocking
+   */
+  disableResourceBlocking(): void {
+    this.resourceBlockingEnabled = false;
+    console.log('Resource blocking disabled');
+  }
+
+  /**
+   * Navigate to URL with optimized loading
+   * Uses 'domcontentloaded' instead of waiting for all resources
    */
   async navigate(url: string): Promise<BrowserSnapshot> {
     if (!this.page) {
@@ -120,10 +344,14 @@ export class BrowserManager {
 
     console.log(`Navigating to: ${url}`);
 
+    // Use domcontentloaded for faster navigation (don't wait for images/videos)
     await this.page.goto(url, {
-      waitUntil: 'networkidle',
-      timeout: 30000
+      waitUntil: 'domcontentloaded',
+      timeout: 60000
     });
+
+    // Small delay to let consent handlers fire
+    await this.page.waitForTimeout(500);
 
     return this.getSnapshot();
   }
@@ -168,7 +396,7 @@ export class BrowserManager {
       await this.page.click(selector, { timeout: 10000 });
     }
 
-    await this.page.waitForLoadState('networkidle');
+    // Wait removed - matches Playwright MCP pattern
 
     return this.getSnapshot();
   }
@@ -222,6 +450,21 @@ export class BrowserManager {
   }
 
   /**
+   * Get screenshots directory (cross-platform)
+   */
+  private getScreenshotsDir(): string {
+    // Use project-local screenshots folder for cross-platform compatibility
+    const screenshotsDir = path.join(__dirname, '..', 'screenshots');
+
+    if (!fs.existsSync(screenshotsDir)) {
+      fs.mkdirSync(screenshotsDir, { recursive: true });
+      console.log(`Created screenshots directory: ${screenshotsDir}`);
+    }
+
+    return screenshotsDir;
+  }
+
+  /**
    * Take screenshot
    */
   async screenshot(): Promise<string> {
@@ -229,10 +472,23 @@ export class BrowserManager {
       throw new Error('Browser not initialized');
     }
 
-    const screenshotPath = path.join('/data/screenshots', `${this.config.projectId}_${Date.now()}.png`);
+    const screenshotsDir = this.getScreenshotsDir();
+    const screenshotPath = path.join(screenshotsDir, `${this.config.projectId}_${Date.now()}.png`);
     await this.page.screenshot({ path: screenshotPath, fullPage: false });
 
     return screenshotPath;
+  }
+
+  /**
+   * Take screenshot and return as base64
+   */
+  async screenshotBase64(): Promise<string> {
+    if (!this.page) {
+      throw new Error('Browser not initialized');
+    }
+
+    const buffer = await this.page.screenshot({ fullPage: false });
+    return buffer.toString('base64');
   }
 
   /**
@@ -323,7 +579,7 @@ export class BrowserManager {
     }
 
     await this.page.goBack();
-    await this.page.waitForLoadState('networkidle');
+    // Wait removed - matches Playwright MCP pattern
 
     return this.getSnapshot();
   }
@@ -337,7 +593,7 @@ export class BrowserManager {
     }
 
     await this.page.goForward();
-    await this.page.waitForLoadState('networkidle');
+    // Wait removed - matches Playwright MCP pattern
 
     return this.getSnapshot();
   }
@@ -350,7 +606,73 @@ export class BrowserManager {
       throw new Error('Browser not initialized');
     }
 
-    await this.page.reload({ waitUntil: 'networkidle' });
+    await this.page.reload();
+
+    return this.getSnapshot();
+  }
+
+  /**
+   * Click at specific coordinates (x, y)
+   * Used for real-time interaction when user clicks on screenshot
+   */
+  async clickAt(x: number, y: number): Promise<BrowserSnapshot> {
+    if (!this.page) {
+      throw new Error('Browser not initialized');
+    }
+
+    console.log(`Clicking at coordinates: (${x}, ${y})`);
+
+    // Use humanized mouse movement if behavior profile is set
+    if (this.behaviorProfile) {
+      const offset = this.behaviorProfile.click_offset || { x: 0, y: 0 };
+      await humanMouseMove(this.page, x, y, this.behaviorProfile.mouse, offset);
+      await humanDelay(this.behaviorProfile.delay);
+    }
+
+    await this.page.mouse.click(x, y);
+
+    // Small delay for page to react
+    await this.page.waitForTimeout(100);
+
+    return this.getSnapshot();
+  }
+
+  /**
+   * Type text directly (without targeting a specific element)
+   * Used for real-time keyboard input
+   */
+  async typeText(text: string, pressEnter: boolean = false): Promise<BrowserSnapshot> {
+    if (!this.page) {
+      throw new Error('Browser not initialized');
+    }
+
+    console.log(`Typing text: "${text}" (pressEnter: ${pressEnter})`);
+
+    // Type text with humanized delay if profile is set
+    if (this.behaviorProfile) {
+      const delay = getDelay(this.behaviorProfile.delay);
+      await this.page.keyboard.type(text, { delay });
+    } else {
+      await this.page.keyboard.type(text);
+    }
+
+    if (pressEnter) {
+      await this.page.keyboard.press('Enter');
+    }
+
+    return this.getSnapshot();
+  }
+
+  /**
+   * Press a specific key
+   */
+  async pressKey(key: string): Promise<BrowserSnapshot> {
+    if (!this.page) {
+      throw new Error('Browser not initialized');
+    }
+
+    console.log(`Pressing key: ${key}`);
+    await this.page.keyboard.press(key);
 
     return this.getSnapshot();
   }
@@ -363,8 +685,12 @@ export class BrowserManager {
       await this.context.close();
       this.context = null;
       this.page = null;
-      console.log(`Browser closed for project: ${this.config.projectId}`);
     }
+    if (this.browser) {
+      await this.browser.close();
+      this.browser = null;
+    }
+    console.log(`Browser closed for project: ${this.config.projectId}`);
   }
 
   /**
@@ -386,5 +712,113 @@ export class BrowserManager {
    */
   getPage(): Page | null {
     return this.page;
+  }
+
+  /**
+   * Automatically handle GDPR/cookie consent dialogs
+   * Tries multiple common consent buttons in different languages
+   * Returns true if consent was handled, false otherwise
+   */
+  async autoHandleConsent(): Promise<{ handled: boolean; buttonClicked: string | null }> {
+    if (!this.page) {
+      throw new Error('Browser not initialized');
+    }
+
+    console.log('Checking for consent dialogs...');
+
+    // Common consent button texts in multiple languages
+    const consentButtons = [
+      // German (common in EU)
+      'Alle akzeptieren',
+      'Akzeptieren',
+      'Alle Cookies akzeptieren',
+      'Zustimmen',
+      'Ich stimme zu',
+      // English
+      'Accept all',
+      'Accept All',
+      'I agree',
+      'Agree',
+      'Accept',
+      'Allow all',
+      'Allow All Cookies',
+      'Got it',
+      'OK',
+      'Continue',
+      // Portuguese
+      'Aceitar tudo',
+      'Aceitar todos',
+      'Concordo',
+      'Aceitar',
+      // Spanish
+      'Aceptar todo',
+      'Aceptar todas',
+      'Acepto',
+      // French
+      'Tout accepter',
+      'Accepter tout',
+      "J'accepte",
+      // Generic CSS selectors for consent buttons
+    ];
+
+    // Try each button text with a short timeout
+    for (const buttonText of consentButtons) {
+      try {
+        const button = this.page.getByText(buttonText, { exact: false }).first();
+
+        // Quick check if button exists (500ms timeout)
+        const isVisible = await button.isVisible({ timeout: 500 }).catch(() => false);
+
+        if (isVisible) {
+          console.log(`Found consent button: "${buttonText}"`);
+          await button.click({ timeout: 3000 });
+          console.log(`Clicked consent button: "${buttonText}"`);
+
+          // Wait briefly for dialog to close
+          await this.page.waitForTimeout(500);
+
+          return { handled: true, buttonClicked: buttonText };
+        }
+      } catch (e) {
+        // Button not found or click failed, try next
+        continue;
+      }
+    }
+
+    // Also try common CSS selectors for consent buttons
+    const consentSelectors = [
+      '[data-testid="accept-btn"]',
+      '[data-testid="GDPR-accept"]',
+      '.accept-cookies',
+      '#accept-cookies',
+      '.cookie-consent-accept',
+      '#cookie-accept',
+      '[aria-label*="accept"]',
+      '[aria-label*="Accept"]',
+      'button[id*="accept"]',
+      'button[class*="accept"]',
+      '.consent-accept',
+      '#consent-accept',
+    ];
+
+    for (const selector of consentSelectors) {
+      try {
+        const button = this.page.locator(selector).first();
+        const isVisible = await button.isVisible({ timeout: 300 }).catch(() => false);
+
+        if (isVisible) {
+          console.log(`Found consent button by selector: ${selector}`);
+          await button.click({ timeout: 2000 });
+          console.log(`Clicked consent button: ${selector}`);
+          await this.page.waitForTimeout(500);
+          return { handled: true, buttonClicked: selector };
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    console.log('No consent dialog found or all attempts failed');
+    return { handled: false, buttonClicked: null };
   }
 }

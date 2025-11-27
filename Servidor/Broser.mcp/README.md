@@ -1,513 +1,485 @@
 # Browser MCP - Liftlio Browser Automation System
 
-Sistema de automacao de browser com AI (Claude) para o Liftlio. Permite executar tarefas de browser automaticamente usando linguagem natural.
+Sistema de automacao de browser com AI (Claude) para o Liftlio.
+Permite executar tarefas automaticamente E acesso manual via VNC.
+
+---
 
 ## Arquitetura Geral
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         BROWSER MCP ARCHITECTURE                            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────┐     ┌──────────────────┐     ┌─────────────────────────┐  │
-│  │   Frontend  │     │     Supabase     │     │      VPS Server         │  │
-│  │   React     │     │                  │     │    173.249.22.2         │  │
-│  └──────┬──────┘     └────────┬─────────┘     └───────────┬─────────────┘  │
-│         │                     │                           │                 │
-│         │  INSERT task        │                           │                 │
-│         ├────────────────────►│                           │                 │
-│         │                     │                           │                 │
-│         │                     │  pg_cron (1 min)          │                 │
-│         │                     │  ─────────────────►       │                 │
-│         │                     │                           │                 │
-│         │                     │  ┌──────────────────┐     │                 │
-│         │                     │  │ browser-dispatch │     │                 │
-│         │                     │  │ Edge Function    │     │                 │
-│         │                     │  └────────┬─────────┘     │                 │
-│         │                     │           │               │                 │
-│         │                     │           │ HTTP POST     │                 │
-│         │                     │           │ /agent/task   │                 │
-│         │                     │           └──────────────►│                 │
-│         │                     │                           │                 │
-│         │                     │                    ┌──────┴──────┐          │
-│         │                     │                    │ Docker      │          │
-│         │                     │                    │ Orchestrator│          │
-│         │                     │                    └──────┬──────┘          │
-│         │                     │                           │                 │
-│         │                     │              ┌────────────┼────────────┐    │
-│         │                     │              │            │            │    │
-│         │                     │         ┌────▼───┐  ┌─────▼────┐ ┌─────▼──┐│
-│         │                     │         │Container│  │Container │ │Container││
-│         │                     │         │ :3001  │  │  :3002   │ │ :3003  ││
-│         │                     │         │Project1│  │ Project2 │ │Project3││
-│         │                     │         └────┬───┘  └──────────┘ └────────┘│
-│         │                     │              │                              │
-│         │                     │              │ Claude AI                    │
-│         │                     │              │ (Haiku)                      │
-│         │                     │              ▼                              │
-│         │                     │         ┌─────────┐                         │
-│         │                     │         │Playwright│                        │
-│         │                     │         │ Browser │                         │
-│         │                     │         └────┬────┘                         │
-│         │                     │              │                              │
-│         │                     │              │ DataImpulse                  │
-│         │                     │              │ Proxy (IP Residencial)       │
-│         │                     │              ▼                              │
-│         │                     │         ┌─────────┐                         │
-│         │                     │         │ YouTube │                         │
-│         │                     │         │ Google  │                         │
-│         │                     │         │ etc...  │                         │
-│         │                     │         └─────────┘                         │
-│         │                     │                                             │
-│         │                     │◄──────────────────────────────────────────  │
-│         │                     │         UPDATE task                         │
-│         │                     │         (completed/failed)                  │
-│         │                     │         + response JSON                     │
-│         │                     │                                             │
-│         │◄────────────────────┤  Realtime subscription                      │
-│         │   Task completed!   │                                             │
-│         │   + response data   │                                             │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
++------------------+     +-------------------+     +------------------+
+|   FRONTEND       |     |   SUPABASE        |     |   VPS SERVER     |
+|   (React)        |     |   (Edge/Cron)     |     |   173.249.22.2   |
++------------------+     +-------------------+     +------------------+
+        |                        |                        |
+        |   LOCAL DEV            |   PRODUCAO             |
+        |   (Docker direto)      |   (via Edge Functions) |
+        v                        v                        v
++-------+--------+       +-------+--------+       +-------+--------+
+|                |       |                |       |                |
+|  localhost:    |       |  browser-proxy |       |  Orchestrator  |
+|  3001          |       |  Edge Function |       |  :8080         |
+|                |       |                |       |                |
++----------------+       +-------+--------+       +-------+--------+
+                                 |                        |
+                                 |    Proxy todas         |
+                                 |    requisicoes         |
+                                 +------------------------+
+                                                          |
+                                                          v
+                                                  +-------+--------+
+                                                  |  Browser Agent |
+                                                  |  Container     |
+                                                  |  :10100+N      |
+                                                  +----------------+
 ```
 
-## Componentes
+---
 
-### 1. Tabela `browser_tasks` (Supabase)
+## Arquitetura Local vs Producao
 
-Armazena todas as tarefas de automacao.
+### LOCAL (Desenvolvimento)
 
-```sql
--- Estrutura da tabela
-CREATE TABLE browser_tasks (
-  id UUID PRIMARY KEY,
-  project_id BIGINT REFERENCES "Projeto"(id),
-
-  -- Tarefa
-  task TEXT NOT NULL,              -- "Faca login no YouTube e..."
-  task_type TEXT,                  -- action | query | scrape | login
-
-  -- Status
-  status TEXT,                     -- pending | running | completed | failed
-  priority INT,                    -- 1 (urgente) a 10 (baixa)
-
-  -- Resposta
-  response JSONB,                  -- { result, data, success }
-  error_message TEXT,
-
-  -- Metricas
-  iterations_used INT,
-  actions_taken JSONB,
-  started_at TIMESTAMPTZ,
-  completed_at TIMESTAMPTZ,
-  container_port INT,
-
-  -- Anti-detection: Padroes comportamentais usados nesta task
-  behavior_used JSONB,          -- { mouse, typing, scroll, delay, click_offset }
-
-  -- Meta
-  created_at TIMESTAMPTZ,
-  created_by UUID
-);
+```
+React App (localhost:3000)
+    |
+    | HTTP direto
+    v
+Docker Standalone (localhost:3001)
+    |
+    +-- Browser Agent
+    +-- Playwright + Chromium
+    +-- AI Agent (Claude Haiku)
 ```
 
-**Exemplo de INSERT:**
-```sql
-INSERT INTO browser_tasks (project_id, task, task_type, priority)
-VALUES (
-  58,
-  'Acesse youtube.com, procure por "AI news" e colete os titulos dos 5 primeiros videos',
-  'scrape',
-  5
-);
+**Comando:**
+```bash
+cd Servidor/Broser.mcp
+docker-compose -f docker-compose.standalone.yml up -d
 ```
 
-**Exemplo de response (scrape):**
-```json
-{
-  "result": "Encontrados 5 videos sobre AI news",
-  "success": true,
-  "data": {
-    "videos": [
-      {"title": "AI Revolution 2025", "views": "1.2M"},
-      {"title": "ChatGPT vs Claude", "views": "890K"}
-    ]
+**Variaveis (.env.development):**
+```
+REACT_APP_BROWSER_ORCHESTRATOR_URL=http://localhost:3001
+```
+
+### PRODUCAO (Deploy)
+
+```
+React App (liftlio.com)
+    |
+    | CORS-safe
+    v
+Edge Function: browser-proxy
+    |
+    | HTTP interno
+    v
+VPS Orchestrator (173.249.22.2:8080)
+    |
+    | Gerencia containers
+    v
+Browser Agents (:10100, :10101, ...)
+    |
+    | Callback async
+    v
+Edge Function: browser-webhook
+    |
+    | Atualiza status
+    v
+Supabase: browser_tasks
+```
+
+**Cron Job (pg_cron):**
+```
+* * * * *  -->  Edge Function: browser-dispatch
+                    |
+                    | Busca tasks pendentes
+                    | Despacha para Browser Agent
+                    v
+                browser_tasks.status = 'running'
+```
+
+---
+
+## Multi-Projeto com Isolamento
+
+Cada projeto tem container isolado:
+- Browser Chromium com perfil persistente
+- Agente AI Claude independente (1000 iteracoes)
+- IP residencial proprio via DataImpulse
+- VNC Server para acesso manual (on-demand)
+
+### Portas por Projeto
+
+| Projeto | MCP Port | VNC Port | DataImpulse | IP |
+|---------|----------|----------|-------------|------|
+| 0 | 10100 | 16080 | 823 | IP #1 |
+| 1 | 10101 | 16081 | 824 | IP #2 |
+| N | 10100+N | 16080+N | 823+N | IP #N+1 |
+
+---
+
+## Edge Functions (Supabase)
+
+### 1. browser-proxy
+
+**Proposito:** Proxy CORS-safe para frontend acessar VPS
+
+**URL:** `https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/browser-proxy`
+
+**Acoes suportadas:**
+
+| Action | Metodo | Descricao |
+|--------|--------|-----------|
+| `create` | POST | Cria container para projeto |
+| `delete` | POST | Remove container |
+| `status` | POST | Status do container |
+| `health` | GET | Health check do agent |
+| `screenshot` | GET | Screenshot base64 |
+| `click-at` | POST | Click em coordenadas |
+| `type-text` | POST | Digitar texto |
+| `press-key` | POST | Pressionar tecla |
+| `scroll` | POST | Scroll na pagina |
+
+**Acoes Neko (WebRTC para video):**
+
+| Action | Descricao |
+|--------|-----------|
+| `neko-start` | Inicia container Neko |
+| `neko-status` | Status do Neko |
+| `neko-stop` | Para container Neko |
+
+**Exemplo:**
+```typescript
+// Frontend React
+const response = await fetch(
+  'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/browser-proxy',
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${supabaseToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      action: 'create',
+      projectId: 'meu-projeto'
+    })
   }
-}
+);
 ```
 
-### Sistema de Humanização Anti-Detecção
+### 2. browser-dispatch
 
-O browser usa um sistema sofisticado para parecer humano e evitar detecção:
+**Proposito:** Despacha tarefas pendentes para Browser Agents
 
+**Chamado por:** pg_cron (a cada minuto)
+
+**verify_jwt:** false (interno)
+
+**Fluxo:**
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    ANTI-DETECTION: BEHAVIORAL MEMORY                        │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│   Task 1 (projeto 58) → grava behavior_used                                 │
-│   { mouse: "bezier_smooth", typing: "fast", scroll: "stepped" }             │
-│                                                                             │
-│                           ↓                                                 │
-│                                                                             │
-│   Task 2 (projeto 58) → CONSULTA últimas 5 tasks                            │
-│   "Já usaram bezier_smooth... vou usar OVERSHOOT"                           │
-│   { mouse: "overshoot", typing: "slow", scroll: "smooth" }                  │
-│                                                                             │
-│                           ↓                                                 │
-│                                                                             │
-│   Task 3 (projeto 58) → CONSULTA últimas 5 tasks                            │
-│   "Já usaram bezier_smooth, overshoot... vou usar ZIGZAG"                   │
-│   { mouse: "zigzag_subtle", typing: "burst", scroll: "fast_scan" }          │
-│                                                                             │
-│   ✅ RESULTADO: Cada sessão parece um humano diferente!                     │
-└─────────────────────────────────────────────────────────────────────────────┘
+1. SELECT * FROM browser_tasks WHERE status = 'pending'
+2. JOIN com Projeto para pegar browser_mcp_url
+3. POST para Browser Agent /agent/task
+4. UPDATE browser_tasks SET status = 'running'
+5. Quando agent termina, atualiza resultado
 ```
 
-**Padrões Disponíveis:**
-
-| Categoria | Padrões                                                    |
-|-----------|-----------------------------------------------------------|
-| Mouse     | bezier_smooth, bezier_fast, overshoot, zigzag_subtle, linear_jitter |
-| Digitação | hunt_peck, touch_typist, variable, burst, with_typos      |
-| Scroll    | smooth, stepped, fast_scan, mouse_wheel                   |
-| Delay     | impatient (500-1500ms), thoughtful (2-4s), erratic, natural |
-
-**Exemplo de behavior_used salvo:**
-```json
-{
-  "mouse": "overshoot",
-  "typing": "burst",
-  "scroll": "smooth",
-  "delay": "erratic",
-  "click_offset": {"x": 3, "y": -2},
-  "typing_speed_ms": 120
-}
-```
-
-**Benefícios:**
-- ✅ Anti-ML: Impossível treinar modelo contra padrões que sempre mudam
-- ✅ Por Projeto: Cada "usuário virtual" evolui independentemente
-- ✅ Auditável: Log completo de comportamentos no campo `behavior_used`
-- ✅ Realista: Humanos reais também variam comportamento
-
-### 2. Edge Function `browser-dispatch`
-
-Dispara tarefas pendentes para o Browser Agent.
-
-- **Trigger:** pg_cron a cada 1 minuto
-- **Funcao:** Busca tasks `pending`, envia para Agent, atualiza status
-
-```bash
-# Testar manualmente
-curl -X POST "https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/browser-dispatch" \
-  -H "Authorization: Bearer YOUR_ANON_KEY" \
-  -H "Content-Type: application/json"
-```
-
-### 3. Edge Function `browser-webhook`
-
-Recebe callbacks do Agent (para tarefas longas assincronas).
-
-```bash
-# Agent chama quando termina
-curl -X POST "https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/browser-webhook" \
-  -H "X-Webhook-Secret: liftlio-browser-webhook-2025" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "taskId": "uuid-da-task",
-    "success": true,
-    "result": "Tarefa concluida",
-    "iterations": 8,
-    "data": {"key": "value"}
-  }'
-```
-
-### 4. Browser Agent (Docker Container)
-
-Servidor Node.js com Playwright + Claude AI.
-
-**Endpoints principais:**
-
-| Endpoint | Metodo | Descricao |
-|----------|--------|-----------|
-| `/health` | GET | Status do container |
-| `/agent/task` | POST | Executa uma tarefa |
-| `/agent/task-list` | POST | Executa lista de tarefas |
-| `/mcp/navigate` | POST | Navegar para URL |
-| `/mcp/click` | POST | Clicar em elemento |
-| `/mcp/type` | POST | Digitar texto |
-| `/mcp/snapshot` | GET | Capturar estado da pagina |
-| `/sse` | GET | Server-Sent Events (progresso) |
-
-**Exemplo de uso:**
-
-```bash
-# Tarefa unica
-curl -X POST "http://173.249.22.2:3001/agent/task" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "task": "Va ao Google e pesquise por Anthropic Claude",
-    "maxIterations": 30
-  }'
-
-# Lista de tarefas
-curl -X POST "http://173.249.22.2:3001/agent/task-list" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tasks": [
-      "Acesse youtube.com",
-      "Pesquise por AI tutorials",
-      "Clique no primeiro video",
-      "Colete o titulo e descricao"
-    ],
-    "maxIterationsPerTask": 20
-  }'
-```
-
-### 5. Docker Orchestrator
-
-Gerencia multiplos containers (1 por projeto).
-
-```bash
-# Criar novo container para projeto
-curl -X POST "http://173.249.22.2:3000/containers" \
-  -H "Content-Type: application/json" \
-  -d '{"projectId": "meu-projeto"}'
-
-# Listar containers
-curl "http://173.249.22.2:3000/containers"
-
-# Remover container
-curl -X DELETE "http://173.249.22.2:3000/containers/meu-projeto"
-```
-
-## Configuracao de Ambiente
-
-### VPS (.env)
-
-```env
-# DataImpulse Proxy (IP Residencial)
-DATAIMPULSE_LOGIN=2e6fd60c4b7ca899cef0
-DATAIMPULSE_PASSWORD=5742ea9e468dae46
-DATAIMPULSE_HOST=gw.dataimpulse.com
-DATAIMPULSE_STICKY_BASE_PORT=823
-
-# Claude API
-CLAUDE_API_KEY=sk-ant-api03-xxx
-
-# Seguranca
-API_SECRET_KEY=liftlio-browser-mcp-secret-key-2025
-
-# Server
-HOST_IP=173.249.22.2
-MAX_CONTAINERS=6
-SESSION_TIMEOUT_MINUTES=30
-```
-
-### Supabase Secrets
-
-```bash
-# Configurar no Dashboard > Edge Functions > Secrets
-BROWSER_AGENT_HOST=173.249.22.2
-BROWSER_AGENT_BASE_PORT=3001
-BROWSER_WEBHOOK_SECRET=liftlio-browser-webhook-2025
-```
-
-## Fluxo Completo de uma Tarefa
-
-```
-1. Frontend/Cron insere tarefa na tabela
-   INSERT INTO browser_tasks (project_id, task) VALUES (58, 'Login no YouTube')
-   status = 'pending'
-
-2. pg_cron dispara browser-dispatch (a cada 1 min)
-   SELECT * FROM browser_tasks WHERE status = 'pending'
-
-3. browser-dispatch envia para Browser Agent
-   POST http://173.249.22.2:3001/agent/task
-   UPDATE browser_tasks SET status = 'running'
-
-4. Browser Agent executa com Claude AI
-   - Claude decide acoes (navigate, click, type)
-   - Playwright executa no browser
-   - DataImpulse fornece IP residencial
-
-5. Agent responde (sincrono) ou chama webhook (assincrono)
-   UPDATE browser_tasks SET
-     status = 'completed',
-     response = '{"result": "...", "data": {...}}'
-
-6. Frontend recebe via Realtime subscription
-   supabase.channel('browser_tasks')
-     .on('postgres_changes', ...)
-```
-
-## Deploy
-
-### 1. VPS (173.249.22.2)
-
-```bash
-# SSH no servidor
-ssh root@173.249.22.2
-
-# Clonar/atualizar codigo
-cd /opt/browser-mcp
-git pull
-
-# Build e start containers
-docker-compose build
-docker-compose up -d
-
-# Ver logs
-docker-compose logs -f
-```
-
-### 2. Supabase
-
-```bash
-# Edge Functions (ja deployadas)
-# - browser-dispatch
-# - browser-webhook
-
-# Cron job (configurar no Dashboard > Database > Extensions > pg_cron)
+**SQL do Cron:**
+```sql
 SELECT cron.schedule(
-  'browser-dispatch-cron',
-  '* * * * *',  -- A cada minuto
+  'dispatch-browser-tasks',
+  '* * * * *',
   $$
   SELECT net.http_post(
     url := 'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/browser-dispatch',
-    headers := '{"Authorization": "Bearer YOUR_SERVICE_ROLE_KEY"}'::jsonb
+    headers := '{"Content-Type": "application/json"}'::jsonb,
+    body := '{}'::jsonb
   );
   $$
 );
 ```
 
-## Estrutura de Arquivos
+### 3. browser-webhook
 
-```
-Servidor/Broser.mcp/
-├── README.md                    # Este arquivo
-├── .env                         # Variaveis de ambiente
-├── docker-compose.yml           # Orquestracao Docker
-├── orchestrator/                # API de gerenciamento
-│   ├── Dockerfile
-│   ├── package.json
-│   └── src/
-│       └── index.ts
-└── browser-agent/               # Agente com Playwright + Claude
-    ├── Dockerfile
-    ├── package.json
-    ├── tsconfig.json
-    └── src/
-        ├── index.ts             # Servidor Express
-        ├── agent.ts             # Claude AI Agent
-        ├── agent-endpoint.ts    # Endpoints /agent/*
-        ├── browser-manager.ts   # Gerenciador Playwright
-        └── proxy-config.ts      # Config DataImpulse
+**Proposito:** Recebe callbacks assincronos do Browser Agent
+
+**Autenticacao:** Header `X-Webhook-Secret`
+
+**Payload esperado:**
+```json
+{
+  "taskId": "uuid",
+  "success": true,
+  "result": "Tarefa concluida com sucesso",
+  "iterations": 5,
+  "actions": ["navigate", "click", "type"],
+  "behaviorUsed": "bezier_smooth"
+}
 ```
 
-## Recursos
+**Atualiza:**
+```sql
+UPDATE browser_tasks SET
+  status = 'completed',
+  response = result,
+  iterations_used = iterations,
+  actions_taken = actions,
+  behavior_used = behaviorUsed,
+  completed_at = now()
+WHERE id = taskId;
+```
 
-- **Modelo AI:** Claude Haiku (claude-haiku-4-5-20251001) - $0.80/1M input tokens
-- **Browser:** Chromium via Playwright
-- **Proxy:** DataImpulse (IP residencial sticky)
-- **Persistencia:** Chrome profile salvo em volume Docker
-- **Max containers:** 6 (1 por projeto)
-- **Iteracoes por tarefa:** 30 (configuravel)
+---
 
-## Troubleshooting
+## Tabelas Supabase
 
-### Task fica em "pending" forever
-- Verificar se pg_cron esta ativo
-- Verificar logs da Edge Function browser-dispatch
-- Testar manualmente: `curl -X POST .../browser-dispatch`
+### Projeto (campos browser)
 
-### Agent nao responde
-- Verificar container: `docker ps`
-- Ver logs: `docker logs browser-agent-1`
-- Testar health: `curl http://173.249.22.2:3001/health`
+| Campo | Tipo | Descricao |
+|-------|------|-----------|
+| browser_mcp_url | text | URL do MCP container |
+| browser_vnc_url | text | URL do noVNC |
+| browser_session_status | text | inactive/creating/running/stopped/error |
+| browser_session_started_at | timestamp | Quando iniciou |
+| browser_container_id | text | Docker container ID |
 
-### Proxy bloqueado
-- Verificar credenciais DataImpulse
-- Mudar porta sticky (cada porta = IP diferente)
-- Verificar saldo de trafego em dataimpulse.com
+### browser_tasks
 
-### Claude retorna erro
-- Verificar CLAUDE_API_KEY no .env
-- Verificar limites de rate da API
-- Ver logs do agent para erro especifico
+| Campo | Tipo | Descricao |
+|-------|------|-----------|
+| id | uuid | PK |
+| project_id | int | FK -> Projeto |
+| task | text | Descricao da tarefa |
+| task_type | text | Tipo (navigate, click, etc) |
+| status | text | pending/running/completed/failed |
+| priority | int | Prioridade (menor = mais urgente) |
+| response | text | Resultado da execucao |
+| error_message | text | Erro se falhou |
+| iterations_used | int | Quantas iteracoes o agent usou |
+| actions_taken | text[] | Acoes executadas |
+| behavior_used | text | Padrao anti-deteccao usado |
+| container_port | int | Porta do container |
+| started_at | timestamp | Inicio da execucao |
+| completed_at | timestamp | Fim da execucao |
 
-## Custos Estimados
+---
 
-| Recurso | Custo |
-|---------|-------|
-| Claude Haiku | ~$0.80/1M input, $4/1M output |
-| DataImpulse | ~$1/GB trafego |
-| VPS | Ja incluso no servidor existente |
-| Supabase | Ja incluso no plano atual |
+## Orchestrator (porta 8080)
 
-**Estimativa por tarefa:** $0.001 - $0.01 dependendo da complexidade
+**API Key:** `liftlio-browser-mcp-secret-key-2025`
 
-## SSH Access - Deploy
+### Endpoints
 
-### Dados do Servidor
-- **IP**: 173.249.22.2
-- **Usuario**: root
-- **Porta**: 22
-- **Chave SSH**: `C:/c/Users/User/.ssh/contabo_key_new`
-
-### Comando SSH (Windows)
+**Criar container:**
 ```bash
-ssh -i "C:/c/Users/User/.ssh/contabo_key_new" root@173.249.22.2
+curl -X POST http://173.249.22.2:8080/containers \
+  -H "X-API-Key: liftlio-browser-mcp-secret-key-2025" \
+  -H "Content-Type: application/json" \
+  -d '{"projectId": "meu-projeto"}'
 ```
 
-### Deploy Rapido
+**Listar containers:**
 ```bash
-# 1. Conectar
-ssh -i "C:/c/Users/User/.ssh/contabo_key_new" root@173.249.22.2
-
-# 2. No servidor:
-cd /opt/browser-mcp
-docker-compose down
-docker-compose up -d --build
-
-# 3. Verificar
-docker ps
-curl http://localhost:3001/health
+curl http://173.249.22.2:8080/containers \
+  -H "X-API-Key: liftlio-browser-mcp-secret-key-2025"
 ```
 
-### Copiar arquivos (SCP)
+**Deletar container:**
 ```bash
-# Copiar arquivo especifico
-scp -i "C:/c/Users/User/.ssh/contabo_key_new" arquivo.ts root@173.249.22.2:/opt/browser-mcp/browser-agent/src/
-
-# Copiar pasta inteira
-scp -i "C:/c/Users/User/.ssh/contabo_key_new" -r browser-agent/src/ root@173.249.22.2:/opt/browser-mcp/browser-agent/
+curl -X DELETE http://173.249.22.2:8080/containers/meu-projeto \
+  -H "X-API-Key: liftlio-browser-mcp-secret-key-2025"
 ```
 
-### Comandos Uteis
+---
+
+## Browser Agent (1 por projeto)
+
+### Endpoints
+
+| Endpoint | Metodo | Descricao |
+|----------|--------|-----------|
+| `/health` | GET | Health check |
+| `/agent/task` | POST | Executa tarefa AI |
+| `/agent/task-list` | POST | Lista de tarefas |
+| `/mcp/snapshot` | GET | Accessibility snapshot |
+| `/mcp/screenshot` | GET | Screenshot base64 |
+| `/mcp/navigate` | POST | Navegar para URL |
+| `/mcp/click` | POST | Click por ref |
+| `/mcp/type` | POST | Digitar texto |
+| `/sse` | GET | Server-Sent Events |
+
+### Exemplo Task AI
+
 ```bash
-# Ver logs
-ssh -i "C:/c/Users/User/.ssh/contabo_key_new" root@173.249.22.2 "docker logs browser-agent-1 --tail 50"
-
-# Ver containers
-ssh -i "C:/c/Users/User/.ssh/contabo_key_new" root@173.249.22.2 "docker ps"
-
-# Restart container
-ssh -i "C:/c/Users/User/.ssh/contabo_key_new" root@173.249.22.2 "cd /opt/browser-mcp && docker-compose restart"
-```
-
-### Testar Task
-```bash
-curl -X POST "http://173.249.22.2:3001/agent/task" \
+curl -X POST http://173.249.22.2:10100/agent/task \
   -H "Content-Type: application/json" \
   -d '{
-    "task": "Acesse google.com e me diga o titulo da pagina",
-    "projectId": 58,
-    "taskId": "test-123"
+    "task": "Acesse youtube.com e pesquise por Liftlio",
+    "model": "claude-haiku-4-5-20251001",
+    "verbose": true
   }'
 ```
 
-### Problemas SSH?
-Ver documentacao completa: `/Servidor/ACESSO_SSH_WINDOWS.md`
+---
+
+## VNC - Acesso Manual
+
+Para usuarios usarem navegador manualmente (logins no YouTube, assistir videos, etc).
+
+### Servicos no Container
+
+| Servico | Funcao |
+|---------|--------|
+| Xvfb | Virtual Frame Buffer |
+| x11vnc | VNC Server |
+| websockify | WebSocket proxy |
+| noVNC | Cliente web |
+| supervisor | Gerencia processos |
+
+### VNC-on-Demand
+
+- Servicos VNC iniciam apenas quando usuario conecta
+- Sem consumo de recursos quando inativo
+- Autenticacao via JWT (sem senha no painel)
+
+### Opcoes de Implementacao
+
+| Opcao | Prós | Contras |
+|-------|------|---------|
+| noVNC + react-vnc | Simples, leve | Audio limitado |
+| Neko | Excelente video/audio | Mais recursos |
+| Kasm | Enterprise-ready | Complexo |
+
+### React Integration
+
+```bash
+npm install react-vnc --legacy-peer-deps
+```
+
+```tsx
+import { VncScreen } from 'react-vnc';
+
+<VncScreen
+  url={`wss://173.249.22.2:16080?token=${jwtToken}`}
+  scaleViewport
+  autoConnect
+/>
+```
+
+---
+
+## Anti-Deteccao
+
+Padroes comportamentais variaveis por tarefa:
+
+| Tipo | Padroes |
+|------|---------|
+| Mouse | bezier_smooth, overshoot, zigzag |
+| Digitacao | burst, hunt_peck, with_typos |
+| Scroll | smooth, stepped, fast_scan |
+| Delay | impatient, thoughtful, erratic |
+
+---
+
+## Deploy
+
+### Local (Standalone)
+
+```bash
+cd Servidor/Broser.mcp
+docker-compose -f docker-compose.standalone.yml up -d
+```
+
+### Producao (VPS)
+
+```bash
+ssh root@173.249.22.2
+cd /opt/browser-mcp
+docker-compose up -d
+```
+
+### Edge Functions
+
+```bash
+# Via Supabase CLI
+supabase functions deploy browser-proxy
+supabase functions deploy browser-dispatch
+supabase functions deploy browser-webhook
+
+# Via MCP
+mcp__supabase__deploy_edge_function(...)
+```
+
+---
+
+## Custos Estimados
+
+| Item | Custo |
+|------|-------|
+| Claude Haiku | ~$0.80/1M input tokens |
+| DataImpulse | ~$1/GB |
+| Por tarefa simples | $0.001-$0.01 |
+
+---
+
+## Arquivos Importantes
+
+```
+Servidor/Broser.mcp/
+├── docker-compose.yml           # Multi-projeto (orchestrator)
+├── docker-compose.standalone.yml # Container unico (dev local)
+├── orchestrator/
+│   └── src/
+│       ├── index.ts             # API orchestrator
+│       └── container-manager.ts # Gerencia Docker containers
+├── browser-agent/
+│   ├── Dockerfile               # Imagem com Playwright
+│   └── src/
+│       ├── index.ts             # API do agent
+│       ├── agent.ts             # AI Agent (Claude)
+│       ├── browser-manager.ts   # Controle Playwright
+│       └── humanization.ts      # Anti-deteccao
+└── README.md                    # Este arquivo
+
+liftlio-react/supabase/functions/
+├── browser-proxy/index.ts       # Proxy CORS
+├── browser-dispatch/index.ts    # Cron dispatcher
+└── browser-webhook/index.ts     # Callback receiver
+```
+
+---
+
+## Fluxo Completo de uma Tarefa
+
+```
+1. Usuario cria tarefa no Liftlio
+   |
+   v
+2. INSERT browser_tasks (status: pending)
+   |
+   v
+3. pg_cron dispara a cada minuto
+   |
+   v
+4. browser-dispatch busca tasks pendentes
+   |
+   v
+5. POST /agent/task para Browser Agent
+   |
+   v
+6. Agent executa com Claude Haiku
+   |  - Usa padrao anti-deteccao
+   |  - Screenshot + accessibility
+   |  - Até 1000 iteracoes
+   |
+   v
+7. Agent retorna resultado
+   |
+   v
+8. browser_tasks atualizado (status: completed)
+   |
+   v
+9. Usuario ve resultado no dashboard
+```

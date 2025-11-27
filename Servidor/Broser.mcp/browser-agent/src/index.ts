@@ -78,6 +78,68 @@ app.get('/health', (req, res) => {
 });
 
 /**
+ * Container status endpoint (for frontend compatibility)
+ * Simulates orchestrator response in standalone mode
+ */
+app.get('/containers', (req, res) => {
+  res.json({
+    count: 1,
+    containers: [{
+      projectId: PROJECT_ID,
+      status: 'running',
+      mcpUrl: `http://localhost:${PORT}`,
+      mcpPort: PORT,
+      browserRunning: browserManager?.isRunning() || false,
+      currentUrl: browserManager?.getCurrentUrl() || null,
+      createdAt: new Date().toISOString(),
+      lastActivity: new Date().toISOString()
+    }]
+  });
+});
+
+/**
+ * Get specific container (for frontend compatibility)
+ */
+app.get('/containers/:projectId', (req, res) => {
+  res.json({
+    projectId: req.params.projectId || PROJECT_ID,
+    status: 'running',
+    mcpUrl: `http://localhost:${PORT}`,
+    mcpPort: PORT,
+    browserRunning: browserManager?.isRunning() || false,
+    currentUrl: browserManager?.getCurrentUrl() || null,
+    createdAt: new Date().toISOString(),
+    lastActivity: new Date().toISOString()
+  });
+});
+
+/**
+ * Create container (for frontend compatibility - no-op in standalone)
+ */
+app.post('/containers', (req, res) => {
+  const { projectId } = req.body;
+  res.status(201).json({
+    success: true,
+    container: {
+      projectId: projectId || PROJECT_ID,
+      status: 'running',
+      mcpUrl: `http://localhost:${PORT}`,
+      mcpPort: PORT
+    }
+  });
+});
+
+/**
+ * Heartbeat (for frontend compatibility)
+ */
+app.post('/containers/:projectId/heartbeat', (req, res) => {
+  res.json({
+    success: true,
+    lastActivity: new Date().toISOString()
+  });
+});
+
+/**
  * SSE endpoint for real-time updates
  */
 app.get('/sse', (req, res) => {
@@ -367,9 +429,159 @@ app.post('/mcp/evaluate', async (req, res) => {
 });
 
 /**
+ * MCP Tool: Click at coordinates (for real-time interaction)
+ */
+app.post('/mcp/click-at', async (req, res) => {
+  try {
+    const { x, y } = req.body;
+
+    if (x === undefined || y === undefined) {
+      return res.status(400).json({ error: 'x and y coordinates are required' });
+    }
+
+    if (!browserManager?.isRunning()) {
+      return res.status(400).json({ error: 'Browser not initialized' });
+    }
+
+    const snapshot = await browserManager.clickAt(x, y);
+
+    broadcastEvent('click_at', { x, y, snapshot });
+
+    res.json({ success: true, snapshot });
+  } catch (error: any) {
+    console.error('Click at coordinates failed:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * MCP Tool: Type text directly (for real-time keyboard input)
+ */
+app.post('/mcp/type-text', async (req, res) => {
+  try {
+    const { text, pressEnter } = req.body;
+
+    if (!text) {
+      return res.status(400).json({ error: 'text is required' });
+    }
+
+    if (!browserManager?.isRunning()) {
+      return res.status(400).json({ error: 'Browser not initialized' });
+    }
+
+    const snapshot = await browserManager.typeText(text, pressEnter === true);
+
+    broadcastEvent('type_text', { text: text.substring(0, 50), snapshot });
+
+    res.json({ success: true, snapshot });
+  } catch (error: any) {
+    console.error('Type text failed:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * MCP Tool: Press a key
+ */
+app.post('/mcp/press-key', async (req, res) => {
+  try {
+    const { key } = req.body;
+
+    if (!key) {
+      return res.status(400).json({ error: 'key is required' });
+    }
+
+    if (!browserManager?.isRunning()) {
+      return res.status(400).json({ error: 'Browser not initialized' });
+    }
+
+    const snapshot = await browserManager.pressKey(key);
+
+    broadcastEvent('press_key', { key, snapshot });
+
+    res.json({ success: true, snapshot });
+  } catch (error: any) {
+    console.error('Press key failed:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * MCP Tool: Scroll page
+ */
+app.post('/mcp/scroll', async (req, res) => {
+  try {
+    const { direction, amount } = req.body;
+
+    if (!direction || !['up', 'down'].includes(direction)) {
+      return res.status(400).json({ error: 'direction must be "up" or "down"' });
+    }
+
+    if (!browserManager?.isRunning()) {
+      return res.status(400).json({ error: 'Browser not initialized' });
+    }
+
+    const snapshot = await browserManager.scroll(direction, amount || 500);
+
+    broadcastEvent('scroll', { direction, amount: amount || 500, snapshot });
+
+    res.json({ success: true, snapshot });
+  } catch (error: any) {
+    console.error('Scroll failed:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
  * Close browser
  */
 app.post('/browser/close', async (req, res) => {
+  try {
+    if (browserManager) {
+      await browserManager.close();
+      browserManager = null;
+    }
+
+    broadcastEvent('browser_closed', { projectId: PROJECT_ID });
+
+    res.json({ success: true, message: 'Browser closed' });
+  } catch (error: any) {
+    console.error('Failed to close browser:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * MCP aliases for consistency with frontend
+ */
+app.post('/mcp/init', async (req, res) => {
+  try {
+    const { projectId, headless } = req.body;
+    const useHeadless = headless !== undefined ? headless : HEADLESS;
+
+    if (browserManager?.isRunning()) {
+      return res.json({ success: true, message: 'Browser already running' });
+    }
+
+    browserManager = new BrowserManager({
+      projectId: projectId || PROJECT_ID,
+      projectIndex: PROJECT_INDEX,
+      profilesDir: PROFILES_DIR,
+      headless: useHeadless
+    });
+
+    await browserManager.initialize();
+
+    broadcastEvent('browser_initialized', { projectId: projectId || PROJECT_ID });
+
+    res.json({ success: true, message: 'Browser initialized' });
+  } catch (error: any) {
+    console.error('Failed to initialize browser:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/mcp/close', async (req, res) => {
   try {
     if (browserManager) {
       await browserManager.close();

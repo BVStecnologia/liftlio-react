@@ -1536,7 +1536,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
     { path: '/settings', label: t('nav.settings'), icon: 'FaCog' },
     { path: '/billing', label: 'Billing', icon: 'FaCreditCard' },
     { path: '/integrations', label: t('nav.integrations'), icon: 'FaPlug' },
-    { path: '/browser', label: 'Browser', icon: 'FaGlobe' }
+    { path: '/computer', label: 'Computer', icon: 'FaDesktop' }
   ];
 
   // AI Assistant action item (mobile only)

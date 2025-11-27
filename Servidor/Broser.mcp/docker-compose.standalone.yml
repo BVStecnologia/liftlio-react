@@ -1,0 +1,82 @@
+version: '3.8'
+
+# ===========================================
+# Browser MCP - Standalone (Single Container)
+# ===========================================
+#
+# Simplified architecture: One container with everything
+# - Browser Agent with Playwright + Chromium
+# - AI Agent endpoint
+# - MCP API
+# - Residential proxy support
+#
+# Usage:
+#   docker-compose -f docker-compose.standalone.yml up -d
+#
+# API will be available at http://localhost:3000
+#
+
+services:
+  browser:
+    build:
+      context: ./browser-agent
+      dockerfile: Dockerfile
+    image: liftlio/browser:latest
+    container_name: liftlio-browser
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - MCP_PORT=3000
+      - PROJECT_ID=${PROJECT_ID:-liftlio}
+      - PROJECT_INDEX=0
+      - PROFILES_DIR=/data/profiles
+      - HEADLESS=${HEADLESS:-true}
+      # Claude API for AI agent
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      # Supabase for task tracking
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      # DataImpulse proxy (optional)
+      - DATAIMPULSE_LOGIN=${DATAIMPULSE_LOGIN}
+      - DATAIMPULSE_PASSWORD=${DATAIMPULSE_PASSWORD}
+      - DATAIMPULSE_HOST=${DATAIMPULSE_HOST:-gw.dataimpulse.com}
+      - DATAIMPULSE_PORT=${DATAIMPULSE_PORT:-823}
+    ports:
+      - "3001:3000"
+    volumes:
+      # Persistent browser profile (keeps logins, cookies)
+      - browser-profiles:/data/profiles
+      # Screenshots storage
+      - browser-screenshots:/data/screenshots
+    networks:
+      - browser-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  browser-profiles:
+    name: liftlio-browser-profiles
+  browser-screenshots:
+    name: liftlio-browser-screenshots
+
+networks:
+  browser-network:
+    name: liftlio-browser-network
+    driver: bridge

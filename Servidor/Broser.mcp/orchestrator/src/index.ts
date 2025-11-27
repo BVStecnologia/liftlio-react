@@ -21,7 +21,10 @@ import {
   getAllSessions,
   cleanupInactiveSessions,
   syncWithDocker,
-  getStats
+  getStats,
+  createNekoContainer,
+  destroyNekoContainer,
+  getNekoStatus
 } from './container-manager';
 
 // Load environment variables
@@ -138,7 +141,9 @@ app.post('/containers', async (req, res) => {
         status: session.status,
         mcpUrl: session.mcpUrl,
         mcpPort: session.mcpPort,
-        proxyPort: session.proxyPort
+        proxyPort: session.proxyPort,
+        vncPort: session.vncPort,
+        vncUrl: session.vncUrl
       }
     });
   } catch (error: any) {
@@ -176,6 +181,8 @@ app.get('/containers/:projectId', (req, res) => {
     mcpUrl: session.mcpUrl,
     mcpPort: session.mcpPort,
     proxyPort: session.proxyPort,
+    vncPort: session.vncPort,
+    vncUrl: session.vncUrl,
     createdAt: session.createdAt,
     lastActivity: session.lastActivity
   });
@@ -256,6 +263,58 @@ app.all('/containers/:projectId/mcp/*', async (req, res) => {
 });
 
 /**
+ * Proxy Agent request to the project's container
+ * This handles AI agent task endpoints like /agent/task
+ */
+app.all('/containers/:projectId/agent/*', async (req, res) => {
+  const { projectId } = req.params;
+
+  const session = getSession(projectId);
+
+  if (!session) {
+    return res.status(404).json({
+      error: 'Not Found',
+      message: `No container found for project ${projectId}`
+    });
+  }
+
+  if (session.status !== 'running') {
+    return res.status(503).json({
+      error: 'Service Unavailable',
+      message: `Container for project ${projectId} is not running`
+    });
+  }
+
+  // Get the agent path (everything after /agent/)
+  const agentPath = req.path.replace(`/containers/${projectId}/agent`, '');
+  const targetUrl = `${session.mcpUrl}/agent${agentPath}`;
+
+  console.log(`Proxying agent request to ${targetUrl}`);
+
+  try {
+    const response = await fetch(targetUrl, {
+      method: req.method,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': API_SECRET_KEY || ''
+      },
+      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined
+    });
+
+    const data = await response.json();
+
+    res.status(response.status).json(data);
+  } catch (error: any) {
+    console.error(`Agent proxy error for project ${projectId}:`, error);
+
+    res.status(502).json({
+      error: 'Bad Gateway',
+      message: `Failed to proxy request to container: ${error.message}`
+    });
+  }
+});
+
+/**
  * Keep session alive (heartbeat)
  */
 app.post('/containers/:projectId/heartbeat', (req, res) => {
@@ -291,10 +350,96 @@ app.get('/containers', (req, res) => {
       containerName: s.containerName,
       status: s.status,
       mcpUrl: s.mcpUrl,
+      mcpPort: s.mcpPort,
+      vncPort: s.vncPort,
+      vncUrl: s.vncUrl,
       createdAt: s.createdAt,
       lastActivity: s.lastActivity
     }))
   });
+});
+
+// ==========================================
+// NEKO (WebRTC Real-Time Browser) Endpoints
+// ==========================================
+
+/**
+ * Start Neko container for a project
+ * Requires browser agent container to exist first
+ */
+app.post('/neko/:projectId/start', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+
+    console.log(`Starting Neko for project: ${projectId}`);
+
+    const session = await createNekoContainer(projectId);
+
+    res.status(201).json({
+      success: true,
+      neko: {
+        projectId: session.projectId,
+        nekoContainerId: session.nekoContainerId,
+        nekoContainerName: session.nekoContainerName,
+        nekoStatus: session.nekoStatus,
+        nekoPort: session.nekoPort,
+        nekoUrl: session.nekoUrl
+      }
+    });
+  } catch (error: any) {
+    console.error('Failed to start Neko:', error);
+
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Get Neko status for a project
+ */
+app.get('/neko/:projectId/status', (req, res) => {
+  const { projectId } = req.params;
+
+  const nekoStatus = getNekoStatus(projectId);
+
+  if (!nekoStatus) {
+    return res.status(404).json({
+      error: 'Not Found',
+      message: `No session found for project ${projectId}`
+    });
+  }
+
+  res.json({
+    projectId,
+    ...nekoStatus
+  });
+});
+
+/**
+ * Stop Neko container for a project
+ */
+app.post('/neko/:projectId/stop', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+
+    console.log(`Stopping Neko for project: ${projectId}`);
+
+    await destroyNekoContainer(projectId);
+
+    res.json({
+      success: true,
+      message: `Neko for project ${projectId} stopped`
+    });
+  } catch (error: any) {
+    console.error('Failed to stop Neko:', error);
+
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 /**
@@ -362,6 +507,11 @@ async function startup() {
     console.log(`  DELETE /containers/:projectId   - Destroy container`);
     console.log(`  ALL  /containers/:projectId/mcp/* - Proxy to MCP`);
     console.log(`  POST /containers/:projectId/heartbeat - Keep alive`);
+    console.log('');
+    console.log(`  NEKO (WebRTC Real-Time Browser):`);
+    console.log(`  POST /neko/:projectId/start     - Start Neko browser`);
+    console.log(`  GET  /neko/:projectId/status    - Get Neko status`);
+    console.log(`  POST /neko/:projectId/stop      - Stop Neko browser`);
     console.log('='.repeat(60));
   });
 }

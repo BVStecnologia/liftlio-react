@@ -7,12 +7,16 @@ import { useTheme } from '../context/ThemeContext';
 import Card from '../components/Card';
 import Spinner from '../components/ui/Spinner';
 import { IconComponent } from '../utils/IconHelper';
-import { FaPlay, FaStop, FaRedo, FaCheckCircle, FaTimesCircle, FaClock, FaRobot, FaGlobe, FaMousePointer, FaKeyboard, FaImage, FaPaperPlane, FaExpand, FaCompress, FaTrash, FaCircle, FaWifi, FaCamera, FaSyncAlt } from 'react-icons/fa';
+import { FaPlay, FaStop, FaRedo, FaCheckCircle, FaTimesCircle, FaClock, FaRobot, FaGlobe, FaMousePointer, FaKeyboard, FaImage, FaPaperPlane, FaExpand, FaCompress, FaTrash, FaCircle, FaWifi, FaCamera, FaSyncAlt, FaDesktop } from 'react-icons/fa';
 
-// Browser Agent VPS Configuration
-const BROWSER_AGENT_HOST = '173.249.22.2';
-const BROWSER_ORCHESTRATOR_PORT = 8080;  // Orchestrator manages containers
-const BROWSER_AGENT_BASE_PORT = 10100;   // Base port for browser agents
+// Browser MCP Configuration - DYNAMIC (LOCAL ou VPS)
+const BROWSER_ORCHESTRATOR_URL = process.env.REACT_APP_BROWSER_ORCHESTRATOR_URL || 'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/browser-proxy';
+const BROWSER_MCP_API_KEY = process.env.REACT_APP_BROWSER_MCP_API_KEY || '';
+
+// Modo DIRETO (localhost) ou via Edge Function (VPS)
+const USE_DIRECT_MODE = BROWSER_ORCHESTRATOR_URL.startsWith('http://localhost');
+
+console.log('[LiftlioBrowser] ORCHESTRATOR_URL:', BROWSER_ORCHESTRATOR_URL, 'USE_DIRECT_MODE:', USE_DIRECT_MODE, 'API_KEY:', !!BROWSER_MCP_API_KEY);
 
 // Types
 interface BrowserTask {
@@ -568,7 +572,7 @@ const getStatusIcon = (status: string) => {
     case 'failed':
       return <IconComponent icon={FaTimesCircle} />;
     case 'running':
-      return <Spinner size={12} />;
+      return <Spinner size="sm" />;
     default:
       return <IconComponent icon={FaClock} />;
   }
@@ -626,7 +630,12 @@ const LiftlioBrowser: React.FC = () => {
     if (!currentProject?.id) return;
 
     try {
-      const response = await fetch(`http://${BROWSER_AGENT_HOST}:${BROWSER_ORCHESTRATOR_PORT}/containers`);
+      const headers: Record<string, string> = {};
+      if (BROWSER_MCP_API_KEY) {
+        headers['X-API-Key'] = BROWSER_MCP_API_KEY;
+      }
+
+      const response = await fetch(`${BROWSER_ORCHESTRATOR_URL}/containers`, { headers });
       if (response.ok) {
         const data = await response.json();
         // Handle both array and {containers: []} response format
@@ -663,9 +672,14 @@ const LiftlioBrowser: React.FC = () => {
     setConnectionStatus('connecting');
 
     try {
-      const response = await fetch(`http://${BROWSER_AGENT_HOST}:${BROWSER_ORCHESTRATOR_PORT}/containers`, {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (BROWSER_MCP_API_KEY) {
+        headers['X-API-Key'] = BROWSER_MCP_API_KEY;
+      }
+
+      const response = await fetch(`${BROWSER_ORCHESTRATOR_URL}/containers`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ projectId: String(currentProject.id) })
       });
 
@@ -697,8 +711,14 @@ const LiftlioBrowser: React.FC = () => {
     setContainerLoading(true);
 
     try {
-      await fetch(`http://${BROWSER_AGENT_HOST}:${BROWSER_ORCHESTRATOR_PORT}/containers/${currentProject.id}`, {
-        method: 'DELETE'
+      const headers: Record<string, string> = {};
+      if (BROWSER_MCP_API_KEY) {
+        headers['X-API-Key'] = BROWSER_MCP_API_KEY;
+      }
+
+      await fetch(`${BROWSER_ORCHESTRATOR_URL}/containers/${currentProject.id}`, {
+        method: 'DELETE',
+        headers
       });
 
       setContainerInfo(null);
@@ -718,7 +738,7 @@ const LiftlioBrowser: React.FC = () => {
     if (!port) return;
 
     try {
-      const response = await fetch(`http://${BROWSER_AGENT_HOST}:${port}/mcp/screenshot`);
+      const response = await fetch(`http://localhost:${port}/mcp/screenshot`);
       if (response.ok) {
         const data = await response.json();
         if (data.screenshot) {
@@ -740,7 +760,7 @@ const LiftlioBrowser: React.FC = () => {
       eventSourceRef.current.close();
     }
 
-    const eventSource = new EventSource(`http://${BROWSER_AGENT_HOST}:${port}/sse`);
+    const eventSource = new EventSource(`http://localhost:${port}/sse`);
 
     eventSource.onmessage = (event) => {
       try {
@@ -862,17 +882,80 @@ const LiftlioBrowser: React.FC = () => {
 
     setSending(true);
     try {
-      const { error } = await supabase
+      // Insert task in Supabase for history
+      const { data: insertedTask, error } = await supabase
         .from('browser_tasks')
         .insert({
           project_id: currentProject.id,
           task: taskText.trim(),
           task_type: taskType,
           priority: priority,
-          status: 'pending'
-        });
+          status: 'running'
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Call browser agent directly (local development)
+      if (BROWSER_ORCHESTRATOR_URL && containerInfo?.status === 'running') {
+        try {
+          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          if (BROWSER_MCP_API_KEY) {
+            headers['X-API-Key'] = BROWSER_MCP_API_KEY;
+          }
+
+          // Call browser-agent directly on its port (container port is mapped to 10100)
+          const browserAgentUrl = containerInfo?.port ? `http://localhost:${containerInfo.port}` : 'http://localhost:10100';
+          const agentResponse = await fetch(`${browserAgentUrl}/agent/task`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              task: taskText.trim(),
+              taskId: insertedTask.id,
+              maxIterations: 30,
+              verbose: false
+            })
+          });
+
+          if (agentResponse.ok) {
+            const result = await agentResponse.json();
+            // Update task with result
+            await supabase
+              .from('browser_tasks')
+              .update({
+                status: result.success ? 'completed' : 'failed',
+                completed_at: new Date().toISOString(),
+                response: { result: result.result, success: result.success },
+                iterations_used: result.iterations,
+                actions_taken: result.actions,
+                error_message: result.success ? null : result.result
+              })
+              .eq('id', insertedTask.id);
+          } else {
+            const errorText = await agentResponse.text();
+            await supabase
+              .from('browser_tasks')
+              .update({
+                status: 'failed',
+                completed_at: new Date().toISOString(),
+                error_message: `Agent error: ${errorText}`
+              })
+              .eq('id', insertedTask.id);
+          }
+        } catch (agentErr) {
+          console.error('Error calling browser agent:', agentErr);
+          // Update task as failed
+          await supabase
+            .from('browser_tasks')
+            .update({
+              status: 'failed',
+              completed_at: new Date().toISOString(),
+              error_message: agentErr instanceof Error ? agentErr.message : 'Unknown error'
+            })
+            .eq('id', insertedTask.id);
+        }
+      }
 
       setTaskText('');
     } catch (err) {
@@ -902,11 +985,11 @@ const LiftlioBrowser: React.FC = () => {
     <PageContainer>
       <PageHeader>
         <PageTitle>
-          <IconComponent icon={FaGlobe} style={{ color: '#8b5cf6' }} />
-          Browser
+          <IconComponent icon={FaDesktop} style={{ color: '#8b5cf6' }} />
+          Computer
         </PageTitle>
         <PageDescription>
-          AI-powered browser automation. Send natural language tasks and let Claude AI execute them automatically.
+          AI Computer Use - Claude controls your computer to complete tasks automatically.
         </PageDescription>
       </PageHeader>
 
@@ -922,7 +1005,7 @@ const LiftlioBrowser: React.FC = () => {
               </ToolbarDots>
               <UrlBar>
                 <IconComponent icon={FaGlobe} />
-                {currentUrl || 'Browser ready - send a task to begin'}
+                {currentUrl || 'Ready - send a task to begin'}
               </UrlBar>
               <ConnectionStatus status={connectionStatus}>
                 <StatusDot status={connectionStatus} />
@@ -942,16 +1025,16 @@ const LiftlioBrowser: React.FC = () => {
                 <BrowserScreenshot src={screenshot} alt="Browser view" />
               ) : connectionStatus === 'connecting' ? (
                 <PlaceholderContent>
-                  <Spinner size={40} />
-                  <p style={{ marginTop: '16px' }}>Starting browser...</p>
+                  <Spinner size="xl" />
+                  <p style={{ marginTop: '16px' }}>Starting computer...</p>
                   <p style={{ fontSize: '12px', opacity: 0.7 }}>This may take a few seconds</p>
                 </PlaceholderContent>
               ) : connectionStatus === 'disconnected' ? (
                 <PlaceholderContent>
-                  <IconComponent icon={FaGlobe} />
-                  <p>Browser not connected</p>
+                  <IconComponent icon={FaDesktop} />
+                  <p>Computer not connected</p>
                   <p style={{ fontSize: '12px', opacity: 0.7, marginBottom: '16px' }}>
-                    Start the browser to view and interact with it
+                    Start the computer to view and interact with it
                   </p>
                   <ControlButton
                     variant="primary"
@@ -959,13 +1042,13 @@ const LiftlioBrowser: React.FC = () => {
                     disabled={containerLoading}
                     style={{ margin: '0 auto' }}
                   >
-                    {containerLoading ? <Spinner size={14} /> : <IconComponent icon={FaPlay} />}
-                    Start Browser
+                    {containerLoading ? <Spinner size="sm" /> : <IconComponent icon={FaPlay} />}
+                    Start Computer
                   </ControlButton>
                 </PlaceholderContent>
               ) : selectedTask && selectedTask.status === 'running' ? (
                 <PlaceholderContent>
-                  <Spinner size={40} />
+                  <Spinner size="xl" />
                   <p style={{ marginTop: '16px' }}>Executing task...</p>
                   <p style={{ fontSize: '12px', opacity: 0.7 }}>
                     {selectedTask.task.substring(0, 100)}{selectedTask.task.length > 100 ? '...' : ''}
@@ -1013,8 +1096,8 @@ const LiftlioBrowser: React.FC = () => {
                     onClick={stopContainer}
                     disabled={containerLoading}
                   >
-                    {containerLoading ? <Spinner size={14} /> : <IconComponent icon={FaStop} />}
-                    Stop Browser
+                    {containerLoading ? <Spinner size="sm" /> : <IconComponent icon={FaStop} />}
+                    Stop Computer
                   </ControlButton>
                 </div>
               </ControlsBar>
@@ -1039,7 +1122,7 @@ const LiftlioBrowser: React.FC = () => {
             <TaskTextarea
               value={taskText}
               onChange={(e) => setTaskText(e.target.value)}
-              placeholder="Describe what you want the browser to do...&#10;&#10;Examples:&#10;- Go to youtube.com and search for 'AI news'&#10;- Collect the titles of the first 5 videos&#10;- Login to my account and check notifications"
+              placeholder="Describe what you want the computer to do...&#10;&#10;Examples:&#10;- Go to youtube.com and search for 'AI news'&#10;- Collect the titles of the first 5 videos&#10;- Login to my account and check notifications"
             />
 
             <TaskActions>
@@ -1059,7 +1142,7 @@ const LiftlioBrowser: React.FC = () => {
                 onClick={handleSendTask}
                 disabled={!taskText.trim() || sending}
               >
-                {sending ? <Spinner size={14} /> : <IconComponent icon={FaPaperPlane} />}
+                {sending ? <Spinner size="sm" /> : <IconComponent icon={FaPaperPlane} />}
                 {sending ? 'Sending...' : 'Send Task'}
               </SendButton>
             </TaskActions>
@@ -1080,7 +1163,7 @@ const LiftlioBrowser: React.FC = () => {
           <TasksList>
             {loading ? (
               <div style={{ textAlign: 'center', padding: '40px' }}>
-                <Spinner size={24} />
+                <Spinner size="md" />
               </div>
             ) : tasks.length === 0 ? (
               <EmptyState>
