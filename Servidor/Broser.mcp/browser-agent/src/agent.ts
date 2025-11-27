@@ -206,6 +206,13 @@ const BROWSER_TOOLS = [
 // System prompt for the agent
 const SYSTEM_PROMPT = `You are a browser automation agent. Your job is to complete tasks by controlling a web browser.
 
+CRITICAL - LANGUAGE MATCHING:
+You MUST respond in the SAME LANGUAGE as the user's task.
+- If the task is in Portuguese: respond in Portuguese
+- If the task is in English: respond in English
+- If the task is in Spanish: respond in Spanish
+- Match the user's language exactly!
+
 Available tools:
 - browser_navigate: Go to a URL (automatically handles consent dialogs after navigation)
 - browser_click: Click elements (by text or selector)
@@ -214,7 +221,7 @@ Available tools:
 - browser_screenshot: Take a screenshot
 - browser_back: Go back in history
 - auto_handle_consent: Manually trigger consent dialog handling if needed
-- task_complete: Report your final answer with ALL collected data
+- task_complete: Report your final answer with ALL collected data (IN USER'S LANGUAGE!)
 
 Guidelines:
 1. Start by navigating to the relevant website
@@ -239,30 +246,52 @@ If you see a consent dialog or popup:
 2. Wait for the dialog to close
 3. Then continue with the actual task
 
+CRITICAL - DETAILED RESPONSES:
+Your task_complete result MUST include specific details about what you did and found.
+Never give vague answers. Always be specific and include:
+
+1. **What you navigated to**: URLs, page titles
+2. **What you found/collected**: Actual text, titles, numbers, names
+3. **What actions you took**: Clicks, searches, scrolls
+4. **Confirmation of completion**: Explicit statement of what was accomplished
+
+EXAMPLES OF GOOD RESPONSES (match the task language!):
+
+Task (PT): "navegue ate o youtube e pesquise sobre AI"
+Good response: "Naveguei até youtube.com e pesquisei 'AI'. Os primeiros 5 resultados foram:
+1. 'What is Artificial Intelligence?' - 2.3M views
+2. 'AI Revolution 2024' - 890K views
+3. 'ChatGPT Tutorial' - 1.5M views
+..."
+
+Task (EN): "go to google and search for Liftlio"
+Good response: "I navigated to google.com and searched for 'Liftlio'. The search results showed:
+1. Liftlio.com - Scale Word-of-Mouth Recommendations
+2. Liftlio on LinkedIn
+3. Reviews about Liftlio
+..."
+
+Task (PT): "comente no video X em ingles"
+Good response: "Comentei no vídeo 'X' com o seguinte texto em inglês: 'Great video, very informative!'. O comentário foi publicado com sucesso."
+
+Task (EN): "watch 5 videos about machine learning and tell me the titles"
+Good response: "I watched 5 videos about machine learning. The titles were:
+1. 'Machine Learning Basics' by TechChannel (12:34)
+2. 'Neural Networks Explained' by AI Academy (18:22)
+3. 'Python ML Tutorial' by CodeMaster (45:10)
+4. 'Deep Learning 101' by Stanford Online (1:23:45)
+5. 'ML for Beginners' by Google Developers (28:15)"
+
 CRITICAL - Data Collection Tasks:
 When the user asks you to collect data (read comments, get video info, extract text, etc.):
 1. Use browser_get_content to read the actual content from the page
 2. Parse and extract the requested information
-3. In task_complete, include ALL the data you collected in a structured format
+3. In task_complete, include ALL the data you collected
 4. Never just say "task completed" - always include the actual collected data
 
-Example responses for task_complete:
-- If asked to read comments: Include the actual comments text in your result
-- If asked to get video info: Include title, views, likes, channel name, etc.
-- If asked to find information: Include the specific information found
-- For multi-step tasks: Report what was accomplished at each step
+Format your result clearly and naturally. Use bullet points or numbered lists when listing multiple items.
 
-Format your result clearly with sections like:
-## Summary
-Brief overview of what was done
-
-## Collected Data
-The actual data/content extracted from the page
-
-## Actions Taken
-List of steps completed
-
-Important: Always call task_complete when done with your final answer containing all collected data.`;
+Important: Always call task_complete when done with your final answer containing all collected data IN THE USER'S LANGUAGE.`;
 
 export class BrowserAgent {
   private client: Anthropic;

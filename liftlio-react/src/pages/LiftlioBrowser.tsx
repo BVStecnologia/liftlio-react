@@ -7,7 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import Card from '../components/Card';
 import Spinner from '../components/ui/Spinner';
 import { IconComponent } from '../utils/IconHelper';
-import { FaPlay, FaStop, FaRedo, FaCheckCircle, FaTimesCircle, FaClock, FaRobot, FaGlobe, FaMousePointer, FaKeyboard, FaImage, FaPaperPlane, FaExpand, FaCompress, FaTrash, FaCircle, FaWifi, FaCamera, FaSyncAlt, FaDesktop } from 'react-icons/fa';
+import { FaPlay, FaStop, FaRedo, FaCheckCircle, FaTimesCircle, FaClock, FaRobot, FaGlobe, FaMousePointer, FaKeyboard, FaImage, FaPaperPlane, FaExpand, FaCompress, FaTrash, FaCircle, FaWifi, FaCamera, FaSyncAlt, FaDesktop, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 // Browser MCP Configuration - DYNAMIC (LOCAL ou VPS)
 const BROWSER_ORCHESTRATOR_URL = process.env.REACT_APP_BROWSER_ORCHESTRATOR_URL || 'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/browser-proxy';
@@ -607,6 +607,7 @@ const LiftlioBrowser: React.FC = () => {
   const [currentUrl, setCurrentUrl] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedTask, setSelectedTask] = useState<BrowserTask | null>(null);
+  const [isResponseExpanded, setIsResponseExpanded] = useState(true);
 
   // Container & Connection state
   const [containerInfo, setContainerInfo] = useState<ContainerInfo | null>(null);
@@ -1120,7 +1121,7 @@ const LiftlioBrowser: React.FC = () => {
               </ToolbarButton>
             </BrowserToolbar>
             <BrowserContent>
-              {/* Show screenshot if available and connected */}
+              {/* Browser always shows screenshot when connected */}
               {connectionStatus === 'connected' && screenshot ? (
                 <BrowserScreenshot src={screenshot} alt="Browser view" />
               ) : connectionStatus === 'connecting' ? (
@@ -1146,38 +1147,11 @@ const LiftlioBrowser: React.FC = () => {
                     Start Computer
                   </ControlButton>
                 </PlaceholderContent>
-              ) : selectedTask && selectedTask.status === 'running' ? (
-                <PlaceholderContent>
-                  <Spinner size="xl" />
-                  <p style={{ marginTop: '16px' }}>Executing task...</p>
-                  <p style={{ fontSize: '12px', opacity: 0.7 }}>
-                    {selectedTask.task.substring(0, 100)}{selectedTask.task.length > 100 ? '...' : ''}
-                  </p>
-                </PlaceholderContent>
-              ) : selectedTask && selectedTask.response ? (
-                <div style={{ padding: '20px', width: '100%', height: '100%', overflow: 'auto' }}>
-                  <StatusBadge status={selectedTask.status}>
-                    {getStatusIcon(selectedTask.status)}
-                    {selectedTask.status}
-                  </StatusBadge>
-                  <h4 style={{ margin: '16px 0 8px', color: theme.name === 'dark' ? '#fff' : '#000' }}>Result:</h4>
-                  <pre style={{
-                    fontSize: '13px',
-                    background: theme.name === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    overflow: 'auto',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word'
-                  }}>
-                    {JSON.stringify(selectedTask.response, null, 2)}
-                  </pre>
-                </div>
               ) : (
                 <PlaceholderContent>
                   <IconComponent icon={FaRobot} />
-                  <p>Select a task to view results</p>
-                  <p style={{ fontSize: '12px', opacity: 0.7 }}>or send a new task below</p>
+                  <p>Ready to browse</p>
+                  <p style={{ fontSize: '12px', opacity: 0.7 }}>Send a task to get started</p>
                 </PlaceholderContent>
               )}
             </BrowserContent>
@@ -1259,6 +1233,104 @@ const LiftlioBrowser: React.FC = () => {
               </span>
             </TasksHeader>
           </Card>
+
+          {/* Task Detail Panel - shows when a task is selected */}
+          {selectedTask && selectedTask.response && (
+            <Card style={{ padding: '16px', marginBottom: '16px' }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '12px'
+              }}>
+                <StatusBadge status={selectedTask.status}>
+                  {getStatusIcon(selectedTask.status)}
+                  {selectedTask.status}
+                </StatusBadge>
+                <button
+                  onClick={() => setSelectedTask(null)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: theme.name === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    padding: '2px 6px'
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p style={{
+                fontSize: '13px',
+                color: theme.name === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)',
+                marginBottom: '12px',
+                lineHeight: '1.4'
+              }}>
+                {selectedTask.task}
+              </p>
+
+              <div
+                onClick={() => setIsResponseExpanded(!isResponseExpanded)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '6px',
+                  marginBottom: isResponseExpanded ? '8px' : '0',
+                  color: theme.colors.primary,
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  userSelect: 'none'
+                }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <IconComponent icon={FaRobot} />
+                  Agent Response
+                </div>
+                <IconComponent
+                  icon={isResponseExpanded ? FaChevronUp : FaChevronDown}
+                  style={{ fontSize: '12px', opacity: 0.7 }}
+                />
+              </div>
+
+              {isResponseExpanded && (
+                <div style={{
+                  fontSize: '13px',
+                  lineHeight: '1.5',
+                  background: theme.name === 'dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: `1px solid ${theme.name === 'dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.15)'}`,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  maxHeight: '300px',
+                  overflow: 'auto',
+                  color: theme.name === 'dark' ? '#fff' : '#000'
+                }}>
+                  {selectedTask.response?.result || JSON.stringify(selectedTask.response, null, 2)}
+                </div>
+              )}
+
+              {(selectedTask.iterations_used || selectedTask.actions_taken) && (
+                <div style={{
+                  marginTop: '12px',
+                  fontSize: '11px',
+                  color: theme.name === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
+                  display: 'flex',
+                  gap: '12px'
+                }}>
+                  {selectedTask.iterations_used && (
+                    <span>Iterations: {selectedTask.iterations_used}</span>
+                  )}
+                  {selectedTask.actions_taken && (
+                    <span>Actions: {selectedTask.actions_taken.length}</span>
+                  )}
+                </div>
+              )}
+            </Card>
+          )}
 
           <TasksList>
             {loading ? (
