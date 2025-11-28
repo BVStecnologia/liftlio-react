@@ -1902,16 +1902,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
             )}
 
             {/* Usage Section */}
-            {!isCollapsed && subscription?.mentions_available !== undefined && subscription?.subscription?.mentions_limit && (
+            {!isCollapsed && subscription?.mentions_available !== undefined && (
               <UsageSection>
                 <UsageBar data-tooltip-id="usage-tooltip">
                   <UsageBarFill
-                    percentage={((subscription.subscription.mentions_limit - subscription.mentions_available) / subscription.subscription.mentions_limit) * 100}
-                    isNearLimit={(subscription.mentions_available / subscription.subscription.mentions_limit) <= 0.10}
+                    percentage={subscription.mentions_available > 0 ? Math.min((subscription.mentions_used_this_cycle / subscription.mentions_available) * 100, 100) : 0}
+                    isNearLimit={subscription.mentions_available > 0 && (subscription.mentions_available - subscription.mentions_used_this_cycle) <= (subscription.subscription?.mentions_limit || 210) * 0.10}
                   />
                 </UsageBar>
-                <UsageCount isNearLimit={(subscription.mentions_available / subscription.subscription.mentions_limit) <= 0.10}>
-                  {subscription.subscription.mentions_limit - subscription.mentions_available}/{subscription.subscription.mentions_limit}
+                <UsageCount isNearLimit={subscription.mentions_available > 0 && (subscription.mentions_available - subscription.mentions_used_this_cycle) <= (subscription.subscription?.mentions_limit || 210) * 0.10}>
+                  {subscription.mentions_used_this_cycle || 0} used / {subscription.mentions_available} available
                 </UsageCount>
                 <ReactTooltip
                   id="usage-tooltip"
@@ -1921,13 +1921,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
                     color: 'rgba(255, 255, 255, 0.95)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '8px',
-                    padding: '8px 12px',
+                    padding: '10px 14px',
                     fontSize: '12px',
-                    maxWidth: '220px',
-                    zIndex: 9999
+                    maxWidth: '280px',
+                    zIndex: 9999,
+                    lineHeight: '1.5'
                   }}
                 >
-                  Resource consumption: mentions, videos, and AI analysis
+                  <div style={{ marginBottom: '6px' }}><strong>Mentions Usage</strong></div>
+                  <div>• <strong>{subscription.mentions_used_this_cycle || 0}</strong> used this billing cycle</div>
+                  <div>• <strong>{subscription.mentions_available}</strong> total available</div>
+                  <div style={{ marginTop: '6px', opacity: 0.8, fontSize: '11px' }}>
+                    Unused mentions roll over to the next cycle. Plan: {subscription.subscription?.plan_name || 'N/A'} ({subscription.subscription?.mentions_limit || 0}/month)
+                  </div>
                 </ReactTooltip>
               </UsageSection>
             )}
