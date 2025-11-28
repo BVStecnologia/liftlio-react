@@ -69,6 +69,10 @@ services:
     image: liftlio/browser-agent:latest
     container_name: browser-agent-117
     restart: unless-stopped
+    labels:
+      - "liftlio.project=117"
+      - "liftlio.user=anonymous"
+      - "liftlio.type=browser-agent"
     ports:
       - "10100:3000"    # MCP API
       - "16080:6080"    # noVNC (VNC streaming)

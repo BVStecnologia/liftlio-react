@@ -7,7 +7,10 @@ import { useTheme } from '../context/ThemeContext';
 import Card from '../components/Card';
 import Spinner from '../components/ui/Spinner';
 import { IconComponent } from '../utils/IconHelper';
-import { FaPlay, FaStop, FaRedo, FaCheckCircle, FaTimesCircle, FaClock, FaRobot, FaGlobe, FaMousePointer, FaKeyboard, FaImage, FaPaperPlane, FaExpand, FaCompress, FaTrash, FaCircle, FaWifi, FaCamera, FaSyncAlt, FaDesktop, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaPlay, FaStop, FaRedo, FaCheckCircle, FaTimesCircle, FaClock, FaRobot, FaGlobe, FaMousePointer, FaKeyboard, FaImage, FaPaperPlane, FaExpand, FaCompress, FaTrash, FaCircle, FaWifi, FaCamera, FaSyncAlt, FaDesktop, FaChevronDown, FaChevronUp, FaTv, FaEye } from 'react-icons/fa';
+
+// VNC Configuration - noVNC port is mapped to 16080
+const VNC_PORT = 16080;
 
 // Browser MCP Configuration - DYNAMIC (LOCAL ou VPS)
 const BROWSER_ORCHESTRATOR_URL = process.env.REACT_APP_BROWSER_ORCHESTRATOR_URL || 'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/browser-proxy';
@@ -226,6 +229,32 @@ const BrowserScreenshot = styled.img`
   height: 100%;
   object-fit: contain;
   background: #000;
+`;
+
+const VNCFrame = styled.iframe`
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #000;
+`;
+
+const VNCToggle = styled.button<{ active?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: ${props => props.active ? 'rgba(139, 92, 246, 0.2)' : 'transparent'};
+  color: ${props => props.active ? '#8b5cf6' : props.theme.colors.text.secondary};
+  
+  &:hover {
+    background: ${props => props.active ? 'rgba(139, 92, 246, 0.3)' : props.theme.name === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+  }
 `;
 
 const ControlsBar = styled.div`
@@ -614,6 +643,12 @@ const LiftlioBrowser: React.FC = () => {
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('disconnected');
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [events, setEvents] = useState<SSEEvent[]>([]);
+  
+  // VNC state
+  const [vncEnabled, setVncEnabled] = useState(() => { const saved = localStorage.getItem('liftlio-vnc-enabled'); return saved === 'true'; });
+  const [vncLoading, setVncLoading] = useState(false);
+  const vncHeartbeatRef = useRef<NodeJS.Timeout | null>(null);
+  const vncShouldAutoStart = useRef(localStorage.getItem('liftlio-vnc-enabled') === 'true');
   const [containerLoading, setContainerLoading] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const screenshotIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -791,6 +826,76 @@ const LiftlioBrowser: React.FC = () => {
     }
   }, [getContainerPort]);
 
+  // Start VNC services
+  const startVNC = useCallback(async () => {
+    const port = getContainerPort();
+    if (!port) return;
+
+    setVncLoading(true);
+    try {
+      const response = await fetch(`http://localhost:${port}/vnc/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        setVncEnabled(true);
+        console.log('[VNC] Started successfully');
+        
+        // Stop screenshot polling when VNC is active
+        if (screenshotIntervalRef.current) {
+          clearInterval(screenshotIntervalRef.current);
+          screenshotIntervalRef.current = null;
+        }
+
+        // Start VNC heartbeat (every 30s to keep alive)
+        vncHeartbeatRef.current = setInterval(async () => {
+          try {
+            await fetch(`http://localhost:${port}/vnc/heartbeat`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+          } catch (e) { /* ignore */ }
+        }, 30000);
+      } else {
+        console.error('[VNC] Failed to start:', await response.text());
+      }
+    } catch (err) {
+      console.error('[VNC] Error starting:', err);
+    } finally {
+      setVncLoading(false);
+    }
+  }, [getContainerPort]);
+
+  // Stop VNC services
+  const stopVNC = useCallback(async () => {
+    const port = getContainerPort();
+    if (!port) return;
+
+    try {
+      await fetch(`http://localhost:${port}/vnc/stop`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (err) {
+      console.error('[VNC] Error stopping:', err);
+    }
+
+    setVncEnabled(false);
+
+    // Clear VNC heartbeat
+    if (vncHeartbeatRef.current) {
+      clearInterval(vncHeartbeatRef.current);
+      vncHeartbeatRef.current = null;
+    }
+
+    // Restart screenshot polling
+    if (connectionStatus === 'connected' && containerInfo?.port) {
+      screenshotIntervalRef.current = setInterval(captureScreenshot, 2000);
+      captureScreenshot();
+    }
+  }, [getContainerPort, connectionStatus, containerInfo?.port, captureScreenshot]);
+
   // Connect to SSE stream
   const connectSSE = useCallback(() => {
     const port = getContainerPort();
@@ -859,22 +964,40 @@ const LiftlioBrowser: React.FC = () => {
     }
   }, [connectionStatus, containerInfo?.port, connectSSE, captureScreenshot]);
 
-  // VNC Heartbeat - Keep VNC alive (auto-timeout is 5 min on backend)
+  // Cleanup VNC on unmount or disconnect
   useEffect(() => {
-    if (connectionStatus === 'connected' && containerInfo?.port) {
-      const sendHeartbeat = async () => {
-        try {
-          await fetch(`http://localhost:${containerInfo.port}/vnc/heartbeat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          });
-        } catch (e) { /* VNC not running */ }
-      };
-      const interval = setInterval(sendHeartbeat, 60000);
-      sendHeartbeat();
-      return () => clearInterval(interval);
+    return () => {
+      if (vncHeartbeatRef.current) {
+        clearInterval(vncHeartbeatRef.current);
+        vncHeartbeatRef.current = null;
+      }
+    };
+  }, []);
+  
+  // Stop VNC when disconnected
+  useEffect(() => {
+    if (connectionStatus !== 'connected' && vncEnabled) {
+      setVncEnabled(false);
+      if (vncHeartbeatRef.current) {
+        clearInterval(vncHeartbeatRef.current);
+        vncHeartbeatRef.current = null;
+      }
     }
-  }, [connectionStatus, containerInfo?.port]);
+  }, [connectionStatus, vncEnabled]);
+
+  // Persist VNC state to localStorage
+  useEffect(() => {
+    localStorage.setItem('liftlio-vnc-enabled', String(vncEnabled));
+  }, [vncEnabled]);
+
+  // Auto-start VNC when connected and was previously enabled
+  useEffect(() => {
+    if (connectionStatus === 'connected' && vncShouldAutoStart.current && !vncEnabled && !vncLoading) {
+      console.log('[VNC] Auto-starting VNC (was enabled before refresh)');
+      vncShouldAutoStart.current = false; // Only try once
+      startVNC();
+    }
+  }, [connectionStatus, vncEnabled, vncLoading, startVNC]);
 
   // Fetch tasks
   useEffect(() => {
@@ -1138,8 +1261,14 @@ const LiftlioBrowser: React.FC = () => {
               </ToolbarButton>
             </BrowserToolbar>
             <BrowserContent>
-              {/* Browser always shows screenshot when connected */}
-              {connectionStatus === 'connected' && screenshot ? (
+              {/* Show VNC iframe when enabled, otherwise screenshot */}
+              {connectionStatus === 'connected' && vncEnabled ? (
+                <VNCFrame
+                  src={`http://localhost:${VNC_PORT}/vnc.html?autoconnect=true&resize=scale&reconnect=true`}
+                  title="VNC Browser View"
+                  allow="clipboard-read; clipboard-write"
+                />
+              ) : connectionStatus === 'connected' && screenshot ? (
                 <BrowserScreenshot src={screenshot} alt="Browser view" />
               ) : connectionStatus === 'connecting' ? (
                 <PlaceholderContent>
@@ -1176,10 +1305,21 @@ const LiftlioBrowser: React.FC = () => {
             {connectionStatus === 'connected' && (
               <ControlsBar>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <ControlButton onClick={captureScreenshot} title="Refresh screenshot">
-                    <IconComponent icon={FaSyncAlt} />
-                    Refresh
-                  </ControlButton>
+                  <VNCToggle
+                    active={vncEnabled}
+                    onClick={vncEnabled ? stopVNC : startVNC}
+                    disabled={vncLoading}
+                    title={vncEnabled ? 'Disable interactive mode' : 'Enable interactive mode (VNC)'}
+                  >
+                    {vncLoading ? <Spinner size="sm" /> : <IconComponent icon={vncEnabled ? FaEye : FaTv} />}
+                    {vncEnabled ? 'Interactive' : 'View Only'}
+                  </VNCToggle>
+                  {!vncEnabled && (
+                    <ControlButton onClick={captureScreenshot} title="Refresh screenshot">
+                      <IconComponent icon={FaSyncAlt} />
+                      Refresh
+                    </ControlButton>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <ControlButton
