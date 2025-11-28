@@ -184,6 +184,8 @@ export async function createContainer(options: CreateContainerOptions): Promise<
         NetworkMode: 'liftlio-browser-network'
       },
       Labels: {
+        'com.docker.compose.project': 'brosermcp',
+        'com.docker.compose.service': `browser-agent-${projectId}`,
         'liftlio.project': projectId,
         'liftlio.user': userId,
         'liftlio.type': 'browser-agent'
@@ -434,6 +436,8 @@ export async function createNekoContainer(projectId: string): Promise<ContainerS
         NetworkMode: 'liftlio-browser-network'
       },
       Labels: {
+        'com.docker.compose.project': 'brosermcp',
+        'com.docker.compose.service': `neko-${projectId}`,
         'liftlio.project': projectId,
         'liftlio.type': 'neko'
       }
