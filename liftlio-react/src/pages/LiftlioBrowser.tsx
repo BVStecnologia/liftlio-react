@@ -168,6 +168,7 @@ const BrowserContent = styled.div`
   justify-content: center;
   background: ${props => props.theme.name === 'dark' ? '#000' : '#fff'};
   position: relative;
+  overflow: hidden;
 `;
 
 const PlaceholderContent = styled.div`
@@ -231,11 +232,24 @@ const BrowserScreenshot = styled.img`
   background: #000;
 `;
 
+const VNCWrapper = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  clip-path: inset(0);
+`;
+
 const VNCFrame = styled.iframe`
-  width: 100%;
+  width: calc(100% + 44px);
   height: 100%;
   border: none;
   background: #000;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: -44px;
 `;
 
 const VNCToggle = styled.button<{ active?: boolean }>`
@@ -990,11 +1004,10 @@ const LiftlioBrowser: React.FC = () => {
     localStorage.setItem('liftlio-vnc-enabled', String(vncEnabled));
   }, [vncEnabled]);
 
-  // Auto-start VNC when connected and was previously enabled
+  // Auto-start VNC when connected (always enable interactive mode)
   useEffect(() => {
-    if (connectionStatus === 'connected' && vncShouldAutoStart.current && !vncEnabled && !vncLoading) {
-      console.log('[VNC] Auto-starting VNC (was enabled before refresh)');
-      vncShouldAutoStart.current = false; // Only try once
+    if (connectionStatus === 'connected' && !vncEnabled && !vncLoading) {
+      console.log('[VNC] Auto-starting VNC (interactive mode by default)');
       startVNC();
     }
   }, [connectionStatus, vncEnabled, vncLoading, startVNC]);
@@ -1263,11 +1276,13 @@ const LiftlioBrowser: React.FC = () => {
             <BrowserContent>
               {/* Show VNC iframe when enabled, otherwise screenshot */}
               {connectionStatus === 'connected' && vncEnabled ? (
-                <VNCFrame
-                  src={`http://localhost:${VNC_PORT}/vnc.html?autoconnect=true&resize=scale&reconnect=true`}
-                  title="VNC Browser View"
-                  allow="clipboard-read; clipboard-write"
-                />
+                <VNCWrapper>
+                  <VNCFrame
+                    src={`http://localhost:${VNC_PORT}/vnc.html?autoconnect=true&resize=scale&scaleViewport=true&reconnect=true&show_dot=true&bell=false&view_only=false`}
+                    title="VNC Browser View"
+                    allow="clipboard-read; clipboard-write"
+                  />
+                </VNCWrapper>
               ) : connectionStatus === 'connected' && screenshot ? (
                 <BrowserScreenshot src={screenshot} alt="Browser view" />
               ) : connectionStatus === 'connecting' ? (
@@ -1304,22 +1319,14 @@ const LiftlioBrowser: React.FC = () => {
             {/* Controls bar when connected */}
             {connectionStatus === 'connected' && (
               <ControlsBar>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <VNCToggle
-                    active={vncEnabled}
-                    onClick={vncEnabled ? stopVNC : startVNC}
-                    disabled={vncLoading}
-                    title={vncEnabled ? 'Disable interactive mode' : 'Enable interactive mode (VNC)'}
-                  >
-                    {vncLoading ? <Spinner size="sm" /> : <IconComponent icon={vncEnabled ? FaEye : FaTv} />}
-                    {vncEnabled ? 'Interactive' : 'View Only'}
-                  </VNCToggle>
-                  {!vncEnabled && (
-                    <ControlButton onClick={captureScreenshot} title="Refresh screenshot">
-                      <IconComponent icon={FaSyncAlt} />
-                      Refresh
-                    </ControlButton>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  {vncEnabled && (
+                    <span style={{ fontSize: '12px', color: '#8b5cf6', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <IconComponent icon={FaEye} />
+                      Interactive Mode
+                    </span>
                   )}
+                  {vncLoading && <Spinner size="sm" />}
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <ControlButton

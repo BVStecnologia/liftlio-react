@@ -164,6 +164,14 @@ const BROWSER_TOOLS = [
     }
   },
   {
+    name: 'browser_get_tree',
+    description: 'Get an accessibility tree of interactive elements on the page. More efficient than browser_get_content. Returns elements with refs (like e42) that can be clicked directly.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {}
+    }
+  },
+  {
     name: 'browser_screenshot',
     description: 'Take a screenshot of the current page. Returns the path to the saved image.',
     input_schema: {
@@ -356,13 +364,21 @@ export class BrowserAgent {
           const page = this.browserManager.getPage();
           if (!page) throw new Error('Browser not initialized');
 
+          const target = input.target;
+
+          // Support clicking by ref (e.g., 'e42' from accessibility tree)
+          if (/^e\d+$/.test(target)) {
+            await this.browserManager.clickByRef(target);
+            return `Clicked element [${target}]`;
+          }
+
           if (input.by_text !== false) {
-            await page.getByText(input.target, { exact: false }).first().click();
+            await page.getByText(target, { exact: false }).first().click();
           } else {
-            await page.click(input.target);
+            await page.click(target);
           }
           await page.waitForLoadState('domcontentloaded');
-          return `Clicked on "${input.target}"`;
+          return `Clicked on "${target}"`;
         }
 
         case 'browser_type': {
@@ -379,10 +395,64 @@ export class BrowserAgent {
         }
 
         case 'browser_get_content': {
-          const snapshot = await this.browserManager.getSnapshot();
-          // Truncate to avoid token limits
-          const content = snapshot.content.slice(0, 6000);
-          return `Current URL: ${snapshot.url}\nTitle: ${snapshot.title}\n\nContent:\n${content}`;
+          // Use accessibility tree for efficient token usage (~50% reduction)
+          try {
+            const tree = await this.browserManager.getAccessibilitySnapshot();
+            const url = this.browserManager.getCurrentUrl();
+            const page = this.browserManager.getPage();
+            const title = page ? await page.title() : '';
+
+            // Format tree compactly
+            const formatTree = (node: any, indent: string = ''): string => {
+              let result = '';
+              if (node.text || node.tag === 'a' || node.tag === 'button' || node.tag === 'input') {
+                result = `${indent}[${node.ref}] ${node.tag}`;
+                if (node.text) result += `: "${node.text}"`;
+                if (node.rect) result += ` @(${node.rect.x},${node.rect.y})`;
+                result += '\n';
+              }
+              if (node.children) {
+                for (const child of node.children) {
+                  result += formatTree(child, indent + '  ');
+                }
+              }
+              return result;
+            };
+
+            const treeContent = formatTree(tree).slice(0, 3000);
+            return `URL: ${url}\nTitle: ${title}\n\nElements (use [ref] to click):\n${treeContent}`;
+          } catch (e) {
+            // Fallback to old method if tree fails
+            const snapshot = await this.browserManager.getSnapshot();
+            const content = snapshot.content.slice(0, 4000);
+            return `Current URL: ${snapshot.url}\nTitle: ${snapshot.title}\n\nContent:\n${content}`;
+          }
+        }
+
+        case 'browser_get_tree': {
+          const tree = await this.browserManager.getAccessibilitySnapshot();
+          const url = this.browserManager.getCurrentUrl();
+          const page = this.browserManager.getPage();
+          const title = page ? await page.title() : '';
+
+          const formatTree = (node: any, indent: string = ''): string => {
+            let result = '';
+            if (node.text || node.tag === 'a' || node.tag === 'button' || node.tag === 'input') {
+              result = `${indent}[${node.ref}] ${node.tag}`;
+              if (node.text) result += `: "${node.text}"`;
+              if (node.rect) result += ` @(${node.rect.x},${node.rect.y})`;
+              result += '\n';
+            }
+            if (node.children) {
+              for (const child of node.children) {
+                result += formatTree(child, indent + '  ');
+              }
+            }
+            return result;
+          };
+
+          const treeContent = formatTree(tree).slice(0, 3000);
+          return `URL: ${url}\nTitle: ${title}\n\nElements (click by [ref]):\n${treeContent}`;
         }
 
         case 'browser_screenshot': {
@@ -407,6 +477,29 @@ export class BrowserAgent {
     } catch (error: any) {
       return `Error executing ${name}: ${error.message}`;
     }
+  }
+
+
+  /**
+   * Truncate message history to reduce token usage
+   * Keeps first message (task) + recent messages, summarizes middle
+   */
+  private truncateHistory(messages: Message[]): Message[] {
+    if (messages.length <= 10) return messages;
+
+    // Keep first message (original task) + last 8 messages
+    const first = messages[0];
+    const recent = messages.slice(-8);
+
+    // Create summary of skipped iterations
+    const skipped = messages.length - 9;
+    const summary: Message = {
+      role: 'user',
+      content: `[Summary: ${skipped} previous iterations completed - navigation and interactions performed]`
+    };
+
+    console.log(`📊 Token optimization: Truncated ${skipped} messages from history`);
+    return [first, summary, ...recent];
   }
 
   /**
@@ -463,13 +556,16 @@ export class BrowserAgent {
         });
       }
 
+      // Truncate history to save tokens on long tasks
+      const optimizedMessages = this.truncateHistory(messages);
+
       // Call Claude
       const response = await this.client.messages.create({
         model: this.model,
         max_tokens: 4096,
         system: SYSTEM_PROMPT,
         tools: BROWSER_TOOLS,
-        messages: messages as any
+        messages: optimizedMessages as any
       });
 
       // Add assistant response to history

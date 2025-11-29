@@ -19,6 +19,17 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 
+// Supabase configuration for session persistence
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://suqjifkhmekcdflwowiw.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
+
+interface SessionData {
+  cookies: any[];
+  localStorage: Record<string, string>;
+  lastUrl: string;
+  savedAt: string;
+}
+
 export interface BrowserManagerConfig {
   projectId: string;
   projectIndex: number;
@@ -31,6 +42,18 @@ export interface BrowserSnapshot {
   title: string;
   content: string;
   timestamp: string;
+}
+/**
+ * Accessibility node for token-efficient page representation
+ * Used instead of full text content to reduce AI token usage by ~50%
+ */
+export interface AccessibilityNode {
+  tag: string;
+  role?: string;
+  text?: string;
+  ref: string;  // Unique selector for clicking (e.g., "e42")
+  rect?: { x: number; y: number; w: number; h: number };
+  children?: AccessibilityNode[];
 }
 
 export class BrowserManager {
@@ -129,6 +152,9 @@ export class BrowserManager {
 
     // Setup resource blocking for better performance (optional, call enableResourceBlocking() to activate)
     await this.setupResourceBlocking();
+
+    // Restore session data from Supabase (cookies, localStorage)
+    await this.restoreSession();
 
     console.log(`Browser initialized for project: ${this.config.projectId}`);
   }
@@ -354,6 +380,9 @@ export class BrowserManager {
     // Small delay to let consent handlers fire
     await this.page.waitForTimeout(500);
 
+    // Apply any pending localStorage from restored session
+    await this.applyPendingLocalStorage();
+
     return this.getSnapshot();
   }
 
@@ -559,6 +588,132 @@ export class BrowserManager {
   }
 
   /**
+   * Get accessibility snapshot for token-efficient AI processing
+   * Returns a tree of interactive elements with refs for clicking
+   * ~50% fewer tokens than text-based content extraction
+   */
+  async getAccessibilitySnapshot(): Promise<AccessibilityNode> {
+    if (!this.page) {
+      throw new Error('Browser not initialized');
+    }
+
+    return await this.page.evaluate(() => {
+      let refCounter = 0;
+
+      function isVisible(el: Element): boolean {
+        const rect = el.getBoundingClientRect();
+        const style = getComputedStyle(el);
+        return rect.width > 0 && rect.height > 0 &&
+               style.display !== 'none' &&
+               style.visibility !== 'hidden' &&
+               parseFloat(style.opacity) > 0;
+      }
+
+      function isInteractive(el: Element): boolean {
+        const tag = el.tagName.toLowerCase();
+        const role = el.getAttribute('role');
+        const hasClick = el.hasAttribute('onclick') || (el as HTMLElement).onclick !== null;
+        const hasHref = el.hasAttribute('href');
+        
+        return /^(a|button|input|select|textarea|video|audio)$/i.test(tag) ||
+               /^(button|link|menuitem|tab|checkbox|radio|textbox|combobox)$/i.test(role || '') ||
+               hasClick || hasHref ||
+               el.hasAttribute('tabindex');
+      }
+
+      function buildTree(el: Element, depth: number = 0): any | null {
+        if (depth > 5 || !isVisible(el)) return null;
+
+        const tag = el.tagName.toLowerCase();
+        const interactive = isInteractive(el);
+        
+        // Skip non-interactive containers without interactive children
+        const hasInteractiveChild = Array.from(el.children).some(c => 
+          isInteractive(c) || Array.from(c.children).some(isInteractive)
+        );
+
+        if (!interactive && !hasInteractiveChild && depth > 1) {
+          return null;
+        }
+
+        // Generate unique ref
+        const ref = 'e' + (refCounter++);
+        (el as any).__ref = ref;
+
+        const rect = el.getBoundingClientRect();
+        const textContent = el.textContent?.trim() || '';
+        const text = interactive ? textContent.slice(0, 50) : undefined;
+
+        const node: any = {
+          tag,
+          ref,
+          role: el.getAttribute('role') || undefined,
+          text: text || undefined,
+          rect: interactive ? {
+            x: Math.round(rect.x),
+            y: Math.round(rect.y),
+            w: Math.round(rect.width),
+            h: Math.round(rect.height)
+          } : undefined
+        };
+
+        // Add placeholder/label for inputs
+        if (tag === 'input' || tag === 'textarea') {
+          const input = el as HTMLInputElement;
+          node.text = input.placeholder || input.name || input.id || undefined;
+        }
+
+        // Process children (max 10 per level)
+        const children = Array.from(el.children)
+          .map(c => buildTree(c, depth + 1))
+          .filter(Boolean)
+          .slice(0, 10);
+
+        if (children.length > 0) {
+          node.children = children;
+        }
+
+        return node;
+      }
+
+      return buildTree(document.body) || { tag: 'body', ref: 'e0' };
+    });
+  }
+
+  /**
+   * Click element by accessibility ref (e.g., "e42")
+   * Used in combination with getAccessibilitySnapshot for efficient navigation
+   */
+  async clickByRef(ref: string): Promise<BrowserSnapshot> {
+    if (!this.page) {
+      throw new Error('Browser not initialized');
+    }
+
+    console.log('Clicking element by ref:', ref);
+
+    // Find and click element by stored ref
+    const clicked = await this.page.evaluate((targetRef: string) => {
+      const elements = Array.from(document.querySelectorAll('*'));
+      for (const el of elements) {
+        if ((el as any).__ref === targetRef) {
+          (el as HTMLElement).click();
+          return true;
+        }
+      }
+      return false;
+    }, ref);
+
+    if (!clicked) {
+      throw new Error('Element not found for ref: ' + ref);
+    }
+
+    // Wait for navigation if needed
+    await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+
+    return this.getSnapshot();
+  }
+
+  /**
    * Execute arbitrary JavaScript
    */
   async evaluate(script: string): Promise<any> {
@@ -688,9 +843,177 @@ export class BrowserManager {
   }
 
   /**
+   * Save browser session (cookies, localStorage) to Supabase
+   * Called automatically when browser is closed
+   */
+  async saveSession(): Promise<void> {
+    if (!this.context || !this.page) {
+      console.log('No session to save - browser not initialized');
+      return;
+    }
+
+    const projectId = parseInt(this.config.projectId, 10);
+    if (isNaN(projectId)) {
+      console.log('Cannot save session - invalid project ID');
+      return;
+    }
+
+    try {
+      // Get cookies from context
+      const cookies = await this.context.cookies() || [];
+
+      // Get localStorage from page
+      let localStorage: Record<string, string> = {};
+      try {
+        const lsData = await this.page.evaluate(() => {
+          const data: Record<string, string> = {};
+          for (let i = 0; i < window.localStorage.length; i++) {
+            const key = window.localStorage.key(i);
+            if (key) {
+              data[key] = window.localStorage.getItem(key) || '';
+            }
+          }
+          return data;
+        });
+        localStorage = lsData;
+      } catch (e) {
+        console.log('Could not get localStorage:', e);
+      }
+
+      const sessionData: SessionData = {
+        cookies,
+        localStorage,
+        lastUrl: this.page.url(),
+        savedAt: new Date().toISOString()
+      };
+
+      // Save to Supabase
+      const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/Projeto?id=eq.${projectId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            browser_session_data: sessionData
+          })
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Failed to save session:', response.status, await response.text());
+      } else {
+        console.log(`Session saved for project ${projectId}: ${cookies.length} cookies, ${Object.keys(localStorage).length} localStorage items`);
+      }
+    } catch (err) {
+      console.error('Error saving session:', err);
+    }
+  }
+
+  /**
+   * Restore browser session (cookies, localStorage) from Supabase
+   * Called automatically when browser is initialized
+   */
+  async restoreSession(): Promise<boolean> {
+    if (!this.context || !this.page) {
+      console.log('Cannot restore session - browser not initialized');
+      return false;
+    }
+
+    const projectId = parseInt(this.config.projectId, 10);
+    if (isNaN(projectId)) {
+      console.log('Cannot restore session - invalid project ID');
+      return false;
+    }
+
+    try {
+      // Fetch session data from Supabase
+      const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/Projeto?id=eq.${projectId}&select=browser_session_data`,
+        {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Failed to fetch session:', response.status);
+        return false;
+      }
+
+      const data = await response.json();
+      if (!data || data.length === 0 || !data[0]?.browser_session_data) {
+        console.log('No saved session found for project', projectId);
+        return false;
+      }
+
+      const sessionData = data[0].browser_session_data as SessionData;
+
+      // Restore cookies
+      if (sessionData.cookies && sessionData.cookies.length > 0) {
+        // Filter out expired cookies
+        const now = Date.now() / 1000;
+        const validCookies = sessionData.cookies.filter(c => !c.expires || c.expires > now);
+        
+        if (validCookies.length > 0) {
+          await this.context.addCookies(validCookies);
+          console.log(`Restored ${validCookies.length} cookies`);
+        }
+      }
+
+      // Restore localStorage (need to navigate first to have a valid origin)
+      if (sessionData.localStorage && Object.keys(sessionData.localStorage).length > 0) {
+        // We'll restore localStorage after navigating to a page
+        // Store it temporarily to apply later
+        (this as any)._pendingLocalStorage = sessionData.localStorage;
+        console.log(`Pending localStorage restoration: ${Object.keys(sessionData.localStorage).length} items`);
+      }
+
+      console.log(`Session restored for project ${projectId} (saved at ${sessionData.savedAt})`);
+      return true;
+    } catch (err) {
+      console.error('Error restoring session:', err);
+      return false;
+    }
+  }
+
+  /**
+   * Apply pending localStorage (call after navigating to restore)
+   */
+  private async applyPendingLocalStorage(): Promise<void> {
+    const pending = (this as any)._pendingLocalStorage;
+    if (!pending || !this.page) return;
+
+    try {
+      await this.page.evaluate((ls: Record<string, string>) => {
+        Object.entries(ls).forEach(([key, value]) => {
+          try {
+            window.localStorage.setItem(key, value);
+          } catch (e) {
+            console.error('Failed to set localStorage item:', key, e);
+          }
+        });
+      }, pending);
+      console.log(`Applied ${Object.keys(pending).length} localStorage items`);
+      delete (this as any)._pendingLocalStorage;
+    } catch (e) {
+      console.log('Could not apply localStorage:', e);
+    }
+  }
+
+  /**
    * Close browser
    */
   async close(): Promise<void> {
+    // Save session before closing
+    await this.saveSession();
+
     if (this.context) {
       await this.context.close();
       this.context = null;

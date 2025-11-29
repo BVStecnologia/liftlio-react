@@ -9,6 +9,9 @@
  *
  * Each task records what patterns were used, and the next task
  * chooses DIFFERENT patterns to avoid repetition.
+ *
+ * UPDATED: Now tracks start_position and click_positions from last 30 tasks
+ * to ensure mouse movements don't repeat patterns.
  */
 
 import { Page } from 'playwright';
@@ -59,6 +62,9 @@ export interface BehaviorProfile {
   delay: DelayPattern;
   click_offset: { x: number; y: number };
   typing_speed_ms: number;
+  // Anti-detection: Track mouse positions to avoid repetition
+  start_position: { x: number; y: number };
+  click_positions: Array<{ x: number; y: number }>;
 }
 
 // ============================================
@@ -98,6 +104,7 @@ export function selectDifferentPattern<T extends string>(
 
 /**
  * Generate a new behavior profile that's different from recent ones
+ * Now includes start_position that avoids last 30 tasks' positions
  */
 export function generateBehaviorProfile(recentBehaviors: BehaviorProfile[]): BehaviorProfile {
   const recentMouse = recentBehaviors.map(b => b.mouse);
@@ -138,15 +145,40 @@ export function generateBehaviorProfile(recentBehaviors: BehaviorProfile[]): Beh
       typing_speed_ms = randomBetween(80, 150);
   }
 
+  // NEW: Generate start_position different from last 30 tasks
+  const recentStartPositions = recentBehaviors
+    .map(b => b.start_position)
+    .filter(Boolean);
+
+  let start_position: { x: number; y: number };
+  let attempts = 0;
+  const MIN_DISTANCE = 30; // Minimum pixels apart from recent positions
+
+  do {
+    start_position = {
+      x: randomBetween(50, 400),
+      y: randomBetween(50, 400)
+    };
+    attempts++;
+  } while (
+    recentStartPositions.some(p =>
+      p && Math.abs(p.x - start_position.x) < MIN_DISTANCE &&
+      Math.abs(p.y - start_position.y) < MIN_DISTANCE
+    ) && attempts < 20
+  );
+
   return {
     mouse,
     typing,
     scroll,
     delay,
     click_offset,
-    typing_speed_ms
+    typing_speed_ms,
+    start_position,
+    click_positions: [] // Will be populated during task execution
   };
 }
+
 
 // ============================================
 // MOUSE MOVEMENT FUNCTIONS
@@ -252,16 +284,18 @@ function generateBezierPath(
 
 /**
  * Move mouse along a human-like path
+ * Now accepts optional startPos and returns final position for tracking
  */
 export async function humanMouseMove(
   page: Page,
   targetX: number,
   targetY: number,
   pattern: MousePattern,
-  offset: { x: number; y: number }
-): Promise<void> {
-  // Get current mouse position (or start from corner)
-  const currentPos = { x: 100, y: 100 }; // Default start position
+  offset: { x: number; y: number },
+  startPos?: { x: number; y: number }
+): Promise<{ x: number; y: number }> {
+  // Use provided start position or default
+  const currentPos = startPos || { x: 100, y: 100 };
 
   // Apply offset to target
   const finalX = targetX + offset.x;
@@ -279,16 +313,21 @@ export async function humanMouseMove(
     const baseDelay = pattern === 'bezier_fast' ? 5 : 15;
     await sleep(randomBetween(baseDelay, baseDelay * 2));
   }
+
+  // Return final position for tracking
+  return { x: finalX, y: finalY };
 }
 
 /**
  * Human-like click with mouse movement
+ * Now tracks click positions in the behavior profile
  */
 export async function humanClick(
   page: Page,
   selector: string,
-  profile: BehaviorProfile
-): Promise<void> {
+  profile: BehaviorProfile,
+  currentMousePos?: { x: number; y: number }
+): Promise<{ x: number; y: number }> {
   // Get element bounding box
   const element = await page.locator(selector).first();
   const box = await element.boundingBox();
@@ -301,15 +340,24 @@ export async function humanClick(
   const targetX = box.x + box.width / 2;
   const targetY = box.y + box.height / 2;
 
+  // Use profile's start_position if no current position provided
+  const startPos = currentMousePos || profile.start_position;
+
   // Move mouse humanly
-  await humanMouseMove(page, targetX, targetY, profile.mouse, profile.click_offset);
+  const finalPos = await humanMouseMove(page, targetX, targetY, profile.mouse, profile.click_offset, startPos);
 
   // Small delay before click
   await sleep(randomBetween(50, 150));
 
   // Click
   await page.mouse.click(targetX + profile.click_offset.x, targetY + profile.click_offset.y);
+
+  // Track this click position
+  profile.click_positions.push(finalPos);
+
+  return finalPos;
 }
+
 
 // ============================================
 // TYPING FUNCTIONS
@@ -471,6 +519,7 @@ export async function humanDelay(pattern: DelayPattern): Promise<void> {
   await sleep(delay);
 }
 
+
 // ============================================
 // BEHAVIOR MEMORY (Supabase Integration)
 // ============================================
@@ -490,8 +539,9 @@ function getSupabase(): SupabaseClient {
 
 /**
  * Get recent behavior profiles for a project
+ * UPDATED: Now fetches 30 tasks instead of 5 for better anti-detection
  */
-export async function getRecentBehaviors(projectId: number, limit: number = 5): Promise<BehaviorProfile[]> {
+export async function getRecentBehaviors(projectId: number, limit: number = 30): Promise<BehaviorProfile[]> {
   try {
     const supabase = getSupabase();
 
@@ -519,6 +569,7 @@ export async function getRecentBehaviors(projectId: number, limit: number = 5): 
 
 /**
  * Save behavior profile for a task
+ * Now includes start_position and click_positions
  */
 export async function saveBehavior(taskId: string, behavior: BehaviorProfile): Promise<void> {
   try {
@@ -539,10 +590,10 @@ export async function saveBehavior(taskId: string, behavior: BehaviorProfile): P
 
 /**
  * Create behavior profile for a new task
- * Automatically avoids patterns used in recent tasks
+ * Automatically avoids patterns and positions used in recent 30 tasks
  */
 export async function createTaskBehavior(projectId: number): Promise<BehaviorProfile> {
-  const recentBehaviors = await getRecentBehaviors(projectId);
+  const recentBehaviors = await getRecentBehaviors(projectId, 30);
   return generateBehaviorProfile(recentBehaviors);
 }
 
