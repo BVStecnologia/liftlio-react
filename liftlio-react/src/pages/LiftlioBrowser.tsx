@@ -169,6 +169,7 @@ const BrowserContent = styled.div`
   background: ${props => props.theme.name === 'dark' ? '#000' : '#fff'};
   position: relative;
   overflow: hidden;
+  min-height: 0;
 `;
 
 const PlaceholderContent = styled.div`
@@ -236,20 +237,18 @@ const VNCWrapper = styled.div`
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  clip-path: inset(0);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 `;
 
 const VNCFrame = styled.iframe`
-  width: calc(100% + 44px);
+  width: 100%;
   height: 100%;
   border: none;
   background: #000;
   display: block;
-  position: absolute;
-  top: 0;
-  left: -44px;
+  overflow: hidden;
 `;
 
 const VNCToggle = styled.button<{ active?: boolean }>`
@@ -1278,7 +1277,7 @@ const LiftlioBrowser: React.FC = () => {
               {connectionStatus === 'connected' && vncEnabled ? (
                 <VNCWrapper>
                   <VNCFrame
-                    src={`http://localhost:${VNC_PORT}/vnc.html?autoconnect=true&resize=scale&scaleViewport=true&reconnect=true&show_dot=true&bell=false&view_only=false`}
+                    src={`http://localhost:${VNC_PORT}/vnc_lite.html?autoconnect=true&resize=scale&view_clip=false&reconnect=true&reconnect_delay=1000&quality=6&compression=2`}
                     title="VNC Browser View"
                     allow="clipboard-read; clipboard-write"
                   />

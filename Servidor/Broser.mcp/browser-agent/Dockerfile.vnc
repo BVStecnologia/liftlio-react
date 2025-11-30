@@ -22,9 +22,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Hide noVNC toolbar by modifying lite.css directly (more reliable than inline CSS)
-# This appends CSS rules to hide the status bar completely
-RUN echo '#noVNC_status_bar { display: none !important; }' >> /usr/share/novnc/app/styles/lite.css
+# Hide noVNC toolbar completely and fix scaling
+# 1. Remove the status bar div entirely from HTML
+# 2. Add aggressive CSS and JS to ensure it stays hidden
+RUN sed -i '/<div id="noVNC_status_bar">/,/<\/div>/d' /usr/share/novnc/vnc_lite.html && \
+    sed -i 's|</head>|<style>#noVNC_status_bar,#noVNC_status,#noVNC_buttons,#sendCtrlAltDelButton{display:none!important;height:0!important;width:0!important;visibility:hidden!important;position:absolute!important;top:-9999px!important;left:-9999px!important;opacity:0!important;pointer-events:none!important}html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000}#noVNC_screen{width:100%!important;height:100%!important}</style><script>(function(){var h=function(){var e=document.getElementById("noVNC_status_bar");if(e)e.style.cssText="display:none!important;height:0!important;visibility:hidden!important";};h();setInterval(h,100);window.addEventListener("load",h);})();</script></head>|' /usr/share/novnc/vnc_lite.html && \
+    echo '#noVNC_status_bar, #noVNC_status, #noVNC_buttons, #sendCtrlAltDelButton { display: none !important; height: 0 !important; width: 0 !important; visibility: hidden !important; position: absolute !important; top: -9999px !important; } html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; } #noVNC_screen { width: 100% !important; height: 100% !important; } canvas { display: block; }' >> /usr/share/novnc/app/styles/lite.css
 
 # Copy package files
 COPY package*.json ./
@@ -34,6 +37,9 @@ RUN npm ci --only=production
 
 # Copy source code
 COPY dist/ ./dist/
+
+# Copy stealth script for anti-detection
+COPY stealth.js ./stealth.js
 
 # Create directories
 RUN mkdir -p /data/profiles /data/screenshots /var/log/supervisor
@@ -52,8 +58,8 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV DISPLAY=:99
 ENV VNC_PORT=5900
 ENV NOVNC_PORT=6080
-ENV SCREEN_WIDTH=1024
-ENV SCREEN_HEIGHT=576
+ENV SCREEN_WIDTH=1280
+ENV SCREEN_HEIGHT=720
 ENV SCREEN_DEPTH=24
 
 # Expose ports

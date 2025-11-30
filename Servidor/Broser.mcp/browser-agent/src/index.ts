@@ -12,6 +12,7 @@ import { promisify } from 'util';
 import { BrowserManager, BrowserSnapshot } from './browser-manager';
 import dotenv from 'dotenv';
 import { setupAgentEndpoint } from './agent-endpoint';
+import { createMCPProxy, checkPlaywrightMCPHealth } from './mcp-proxy';
 
 // Load environment variables
 dotenv.config();
@@ -124,6 +125,16 @@ setupAgentEndpoint(
   },
   broadcastEvent
 );
+
+// ============================================
+// Playwright MCP Proxy (routes to localhost:8931)
+// ============================================
+const mcpProxy = createMCPProxy(
+  () => browserManager,
+  broadcastEvent
+);
+app.use('/mcp', mcpProxy);
+console.log('Playwright MCP proxy enabled at /mcp/*');
 
 /**
  * Health check endpoint
@@ -363,16 +374,28 @@ app.post('/mcp/screenshot', async (req, res) => {
 
 /**
  * MCP Tool: Get screenshot as base64 (GET - returns image data)
+ * Returns null screenshot gracefully if browser not running (no error 400)
  */
 app.get('/mcp/screenshot', async (req, res) => {
   try {
+    // Return graceful null response if browser not initialized (no error)
     if (!browserManager?.isRunning()) {
-      return res.status(400).json({ error: 'Browser not initialized' });
+      return res.json({
+        success: false,
+        screenshot: null,
+        reason: 'browser_not_initialized',
+        timestamp: new Date().toISOString()
+      });
     }
 
     const page = browserManager.getPage();
     if (!page) {
-      return res.status(400).json({ error: 'No page available' });
+      return res.json({
+        success: false,
+        screenshot: null,
+        reason: 'no_page_available',
+        timestamp: new Date().toISOString()
+      });
     }
 
     // Take screenshot as buffer and return as base64

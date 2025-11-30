@@ -51,7 +51,7 @@ export interface AccessibilityNode {
   tag: string;
   role?: string;
   text?: string;
-  ref: string;  // Unique selector for clicking (e.g., "e42")
+  ref: string;  // Semantic selector for clicking (e.g., "button[aria-label="Compose"]")
   rect?: { x: number; y: number; w: number; h: number };
   children?: AccessibilityNode[];
 }
@@ -507,7 +507,7 @@ export class BrowserManager {
     await this.page.screenshot({
       path: screenshotPath,
       fullPage: false,
-      timeout: 10000,
+      timeout: 30000,
       animations: 'disabled'
     });
 
@@ -524,7 +524,7 @@ export class BrowserManager {
 
     const buffer = await this.page.screenshot({
       fullPage: false,
-      timeout: 10000,  // 10 second timeout to avoid font loading hangs
+      timeout: 30000,  // Increased to 30s for heavy pages like Gmail
       animations: 'disabled'
     });
     return buffer.toString('base64');
@@ -589,7 +589,8 @@ export class BrowserManager {
 
   /**
    * Get accessibility snapshot for token-efficient AI processing
-   * Returns a tree of interactive elements with refs for clicking
+   * Returns a tree of interactive elements with SEMANTIC refs for clicking
+   * Semantic refs survive SPA re-renders (e.g., "button[aria-label='Compose']")
    * ~50% fewer tokens than text-based content extraction
    */
   async getAccessibilitySnapshot(): Promise<AccessibilityNode> {
@@ -598,7 +599,8 @@ export class BrowserManager {
     }
 
     return await this.page.evaluate(() => {
-      let refCounter = 0;
+      let fallbackCounter = 0;
+      const usedRefs = new Set<string>();
 
       function isVisible(el: Element): boolean {
         const rect = el.getBoundingClientRect();
@@ -614,11 +616,70 @@ export class BrowserManager {
         const role = el.getAttribute('role');
         const hasClick = el.hasAttribute('onclick') || (el as HTMLElement).onclick !== null;
         const hasHref = el.hasAttribute('href');
-        
+
         return /^(a|button|input|select|textarea|video|audio)$/i.test(tag) ||
                /^(button|link|menuitem|tab|checkbox|radio|textbox|combobox)$/i.test(role || '') ||
                hasClick || hasHref ||
                el.hasAttribute('tabindex');
+      }
+
+      // Generate semantic ref that survives SPA re-renders
+      function generateSemanticRef(el: Element): string {
+        const tag = el.tagName.toLowerCase();
+
+        // Priority 1: data-testid (most reliable for SPAs)
+        const testId = el.getAttribute('data-testid');
+        if (testId) {
+          const ref = `${tag}[data-testid="${testId}"]`;
+          if (!usedRefs.has(ref)) { usedRefs.add(ref); return ref; }
+        }
+
+        // Priority 2: aria-label (common in Gmail, SPAs)
+        const ariaLabel = el.getAttribute('aria-label');
+        if (ariaLabel && ariaLabel.length < 60) {
+          const ref = `${tag}[aria-label="${ariaLabel}"]`;
+          if (!usedRefs.has(ref)) { usedRefs.add(ref); return ref; }
+        }
+
+        // Priority 3: id (if not auto-generated)
+        const id = el.getAttribute('id');
+        if (id && !/^[\d_-]|^(ember|react|vue|ng-)/.test(id)) {
+          const ref = `#${id}`;
+          if (!usedRefs.has(ref)) { usedRefs.add(ref); return ref; }
+        }
+
+        // Priority 4: role + visible text (role=button:Compose)
+        const role = el.getAttribute('role');
+        const text = el.textContent?.trim().slice(0, 30);
+        if (role && text && text.length > 2) {
+          const ref = `role=${role}:${text}`;
+          if (!usedRefs.has(ref)) { usedRefs.add(ref); return ref; }
+        }
+
+        // Priority 5: text content only (text=Compose)
+        if (text && text.length >= 2 && text.length <= 40) {
+          const ref = `text=${text}`;
+          if (!usedRefs.has(ref)) { usedRefs.add(ref); return ref; }
+        }
+
+        // Priority 6: name attribute (forms)
+        const name = el.getAttribute('name');
+        if (name) {
+          const ref = `${tag}[name="${name}"]`;
+          if (!usedRefs.has(ref)) { usedRefs.add(ref); return ref; }
+        }
+
+        // Priority 7: placeholder (inputs)
+        const placeholder = el.getAttribute('placeholder');
+        if (placeholder) {
+          const ref = `${tag}[placeholder="${placeholder}"]`;
+          if (!usedRefs.has(ref)) { usedRefs.add(ref); return ref; }
+        }
+
+        // Fallback: sequential number (will need fresh snapshot if re-render happens)
+        const fallbackRef = `e${fallbackCounter++}`;
+        usedRefs.add(fallbackRef);
+        return fallbackRef;
       }
 
       function buildTree(el: Element, depth: number = 0): any | null {
@@ -626,9 +687,9 @@ export class BrowserManager {
 
         const tag = el.tagName.toLowerCase();
         const interactive = isInteractive(el);
-        
+
         // Skip non-interactive containers without interactive children
-        const hasInteractiveChild = Array.from(el.children).some(c => 
+        const hasInteractiveChild = Array.from(el.children).some(c =>
           isInteractive(c) || Array.from(c.children).some(isInteractive)
         );
 
@@ -636,9 +697,8 @@ export class BrowserManager {
           return null;
         }
 
-        // Generate unique ref
-        const ref = 'e' + (refCounter++);
-        (el as any).__ref = ref;
+        // Generate semantic ref (survives SPA re-renders!)
+        const ref = generateSemanticRef(el);
 
         const rect = el.getBoundingClientRect();
         const textContent = el.textContent?.trim() || '';
@@ -681,36 +741,77 @@ export class BrowserManager {
   }
 
   /**
-   * Click element by accessibility ref (e.g., "e42")
-   * Used in combination with getAccessibilitySnapshot for efficient navigation
+   * Click element by semantic ref (e.g., "button[aria-label='Compose']", "role=button:Compose", "text=Compose")
+   * Uses Playwright Locators which auto-retry and survive SPA re-renders
    */
   async clickByRef(ref: string): Promise<BrowserSnapshot> {
     if (!this.page) {
       throw new Error('Browser not initialized');
     }
 
-    console.log('Clicking element by ref:', ref);
+    console.log('Clicking element by semantic ref:', ref);
 
-    // Find and click element by stored ref
-    const clicked = await this.page.evaluate((targetRef: string) => {
-      const elements = Array.from(document.querySelectorAll('*'));
-      for (const el of elements) {
-        if ((el as any).__ref === targetRef) {
-          (el as HTMLElement).click();
-          return true;
+    try {
+      // Strategy 1: CSS selector (data-testid, aria-label, id, name, placeholder)
+      if (ref.includes('[') || ref.startsWith('#')) {
+        console.log('  Using CSS selector strategy');
+        await this.page.locator(ref).first().click({ timeout: 5000 });
+        await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+        return this.getSnapshot();
+      }
+
+      // Strategy 2: Role-based (role=button:Compose)
+      if (ref.startsWith('role=')) {
+        const match = ref.match(/^role=(\w+):(.+)$/);
+        if (match) {
+          const [, role, name] = match;
+          console.log(`  Using role strategy: role=${role}, name="${name}"`);
+          await this.page.getByRole(role as any, { name }).first().click({ timeout: 5000 });
+          await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+          return this.getSnapshot();
         }
       }
-      return false;
-    }, ref);
 
-    if (!clicked) {
-      throw new Error('Element not found for ref: ' + ref);
+      // Strategy 3: Text-based (text=Compose)
+      if (ref.startsWith('text=')) {
+        const text = ref.replace('text=', '');
+        console.log(`  Using text strategy: "${text}"`);
+        await this.page.getByText(text, { exact: false }).first().click({ timeout: 5000 });
+        await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+        return this.getSnapshot();
+      }
+
+      // Strategy 4: Fallback numeric ref (e0, e1, etc.) - try as generic locator
+      if (/^e\d+$/.test(ref)) {
+        console.log('  Fallback ref detected - refreshing snapshot recommended');
+        // For fallback refs, try to find by walking the DOM
+        const clicked = await this.page.evaluate((targetRef: string) => {
+          const elements = Array.from(document.querySelectorAll('*'));
+          for (const el of elements) {
+            if ((el as any).__ref === targetRef) {
+              (el as HTMLElement).click();
+              return true;
+            }
+          }
+          return false;
+        }, ref);
+
+        if (clicked) {
+          await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+          return this.getSnapshot();
+        }
+      }
+
+      // Strategy 5: Try ref as a generic locator
+      console.log('  Trying as generic locator');
+      await this.page.locator(ref).first().click({ timeout: 5000 });
+      await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+      return this.getSnapshot();
+
+    } catch (error) {
+      console.error('Click by semantic ref failed:', ref, error);
+      throw new Error(`Element not found for ref: ${ref}`);
     }
-
-    // Wait for navigation if needed
-    await this.page.waitForLoadState('domcontentloaded').catch(() => {});
-
-    return this.getSnapshot();
   }
 
   /**

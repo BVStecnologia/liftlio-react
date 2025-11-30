@@ -1,7 +1,7 @@
 /**
  * Claude AI Agent for Browser Automation
  *
- * Uses Claude Haiku (claude-haiku-4-5-20251001) for cost-effective browser control.
+ * Uses Claude Haiku (claude-haiku-4-5-20251015) for cost-effective browser control.
  * Receives natural language tasks and executes them step by step.
  *
  * Includes behavioral anti-detection system:
@@ -317,7 +317,7 @@ export class BrowserAgent {
       apiKey: process.env.CLAUDE_API_KEY
     });
     this.browserManager = browserManager;
-    this.model = config.model || 'claude-haiku-4-5-20251001';
+    this.model = config.model || 'claude-haiku-4-5-20251015';
     this.maxIterations = config.maxIterations || 200; // High default for long tasks (can take hours)
     this.verbose = config.verbose || false;
     this.onProgress = config.onProgress;
@@ -366,19 +366,73 @@ export class BrowserAgent {
 
           const target = input.target;
 
-          // Support clicking by ref (e.g., 'e42' from accessibility tree)
-          if (/^e\d+$/.test(target)) {
-            await this.browserManager.clickByRef(target);
-            return `Clicked element [${target}]`;
+          // Support clicking by semantic ref (e.g., 'button[aria-label="Compose"]', 'role=button:Compose', 'text=Compose')
+          // Also supports fallback refs (e.g., 'e42')
+          const isSemanticRef = target.includes('[') || target.startsWith('#') ||
+                               target.startsWith('role=') || target.startsWith('text=') ||
+                               /^e\d+$/.test(target);
+
+          if (isSemanticRef) {
+            try {
+              await this.browserManager.clickByRef(target);
+              return `Clicked element [${target}]`;
+            } catch (e) {
+              console.log(`Semantic ref click failed for "${target}", trying fallbacks...`);
+            }
           }
 
-          if (input.by_text !== false) {
-            await page.getByText(target, { exact: false }).first().click();
-          } else {
-            await page.click(target);
+          // Fallback cascade for when semantic refs fail or direct text/selector is provided
+          const strategies: Array<{ name: string; fn: () => Promise<void> }> = [];
+
+          // Strategy 1: Click by visible text (most reliable for SPAs)
+          strategies.push({
+            name: 'text',
+            fn: async () => {
+              await page.getByText(target, { exact: false }).first().click({ timeout: 5000 });
+            }
+          });
+
+          // Strategy 2: Click by role (button/link) with name
+          strategies.push({
+            name: 'role',
+            fn: async () => {
+              await page.getByRole('button', { name: target }).or(
+                page.getByRole('link', { name: target })
+              ).first().click({ timeout: 5000 });
+            }
+          });
+
+          // Strategy 3: Click by CSS selector
+          strategies.push({
+            name: 'selector',
+            fn: async () => {
+              await page.click(target, { timeout: 5000 });
+            }
+          });
+
+          // Strategy 4: Click by aria-label
+          strategies.push({
+            name: 'aria-label',
+            fn: async () => {
+              await page.locator(`[aria-label*="${target}" i]`).first().click({ timeout: 5000 });
+            }
+          });
+
+          // Execute strategies in cascade
+          let lastError: Error | null = null;
+          for (const strategy of strategies) {
+            try {
+              console.log(`  Trying click strategy: ${strategy.name}`);
+              await strategy.fn();
+              await page.waitForLoadState('domcontentloaded').catch(() => {});
+              return `Clicked on "${target}" (via ${strategy.name})`;
+            } catch (e) {
+              lastError = e as Error;
+              // Continue to next strategy
+            }
           }
-          await page.waitForLoadState('domcontentloaded');
-          return `Clicked on "${target}"`;
+
+          throw lastError || new Error(`Failed to click: ${target}`);
         }
 
         case 'browser_type': {
