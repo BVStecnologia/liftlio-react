@@ -1279,7 +1279,7 @@ const LiftlioBrowser: React.FC = () => {
               {connectionStatus === 'connected' && vncEnabled ? (
                 <VNCWrapper>
                   <VNCFrame
-                    src={`http://localhost:${VNC_PORT}/vnc_lite.html?autoconnect=true&resize=scale&view_clip=false&reconnect=true&reconnect_delay=1000&quality=6&compression=2`}
+                    src={`http://localhost:${VNC_PORT}/vnc.html?autoconnect=true&resize=scale&view_clip=false&reconnect=true&reconnect_delay=1000&quality=6&compression=2`}
                     title="VNC Browser View"
                     allow="clipboard-read; clipboard-write"
                   />

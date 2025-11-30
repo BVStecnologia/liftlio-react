@@ -21,13 +21,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     supervisor \
     curl \
     && rm -rf /var/lib/apt/lists/*
+# Install Google Chrome (real browser, no automation banner)
+RUN curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/*
 
-# Hide noVNC toolbar completely and fix scaling
-# 1. Remove the status bar div entirely from HTML
-# 2. Add aggressive CSS and JS to ensure it stays hidden
-RUN sed -i '/<div id="noVNC_status_bar">/,/<\/div>/d' /usr/share/novnc/vnc_lite.html && \
-    sed -i 's|</head>|<style>#noVNC_status_bar,#noVNC_status,#noVNC_buttons,#sendCtrlAltDelButton{display:none!important;height:0!important;width:0!important;visibility:hidden!important;position:absolute!important;top:-9999px!important;left:-9999px!important;opacity:0!important;pointer-events:none!important}html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000}#noVNC_screen{width:100%!important;height:100%!important}</style><script>(function(){var h=function(){var e=document.getElementById("noVNC_status_bar");if(e)e.style.cssText="display:none!important;height:0!important;visibility:hidden!important";};h();setInterval(h,100);window.addEventListener("load",h);})();</script></head>|' /usr/share/novnc/vnc_lite.html && \
-    echo '#noVNC_status_bar, #noVNC_status, #noVNC_buttons, #sendCtrlAltDelButton { display: none !important; height: 0 !important; width: 0 !important; visibility: hidden !important; position: absolute !important; top: -9999px !important; } html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; } #noVNC_screen { width: 100% !important; height: 100% !important; } canvas { display: block; }' >> /usr/share/novnc/app/styles/lite.css
+# Hide noVNC toolbar with CSS only (don't remove HTML elements to avoid JS errors)
+RUN sed -i 's|</head>|<style>#noVNC_status_bar{display:none!important;height:0!important;visibility:hidden!important;position:absolute!important;top:-9999px!important}html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000}#noVNC_screen{width:100%!important;height:100%!important}canvas{display:block}</style></head>|' /usr/share/novnc/vnc_lite.html && \
+    echo '#noVNC_status_bar { display: none !important; height: 0 !important; visibility: hidden !important; } html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; } #noVNC_screen { width: 100% !important; height: 100% !important; } canvas { display: block; }' >> /usr/share/novnc/app/styles/lite.css
 
 # Copy package files
 COPY package*.json ./
@@ -58,8 +61,8 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV DISPLAY=:99
 ENV VNC_PORT=5900
 ENV NOVNC_PORT=6080
-ENV SCREEN_WIDTH=1280
-ENV SCREEN_HEIGHT=720
+ENV SCREEN_WIDTH=1920
+ENV SCREEN_HEIGHT=1080
 ENV SCREEN_DEPTH=24
 
 # Expose ports

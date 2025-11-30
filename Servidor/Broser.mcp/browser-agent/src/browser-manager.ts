@@ -64,6 +64,7 @@ export class BrowserManager {
   private proxyConfig: ProxyConfig | null = null;
   private behaviorProfile: BehaviorProfile | null = null;
   private resourceBlockingEnabled: boolean = false;
+  private sessionSaveInterval: NodeJS.Timeout | null = null;
 
   constructor(config: BrowserManagerConfig) {
     this.config = config;
@@ -100,9 +101,12 @@ export class BrowserManager {
     console.log(`Initializing browser for project: ${this.config.projectId}`);
 
     const launchOptions: any = {
+      channel: 'chrome',  // Use real Chrome instead of Playwright Chromium (no automation banner)
+      ignoreDefaultArgs: ['--no-startup-window', '--enable-automation'],
       headless: this.config.headless,
       args: [
         '--disable-blink-features=AutomationControlled',
+        '--disable-infobars',  // Hide "Chrome is being controlled" banner
         '--disable-features=IsolateOrigins,site-per-process',
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -111,6 +115,10 @@ export class BrowserManager {
         '--disable-gpu',
         '--disable-http2',
         '--mute-audio', // Mute audio to prevent issues with video playback
+        // VNC visibility - force window to appear on X11 display
+        '--start-maximized',
+        '--window-position=0,0',
+        '--window-size=1920,1080',
       ]
     };
 
@@ -157,6 +165,12 @@ export class BrowserManager {
     await this.restoreSession();
 
     console.log(`Browser initialized for project: ${this.config.projectId}`);
+
+    // Setup auto-save session every 2 minutes
+    this.sessionSaveInterval = setInterval(async () => {
+      await this.saveSession();
+      console.log('Auto-saved session');
+    }, 2 * 60 * 1000);
   }
 
   /**
@@ -196,6 +210,10 @@ export class BrowserManager {
     });
 
     console.log('Stealth mode enabled');
+    // Press ESC to dismiss automation infobar
+    await this.page.keyboard.press('Escape');
+    await this.page.waitForTimeout(500);
+    await this.page.keyboard.press('Escape');
   }
 
   /**
@@ -382,6 +400,9 @@ export class BrowserManager {
 
     // Apply any pending localStorage from restored session
     await this.applyPendingLocalStorage();
+
+    // Save session after navigation (captures new cookies/auth)
+    await this.saveSession();
 
     return this.getSnapshot();
   }
@@ -1112,6 +1133,12 @@ export class BrowserManager {
    * Close browser
    */
   async close(): Promise<void> {
+    // Clear auto-save interval
+    if (this.sessionSaveInterval) {
+      clearInterval(this.sessionSaveInterval);
+      this.sessionSaveInterval = null;
+    }
+
     // Save session before closing
     await this.saveSession();
 
