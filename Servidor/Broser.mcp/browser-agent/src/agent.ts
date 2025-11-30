@@ -1,7 +1,7 @@
 /**
  * Claude AI Agent for Browser Automation
  *
- * Uses Claude Haiku (claude-haiku-4-5-20251015) for cost-effective browser control.
+ * Uses Claude Haiku (claude-haiku-4-5-20251001) for cost-effective browser control.
  * Receives natural language tasks and executes them step by step.
  *
  * Includes behavioral anti-detection system:
@@ -317,7 +317,7 @@ export class BrowserAgent {
       apiKey: process.env.CLAUDE_API_KEY
     });
     this.browserManager = browserManager;
-    this.model = config.model || 'claude-haiku-4-5-20251015';
+    this.model = config.model || 'claude-haiku-4-5-20251001';
     this.maxIterations = config.maxIterations || 200; // High default for long tasks (can take hours)
     this.verbose = config.verbose || false;
     this.onProgress = config.onProgress;
@@ -687,6 +687,15 @@ export class BrowserAgent {
       } catch (e) {
         console.log('⚠️ Could not save behavior profile');
       }
+    }
+
+    // Save browser session (cookies, localStorage) after each task
+    // This ensures session persistence even if container crashes
+    try {
+      await this.browserManager.saveSession();
+      console.log(`💾 Session saved after task completion`);
+    } catch (e) {
+      console.log('⚠️ Could not save session:', (e as Error).message);
     }
 
     return {
