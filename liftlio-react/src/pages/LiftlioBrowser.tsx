@@ -1117,7 +1117,9 @@ const LiftlioBrowser: React.FC = () => {
             body: JSON.stringify({
               task: taskText.trim(),
               taskId: insertedTask.id,
-              maxIterations: 30,
+              projectId: currentProject.id.toString(),
+              model: 'claude-haiku-4-5-20251001',
+              maxIterations: 100,
               verbose: false
             })
           });
