@@ -17,17 +17,42 @@
 ## 📸 REGRA: Imagens são OBRIGATÓRIAS
 
 ### Geração de Imagens
+
+**Opção 1: Pollinations AI (GRATUITO - Recomendado)**
 ```bash
-# Gerar imagem localmente SEMPRE com GPT-Image-1:
+# 100% GRATUITO, sem API key necessária!
+C:/Users/User/Desktop/Liftlio/.claude/scripts/pollinations-image.sh "prompt" "output_dir" "width" "height"
+
+# Exemplo:
+bash .claude/scripts/pollinations-image.sh "Purple tech dashboard with analytics graphs, dark theme, modern UI" "liftlio-react/generated-images" "1200" "675"
+
+# Tamanhos recomendados para Trello: 1200x675 (16:9)
+# Imagem salva em: liftlio-react/generated-images/
+```
+
+**Opção 2: GPT-Image-1 (Requer OpenAI billing)**
+```bash
+# Requer OPENAI_API_KEY com billing ativo
 /Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/gpt-image-1.sh "prompt" "1536x1024" "high"
 
 # NOTA: GPT-Image-1 usa internamente dall-e-3 como modelo
 # Tamanhos válidos: 1024x1024, 1024x1536, 1536x1024
 # Qualidade: low, medium, high, auto
-
-# Imagem salva em: /liftlio-react/generated-images/
-# Usuário sobe manualmente no Trello como capa do card
 ```
+
+**Opção 3: Google Gemini (Requer billing para imagens)**
+```bash
+# API Key disponível em: .claude/secrets/gemini-api.env
+# NOTA: Geração de imagens requer billing no Google Cloud
+# Text generation funciona no free tier
+# Projeto: Liftlio-Images (207869528012)
+```
+
+**Imagens salvas em:** `liftlio-react/generated-images/`
+
+### Upload de Capas no Trello
+- **Via MCP Browser**: Login com Google (valdair3d@gmail.com) → Navegar ao card → Capa → Upload
+- **Manualmente**: Usuário sobe a imagem como capa do card
 
 ## Workflow de Cards
 
@@ -109,7 +134,8 @@ await mcp__trello__move_card_to_list({
 ## Best Practices
 1. **Clear title**: Use action verb + context (IN ENGLISH!)
 2. **Structured description**: Markdown with sections (Objective, Tasks, Refs) (IN ENGLISH!)
-3. **Always include image**: Use GPT-Image-1 for visual impact
+3. **Always include image**: Use Pollinations (free) or GPT-Image-1 (paid) for visual impact
 4. **Descriptive labels**: Facilitate filtering and organization
 5. **Comments**: Update progress with emojis (✅ ❌ ⚠️) (IN ENGLISH!)
 6. **Useful attachments**: Links to Figma, docs, PRs
+7. **Cover upload**: Use MCP Browser to upload directly or inform user to do manually
