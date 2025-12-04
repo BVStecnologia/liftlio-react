@@ -63,7 +63,7 @@ export function getDataImpulseConfig(): DataImpulseConfig | null {
  */
 export async function testProxyConnection(config: ProxyConfig): Promise<boolean> {
   try {
-    const { chromium } = await import('playwright');
+    const { chromium } = await import('patchright');
 
     const browser = await chromium.launch({
       proxy: config,

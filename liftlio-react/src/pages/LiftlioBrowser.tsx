@@ -669,10 +669,15 @@ const LiftlioBrowser: React.FC = () => {
   // Get container port for project
   const getContainerPort = useCallback(() => {
     if (!currentProject?.id) return null;
-    // Port is calculated as base port + project index (simplified)
-    // In real implementation, orchestrator assigns ports
-    return containerInfo?.port || null;
-  }, [currentProject?.id, containerInfo]);
+    // Always use the orchestrator URL port (10100) since container's mcpPort (3000) is internal
+    // The orchestrator URL already has the correct external port mapping
+    try {
+      const url = new URL(BROWSER_ORCHESTRATOR_URL);
+      return parseInt(url.port) || 10100;
+    } catch {
+      return 10100; // Default to mapped port
+    }
+  }, [currentProject?.id]);
 
   // Initialize browser in container
   const initializeBrowser = useCallback(async (port: number) => {
@@ -718,10 +723,20 @@ const LiftlioBrowser: React.FC = () => {
         );
 
         if (myContainer) {
-          const port = myContainer.mcpPort || myContainer.port;
+          // Container's mcpPort (3000) is the INTERNAL Docker port
+          // We need to use the orchestrator URL's port (10100) which is the EXTERNAL mapped port
+          const internalPort = myContainer.mcpPort || myContainer.port;
+          let orchestratorPort = 10100; // Default external port
+          try {
+            const url = new URL(BROWSER_ORCHESTRATOR_URL);
+            orchestratorPort = parseInt(url.port) || 10100;
+          } catch {}
+
+          console.log(`[LiftlioBrowser] Container internal port: ${internalPort}, using orchestrator port: ${orchestratorPort}`);
+
           setContainerInfo({
             projectId: myContainer.projectId,
-            port: port,
+            port: orchestratorPort, // Store the external port for API calls
             status: 'running',
             createdAt: myContainer.createdAt,
             lastActivity: myContainer.lastActivity
@@ -730,17 +745,17 @@ const LiftlioBrowser: React.FC = () => {
 
           // Auto-initialize browser if not running
           try {
-            const healthRes = await fetch(`http://localhost:${port}/health`);
+            const healthRes = await fetch(`http://localhost:${orchestratorPort}/health`);
             if (healthRes.ok) {
               const healthData = await healthRes.json();
               if (!healthData.browserRunning) {
                 console.log('[LiftlioBrowser] Browser not running, initializing...');
-                await initializeBrowser(port);
+                await initializeBrowser(orchestratorPort);
               }
             }
           } catch (healthErr) {
             console.log('[LiftlioBrowser] Could not check health, trying to init browser anyway');
-            await initializeBrowser(port);
+            await initializeBrowser(orchestratorPort);
           }
         } else {
           setContainerInfo(null);
@@ -1109,9 +1124,8 @@ const LiftlioBrowser: React.FC = () => {
             headers['X-API-Key'] = BROWSER_MCP_API_KEY;
           }
 
-          // Call browser-agent directly on its port (container port is mapped to 10100)
-          const browserAgentUrl = containerInfo?.port ? `http://localhost:${containerInfo.port}` : 'http://localhost:10100';
-          const agentResponse = await fetch(`${browserAgentUrl}/agent/task`, {
+          // Call browser-agent using the orchestrator URL (always use configured URL to avoid port mismatch)
+          const agentResponse = await fetch(`${BROWSER_ORCHESTRATOR_URL}/agent/task`, {
             method: 'POST',
             headers,
             body: JSON.stringify({
@@ -1119,7 +1133,7 @@ const LiftlioBrowser: React.FC = () => {
               taskId: insertedTask.id,
               projectId: currentProject.id.toString(),
               model: 'claude-haiku-4-5-20251001',
-              maxIterations: 100,
+              maxIterations: 50,
               verbose: false
             })
           });

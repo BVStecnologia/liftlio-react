@@ -96,6 +96,96 @@ function clearVncTimer(): void {
   vncLastActivity = null;
 }
 
+// ============================================
+// Browser Watchdog - Auto-restart if closed
+// ============================================
+const WATCHDOG_INTERVAL_MS = 30000; // Check every 30 seconds
+let watchdogInterval: NodeJS.Timeout | null = null;
+let browserRestartCount = 0;
+const MAX_RESTARTS_PER_HOUR = 10;
+let restartResetTimer: NodeJS.Timeout | null = null;
+
+/**
+ * Browser watchdog - checks if browser is running and restarts if needed
+ */
+async function browserWatchdog(): Promise<void> {
+  if (browserManager && !browserManager.isRunning()) {
+    console.log('[Watchdog] Browser closed unexpectedly, attempting restart...');
+
+    // Check restart limit
+    if (browserRestartCount >= MAX_RESTARTS_PER_HOUR) {
+      console.error('[Watchdog] Max restarts reached, waiting for reset...');
+      return;
+    }
+
+    try {
+      browserRestartCount++;
+
+      // Close old instance completely
+      await browserManager.close().catch(() => {});
+
+      // Create new instance
+      browserManager = new BrowserManager({
+        projectId: PROJECT_ID,
+        projectIndex: PROJECT_INDEX,
+        profilesDir: PROFILES_DIR,
+        headless: HEADLESS
+      });
+
+      await browserManager.initialize();
+      await browserManager.navigate(DEFAULT_URL);
+
+      console.log(`[Watchdog] Browser restarted successfully (restart #${browserRestartCount})`);
+
+      // Broadcast event
+      try {
+        broadcastEvent('browser_restarted', {
+          projectId: PROJECT_ID,
+          restartCount: browserRestartCount
+        });
+      } catch (e) { /* broadcastEvent may not be ready */ }
+
+    } catch (error) {
+      console.error('[Watchdog] Failed to restart browser:', error);
+    }
+  }
+}
+
+/**
+ * Start the browser watchdog
+ */
+function startWatchdog(): void {
+  if (watchdogInterval) return;
+
+  watchdogInterval = setInterval(browserWatchdog, WATCHDOG_INTERVAL_MS);
+  console.log(`[Watchdog] Started - checking every ${WATCHDOG_INTERVAL_MS / 1000}s`);
+
+  // Reset restart counter every hour
+  restartResetTimer = setInterval(() => {
+    if (browserRestartCount > 0) {
+      console.log(`[Watchdog] Resetting restart counter (was ${browserRestartCount})`);
+      browserRestartCount = 0;
+    }
+  }, 60 * 60 * 1000);
+}
+
+/**
+ * Stop the browser watchdog
+ */
+function stopWatchdog(): void {
+  if (watchdogInterval) {
+    clearInterval(watchdogInterval);
+    watchdogInterval = null;
+  }
+  if (restartResetTimer) {
+    clearInterval(restartResetTimer);
+    restartResetTimer = null;
+  }
+  console.log('[Watchdog] Stopped');
+}
+
+// Start watchdog after server starts (see bottom of file)
+
 /**
  * Send event to all SSE clients
  */
@@ -952,4 +1042,9 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Project Index: ${PROJECT_INDEX}`);
   console.log(`Headless: ${HEADLESS}`);
   console.log(`Profiles Dir: ${PROFILES_DIR}`);
+
+  // Start browser watchdog after 10 seconds (give time for initial setup)
+  setTimeout(() => {
+    startWatchdog();
+  }, 10000);
 });

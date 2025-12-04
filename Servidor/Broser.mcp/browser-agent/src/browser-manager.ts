@@ -4,7 +4,9 @@
  * Includes humanization to avoid detection
  */
 
-import { chromium, Browser, BrowserContext, Page } from 'playwright';
+// PATCHRIGHT: Undetected Playwright fork that removes Runtime.enable leak
+// This is the key to avoiding Google's "50% like-headless" detection!
+import { chromium, Browser, BrowserContext, Page } from 'patchright';
 import { ProxyConfig, createProxyConfig, getDataImpulseConfig } from './proxy-config';
 import {
   BehaviorProfile,
@@ -100,22 +102,31 @@ export class BrowserManager {
   async initialize(): Promise<void> {
     console.log(`Initializing browser for project: ${this.config.projectId}`);
 
+    // CRITICAL FIX: Use EXACT same config as MCP Playwright local (which works!)
+    // The key is assistantMode: true which:
+    // 1. Adds "AutomationControlled" to --disable-features automatically
+    // 2. Does NOT add --enable-automation flag
+    // This is the ONLY thing that matters for Google login!
     const launchOptions: any = {
-      channel: 'chrome',  // Use real Chrome instead of Playwright Chromium (no automation banner)
-      ignoreDefaultArgs: ['--no-startup-window', '--enable-automation'],
       headless: this.config.headless,
+      // EXACTLY like MCP Playwright local:
+      ignoreDefaultArgs: ['--disable-extensions'],
+      assistantMode: true,  // THE KEY! Makes browser undetectable by Google
+      // Minimal args - only what Docker requires
       args: [
-        '--disable-blink-features=AutomationControlled',
-        '--disable-infobars',  // Hide "Chrome is being controlled" banner
-        '--disable-features=IsolateOrigins,site-per-process',
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--disable-gpu',
-        '--disable-http2',
-        '--mute-audio', // Mute audio to prevent issues with video playback
-        // VNC visibility - force window to appear on X11 display
+        '--no-sandbox',  // Required for Docker
+        '--disable-setuid-sandbox',  // Required for Docker
+        '--disable-dev-shm-usage',  // Required for Docker
+        // GPU spoofing - CRITICAL to avoid SwiftShader detection
+        // These flags override the GPU info reported to WebGL
+        '--use-gl=angle',
+        '--use-angle=swiftshader',  // Still use SwiftShader for rendering but...
+        '--gpu-testing-vendor-id=0x10de',  // NVIDIA vendor ID
+        '--gpu-testing-device-id=0x2584',  // RTX 3050 device ID
+        '--gpu-testing-gl-vendor=Google Inc. (NVIDIA)',
+        '--gpu-testing-gl-renderer=ANGLE (NVIDIA, NVIDIA GeForce RTX 3050 (0x00002584) Direct3D11 vs_5_0 ps_5_0, D3D11)',
+        '--gpu-testing-gl-version=OpenGL ES 3.0 (ANGLE 2.1.0)',
+        // VNC visibility
         '--start-maximized',
         '--window-position=0,0',
         '--window-size=1920,1080',
@@ -132,21 +143,26 @@ export class BrowserManager {
       console.log(`Using proxy: ${this.proxyConfig.server}`);
     }
 
-    // Launch browser (not persistent context - better proxy compatibility)
-    this.browser = await chromium.launch(launchOptions);
+    // Get persistent profile path
+    const profilePath = this.getProfilePath();
+    console.log(`Using persistent Chrome profile at: ${profilePath}`);
 
-    // Create context with browser settings
-    this.context = await this.browser.newContext({
-      viewport: { width: 1920, height: 1080 },
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      locale: 'en-US',
-      timezoneId: 'America/Sao_Paulo',
-      permissions: ['geolocation', 'notifications'],
-      ignoreHTTPSErrors: true
-    });
+    // Add context settings to launch options for persistent context
+    launchOptions.viewport = { width: 1920, height: 1080 };
+    // userAgent removed - let Playwright use default (matches environment)
+    launchOptions.locale = 'en-US';
+    launchOptions.timezoneId = 'America/Sao_Paulo';
+    launchOptions.permissions = ['geolocation', 'notifications'];
+    launchOptions.ignoreHTTPSErrors = true;
 
-    // Create page
-    this.page = await this.context.newPage();
+    // Use launchPersistentContext for REAL Chrome profile persistence
+    // This is KEY to avoiding Google's "unsafe browser" detection
+    // Chrome keeps its own cookies, history, and session data in profilePath
+    this.context = await chromium.launchPersistentContext(profilePath, launchOptions);
+    this.browser = null; // Not used with persistent context
+
+    // Get existing page or create new one
+    this.page = this.context.pages()[0] || await this.context.newPage();
 
     // Set default timeouts
     this.page.setDefaultTimeout(60000); // 60s for operations
@@ -174,46 +190,23 @@ export class BrowserManager {
   }
 
   /**
-   * Setup stealth mode to avoid detection
+   * Setup stealth mode with WebGL spoofing
+   * CRITICAL: Must inject stealth.js to mask SwiftShader as NVIDIA GPU
+   * Without this, CreepJS detects hasSwiftShader:true → "50% like-headless"
    */
   private async setupStealthMode(): Promise<void> {
-    if (!this.page) return;
+    if (!this.context) return;
 
-    // Override navigator.webdriver and other detection points
-    await this.page.addInitScript(() => {
-      // Remove webdriver property
-      Object.defineProperty(navigator, 'webdriver', {
-        get: () => undefined,
-      });
+    // Load stealth.js which contains WebGL spoofing (NVIDIA instead of SwiftShader)
+    const stealthPath = path.join(__dirname, '..', 'stealth.js');
 
-      // Override plugins to look like a real browser
-      Object.defineProperty(navigator, 'plugins', {
-        get: () => [1, 2, 3, 4, 5],
-      });
-
-      // Override languages
-      Object.defineProperty(navigator, 'languages', {
-        get: () => ['en-US', 'en', 'de', 'pt-BR'],
-      });
-
-      // Override permissions query
-      const originalQuery = window.navigator.permissions.query;
-      window.navigator.permissions.query = (parameters: any) =>
-        parameters.name === 'notifications'
-          ? Promise.resolve({ state: Notification.permission } as PermissionStatus)
-          : originalQuery(parameters);
-
-      // Override Chrome runtime
-      (window as any).chrome = {
-        runtime: {},
-      };
-    });
-
-    console.log('Stealth mode enabled');
-    // Press ESC to dismiss automation infobar
-    await this.page.keyboard.press('Escape');
-    await this.page.waitForTimeout(500);
-    await this.page.keyboard.press('Escape');
+    if (fs.existsSync(stealthPath)) {
+      const stealthScript = fs.readFileSync(stealthPath, 'utf-8');
+      await this.context.addInitScript(stealthScript);
+      console.log('Stealth mode: injected WebGL spoofing (NVIDIA GeForce RTX 3050)');
+    } else {
+      console.warn('Stealth mode: stealth.js not found at', stealthPath);
+    }
   }
 
   /**
@@ -577,14 +570,40 @@ export class BrowserManager {
         }
       }
 
-      // Get interactive elements
-      const links = Array.from(document.querySelectorAll('a[href]'))
-        .slice(0, 20)
-        .map(a => `[link: ${a.textContent?.trim()}]`);
+      // Get interactive elements - improved for YouTube and other sites
 
-      const buttons = Array.from(document.querySelectorAll('button, input[type="submit"]'))
+      // YouTube-specific: Get video titles first
+      const videoTitles = Array.from(document.querySelectorAll('#video-title, #video-title-link, a.ytd-video-renderer'))
         .slice(0, 10)
-        .map(b => `[button: ${b.textContent?.trim() || (b as HTMLInputElement).value}]`);
+        .map(el => {
+          const text = el.textContent?.trim() || el.getAttribute('title') || el.getAttribute('aria-label');
+          return text ? `[video: ${text.slice(0, 80)}]` : null;
+        })
+        .filter(Boolean);
+
+      // General links with improved text extraction
+      const links = Array.from(document.querySelectorAll('a[href]'))
+        .slice(0, 30)
+        .map(a => {
+          // Try multiple sources for link text
+          const text = a.textContent?.trim()
+            || a.getAttribute('title')
+            || a.getAttribute('aria-label')
+            || (a.querySelector('img') as HTMLImageElement)?.alt;
+          return text ? `[link: ${text.slice(0, 60)}]` : null;
+        })
+        .filter(Boolean);
+
+      const buttons = Array.from(document.querySelectorAll('button, input[type="submit"], [role="button"]'))
+        .slice(0, 15)
+        .map(b => {
+          const text = b.textContent?.trim()
+            || (b as HTMLInputElement).value
+            || b.getAttribute('aria-label')
+            || b.getAttribute('title');
+          return text ? `[button: ${text.slice(0, 40)}]` : null;
+        })
+        .filter(Boolean);
 
       const inputs = Array.from(document.querySelectorAll('input:not([type="hidden"]), textarea'))
         .slice(0, 10)
@@ -594,6 +613,7 @@ export class BrowserManager {
         textParts.slice(0, 100).join(' '),
         '',
         'Interactive elements:',
+        ...videoTitles,
         ...links,
         ...buttons,
         ...inputs
@@ -606,6 +626,28 @@ export class BrowserManager {
       content,
       timestamp: new Date().toISOString()
     };
+  }
+
+  /**
+   * Get Playwright's native ARIA snapshot (most efficient for AI processing)
+   * This is what Browser MCP uses - 70-80% fewer tokens than full DOM
+   * Returns structured text with refs like [ref=N] for clicking
+   */
+  async getAriaSnapshot(): Promise<string> {
+    if (!this.page) {
+      throw new Error('Browser not initialized');
+    }
+
+    try {
+      // Use Playwright's native ariaSnapshot - exactly what Browser MCP uses
+      const snapshot = await this.page.locator('body').ariaSnapshot({ timeout: 5000 });
+      return snapshot;
+    } catch (e) {
+      // Fallback to simpler extraction
+      const title = await this.page.title();
+      const url = this.page.url();
+      return `URL: ${url}\nTitle: ${title}\n\n(ARIA snapshot failed, using fallback)`;
+    }
   }
 
   /**
@@ -771,8 +813,52 @@ export class BrowserManager {
     }
 
     console.log('Clicking element by semantic ref:', ref);
+    const isYouTube = this.page.url().includes('youtube.com');
 
     try {
+      // PRIORITY: YouTube JavaScript click (avoids strict mode violations)
+      // Check this FIRST for YouTube pages with plain text refs
+      if (isYouTube && !ref.includes('[') && !ref.startsWith('#') && !ref.startsWith('role=') && !ref.startsWith('text=')) {
+        console.log('  YouTube: Trying JavaScript click for:', ref.slice(0, 50));
+        const searchText = ref.slice(0, 50).toLowerCase();
+        const clicked = await this.page.evaluate((text: string) => {
+          // Priority 1: Video titles (#video-title)
+          const titles = Array.from(document.querySelectorAll('#video-title'));
+          for (let i = 0; i < titles.length; i++) {
+            const title = titles[i];
+            if (title.textContent?.toLowerCase().includes(text)) {
+              (title as HTMLElement).click();
+              return 'video-title';
+            }
+          }
+          // Priority 2: Any clickable element with matching text
+          const clickables = Array.from(document.querySelectorAll('a, button, [role="button"]'));
+          for (let i = 0; i < clickables.length; i++) {
+            const el = clickables[i];
+            if (el.textContent?.toLowerCase().includes(text)) {
+              (el as HTMLElement).click();
+              return 'clickable';
+            }
+          }
+          // Priority 3: Any element with matching aria-label
+          const labeled = Array.from(document.querySelectorAll('[aria-label]'));
+          for (let i = 0; i < labeled.length; i++) {
+            const el = labeled[i];
+            if (el.getAttribute('aria-label')?.toLowerCase().includes(text)) {
+              (el as HTMLElement).click();
+              return 'aria-label';
+            }
+          }
+          return null;
+        }, searchText);
+        if (clicked) {
+          console.log(`  YouTube: Clicked via ${clicked}!`);
+          await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+          return this.getSnapshot();
+        }
+        console.log('  YouTube: JavaScript click failed, trying other strategies...');
+      }
+
       // Strategy 1: CSS selector (data-testid, aria-label, id, name, placeholder)
       if (ref.includes('[') || ref.startsWith('#')) {
         console.log('  Using CSS selector strategy');
@@ -802,10 +888,9 @@ export class BrowserManager {
         return this.getSnapshot();
       }
 
-      // Strategy 4: Fallback numeric ref (e0, e1, etc.) - try as generic locator
+      // Strategy 4: Fallback numeric ref (e0, e1, etc.)
       if (/^e\d+$/.test(ref)) {
         console.log('  Fallback ref detected - refreshing snapshot recommended');
-        // For fallback refs, try to find by walking the DOM
         const clicked = await this.page.evaluate((targetRef: string) => {
           const elements = Array.from(document.querySelectorAll('*'));
           for (const el of elements) {
@@ -823,9 +908,9 @@ export class BrowserManager {
         }
       }
 
-      // Strategy 5: Try ref as a generic locator
-      console.log('  Trying as generic locator');
-      await this.page.locator(ref).first().click({ timeout: 5000 });
+      // Strategy 5: Try ref as a generic locator (last resort)
+      console.log('  Trying as generic text locator');
+      await this.page.getByText(ref, { exact: false }).first().click({ timeout: 5000 });
       await this.page.waitForLoadState('domcontentloaded').catch(() => {});
       return this.getSnapshot();
 

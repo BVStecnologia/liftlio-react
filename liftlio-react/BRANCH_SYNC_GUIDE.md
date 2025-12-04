@@ -14,7 +14,7 @@ Sistema automatizado que sincroniza branches do Git com branches do Supabase, el
 
 ### Mudar para DEV
 ```bash
-./switch-branch.sh dev
+./switch-branch.sh dev./.claude-images/image_20251122_145315_001.png
 npm start
 ```
 

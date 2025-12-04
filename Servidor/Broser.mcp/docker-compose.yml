@@ -36,10 +36,10 @@ services:
       - CLAUDE_API_KEY=${CLAUDE_API_KEY}
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-      - DATAIMPULSE_LOGIN=${DATAIMPULSE_LOGIN}
-      - DATAIMPULSE_PASSWORD=${DATAIMPULSE_PASSWORD}
-      - DATAIMPULSE_HOST=${DATAIMPULSE_HOST:-gw.dataimpulse.com}
-      - DATAIMPULSE_STICKY_BASE_PORT=${DATAIMPULSE_STICKY_BASE_PORT:-10000}
+#      - DATAIMPULSE_LOGIN=${DATAIMPULSE_LOGIN}
+#      - DATAIMPULSE_PASSWORD=${DATAIMPULSE_PASSWORD}
+#      - DATAIMPULSE_HOST=${DATAIMPULSE_HOST:-gw.dataimpulse.com}
+#      - DATAIMPULSE_STICKY_BASE_PORT=${DATAIMPULSE_STICKY_BASE_PORT:-10000}
     ports:
       - "8080:8080"
     volumes:
@@ -85,15 +85,19 @@ services:
       - HEADLESS=false
       - VNC_TIMEOUT_MINUTES=5
       - DEFAULT_URL=https://www.google.com
-      # Proxy DataImpulse
-      - DATAIMPULSE_USER=geonode_qG3EBK6CjE
-      - DATAIMPULSE_PASS=9d95f8b2-bc07-4c7b-804e-dca77b6c3e59
-      - PROXY_PORT=10000
+      # Proxy DataImpulse - DESABILITADO para testar assistantMode
+      #- DATAIMPULSE_LOGIN=${DATAIMPULSE_LOGIN}
+      #- DATAIMPULSE_PASSWORD=${DATAIMPULSE_PASSWORD}
+      #- DATAIMPULSE_HOST=${DATAIMPULSE_HOST:-gw.dataimpulse.com}
+      #- DATAIMPULSE_STICKY_BASE_PORT=${DATAIMPULSE_STICKY_BASE_PORT:-10000}
       # Claude API
       - CLAUDE_API_KEY=${CLAUDE_API_KEY}
       # Supabase
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      # Rebrowser patches - Runtime.enable leak fix
+      - REBROWSER_PATCHES_RUNTIME_FIX_MODE=alwaysIsolated
+      - REBROWSER_PATCHES_DEBUG=1
     volumes:
       - browser-profiles:/data/profiles
       - browser-screenshots:/data/screenshots

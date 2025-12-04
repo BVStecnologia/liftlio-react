@@ -14,7 +14,7 @@
  * to ensure mouse movements don't repeat patterns.
  */
 
-import { Page } from 'playwright';
+import { Page } from 'patchright';
 
 // ============================================
 // PATTERN DEFINITIONS

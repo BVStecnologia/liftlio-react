@@ -38,6 +38,10 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci --only=production
 
+# Install Patchright browser (undetected Chromium)
+# This removes Runtime.enable leak that causes "50% like-headless" detection
+RUN npx patchright install chromium
+
 # Copy source code
 COPY dist/ ./dist/
 
@@ -57,7 +61,8 @@ RUN chmod +x /start-vnc.sh
 # Environment variables
 ENV NODE_ENV=production
 ENV MCP_PORT=3000
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+# Patchright installs browsers to its own path (not playwright's)
+# Let patchright find its own browser automatically
 ENV DISPLAY=:99
 ENV VNC_PORT=5900
 ENV NOVNC_PORT=6080

@@ -9,7 +9,7 @@ DISPLAY=:99 fluxbox &
 sleep 1
 
 # Start x11vnc
-x11vnc -display :99 -forever -shared -rfbport ${VNC_PORT} -passwd ${VNC_PASSWORD} -xkb -noxrecord -noxfixes -noxdamage &
+x11vnc -display :99 -forever -shared -rfbport ${VNC_PORT} -passwd ${VNC_PASSWORD} -xkb -noxrecord -noxfixes -ncache 10 -threads -wait 10 -defer 10 &
 sleep 1
 
 # Start noVNC
