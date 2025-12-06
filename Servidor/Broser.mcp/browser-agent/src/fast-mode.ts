@@ -108,36 +108,75 @@ export class FastModeExecutor {
   }
 
   /**
+   * Detecta o contexto da página YouTube para escolher seletores corretos
+   * Evita pegar vídeos do mini-player, sidebar, etc.
+   */
+  private detectPageContext(url: string): 'search' | 'watch' | 'home' | 'channel' {
+    if (url.includes('/results')) return 'search';
+    if (url.includes('/watch')) return 'watch';
+    if (url.includes('/@') || url.includes('/channel/') || url.includes('/c/')) return 'channel';
+    return 'home';
+  }
+
+  /**
    * Extract YouTube video titles directly from page via JavaScript
-   * This is MORE RELIABLE than parsing snapshot text
+   * Uses context-aware selectors to avoid mini-player and sidebar videos
    */
   private async getYouTubeVideos(): Promise<string[]> {
     const page = this.browserManager.getPage();
     if (!page) return [];
 
+    const url = page.url();
+    const context = this.detectPageContext(url);
+    console.log(`[FAST MODE] Detecting videos in context: ${context}`);
+
     try {
-      const videos = await page.evaluate(() => {
+      const videos = await page.evaluate((ctx: string) => {
         const titles: string[] = [];
-        // YouTube video title selectors
-        const selectors = [
-          '#video-title',                          // Standard video titles
-          'a#video-title-link',                    // Alternative selector
-          'ytd-video-renderer #video-title',       // Search results
-          'ytd-rich-item-renderer #video-title'    // Homepage
+
+        // Seletores ESPECÍFICOS por contexto - EVITA mini-player e sidebar
+        const contextSelectors: Record<string, string> = {
+          'search': 'ytd-video-renderer:not([hidden]) #video-title',
+          'watch': 'ytd-compact-video-renderer:not([hidden]) #video-title',
+          'home': 'ytd-rich-item-renderer:not([hidden]) #video-title',
+          'channel': 'ytd-grid-video-renderer:not([hidden]) #video-title, ytd-rich-item-renderer:not([hidden]) #video-title'
+        };
+
+        // Elementos a IGNORAR (mini-player, overlays, player controls)
+        const excludeParents = [
+          'ytd-miniplayer',
+          'ytd-player',
+          '.ytp-tooltip',
+          '#movie_player',
+          'ytd-playlist-panel-renderer'
         ];
 
-        for (const selector of selectors) {
-          const elements = document.querySelectorAll(selector);
-          for (let i = 0; i < elements.length && titles.length < 10; i++) {
-            const el = elements[i];
-            const text = el.textContent?.trim();
-            if (text && text.length > 5 && !titles.includes(text)) {
-              titles.push(text);
-            }
+        const selector = contextSelectors[ctx] || contextSelectors['home'];
+        const elements = document.querySelectorAll(selector);
+
+        for (let i = 0; i < elements.length && titles.length < 10; i++) {
+          const el = elements[i] as HTMLElement;
+
+          // Verificar se está dentro de elemento excluído
+          const isExcluded = excludeParents.some(parent =>
+            el.closest(parent) !== null
+          );
+          if (isExcluded) continue;
+
+          // Verificar visibilidade real do elemento
+          const rect = el.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) continue;
+
+          const text = el.textContent?.trim();
+          if (text && text.length > 5 && !titles.includes(text)) {
+            titles.push(text);
           }
         }
+
         return titles;
-      });
+      }, context);
+
+      console.log(`[FAST MODE] Found ${videos.length} videos in ${context} context`);
       return videos;
     } catch (e) {
       console.log('[FAST MODE] Failed to get YouTube videos:', e);
@@ -147,44 +186,85 @@ export class FastModeExecutor {
 
   /**
    * Click a YouTube video by index (0 = first, 1 = second, etc.)
-   * Uses JavaScript for reliability
+   * Uses context-aware selectors to avoid mini-player, sidebar, etc.
+   * Uses Playwright native click for reliable navigation
    */
   private async clickVideoByIndex(index: number): Promise<string> {
     const page = this.browserManager.getPage();
     if (!page) throw new Error('Browser not initialized');
 
-    const result = await page.evaluate((videoIndex: number) => {
-      const selectors = [
-        '#video-title',
-        'ytd-video-renderer #video-title',
-        'ytd-rich-item-renderer #video-title'
-      ];
+    const url = page.url();
+    const context = this.detectPageContext(url);
+    console.log(`[FAST MODE] Clicking video ${index} in context: ${context}`);
 
-      let count = 0;
-      for (const selector of selectors) {
-        const elements = document.querySelectorAll(selector);
-        for (let i = 0; i < elements.length; i++) {
-          const el = elements[i] as HTMLElement;
-          const text = el.textContent?.trim();
-          if (text && text.length > 5) {
-            if (count === videoIndex) {
-              el.click();
-              return { success: true, title: text };
-            }
-            count++;
+    // Seletores ESPECÍFICOS por contexto - EVITA mini-player e sidebar
+    const contextSelectors: Record<string, string> = {
+      'search': 'ytd-video-renderer:not([hidden]) #video-title',
+      'watch': 'ytd-compact-video-renderer:not([hidden]) #video-title',
+      'home': 'ytd-rich-item-renderer:not([hidden]) #video-title',
+      'channel': 'ytd-grid-video-renderer:not([hidden]) #video-title, ytd-rich-item-renderer:not([hidden]) #video-title'
+    };
+
+    // Elementos a IGNORAR (mini-player, overlays, player controls)
+    const excludeParents = [
+      'ytd-miniplayer',
+      'ytd-player',
+      '.ytp-tooltip',
+      '#movie_player',
+      'ytd-playlist-panel-renderer'
+    ];
+
+    const selector = contextSelectors[context] || contextSelectors['home'];
+    
+    // Find valid elements and get the Nth one
+    const result = await page.evaluate((args: { sel: string, videoIndex: number, excludes: string[] }) => {
+      const { sel, videoIndex, excludes } = args;
+      const elements = document.querySelectorAll(sel);
+      
+      let validCount = 0;
+      for (let i = 0; i < elements.length; i++) {
+        const el = elements[i] as HTMLElement;
+        
+        // Check if excluded
+        const isExcluded = excludes.some(parent => el.closest(parent) !== null);
+        if (isExcluded) continue;
+        
+        // Check visibility
+        const rect = el.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) continue;
+        
+        const text = el.textContent?.trim();
+        if (text && text.length > 5) {
+          if (validCount === videoIndex) {
+            // Return the href for navigation instead of clicking
+            const href = el.getAttribute('href');
+            return { success: true, title: text, href: href, elementIndex: i };
           }
+          validCount++;
         }
       }
-      return { success: false, title: '' };
-    }, index);
+      return { success: false, title: '', href: null, elementIndex: -1 };
+    }, { sel: selector, videoIndex: index, excludes: excludeParents });
 
-    if (result.success) {
-      // Wait for navigation
-      await page.waitForLoadState('domcontentloaded').catch(() => {});
-      await new Promise(r => setTimeout(r, 1000));
-      return `Clicked video: "${result.title.slice(0, 50)}"`;
+    if (result.success && result.href) {
+      // Navigate directly using the href - more reliable than click
+      const fullUrl = result.href.startsWith('http') ? result.href : `https://www.youtube.com${result.href}`;
+      console.log(`[FAST MODE] Navigating to video: ${fullUrl}`);
+      await page.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await new Promise(r => setTimeout(r, 1500));
+      console.log(`[FAST MODE] Successfully navigated to video [${context}]: "${result.title.slice(0, 50)}"`);
+      return `Clicked video [${context}]: "${result.title.slice(0, 50)}"`;
+    } else if (result.success) {
+      // Fallback: use Playwright click on the element
+      const allElements = await page.$$(selector);
+      if (result.elementIndex >= 0 && result.elementIndex < allElements.length) {
+        await allElements[result.elementIndex].click();
+        await page.waitForLoadState('domcontentloaded').catch(() => {});
+        await new Promise(r => setTimeout(r, 1500));
+        return `Clicked video [${context}]: "${result.title.slice(0, 50)}"`;
+      }
     }
-    throw new Error(`No video found at index ${index}`);
+    throw new Error(`No video found at index ${index} in ${context} context`);
   }
 
   /**
@@ -332,7 +412,11 @@ export class FastModeExecutor {
     if (url.includes('youtube.com')) {
       const videos = await this.getYouTubeVideos();
       if (videos.length > 0) {
-        videoSection = '\n\nVIDEO LIST (use click_video action with videoIndex):\n';
+        const context = this.detectPageContext(url);
+        videoSection = `
+
+VIDEO LIST (context: ${context}, use click_video action with videoIndex):
+`;
         videos.forEach((v, i) => {
           videoSection += `[VIDEO ${i}]: ${v}\n`;
         });
