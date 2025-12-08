@@ -117,6 +117,9 @@ export class BrowserManager {
         '--no-sandbox',  // Required for Docker
         '--disable-setuid-sandbox',  // Required for Docker
         '--disable-dev-shm-usage',  // Required for Docker
+        // Disable "Restore pages?" popup after crash/improper shutdown
+        '--disable-session-crashed-bubble',
+        '--hide-crash-restore-bubble',
         // GPU spoofing - CRITICAL to avoid SwiftShader detection
         // These flags override the GPU info reported to WebGL
         '--use-gl=angle',
