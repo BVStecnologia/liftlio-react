@@ -13,6 +13,7 @@ import { BrowserManager, BrowserSnapshot } from './browser-manager';
 import dotenv from 'dotenv';
 import { setupAgentEndpoint } from './agent-endpoint';
 import { createMCPProxy, checkPlaywrightMCPHealth } from './mcp-proxy';
+import { setupCaptchaEndpoints } from './captcha-endpoint';
 
 // Load environment variables
 dotenv.config();
@@ -215,6 +216,9 @@ setupAgentEndpoint(
   },
   broadcastEvent
 );
+
+// Setup CAPTCHA solving endpoints (CapMonster Cloud)
+setupCaptchaEndpoints(app, () => browserManager, broadcastEvent);
 
 // ============================================
 // Playwright MCP Proxy (routes to localhost:8931)
