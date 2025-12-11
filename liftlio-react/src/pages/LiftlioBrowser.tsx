@@ -109,6 +109,22 @@ const BrowserFrame = styled.div<{ isExpanded?: boolean }>`
   min-height: ${props => props.isExpanded ? '600px' : '400px'};
   display: flex;
   flex-direction: column;
+
+  /* Fullscreen styles */
+  &:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    aspect-ratio: auto;
+    min-height: 100vh;
+    border-radius: 0;
+    border: none;
+    padding-top: 5px;
+    box-sizing: border-box;
+  }
+
+  &:fullscreen ${() => BrowserContent} {
+    flex: 1;
+  }
 `;
 
 const BrowserToolbar = styled.div`
@@ -665,6 +681,39 @@ const LiftlioBrowser: React.FC = () => {
   const [containerLoading, setContainerLoading] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const screenshotIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fullscreen state
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const browserFrameRef = useRef<HTMLDivElement>(null);
+
+  // Toggle real fullscreen using Fullscreen API
+  const toggleFullscreen = useCallback(async () => {
+    if (!browserFrameRef.current) return;
+
+    try {
+      if (!document.fullscreenElement) {
+        await browserFrameRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (err) {
+      console.error('Fullscreen error:', err);
+    }
+  }, []);
+
+  // Listen for fullscreen changes (e.g., pressing ESC)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   // Get container port for project
   const getContainerPort = useCallback(() => {
@@ -1265,7 +1314,7 @@ const LiftlioBrowser: React.FC = () => {
       <MainGrid>
         <BrowserViewSection>
           {/* Browser Frame */}
-          <BrowserFrame isExpanded={isExpanded}>
+          <BrowserFrame ref={browserFrameRef} isExpanded={isExpanded}>
             <BrowserToolbar>
               <ToolbarDots>
                 <Dot color="#ff5f57" />
@@ -1284,8 +1333,8 @@ const LiftlioBrowser: React.FC = () => {
               <ToolbarButton onClick={captureScreenshot} title="Capture screenshot">
                 <IconComponent icon={FaCamera} />
               </ToolbarButton>
-              <ToolbarButton onClick={() => setIsExpanded(!isExpanded)}>
-                <IconComponent icon={isExpanded ? FaCompress : FaExpand} />
+              <ToolbarButton onClick={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}>
+                <IconComponent icon={isFullscreen ? FaCompress : FaExpand} />
               </ToolbarButton>
             </BrowserToolbar>
             <BrowserContent>
@@ -1295,7 +1344,8 @@ const LiftlioBrowser: React.FC = () => {
                   <VNCFrame
                     src={`http://localhost:${VNC_PORT}/vnc.html?autoconnect=true&resize=scale&view_clip=false&reconnect=true&reconnect_delay=1000&quality=6&compression=2`}
                     title="VNC Browser View"
-                    allow="clipboard-read; clipboard-write"
+                    allow="clipboard-read; clipboard-write; fullscreen"
+                    allowFullScreen
                   />
                 </VNCWrapper>
               ) : connectionStatus === 'connected' && screenshot ? (
