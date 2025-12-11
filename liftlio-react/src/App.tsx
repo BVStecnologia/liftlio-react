@@ -984,6 +984,7 @@ const ProtectedLayout = ({
                 <Route path="/billing" element={<SubscriptionGate><Billing /></SubscriptionGate>} />
                 <Route path="/integrations" element={<SubscriptionGate><Integrations /></SubscriptionGate>} />
                 <Route path="/computer" element={<SubscriptionGate><LiftlioBrowser /></SubscriptionGate>} />
+                <Route path="/computer-dev" element={<LiftlioBrowser />} />
                 {/* <Route path="/url-test" element={<SubscriptionGate><UrlDataTest /></SubscriptionGate>} /> */}
                 {/* Removed duplicate trends and analytics routes - they are defined as public routes */}
                 <Route path="*" element={(() => {
