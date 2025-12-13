@@ -313,6 +313,135 @@ app.post('/containers/:projectId/keepalive', (req, res) => {
   res.json({ success: true, lastActivity: session.lastActivity });
 });
 
+// =============================================================================
+// PROXY ROUTES - Forward requests to containers
+// =============================================================================
+
+const axios = require('axios');
+
+/**
+ * Proxy helper function
+ */
+async function proxyToContainer(session, path, method, body, res) {
+  try {
+    const containerUrl = `http://localhost:${session.mcpPort}${path}`;
+    log(`[PROXY] ${method} ${path} -> ${containerUrl}`);
+
+    session.lastActivity = new Date();
+
+    const response = await axios({
+      method,
+      url: containerUrl,
+      data: body,
+      timeout: 120000, // 2 min timeout for tasks
+      validateStatus: () => true // Don't throw on any status
+    });
+
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    log(`[PROXY] Error: ${error.message}`);
+    res.status(502).json({ error: 'Proxy error', message: error.message });
+  }
+}
+
+/**
+ * Proxy: POST /containers/:projectId/agent/task
+ */
+app.post('/containers/:projectId/agent/task', async (req, res) => {
+  const { projectId } = req.params;
+  const session = sessions.get(projectId);
+
+  if (!session || session.status !== 'running') {
+    return res.status(404).json({ error: 'Container not found or not running' });
+  }
+
+  await proxyToContainer(session, '/agent/task', 'POST', req.body, res);
+});
+
+/**
+ * Proxy: GET /containers/:projectId/mcp/screenshot
+ */
+app.get('/containers/:projectId/mcp/screenshot', async (req, res) => {
+  const { projectId } = req.params;
+  const session = sessions.get(projectId);
+
+  if (!session || session.status !== 'running') {
+    return res.status(404).json({ error: 'Container not found or not running' });
+  }
+
+  await proxyToContainer(session, '/mcp/screenshot', 'GET', null, res);
+});
+
+/**
+ * Proxy: GET /containers/:projectId/health
+ */
+app.get('/containers/:projectId/health', async (req, res) => {
+  const { projectId } = req.params;
+  const session = sessions.get(projectId);
+
+  if (!session || session.status !== 'running') {
+    return res.status(404).json({ error: 'Container not found or not running' });
+  }
+
+  await proxyToContainer(session, '/health', 'GET', null, res);
+});
+
+/**
+ * Proxy: POST /containers/:projectId/vnc/start
+ */
+app.post('/containers/:projectId/vnc/start', async (req, res) => {
+  const { projectId } = req.params;
+  const session = sessions.get(projectId);
+
+  if (!session || session.status !== 'running') {
+    return res.status(404).json({ error: 'Container not found or not running' });
+  }
+
+  await proxyToContainer(session, '/vnc/start', 'POST', req.body, res);
+});
+
+/**
+ * Proxy: POST /containers/:projectId/vnc/stop
+ */
+app.post('/containers/:projectId/vnc/stop', async (req, res) => {
+  const { projectId } = req.params;
+  const session = sessions.get(projectId);
+
+  if (!session || session.status !== 'running') {
+    return res.status(404).json({ error: 'Container not found or not running' });
+  }
+
+  await proxyToContainer(session, '/vnc/stop', 'POST', req.body, res);
+});
+
+/**
+ * Proxy: GET /containers/:projectId/vnc/status
+ */
+app.get('/containers/:projectId/vnc/status', async (req, res) => {
+  const { projectId } = req.params;
+  const session = sessions.get(projectId);
+
+  if (!session || session.status !== 'running') {
+    return res.status(404).json({ error: 'Container not found or not running' });
+  }
+
+  await proxyToContainer(session, '/vnc/status', 'GET', null, res);
+});
+
+/**
+ * Proxy: POST /containers/:projectId/browser/init
+ */
+app.post('/containers/:projectId/browser/init', async (req, res) => {
+  const { projectId } = req.params;
+  const session = sessions.get(projectId);
+
+  if (!session || session.status !== 'running') {
+    return res.status(404).json({ error: 'Container not found or not running' });
+  }
+
+  await proxyToContainer(session, '/browser/init', 'POST', req.body, res);
+});
+
 /**
  * Sincronizar sessoes com containers Docker reais
  */
