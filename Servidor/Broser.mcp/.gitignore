@@ -2,6 +2,17 @@
 .env
 .env.local
 .env.production
+*.env
+
+# CREDENTIALS - NEVER COMMIT!
+CREDENTIALS_AND_SERVICES.md
+credentials/
+secrets/
+*.credentials.json
+
+# Claude Code agent sensitive files
+claude-code-agent/.env
+claude-code-agent/*.credentials.json
 
 # Node modules
 node_modules/

@@ -1,0 +1,94 @@
+# =============================================================================
+# LIFTLIO BROWSER AGENT v4 - Docker Compose with VNC
+# =============================================================================
+# Claude Code Max + Playwright MCP + VNC
+# =============================================================================
+
+version: "3.8"
+
+services:
+  # ===========================================================================
+  # BROWSER AGENT with VNC
+  # ===========================================================================
+  browser-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.vnc
+    container_name: liftlio-browser-117
+    restart: unless-stopped
+    ports:
+      - "10117:10100"   # API (10000 + PROJECT_ID)
+      - "16117:6080"    # noVNC (16000 + PROJECT_ID)
+    environment:
+      - PORT=10100
+      - PROJECT_ID=117
+      - CAPMONSTER_API_KEY=${CAPMONSTER_API_KEY:-}
+      - PROXY_URL=${PROXY_URL:-}
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_KEY=${SUPABASE_KEY:-}
+      - VNC_TIMEOUT_MINUTES=5
+      - SCREEN_WIDTH=1920
+      - SCREEN_HEIGHT=1080
+      - SCREEN_DEPTH=24
+      - NOVNC_PORT=6080
+    volumes:
+      # Claude Max credentials (shared via volume)
+      - claude-credentials:/opt/claude-credentials:ro
+      - claude-config:/opt/claude-config:ro
+      # Persistent workspace
+      - browser-workspace:/workspace
+      # Chrome persistent session
+      - browser-chrome:/home/claude/.chrome-persistent
+    # Required for Chromium
+    ipc: host
+    shm_size: '2gb'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10100/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # TOKEN REFRESHER - Keeps credentials valid
+  # ===========================================================================
+  token-refresher:
+    image: python:3.11-slim
+    container_name: claude-token-refresher
+    restart: unless-stopped
+    volumes:
+      - claude-credentials:/opt/claude/credentials
+      - ./refresh_token.py:/app/refresh.py:ro
+    environment:
+      - CREDS_FILE=/opt/claude/credentials/.credentials.json
+      - DAEMON_MODE=true
+      - REFRESH_INTERVAL_HOURS=6
+    command: |
+      sh -c "
+        pip install --quiet requests &&
+        python /app/refresh.py
+      "
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; exit(0 if os.path.exists('/opt/claude/credentials/.credentials.json') else 1)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  # Shared credentials
+  claude-credentials:
+    name: claude-credentials
+  claude-config:
+    name: claude-config
+  # Browser agent data
+  browser-workspace:
+  browser-chrome:
+
+networks:
+  default:
+    name: liftlio-browser-network

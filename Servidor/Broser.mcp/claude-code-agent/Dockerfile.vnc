@@ -1,0 +1,121 @@
+# =============================================================================
+# LIFTLIO BROWSER AGENT v4 - Claude Code Max + VNC
+# =============================================================================
+# All-in-One: Claude Code + Playwright MCP + VNC
+# =============================================================================
+
+FROM mcr.microsoft.com/playwright:v1.49.0-noble
+
+LABEL maintainer="Liftlio"
+LABEL description="Liftlio Browser Agent - Claude Code Max + VNC"
+LABEL version="4.0.0"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Install VNC + noVNC + dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    dumb-init \
+    xvfb \
+    x11vnc \
+    fluxbox \
+    novnc \
+    websockify \
+    supervisor \
+    curl \
+    jq \
+    git \
+    procps \
+    ca-certificates \
+    gnupg \
+    xdotool \
+    && rm -rf /var/lib/apt/lists/*
+
+# Node.js 20 LTS (fresh install for Claude Code)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g npm@latest
+
+# Claude Code + Playwright MCP
+RUN npm install -g \
+    @anthropic-ai/claude-code \
+    @playwright/mcp
+
+# Pre-install Chrome for Playwright MCP
+# Use the bundled playwright CLI from the MCP package
+RUN PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    /usr/lib/node_modules/@playwright/mcp/node_modules/.bin/playwright install chrome || \
+    npx -p @playwright/mcp playwright install chrome || \
+    echo "Chrome pre-installation completed"
+
+# Hide noVNC toolbar with CSS injection (supports both vnc.html and vnc_lite.html)
+RUN HIDE_CSS='<style>*{box-sizing:border-box}#noVNC_control_bar,#noVNC_control_bar_anchor,#noVNC_status_bar,.noVNC_status_error,.noVNC_status_warn,.noVNC_status_normal,#top_bar,#sendCtrlAltDelButton,#status{display:none!important;height:0!important;width:0!important;visibility:hidden!important;position:absolute!important;top:-9999px!important;left:-9999px!important;pointer-events:none!important;opacity:0!important}html,body{margin:0!important;padding:0!important;width:100%!important;height:100%!important;overflow:hidden!important;background:#000!important}#noVNC_container,#noVNC_screen,#screen{position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;margin:0!important;padding:0!important}#noVNC_canvas,canvas{width:100%!important;height:100%!important;object-fit:contain!important}</style>' && \
+    sed -i "s|</head>|${HIDE_CSS}</head>|" /usr/share/novnc/vnc.html && \
+    sed -i "s|</head>|${HIDE_CSS}</head>|" /usr/share/novnc/vnc_lite.html
+
+# Create claude user
+RUN useradd -m -s /bin/bash claude
+
+# Create directories
+RUN mkdir -p /home/claude/.claude \
+             /home/claude/.config/chromium \
+             /home/claude/.npm \
+             /home/claude/.cache \
+             /workspace \
+             /app \
+             /var/log/supervisor \
+             /var/run
+
+# Environment variables
+ENV CAPMONSTER_API_KEY=""
+ENV PROXY_URL=""
+ENV PROJECT_ID=""
+ENV SUPABASE_URL=""
+ENV SUPABASE_KEY=""
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV HOME=/home/claude
+ENV PORT=10100
+
+# VNC environment
+ENV DISPLAY=:99
+ENV VNC_PORT=5900
+ENV NOVNC_PORT=6080
+ENV SCREEN_WIDTH=1920
+ENV SCREEN_HEIGHT=1080
+ENV SCREEN_DEPTH=24
+
+# Copy files
+COPY supervisord-claude.conf /etc/supervisor/conf.d/supervisord.conf
+COPY entrypoint-vnc.sh /entrypoint.sh
+COPY api/server-vnc.js /app/server.js
+COPY start-browser.sh /app/start-browser.sh
+COPY chrome-persistent.sh /app/chrome-persistent.sh
+COPY window-watchdog.sh /app/window-watchdog.sh
+COPY anti-automation.js /app/anti-automation.js
+COPY proxy-server.js /app/proxy-server.js
+
+# Fix Windows line endings (CRLF -> LF)
+RUN sed -i 's/\r$//' /entrypoint.sh /app/start-browser.sh /app/chrome-persistent.sh /app/window-watchdog.sh
+
+# Install API dependencies (including ws for CDP WebSocket)
+WORKDIR /app
+RUN npm init -y && npm install express axios cors ws
+
+# Permissions AFTER all installs
+RUN chmod +x /entrypoint.sh /app/start-browser.sh /app/chrome-persistent.sh /app/window-watchdog.sh \
+    && chown -R claude:claude /home/claude /workspace /app \
+    && chmod 777 /var/log/supervisor /var/run
+
+WORKDIR /workspace
+
+# Expose ports
+EXPOSE 10100 5900 6080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:10100/health || exit 1
+
+# Use dumb-init for proper signal handling
+ENTRYPOINT ["dumb-init", "--"]
+
+CMD ["/entrypoint.sh"]
