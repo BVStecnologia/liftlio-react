@@ -1547,8 +1547,10 @@ function navigateToPage(path) {
 console.log('navigateToPage called with:', path);
 const isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost';
 if (isLocal) {
-console.log('Local environment, redirecting to:', 'http://localhost:3000' + path);
-window.location.href = 'http://localhost:3000' + path;
+const port = window.location.port || '3000';
+const localUrl = 'http://localhost:' + port + path;
+console.log('Local environment, redirecting to:', localUrl);
+window.location.href = localUrl;
 } else {
 // Em produção, usar URL absoluta
 const targetUrl = window.location.origin + path;

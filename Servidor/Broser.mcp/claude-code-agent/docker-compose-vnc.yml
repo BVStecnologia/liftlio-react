@@ -1,0 +1,129 @@
+# =============================================================================
+# LIFTLIO BROWSER SYSTEM v4 - Docker Compose Completo
+# =============================================================================
+# Orquestrador + Browser Agents + Token Refresher
+# Sistema escalável: cada projeto recebe seu próprio container isolado
+# =============================================================================
+
+
+services:
+  # ===========================================================================
+  # ORCHESTRATOR - Gerencia containers de Browser Agent
+  # ===========================================================================
+  orchestrator:
+    build:
+      context: ./orchestrator
+      dockerfile: Dockerfile
+    container_name: liftlio-orchestrator
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - API_SECRET_KEY=${API_SECRET_KEY:-}
+      - BROWSER_AGENT_IMAGE=claude-code-agent-browser-agent:latest
+      - MCP_PORT_BASE=10100
+      - VNC_PORT_BASE=16000
+      - MAX_CONTAINERS=${MAX_CONTAINERS:-10}
+      - HOST_IP=${HOST_IP:-localhost}
+      - SESSION_TIMEOUT_MINUTES=${SESSION_TIMEOUT_MINUTES:-60}
+      - CLEANUP_INTERVAL_MINUTES=${CLEANUP_INTERVAL_MINUTES:-5}
+      # Variaveis passadas para containers criados
+      - CAPMONSTER_API_KEY=${CAPMONSTER_API_KEY:-}
+      - PROXY_URL=${PROXY_URL:-}
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_KEY=${SUPABASE_KEY:-}
+    volumes:
+      # Docker socket para criar/destruir containers
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - browser-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # BROWSER AGENT - Template (NAO inicia automaticamente)
+  # ===========================================================================
+  # Este service existe apenas para BUILD da imagem
+  # Containers reais sao criados pelo orchestrator via API
+  browser-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.vnc
+    image: claude-code-agent-browser-agent:latest
+    profiles:
+      - build-only  # NAO inicia com docker-compose up
+    environment:
+      - PORT=10100
+      - PROJECT_ID=template
+      - CAPMONSTER_API_KEY=${CAPMONSTER_API_KEY:-}
+      - PROXY_URL=${PROXY_URL:-}
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_KEY=${SUPABASE_KEY:-}
+      - VNC_TIMEOUT_MINUTES=60
+      - SCREEN_WIDTH=1920
+      - SCREEN_HEIGHT=1080
+      - SCREEN_DEPTH=24
+      - NOVNC_PORT=6080
+    volumes:
+      - claude-credentials:/opt/claude-credentials
+      - claude-config:/opt/claude-config:ro
+    ipc: host
+    shm_size: '2gb'
+    networks:
+      - browser-network
+
+  # ===========================================================================
+  # TOKEN REFRESHER - Mantém credenciais OAuth válidas
+  # ===========================================================================
+  token-refresher:
+    image: python:3.11-slim
+    container_name: claude-token-refresher
+    restart: unless-stopped
+    volumes:
+      - claude-credentials:/opt/claude/credentials
+      - ./refresh_token.py:/app/refresh.py:ro
+    environment:
+      - CREDS_FILE=/opt/claude/credentials/.credentials.json
+      - DAEMON_MODE=true
+      - REFRESH_INTERVAL_HOURS=6
+    command: |
+      sh -c "
+        pip install --quiet requests &&
+        python /app/refresh.py
+      "
+    networks:
+      - browser-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; exit(0 if os.path.exists('/opt/claude/credentials/.credentials.json') else 1)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  # Credenciais OAuth compartilhadas (sincronizadas via symlink nos containers)
+  claude-credentials:
+    name: claude-credentials
+  # Config Claude Code
+  claude-config:
+    name: claude-config
+
+# =============================================================================
+# NETWORK
+# =============================================================================
+networks:
+  browser-network:
+    name: liftlio-browser-network
+    driver: bridge

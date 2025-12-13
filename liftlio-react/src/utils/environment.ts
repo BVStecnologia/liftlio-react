@@ -32,8 +32,9 @@ export const getOAuthRedirectUri = (): string => {
     return `https://${hostname}`;
   }
 
-  // Development
-  return 'http://localhost:3000';
+  // Development - use dynamic port
+  const port = window.location.port || '3000';
+  return `http://localhost:${port}`;
 };
 
 /**

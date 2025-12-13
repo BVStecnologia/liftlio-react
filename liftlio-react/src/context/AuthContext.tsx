@@ -10,6 +10,7 @@ type SubscriptionInfo = {
   can_access_checkout: boolean
   can_access_dashboard: boolean
   mentions_available: number
+  mentions_used_this_cycle: number
   is_cancelled_with_access: boolean
   message?: string
   subscription: {

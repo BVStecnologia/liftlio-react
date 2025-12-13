@@ -2,6 +2,7 @@
 -- Funcao: process_all_projects_pipeline2
 -- Descricao: Processa TODOS os projetos ativos (chamada pelo CRON)
 -- Criado: 2025-11-25
+-- Atualizado: 2025-11-28 - Adicionado filtro "Youtube Active" = TRUE
 -- =============================================
 
 DROP FUNCTION IF EXISTS process_all_projects_pipeline2();
@@ -19,6 +20,7 @@ BEGIN
         SELECT id FROM "Projeto"
         WHERE status::integer >= 0
         AND status::integer < 6
+        AND "Youtube Active" = TRUE  -- FIX 2025-11-28: Ignorar projetos desativados
         ORDER BY id
     LOOP
         BEGIN

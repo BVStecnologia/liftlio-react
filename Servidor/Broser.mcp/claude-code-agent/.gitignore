@@ -1,0 +1,24 @@
+# Environment (NEVER COMMIT!)
+.env
+*.env
+.env.*
+
+# Credentials
+*.credentials.json
+credentials/
+secrets/
+
+# Node
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Build
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/

@@ -113,8 +113,8 @@ serve(async (req)=>{
         });
       }
       // Registrar nova requisição (apenas se não for localhost)
-      await recordRequest(ip);
-      console.log(`Rate limit OK for IP ${ip}: ${rateLimitCheck.count + 1}/${RATE_LIMIT_MAX_REQUESTS} requests`);
+      await recordRequest(ip, url);
+      console.log(`Rate limit OK for IP ${ip}: ${rateLimitCheck.count + 1}/${RATE_LIMIT_MAX_REQUESTS} requests | URL: ${url || 'N/A'}`);
     } else {
       console.log('Localhost/development request - rate limiting disabled');
     }
@@ -459,11 +459,12 @@ async function checkRateLimit(ip) {
   }
 }
 // Função para registrar nova requisição
-async function recordRequest(ip) {
+async function recordRequest(ip, url) {
   try {
     const { error } = await supabase.from('url_analyzer_rate_limit').insert([
       {
-        ip_address: ip
+        ip_address: ip,
+        url_analyzed: url || null
       }
     ]);
     if (error) {

@@ -83,81 +83,106 @@ Include this EXACT phrase in EVERY image generation prompt:
 2. **"Valdair Is Working On it"**: `686b4ad61da133ac3b998284`  
 3. **"Completed"**: `686b442bd7c4de1dbcb52ba8` (mark dueComplete=true)
 
-## 🎨 COMPLETE IMAGE FLOW - FULLY AUTOMATED (NEVER SKIP STEPS!)
+## 🎨 COMPLETE IMAGE FLOW - MCP BROWSER + GEMINI + TRELLO UPLOAD
 
-### ⚠️ PREREQUISITES (AUTO-LOADED BY HOOK!)
-```bash
-# Environment variables are automatically exported by SessionStart hook:
-# - OPENAI_API_KEY (for image generation)
-# - TRELLO_API_KEY (for upload)
-# - TRELLO_TOKEN (for upload)
-# You don't need to export anything manually!
+### 🌟 MÉTODO PRINCIPAL: Google Gemini via MCP Browser (RECOMENDADO!)
+
+**Fluxo 100% automatizado usando MCP Browser:**
+1. Navegar para Google AI Studio (gemini)
+2. Gerar imagem com Gemini (assinatura ativa do Valdair)
+3. Download da imagem gerada
+4. Upload direto no card do Trello via MCP Browser
+
+### 📸 STEP 1: GENERATE IMAGE WITH GEMINI (VIA MCP BROWSER)
+```typescript
+// 1. Navegar para Google AI Studio
+await mcp__playwright__browser_navigate({ url: "https://aistudio.google.com/app/prompts/new_chat" });
+
+// 2. Já está logado com valdair3d@gmail.com
+// 3. Digitar prompt para gerar imagem
+const prompt = `Generate an image: ${task_description}, purple gradient #8b5cf6 to #a855f7, Liftlio branding, modern tech aesthetic, professional dashboard UI`;
+
+await mcp__playwright__browser_type({
+  element: "Prompt input",
+  ref: "[prompt-input-ref]",
+  text: prompt,
+  submit: true
+});
+
+// 4. Aguardar geração e fazer download da imagem
+// 5. Imagem salva em: C:/Users/User/Desktop/Liftlio/liftlio-react/generated-images/
 ```
 
-### 📸 STEP 1: GENERATE IMAGE LOCALLY (TESTED & WORKING!)
+### 🚀 STEP 2: UPLOAD DIRECT TO TRELLO (VIA MCP BROWSER)
+```typescript
+// 1. Navegar para o card do Trello
+await mcp__playwright__browser_navigate({ url: `https://trello.com/c/${cardShortLink}` });
+
+// 2. Já está logado via Google (valdair3d@gmail.com)
+// 3. Clicar em "Capa"
+await mcp__playwright__browser_click({ element: "Capa", ref: "[cover-button-ref]" });
+
+// 4. Clicar em "Carregar uma imagem de capa"
+await mcp__playwright__browser_click({ element: "Carregar uma imagem de capa", ref: "[upload-button-ref]" });
+
+// 5. Upload da imagem gerada
+await mcp__playwright__browser_file_upload({
+  paths: ["C:/Users/User/Desktop/Liftlio/liftlio-react/generated-images/[image-name].jpg"]
+});
+
+// ✅ Capa definida automaticamente!
+```
+
+### 🆓 MÉTODO ALTERNATIVO: Pollinations AI (100% GRATUITO)
 ```bash
-# Generate image with GPT-Image-1 (credentials auto-loaded)
+# Se Gemini não estiver disponível, usar Pollinations (gratuito, sem API key)
+C:/Users/User/Desktop/Liftlio/.claude/scripts/pollinations-image.sh \
+  "${task_description}, purple gradient #8b5cf6 to #a855f7, Liftlio branding" \
+  "C:/Users/User/Desktop/Liftlio/liftlio-react/generated-images" \
+  "1200" "675"
+
+# Depois fazer upload via MCP Browser no Trello (mesmo fluxo do Step 2 acima)
+```
+
+### 💰 MÉTODO LEGACY: GPT-Image-1 (Requer OpenAI billing)
+```bash
+# Se preferir usar OpenAI (requer billing ativo)
 /Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/gpt-image-wrapper.sh \
-  "${task_description}, purple gradient #8b5cf6 to #a855f7, Liftlio branding, modern tech aesthetic" \
-  "1024x1024" \
-  "high"
+  "${task_description}, purple gradient #8b5cf6 to #a855f7, Liftlio branding" \
+  "1024x1024" "high"
 
-# ✅ VALID PARAMETERS (TESTED):
-# Sizes: "1024x1024" | "1024x1536" | "1536x1024"
-# Quality: "low" | "medium" | "high"
-# ❌ INVALID: "1792x1024", "auto", "hd", "standard"
-
-# ✅ OUTPUT FORMAT:
-# PATH:/Users/valdair/Documents/Projetos/Liftlio/liftlio-react/generated-images/gpt_image_1_*.png
+# Upload via script ou MCP Browser
 ```
 
-### 🚀 STEP 2: UPLOAD TO TRELLO AND SET AS COVER (AUTOMATIC!)
-```bash
-# Extract image path from previous output (look for "PATH:" line)
-IMAGE_PATH="/Users/valdair/Documents/Projetos/Liftlio/liftlio-react/generated-images/gpt_image_1_*.png"
+### ✅ FLUXO COMPLETO RECOMENDADO (Gemini + MCP Browser)
+```typescript
+// 🎯 WORKFLOW AUTOMATIZADO COMPLETO:
 
-# Upload and set as cover in ONE command (credentials auto-loaded)
-/Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/trello-set-cover.sh \
-  "${CARD_ID}" \
-  "${IMAGE_PATH}"
+// 1. Criar card no Trello
+const card = await mcp__trello__create_card({
+  idList: "686b4422d297ee28b3d92163",
+  name: "🚀 Feature Name",
+  desc: "Description..."
+});
 
-# ✅ OUTPUT:
-# 📤 Uploading cover image to Trello card: abc123
-# 📁 Image: /path/to/image.png
-# ✅ Cover image uploaded successfully!
-# 🎨 Cover automatically set!
+// 2. Gerar imagem com Gemini via MCP Browser
+await mcp__playwright__browser_navigate({ url: "https://aistudio.google.com/app/prompts/new_chat" });
+// ... gerar e salvar imagem
+
+// 3. Upload no Trello via MCP Browser
+await mcp__playwright__browser_navigate({ url: `https://trello.com/c/${card.shortLink}` });
+// ... clicar Capa → Upload → Selecionar arquivo
+
+// 🎉 DONE! Card com capa profissional automaticamente!
 ```
 
-### ✅ COMPLETE FLOW (BOTH STEPS AUTOMATIC!)
-```bash
-# 1. Generate image
-IMAGE_OUTPUT=$(/Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/gpt-image-wrapper.sh \
-  "feature description, purple gradient #8b5cf6 to #a855f7, Liftlio branding" \
-  "1024x1024" "high")
+### 📋 RESUMO DOS MÉTODOS:
 
-# 2. Extract path from output
-IMAGE_PATH=$(echo "$IMAGE_OUTPUT" | grep "PATH:" | cut -d':' -f2-)
-
-# 3. Upload to Trello and set as cover
-/Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/trello-set-cover.sh "${CARD_ID}" "${IMAGE_PATH}"
-
-# 🎉 DONE! Card created with purple cover automatically!
-```
-
-### ✅ REAL WORKING EXAMPLE (NO EXPORTS NEEDED!):
-```bash
-# Credentials already auto-loaded by SessionStart hook!
-# Just call the script directly:
-
-/Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/gpt-image-wrapper.sh \
-  "Epic Trello card creation workflow automation, purple gradient #8b5cf6 to #a855f7, Liftlio branding" \
-  "1024x1024" \
-  "high"
-
-# Output:
-✅ Image saved to: /Users/valdair/Documents/Projetos/Liftlio/liftlio-react/generated-images/gpt_image_1_*.png
-PATH:/Users/valdair/Documents/Projetos/Liftlio/liftlio-react/generated-images/gpt_image_1_*.png
-```
+| Método | Custo | Qualidade | Automação |
+|--------|-------|-----------|-----------|
+| **Gemini + MCP Browser** | Grátis (assinatura) | ⭐⭐⭐⭐⭐ | 100% auto |
+| Pollinations + MCP Browser | Grátis | ⭐⭐⭐⭐ | 100% auto |
+| GPT-Image-1 + Script | Pago | ⭐⭐⭐⭐⭐ | 100% auto |
 
 ## 💪 Card Templates (ALL IN ENGLISH!)
 
@@ -316,10 +341,10 @@ Every card MUST have:
 - [ ] Next steps defined
 - [ ] dueComplete=true when moved to Completed
 
-## 🚀 COMPLETE REAL EXAMPLE (TESTED & WORKING!)
+## 🚀 COMPLETE REAL EXAMPLE (MCP BROWSER + GEMINI + TRELLO)
 
 ```typescript
-// Credentials already auto-loaded by SessionStart hook - no need to get them!
+// 🎯 WORKFLOW COMPLETO COM MCP BROWSER
 
 // STEP 1: Create card IN ENGLISH with value
 const card = await mcp__trello__create_card({
@@ -346,24 +371,40 @@ const card = await mcp__trello__create_card({
 • Technical documentation`
 });
 
-// STEP 2: Generate PURPLE image locally (AUTO-LOADED CREDENTIALS!)
-const imageGenCommand = `/Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/gpt-image-wrapper.sh \
-  "real-time analytics dashboard AI predictions, purple gradient #8b5cf6 to #a855f7, Liftlio branding" \
-  "1024x1024" \
-  "high"`;
+// STEP 2: Generate image with Gemini via MCP Browser
+// Navegar para Google AI Studio (já logado com valdair3d@gmail.com)
+await mcp__playwright__browser_navigate({
+  url: "https://aistudio.google.com/app/prompts/new_chat"
+});
 
-const imageResult = await bash(imageGenCommand);
-// Extract path from output: PATH:/Users/valdair/.../gpt_image_1_*.png
-const imagePath = imageResult.match(/PATH:(.+\.png)/)[1];
+// Digitar prompt e gerar imagem
+await mcp__playwright__browser_type({
+  element: "Prompt input",
+  ref: "[encontrar ref no snapshot]",
+  text: "Generate an image: real-time analytics dashboard with AI predictions, purple gradient #8b5cf6 to #a855f7, Liftlio branding, modern glassmorphism UI",
+  submit: true
+});
 
-// STEP 3: Upload to Trello and set as cover AUTOMATICALLY!
-const uploadCommand = `/Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/trello-set-cover.sh \
-  "${card.id}" \
-  "${imagePath}"`;
+// Aguardar geração e salvar imagem
+// Download automático para: C:/Users/User/Desktop/Liftlio/liftlio-react/generated-images/
 
-const uploadResult = await bash(uploadCommand);
-console.log(`✅ Image generated: ${imagePath}`);
-console.log(`✅ Cover uploaded and set automatically!`);
+// STEP 3: Upload cover via MCP Browser (já logado via Google no Trello)
+await mcp__playwright__browser_navigate({
+  url: `https://trello.com/c/${card.shortLink}`
+});
+
+// Clicar em Capa
+await mcp__playwright__browser_click({ element: "Capa", ref: "[cover-ref]" });
+
+// Clicar em Upload
+await mcp__playwright__browser_click({ element: "Carregar uma imagem de capa", ref: "[upload-ref]" });
+
+// Upload da imagem
+await mcp__playwright__browser_file_upload({
+  paths: ["C:/Users/User/Desktop/Liftlio/liftlio-react/generated-images/gemini_image.jpg"]
+});
+
+console.log(`✅ Card created with Gemini cover via MCP Browser!`);
 
 // STEP 4: Move to working when starting
 await mcp__trello__update_card({
@@ -379,9 +420,20 @@ await mcp__trello__update_card({
 });
 ```
 
-### 📝 ACTUAL OUTPUT FROM TEST RUN:
-```
-✅ Image saved to: /Users/valdair/Documents/Projetos/Liftlio/liftlio-react/generated-images/gpt_image_1_20250929_011509_epic_trello_card_creation_workflow_automation__pur.png
+### 🔑 MCP BROWSER LOGIN STATUS:
+- **Google**: ✅ Logado como valdair3d@gmail.com
+- **Trello**: ✅ Login via Google OAuth (automático)
+- **AI Studio**: ✅ Acesso com conta Google
+
+### 📝 ALTERNATIVA RÁPIDA (Pollinations - 100% Gratuito):
+```bash
+# Se Gemini não estiver disponível, usar Pollinations:
+bash C:/Users/User/Desktop/Liftlio/.claude/scripts/pollinations-image.sh \
+  "analytics dashboard purple gradient Liftlio" \
+  "C:/Users/User/Desktop/Liftlio/liftlio-react/generated-images" \
+  "1200" "675"
+
+# Depois upload via MCP Browser no Trello (mesmo fluxo)
 ```
 
 ## 🎯 Final Philosophy

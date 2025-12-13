@@ -1,7 +1,8 @@
 -- =============================================
--- Função: process_pipeline_step_for_video
--- Descrição: Orquestrador - executa próximo step de UM vídeo
+-- Funcao: process_pipeline_step_for_video
+-- Descricao: Orquestrador - executa proximo step de UM video
 -- Criado: 2025-11-14
+-- Atualizado: 2025-11-28 - Adicionado protecao contra retry infinito (max 3)
 -- =============================================
 
 DROP FUNCTION IF EXISTS process_pipeline_step_for_video(TEXT);
@@ -13,48 +14,56 @@ AS $function$
 DECLARE
     v_current_step INTEGER;
     v_pipeline_completo BOOLEAN;
+    v_retry_count INTEGER;
     v_result TEXT;
 BEGIN
-    -- Buscar step atual e status
-    SELECT current_step, pipeline_completo
-    INTO v_current_step, v_pipeline_completo
+    -- Buscar step atual, status e retry_count
+    SELECT current_step, pipeline_completo, COALESCE(retry_count, 0)
+    INTO v_current_step, v_pipeline_completo, v_retry_count
     FROM pipeline_processing
     WHERE video_youtube_id = video_youtube_id_param;
 
-    -- Verificar se vídeo existe
+    -- Verificar se video existe
     IF v_current_step IS NULL THEN
-        RETURN 'ERROR: Vídeo ' || video_youtube_id_param || ' não encontrado na pipeline_processing.';
+        RETURN 'ERROR: Video ' || video_youtube_id_param || ' nao encontrado na pipeline_processing.';
     END IF;
 
-    -- Verificar se pipeline já está completo
+    -- Verificar se pipeline ja esta completo
     IF v_pipeline_completo = TRUE THEN
-        RETURN 'INFO: Pipeline já completo para vídeo ' || video_youtube_id_param;
+        RETURN 'INFO: Pipeline ja completo para video ' || video_youtube_id_param;
     END IF;
 
-    -- Chamar função apropriada para o step atual
+    -- PROTECAO: Verificar se excedeu maximo de retries (evita loop infinito)
+    IF v_retry_count >= 3 THEN
+        UPDATE pipeline_processing
+        SET
+            pipeline_completo = TRUE,
+            pipeline_completo_at = NOW(),
+            curadoria_error = 'BLOCKED: Max retries (3) exceeded at step ' || v_current_step,
+            updated_at = NOW()
+        WHERE video_youtube_id = video_youtube_id_param;
+
+        RETURN 'BLOCKED: Video ' || video_youtube_id_param || ' excedeu max retries (3) no step ' || v_current_step || '. Marcado como completo para evitar loop.';
+    END IF;
+
+    -- Chamar funcao apropriada para o step atual
     CASE v_current_step
         WHEN 0 THEN
-            -- Step 0: Criar vídeo na tabela Videos
             v_result := process_step_1_criar_video(video_youtube_id_param);
 
         WHEN 1 THEN
-            -- Step 1: Buscar comentários do YouTube
             v_result := process_step_2_buscar_comentarios(video_youtube_id_param);
 
         WHEN 2 THEN
-            -- Step 2: Curar comentários (filtrar + curar com Claude)
             v_result := process_step_3_curar_video(video_youtube_id_param);
 
         WHEN 3 THEN
-            -- Step 3: Analisar sentimentos dos comentários
             v_result := process_step_4_analisar_comentarios(video_youtube_id_param);
 
         WHEN 4 THEN
-            -- Step 4: Criar mensagens orientadas
             v_result := process_step_5_criar_mensagens(video_youtube_id_param);
 
         WHEN 5 THEN
-            -- Step 5: Pipeline completo!
             UPDATE pipeline_processing
             SET
                 pipeline_completo = TRUE,
@@ -62,10 +71,10 @@ BEGIN
                 updated_at = NOW()
             WHERE video_youtube_id = video_youtube_id_param;
 
-            v_result := 'SUCCESS: Pipeline completo para vídeo ' || video_youtube_id_param || '! ✅';
+            v_result := 'SUCCESS: Pipeline completo para video ' || video_youtube_id_param || '!';
 
         ELSE
-            v_result := 'ERROR: Step inválido (' || v_current_step || ') para vídeo ' || video_youtube_id_param;
+            v_result := 'ERROR: Step invalido (' || v_current_step || ') para video ' || video_youtube_id_param;
     END CASE;
 
     RETURN v_result;
@@ -73,54 +82,28 @@ END;
 $function$;
 
 -- =============================================
--- COMENTÁRIOS
+-- COMENTARIOS
 -- =============================================
--- Orquestrador de Steps
---
--- Esta função é o ORQUESTRADOR PRINCIPAL que executa o step
--- correto baseado no current_step do vídeo.
+-- Orquestrador de Steps com PROTECAO contra loop infinito
 --
 -- FUNCIONAMENTO:
--- 1. Verifica current_step do vídeo
--- 2. Chama função apropriada para aquele step
--- 3. Cada função de step:
---    - Executa sua tarefa
---    - Atualiza current_step (incrementa)
---    - Retorna SUCCESS ou ERROR
--- 4. Se chegar no step 5, marca pipeline_completo = TRUE
+-- 1. Verifica current_step do video
+-- 2. Verifica retry_count (NOVO - protecao contra loop)
+-- 3. Chama funcao apropriada para aquele step
+-- 4. Cada funcao de step atualiza current_step
+-- 5. Se chegar no step 5, marca pipeline_completo = TRUE
+--
+-- PROTECAO CONTRA LOOP (2025-11-28):
+-- - Se retry_count >= 3, bloqueia video e marca como completo
+-- - Evita que erros repetidos gastem API do Claude infinitamente
+-- - Video bloqueado fica com curadoria_error = 'BLOCKED: Max retries...'
 --
 -- STEPS:
--- 0 → process_step_1_criar_video()         ✅ Implementado
--- 1 → process_step_2_buscar_comentarios()  ⏳ TODO
--- 2 → process_step_3_curar_video()         ⏳ TODO
--- 3 → process_step_4_analisar_comentarios() ⏳ TODO
--- 4 → process_step_5_criar_mensagens()     ⏳ TODO
--- 5 → Marca pipeline_completo = TRUE       ✅ Implementado
---
--- VANTAGENS:
--- - Código centralizado (fácil manutenção)
--- - Fácil adicionar novos steps
--- - Cada vídeo é processado independentemente
--- - Permite retry de steps individuais
--- - Log claro de progresso
---
--- EXEMPLO DE USO:
--- ```sql
--- -- Processar próximo step do vídeo
--- SELECT process_pipeline_step_for_video('dQw4w9WgXcQ');
---
--- -- Resultado possível:
--- -- 'SUCCESS: Vídeo dQw4w9WgXcQ criado (ID: 123). Avançando para step 1.'
---
--- -- Chamar novamente para executar próximo step
--- SELECT process_pipeline_step_for_video('dQw4w9WgXcQ');
---
--- -- Resultado:
--- -- 'ERROR: Step 1 (buscar comentários) ainda não implementado'
--- ```
---
--- INTEGRAÇÃO COM OUTROS ORQUESTRADORES:
--- - process_scanner_videos(scanner_id) → chama esta função para cada vídeo
--- - process_next_project_scanner(project_id) → chama process_scanner_videos()
+-- 0 -> process_step_1_criar_video()
+-- 1 -> process_step_2_buscar_comentarios()
+-- 2 -> process_step_3_curar_video()
+-- 3 -> process_step_4_analisar_comentarios()
+-- 4 -> process_step_5_criar_mensagens()
+-- 5 -> Marca pipeline_completo = TRUE
 --
 -- =============================================

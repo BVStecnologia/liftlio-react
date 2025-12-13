@@ -12,14 +12,15 @@ LANGUAGE plpgsql
 AS $function$
 DECLARE
     v_video_db_id BIGINT;
+    v_project_id INTEGER;
     v_current_step INTEGER;
     v_total_comentarios_curados INTEGER;
     v_analysis_result TEXT;
     v_total_analisados INTEGER := 0;
 BEGIN
     -- Buscar dados do vídeo na pipeline
-    SELECT video_db_id, current_step, total_comentarios_curados
-    INTO v_video_db_id, v_current_step, v_total_comentarios_curados
+    SELECT video_db_id, project_id, current_step, total_comentarios_curados
+    INTO v_video_db_id, v_project_id, v_current_step, v_total_comentarios_curados
     FROM pipeline_processing
     WHERE video_youtube_id = video_youtube_id_param;
 
@@ -53,9 +54,8 @@ BEGIN
     -- NOTA: analisar_comentarios_com_claude analisa comentários não analisados de um vídeo específico
     BEGIN
         -- Chamar análise passando project_id e video_id
-        SELECT atualizar_comentarios_analisados(
-            (SELECT project_id FROM pipeline_processing WHERE video_youtube_id = video_youtube_id_param)::INTEGER
-        ) INTO v_analysis_result;
+        SELECT analisar_comentarios_com_claude(v_project_id::INTEGER, v_video_db_id::INTEGER) INTO v_analysis_result;
+        -- FIX 2025-11-28: Agora chama diretamente com video_db_id (antes usava atualizar_comentarios_analisados sem video_id)
 
         -- Verificar se houve erro na análise
         IF v_analysis_result LIKE '%Erro%' OR

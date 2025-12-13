@@ -19,6 +19,7 @@ liftlio-react/.env.development.original
 
 # Servidor - Python projects (Monitormanto, youtube-search-engine)
 Servidor/**/.env
+Servidor/**/.env.*
 Servidor/**/venv/
 Servidor/**/__pycache__/
 Servidor/**/*.log

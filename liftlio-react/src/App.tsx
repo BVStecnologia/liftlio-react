@@ -35,6 +35,7 @@ const Billing = lazy(() => import('./pages/Billing'));
 const Integrations = lazy(() => import('./pages/Integrations'));
 const ProjectCreationPage = lazy(() => import('./pages/ProjectCreationPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const LiftlioBrowser = lazy(() => import('./pages/LiftlioBrowser'));
 // About, Privacy, Terms agora são servidas como HTML estático da pasta public
 const Security = lazy(() => import('./pages/Security'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
@@ -982,6 +983,8 @@ const ProtectedLayout = ({
                 <Route path="/settings" element={<SubscriptionGate><Settings /></SubscriptionGate>} />
                 <Route path="/billing" element={<SubscriptionGate><Billing /></SubscriptionGate>} />
                 <Route path="/integrations" element={<SubscriptionGate><Integrations /></SubscriptionGate>} />
+                <Route path="/computer" element={<SubscriptionGate><LiftlioBrowser /></SubscriptionGate>} />
+                <Route path="/computer-dev" element={<LiftlioBrowser />} />
                 {/* <Route path="/url-test" element={<SubscriptionGate><UrlDataTest /></SubscriptionGate>} /> */}
                 {/* Removed duplicate trends and analytics routes - they are defined as public routes */}
                 <Route path="*" element={(() => {
