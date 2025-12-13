@@ -1376,6 +1376,79 @@ app.get('/captcha/screenshot', async (req, res) => {
   }
 });
 
+
+// =============================================================================
+// MCP COMPATIBILITY ENDPOINTS (for frontend)
+// =============================================================================
+
+/**
+ * MCP Screenshot - Returns full base64 screenshot for frontend
+ */
+app.get('/mcp/screenshot', async (req, res) => {
+  try {
+    const screenshotBase64 = await takeScreenshotCDP();
+    res.json({
+      success: true,
+      screenshot: screenshotBase64
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// SSE clients
+const sseClients = new Set();
+
+/**
+ * SSE Endpoint - Server-Sent Events stream for real-time updates
+ */
+app.get('/sse', (req, res) => {
+  // Set SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.flushHeaders();
+
+  // Add client to set
+  sseClients.add(res);
+  console.log('[SSE] Client connected (total: ' + sseClients.size + ')');
+
+  // Send initial status
+  const initialData = {
+    type: 'connected',
+    projectId: PROJECT_ID,
+    timestamp: new Date().toISOString()
+  };
+  res.write('data: ' + JSON.stringify(initialData) + '\n\n');
+
+  // Heartbeat to keep connection alive
+  const heartbeat = setInterval(() => {
+    res.write('data: ' + JSON.stringify({ type: 'heartbeat', timestamp: new Date().toISOString() }) + '\n\n');
+  }, 30000);
+
+  // Cleanup on disconnect
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    sseClients.delete(res);
+    console.log('[SSE] Client disconnected (remaining: ' + sseClients.size + ')');
+  });
+});
+
+/**
+ * Broadcast event to all SSE clients
+ */
+function broadcastSSE(eventData) {
+  const data = JSON.stringify(eventData);
+  sseClients.forEach(client => {
+    try {
+      client.write('data: ' + data + '\n\n');
+    } catch (e) {
+      sseClients.delete(client);
+    }
+  });
+}
+
 // =============================================================================
 // DIRECT LOGIN ENDPOINTS (Bypasses Claude - Direct CDP automation)
 // =============================================================================

@@ -135,6 +135,7 @@ app.get('/containers/:projectId', (req, res) => {
   res.json(session);
 });
 
+/** * Obter info de um container (formato esperado pelo frontend) */app.get('/containers/:projectId/info', (req, res) => {  const { projectId } = req.params;  const session = sessions.get(projectId);  if (!session) {    return res.status(404).json({ error: 'Not found', message: `Container for project ${projectId} not found` });  }  res.json({    projectId: session.projectId,    apiPort: session.mcpPort,    vncPort: session.vncPort,    status: session.status,    createdAt: session.createdAt,    lastActivity: session.lastActivity,    mcpUrl: session.mcpUrl,    vncUrl: session.vncUrl  });});
 /**
  * Criar novo container para projeto
  */
