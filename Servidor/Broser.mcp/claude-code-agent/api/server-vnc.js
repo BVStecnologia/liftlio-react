@@ -188,6 +188,47 @@ async function saveSessionToSupabase(projectId, sessionData) {
 }
 
 /**
+ * Update browser_tasks in Supabase after task execution
+ * Called when CRON sends taskId with the request
+ */
+async function updateTaskInSupabase(taskId, result) {
+  if (!SUPABASE_URL || !SUPABASE_KEY || !taskId) {
+    console.log('[TASK] Supabase not configured or taskId not provided, skipping update');
+    return false;
+  }
+
+  try {
+    const axios = require('axios');
+    await axios.patch(
+      `${SUPABASE_URL}/rest/v1/browser_tasks?id=eq.${taskId}`,
+      {
+        status: result.success ? 'completed' : 'failed',
+        response: {
+          result: result.result,
+          success: result.success,
+          duration: result.duration
+        },
+        completed_at: new Date().toISOString(),
+        error_message: result.success ? null : (result.error || result.result)
+      },
+      {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        }
+      }
+    );
+    console.log(`[TASK] Updated browser_tasks ${taskId}: ${result.success ? 'completed' : 'failed'}`);
+    return true;
+  } catch (err) {
+    console.error(`[TASK] Error updating browser_tasks: ${err.message}`);
+    return false;
+  }
+}
+
+/**
  * Get current session from Chrome via CDP
  */
 async function getCurrentSession() {
@@ -1792,7 +1833,7 @@ app.post('/containers/:projectId/heartbeat', (req, res) => {
  * Now ensures Google session is valid before executing
  */
 app.post('/agent/task', async (req, res) => {
-  const { task, maxIterations, projectId } = req.body;
+  const { task, maxIterations, projectId, taskId } = req.body;
 
   if (!task) {
     return res.status(400).json({ error: 'task is required' });
@@ -1837,6 +1878,15 @@ app.post('/agent/task', async (req, res) => {
       }
     }
 
+    // Update browser_tasks if taskId was provided (from CRON)
+    if (taskId) {
+      await updateTaskInSupabase(taskId, {
+        success: true,
+        result: claudeResponse,
+        duration: result.duration
+      });
+    }
+
     res.json({
       success: true,
       projectId: projectId || PROJECT_ID,
@@ -1849,6 +1899,16 @@ app.post('/agent/task', async (req, res) => {
     });
   } catch (error) {
     currentTask = null;
+
+    // Update browser_tasks with failure if taskId was provided
+    if (taskId) {
+      await updateTaskInSupabase(taskId, {
+        success: false,
+        result: null,
+        error: error.message
+      });
+    }
+
     res.status(500).json({ success: false, error: error.message });
   }
 });

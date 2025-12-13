@@ -7,7 +7,10 @@ import { useTheme } from '../context/ThemeContext';
 import Card from '../components/Card';
 import Spinner from '../components/ui/Spinner';
 import { IconComponent } from '../utils/IconHelper';
-import { FaPlay, FaStop, FaCheckCircle, FaTimesCircle, FaClock, FaRobot, FaGlobe, FaMousePointer, FaPaperPlane, FaExpand, FaCompress, FaTrash, FaCamera, FaDesktop, FaChevronDown, FaChevronUp, FaEye } from 'react-icons/fa';
+import { FaPlay, FaStop, FaCheckCircle, FaTimesCircle, FaClock, FaRobot, FaGlobe, FaMousePointer, FaPaperPlane, FaExpand, FaCompress, FaTrash, FaCamera, FaDesktop, FaChevronDown, FaChevronUp, FaEye, FaCopy } from 'react-icons/fa';
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 // VNC port is now dynamic per project (16000 + projectId)
 // No fixed VNC_PORT - determined at runtime from orchestrator
@@ -603,6 +606,78 @@ const TaskMetaItem = styled.span`
   gap: 4px;
 `;
 
+const ResponsePreview = styled.div`
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: ${props => props.theme.name === 'dark' ? 'rgba(34, 197, 94, 0.08)' : 'rgba(34, 197, 94, 0.05)'};
+  border-radius: 8px;
+  font-size: 12px;
+  color: ${props => props.theme.colors.text.secondary};
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  border-left: 3px solid rgba(34, 197, 94, 0.5);
+`;
+
+const CopyButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: ${props => props.theme.name === 'dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)'};
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 6px;
+  color: #8b5cf6;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${props => props.theme.name === 'dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.1)'};
+    border-color: rgba(139, 92, 246, 0.5);
+  }
+`;
+
+const MarkdownContent = styled.div`
+  font-size: 13px;
+  line-height: 1.6;
+  color: ${props => props.theme.colors.text.primary};
+
+  p {
+    margin-bottom: 12px;
+  }
+
+  code {
+    background: ${props => props.theme.name === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'};
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+  }
+
+  pre {
+    margin: 12px 0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  ul, ol {
+    margin: 8px 0;
+    padding-left: 20px;
+  }
+
+  li {
+    margin-bottom: 4px;
+  }
+
+  strong {
+    color: ${props => props.theme.colors.text.primary};
+    font-weight: 600;
+  }
+`;
+
 const EmptyState = styled.div`
   text-align: center;
   padding: 40px 20px;
@@ -686,6 +761,8 @@ const LiftlioBrowser: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedTask, setSelectedTask] = useState<BrowserTask | null>(null);
   const [isResponseExpanded, setIsResponseExpanded] = useState(true);
+  // Track which task responses are expanded in the list (by task ID)
+  const [expandedResponses, setExpandedResponses] = useState<Set<string>>(new Set());
 
   // Container & Connection state
   const [containerInfo, setContainerInfo] = useState<ContainerInfo | null>(null);
@@ -696,8 +773,8 @@ const LiftlioBrowser: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [events, setEvents] = useState<SSEEvent[]>([]);
 
-  // VNC state
-  const [vncEnabled, setVncEnabled] = useState(() => { const saved = localStorage.getItem('liftlio-vnc-enabled'); return saved === 'true'; });
+  // VNC state - default to TRUE so VNC shows automatically
+  const [vncEnabled, setVncEnabled] = useState(() => { const saved = localStorage.getItem('liftlio-vnc-enabled'); return saved !== 'false'; });
   const [vncLoading, setVncLoading] = useState(false);
   const vncHeartbeatRef = useRef<NodeJS.Timeout | null>(null);
   const vncCacheBusterRef = useRef<number>(Date.now()); // Stable cache buster - only changes on VNC restart
@@ -744,29 +821,105 @@ const LiftlioBrowser: React.FC = () => {
     };
   }, []);
 
-  // Get container port for project (use dynamic API port when available)
+  // Helper: Extract port from URL (e.g., "http://173.249.22.2:16001/vnc.html" -> 16001)
+  const extractPortFromUrl = useCallback((url: string | undefined): number | null => {
+    if (!url) return null;
+    try {
+      const urlObj = new URL(url);
+      return parseInt(urlObj.port, 10) || null;
+    } catch {
+      const match = url.match(/:(\d+)/);
+      return match ? parseInt(match[1], 10) : null;
+    }
+  }, []);
+
+  // Get VNC port from project's browser_vnc_url (filled by orchestrator CRON)
+  const getProjectVncPort = useCallback(() => {
+    if (!currentProject?.id) return null;
+
+    // PRIMARY: Use port from browser_vnc_url in Projeto table (set by orchestrator)
+    const projectVncUrl = (currentProject as any).browser_vnc_url;
+    if (projectVncUrl) {
+      const portFromProject = extractPortFromUrl(projectVncUrl);
+      if (portFromProject) {
+        console.log(`[LiftlioBrowser] VNC using project port ${portFromProject} from browser_vnc_url`);
+        return portFromProject;
+      }
+    }
+
+    // FALLBACK: Use dynamicVncPort from orchestrator API
+    if (dynamicVncPort) {
+      console.log(`[LiftlioBrowser] VNC using orchestrator port ${dynamicVncPort}`);
+      return dynamicVncPort;
+    }
+
+    // LAST RESORT: Calculate (may be wrong)
+    const calculatedPort = 16000 + Number(currentProject.id);
+    console.log(`[LiftlioBrowser] VNC using calculated port ${calculatedPort} (fallback)`);
+    return calculatedPort;
+  }, [currentProject, dynamicVncPort, extractPortFromUrl]);
+
+  // Get API/MCP port from project's browser_mcp_url (filled by orchestrator CRON)
   const getContainerPort = useCallback(() => {
     if (!currentProject?.id) return null;
 
-    // Use dynamic API port if available (from orchestrator /info response)
+    // PRIMARY: Use port from browser_mcp_url in Projeto table (set by orchestrator)
+    const projectMcpUrl = (currentProject as any).browser_mcp_url;
+    if (projectMcpUrl) {
+      const portFromProject = extractPortFromUrl(projectMcpUrl);
+      if (portFromProject) {
+        console.log(`[LiftlioBrowser] API using project port ${portFromProject} from browser_mcp_url`);
+        return portFromProject;
+      }
+    }
+
+    // FALLBACK: Use dynamicApiPort from orchestrator API
     if (dynamicApiPort) {
+      console.log(`[LiftlioBrowser] API using orchestrator port ${dynamicApiPort}`);
       return dynamicApiPort;
     }
 
-    // Fallback to orchestrator URL port
-    try {
-      const url = new URL(BROWSER_ORCHESTRATOR_URL);
-      return parseInt(url.port) || 10100;
-    } catch {
-      return 10100; // Default to mapped port
+    // LAST RESORT: Calculate (may be wrong)
+    const calculatedPort = 10000 + Number(currentProject.id);
+    console.log(`[LiftlioBrowser] API using calculated port ${calculatedPort} (fallback)`);
+    return calculatedPort;
+  }, [currentProject, dynamicApiPort, extractPortFromUrl]);
+
+  // Get full VNC URL from project's browser_vnc_url (VPS URL, not localhost)
+  const getVncFullUrl = useCallback(() => {
+    // PRIMARY: Use browser_vnc_url from Projeto table (includes VPS IP)
+    const projectVncUrl = (currentProject as any)?.browser_vnc_url;
+    if (projectVncUrl) {
+      // Replace vnc.html with vnc_lite.html for better performance
+      const baseUrl = projectVncUrl.replace('/vnc.html', '/vnc_lite.html');
+      // Add extra params if not present
+      const url = new URL(baseUrl);
+      url.searchParams.set('autoconnect', 'true');
+      url.searchParams.set('resize', 'scale');
+      url.searchParams.set('reconnect', 'true');
+      url.searchParams.set('reconnect_delay', '1000');
+      url.searchParams.set('view_only', 'false');
+      url.searchParams.set('_cb', String(vncCacheBusterRef.current));
+      console.log(`[LiftlioBrowser] VNC using project URL: ${url.toString()}`);
+      return url.toString();
     }
-  }, [currentProject?.id, dynamicApiPort]);
+
+    // FALLBACK: Construct from VPS IP + port
+    const vncPort = getProjectVncPort();
+    if (vncPort) {
+      const fallbackUrl = `http://173.249.22.2:${vncPort}/vnc_lite.html?autoconnect=true&resize=scale&reconnect=true&reconnect_delay=1000&view_only=false&_cb=${vncCacheBusterRef.current}`;
+      console.log(`[LiftlioBrowser] VNC using fallback URL: ${fallbackUrl}`);
+      return fallbackUrl;
+    }
+
+    return null;
+  }, [currentProject, getProjectVncPort]);
 
   // Initialize browser in container
   const initializeBrowser = useCallback(async (port: number) => {
     try {
       console.log('[LiftlioBrowser] Initializing browser on port', port);
-      const response = await fetch(`http://localhost:${port}/browser/init`, {
+      const response = await fetch(`http://173.249.22.2:${port}/browser/init`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId: String(currentProject?.id) })
@@ -823,7 +976,7 @@ const LiftlioBrowser: React.FC = () => {
 
         // Auto-initialize browser if needed
         try {
-          const healthRes = await fetch(`http://localhost:${data.apiPort}/health`);
+          const healthRes = await fetch(`http://173.249.22.2:${data.apiPort}/health`);
           if (healthRes.ok) {
             const healthData = await healthRes.json();
             if (!healthData.browserRunning) {
@@ -937,7 +1090,7 @@ const LiftlioBrowser: React.FC = () => {
     if (!port) return;
 
     try {
-      const response = await fetch(`http://localhost:${port}/mcp/screenshot`);
+      const response = await fetch(`http://173.249.22.2:${port}/mcp/screenshot`);
       if (response.ok) {
         const data = await response.json();
         if (data.screenshot) {
@@ -956,7 +1109,7 @@ const LiftlioBrowser: React.FC = () => {
 
     setVncLoading(true);
     try {
-      const response = await fetch(`http://localhost:${port}/vnc/start`, {
+      const response = await fetch(`http://173.249.22.2:${port}/vnc/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -976,7 +1129,7 @@ const LiftlioBrowser: React.FC = () => {
         // Start VNC heartbeat (every 30s to keep alive)
         vncHeartbeatRef.current = setInterval(async () => {
           try {
-            await fetch(`http://localhost:${port}/vnc/heartbeat`, {
+            await fetch(`http://173.249.22.2:${port}/vnc/heartbeat`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' }
             });
@@ -1003,7 +1156,7 @@ const LiftlioBrowser: React.FC = () => {
     if (!port) return;
 
     try {
-      await fetch(`http://localhost:${port}/vnc/stop`, {
+      await fetch(`http://173.249.22.2:${port}/vnc/stop`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -1036,7 +1189,7 @@ const LiftlioBrowser: React.FC = () => {
       eventSourceRef.current.close();
     }
 
-    const eventSource = new EventSource(`http://localhost:${port}/sse`);
+    const eventSource = new EventSource(`http://173.249.22.2:${port}/sse`);
 
     eventSource.onmessage = (event) => {
       try {
@@ -1064,14 +1217,50 @@ const LiftlioBrowser: React.FC = () => {
     eventSourceRef.current = eventSource;
   }, [getContainerPort]);
 
-  // Check container status on mount
+  // Sync connection status from project's browser_session_status (filled by orchestrator CRON)
   useEffect(() => {
-    checkContainerStatus();
+    if (!currentProject) return;
+
+    const status = (currentProject as any).browser_session_status;
+    const vncUrl = (currentProject as any).browser_vnc_url;
+    const mcpUrl = (currentProject as any).browser_mcp_url;
+
+    console.log(`[LiftlioBrowser] Project browser status: ${status}, VNC: ${vncUrl}, MCP: ${mcpUrl}`);
+
+    if (status === 'running' && vncUrl && mcpUrl) {
+      // Container is running - extract ports from URLs
+      const vncPort = vncUrl.match(/:(\d+)/)?.[1];
+      const mcpPort = mcpUrl.match(/:(\d+)/)?.[1];
+
+      if (vncPort && mcpPort) {
+        console.log(`[LiftlioBrowser] Container running - VNC port: ${vncPort}, MCP port: ${mcpPort}`);
+        setDynamicVncPort(parseInt(vncPort, 10));
+        setDynamicApiPort(parseInt(mcpPort, 10));
+        setContainerInfo({
+          projectId: currentProject.id,
+          port: parseInt(mcpPort, 10),
+          apiPort: parseInt(mcpPort, 10),
+          vncPort: parseInt(vncPort, 10),
+          status: 'running',
+        });
+        setConnectionStatus('connected');
+      }
+    } else if (status === 'inactive' || !status) {
+      setConnectionStatus('disconnected');
+    }
+  }, [currentProject]);
+
+  // Check container status on mount (fallback to orchestrator API)
+  useEffect(() => {
+    // Only check orchestrator if project doesn't have status yet
+    if ((currentProject as any)?.browser_session_status !== 'running') {
+      checkContainerStatus();
+    }
 
     // Poll for container status every 30 seconds
     const interval = setInterval(checkContainerStatus, 30000);
     return () => clearInterval(interval);
-  }, [checkContainerStatus]);
+  }, [checkContainerStatus, currentProject]);
 
   // Connect SSE and start screenshot polling when container is ready
   useEffect(() => {
@@ -1227,10 +1416,11 @@ const LiftlioBrowser: React.FC = () => {
             headers['X-API-Key'] = BROWSER_MCP_API_KEY;
           }
 
-          // Use dynamic API port for direct container communication, fallback to orchestrator
-          const agentUrl = dynamicApiPort
-            ? `http://localhost:${dynamicApiPort}/agent/task`
-            : `${BROWSER_ORCHESTRATOR_URL}/agent/task`;
+          // Use dynamic API port for direct container communication (localhost only)
+          // For remote (VPS), always route through Edge Function with projectId
+          const agentUrl = USE_DIRECT_MODE && dynamicApiPort
+            ? `http://173.249.22.2:${dynamicApiPort}/agent/task`
+            : `${BROWSER_ORCHESTRATOR_URL}/containers/${currentProject.id}/agent/task`;
 
           console.log(`[LiftlioBrowser] Sending task to: ${agentUrl}`);
 
@@ -1359,6 +1549,20 @@ const LiftlioBrowser: React.FC = () => {
     }
   };
 
+  // Toggle response expansion for a task in the list
+  const toggleResponseExpanded = (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Don't trigger card selection
+    setExpandedResponses(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(taskId)) {
+        newSet.delete(taskId);
+      } else {
+        newSet.add(taskId);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <PageContainer>
       <PageHeader>
@@ -1398,12 +1602,12 @@ const LiftlioBrowser: React.FC = () => {
               </ToolbarButton>
             </BrowserToolbar>
             <BrowserContent>
-              {/* Show VNC iframe when enabled, otherwise screenshot */}
-              {connectionStatus === 'connected' && vncEnabled && dynamicVncPort ? (
+              {/* Show VNC iframe when enabled - port calculated from projectId (16000 + id) */}
+              {connectionStatus === 'connected' && vncEnabled && currentProject?.id ? (
                 <VNCWrapper>
                   <VNCFrame
                     ref={vncIframeRef}
-                    src={`http://localhost:${dynamicVncPort}/vnc_lite.html?autoconnect=true&resize=scale&reconnect=true&reconnect_delay=1000&view_only=false&_cb=${vncCacheBusterRef.current}`}
+                    src={getVncFullUrl() || ''}
                     title="VNC Browser View"
                     tabIndex={0}
                     sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-modals allow-popups"
@@ -1527,7 +1731,7 @@ const LiftlioBrowser: React.FC = () => {
           </Card>
 
           {/* Task Detail Panel - shows when a task is selected */}
-          {selectedTask && selectedTask.response && (
+          {selectedTask && (selectedTask.response || selectedTask.status === 'running') && (
             <Card style={{ padding: '16px', marginBottom: '16px' }}>
               <div style={{
                 display: 'flex',
@@ -1563,45 +1767,119 @@ const LiftlioBrowser: React.FC = () => {
                 {selectedTask.task}
               </p>
 
-              <div
-                onClick={() => setIsResponseExpanded(!isResponseExpanded)}
-                style={{
+              {/* Progress indicator for running tasks */}
+              {selectedTask.status === 'running' && (
+                <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '6px',
-                  marginBottom: isResponseExpanded ? '8px' : '0',
-                  color: theme.colors.primary,
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  userSelect: 'none'
+                  gap: '12px',
+                  padding: '16px',
+                  background: theme.name === 'dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)',
+                  borderRadius: '10px',
+                  marginBottom: '12px',
+                  border: `1px solid ${theme.name === 'dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.15)'}`
                 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Spinner />
+                  <div>
+                    <p style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#8b5cf6',
+                      marginBottom: '4px'
+                    }}>
+                      Processando tarefa...
+                    </p>
+                    <p style={{
+                      fontSize: '11px',
+                      color: theme.name === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'
+                    }}>
+                      {selectedTask.started_at
+                        ? `Iniciado ${formatTimeAgo(selectedTask.started_at)}`
+                        : 'Aguardando início...'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Response section - only show when there's a response */}
+              {selectedTask.response && (
+              <>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: isResponseExpanded ? '8px' : '0'
+              }}>
+                <div
+                  onClick={() => setIsResponseExpanded(!isResponseExpanded)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: theme.colors.primary,
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    userSelect: 'none'
+                  }}>
                   <IconComponent icon={FaRobot} />
                   Agent Response
+                  <IconComponent
+                    icon={isResponseExpanded ? FaChevronUp : FaChevronDown}
+                    style={{ fontSize: '12px', opacity: 0.7 }}
+                  />
                 </div>
-                <IconComponent
-                  icon={isResponseExpanded ? FaChevronUp : FaChevronDown}
-                  style={{ fontSize: '12px', opacity: 0.7 }}
-                />
+                {selectedTask.response?.result && (
+                  <CopyButton
+                    onClick={() => {
+                      const text = typeof selectedTask.response?.result === 'string'
+                        ? selectedTask.response.result
+                        : JSON.stringify(selectedTask.response, null, 2);
+                      navigator.clipboard.writeText(text);
+                    }}
+                  >
+                    <IconComponent icon={FaCopy} style={{ fontSize: '11px' }} />
+                    Copiar
+                  </CopyButton>
+                )}
               </div>
 
               {isResponseExpanded && (
                 <div style={{
-                  fontSize: '13px',
-                  lineHeight: '1.5',
                   background: theme.name === 'dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)',
                   padding: '12px',
                   borderRadius: '8px',
                   border: `1px solid ${theme.name === 'dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.15)'}`,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  maxHeight: '300px',
-                  overflow: 'auto',
-                  color: theme.name === 'dark' ? '#fff' : '#000'
+                  maxHeight: '400px',
+                  overflow: 'auto'
                 }}>
-                  {selectedTask.response?.result || JSON.stringify(selectedTask.response, null, 2)}
+                  <MarkdownContent>
+                    <ReactMarkdown
+                      components={{
+                        code({ node, inline, className, children, ...props }: any) {
+                          const match = /language-(\w+)/.exec(className || '');
+                          return !inline && match ? (
+                            <SyntaxHighlighter
+                              style={theme.name === 'dark' ? vscDarkPlus : vs}
+                              language={match[1]}
+                              PreTag="div"
+                              {...props}
+                            >
+                              {String(children).replace(/\n$/, '')}
+                            </SyntaxHighlighter>
+                          ) : (
+                            <code className={className} {...props}>
+                              {children}
+                            </code>
+                          );
+                        }
+                      }}
+                    >
+                      {typeof selectedTask.response?.result === 'string'
+                        ? selectedTask.response.result
+                        : JSON.stringify(selectedTask.response, null, 2)}
+                    </ReactMarkdown>
+                  </MarkdownContent>
                 </div>
               )}
 
@@ -1620,6 +1898,8 @@ const LiftlioBrowser: React.FC = () => {
                     <span>Actions: {selectedTask.actions_taken.length}</span>
                   )}
                 </div>
+              )}
+              </>
               )}
             </Card>
           )}
@@ -1653,7 +1933,10 @@ const LiftlioBrowser: React.FC = () => {
                   >
                     <TaskCardHeader>
                       <TaskStatus status={task.status}>
-                        {getStatusIcon(task.status)}
+                        {/* Don't show spinner in list when task is selected (detail panel already shows it) */}
+                        {selectedTask?.id === task.id && task.status === 'running'
+                          ? <IconComponent icon={FaClock} style={{ color: '#8b5cf6' }} />
+                          : getStatusIcon(task.status)}
                         {task.status}
                       </TaskStatus>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1668,6 +1951,30 @@ const LiftlioBrowser: React.FC = () => {
                     </TaskCardHeader>
 
                     <TaskText>{task.task}</TaskText>
+
+                    {/* Collapsible response preview for completed tasks */}
+                    {task.status === 'completed' && task.response?.result && (
+                      <ResponsePreview
+                        onClick={(e) => toggleResponseExpanded(task.id, e)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                          <div style={{ flex: 1, overflow: 'hidden' }}>
+                            {expandedResponses.has(task.id)
+                              ? (typeof task.response.result === 'string'
+                                  ? task.response.result
+                                  : JSON.stringify(task.response.result, null, 2))
+                              : (typeof task.response.result === 'string'
+                                  ? task.response.result.substring(0, 100) + (task.response.result.length > 100 ? '...' : '')
+                                  : JSON.stringify(task.response.result).substring(0, 100) + '...')}
+                          </div>
+                          <IconComponent
+                            icon={expandedResponses.has(task.id) ? FaChevronUp : FaChevronDown}
+                            style={{ fontSize: '10px', opacity: 0.6, flexShrink: 0 }}
+                          />
+                        </div>
+                      </ResponsePreview>
+                    )}
 
                     <TaskMeta>
                       <TaskMetaItem>
@@ -1693,3 +2000,5 @@ const LiftlioBrowser: React.FC = () => {
 };
 
 export default LiftlioBrowser;
+
+

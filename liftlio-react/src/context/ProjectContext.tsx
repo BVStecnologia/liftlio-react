@@ -16,7 +16,13 @@ interface Project {
   projetc_index?: boolean; // Indica se este é o projeto selecionado pelo usuário
   fuso_horario?: string; // Fuso horário do usuário
   _updateTimestamp?: number; // Timestamp para forçar detecção de mudanças no React
-  // Adicione outros campos conforme necessário
+  // Browser session fields (filled by orchestrator CRON)
+  browser_vnc_url?: string;
+  browser_mcp_url?: string;
+  browser_session_status?: string;
+  browser_container_id?: string;
+  browser_session_started_at?: string;
+  "Youtube Active"?: boolean;
 }
 
 type ProjectContextType = {
