@@ -7,10 +7,10 @@ import { useTheme } from '../context/ThemeContext';
 import Card from '../components/Card';
 import Spinner from '../components/ui/Spinner';
 import { IconComponent } from '../utils/IconHelper';
-import { FaPlay, FaStop, FaRedo, FaCheckCircle, FaTimesCircle, FaClock, FaRobot, FaGlobe, FaMousePointer, FaKeyboard, FaImage, FaPaperPlane, FaExpand, FaCompress, FaTrash, FaCircle, FaWifi, FaCamera, FaSyncAlt, FaDesktop, FaChevronDown, FaChevronUp, FaTv, FaEye } from 'react-icons/fa';
+import { FaPlay, FaStop, FaCheckCircle, FaTimesCircle, FaClock, FaRobot, FaGlobe, FaMousePointer, FaPaperPlane, FaExpand, FaCompress, FaTrash, FaCamera, FaDesktop, FaChevronDown, FaChevronUp, FaEye } from 'react-icons/fa';
 
-// VNC Configuration - noVNC port is mapped to 16080
-const VNC_PORT = 16080;
+// VNC port is now dynamic per project (16000 + projectId)
+// No fixed VNC_PORT - determined at runtime from orchestrator
 
 // Browser MCP Configuration - DYNAMIC (LOCAL ou VPS)
 const BROWSER_ORCHESTRATOR_URL = process.env.REACT_APP_BROWSER_ORCHESTRATOR_URL || 'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/browser-proxy';
@@ -46,6 +46,8 @@ interface BrowserTask {
 interface ContainerInfo {
   projectId: string | number;
   port: number;
+  apiPort?: number;      // Dynamic API port (10000 + projectId)
+  vncPort?: number;      // Dynamic VNC port (16000 + projectId)
   status: 'running' | 'stopped' | 'starting' | 'error';
   createdAt?: string;
   lastActivity?: string;
@@ -256,6 +258,14 @@ const VNCWrapper = styled.div`
   width: 100%;
   height: 100%;
   overflow: hidden;
+  z-index: 10;
+
+  /* Ensure wrapper doesn't block any events - pass everything to iframe */
+  pointer-events: none;
+
+  & > iframe {
+    pointer-events: auto;
+  }
 `;
 
 const VNCFrame = styled.iframe`
@@ -265,8 +275,15 @@ const VNCFrame = styled.iframe`
   background: #000;
   display: block;
   overflow: hidden;
+  pointer-events: auto;
+
+  /* Ensure iframe can receive all input events */
+  &:focus {
+    outline: none;
+  }
 `;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const VNCToggle = styled.button<{ active?: boolean }>`
   display: flex;
   align-items: center;
@@ -280,7 +297,7 @@ const VNCToggle = styled.button<{ active?: boolean }>`
   transition: all 0.2s ease;
   background: ${props => props.active ? 'rgba(139, 92, 246, 0.2)' : 'transparent'};
   color: ${props => props.active ? '#8b5cf6' : props.theme.colors.text.secondary};
-  
+
   &:hover {
     background: ${props => props.active ? 'rgba(139, 92, 246, 0.3)' : props.theme.name === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
   }
@@ -332,6 +349,7 @@ const ControlButton = styled.button<{ variant?: 'primary' | 'danger' | 'default'
   }
 `;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const EventsLog = styled.div`
   max-height: 200px;
   overflow-y: auto;
@@ -342,6 +360,7 @@ const EventsLog = styled.div`
   font-size: 12px;
 `;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const EventLine = styled.div<{ type: string }>`
   padding: 4px 0;
   color: ${props => {
@@ -663,20 +682,26 @@ const LiftlioBrowser: React.FC = () => {
   const [priority, setPriority] = useState(5);
   const [sending, setSending] = useState(false);
   const [currentUrl, setCurrentUrl] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedTask, setSelectedTask] = useState<BrowserTask | null>(null);
   const [isResponseExpanded, setIsResponseExpanded] = useState(true);
 
   // Container & Connection state
   const [containerInfo, setContainerInfo] = useState<ContainerInfo | null>(null);
+  const [dynamicApiPort, setDynamicApiPort] = useState<number | null>(null);
+  const [dynamicVncPort, setDynamicVncPort] = useState<number | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('disconnected');
   const [screenshot, setScreenshot] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [events, setEvents] = useState<SSEEvent[]>([]);
-  
+
   // VNC state
   const [vncEnabled, setVncEnabled] = useState(() => { const saved = localStorage.getItem('liftlio-vnc-enabled'); return saved === 'true'; });
   const [vncLoading, setVncLoading] = useState(false);
   const vncHeartbeatRef = useRef<NodeJS.Timeout | null>(null);
+  const vncCacheBusterRef = useRef<number>(Date.now()); // Stable cache buster - only changes on VNC restart
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const vncShouldAutoStart = useRef(localStorage.getItem('liftlio-vnc-enabled') === 'true');
   const [containerLoading, setContainerLoading] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -685,6 +710,10 @@ const LiftlioBrowser: React.FC = () => {
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false);
   const browserFrameRef = useRef<HTMLDivElement>(null);
+  const vncIframeRef = useRef<HTMLIFrameElement>(null);
+
+  // VNC iframe ref for potential focus operations
+  // (pointer-events now go directly to iframe via CSS)
 
   // Toggle real fullscreen using Fullscreen API
   const toggleFullscreen = useCallback(async () => {
@@ -715,18 +744,23 @@ const LiftlioBrowser: React.FC = () => {
     };
   }, []);
 
-  // Get container port for project
+  // Get container port for project (use dynamic API port when available)
   const getContainerPort = useCallback(() => {
     if (!currentProject?.id) return null;
-    // Always use the orchestrator URL port (10100) since container's mcpPort (3000) is internal
-    // The orchestrator URL already has the correct external port mapping
+
+    // Use dynamic API port if available (from orchestrator /info response)
+    if (dynamicApiPort) {
+      return dynamicApiPort;
+    }
+
+    // Fallback to orchestrator URL port
     try {
       const url = new URL(BROWSER_ORCHESTRATOR_URL);
       return parseInt(url.port) || 10100;
     } catch {
       return 10100; // Default to mapped port
     }
-  }, [currentProject?.id]);
+  }, [currentProject?.id, dynamicApiPort]);
 
   // Initialize browser in container
   const initializeBrowser = useCallback(async (port: number) => {
@@ -752,7 +786,7 @@ const LiftlioBrowser: React.FC = () => {
     }
   }, [currentProject?.id]);
 
-  // Check container status
+  // Check container status using /containers/:projectId/info endpoint
   const checkContainerStatus = useCallback(async () => {
     if (!currentProject?.id) return;
 
@@ -762,54 +796,51 @@ const LiftlioBrowser: React.FC = () => {
         headers['X-API-Key'] = BROWSER_MCP_API_KEY;
       }
 
-      const response = await fetch(`${BROWSER_ORCHESTRATOR_URL}/containers`, { headers });
+      // Use the new /info endpoint that returns dynamic ports
+      const response = await fetch(
+        `${BROWSER_ORCHESTRATOR_URL}/containers/${currentProject.id}/info`,
+        { headers }
+      );
+
       if (response.ok) {
         const data = await response.json();
-        // Handle both array and {containers: []} response format
-        const containers = Array.isArray(data) ? data : (data.containers || []);
-        const myContainer = containers.find((c: any) =>
-          String(c.projectId) === String(currentProject.id)
-        );
 
-        if (myContainer) {
-          // Container's mcpPort (3000) is the INTERNAL Docker port
-          // We need to use the orchestrator URL's port (10100) which is the EXTERNAL mapped port
-          const internalPort = myContainer.mcpPort || myContainer.port;
-          let orchestratorPort = 10100; // Default external port
-          try {
-            const url = new URL(BROWSER_ORCHESTRATOR_URL);
-            orchestratorPort = parseInt(url.port) || 10100;
-          } catch {}
+        console.log(`[LiftlioBrowser] Container ready - API: ${data.apiPort}, VNC: ${data.vncPort}`);
 
-          console.log(`[LiftlioBrowser] Container internal port: ${internalPort}, using orchestrator port: ${orchestratorPort}`);
+        setContainerInfo({
+          projectId: data.projectId,
+          port: data.apiPort,
+          apiPort: data.apiPort,
+          vncPort: data.vncPort,
+          status: data.status || 'running',
+          createdAt: data.createdAt,
+          lastActivity: data.lastActivity,
+        });
 
-          setContainerInfo({
-            projectId: myContainer.projectId,
-            port: orchestratorPort, // Store the external port for API calls
-            status: 'running',
-            createdAt: myContainer.createdAt,
-            lastActivity: myContainer.lastActivity
-          });
-          setConnectionStatus('connected');
+        setDynamicApiPort(data.apiPort);
+        setDynamicVncPort(data.vncPort);
+        setConnectionStatus('connected');
 
-          // Auto-initialize browser if not running
-          try {
-            const healthRes = await fetch(`http://localhost:${orchestratorPort}/health`);
-            if (healthRes.ok) {
-              const healthData = await healthRes.json();
-              if (!healthData.browserRunning) {
-                console.log('[LiftlioBrowser] Browser not running, initializing...');
-                await initializeBrowser(orchestratorPort);
-              }
+        // Auto-initialize browser if needed
+        try {
+          const healthRes = await fetch(`http://localhost:${data.apiPort}/health`);
+          if (healthRes.ok) {
+            const healthData = await healthRes.json();
+            if (!healthData.browserRunning) {
+              console.log('[LiftlioBrowser] Browser not running, initializing...');
+              await initializeBrowser(data.apiPort);
             }
-          } catch (healthErr) {
-            console.log('[LiftlioBrowser] Could not check health, trying to init browser anyway');
-            await initializeBrowser(orchestratorPort);
           }
-        } else {
-          setContainerInfo(null);
-          setConnectionStatus('disconnected');
+        } catch (healthErr) {
+          console.log('[LiftlioBrowser] Could not check health, trying to init browser anyway');
+          await initializeBrowser(data.apiPort);
         }
+      } else {
+        // Container not found or error - reset state
+        setContainerInfo(null);
+        setDynamicApiPort(null);
+        setDynamicVncPort(null);
+        setConnectionStatus('disconnected');
       }
     } catch (err) {
       console.error('Error checking container status:', err);
@@ -840,11 +871,23 @@ const LiftlioBrowser: React.FC = () => {
         const data = await response.json();
         // Handle both container and nested container response
         const containerData = data.container || data;
+
+        // Set dynamic ports from response
+        const apiPort = containerData.apiPort || containerData.mcpPort || containerData.port;
+        const vncPort = containerData.vncPort;
+
+        console.log(`[LiftlioBrowser] Container created - API: ${apiPort}, VNC: ${vncPort}`);
+
         setContainerInfo({
           projectId: containerData.projectId,
-          port: containerData.mcpPort || containerData.port,
+          port: apiPort,
+          apiPort: apiPort,
+          vncPort: vncPort,
           status: 'running'
         });
+
+        setDynamicApiPort(apiPort);
+        setDynamicVncPort(vncPort);
         setConnectionStatus('connected');
       } else {
         throw new Error('Failed to create container');
@@ -874,7 +917,10 @@ const LiftlioBrowser: React.FC = () => {
         headers
       });
 
+      // Reset all container-related state
       setContainerInfo(null);
+      setDynamicApiPort(null);
+      setDynamicVncPort(null);
       setConnectionStatus('disconnected');
       setScreenshot(null);
       setEvents([]);
@@ -916,9 +962,11 @@ const LiftlioBrowser: React.FC = () => {
       });
 
       if (response.ok) {
+        // Reset cache buster so iframe gets fresh connection
+        vncCacheBusterRef.current = Date.now();
         setVncEnabled(true);
         console.log('[VNC] Started successfully');
-        
+
         // Stop screenshot polling when VNC is active
         if (screenshotIntervalRef.current) {
           clearInterval(screenshotIntervalRef.current);
@@ -934,6 +982,10 @@ const LiftlioBrowser: React.FC = () => {
             });
           } catch (e) { /* ignore */ }
         }, 30000);
+
+        // Note: Browser will appear when you send a task
+        // (Playwright closes browser after each task, so warmup doesn't work well)
+        setCurrentUrl('Ready - send a task to start browser');
       } else {
         console.error('[VNC] Failed to start:', await response.text());
       }
@@ -945,6 +997,7 @@ const LiftlioBrowser: React.FC = () => {
   }, [getContainerPort]);
 
   // Stop VNC services
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const stopVNC = useCallback(async () => {
     const port = getContainerPort();
     if (!port) return;
@@ -1136,6 +1189,7 @@ const LiftlioBrowser: React.FC = () => {
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentProject?.id]);
 
   // Send task
@@ -1165,16 +1219,22 @@ const LiftlioBrowser: React.FC = () => {
         setSelectedTask(insertedTask as BrowserTask);
       }
 
-      // Call browser agent directly (local development)
-      if (BROWSER_ORCHESTRATOR_URL && containerInfo?.status === 'running') {
+      // Call browser agent directly (use dynamic port if available, otherwise orchestrator)
+      if (containerInfo?.status === 'running') {
         try {
           const headers: Record<string, string> = { 'Content-Type': 'application/json' };
           if (BROWSER_MCP_API_KEY) {
             headers['X-API-Key'] = BROWSER_MCP_API_KEY;
           }
 
-          // Call browser-agent using the orchestrator URL (always use configured URL to avoid port mismatch)
-          const agentResponse = await fetch(`${BROWSER_ORCHESTRATOR_URL}/agent/task`, {
+          // Use dynamic API port for direct container communication, fallback to orchestrator
+          const agentUrl = dynamicApiPort
+            ? `http://localhost:${dynamicApiPort}/agent/task`
+            : `${BROWSER_ORCHESTRATOR_URL}/agent/task`;
+
+          console.log(`[LiftlioBrowser] Sending task to: ${agentUrl}`);
+
+          const agentResponse = await fetch(agentUrl, {
             method: 'POST',
             headers,
             body: JSON.stringify({
@@ -1339,12 +1399,15 @@ const LiftlioBrowser: React.FC = () => {
             </BrowserToolbar>
             <BrowserContent>
               {/* Show VNC iframe when enabled, otherwise screenshot */}
-              {connectionStatus === 'connected' && vncEnabled ? (
+              {connectionStatus === 'connected' && vncEnabled && dynamicVncPort ? (
                 <VNCWrapper>
                   <VNCFrame
-                    src={`http://localhost:${VNC_PORT}/vnc.html?autoconnect=true&resize=scale&view_clip=false&reconnect=true&reconnect_delay=1000&quality=6&compression=2&show_dot=false&bell=false&view_only=false`}
+                    ref={vncIframeRef}
+                    src={`http://localhost:${dynamicVncPort}/vnc_lite.html?autoconnect=true&resize=scale&reconnect=true&reconnect_delay=1000&view_only=false&_cb=${vncCacheBusterRef.current}`}
                     title="VNC Browser View"
-                    allow="clipboard-read; clipboard-write; fullscreen"
+                    tabIndex={0}
+                    sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-modals allow-popups"
+                    allow="clipboard-read; clipboard-write; fullscreen; pointer-lock; keyboard-map"
                     allowFullScreen
                   />
                 </VNCWrapper>
