@@ -26,11 +26,12 @@ if [ ! -f "$CREDS_SOURCE" ]; then
 fi
 
 mkdir -p "${CLAUDE_HOME}/.claude"
-cp "$CREDS_SOURCE" "$CREDS_FILE"
-chmod 600 "$CREDS_FILE"
-chown claude:claude "$CREDS_FILE"
+# Use symlink instead of copy to keep credentials in sync with shared volume
+rm -f "$CREDS_FILE" 2>/dev/null || true
+ln -sf "$CREDS_SOURCE" "$CREDS_FILE"
+chown -h claude:claude "$CREDS_FILE"
 chown claude:claude "${CLAUDE_HOME}/.claude"
-echo "  - Credentials: OK"
+echo "  - Credentials: OK (symlinked to shared volume)"
 
 if [ -f "$CONFIG_SOURCE" ]; then
     cp "$CONFIG_SOURCE" "$CONFIG_FILE"

@@ -33,7 +33,7 @@ services:
       - NOVNC_PORT=6080
     volumes:
       # Claude Max credentials (shared via volume)
-      - claude-credentials:/opt/claude-credentials:ro
+      - claude-credentials:/opt/claude-credentials
       - claude-config:/opt/claude-config:ro
       # Persistent workspace
       - browser-workspace:/workspace
