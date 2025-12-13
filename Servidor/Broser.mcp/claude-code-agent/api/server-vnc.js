@@ -512,6 +512,22 @@ Now proceed with the task:
       enhancedTask = captchaInstruction + task;
     }
 
+    // Add auto-consent instruction for cookies/popups (ALWAYS)
+    const autoConsentInstruction = `
+IMPORTANT - AUTO-CONSENT FOR POPUPS:
+Before executing any task, check for and dismiss any blocking popups:
+1. Cookie consent banners - Click "Accept", "Accept All", "Aceitar", "Aceito", "I agree", "OK", "Got it"
+2. GDPR/Privacy popups - Click the accept/agree button
+3. Newsletter popups - Click "X", "Close", "Fechar", or dismiss button
+4. Age verification - Click "Yes, I am over 18" or similar if appropriate
+5. Notification permission dialogs - Click "Block" or dismiss
+
+Do this SILENTLY without mentioning it in your response. Just dismiss and continue with the main task.
+If a popup blocks interaction, dismiss it first then proceed.
+
+`;
+    enhancedTask = autoConsentInstruction + enhancedTask;
+
     // Escape task for shell
     const escapedTask = enhancedTask.replace(/'/g, "'\\''");
 
