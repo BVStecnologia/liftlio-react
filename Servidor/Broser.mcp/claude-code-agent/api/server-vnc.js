@@ -591,6 +591,19 @@ If a popup blocks interaction, dismiss it first then proceed.
       stdio: ['ignore', 'pipe', 'pipe']
     });
 
+    // Task timeout - kill process after 10 minutes to prevent stuck tasks
+    const TASK_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+    const taskTimeout = setTimeout(() => {
+      console.log('[TASK TIMEOUT] Killing Claude process after 10 minutes');
+      claude.kill('SIGTERM');
+      setTimeout(() => {
+        if (!claude.killed) {
+          console.log('[TASK TIMEOUT] Force killing with SIGKILL');
+          claude.kill('SIGKILL');
+        }
+      }, 5000);
+    }, TASK_TIMEOUT_MS);
+
     let stdout = '';
     let stderr = '';
 
@@ -607,6 +620,9 @@ If a popup blocks interaction, dismiss it first then proceed.
     });
 
     claude.on('close', (code) => {
+      // Clear the task timeout since task completed
+      clearTimeout(taskTimeout);
+
       const duration = Date.now() - startTime;
 
       console.log(`\n${'='.repeat(60)}`);
@@ -651,6 +667,7 @@ If a popup blocks interaction, dismiss it first then proceed.
     });
 
     claude.on('error', (err) => {
+      clearTimeout(taskTimeout);
       reject(err);
     });
   });
@@ -2028,6 +2045,23 @@ app.post('/cancel', (req, res) => {
   } else {
     res.json({ message: 'No task running' });
   }
+});
+
+/**
+ * Force cleanup stuck task
+ * Use this when a task has been running too long and is stuck
+ */
+app.post('/agent/force-cleanup', (req, res) => {
+  console.log('[FORCE CLEANUP] Clearing stuck task');
+
+  const wasRunning = currentTask !== null;
+  currentTask = null;
+
+  res.json({
+    success: true,
+    wasTaskRunning: wasRunning,
+    message: wasRunning ? 'Task cleared successfully' : 'No task was running'
+  });
 });
 
 // =============================================================================

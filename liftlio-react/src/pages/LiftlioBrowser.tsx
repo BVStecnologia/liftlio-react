@@ -7,7 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import Card from '../components/Card';
 import Spinner from '../components/ui/Spinner';
 import { IconComponent } from '../utils/IconHelper';
-import { FaPlay, FaStop, FaCheckCircle, FaTimesCircle, FaClock, FaRobot, FaGlobe, FaMousePointer, FaPaperPlane, FaExpand, FaCompress, FaTrash, FaCamera, FaDesktop, FaChevronDown, FaChevronUp, FaEye, FaCopy } from 'react-icons/fa';
+import { FaPlay, FaStop, FaCheckCircle, FaTimesCircle, FaTimes, FaClock, FaRobot, FaGlobe, FaMousePointer, FaPaperPlane, FaExpand, FaCompress, FaTrash, FaCamera, FaDesktop, FaChevronDown, FaChevronUp, FaEye, FaCopy } from 'react-icons/fa';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -1210,8 +1210,18 @@ const LiftlioBrowser: React.FC = () => {
     };
 
     eventSource.onerror = () => {
-      console.error('SSE connection error');
+      console.error('[SSE] Connection error');
       eventSource.close();
+      eventSourceRef.current = null;
+
+      // Auto-reconnect after 3 seconds if container is still running
+      const port = getContainerPort();
+      if (port) {
+        setTimeout(() => {
+          console.log('[SSE] Attempting reconnect...');
+          connectSSE();
+        }, 3000);
+      }
     };
 
     eventSourceRef.current = eventSource;
@@ -1520,6 +1530,32 @@ const LiftlioBrowser: React.FC = () => {
     }
   };
 
+  // Force cleanup stuck task
+  const handleForceCleanup = async () => {
+    const port = getContainerPort();
+    if (!port) {
+      alert('No container port available');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://173.249.22.2:${port}/agent/force-cleanup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert(data.message);
+        fetchTasks();
+      } else {
+        alert('Failed to clear task: ' + (data.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Force cleanup failed:', error);
+      alert('Force cleanup failed - container may be unavailable');
+    }
+  };
+
   // Delete task with optimistic update
   const handleDeleteTask = async (taskId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1715,6 +1751,21 @@ const LiftlioBrowser: React.FC = () => {
                 {sending ? <Spinner size="sm" /> : <IconComponent icon={FaPaperPlane} />}
                 {sending ? 'Sending...' : 'Send Task'}
               </SendButton>
+
+              {/* Button to clear stuck tasks */}
+              {tasks.some(t => t.status === 'running') && (
+                <SendButton
+                  onClick={handleForceCleanup}
+                  style={{
+                    backgroundColor: '#dc3545',
+                    marginLeft: '8px'
+                  }}
+                  title="Clear stuck task that has been running too long"
+                >
+                  <IconComponent icon={FaTimes} />
+                  Clear Stuck
+                </SendButton>
+              )}
             </TaskActions>
           </TaskInputSection>
         </BrowserViewSection>
