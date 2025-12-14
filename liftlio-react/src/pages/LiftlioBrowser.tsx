@@ -19,10 +19,50 @@ import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism'
 const BROWSER_ORCHESTRATOR_URL = process.env.REACT_APP_BROWSER_ORCHESTRATOR_URL || 'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/browser-proxy';
 const BROWSER_MCP_API_KEY = process.env.REACT_APP_BROWSER_MCP_API_KEY || '';
 
+// Detect if running on HTTPS (production) - needs proxy to avoid Mixed Content
+const IS_HTTPS = typeof window !== 'undefined' && window.location.protocol === 'https:';
+const VPS_IP = '173.249.22.2';
+
+// Helper: Get URL for VPS calls (uses nginx proxy in production to avoid Mixed Content)
+const getVpsUrl = (port: number, path: string): string => {
+  if (IS_HTTPS) {
+    // Production: use nginx proxy to avoid Mixed Content (HTTPS->HTTP blocked)
+    return `/browser-proxy/port/${port}/${path}`;
+  }
+  // Localhost: direct call works fine (HTTP->HTTP)
+  return `http://${VPS_IP}:${port}/${path}`;
+};
+
+// Helper: Get Orchestrator URL (port 8080)
+const getOrchestratorUrl = (path: string): string => {
+  if (IS_HTTPS) {
+    return `/browser-proxy/orchestrator/${path}`;
+  }
+  return `${BROWSER_ORCHESTRATOR_URL}/${path}`;
+};
+
+// Helper: Get VNC iframe URL
+const getVncProxyUrl = (port: number, path: string): string => {
+  if (IS_HTTPS) {
+    // Production: use nginx proxy for VNC WebSocket
+    return `/vnc-proxy/${port}/${path}`;
+  }
+  // Localhost: direct VNC URL
+  return `http://${VPS_IP}:${port}/${path}`;
+};
+
+// Helper: Get SSE URL
+const getSseUrl = (port: number): string => {
+  if (IS_HTTPS) {
+    return `/browser-proxy/sse/${port}`;
+  }
+  return `http://${VPS_IP}:${port}/sse`;
+};
+
 // Modo DIRETO (localhost) ou via Edge Function (VPS)
 const USE_DIRECT_MODE = BROWSER_ORCHESTRATOR_URL.startsWith('http://localhost');
 
-console.log('[LiftlioBrowser] ORCHESTRATOR_URL:', BROWSER_ORCHESTRATOR_URL, 'USE_DIRECT_MODE:', USE_DIRECT_MODE, 'API_KEY:', !!BROWSER_MCP_API_KEY);
+console.log('[LiftlioBrowser] ORCHESTRATOR_URL:', BROWSER_ORCHESTRATOR_URL, 'IS_HTTPS:', IS_HTTPS, 'USE_DIRECT_MODE:', USE_DIRECT_MODE, 'API_KEY:', !!BROWSER_MCP_API_KEY);
 
 // Types
 interface BrowserTask {
@@ -777,6 +817,7 @@ const LiftlioBrowser: React.FC = () => {
   const [vncEnabled, setVncEnabled] = useState(() => { const saved = localStorage.getItem('liftlio-vnc-enabled'); return saved !== 'false'; });
   const [vncLoading, setVncLoading] = useState(false);
   const vncHeartbeatRef = useRef<NodeJS.Timeout | null>(null);
+  const orchestratorKeepaliveRef = useRef<NodeJS.Timeout | null>(null); // Keepalive for orchestrator (prevents CRON3 from stopping container)
   const vncCacheBusterRef = useRef<number>(Date.now()); // Stable cache buster - only changes on VNC restart
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const vncShouldAutoStart = useRef(localStorage.getItem('liftlio-vnc-enabled') === 'true');
@@ -833,93 +874,101 @@ const LiftlioBrowser: React.FC = () => {
     }
   }, []);
 
-  // Get VNC port from project's browser_vnc_url (filled by orchestrator CRON)
+  // Get VNC port - PRIORITY: orchestrator (live) > database (may be stale) > calculated
   const getProjectVncPort = useCallback(() => {
     if (!currentProject?.id) return null;
 
-    // PRIMARY: Use port from browser_vnc_url in Projeto table (set by orchestrator)
-    const projectVncUrl = (currentProject as any).browser_vnc_url;
-    if (projectVncUrl) {
-      const portFromProject = extractPortFromUrl(projectVncUrl);
-      if (portFromProject) {
-        console.log(`[LiftlioBrowser] VNC using project port ${portFromProject} from browser_vnc_url`);
-        return portFromProject;
-      }
-    }
-
-    // FALLBACK: Use dynamicVncPort from orchestrator API
+    // PRIMARY: Use dynamicVncPort from orchestrator API (live/current info)
     if (dynamicVncPort) {
       console.log(`[LiftlioBrowser] VNC using orchestrator port ${dynamicVncPort}`);
       return dynamicVncPort;
     }
 
-    // LAST RESORT: Calculate (may be wrong)
-    const calculatedPort = 16000 + Number(currentProject.id);
-    console.log(`[LiftlioBrowser] VNC using calculated port ${calculatedPort} (fallback)`);
-    return calculatedPort;
-  }, [currentProject, dynamicVncPort, extractPortFromUrl]);
-
-  // Get API/MCP port from project's browser_mcp_url (filled by orchestrator CRON)
-  const getContainerPort = useCallback(() => {
-    if (!currentProject?.id) return null;
-
-    // PRIMARY: Use port from browser_mcp_url in Projeto table (set by orchestrator)
-    const projectMcpUrl = (currentProject as any).browser_mcp_url;
-    if (projectMcpUrl) {
-      const portFromProject = extractPortFromUrl(projectMcpUrl);
+    // FALLBACK: Use port from browser_vnc_url in Projeto table (may be stale)
+    const projectVncUrl = (currentProject as any).browser_vnc_url;
+    if (projectVncUrl) {
+      const portFromProject = extractPortFromUrl(projectVncUrl);
       if (portFromProject) {
-        console.log(`[LiftlioBrowser] API using project port ${portFromProject} from browser_mcp_url`);
+        console.log(`[LiftlioBrowser] VNC using DB port ${portFromProject} from browser_vnc_url (fallback)`);
         return portFromProject;
       }
     }
 
-    // FALLBACK: Use dynamicApiPort from orchestrator API
+    // LAST RESORT: Calculate (may be wrong if container was recreated)
+    const calculatedPort = 16000 + Number(currentProject.id);
+    console.log(`[LiftlioBrowser] VNC using calculated port ${calculatedPort} (last resort)`);
+    return calculatedPort;
+  }, [currentProject, dynamicVncPort, extractPortFromUrl]);
+
+  // Get API/MCP port - PRIORITY: orchestrator (live) > database (may be stale) > calculated
+  const getContainerPort = useCallback(() => {
+    if (!currentProject?.id) return null;
+
+    // PRIMARY: Use dynamicApiPort from orchestrator API (live/current info)
     if (dynamicApiPort) {
       console.log(`[LiftlioBrowser] API using orchestrator port ${dynamicApiPort}`);
       return dynamicApiPort;
     }
 
-    // LAST RESORT: Calculate (may be wrong)
+    // FALLBACK: Use port from browser_mcp_url in Projeto table (may be stale)
+    const projectMcpUrl = (currentProject as any).browser_mcp_url;
+    if (projectMcpUrl) {
+      const portFromProject = extractPortFromUrl(projectMcpUrl);
+      if (portFromProject) {
+        console.log(`[LiftlioBrowser] API using DB port ${portFromProject} from browser_mcp_url (fallback)`);
+        return portFromProject;
+      }
+    }
+
+    // LAST RESORT: Calculate (may be wrong if container was recreated)
     const calculatedPort = 10000 + Number(currentProject.id);
-    console.log(`[LiftlioBrowser] API using calculated port ${calculatedPort} (fallback)`);
+    console.log(`[LiftlioBrowser] API using calculated port ${calculatedPort} (last resort)`);
     return calculatedPort;
   }, [currentProject, dynamicApiPort, extractPortFromUrl]);
 
-  // Get full VNC URL from project's browser_vnc_url (VPS URL, not localhost)
+  // Get full VNC URL from project's browser_vnc_url (uses proxy in production)
   const getVncFullUrl = useCallback(() => {
-    // PRIMARY: Use browser_vnc_url from Projeto table (includes VPS IP)
-    const projectVncUrl = (currentProject as any)?.browser_vnc_url;
-    if (projectVncUrl) {
-      // Replace vnc.html with vnc_lite.html for better performance
-      const baseUrl = projectVncUrl.replace('/vnc.html', '/vnc_lite.html');
-      // Add extra params if not present
-      const url = new URL(baseUrl);
-      url.searchParams.set('autoconnect', 'true');
-      url.searchParams.set('resize', 'scale');
-      url.searchParams.set('reconnect', 'true');
-      url.searchParams.set('reconnect_delay', '1000');
-      url.searchParams.set('view_only', 'false');
-      url.searchParams.set('_cb', String(vncCacheBusterRef.current));
-      console.log(`[LiftlioBrowser] VNC using project URL: ${url.toString()}`);
-      return url.toString();
-    }
-
-    // FALLBACK: Construct from VPS IP + port
     const vncPort = getProjectVncPort();
-    if (vncPort) {
-      const fallbackUrl = `http://173.249.22.2:${vncPort}/vnc_lite.html?autoconnect=true&resize=scale&reconnect=true&reconnect_delay=1000&view_only=false&_cb=${vncCacheBusterRef.current}`;
-      console.log(`[LiftlioBrowser] VNC using fallback URL: ${fallbackUrl}`);
-      return fallbackUrl;
+    if (!vncPort) return null;
+
+    // Build VNC URL params - IMPORTANT: Include WebSocket connection params!
+    // noVNC needs host/port/path to know where to connect its WebSocket
+    const params = new URLSearchParams({
+      autoconnect: 'true',
+      resize: 'scale',
+      reconnect: 'true',
+      reconnect_delay: '1000',
+      view_only: 'false',
+      _cb: String(vncCacheBusterRef.current)
+    });
+
+    // Add WebSocket connection parameters for noVNC
+    if (IS_HTTPS) {
+      // Production: WebSocket must go through nginx proxy
+      // noVNC will connect to wss://liftlio.com:443/vnc-proxy/{port}/websockify
+      params.set('host', window.location.hostname);
+      params.set('port', '443');
+      params.set('path', `vnc-proxy/${vncPort}/websockify`);
+      params.set('encrypt', 'true'); // Use WSS (secure WebSocket)
+    } else {
+      // Localhost: Direct connection to VPS
+      params.set('host', VPS_IP);
+      params.set('port', String(vncPort));
+      params.set('path', 'websockify');
+      params.set('encrypt', 'false'); // Use WS (non-secure WebSocket)
     }
 
-    return null;
-  }, [currentProject, getProjectVncPort]);
+    // Use proxy in production to avoid Mixed Content (HTTPS->HTTP blocked)
+    const vncUrl = getVncProxyUrl(vncPort, `vnc_lite.html?${params.toString()}`);
+    console.log(`[LiftlioBrowser] VNC URL (IS_HTTPS=${IS_HTTPS}): ${vncUrl}`);
+    return vncUrl;
+  }, [getProjectVncPort]);
 
   // Initialize browser in container
   const initializeBrowser = useCallback(async (port: number) => {
     try {
       console.log('[LiftlioBrowser] Initializing browser on port', port);
-      const response = await fetch(`http://173.249.22.2:${port}/browser/init`, {
+      const response = await fetch(getVpsUrl(port, 'browser/init'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId: String(currentProject?.id) })
@@ -951,7 +1000,7 @@ const LiftlioBrowser: React.FC = () => {
 
       // Use the new /info endpoint that returns dynamic ports
       const response = await fetch(
-        `${BROWSER_ORCHESTRATOR_URL}/containers/${currentProject.id}/info`,
+        getOrchestratorUrl(`containers/${currentProject.id}/info`),
         { headers }
       );
 
@@ -976,7 +1025,7 @@ const LiftlioBrowser: React.FC = () => {
 
         // Auto-initialize browser if needed
         try {
-          const healthRes = await fetch(`http://173.249.22.2:${data.apiPort}/health`);
+          const healthRes = await fetch(getVpsUrl(data.apiPort, 'health'));
           if (healthRes.ok) {
             const healthData = await healthRes.json();
             if (!healthData.browserRunning) {
@@ -1014,7 +1063,7 @@ const LiftlioBrowser: React.FC = () => {
         headers['X-API-Key'] = BROWSER_MCP_API_KEY;
       }
 
-      const response = await fetch(`${BROWSER_ORCHESTRATOR_URL}/containers`, {
+      const response = await fetch(getOrchestratorUrl('containers'), {
         method: 'POST',
         headers,
         body: JSON.stringify({ projectId: String(currentProject.id) })
@@ -1065,7 +1114,7 @@ const LiftlioBrowser: React.FC = () => {
         headers['X-API-Key'] = BROWSER_MCP_API_KEY;
       }
 
-      await fetch(`${BROWSER_ORCHESTRATOR_URL}/containers/${currentProject.id}`, {
+      await fetch(getOrchestratorUrl(`containers/${currentProject.id}`), {
         method: 'DELETE',
         headers
       });
@@ -1090,7 +1139,7 @@ const LiftlioBrowser: React.FC = () => {
     if (!port) return;
 
     try {
-      const response = await fetch(`http://173.249.22.2:${port}/mcp/screenshot`);
+      const response = await fetch(getVpsUrl(port, 'mcp/screenshot'));
       if (response.ok) {
         const data = await response.json();
         if (data.screenshot) {
@@ -1109,7 +1158,7 @@ const LiftlioBrowser: React.FC = () => {
 
     setVncLoading(true);
     try {
-      const response = await fetch(`http://173.249.22.2:${port}/vnc/start`, {
+      const response = await fetch(getVpsUrl(port, 'vnc/start'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -1129,7 +1178,7 @@ const LiftlioBrowser: React.FC = () => {
         // Start VNC heartbeat (every 30s to keep alive)
         vncHeartbeatRef.current = setInterval(async () => {
           try {
-            await fetch(`http://173.249.22.2:${port}/vnc/heartbeat`, {
+            await fetch(getVpsUrl(port, 'vnc/heartbeat'), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' }
             });
@@ -1156,7 +1205,7 @@ const LiftlioBrowser: React.FC = () => {
     if (!port) return;
 
     try {
-      await fetch(`http://173.249.22.2:${port}/vnc/stop`, {
+      await fetch(getVpsUrl(port, 'vnc/stop'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -1189,7 +1238,7 @@ const LiftlioBrowser: React.FC = () => {
       eventSourceRef.current.close();
     }
 
-    const eventSource = new EventSource(`http://173.249.22.2:${port}/sse`);
+    const eventSource = new EventSource(getSseUrl(port));
 
     eventSource.onmessage = (event) => {
       try {
@@ -1293,12 +1342,16 @@ const LiftlioBrowser: React.FC = () => {
     }
   }, [connectionStatus, containerInfo?.port, connectSSE, captureScreenshot]);
 
-  // Cleanup VNC on unmount or disconnect
+  // Cleanup VNC and orchestrator keepalive on unmount
   useEffect(() => {
     return () => {
       if (vncHeartbeatRef.current) {
         clearInterval(vncHeartbeatRef.current);
         vncHeartbeatRef.current = null;
+      }
+      if (orchestratorKeepaliveRef.current) {
+        clearInterval(orchestratorKeepaliveRef.current);
+        orchestratorKeepaliveRef.current = null;
       }
     };
   }, []);
@@ -1326,6 +1379,44 @@ const LiftlioBrowser: React.FC = () => {
       startVNC();
     }
   }, [connectionStatus, vncEnabled, vncLoading, startVNC]);
+
+  // Orchestrator keepalive - prevents CRON3 from stopping container after 5 min idle
+  // Sends keepalive every 3 minutes while connected (CRON3 timeout is 5 min)
+  useEffect(() => {
+    if (connectionStatus === 'connected' && currentProject?.id) {
+      // Send keepalive immediately
+      const sendKeepalive = async () => {
+        try {
+          const headers: Record<string, string> = {};
+          if (BROWSER_MCP_API_KEY) {
+            headers['X-API-Key'] = BROWSER_MCP_API_KEY;
+          }
+          const response = await fetch(
+            getOrchestratorUrl(`containers/${currentProject.id}/keepalive`),
+            { headers }
+          );
+          if (response.ok) {
+            console.log('[Orchestrator] Keepalive sent successfully');
+          }
+        } catch (err) {
+          console.error('[Orchestrator] Keepalive error:', err);
+        }
+      };
+
+      // Send immediately on connect
+      sendKeepalive();
+
+      // Then every 3 minutes (180000ms) - well before the 5 min timeout
+      orchestratorKeepaliveRef.current = setInterval(sendKeepalive, 180000);
+
+      return () => {
+        if (orchestratorKeepaliveRef.current) {
+          clearInterval(orchestratorKeepaliveRef.current);
+          orchestratorKeepaliveRef.current = null;
+        }
+      };
+    }
+  }, [connectionStatus, currentProject?.id]);
 
   // Fetch tasks
   useEffect(() => {
@@ -1426,11 +1517,10 @@ const LiftlioBrowser: React.FC = () => {
             headers['X-API-Key'] = BROWSER_MCP_API_KEY;
           }
 
-          // Use dynamic API port for direct container communication (localhost only)
-          // For remote (VPS), always route through Edge Function with projectId
-          const agentUrl = USE_DIRECT_MODE && dynamicApiPort
-            ? `http://173.249.22.2:${dynamicApiPort}/agent/task`
-            : `${BROWSER_ORCHESTRATOR_URL}/containers/${currentProject.id}/agent/task`;
+          // Use proxy in production to avoid Mixed Content
+          const agentUrl = dynamicApiPort
+            ? getVpsUrl(dynamicApiPort, 'agent/task')
+            : getOrchestratorUrl(`containers/${currentProject.id}/agent/task`);
 
           console.log(`[LiftlioBrowser] Sending task to: ${agentUrl}`);
 
@@ -1539,14 +1629,13 @@ const LiftlioBrowser: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`http://173.249.22.2:${port}/agent/force-cleanup`, {
+      const response = await fetch(getVpsUrl(port, 'agent/force-cleanup'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
       const data = await response.json();
       if (data.success) {
         alert(data.message);
-        fetchTasks();
       } else {
         alert('Failed to clear task: ' + (data.error || 'Unknown error'));
       }

@@ -7,19 +7,20 @@ COPY . .
 # Declare build arguments from fly.toml
 ARG REACT_APP_SUPABASE_URL
 ARG REACT_APP_SUPABASE_ANON_KEY
+ARG REACT_APP_BROWSER_ORCHESTRATOR_URL
+ARG REACT_APP_BROWSER_MCP_API_KEY
 
 # Set as environment variables for React build process
 ENV REACT_APP_SUPABASE_URL=$REACT_APP_SUPABASE_URL
 ENV REACT_APP_SUPABASE_ANON_KEY=$REACT_APP_SUPABASE_ANON_KEY
+ENV REACT_APP_BROWSER_ORCHESTRATOR_URL=$REACT_APP_BROWSER_ORCHESTRATOR_URL
+ENV REACT_APP_BROWSER_MCP_API_KEY=$REACT_APP_BROWSER_MCP_API_KEY
 
 RUN npm run build
 
 FROM nginx:alpine
 COPY --from=build /app/build /usr/share/nginx/html
-# Copiar a landing page HTML da pasta build (já processada pelo React build)
 COPY --from=build /app/build/landing-page.html /usr/share/nginx/html/landing-page.html
-# Manter o index.html original do React para as rotas funcionarem
-# Vamos usar o nginx para servir landing.html na rota raiz
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
