@@ -19,7 +19,7 @@
 // CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-api-key',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Content-Type': 'application/json'
 };
@@ -69,8 +69,63 @@ Deno.serve(async (req) => {
       const url = new URL(req.url);
       const pathParts = url.pathname.split('/browser-proxy');
       const targetPath = pathParts[1] || '';
-      const targetUrl = `${ORCHESTRATOR_URL}${targetPath}${url.search}`;
 
+      // Check if this is a task request to container agent: /containers/{id}/agent/task
+      const taskMatch = targetPath.match(/^\/containers\/(\d+)\/agent\/task$/);
+      if (taskMatch && req.method === 'POST') {
+        const projectId = taskMatch[1];
+        console.log(`[Proxy] Task request for project ${projectId}`);
+
+        // Route task requests directly to browser agent
+        // TODO: In future, query orchestrator for dynamic port
+        const agentTaskUrl = `${BROWSER_AGENT_URL}/agent/task`;
+        console.log(`[Proxy] Routing to: ${agentTaskUrl}`);
+
+        const response = await fetch(agentTaskUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': BROWSER_API_KEY
+          },
+          body: body ? JSON.stringify(body) : undefined
+        });
+
+        const responseData = await response.text();
+        console.log(`[Proxy] Task response: ${response.status}`);
+
+        return new Response(responseData, {
+          status: response.status,
+          headers: corsHeaders
+        });
+      }
+
+      // Check if this is a container info request: /containers/{id}/info
+      const infoMatch = targetPath.match(/^\/containers\/(\d+)\/info$/);
+      if (infoMatch && req.method === 'GET') {
+        const projectId = infoMatch[1];
+        console.log(`[Proxy] Info request for project ${projectId}`);
+
+        // Route to orchestrator for container info
+        const infoUrl = `${ORCHESTRATOR_URL}/containers/${projectId}`;
+        console.log(`[Proxy] Routing to: ${infoUrl}`);
+
+        const response = await fetch(infoUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': BROWSER_API_KEY
+          }
+        });
+
+        const responseData = await response.text();
+        return new Response(responseData, {
+          status: response.status,
+          headers: corsHeaders
+        });
+      }
+
+      // Default: route to orchestrator
+      const targetUrl = `${ORCHESTRATOR_URL}${targetPath}${url.search}`;
       console.log(`[Proxy] Legacy mode: ${req.method} ${targetUrl}`);
 
       const response = await fetch(targetUrl, {

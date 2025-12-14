@@ -96,7 +96,6 @@ echo "[CHROME] Starting Chrome..."
     --window-size=1920,1080 \
     --disable-infobars \
     --disable-session-crashed-bubble \
-    --disable-features=TranslateUI,VizDisplayCompositor \
     --disable-blink-features=AutomationControlled \
     --no-first-run \
     --no-default-browser-check \
@@ -105,6 +104,15 @@ echo "[CHROME] Starting Chrome..."
     --disable-default-apps \
     --mute-audio \
     --force-device-scale-factor=1 \
+    --disable-notifications \
+    --deny-permission-prompts \
+    --disable-popup-blocking \
+    --disable-prompt-on-repost \
+    --disable-hang-monitor \
+    --disable-domain-reliability \
+    --disable-component-update \
+    --autoplay-policy=no-user-gesture-required \
+    --disable-features=TranslateUI,VizDisplayCompositor,InfiniteSessionRestore,PermissionsPolicyHeader \
     $PROXY_ARGS \
     "https://www.google.com" &
 
