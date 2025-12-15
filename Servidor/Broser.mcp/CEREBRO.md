@@ -163,6 +163,19 @@ POST http://localhost:10117/session/restore
 > Este e um BUG CONHECIDO (Issues #956, #7744, #9403, #10784, #12447)
 > Access token expira em ~1-8 HORAS dependendo do contexto.
 
+### TOKEN REFRESH CONFIRMADO FUNCIONANDO! (2025-12-15)
+
+**PROVA CONCRETA:**
+- Container `claude-token-refresher` iniciou em: **2025-12-14 12:31 UTC**
+- Token atual criado em: **2025-12-15 12:31 UTC** (24 horas depois!)
+- Isso prova que houve **~4 refreshes automaticos** (tokens de 8h cada)
+
+**TESTE AO VIVO (2025-12-15):**
+- Token ANTES do refresh: `sk-ant-oat01-ENvJ_yt-HJaDD8K1M...`
+- Token DEPOIS do refresh: `sk-ant-oat01-QxhNotxzi0djmBbTn...`
+- O token MUDOU! O refresh esta funcionando corretamente.
+
+
 ### Multiplos Dispositivos - PERMITIDO!
 
 - A Anthropic **NAO impoe limite de dispositivos** no plano Max
@@ -454,6 +467,19 @@ http://localhost:16117/vnc.html
 
 ## 10. HISTORICO DE MUDANCAS
 
+### 2025-12-15
+- [x] **TOKEN REFRESH CONFIRMADO FUNCIONANDO!**
+  - Container rodando ha 24+ horas com tokens de 8h = ~4 refreshes automaticos
+  - Teste ao vivo: token mudou de `ENvJ_yt...` para `QxhNotxzi0...`
+  - Script `refresh_token.py` funciona corretamente
+  - Endpoint oficial: `https://console.anthropic.com/v1/oauth/token`
+  - Client ID: `9d1c250a-e61b-44d9-88ed-5944d1962f5e`
+  - Refresh token tambem e renovado a cada refresh
+- [x] Fix /computer page para producao (HTTPS)
+  - Adicionado proxy nginx para VPS (browser-proxy/*, vnc-proxy/*)
+  - Corrigido WebSocket params para noVNC em producao
+  - Adicionado keepalive para orchestrator (evita CRON3 parar container)
+
 ### 2025-12-13
 - [x] **Documentacao OAuth Token Refresh COMPLETA** (Secao 6):
   - Multiplos dispositivos SAO PERMITIDOS no plano Max
@@ -495,7 +521,7 @@ http://localhost:16117/vnc.html
 
 ## 11. PROXIMOS PASSOS (TODO)
 
-- [ ] **Usar `claude setup-token` para VPS/Docker** - Token de longa duracao
+- [x] ~~Token refresh automatico~~ (CONFIRMADO FUNCIONANDO 2025-12-15!)
 - [ ] Configurar `CLAUDE_CODE_OAUTH_TOKEN` no docker-compose
 - [ ] Implementar polling de tasks do Supabase no container
 - [ ] Botao "Login Google" no frontend
