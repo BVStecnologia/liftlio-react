@@ -795,6 +795,7 @@ const LiftlioBrowser: React.FC = () => {
   const [taskText, setTaskText] = useState('');
   const [taskType, setTaskType] = useState('action');
   const [priority, setPriority] = useState(5);
+  const [continueSession, setContinueSession] = useState(true); // Continue Claude conversation context
   const [sending, setSending] = useState(false);
   const [currentUrl, setCurrentUrl] = useState('');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1533,7 +1534,8 @@ const LiftlioBrowser: React.FC = () => {
               projectId: currentProject.id.toString(),
               model: 'claude-haiku-4-5-20251001',
               maxIterations: 50,
-              verbose: false
+              verbose: false,
+              continueSession: continueSession
             })
           });
 
@@ -1833,12 +1835,54 @@ const LiftlioBrowser: React.FC = () => {
                 <span style={{ opacity: 0.6 }}>(1=urgent, 10=low)</span>
               </PrioritySelector>
 
+              <label style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                fontSize: '13px',
+                cursor: 'pointer',
+                opacity: 0.85
+              }}>
+                <input
+                  type="checkbox"
+                  checked={continueSession}
+                  onChange={(e) => setContinueSession(e.target.checked)}
+                  style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                />
+                Continue conversation
+              </label>
+
               <SendButton
                 onClick={handleSendTask}
                 disabled={!taskText.trim() || sending}
               >
                 {sending ? <Spinner size="sm" /> : <IconComponent icon={FaPaperPlane} />}
                 {sending ? 'Sending...' : 'Send Task'}
+              </SendButton>
+
+              {/* Button to reset Claude conversation */}
+              <SendButton
+                onClick={async () => {
+                  if (dynamicApiPort) {
+                    try {
+                      await fetch(getVpsUrl(dynamicApiPort, 'agent/session/reset'), { method: 'POST' });
+                      setContinueSession(false);
+                      console.log('[LiftlioBrowser] Claude session reset');
+                    } catch (e) {
+                      console.error('Failed to reset session:', e);
+                    }
+                  }
+                }}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: '1px solid rgba(139, 92, 246, 0.5)',
+                  color: '#8b5cf6',
+                  marginLeft: '8px'
+                }}
+                title="Start a new conversation (reset Claude context)"
+              >
+                <IconComponent icon={FaTrash} />
+                New Chat
               </SendButton>
 
               {/* Button to clear stuck tasks */}
