@@ -890,6 +890,15 @@ async function autoStopInactiveContainers() {
       log(`[CRON3] Container ${projectId} inativo ha ${idleMinutes} min, parando...`);
 
       try {
+        // Salvar sessão ANTES de parar o container
+        try {
+          const saveUrl = `http://${HOST_IP}:${session.mcpPort}/session/save`;
+          await axios.post(saveUrl, {}, { timeout: 10000 });
+          log(`[CRON3] Sessão salva antes de parar projeto ${projectId}`);
+        } catch (saveErr) {
+          log(`[CRON3] Aviso: não conseguiu salvar sessão: ${saveErr.message}`);
+        }
+
         const container = docker.getContainer(session.containerName);
         await container.stop();
         session.status = 'stopped';
