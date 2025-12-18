@@ -874,6 +874,7 @@ async function processPendingTasks() {
 /**
  * Para containers inativos ha mais de 5 minutos
  * Usa docker stop (nao remove) - preserva volumes
+ * IMPORTANTE: NAO para se houver tarefa em andamento!
  */
 async function autoStopInactiveContainers() {
   const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutos
@@ -886,6 +887,29 @@ async function autoStopInactiveContainers() {
     const idleTime = now - lastActivity;
 
     if (idleTime > IDLE_TIMEOUT_MS) {
+      // VERIFICAR SE HA TAREFA EM ANDAMENTO ANTES DE PARAR!
+      if (supabase) {
+        try {
+          const { data: runningTasks } = await supabase
+            .from('browser_tasks')
+            .select('id')
+            .eq('project_id', projectId)
+            .eq('status', 'running')
+            .limit(1);
+
+          if (runningTasks && runningTasks.length > 0) {
+            log(`[CRON3] Container ${projectId} tem tarefa em andamento, NAO parar!`);
+            // Atualizar lastActivity para evitar verificacoes repetidas
+            session.lastActivity = new Date();
+            continue; // Pular para proximo container
+          }
+        } catch (checkErr) {
+          log(`[CRON3] Erro ao verificar tarefas: ${checkErr.message}`);
+          // Em caso de erro, NAO parar o container (seguranca)
+          continue;
+        }
+      }
+
       const idleMinutes = Math.round(idleTime / 1000 / 60);
       log(`[CRON3] Container ${projectId} inativo ha ${idleMinutes} min, parando...`);
 

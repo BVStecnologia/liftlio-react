@@ -1001,42 +1001,46 @@ const LiftlioBrowser: React.FC = () => {
 
       // Use the new /info endpoint that returns dynamic ports
       const response = await fetch(
-        getOrchestratorUrl(`containers/${currentProject.id}/info`),
+        getOrchestratorUrl(`containers/${currentProject.id}`),
         { headers }
       );
 
       if (response.ok) {
         const data = await response.json();
 
-        console.log(`[LiftlioBrowser] Container ready - API: ${data.apiPort}, VNC: ${data.vncPort}`);
+        // Map mcpPort to apiPort (orchestrator uses mcpPort naming)
+        const apiPort = data.mcpPort || data.apiPort || 0;
+        const vncPort = data.vncPort || 0;
+
+        console.log(`[LiftlioBrowser] Container ready - API: ${apiPort}, VNC: ${vncPort}`);
 
         setContainerInfo({
           projectId: data.projectId,
-          port: data.apiPort,
-          apiPort: data.apiPort,
-          vncPort: data.vncPort,
+          port: apiPort,
+          apiPort: apiPort,
+          vncPort: vncPort,
           status: data.status || 'running',
           createdAt: data.createdAt,
           lastActivity: data.lastActivity,
         });
 
-        setDynamicApiPort(data.apiPort);
-        setDynamicVncPort(data.vncPort);
+        setDynamicApiPort(apiPort);
+        setDynamicVncPort(vncPort);
         setConnectionStatus('connected');
 
         // Auto-initialize browser if needed
         try {
-          const healthRes = await fetch(getVpsUrl(data.apiPort, 'health'));
+          const healthRes = await fetch(getVpsUrl(apiPort, 'health'));
           if (healthRes.ok) {
             const healthData = await healthRes.json();
             if (!healthData.browserRunning) {
               console.log('[LiftlioBrowser] Browser not running, initializing...');
-              await initializeBrowser(data.apiPort);
+              await initializeBrowser(apiPort);
             }
           }
         } catch (healthErr) {
           console.log('[LiftlioBrowser] Could not check health, trying to init browser anyway');
-          await initializeBrowser(data.apiPort);
+          await initializeBrowser(apiPort);
         }
       } else {
         // Container not found or error - reset state
