@@ -1,7 +1,7 @@
 # CEREBRO - Liftlio Browser Agent
 
 > **IMPORTANTE**: Este arquivo e a fonte de verdade. SEMPRE leia antes de trabalhar no projeto.
-> **Ultima Atualizacao**: 2025-12-13
+> **Ultima Atualizacao**: 2025-12-19
 
 ---
 
@@ -149,6 +149,7 @@ POST http://localhost:10117/session/restore
 - **Causa**: Apenas cookies publicos capturados (NID, AEC)
 - **Solucao**: Confiar no Chrome persistente, nao em cookies extraidos
 
+### Problema: Session Watchdog nao salva no Supabase- **Causa**: `.env` define `SUPABASE_ANON_KEY` mas codigo espera `SUPABASE_KEY`- **Sintoma**: Container mostra `SUPABASE_KEY=` vazio, watchdog nao inicia- **Solucao (2025-12-19)**: Adicionar `SUPABASE_KEY` ao `.env` (mesmo valor que ANON_KEY)- **Verificacao**: `docker exec container env | grep SUPABASE_KEY`
 ### Problema: Token OAuth expira muito rapido
 - **Causa**: Access token tem duracao de ~8 horas (28.800 segundos)
 - **Causa 2**: Claude Code CLI NAO implementa refresh automatico de forma confiavel
@@ -467,6 +468,7 @@ http://localhost:16117/vnc.html
 
 ## 10. HISTORICO DE MUDANCAS
 
+### 2025-12-19- [x] **PERSISTENCIA SUPABASE CONFIRMADA FUNCIONANDO!**  - Problema: `.env` tinha `SUPABASE_ANON_KEY` mas codigo esperava `SUPABASE_KEY`  - Container recebia `SUPABASE_KEY=` (vazio) → Session Watchdog nao iniciava  - Correcao: Adicionado `SUPABASE_KEY` no `.env` e `docker-compose.yml` do servidor  - Testado: Login Google → Container destruido → Recriado → Sessao restaurada (115 cookies)- [x] **Sticky Proxy corrigido (Data Impulse)**  - Problema: Proxy usava porta 823 (rotating IP) → Google bloqueava login  - Correcao: Alterado para porta 10000+ (sticky session = mesmo IP)  - Resultado: Login Google funciona SEM 2FA (IP confiavel)- [x] **Orchestrator gerencia containers dinamicos**  - Portas dinamicas: API 10100+, VNC 16000+  - Containers por projeto: `liftlio-browser-{projectId}`  - Volumes persistentes: `browser-chrome-{projectId}`  - Auto-save sessao para Supabase (Watchdog 60s)
 ### 2025-12-15
 - [x] **TOKEN REFRESH CONFIRMADO FUNCIONANDO!**
   - Container rodando ha 24+ horas com tokens de 8h = ~4 refreshes automaticos
@@ -528,7 +530,7 @@ http://localhost:16117/vnc.html
 - [ ] Implementar auto-standby (desligar container apos X min sem uso)
 - [x] ~~Verificar sessao antes de cada task~~ (implementado: ensureSessionBeforeTask)
 - [x] ~~Testar persistencia de sessao apos rebuild~~ (implementado: watchdog + auto-save)
-- [ ] Testar fluxo completo: Login -> Task YouTube -> Reiniciar -> Nova Task
+- [x] ~~Testar fluxo completo: Login -> Task YouTube -> Reiniciar -> Nova Task~~ (CONFIRMADO 2025-12-19)
 
 ---
 
