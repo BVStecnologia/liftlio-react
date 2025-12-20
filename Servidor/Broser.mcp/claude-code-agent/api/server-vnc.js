@@ -369,9 +369,14 @@ async function exportStorageStateFile() {
 
 /**
  * Restore session to Chrome via CDP
+ * FIXED v4.2 (2025-12-19):
+ * - CRITICAL: First checks if Chrome already has valid session from Docker volume
+ * - If Chrome has valid session, SKIP restore (don't clear cookies!)
+ * - If no valid session, restore from Supabase
+ * - Also duplicates .google.com.br cookies to .google.com for YouTube compatibility
  */
 async function restoreSessionToChrome(sessionData) {
-  if (!sessionData || !sessionData.cookies) {
+  if (!sessionData || !sessionData.cookies || sessionData.cookies.length === 0) {
     console.log('[SESSION] No valid session data to restore');
     return false;
   }
@@ -380,7 +385,6 @@ async function restoreSessionToChrome(sessionData) {
     const axios = require('axios');
     const WebSocket = require('ws');
 
-    // Get CDP targets
     const targetsResponse = await axios.get(`http://localhost:${CDP_PORT}/json/list`);
     const targets = targetsResponse.data;
 
@@ -393,74 +397,235 @@ async function restoreSessionToChrome(sessionData) {
     const wsUrl = page.webSocketDebuggerUrl;
 
     if (!wsUrl) {
+      console.log('[SESSION] No WebSocket URL available');
       return false;
     }
 
     const ws = new WebSocket(wsUrl);
+    const responses = new Map();
+    let messageId = 1;
+
+    const sendCommand = (method, params = {}) => {
+      return new Promise((resolve, reject) => {
+        const id = messageId++;
+        const timeout = setTimeout(() => reject(new Error(`CDP timeout: ${method}`)), 10000);
+
+        const checkResponse = () => {
+          if (responses.has(id)) {
+            clearTimeout(timeout);
+            const response = responses.get(id);
+            responses.delete(id);
+            if (response.error) reject(new Error(response.error.message || 'CDP error'));
+            else resolve(response.result || {});
+          } else {
+            setTimeout(checkResponse, 50);
+          }
+        };
+
+        ws.send(JSON.stringify({ id, method, params }));
+        checkResponse();
+      });
+    };
 
     return new Promise((resolve) => {
-      let messageId = 1;
+      ws.on('message', (data) => {
+        try {
+          const response = JSON.parse(data);
+          if (response.id) responses.set(response.id, response);
+        } catch (e) { }
+      });
 
-      ws.on('open', () => {
-        console.log(`[SESSION] Restoring ${sessionData.cookies.length} cookies...`);
+      ws.on('open', async () => {
+        try {
+          // ============================================================
+          // STEP 0: CHECK IF CHROME ALREADY HAS VALID SESSION (CRITICAL!)
+          // This prevents clearing cookies that are already valid from Docker volume
+          // ============================================================
+          console.log('[SESSION] Step 0: Checking if Chrome already has valid session...');
 
-        // Clear existing cookies first
-        ws.send(JSON.stringify({
-          id: messageId++,
-          method: 'Network.clearBrowserCookies'
-        }));
+          let existingCookies = [];
+          try {
+            const existing = await sendCommand('Network.getCookies', {
+              urls: ['https://www.google.com/', 'https://www.youtube.com/', 'https://accounts.google.com/']
+            });
+            existingCookies = existing.cookies || [];
+          } catch (e) {
+            console.log('[SESSION] Could not check existing cookies:', e.message);
+          }
 
-        // Set each cookie
-        sessionData.cookies.forEach((cookie) => {
-          ws.send(JSON.stringify({
-            id: messageId++,
-            method: 'Network.setCookie',
-            params: {
+          const existingSID = existingCookies.some(c => c.name === 'SID' && c.domain.includes('google'));
+          const existingHSID = existingCookies.some(c => c.name === 'HSID' && c.domain.includes('google'));
+          const existing1PSID = existingCookies.some(c => c.name === '__Secure-1PSID');
+
+          console.log(`[SESSION] Chrome has ${existingCookies.length} cookies. SID=${existingSID}, HSID=${existingHSID}, 1PSID=${existing1PSID}`);
+
+          if (existingSID && existingHSID) {
+            console.log('[SESSION] Chrome already has valid Google session from Docker volume!');
+            console.log('[SESSION] Skipping Supabase restore to preserve existing session.');
+            ws.close();
+            resolve(true);
+            return;
+          }
+
+          console.log('[SESSION] No valid session in Chrome, proceeding with Supabase restore...');
+          console.log(`[SESSION] Will restore ${sessionData.cookies.length} cookies from Supabase`);
+
+          // Step 1: Navigate to HTTPS (required for Secure cookies)
+          console.log('[SESSION] Step 1/5: Navigating to HTTPS context...');
+          try {
+            await sendCommand('Page.navigate', { url: 'https://www.google.com' });
+            await new Promise(r => setTimeout(r, 3000));
+          } catch (e) {
+            console.log('[SESSION] Navigation warning:', e.message);
+          }
+
+          // Step 2: Clear cookies (only if we confirmed no valid session exists)
+          console.log('[SESSION] Step 2/5: Clearing cookies for fresh restore...');
+          try {
+            await sendCommand('Network.clearBrowserCookies');
+          } catch (e) {
+            console.log('[SESSION] Clear warning:', e.message);
+          }
+
+          // Step 3: Prepare cookies + DUPLICATE .google.com.br to .google.com
+          console.log('[SESSION] Step 3/5: Preparing cookies...');
+
+          const validDomains = ['.google.com', '.youtube.com', '.googleapis.com',
+                               '.gstatic.com', 'accounts.google.com', '.google.com.br',
+                               '.googlevideo.com', '.ytimg.com'];
+
+          const criticalCookies = ['SID', 'HSID', 'SSID', 'APISID', 'SAPISID',
+                                   '__Secure-1PSID', '__Secure-3PSID', '__Secure-1PAPISID',
+                                   '__Secure-3PAPISID', '__Secure-1PSIDTS', '__Secure-3PSIDTS',
+                                   '__Secure-1PSIDCC', '__Secure-3PSIDCC', 'SIDCC'];
+
+          let skippedCount = 0;
+          const cookiesToSet = [];
+          const addedKeys = new Set();
+
+          sessionData.cookies.forEach(cookie => {
+            const domainValid = validDomains.some(d => cookie.domain === d || cookie.domain.endsWith(d));
+            if (!domainValid) { skippedCount++; return; }
+
+            let sameSite = cookie.sameSite || 'Lax';
+            let secure = cookie.secure || false;
+            if (sameSite === 'None' && !secure) secure = true;
+            if (cookie.name.startsWith('__Secure-') && !secure) secure = true;
+
+            const baseCookie = {
               name: cookie.name,
               value: cookie.value,
               domain: cookie.domain,
               path: cookie.path || '/',
-              secure: cookie.secure || false,
+              secure: secure,
               httpOnly: cookie.httpOnly || false,
-              sameSite: cookie.sameSite || 'Lax',
+              sameSite: sameSite,
               expires: cookie.expires || undefined
+            };
+
+            const key = `${cookie.name}@${cookie.domain}`;
+            if (!addedKeys.has(key)) {
+              cookiesToSet.push(baseCookie);
+              addedKeys.add(key);
             }
-          }));
-        });
 
-        // Navigate to last URL if available
-        if (sessionData.lastUrl && sessionData.lastUrl !== 'about:blank') {
-          setTimeout(() => {
-            ws.send(JSON.stringify({
-              id: messageId++,
-              method: 'Page.navigate',
-              params: { url: sessionData.lastUrl }
-            }));
-            console.log(`[SESSION] Navigating to last URL: ${sessionData.lastUrl}`);
-          }, 1000);
-        }
+            // CRITICAL: Duplicate .google.com.br critical cookies to .google.com
+            if (cookie.domain === '.google.com.br' && criticalCookies.includes(cookie.name)) {
+              const googleKey = `${cookie.name}@.google.com`;
+              if (!addedKeys.has(googleKey)) {
+                cookiesToSet.push({ ...baseCookie, domain: '.google.com' });
+                addedKeys.add(googleKey);
+                console.log(`[SESSION] Duplicated ${cookie.name} to .google.com`);
+              }
+            }
+          });
 
-        setTimeout(() => {
+          if (skippedCount > 0) console.log(`[SESSION] Skipped ${skippedCount} invalid domain cookies`);
+          console.log(`[SESSION] Will set ${cookiesToSet.length} cookies`);
+
+          // Step 4: Set cookies
+          console.log('[SESSION] Step 4/5: Setting cookies...');
+          try {
+            await sendCommand('Network.setCookies', { cookies: cookiesToSet });
+            console.log('[SESSION] Batch setCookies succeeded');
+          } catch (batchError) {
+            console.log(`[SESSION] Batch failed: ${batchError.message}, trying individual...`);
+            let ok = 0, fail = 0;
+            for (const cookie of cookiesToSet) {
+              try {
+                await sendCommand('Network.setCookie', cookie);
+                ok++;
+              } catch (e) {
+                fail++;
+                if (fail <= 5) console.log(`[SESSION] Failed: ${cookie.name}@${cookie.domain}`);
+              }
+              await new Promise(r => setTimeout(r, 10));
+            }
+            console.log(`[SESSION] Individual: ${ok} ok, ${fail} failed`);
+          }
+
+          // Step 5: Verify
+          console.log('[SESSION] Step 5/5: Verifying...');
+          await new Promise(r => setTimeout(r, 1000));
+
+          let verification;
+          try {
+            verification = await sendCommand('Network.getCookies', {
+              urls: ['https://www.google.com/', 'https://www.youtube.com/', 'https://accounts.google.com/']
+            });
+          } catch (e) {
+            console.error('[SESSION] Verification failed:', e.message);
+            ws.close();
+            resolve(false);
+            return;
+          }
+
+          const setCookies = verification.cookies || [];
+          const hasSID = setCookies.some(c => c.name === 'SID' && c.domain.includes('google'));
+          const hasHSID = setCookies.some(c => c.name === 'HSID' && c.domain.includes('google'));
+          const has1PSID = setCookies.some(c => c.name === '__Secure-1PSID');
+
+          console.log(`[SESSION] Verified: ${setCookies.length} cookies. SID=${hasSID}, HSID=${hasHSID}, 1PSID=${has1PSID}`);
+
+          if (!hasSID || !hasHSID) {
+            console.error('[SESSION] CRITICAL: Core Google cookies NOT restored!');
+            ws.close();
+            resolve(false);
+            return;
+          }
+
+          const lastUrl = sessionData.lastUrl;
+          if (lastUrl && lastUrl !== 'about:blank' && !lastUrl.startsWith('chrome://')) {
+            console.log(`[SESSION] Navigating to: ${lastUrl}`);
+            try { await sendCommand('Page.navigate', { url: lastUrl }); } catch (e) { }
+          }
+
+          console.log('[SESSION] Session restored and VERIFIED successfully');
           ws.close();
-          console.log('[SESSION] Session restored successfully');
           resolve(true);
-        }, 3000);
+
+        } catch (error) {
+          console.error('[SESSION] Restore error:', error.message);
+          ws.close();
+          resolve(false);
+        }
       });
 
       ws.on('error', (err) => {
-        console.error('[SESSION] WebSocket error during restore:', err.message);
+        console.error('[SESSION] WebSocket error:', err.message);
         ws.close();
         resolve(false);
       });
 
-      // Timeout
       setTimeout(() => {
-        ws.close();
+        console.error('[SESSION] Timeout after 30s');
+        try { ws.close(); } catch (e) {}
         resolve(false);
-      }, 10000);
+      }, 30000);
     });
+
   } catch (error) {
-    console.error('[SESSION] Error restoring session:', error.message);
+    console.error('[SESSION] Error in restoreSessionToChrome:', error.message);
     return false;
   }
 }

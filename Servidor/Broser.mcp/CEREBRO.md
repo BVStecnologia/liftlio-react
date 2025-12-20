@@ -1,7 +1,7 @@
 # CEREBRO - Liftlio Browser Agent
 
 > **IMPORTANTE**: Este arquivo e a fonte de verdade. SEMPRE leia antes de trabalhar no projeto.
-> **Ultima Atualizacao**: 2025-12-19
+> **Ultima Atualizacao**: 2025-12-20
 
 ---
 
@@ -466,9 +466,142 @@ http://localhost:16117/vnc.html
 
 ---
 
-## 10. HISTORICO DE MUDANCAS
+## 10. VARIAVEIS DE AMBIENTE (CRITICO!)
 
-### 2025-12-19- [x] **PERSISTENCIA SUPABASE CONFIRMADA FUNCIONANDO!**  - Problema: `.env` tinha `SUPABASE_ANON_KEY` mas codigo esperava `SUPABASE_KEY`  - Container recebia `SUPABASE_KEY=` (vazio) → Session Watchdog nao iniciava  - Correcao: Adicionado `SUPABASE_KEY` no `.env` e `docker-compose.yml` do servidor  - Testado: Login Google → Container destruido → Recriado → Sessao restaurada (115 cookies)- [x] **Sticky Proxy corrigido (Data Impulse)**  - Problema: Proxy usava porta 823 (rotating IP) → Google bloqueava login  - Correcao: Alterado para porta 10000+ (sticky session = mesmo IP)  - Resultado: Login Google funciona SEM 2FA (IP confiavel)- [x] **Orchestrator gerencia containers dinamicos**  - Portas dinamicas: API 10100+, VNC 16000+  - Containers por projeto: `liftlio-browser-{projectId}`  - Volumes persistentes: `browser-chrome-{projectId}`  - Auto-save sessao para Supabase (Watchdog 60s)
+> **⚠️ SEMPRE verificar TODAS as variaveis antes de fazer deploy!**
+> **Falta de variavel = sistema quebrado silenciosamente!**
+
+### Arquivo: `/opt/browser-mcp/.env` (SERVIDOR)
+```bash
+# ===========================================
+# TODAS AS VARIAVEIS OBRIGATORIAS
+# ===========================================
+
+# Supabase (AMBAS sao necessarias!)
+SUPABASE_URL=https://suqjifkhmekcdflwowiw.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...anon...
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...service_role...
+
+# CapMonster (CAPTCHA solver)
+CAPMONSTER_API_KEY=dfa5ce816cbc662599ae29378241a231
+
+# DataImpulse (Proxy residencial)
+DATAIMPULSE_LOGIN=2e6fd60c4b7ca899cef0
+DATAIMPULSE_PASSWORD=5742ea9e468dae46
+DATAIMPULSE_HOST=gw.dataimpulse.com
+DATAIMPULSE_STICKY_BASE_PORT=10000
+PROXY_URL=http://LOGIN:PASS@gw.dataimpulse.com:10000
+
+# Claude API
+CLAUDE_API_KEY=sk-ant-api03-...
+
+# Seguranca
+API_SECRET_KEY=liftlio-browser-mcp-secret-key-2025
+
+# Server Config
+HOST_IP=173.249.22.2
+MAX_CONTAINERS=6
+SESSION_TIMEOUT_MINUTES=30
+```
+
+### Arquivo: `docker-compose.yml` (OBRIGATORIO!)
+Todas variaveis precisam estar mapeadas em `environment:`:
+```yaml
+environment:
+  - SUPABASE_URL=${SUPABASE_URL}
+  - SUPABASE_KEY=${SUPABASE_KEY}           # service_role!
+  - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+  - CAPMONSTER_API_KEY=${CAPMONSTER_API_KEY}  # <-- ESQUECI ISSO!
+  - PROXY_URL=${PROXY_URL}
+  # ... outras
+```
+
+### Verificacao Rapida
+```bash
+# No servidor (173.249.22.2):
+docker exec browser-orchestrator printenv | grep -E 'CAPMONSTER|SUPABASE_KEY|PROXY'
+docker exec liftlio-browser-117 printenv | grep -E 'CAPMONSTER|SUPABASE_KEY'
+```
+
+### Checklist Pre-Deploy
+- [ ] `.env` tem TODAS as variaveis?
+- [ ] `docker-compose.yml` mapeia TODAS as variaveis?
+- [ ] SUPABASE_KEY e service_role (nao anon)?
+- [ ] CAPMONSTER_API_KEY presente?
+- [ ] Apos mudanca no .env: `docker-compose down && docker-compose up -d`?
+
+---
+
+## 11. HISTORICO DE MUDANCAS
+
+### 2025-12-20 - FIX v4.2: SESSAO PERSISTE APOS RECRIAR CONTAINER!
+- [x] **FIX CRITICO v4.2: Sessao Google persiste mesmo apos docker rm + docker run**
+  - Problema: restoreSessionToChrome() LIMPAVA cookies validos do Chrome antes de restaurar do Supabase
+  - Causa raiz: Funcao fazia Network.clearBrowserCookies() ANTES de verificar se Chrome ja tinha sessao
+  - Solucao (Fix v4.2): Step 0 - Verificar se Chrome ja tem sessao valida ANTES de limpar
+  - Arquivo modificado: server-vnc.js (linha ~850)
+  - Imagem Docker: liftlio/browser-agent:vnc (rebuilt com fix permanente)
+
+- [x] **TESTE COMPLETO DE PERSISTENCIA (PROVA):**
+  1. Login Google realizado (valdair3d@gmail.com) via Playwright MCP
+  2. Usuario aprovou 2FA no celular
+  3. Sessao salva: 64 cookies no Supabase
+  4. Container DESTRUIDO: docker stop && docker rm
+  5. Container RECRIADO: docker run com mesmo volume
+  6. Logs mostram Fix v4.2 funcionando:
+     [SESSION] Step 0: Checking if Chrome already has valid session...
+     [SESSION] Chrome has 43 cookies. SID=true, HSID=true, 1PSID=true
+     [SESSION] Chrome already has valid Google session from Docker volume!
+     [SESSION] Skipping Supabase restore to preserve existing session.
+  7. YouTube verificado: Conta Valdair Demello (valdair3d@gmail.com) LOGADA!
+
+- [x] **ARQUITETURA DINAMICA CONFIRMADA FUNCIONANDO:**
+  - CapMonster: OK (API Key configurada, RecaptchaV2/V3, hCaptcha, Turnstile)
+  - DataImpulse: OK (IP unico por projeto - porta 10000 + index)
+  - Containers dinamicos: OK (POST /containers cria por projeto)
+  - Volumes persistentes: OK (browser-data-{projectId})
+  - Frontend integrado: OK (portas dinamicas via orchestrator)
+
+
+### 2025-12-19 (Sessao 2)
+- [x] **FIX CRITICO: Container parava durante tasks em execucao**
+  - Problema: CRON3 parava container apos 5 min "inativo" MESMO com task rodando
+  - Causa raiz: Orchestrator usava `anon` key → RLS bloqueava query de tasks running
+  - Solucao: Trocado para `service_role` key no .env E docker-compose.yml
+  - Verificacao: CRON3 agora ve tasks running e NAO para o container
+- [x] **FIX: CRON3 verifica atividade recente (ultimos 5 min)**
+  - Problema: CRON3 so verificava `status='running'`, nao atividade recente
+  - Solucao: Query `browser_tasks` onde (created_at OU completed_at) >= 5 min atras
+  - Arquivo: `/opt/browser-mcp/orchestrator/index.js` + dist/index.js
+  - Log: `"Container teve atividade recente, NAO parar!"`
+  - Verificacao: `grep -c 'atividade recente' /app/dist/index.js` retorna "2"
+
+- [x] **FIX: CapMonster nao estava sendo usado para CAPTCHAs**
+  - Problema: CAPMONSTER_API_KEY faltando no docker-compose.yml
+  - Claude recebia instrucao para usar CapMonster mas key estava vazia
+  - Solucao: Adicionado `CAPMONSTER_API_KEY=${CAPMONSTER_API_KEY}` no docker-compose.yml
+  - Verificacao: `docker exec container printenv | grep CAPMONSTER`
+
+- [x] **DOCUMENTACAO: Secao 10 adicionada com checklist de variaveis**
+  - Lista completa de TODAS variaveis obrigatorias
+  - Verificacao rapida para debug
+  - Checklist pre-deploy
+
+### 2025-12-19 (Sessao 1)
+- [x] **PERSISTENCIA SUPABASE CONFIRMADA FUNCIONANDO!**
+  - Problema: `.env` tinha `SUPABASE_ANON_KEY` mas codigo esperava `SUPABASE_KEY`
+  - Container recebia `SUPABASE_KEY=` (vazio) → Session Watchdog nao iniciava
+  - Correcao: Adicionado `SUPABASE_KEY` no `.env` e `docker-compose.yml` do servidor
+  - Testado: Login Google → Container destruido → Recriado → Sessao restaurada (115 cookies)
+- [x] **Sticky Proxy corrigido (Data Impulse)**
+  - Problema: Proxy usava porta 823 (rotating IP) → Google bloqueava login
+  - Correcao: Alterado para porta 10000+ (sticky session = mesmo IP)
+  - Resultado: Login Google funciona SEM 2FA (IP confiavel)
+- [x] **Orchestrator gerencia containers dinamicos**
+  - Portas dinamicas: API 10100+, VNC 16000+
+  - Containers por projeto: `liftlio-browser-{projectId}`
+  - Volumes persistentes: `browser-chrome-{projectId}`
+  - Auto-save sessao para Supabase (Watchdog 60s)
 ### 2025-12-15
 - [x] **TOKEN REFRESH CONFIRMADO FUNCIONANDO!**
   - Container rodando ha 24+ horas com tokens de 8h = ~4 refreshes automaticos
