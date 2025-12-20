@@ -94,9 +94,9 @@ O Claude e inteligente - ele vai responder exatamente como voce pedir.
 ## Dados de Teste
 
 ```
-Email:    valdair3d@gmail.com
-Senha:    Gabriela2022***
-Projeto:  117
+Email:    (usar variável de ambiente)
+Senha:    (usar variável de ambiente)
+Projeto:  (ID do projeto atual)
 ```
 
 ---
