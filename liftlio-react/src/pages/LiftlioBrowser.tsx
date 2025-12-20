@@ -756,6 +756,164 @@ const StatusBadge = styled.span<{ status: string }>`
   }};
 `;
 
+// ============================================
+// LIFTLIO AGENT COMPONENTS (Animated Avatar)
+// ============================================
+
+const LiftlioAgentContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: ${props => props.theme.name === 'dark'
+    ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(59, 130, 246, 0.05) 100%)'
+    : 'linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(59, 130, 246, 0.03) 100%)'};
+  border-radius: 16px;
+  border: 1px solid ${props => props.theme.name === 'dark'
+    ? 'rgba(139, 92, 246, 0.2)'
+    : 'rgba(139, 92, 246, 0.15)'};
+`;
+
+const LiftlioAvatarWrapper = styled.div`
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 16px;
+`;
+
+const LiftlioAvatarRing = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: #8b5cf6;
+  border-right-color: #8b5cf6;
+  animation: spin 1.5s linear infinite;
+
+  @keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+`;
+
+const LiftlioAvatarPulse = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(139, 92, 246, 0.15);
+  animation: pulse-ring 2s ease-out infinite;
+
+  @keyframes pulse-ring {
+    0% {
+      transform: translate(-50%, -50%) scale(0.8);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1.4);
+      opacity: 0;
+    }
+  }
+`;
+
+const LiftlioAvatarCore = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+
+  svg {
+    color: white;
+    font-size: 24px;
+  }
+`;
+
+const LiftlioAgentText = styled.div`
+  text-align: center;
+`;
+
+const LiftlioAgentTitle = styled.h4`
+  font-size: 16px;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+`;
+
+const LiftlioAgentStatus = styled.p`
+  font-size: 13px;
+  color: #8b5cf6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+`;
+
+const AnimatedDots = styled.span`
+  display: inline-flex;
+  gap: 2px;
+
+  span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #8b5cf6;
+    animation: dot-pulse 1.4s ease-in-out infinite;
+
+    &:nth-child(1) { animation-delay: 0s; }
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.4s; }
+  }
+
+  @keyframes dot-pulse {
+    0%, 80%, 100% {
+      opacity: 0.3;
+      transform: scale(0.8);
+    }
+    40% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+`;
+
+const LiftlioAgentTimer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 6px 12px;
+  background: ${props => props.theme.name === 'dark'
+    ? 'rgba(255, 255, 255, 0.05)'
+    : 'rgba(0, 0, 0, 0.03)'};
+  border-radius: 20px;
+  font-size: 12px;
+  color: ${props => props.theme.colors.text.secondary};
+
+  svg {
+    font-size: 10px;
+  }
+`;
+
 // Helper function
 const getStatusIcon = (status: string) => {
   switch (status) {
@@ -784,6 +942,91 @@ const formatTimeAgo = (date: string) => {
 
   const diffDays = Math.floor(diffHours / 24);
   return `${diffDays}d ago`;
+};
+
+// Hook for task timer (counts seconds since task started)
+const useTaskTimer = (startTime: string | null, isRunning: boolean) => {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!isRunning || !startTime) {
+      setSeconds(0);
+      return;
+    }
+
+    // Calculate seconds ensuring non-negative values
+    const start = new Date(startTime).getTime();
+    const calculateSeconds = () => {
+      const now = Date.now();
+      const diff = Math.floor((now - start) / 1000);
+      return Math.max(0, diff); // Ensure non-negative
+    };
+
+    setSeconds(calculateSeconds());
+
+    // Update every second
+    const interval = setInterval(() => {
+      setSeconds(calculateSeconds());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [startTime, isRunning]);
+
+  // Format as mm:ss
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+};
+
+// Liftlio Agent Indicator Component
+interface LiftlioAgentProps {
+  taskText?: string;
+  startTime?: string | null;
+}
+
+const LiftlioAgentIndicator: React.FC<LiftlioAgentProps> = ({ taskText, startTime }) => {
+  const timer = useTaskTimer(startTime || null, true);
+
+  return (
+    <LiftlioAgentContainer>
+      <LiftlioAvatarWrapper>
+        <LiftlioAvatarPulse />
+        <LiftlioAvatarRing />
+        <LiftlioAvatarCore>
+          <IconComponent icon={FaRobot} />
+        </LiftlioAvatarCore>
+      </LiftlioAvatarWrapper>
+      <LiftlioAgentText>
+        <LiftlioAgentTitle>
+          Liftlio
+        </LiftlioAgentTitle>
+        <LiftlioAgentStatus>
+          working
+          <AnimatedDots>
+            <span />
+            <span />
+            <span />
+          </AnimatedDots>
+        </LiftlioAgentStatus>
+      </LiftlioAgentText>
+      <LiftlioAgentTimer>
+        <IconComponent icon={FaClock} />
+        {timer}
+      </LiftlioAgentTimer>
+      {taskText && (
+        <p style={{
+          marginTop: '12px',
+          fontSize: '12px',
+          color: 'rgba(139, 92, 246, 0.7)',
+          textAlign: 'center',
+          maxWidth: '250px',
+          lineHeight: 1.4
+        }}>
+          "{taskText.length > 60 ? taskText.substring(0, 60) + '...' : taskText}"
+        </p>
+      )}
+    </LiftlioAgentContainer>
+  );
 };
 
 // Main Component
@@ -1955,38 +2198,12 @@ const LiftlioBrowser: React.FC = () => {
                 {selectedTask.task}
               </p>
 
-              {/* Progress indicator for running tasks */}
+              {/* Liftlio Agent indicator for running tasks */}
               {selectedTask.status === 'running' && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '16px',
-                  background: theme.name === 'dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)',
-                  borderRadius: '10px',
-                  marginBottom: '12px',
-                  border: `1px solid ${theme.name === 'dark' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.15)'}`
-                }}>
-                  <Spinner />
-                  <div>
-                    <p style={{
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      color: '#8b5cf6',
-                      marginBottom: '4px'
-                    }}>
-                      Processando tarefa...
-                    </p>
-                    <p style={{
-                      fontSize: '11px',
-                      color: theme.name === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'
-                    }}>
-                      {selectedTask.started_at
-                        ? `Iniciado ${formatTimeAgo(selectedTask.started_at)}`
-                        : 'Aguardando início...'}
-                    </p>
-                  </div>
-                </div>
+                <LiftlioAgentIndicator
+                  taskText={selectedTask.task}
+                  startTime={selectedTask.started_at || selectedTask.created_at}
+                />
               )}
 
               {/* Response section - only show when there's a response */}
@@ -2027,7 +2244,7 @@ const LiftlioBrowser: React.FC = () => {
                     }}
                   >
                     <IconComponent icon={FaCopy} style={{ fontSize: '11px' }} />
-                    Copiar
+                    Copy
                   </CopyButton>
                 )}
               </div>
@@ -2141,7 +2358,7 @@ const LiftlioBrowser: React.FC = () => {
                     <TaskText>{task.task}</TaskText>
 
                     {/* Collapsible response preview for completed tasks */}
-                    {task.status === 'completed' && task.response?.result && (
+                    {task.status === 'completed' && task.response?.result && selectedTask?.id !== task.id && (
                       <ResponsePreview
                         onClick={(e) => toggleResponseExpanded(task.id, e)}
                         style={{ cursor: 'pointer' }}

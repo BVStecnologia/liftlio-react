@@ -47,28 +47,7 @@
   "permissionMode": "normal",
 
   "hooks": {
-    "SessionStart": [
-      {
-        "type": "command",
-        "command": "bash .claude/hooks/load-env.sh"
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '✅ File saved successfully' >&2"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "type": "command",
-        "command": "osascript -e 'display notification \"Claude Code session completed!\" with title \"✅ Session Complete\"' 2>/dev/null || true"
-      }
-    ]
+    "PreToolUse": [],
+    "PostToolUse": []
   }
 }
