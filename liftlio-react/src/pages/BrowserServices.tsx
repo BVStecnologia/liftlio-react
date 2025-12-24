@@ -1,9 +1,49 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { FaGoogle, FaReddit, FaCheck, FaTimes, FaSpinner, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import {
+  FaGoogle as FaGoogleBase,
+  FaReddit as FaRedditBase,
+  FaCheck as FaCheckBase,
+  FaTimes as FaTimesBase,
+  FaSpinner as FaSpinnerBase,
+  FaLock as FaLockBase,
+  FaEye as FaEyeBase,
+  FaEyeSlash as FaEyeSlashBase
+} from 'react-icons/fa';
 import { useProject } from '../context/ProjectContext';
-import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
+
+// Browser MCP Configuration - DYNAMIC (matches LiftlioBrowser.tsx)
+const BROWSER_ORCHESTRATOR_URL = process.env.REACT_APP_BROWSER_ORCHESTRATOR_URL || 'https://suqjifkhmekcdflwowiw.supabase.co/functions/v1/browser-proxy';
+const BROWSER_MCP_API_KEY = process.env.REACT_APP_BROWSER_MCP_API_KEY || '';
+const IS_HTTPS = typeof window !== 'undefined' && window.location.protocol === 'https:';
+const VPS_IP = '173.249.22.2';
+
+// Helper: Get URL for VPS calls (uses nginx proxy in production to avoid Mixed Content)
+const getVpsUrl = (port: number, path: string): string => {
+  if (IS_HTTPS) {
+    return `/browser-proxy/port/${port}/${path}`;
+  }
+  return `http://${VPS_IP}:${port}/${path}`;
+};
+
+// Helper: Get Orchestrator URL
+const getOrchestratorUrl = (path: string): string => {
+  if (IS_HTTPS) {
+    return `/browser-proxy/orchestrator/${path}`;
+  }
+  return `${BROWSER_ORCHESTRATOR_URL}/${path}`;
+};
+
+// Icon wrappers to fix TypeScript compatibility with React 19
+const FaGoogle: React.FC<{ size?: number; className?: string }> = (props) => React.createElement(FaGoogleBase as any, props);
+const FaReddit: React.FC<{ size?: number; className?: string }> = (props) => React.createElement(FaRedditBase as any, props);
+const FaCheck: React.FC<{ size?: number; className?: string }> = (props) => React.createElement(FaCheckBase as any, props);
+const FaTimes: React.FC<{ size?: number; className?: string }> = (props) => React.createElement(FaTimesBase as any, props);
+const FaSpinner: React.FC<{ size?: number; className?: string }> = (props) => React.createElement(FaSpinnerBase as any, props);
+const FaLock: React.FC<{ size?: number; className?: string }> = (props) => React.createElement(FaLockBase as any, props);
+const FaEye: React.FC<{ size?: number; className?: string }> = (props) => React.createElement(FaEyeBase as any, props);
+const FaEyeSlash: React.FC<{ size?: number; className?: string }> = (props) => React.createElement(FaEyeSlashBase as any, props);
 
 // ============================================
 // TYPES
@@ -24,7 +64,7 @@ interface BrowserPlatforms {
 interface Service {
   id: string;
   name: string;
-  icon: React.ComponentType<any>;
+  icon: React.FC<{ size?: number; className?: string }>;
   color: string;
   description: string;
   loginUrl: string;
@@ -493,9 +533,16 @@ const SubmitButton = styled.button`
   }
 `;
 
-const SpinnerIcon = styled(FaSpinner)`
+const SpinnerWrapper = styled.span`
+  display: inline-flex;
   animation: ${spin} 1s linear infinite;
 `;
+
+const SpinnerIcon: React.FC = () => (
+  <SpinnerWrapper>
+    <FaSpinner />
+  </SpinnerWrapper>
+);
 
 // 2FA Modal Styles
 const TwoFactorContent = styled.div`
@@ -603,10 +650,10 @@ const MessageText = styled.p`
 
 const BrowserServices: React.FC = () => {
   const { currentProject } = useProject();
-  const { theme } = useTheme();
 
   // State
   const [platforms, setPlatforms] = useState<BrowserPlatforms>({});
+  const [projectCountry, setProjectCountry] = useState<string>('US');
   const [modalState, setModalState] = useState<ModalState>({ type: 'closed' });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -614,6 +661,7 @@ const BrowserServices: React.FC = () => {
   const [code, setCode] = useState('');
   const [useGoogleLogin, setUseGoogleLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [dynamicApiPort, setDynamicApiPort] = useState<number | null>(null);
 
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -627,15 +675,213 @@ const BrowserServices: React.FC = () => {
   const loadPlatforms = async () => {
     if (!currentProject?.id) return;
 
-    const { data, error } = await supabase
+    // Note: Using type assertion because 'País' has accent that breaks Supabase type inference
+    const { data } = await supabase
       .from('Projeto')
-      .select('browser_platforms')
+      .select('browser_platforms, País')
       .eq('id', currentProject.id)
-      .single();
+      .single() as { data: { browser_platforms?: BrowserPlatforms; País?: string } | null };
 
     if (data?.browser_platforms) {
       setPlatforms(data.browser_platforms);
     }
+    if (data?.País) {
+      setProjectCountry(data.País);
+    }
+  };
+
+  // Helper to get language based on country
+  const getLanguage = () => {
+    return projectCountry === 'BR' ? 'pt-BR' : 'en';
+  };
+
+  const getLanguageInstructions = () => {
+    if (projectCountry === 'BR') {
+      return 'Responda SEMPRE em português brasileiro.';
+    }
+    return 'Always respond in English.';
+  };
+
+  // Build robust login prompt with CAPTCHA handling, retry logic, and language support
+  const buildLoginPrompt = (
+    service: Service,
+    loginEmail: string,
+    loginPassword: string,
+    isGoogleLogin: boolean
+  ): string => {
+    const lang = getLanguage();
+    const langInstructions = getLanguageInstructions();
+
+    const captchaInstructions = `
+## CAPTCHA HANDLING (CRITICAL!)
+If you encounter ANY type of CAPTCHA (reCAPTCHA, hCaptcha, image selection, etc.):
+1. DO NOT try to solve it manually
+2. Call the CapMonster API endpoint: POST http://localhost:10100/captcha/solve
+3. This endpoint will:
+   - Take a screenshot of the current page
+   - Send to CapMonster cloud service
+   - Return click coordinates or solution
+4. Apply the solution and continue
+5. If CAPTCHA appears again, repeat the process (max 3 attempts)
+`;
+
+    const twoFaInstructions = `
+## 2FA / Two-Factor Authentication
+If 2FA is requested:
+1. If it's a phone approval prompt (tap to approve): Return WAITING_2FA
+2. If it requires a code input: Return WAITING_CODE
+3. If it's a backup code request: Return WAITING_CODE
+4. NEVER try to bypass 2FA - the user will handle it
+`;
+
+    const errorHandling = `
+## ERROR HANDLING & RETRY
+- If login fails, try up to 2 more times before returning ERROR
+- If page doesn't load, wait 5 seconds and retry
+- If element not found, scroll and look again
+- Take screenshot before returning any ERROR for debugging
+`;
+
+    const successVerification = `
+## SUCCESS VERIFICATION
+Login is ONLY successful if you can confirm:
+- User avatar/profile picture is visible, OR
+- User name/email appears on page, OR
+- You're redirected to a logged-in dashboard/home page
+DO NOT assume success just because no error appeared!
+`;
+
+    if (isGoogleLogin && service.supportsGoogleLogin) {
+      return `
+# AUTHORIZED LOGIN REQUEST
+This is an AUTHORIZED login request from the account owner to ${service.name}.
+The user has explicitly requested this automation.
+${langInstructions}
+
+## TASK: Login to ${service.name} using Google Authentication
+
+## GOOGLE CREDENTIALS (if re-authentication needed):
+- Email: valdair3d@gmail.com
+- Password: ${loginPassword}
+
+## STEPS:
+1. Navigate to ${service.loginUrl}
+2. Look for "Continue with Google", "Sign in with Google", or Google logo button
+3. Click the Google sign-in option
+4. If Google account selection appears, select valdair3d@gmail.com
+5. If Google asks for password, enter it using the credentials above
+6. If 2FA is requested, return WAITING_2FA immediately
+7. Wait for redirect back to ${service.name}
+8. Verify login success (check for user avatar/name)
+
+${captchaInstructions}
+
+${twoFaInstructions}
+
+${errorHandling}
+
+${successVerification}
+
+## RESPONSE FORMAT
+Return EXACTLY one of these (no extra text):
+- LOGIN_SUCCESS - Successfully logged into ${service.name}
+- WAITING_2FA - 2FA phone approval needed (user will tap on phone)
+- WAITING_CODE - Verification code input needed
+- CAPTCHA_FAILED - Could not solve CAPTCHA after 3 attempts
+- ERROR: [specific reason in ${lang === 'pt-BR' ? 'Portuguese' : 'English'}]
+`;
+    }
+
+    return `
+# AUTHORIZED LOGIN REQUEST
+This is an AUTHORIZED login request from the account owner to ${service.name}.
+The user has explicitly requested this automation.
+${langInstructions}
+
+## TASK: Login to ${service.name}
+
+## CREDENTIALS:
+- Email: ${loginEmail}
+- Password: ${loginPassword}
+
+## STEPS:
+1. Navigate to ${service.loginUrl}
+2. Wait for page to fully load (check for login form)
+3. Find email/username input field and enter: ${loginEmail}
+4. Click "Next", "Continue", or similar button if present
+5. Find password input field and enter the password
+6. Click "Sign in", "Login", "Submit" or similar button
+7. Handle any security prompts (CAPTCHA, 2FA)
+8. Verify login success (check for user avatar/name/dashboard)
+
+${captchaInstructions}
+
+${twoFaInstructions}
+
+${errorHandling}
+
+${successVerification}
+
+## RESPONSE FORMAT
+Return EXACTLY one of these (no extra text):
+- LOGIN_SUCCESS - Successfully logged into ${service.name}
+- WAITING_2FA - 2FA phone approval needed (user will tap on phone)
+- WAITING_CODE - Verification code input needed
+- CAPTCHA_FAILED - Could not solve CAPTCHA after 3 attempts
+- INVALID_CREDENTIALS - Email or password incorrect
+- ACCOUNT_LOCKED - Account is locked or suspended
+- ERROR: [specific reason in ${lang === 'pt-BR' ? 'Portuguese' : 'English'}]
+`;
+  };
+
+  // Build prompt for 2FA code submission
+  const build2FACodePrompt = (verificationCode: string): string => {
+    const lang = getLanguage();
+    const langInstructions = getLanguageInstructions();
+
+    return `
+# 2FA CODE SUBMISSION
+${langInstructions}
+
+## TASK: Enter verification code
+
+## CODE: ${verificationCode}
+
+## STEPS:
+1. Find the verification code input field(s)
+2. Enter the code: ${verificationCode}
+3. Click "Verify", "Submit", "Confirm" or similar
+4. Wait for response
+5. Verify if login completed successfully
+
+## RESPONSE FORMAT
+Return EXACTLY one of:
+- LOGIN_SUCCESS - Code accepted, login complete
+- INVALID_CODE - Code was rejected
+- ERROR: [reason in ${lang === 'pt-BR' ? 'Portuguese' : 'English'}]
+`;
+  };
+
+  // Build prompt for checking 2FA completion (polling)
+  const build2FACheckPrompt = (): string => {
+    const lang = getLanguage();
+
+    return `
+# CHECK LOGIN STATUS
+Check if the user has approved the 2FA request on their phone.
+
+## STEPS:
+1. Look at the current page
+2. Check if login was successful (user avatar, name, or dashboard visible)
+3. Check if still waiting for approval
+4. Check if there was an error
+
+## RESPONSE FORMAT
+Return EXACTLY one of:
+- LOGIN_SUCCESS - User is logged in
+- STILL_WAITING - Still waiting for 2FA approval
+- ERROR: [reason in ${lang === 'pt-BR' ? 'Portuguese' : 'English'}]
+`;
   };
 
   const updateBrowserPlatform = async (
@@ -657,13 +903,58 @@ const BrowserServices: React.FC = () => {
       .update({ browser_platforms: newPlatforms })
       .eq('id', currentProject.id);
 
+
     setPlatforms(newPlatforms);
   };
 
-  const getAgentUrl = () => {
-    // Use orchestrator to get the correct container port
-    const orchestratorUrl = process.env.REACT_APP_BROWSER_ORCHESTRATOR_URL || 'http://173.249.22.2:8080';
-    return `${orchestratorUrl}/containers/${currentProject?.id}/agent/task`;
+  // Check container status and get dynamic API port (like LiftlioBrowser.tsx)
+  const checkContainerStatus = useCallback(async (): Promise<number | null> => {
+    if (!currentProject?.id) return null;
+
+    try {
+      const headers: Record<string, string> = {};
+      if (BROWSER_MCP_API_KEY) {
+        headers['X-API-Key'] = BROWSER_MCP_API_KEY;
+      }
+
+      // Use the orchestrator /containers/:projectId endpoint to get dynamic ports
+      const response = await fetch(
+        getOrchestratorUrl(`containers/${currentProject.id}`),
+        { headers }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        // Map mcpPort to apiPort (orchestrator uses mcpPort naming)
+        const apiPort = data.mcpPort || data.apiPort || 0;
+        console.log(`[BrowserServices] Container ready - API port: ${apiPort}`);
+        
+        setDynamicApiPort(apiPort);
+        return apiPort;
+      } else {
+        console.error('[BrowserServices] Container not found or error');
+        setDynamicApiPort(null);
+        return null;
+      }
+    } catch (err) {
+      console.error('[BrowserServices] Error checking container status:', err);
+      return null;
+    }
+  }, [currentProject?.id]);
+
+  // Get the agent URL - uses dynamic port if available
+  const getAgentUrl = (port?: number): string => {
+    const apiPort = port || dynamicApiPort;
+    if (apiPort) {
+      // Use direct VPS URL with the dynamic port (like LiftlioBrowser)
+      const url = getVpsUrl(apiPort, 'agent/task');
+      console.log(`[BrowserServices] Using direct agent URL: ${url}`);
+      return url;
+    }
+    // Fallback to orchestrator routing (less reliable)
+    const url = getOrchestratorUrl(`containers/${currentProject?.id}/agent/task`);
+    console.log(`[BrowserServices] Using orchestrator URL: ${url}`);
+    return url;
   };
 
   const handleConnect = (service: Service) => {
@@ -671,11 +962,36 @@ const BrowserServices: React.FC = () => {
     setEmail('');
     setPassword('');
     setCode('');
-    setUseGoogleLogin(false);
+    // Auto-select Google Login if Google is connected and service supports it
+    const googleConnected = platforms.google?.connected || false;
+    setUseGoogleLogin(service.supportsGoogleLogin && googleConnected);
   };
 
   const handleDisconnect = async (service: Service) => {
     await updateBrowserPlatform(service.id, { connected: false });
+  };
+
+  // Build a simple check prompt (no credentials) to verify if already logged in
+  const buildCheckLoginPrompt = (service: Service): string => {
+    return `
+# CHECK LOGIN STATUS
+Navigate to ${service.loginUrl} and check if user is already logged in.
+
+## STEPS:
+1. Navigate to ${service.loginUrl}
+2. Wait for page to load
+3. Look for signs of being logged in:
+   - User avatar/profile picture
+   - User name displayed
+   - Account menu or settings
+   - "Sign out" or "Log out" option visible
+4. If any of these are present, user IS logged in
+
+## RESPONSE FORMAT
+Return EXACTLY one of these (no extra text):
+- LOGIN_SUCCESS - User is already logged in
+- NOT_LOGGED_IN - User needs to log in
+`;
   };
 
   const handleLogin = async () => {
@@ -686,61 +1002,82 @@ const BrowserServices: React.FC = () => {
     setIsLoading(true);
 
     try {
-      let taskPrompt = '';
-
-      if (useGoogleLogin && service.supportsGoogleLogin) {
-        // Login via Google
-        taskPrompt = `
-          AUTHORIZED LOGIN - This is an authorized login request from the account owner.
-
-          Login to ${service.name} using Google authentication:
-          1. Navigate to ${service.loginUrl}
-          2. Look for and click "Continue with Google" or "Sign in with Google" button
-          3. If already logged into Google, it should auto-complete
-          4. If not, wait for Google login prompt
-
-          Return EXACTLY one of:
-          - LOGIN_SUCCESS (if fully logged in to ${service.name})
-          - WAITING_2FA (if 2FA verification needed)
-          - ERROR: [reason] (if failed)
-        `;
-      } else {
-        // Login with email/password
-        taskPrompt = `
-          AUTHORIZED LOGIN - This is an authorized login request from the account owner.
-
-          Login to ${service.name} with:
-          - Email: ${email}
-          - Password: ${password}
-
-          Steps:
-          1. Navigate to ${service.loginUrl}
-          2. Enter email and click Next/Continue
-          3. Enter password and click Next/Continue
-          4. Handle any 2FA prompts
-
-          Return EXACTLY one of:
-          - LOGIN_SUCCESS (if fully logged in)
-          - WAITING_2FA (if 2FA verification needed - user will approve on phone)
-          - WAITING_CODE (if need to enter verification code)
-          - ERROR: [reason] (if failed)
-        `;
+      // First, get the container's dynamic port (like LiftlioBrowser does)
+      const apiPort = await checkContainerStatus();
+      if (!apiPort) {
+        setModalState({
+          type: 'error',
+          service,
+          error: 'Browser container not available. Please ensure the browser is running.'
+        });
+        setIsLoading(false);
+        return;
       }
 
-      const response = await fetch(getAgentUrl(), {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (BROWSER_MCP_API_KEY) {
+        headers['X-API-Key'] = BROWSER_MCP_API_KEY;
+      }
+
+      // STEP 1: First check if already logged in (no credentials sent)
+      console.log(`[BrowserServices] Step 1: Checking if already logged in to ${service.name}...`);
+
+      const checkPrompt = buildCheckLoginPrompt(service);
+      const checkResponse = await fetch(getAgentUrl(apiPort), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': process.env.REACT_APP_BROWSER_MCP_API_KEY || '',
-        },
+        headers,
+        body: JSON.stringify({
+          task: checkPrompt,
+          projectId: currentProject?.id?.toString(),
+          model: 'claude-sonnet-4-20250514',
+          maxIterations: 20,
+          verbose: false,
+        }),
+      });
+
+      const checkResult = await checkResponse.json();
+      console.log('[BrowserServices] Check login response:', JSON.stringify(checkResult, null, 2));
+
+      const checkText = checkResult.result || checkResult.output?.result || checkResult.message || checkResult.text || '';
+      console.log('[BrowserServices] Check result:', checkText);
+
+      // If already logged in, we're done!
+      if (checkText.includes('LOGIN_SUCCESS')) {
+        console.log('[BrowserServices] Already logged in! Marking as connected.');
+        await updateBrowserPlatform(service.id, {
+          connected: true,
+          email: useGoogleLogin ? 'via Google' : email || 'connected'
+        });
+        setModalState({ type: 'success', service });
+        setIsLoading(false);
+        return;
+      }
+
+      // STEP 2: Not logged in, need to perform login with credentials
+      console.log(`[BrowserServices] Step 2: Not logged in, performing login...`);
+
+      const taskPrompt = buildLoginPrompt(service, email, password, useGoogleLogin);
+
+      const response = await fetch(getAgentUrl(apiPort), {
+        method: 'POST',
+        headers,
         body: JSON.stringify({
           task: taskPrompt,
-          projectId: currentProject?.id,
+          projectId: currentProject?.id?.toString(),
+          model: 'claude-sonnet-4-20250514',
+          maxIterations: 50,
+          verbose: false,
         }),
       });
 
       const result = await response.json();
-      const resultText = result.result || result.output?.result || '';
+      console.log('[BrowserServices] Raw agent response:', JSON.stringify(result, null, 2));
+
+      // Handle various response formats from browser agent
+      const resultText = result.result || result.output?.result || result.message || result.text || '';
+      console.log('[BrowserServices] Parsed resultText:', resultText);
 
       if (resultText.includes('LOGIN_SUCCESS')) {
         await updateBrowserPlatform(service.id, {
@@ -761,6 +1098,7 @@ const BrowserServices: React.FC = () => {
         setModalState({ type: 'error', service, error: 'Unexpected response from agent' });
       }
     } catch (error: any) {
+      console.error('[BrowserServices] Login error:', error);
       setModalState({
         type: 'error',
         service: modalState.type === 'login' ? modalState.service : BROWSER_SERVICES[0],
@@ -778,15 +1116,8 @@ const BrowserServices: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const taskPrompt = `
-        Enter the verification code: ${code}
-
-        Find the code input field and type this code, then submit.
-
-        Return EXACTLY one of:
-        - LOGIN_SUCCESS (if code accepted and logged in)
-        - ERROR: [reason] (if code rejected or failed)
-      `;
+      // Build robust 2FA code submission prompt with language support
+      const taskPrompt = build2FACodePrompt(code);
 
       const response = await fetch(getAgentUrl(), {
         method: 'POST',
@@ -829,14 +1160,8 @@ const BrowserServices: React.FC = () => {
       if (modalState.type !== '2fa') return;
 
       try {
-        const taskPrompt = `
-          Check if the login was completed successfully (user may have approved 2FA on their phone).
-
-          Look at the current page and determine:
-          - If logged in successfully, return: LOGIN_SUCCESS
-          - If still waiting for 2FA, return: STILL_WAITING
-          - If error occurred, return: ERROR: [reason]
-        `;
+        // Build robust 2FA check prompt with language support
+        const taskPrompt = build2FACheckPrompt();
 
         const response = await fetch(getAgentUrl(), {
           method: 'POST',
@@ -983,26 +1308,28 @@ const BrowserServices: React.FC = () => {
             </ModalHeader>
 
             <ModalBody>
-              <FormGroup>
-                <FormLabel>Email</FormLabel>
-                <FormInput
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={useGoogleLogin}
-                />
-              </FormGroup>
+              {!useGoogleLogin && (
+                <FormGroup>
+                  <FormLabel>Email</FormLabel>
+                  <FormInput
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </FormGroup>
+              )}
 
               <FormGroup>
-                <FormLabel>Password</FormLabel>
+                <FormLabel>
+                  {useGoogleLogin ? 'Google Password (for re-authentication)' : 'Password'}
+                </FormLabel>
                 <InputWrapper>
                   <FormInput
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter your password"
+                    placeholder={useGoogleLogin ? 'Enter your Google password' : 'Enter your password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    disabled={useGoogleLogin}
                   />
                   <PasswordToggle
                     type="button"
@@ -1011,6 +1338,11 @@ const BrowserServices: React.FC = () => {
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                   </PasswordToggle>
                 </InputWrapper>
+                {useGoogleLogin && (
+                  <small style={{ color: '#888', marginTop: '4px', display: 'block' }}>
+                    Google may ask to re-authenticate. Your account is protected by 2FA.
+                  </small>
+                )}
               </FormGroup>
 
               {modalState.service.supportsGoogleLogin && (
@@ -1030,11 +1362,11 @@ const BrowserServices: React.FC = () => {
                     <FaGoogle />
                     <GoogleLoginText>
                       <GoogleLoginTitle>
-                        {useGoogleLogin ? 'Using Google Login' : 'Use Google Login'}
+                        {useGoogleLogin ? 'Using Google Login ✓' : 'Use Google Login'}
                       </GoogleLoginTitle>
                       <GoogleLoginSubtitle>
                         {isGoogleConnected
-                          ? 'Click to use your connected Google account'
+                          ? (useGoogleLogin ? 'valdair3d@gmail.com' : 'Click to use your connected Google account')
                           : 'Connect Google first to use this option'}
                       </GoogleLoginSubtitle>
                     </GoogleLoginText>
@@ -1049,7 +1381,7 @@ const BrowserServices: React.FC = () => {
               </CancelButton>
               <SubmitButton
                 onClick={handleLogin}
-                disabled={!useGoogleLogin && (!email || !password)}
+                disabled={!password || (!useGoogleLogin && !email)}
               >
                 <FaLock size={14} />
                 Connect

@@ -1203,7 +1203,7 @@ const LiftlioBrowser: React.FC = () => {
     }
 
     // Use proxy in production to avoid Mixed Content (HTTPS->HTTP blocked)
-    const vncUrl = getVncProxyUrl(vncPort, `vnc_lite.html?${params.toString()}`);
+    const vncUrl = getVncProxyUrl(vncPort, `vnc.html?${params.toString()}`);
     console.log(`[LiftlioBrowser] VNC URL (IS_HTTPS=${IS_HTTPS}): ${vncUrl}`);
     return vncUrl;
   }, [getProjectVncPort]);
