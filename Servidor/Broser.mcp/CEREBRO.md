@@ -534,6 +534,66 @@ docker exec liftlio-browser-117 printenv | grep -E 'CAPMONSTER|SUPABASE_KEY'
 
 ## 11. HISTORICO DE MUDANCAS
 
+### 2025-12-24 - FIX v4.6 + PESQUISA PROFUNDA SOBRE SESSOES GOOGLE
+
+#### PESQUISA: O que invalida sessoes Google (mesmo com cookies validos)
+
+| Fator | Risco | Detalhes |
+|-------|-------|----------|
+| **Device Bound Session Credentials (DBSC)** | ALTO | Google lancou em Abril/2024 - vincula sessoes ao hardware via TPM. Chrome 136+ |
+| **Mudanca significativa de IP** | MEDIO | Trocar de pais/regiao pode invalidar |
+| **Sticky session expira** | MEDIO | Data Impulse: 30 min maximo por sessao |
+| **Padrao nao-humano** | MEDIO | Requests muito rapidos, sem delays |
+| **Formato de cookie mudou** | BAIXO | __Secure-1PSID nao termina mais com . (Jan/2024) |
+
+**Fonte**: Pesquisa doc-research-expert (Playwright MCP docs, Google policies, CookieDatabase)
+
+#### FIX v4.6: --cdp-endpoint + --storage-state (ATUAL NO SERVIDOR)
+
+- **Problema**: Fixes v4.2-v4.5 nao funcionavam porque Playwright MCP Issue #983 nao suportava combinacao
+- **Solucao**: Issue #983 foi RESOLVIDO em Set/2025 - agora suporta --cdp-endpoint + --storage-state
+- **Arquivo modificado**: /opt/browser-agent-v4/Servidor/Broser.mcp/claude-code-agent/api/server-vnc.js
+
+#### PROXY DATA IMPULSE - ROTATING vs STICKY (IMPORTANTE\!)
+
+**Credenciais (conta Steve no Data Impulse):**
+- Login: 2e6fd60c4b7ca899cef0
+- Password: 5742ea9e468dae46
+- Host: gw.dataimpulse.com
+- Traffic disponivel: ~50 GB
+
+**Portas disponiveis:**
+
+| Porta | Tipo | Comportamento | Uso |
+|-------|------|---------------|-----|
+| 823 | Rotating | IP muda A CADA REQUEST | Scraping em massa (NAO usar para login\!) |
+| 10000 | Sticky | IP fica estavel por ~30 min | Login Google, sessoes (USAR ESTE\!) |
+
+**Por que Sticky (10000) e melhor para Google:**
+- IP dinamico de CASA = muda a cada horas/dias = OK para Google
+- Proxy ROTATING = muda a cada REQUEST = Google detecta como bot
+- Proxy STICKY = IP estavel durante sessao = simula usuario real
+
+**Exemplo de uso:**
+- Sticky (CORRETO): http://LOGIN:PASS@gw.dataimpulse.com:10000
+- Rotating (NAO usar para login\!): http://LOGIN:PASS@gw.dataimpulse.com:823
+
+#### PROXY_URL vs DATAIMPULSE_* (ESCLARECIMENTO)
+
+- PROXY_URL pode estar VAZIO se codigo usa DATAIMPULSE_* para montar dinamicamente
+- **Formato dinamico**: http://{LOGIN}:{PASS}@{HOST}:10000
+- **Porta sticky**: 10000 (base para sticky session)
+- **Data Impulse sticky session**: Maximo 30 minutos por IP
+
+#### TESTE DE PERSISTENCIA (2025-12-24)
+
+1. Container liftlio-browser-117 parado e removido
+2. Container recriado com mesmo volume
+3. Sessao Google (valdair3d@gmail.com) PERSISTIU via Docker volume
+4. 71 cookies salvos no Supabase como backup
+
+---
+
 ### 2025-12-20 - FIX v4.2: SESSAO PERSISTE APOS RECRIAR CONTAINER!
 - [x] **FIX CRITICO v4.2: Sessao Google persiste mesmo apos docker rm + docker run**
   - Problema: restoreSessionToChrome() LIMPAVA cookies validos do Chrome antes de restaurar do Supabase
