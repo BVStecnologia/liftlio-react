@@ -1,7 +1,38 @@
 # CEREBRO - Liftlio Browser Agent
 
 > **IMPORTANTE**: Este arquivo e a fonte de verdade. SEMPRE leia antes de trabalhar no projeto.
-> **Ultima Atualizacao**: 2025-12-20
+> **Ultima Atualizacao**: 2025-12-24
+
+---
+
+## 0. SISTEMA DE LOGIN (NOVO - 2025-12-24)
+
+### Arquitetura de Dados
+
+### Fluxo de Login
+
+### Respostas Padronizadas
+
+| Codigo | Significado |
+|--------|-------------|
+| LOGIN_SUCCESS | Login OK |
+| ALREADY_LOGGED | Ja estava logado |
+| WAITING_2FA | Aguardando aprovacao no telefone |
+| WAITING_CODE | Precisa digitar codigo |
+| INVALID_CREDENTIALS | Email/senha errados |
+| CAPTCHA_FAILED | Nao conseguiu resolver CAPTCHA |
+| ACCOUNT_LOCKED | Conta bloqueada |
+| GOOGLE_LOGIN_REQUIRED | Sessao Google expirou (para SSO) |
+| ERROR: msg | Erro generico |
+
+### Pagina Frontend
+
+- **URL**: /browser-integrations
+- **Arquivo**: liftlio-react/src/pages/BrowserIntegrations.tsx
+- **Passo 1**: Conectar Google (email + senha)
+- **Passo 2**: Checkboxes para outros servicos (YouTube, Reddit)
+
+### Tabelas Supabase
 
 ---
 
