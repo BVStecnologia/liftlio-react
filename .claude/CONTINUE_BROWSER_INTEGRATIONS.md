@@ -1,154 +1,207 @@
-# CONTINUAR: Sistema de Login Browser
+# CONTINUAR: Sistema Browser Integrations
 
-> **Data:** 2025-12-24
-> **Branch:** feature/browser-integrations
-> **Plano completo:** `.claude/plans/wondrous-juggling-curry.md`
-
----
-
-## CONTEXTO COMPLETO
-
-Estamos implementando um sistema de login de browser com:
-1. **UX Simplificada** - Google primeiro, depois checkboxes para outros serviços
-2. **Prompts no Banco** - Fácil de atualizar sem deploy
-3. **Frontend faz toda lógica** - NÃO modificar server-vnc.js
+> **Ultima atualizacao:** 2025-12-25 19:20
+> **Branch:** `feature/browser-integrations`
+> **Status:** FUNCIONAL - Testes passando
 
 ---
 
-## O QUE JÁ FOI FEITO
+## RESUMO RAPIDO
 
-### Banco de Dados (Supabase LIVE)
-- [x] Tabela `browser_platforms` criada com prompts
-- [x] Tabela `browser_logins` criada para credenciais
-- [x] Seed data: Google, YouTube, Reddit com prompts completos
+O sistema de login via browser esta **100% funcional**:
+- Login Google com 2FA funcionando
+- Realtime implementado (UI atualiza automaticamente)
+- Dados salvos no Supabase
 
+**Para continuar, cole isso na nova sessao:**
+```
+Leia o arquivo .claude/CONTINUE_BROWSER_INTEGRATIONS.md e continue de onde paramos.
+```
+
+---
+
+## O QUE FOI FEITO (25/12/2025)
+
+### Testes Completados
+| Teste | Status | Observacoes |
+|-------|--------|-------------|
+| Disconnect pelo frontend | OK | Remove sessao e atualiza banco |
+| Login com 2FA | OK | Detecta WAITING_PHONE e aguarda |
+| YouTube auto-connect | OK | Conecta automaticamente apos Google |
+| Realtime auto-update | OK | UI atualiza sem refresh manual |
+
+### Implementacoes
+
+**1. Supabase Realtime (NOVO)**
+- Adicionei `browser_logins` a publicacao `supabase_realtime`
+- Implementei subscription no frontend que escuta mudancas
+- UI atualiza automaticamente quando banco muda
+
+**2. Frontend (`BrowserIntegrations.tsx`)**
+```typescript
+// Imports adicionados
+import { useRef } from 'react';
+import { RealtimeChannel } from '@supabase/supabase-js';
+
+// Ref para canal Realtime
+const channelRef = useRef<RealtimeChannel | null>(null);
+
+// useEffect com subscription (linhas ~200-270)
+// Escuta INSERT, UPDATE, DELETE em browser_logins
+// Filtra por projeto_id atual
+```
+
+---
+
+## DADOS NO BANCO
+
+### Tabela `browser_logins` (projeto 117)
+| ID | Plataforma | Email | Conectado |
+|----|------------|-------|-----------|
+| 1 | google | valdair3d@gmail.com | true |
+| 2 | youtube | valdair3d@gmail.com | false |
+| 3 | reddit | valdair3d@gmail.com | false |
+
+### Publicacao Realtime
 ```sql
--- Verificar dados:
-SELECT platform_name, LENGTH(login_prompt) as prompt_len
-FROM browser_platforms;
--- Resultado: google (1277), youtube (628), reddit (718)
-```
-
-### Frontend
-- [x] Arquivo: `liftlio-react/src/pages/BrowserIntegrations.tsx` (CRIADO)
-- [x] Rota: `/browser-integrations` configurada em App.tsx
-- [x] Menu: Sidebar atualizado com "Browser Integrations"
-- [x] `BrowserServices.tsx` antigo foi DELETADO
-
-### Documentação
-- [x] `Servidor/Broser.mcp/CEREBRO.md` atualizado (seção 0)
-- [x] Plano em `.claude/plans/wondrous-juggling-curry.md`
-
----
-
-## O QUE FALTA FAZER
-
-### Fase 5: Testes (PENDENTE)
-- [ ] 5.1. Testar login Google com 2FA
-- [ ] 5.2. Testar login Reddit via Google SSO
-- [ ] 5.3. Testar reconexão (sessão expirada)
-- [ ] 5.4. Testar erros (credenciais erradas)
-
-### Fase 6: Cleanup
-- [ ] 6.3. Migrar dados existentes de `Projeto.browser_platforms` (opcional)
-
----
-
-## ARQUITETURA
-
-```
-Frontend (BrowserIntegrations.tsx)
-    │
-    ├── 1. Usuário digita email/senha
-    │
-    ├── 2. Salva credenciais em browser_logins (Supabase)
-    │
-    ├── 3. Busca prompt de browser_platforms
-    │
-    ├── 4. Substitui {{email}} e {{password}} no prompt
-    │
-    └── 5. Envia task completo para agente (mesmo endpoint da página Computer)
-            │
-            └── POST http://173.249.22.2:10117/agent/task
-                {
-                  "task": "prompt completo com credenciais"
-                }
+-- browser_logins esta na publicacao:
+SELECT * FROM pg_publication_tables WHERE pubname = 'supabase_realtime';
+-- Inclui: browser_logins (adicionado em 25/12)
 ```
 
 ---
 
-## CÓDIGOS DE RESPOSTA DO AGENTE
+## ARQUITETURA ATUAL
 
-| Código | Significado |
-|--------|-------------|
-| `LOGIN_SUCCESS` | Login OK |
-| `ALREADY_LOGGED` | Já estava logado |
-| `WAITING_2FA` | Aguardando aprovação no telefone |
-| `WAITING_CODE` | Precisa digitar código |
-| `INVALID_CREDENTIALS` | Email/senha errados |
-| `CAPTCHA_FAILED` | Não conseguiu resolver CAPTCHA |
-| `ACCOUNT_LOCKED` | Conta bloqueada |
-| `ERROR: <msg>` | Erro genérico |
+```
+                       FRONTEND
+  BrowserIntegrations.tsx
+
+  1. Usuario digita email/senha
+  2. Clica "Connect Google Account"
+  3. Salva em browser_logins (Supabase)
+  4. Busca prompt de browser_platforms
+  5. Envia para agente VPS
+
+  [Realtime Subscription]
+  - Escuta mudancas em browser_logins
+  - Atualiza UI automaticamente
+                       |
+                       v
+                  AGENTE VPS
+  http://173.249.22.2:10100/agent/task
+  http://173.249.22.2:10117/agent/task (projeto 117)
+
+  - Recebe prompt com credenciais
+  - Executa login no browser real
+  - Detecta 2FA e retorna WAITING_PHONE
+  - Atualiza banco quando sucesso
+                       |
+                       v
+                    SUPABASE
+
+  browser_logins     -> Credenciais e status
+  browser_platforms  -> Prompts de login
+
+  [Realtime]
+  - Publica eventos INSERT/UPDATE/DELETE
+  - Frontend recebe e atualiza UI
+```
+
+---
+
+## PENDENCIAS
+
+### Alta Prioridade
+- [ ] **Criar migration local** para `browser_logins` na publicacao Realtime
+  - Executei direto no banco, nao criei arquivo .sql
+  - Criar em: `liftlio-react/supabase/migrations/YYYYMMDD_add_browser_logins_to_realtime.sql`
+
+### Media Prioridade
+- [ ] Testar Reddit login via Google SSO
+- [ ] Testar reconexao quando sessao expira
+- [ ] Melhorar tratamento de erros no frontend
+
+### Baixa Prioridade
+- [ ] Implementar Vault para senhas (atualmente texto simples)
+- [ ] Adicionar mais plataformas (Twitter, Instagram, etc.)
+
+---
+
+## CODIGOS DE RESPOSTA DO AGENTE
+
+| Codigo | Significado | Acao Frontend |
+|--------|-------------|---------------|
+| `LOGIN_SUCCESS` | Login OK | Mostrar sucesso |
+| `ALREADY_LOGGED` | Ja estava logado | Mostrar sucesso |
+| `WAITING_PHONE` | Aguardando 2FA no telefone | Mostrar "Approve on phone" |
+| `WAITING_CODE` | Precisa digitar codigo | Mostrar input de codigo |
+| `INVALID_CREDENTIALS` | Email/senha errados | Mostrar erro |
+| `CAPTCHA_FAILED` | Nao resolveu CAPTCHA | Tentar novamente |
+| `ACCOUNT_LOCKED` | Conta bloqueada | Mostrar erro |
 
 ---
 
 ## ARQUIVOS IMPORTANTES
 
-| Arquivo | Descrição |
+| Arquivo | Descricao |
 |---------|-----------|
-| `liftlio-react/src/pages/BrowserIntegrations.tsx` | Nova página de login |
-| `Servidor/Broser.mcp/CEREBRO.md` | Documentação do sistema browser |
-| `.claude/plans/wondrous-juggling-curry.md` | Plano detalhado |
+| `liftlio-react/src/pages/BrowserIntegrations.tsx` | Pagina principal (Realtime aqui) |
+| `Servidor/Broser.mcp/CEREBRO.md` | Documentacao do sistema browser |
+| `claude-code-agent/api/server-vnc.js` | Servidor do agente (NAO modificar) |
 
 ---
 
-## DECISÕES TOMADAS
+## COMO TESTAR
 
-1. **Senhas**: Texto simples agora, Vault depois
-2. **Proxy**: Global (porta 10000 sticky)
-3. **Backend**: NÃO modificar server-vnc.js - funciona bem para Computer
-
----
-
-## PARA TESTAR
-
-1. Iniciar app: `cd liftlio-react && npm start`
-2. Acessar: http://localhost:3000/browser-integrations
-3. Preencher email/senha Google
-4. Clicar "Connect Google"
-5. Verificar resposta do agente
-
-**IMPORTANTE:** Container do browser precisa estar rodando no VPS (173.249.22.2)
-
----
-
-## COMMIT PENDENTE
-
-O código está pronto mas NÃO foi commitado (usuário não autorizou).
-
-Para commitar:
 ```bash
-git add .
-git commit -m "feat(browser): new login system with database-driven prompts"
-git push origin feature/browser-integrations
+# 1. Iniciar frontend
+cd liftlio-react && npm start
+
+# 2. Acessar
+http://localhost:3000/browser-integrations
+
+# 3. Preencher credenciais Google
+# 4. Clicar "Connect Google Account"
+# 5. Aprovar 2FA no telefone
+# 6. UI deve atualizar AUTOMATICAMENTE (sem refresh)
+```
+
+**Credenciais de teste:**
+- Email: valdair3d@gmail.com
+- Senha: (salva no banco, 15 caracteres)
+
+---
+
+## SENHA NO BANCO
+
+A senha esta salva em `browser_logins.login_password` (texto simples).
+Para verificar:
+```sql
+SELECT login_email, LENGTH(login_password) as pwd_len
+FROM browser_logins
+WHERE platform_name = 'google';
+-- Resultado: valdair3d@gmail.com, 15 chars
 ```
 
 ---
 
-## PROMPT PARA CONTINUAR
-
-Cole isso em uma nova conversa:
+## LOGS IMPORTANTES (Console do Browser)
 
 ```
-Continuar implementação do sistema de login do browser.
-
-Contexto: `.claude/CONTINUE_BROWSER_INTEGRATIONS.md`
-Plano: `.claude/plans/wondrous-juggling-curry.md`
-
-Estado atual:
-- Tabelas criadas no Supabase (browser_platforms, browser_logins)
-- Frontend BrowserIntegrations.tsx criado
-- Rotas configuradas
-
-Próximo passo: Testar o login com o agente real
+[Realtime] Setting up subscription for project: 117
+[Realtime] Successfully subscribed to browser_logins
+[Realtime] Change detected: UPDATE {...}
+[Realtime] Login connected: google
 ```
+
+Se esses logs aparecerem, o Realtime esta funcionando.
+
+---
+
+## GIT STATUS
+
+Branch: `feature/browser-integrations`
+Ultimo commit: `a0a7aaa` - "feat(browser): add Supabase Realtime for auto-update UI"
+
+Tudo commitado e no GitHub.
