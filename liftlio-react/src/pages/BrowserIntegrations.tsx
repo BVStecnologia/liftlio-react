@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import styled, { keyframes } from 'styled-components';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import styled, { keyframes, css } from 'styled-components';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import {
   FaGoogle as FaGoogleBase,
   FaYoutube as FaYoutubeBase,
@@ -10,7 +11,10 @@ import {
   FaLock as FaLockBase,
   FaEye as FaEyeBase,
   FaEyeSlash as FaEyeSlashBase,
-  FaPlug as FaPlugBase
+  FaPlug as FaPlugBase,
+  FaSignOutAlt as FaSignOutAltBase,
+  FaMobileAlt as FaMobileAltBase,
+  FaEnvelope as FaEnvelopeBase
 } from 'react-icons/fa';
 import { useProject } from '../context/ProjectContext';
 import { supabase } from '../lib/supabaseClient';
@@ -26,6 +30,9 @@ const FaLock: React.FC<{ size?: number; className?: string; style?: React.CSSPro
 const FaEye: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = (props) => React.createElement(FaEyeBase as any, props);
 const FaEyeSlash: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = (props) => React.createElement(FaEyeSlashBase as any, props);
 const FaPlug: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = (props) => React.createElement(FaPlugBase as any, props);
+const FaSignOutAlt: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = (props) => React.createElement(FaSignOutAltBase as any, props);
+const FaMobileAlt: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = (props) => React.createElement(FaMobileAltBase as any, props);
+const FaEnvelope: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = (props) => React.createElement(FaEnvelopeBase as any, props);
 
 // ============================================
 // CONFIG
@@ -56,6 +63,7 @@ interface BrowserPlatform {
   display_name: string;
   login_url: string;
   login_prompt: string;
+  logout_prompt?: string;
   check_logged_prompt: string;
   twofa_phone_prompt: string;
   twofa_code_prompt: string;
@@ -81,7 +89,13 @@ interface BrowserLogin {
   is_active: boolean;
 }
 
-type LoginStatus = 'idle' | 'connecting' | '2fa_phone' | '2fa_code' | 'success' | 'error';
+type LoginStatus = 'idle' | 'connecting' | '2fa_phone' | '2fa_code' | 'success' | 'error' | 'disconnecting';
+
+interface AgentStep {
+  id: string;
+  label: string;
+  status: 'pending' | 'active' | 'completed' | 'error';
+}
 
 // ============================================
 // ICONS MAP
@@ -110,6 +124,12 @@ const spin = keyframes`
 const pulse = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+`;
+
+const phoneVibrate = keyframes`
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
 `;
 
 // ============================================
@@ -188,6 +208,7 @@ const StepTitle = styled.h2`
   font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
   margin: 0;
+  flex: 1;
 `;
 
 const StepContent = styled.div``;
@@ -276,7 +297,35 @@ const PrimaryButton = styled.button<{ $loading?: boolean }>`
   }
 
   svg {
-    ${props => props.$loading && `animation: ${spin} 1s linear infinite;`}
+    ${props => props.$loading && css`animation: ${spin} 1s linear infinite;`}
+  }
+`;
+
+const DisconnectButton = styled.button<{ $loading?: boolean }>`
+  padding: 10px 20px;
+  background: transparent;
+  color: #EF4444;
+  border: 1px solid #EF4444;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  svg {
+    ${props => props.$loading && css`animation: ${spin} 1s linear infinite;`}
   }
 `;
 
@@ -379,7 +428,6 @@ const StatusMessage = styled.div<{ $type: 'info' | 'success' | 'error' | 'warnin
 
   svg {
     flex-shrink: 0;
-    animation: ${pulse} 2s ease-in-out infinite;
   }
 `;
 
@@ -419,12 +467,127 @@ const ConnectedBadge = styled.div`
   }
 `;
 
+// Agent Steps Progress
+const AgentStepsContainer = styled.div`
+  margin: 20px 0;
+  padding: 20px;
+  background: ${props => props.theme.colors.bg.tertiary};
+  border-radius: 12px;
+  border: 1px solid ${props => props.theme.colors.border.primary};
+`;
+
+const AgentStepItem = styled.div<{ $status: 'pending' | 'active' | 'completed' | 'error' }>`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid ${props => props.theme.colors.border.primary};
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  &:first-child {
+    padding-top: 0;
+  }
+`;
+
+const StepIndicator = styled.div<{ $status: 'pending' | 'active' | 'completed' | 'error' }>`
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+
+  ${props => props.$status === 'pending' && `
+    background: ${props.theme.colors.bg.secondary};
+    border: 2px solid ${props.theme.colors.border.primary};
+    color: ${props.theme.colors.text.muted};
+  `}
+
+  ${props => props.$status === 'active' && `
+    background: rgba(139, 92, 246, 0.2);
+    border: 2px solid #8b5cf6;
+    color: #8b5cf6;
+  `}
+
+  ${props => props.$status === 'completed' && `
+    background: #10B981;
+    border: 2px solid #10B981;
+    color: white;
+  `}
+
+  ${props => props.$status === 'error' && `
+    background: rgba(239, 68, 68, 0.2);
+    border: 2px solid #EF4444;
+    color: #EF4444;
+  `}
+
+  svg {
+    ${props => props.$status === 'active' && css`animation: ${spin} 1s linear infinite;`}
+  }
+`;
+
+const StepLabel = styled.span<{ $status: 'pending' | 'active' | 'completed' | 'error' }>`
+  font-size: 14px;
+  color: ${props =>
+    props.$status === 'completed' ? '#10B981' :
+    props.$status === 'active' ? props.theme.colors.text.primary :
+    props.$status === 'error' ? '#EF4444' :
+    props.theme.colors.text.muted
+  };
+  font-weight: ${props => props.$status === 'active' ? '500' : '400'};
+`;
+
+// 2FA Phone Animation
+const PhoneWaitingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  text-align: center;
+`;
+
+const PhoneIcon = styled.div`
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 36px;
+  margin-bottom: 16px;
+  animation: ${phoneVibrate} 0.5s ease-in-out infinite;
+`;
+
+const PhoneText = styled.p`
+  font-size: 16px;
+  color: ${props => props.theme.colors.text.primary};
+  margin: 0 0 8px 0;
+  font-weight: 500;
+`;
+
+const PhoneSubtext = styled.p`
+  font-size: 13px;
+  color: ${props => props.theme.colors.text.secondary};
+  margin: 0;
+`;
+
 // ============================================
 // COMPONENT
 // ============================================
 
 const BrowserIntegrations: React.FC = () => {
   const { currentProject } = useProject();
+
+  // Realtime channel ref
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   // State
   const [platforms, setPlatforms] = useState<BrowserPlatform[]>([]);
@@ -438,6 +601,7 @@ const BrowserIntegrations: React.FC = () => {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [currentPlatform, setCurrentPlatform] = useState<string>('google');
   const [dynamicApiPort, setDynamicApiPort] = useState<number | null>(null);
+  const [agentSteps, setAgentSteps] = useState<AgentStep[]>([]);
 
   // Load data
   useEffect(() => {
@@ -450,14 +614,110 @@ const BrowserIntegrations: React.FC = () => {
     }
   }, [currentProject?.id]);
 
+  // ============================================
+  // REALTIME SUBSCRIPTION - Auto-update UI when database changes
+  // ============================================
+  useEffect(() => {
+    if (!currentProject?.id) return;
+
+    // Cleanup previous channel if exists
+    if (channelRef.current) {
+      console.log('[Realtime] Removing previous channel');
+      supabase.removeChannel(channelRef.current);
+    }
+
+    console.log('[Realtime] Setting up subscription for project:', currentProject.id);
+
+    const channel = supabase
+      .channel(`browser-logins-${currentProject.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'browser_logins',
+          filter: `projeto_id=eq.${currentProject.id}`
+        },
+        (payload) => {
+          console.log('[Realtime] Change detected:', payload.eventType, payload);
+
+          const newRecord = payload.new as BrowserLogin;
+          const oldRecord = payload.old as BrowserLogin;
+
+          switch (payload.eventType) {
+            case 'INSERT':
+              setLogins(prev => {
+                // Avoid duplicates
+                if (prev.some(l => l.id === newRecord.id)) return prev;
+                return [...prev, newRecord];
+              });
+              break;
+
+            case 'UPDATE':
+              setLogins(prev => prev.map(login =>
+                login.id === newRecord.id ? newRecord : login
+              ));
+              // If login became connected, update status
+              if (newRecord.is_connected && !oldRecord?.is_connected) {
+                console.log('[Realtime] Login connected:', newRecord.platform_name);
+                setLoginStatus('success');
+                if (newRecord.platform_name === 'google') {
+                  setStatusMessage('Connected to Google & YouTube!');
+                  // Update steps if they exist
+                  setAgentSteps(prev => prev.map(step => ({
+                    ...step,
+                    status: 'completed' as const
+                  })));
+                } else {
+                  setStatusMessage(`${newRecord.platform_name} connected!`);
+                }
+              }
+              break;
+
+            case 'DELETE':
+              setLogins(prev => prev.filter(login => login.id !== oldRecord?.id));
+              break;
+          }
+        }
+      )
+      .subscribe((status, err) => {
+        console.log('[Realtime] Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('[Realtime] Successfully subscribed to browser_logins');
+        }
+        if (status === 'CHANNEL_ERROR') {
+          console.error('[Realtime] Channel error:', err);
+        }
+      });
+
+    channelRef.current = channel;
+
+    // Cleanup on unmount or project change
+    return () => {
+      console.log('[Realtime] Cleanup - removing channel');
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [currentProject?.id]);
+
   const loadPlatforms = async () => {
-    const { data } = await supabase
+    console.log('[BrowserIntegrations] loadPlatforms called');
+    const { data, error } = await supabase
       .from('browser_platforms')
       .select('*')
       .eq('is_active', true)
       .order('id');
 
-    if (data) setPlatforms(data);
+    console.log('[BrowserIntegrations] loadPlatforms result:', { data, error });
+    if (error) {
+      console.error('[BrowserIntegrations] loadPlatforms error:', error);
+    }
+    if (data) {
+      console.log('[BrowserIntegrations] Setting platforms:', data.length, 'items');
+      setPlatforms(data);
+    }
   };
 
   const loadLogins = async () => {
@@ -474,7 +734,16 @@ const BrowserIntegrations: React.FC = () => {
 
   // Check if Google is connected
   const googleLogin = logins.find(l => l.platform_name === 'google' && l.is_connected);
+  const youtubeLogin = logins.find(l => l.platform_name === 'youtube' && l.is_connected);
   const isGoogleConnected = !!googleLogin;
+  const isYoutubeConnected = !!youtubeLogin;
+
+  // Update step status
+  const updateStep = (stepId: string, status: AgentStep['status']) => {
+    setAgentSteps(prev => prev.map(step =>
+      step.id === stepId ? { ...step, status } : step
+    ));
+  };
 
   // Get container API port
   const checkContainerStatus = useCallback(async (): Promise<number | null> => {
@@ -533,21 +802,49 @@ const BrowserIntegrations: React.FC = () => {
   const fillPromptTemplate = (template: string, vars: Record<string, string>): string => {
     let filled = template;
     for (const [key, value] of Object.entries(vars)) {
-      filled = filled.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
+      filled = filled.replace(new RegExp(`\{\{${key}\}\}`, 'g'), value);
     }
     return filled;
+  };
+
+  // Save YouTube login record
+  const saveYoutubeLogin = async () => {
+    if (!currentProject?.id || !googleLogin) return;
+
+    await supabase
+      .from('browser_logins')
+      .upsert({
+        projeto_id: currentProject.id,
+        platform_name: 'youtube',
+        login_email: googleLogin.login_email,
+        uses_google_sso: true,
+        google_login_id: googleLogin.id,
+        is_connected: true,
+        connected_at: new Date().toISOString(),
+        is_active: true,
+      }, {
+        onConflict: 'projeto_id,platform_name,login_email',
+      });
   };
 
   // Handle Google login
   const handleGoogleLogin = async () => {
     if (!currentProject?.id || !email || !password) return;
 
+    // Initialize steps
+    setAgentSteps([
+      { id: 'save', label: 'Saving credentials...', status: 'active' },
+      { id: 'check', label: 'Checking login status', status: 'pending' },
+      { id: 'login', label: 'Logging into Google', status: 'pending' },
+      { id: 'youtube', label: 'Verifying YouTube access', status: 'pending' },
+    ]);
+
     setLoginStatus('connecting');
-    setStatusMessage('Connecting to Google...');
+    setStatusMessage('');
 
     try {
       // 1. Save credentials to database
-      const { data: loginData, error: saveError } = await supabase
+      const { error: saveError } = await supabase
         .from('browser_logins')
         .upsert({
           projeto_id: currentProject.id,
@@ -564,6 +861,8 @@ const BrowserIntegrations: React.FC = () => {
         .single();
 
       if (saveError) throw saveError;
+      updateStep('save', 'completed');
+      updateStep('check', 'active');
 
       // 2. Get platform prompts
       const googlePlatform = platforms.find(p => p.platform_name === 'google');
@@ -575,13 +874,19 @@ const BrowserIntegrations: React.FC = () => {
       console.log('[BrowserIntegrations] Check result:', checkResult);
 
       if (checkResult.includes('ALREADY_LOGGED')) {
-        // Already logged in!
+        updateStep('check', 'completed');
+        updateStep('login', 'completed');
+        updateStep('youtube', 'completed');
         await updateLoginStatus('google', true);
+        await saveYoutubeLogin();
         setLoginStatus('success');
-        setStatusMessage('Already logged in to Google!');
+        setStatusMessage('Already logged in to Google & YouTube!');
         await loadLogins();
         return;
       }
+
+      updateStep('check', 'completed');
+      updateStep('login', 'active');
 
       // 4. Not logged in, execute login
       const loginPrompt = fillPromptTemplate(googlePlatform.login_prompt, {
@@ -592,32 +897,52 @@ const BrowserIntegrations: React.FC = () => {
       const loginResult = await sendTask(loginPrompt);
       console.log('[BrowserIntegrations] Login result:', loginResult);
 
-      // 5. Handle response
-      if (loginResult.includes('LOGIN_SUCCESS')) {
+      // 5. Handle response - parse GOOGLE:SUCCESS|YOUTUBE:SUCCESS format
+      if (loginResult.includes('GOOGLE:SUCCESS') && loginResult.includes('YOUTUBE:SUCCESS')) {
+        updateStep('login', 'completed');
+        updateStep('youtube', 'completed');
         await updateLoginStatus('google', true);
+        await saveYoutubeLogin();
         setLoginStatus('success');
-        setStatusMessage('Successfully connected to Google!');
-      } else if (loginResult.includes('WAITING_2FA')) {
+        setStatusMessage('Connected to Google & YouTube!');
+      } else if (loginResult.includes('LOGIN_SUCCESS') || loginResult.includes('GOOGLE:SUCCESS')) {
+        updateStep('login', 'completed');
+        updateStep('youtube', 'active');
+        await updateLoginStatus('google', true);
+        await saveYoutubeLogin();
+        updateStep('youtube', 'completed');
+        setLoginStatus('success');
+        setStatusMessage('Connected to Google & YouTube!');
+      } else if (loginResult.includes('WAITING_PHONE')) {
+        updateStep('login', 'active');
         setLoginStatus('2fa_phone');
-        setStatusMessage('Approve the login on your phone');
+        setStatusMessage('Check your phone and approve the login request');
         startPolling2FA();
+        return;
       } else if (loginResult.includes('WAITING_CODE')) {
+        updateStep('login', 'active');
         setLoginStatus('2fa_code');
-        setStatusMessage('Enter the verification code');
+        setStatusMessage('Enter the verification code sent to your email or phone');
+        return;
       } else if (loginResult.includes('INVALID_CREDENTIALS')) {
+        updateStep('login', 'error');
         setLoginStatus('error');
         setStatusMessage('Invalid email or password');
       } else if (loginResult.includes('CAPTCHA_FAILED')) {
+        updateStep('login', 'error');
         setLoginStatus('error');
         setStatusMessage('Could not solve CAPTCHA. Please try again later.');
       } else if (loginResult.includes('ACCOUNT_LOCKED')) {
+        updateStep('login', 'error');
         setLoginStatus('error');
         setStatusMessage('Account is locked. Please recover your account.');
       } else if (loginResult.includes('ERROR:')) {
+        updateStep('login', 'error');
         const errorMsg = loginResult.split('ERROR:')[1]?.trim() || 'Unknown error';
         setLoginStatus('error');
         setStatusMessage(errorMsg);
       } else {
+        updateStep('login', 'error');
         setLoginStatus('error');
         setStatusMessage('Unexpected response from agent');
       }
@@ -627,6 +952,65 @@ const BrowserIntegrations: React.FC = () => {
       console.error('[BrowserIntegrations] Login error:', error);
       setLoginStatus('error');
       setStatusMessage(error.message || 'Connection failed');
+    }
+  };
+
+  // Handle disconnect
+  const handleDisconnect = async () => {
+    if (!currentProject?.id || !isGoogleConnected) return;
+
+    setLoginStatus('disconnecting');
+    setStatusMessage('Disconnecting...');
+
+    try {
+      console.log('[BrowserIntegrations] All platforms:', JSON.stringify(platforms, null, 2));
+      const googlePlatform = platforms.find(p => p.platform_name === 'google');
+      console.log('[BrowserIntegrations] Google platform found:', JSON.stringify(googlePlatform, null, 2));
+      console.log('[BrowserIntegrations] logout_prompt exists:', !!googlePlatform?.logout_prompt);
+      if (!googlePlatform?.logout_prompt) {
+        throw new Error('Logout prompt not configured');
+      }
+
+      const result = await sendTask(googlePlatform.logout_prompt);
+      console.log('[BrowserIntegrations] Logout result:', result);
+
+      if (result.includes('LOGOUT_SUCCESS') || result.includes('SUCCESS') || result.includes('LOGGED_OUT')) {
+        // Update Google as disconnected
+        await supabase
+          .from('browser_logins')
+          .update({
+            is_connected: false,
+            connected_at: null,
+          })
+          .eq('projeto_id', currentProject.id)
+          .eq('platform_name', 'google')
+          .eq('is_active', true);
+
+        // Also disconnect YouTube
+        await supabase
+          .from('browser_logins')
+          .update({
+            is_connected: false,
+            connected_at: null,
+          })
+          .eq('projeto_id', currentProject.id)
+          .eq('platform_name', 'youtube')
+          .eq('is_active', true);
+
+        setLoginStatus('idle');
+        setStatusMessage('');
+        setEmail('');
+        setPassword('');
+        setAgentSteps([]);
+        await loadLogins();
+      } else {
+        setLoginStatus('error');
+        setStatusMessage('Failed to disconnect. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('[BrowserIntegrations] Disconnect error:', error);
+      setLoginStatus('error');
+      setStatusMessage(error.message || 'Disconnect failed');
     }
   };
 
@@ -662,15 +1046,20 @@ const BrowserIntegrations: React.FC = () => {
 
         const result = await sendTask(googlePlatform.twofa_phone_prompt);
 
-        if (result.includes('LOGIN_SUCCESS')) {
+        if (result.includes('LOGIN_SUCCESS') || result.includes('GOOGLE:SUCCESS')) {
+          updateStep('login', 'completed');
+          updateStep('youtube', 'active');
           await updateLoginStatus('google', true);
+          await saveYoutubeLogin();
+          updateStep('youtube', 'completed');
           setLoginStatus('success');
-          setStatusMessage('Successfully connected to Google!');
+          setStatusMessage('Connected to Google & YouTube!');
           await loadLogins();
           return;
         } else if (result.includes('DENIED')) {
+          updateStep('login', 'error');
           setLoginStatus('error');
-          setStatusMessage('Login request was denied');
+          setStatusMessage('Login request was denied on your phone');
           return;
         }
 
@@ -679,6 +1068,7 @@ const BrowserIntegrations: React.FC = () => {
         if (attempts < maxAttempts) {
           setTimeout(poll, 5000);
         } else {
+          updateStep('login', 'error');
           setLoginStatus('error');
           setStatusMessage('2FA timeout. Please try again.');
         }
@@ -710,14 +1100,19 @@ const BrowserIntegrations: React.FC = () => {
 
       const result = await sendTask(prompt);
 
-      if (result.includes('LOGIN_SUCCESS')) {
+      if (result.includes('LOGIN_SUCCESS') || result.includes('GOOGLE:SUCCESS')) {
+        updateStep('login', 'completed');
+        updateStep('youtube', 'active');
         await updateLoginStatus('google', true);
+        await saveYoutubeLogin();
+        updateStep('youtube', 'completed');
         setLoginStatus('success');
-        setStatusMessage('Successfully connected to Google!');
+        setStatusMessage('Connected to Google & YouTube!');
       } else if (result.includes('INVALID_CODE')) {
         setLoginStatus('2fa_code');
         setStatusMessage('Invalid code. Please try again.');
       } else {
+        updateStep('login', 'error');
         setLoginStatus('error');
         setStatusMessage('Verification failed');
       }
@@ -808,18 +1203,26 @@ const BrowserIntegrations: React.FC = () => {
     return IconComponent ? <IconComponent /> : <FaPlug />;
   };
 
-  // Filter platforms that support Google SSO (excluding Google itself)
-  const ssoPlatforms = platforms.filter(p => p.supports_google_sso && p.platform_name !== 'google');
+  // Filter platforms that support Google SSO (excluding Google and YouTube)
+  const ssoPlatforms = platforms.filter(p =>
+    p.supports_google_sso &&
+    p.platform_name !== 'google' &&
+    p.platform_name !== 'youtube'
+  );
+
+  // ============================================
+  // RENDER
+  // ============================================
 
   return (
     <PageContainer>
       <PageHeader>
         <PageTitle>
-          <FaPlug />
+          <FaPlug size={28} />
           Browser Integrations
         </PageTitle>
         <PageDescription>
-          Connect your accounts to enable browser automation
+          Connect your accounts for automated actions via browser
         </PageDescription>
       </PageHeader>
 
@@ -827,9 +1230,9 @@ const BrowserIntegrations: React.FC = () => {
       <StepCard $active={!isGoogleConnected} $completed={isGoogleConnected}>
         <StepHeader>
           <StepNumber $completed={isGoogleConnected}>
-            {isGoogleConnected ? <FaCheck /> : '1'}
+            {isGoogleConnected ? <FaCheck size={16} /> : '1'}
           </StepNumber>
-          <StepTitle>Connect Google Account</StepTitle>
+          <StepTitle>Google Account</StepTitle>
           {isGoogleConnected && (
             <ConnectedBadge>
               <FaCheck /> Connected
@@ -839,104 +1242,190 @@ const BrowserIntegrations: React.FC = () => {
 
         <StepContent>
           {isGoogleConnected ? (
-            <PlatformItem $connected={true}>
-              <PlatformIcon $color="#4285F4">
-                <FaGoogle />
-              </PlatformIcon>
-              <PlatformInfo>
-                <PlatformName>Google</PlatformName>
-                <PlatformStatus $connected={true}>
-                  <FaCheck /> {googleLogin?.login_email}
-                </PlatformStatus>
-              </PlatformInfo>
-            </PlatformItem>
-          ) : (
             <>
-              <FormGroup>
-                <FormLabel>Email</FormLabel>
-                <FormInput
-                  type="email"
-                  placeholder="your@gmail.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loginStatus === 'connecting'}
-                />
-              </FormGroup>
+              {/* Connected State */}
+              <PlatformList>
+                <PlatformItem $connected={true}>
+                  <PlatformIcon $color="#EA4335">
+                    <FaGoogle />
+                  </PlatformIcon>
+                  <PlatformInfo>
+                    <PlatformName>Google</PlatformName>
+                    <PlatformStatus $connected={true}>
+                      <FaCheck size={10} /> {googleLogin?.login_email}
+                    </PlatformStatus>
+                  </PlatformInfo>
+                </PlatformItem>
 
-              <FormGroup>
-                <FormLabel>Password</FormLabel>
-                <InputWrapper>
-                  <FormInput
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loginStatus === 'connecting'}
-                  />
-                  <PasswordToggle
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </PasswordToggle>
-                </InputWrapper>
-              </FormGroup>
+                <PlatformItem $connected={isYoutubeConnected}>
+                  <PlatformIcon $color="#FF0000">
+                    <FaYoutube />
+                  </PlatformIcon>
+                  <PlatformInfo>
+                    <PlatformName>YouTube</PlatformName>
+                    <PlatformStatus $connected={isYoutubeConnected}>
+                      {isYoutubeConnected ? (
+                        <>
+                          <FaCheck size={10} /> Connected via Google SSO
+                        </>
+                      ) : (
+                        'Will connect automatically'
+                      )}
+                    </PlatformStatus>
+                  </PlatformInfo>
+                </PlatformItem>
+              </PlatformList>
 
-              {loginStatus === '2fa_code' && (
-                <FormGroup>
-                  <FormLabel>Verification Code</FormLabel>
-                  <TwoFAInput
-                    type="text"
-                    placeholder="000000"
-                    value={twoFACode}
-                    onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    maxLength={6}
-                  />
-                </FormGroup>
-              )}
-
-              <PrimaryButton
-                onClick={loginStatus === '2fa_code' ? handleSubmit2FACode : handleGoogleLogin}
-                disabled={
-                  loginStatus === 'connecting' ||
-                  loginStatus === '2fa_phone' ||
-                  (!email || !password) && loginStatus !== '2fa_code'
-                }
-                $loading={loginStatus === 'connecting'}
+              <DisconnectButton
+                onClick={handleDisconnect}
+                disabled={loginStatus === 'disconnecting'}
+                $loading={loginStatus === 'disconnecting'}
+                style={{ marginTop: '20px' }}
               >
-                {loginStatus === 'connecting' ? (
+                {loginStatus === 'disconnecting' ? (
                   <>
-                    <FaSpinner /> Connecting...
-                  </>
-                ) : loginStatus === '2fa_code' ? (
-                  <>
-                    <FaLock /> Verify Code
+                    <FaSpinner /> Disconnecting...
                   </>
                 ) : (
                   <>
-                    <FaGoogle /> Connect Google
+                    <FaSignOutAlt /> Disconnect Account
                   </>
                 )}
-              </PrimaryButton>
+              </DisconnectButton>
+            </>
+          ) : (
+            <>
+              {/* Login Form */}
+              {loginStatus !== '2fa_phone' && loginStatus !== '2fa_code' && (
+                <>
+                  <FormGroup>
+                    <FormLabel>
+                      <FaEnvelope style={{ marginRight: 6 }} />
+                      Google Email
+                    </FormLabel>
+                    <FormInput
+                      type="email"
+                      placeholder="your-email@gmail.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={loginStatus === 'connecting'}
+                    />
+                  </FormGroup>
 
-              {statusMessage && (
-                <StatusMessage
-                  $type={
-                    loginStatus === 'success' ? 'success' :
-                    loginStatus === 'error' ? 'error' :
-                    loginStatus === '2fa_phone' || loginStatus === '2fa_code' ? 'warning' :
-                    'info'
-                  }
-                >
-                  {loginStatus === 'connecting' && <FaSpinner />}
-                  {loginStatus === '2fa_phone' && <FaLock />}
-                  {loginStatus === '2fa_code' && <FaLock />}
-                  {loginStatus === 'success' && <FaCheck />}
-                  {loginStatus === 'error' && <FaTimes />}
-                  {statusMessage}
-                </StatusMessage>
+                  <FormGroup>
+                    <FormLabel>
+                      <FaLock style={{ marginRight: 6 }} />
+                      Password
+                    </FormLabel>
+                    <InputWrapper>
+                      <FormInput
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={loginStatus === 'connecting'}
+                      />
+                      <PasswordToggle
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+                      </PasswordToggle>
+                    </InputWrapper>
+                  </FormGroup>
+
+                  {/* Agent Steps Progress */}
+                  {agentSteps.length > 0 && loginStatus === 'connecting' && (
+                    <AgentStepsContainer>
+                      {agentSteps.map(step => (
+                        <AgentStepItem key={step.id} $status={step.status}>
+                          <StepIndicator $status={step.status}>
+                            {step.status === 'completed' ? <FaCheck size={12} /> :
+                             step.status === 'active' ? <FaSpinner size={12} /> :
+                             step.status === 'error' ? <FaTimes size={12} /> :
+                             null}
+                          </StepIndicator>
+                          <StepLabel $status={step.status}>{step.label}</StepLabel>
+                        </AgentStepItem>
+                      ))}
+                    </AgentStepsContainer>
+                  )}
+
+                  <PrimaryButton
+                    onClick={handleGoogleLogin}
+                    disabled={!email || !password || loginStatus === 'connecting'}
+                    $loading={loginStatus === 'connecting'}
+                  >
+                    {loginStatus === 'connecting' ? (
+                      <>
+                        <FaSpinner /> Connecting...
+                      </>
+                    ) : (
+                      <>
+                        <FaGoogle /> Connect Google Account
+                      </>
+                    )}
+                  </PrimaryButton>
+                </>
+              )}
+
+              {/* 2FA Phone Waiting */}
+              {loginStatus === '2fa_phone' && (
+                <PhoneWaitingContainer>
+                  <PhoneIcon>
+                    <FaMobileAlt />
+                  </PhoneIcon>
+                  <PhoneText>Approve login on your phone</PhoneText>
+                  <PhoneSubtext>
+                    Open the Google app on your phone and tap Yes to approve
+                  </PhoneSubtext>
+                  <StatusMessage $type="info" style={{ marginTop: 20 }}>
+                    <FaSpinner className="spin" />
+                    Waiting for approval... This may take up to 2 minutes
+                  </StatusMessage>
+                </PhoneWaitingContainer>
+              )}
+
+              {/* 2FA Code Input */}
+              {loginStatus === '2fa_code' && (
+                <div style={{ textAlign: 'center' }}>
+                  <PhoneText>Enter verification code</PhoneText>
+                  <PhoneSubtext>
+                    Check your email or phone for the 6-digit code
+                  </PhoneSubtext>
+                  <TwoFAInput
+                    type="text"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={twoFACode}
+                    onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, ''))}
+                  />
+                  <PrimaryButton
+                    onClick={handleSubmit2FACode}
+                    disabled={twoFACode.length !== 6}
+                    style={{ maxWidth: 200, margin: '0 auto' }}
+                  >
+                    Verify Code
+                  </PrimaryButton>
+                </div>
               )}
             </>
+          )}
+
+          {/* Status Messages */}
+          {statusMessage && loginStatus !== 'connecting' && loginStatus !== '2fa_phone' && (
+            <StatusMessage
+              $type={
+                loginStatus === 'success' ? 'success' :
+                loginStatus === 'error' ? 'error' :
+                'info'
+              }
+            >
+              {loginStatus === 'success' ? <FaCheck /> :
+               loginStatus === 'error' ? <FaTimes /> :
+               <FaSpinner />}
+              {statusMessage}
+            </StatusMessage>
           )}
         </StepContent>
       </StepCard>
@@ -945,14 +1434,19 @@ const BrowserIntegrations: React.FC = () => {
       <StepCard $active={isGoogleConnected} $completed={false}>
         <StepHeader>
           <StepNumber $completed={false}>2</StepNumber>
-          <StepTitle>Connect Other Platforms</StepTitle>
+          <StepTitle>Other Platforms</StepTitle>
         </StepHeader>
 
         <StepContent>
           {!isGoogleConnected ? (
             <StatusMessage $type="info">
               <FaLock />
-              Connect Google first to enable other platforms
+              Connect your Google account first to enable other platforms
+            </StatusMessage>
+          ) : ssoPlatforms.length === 0 ? (
+            <StatusMessage $type="info">
+              <FaCheck />
+              No additional platforms available yet
             </StatusMessage>
           ) : (
             <>
@@ -964,9 +1458,9 @@ const BrowserIntegrations: React.FC = () => {
 
                   return (
                     <PlatformItem
-                      key={platform.platform_name}
+                      key={platform.id}
                       $connected={isConnected}
-                      onClick={() => togglePlatform(platform.platform_name)}
+                      onClick={() => !isConnected && togglePlatform(platform.platform_name)}
                     >
                       <PlatformIcon $color={platform.brand_color}>
                         {renderIcon(platform.icon_name)}
@@ -975,9 +1469,15 @@ const BrowserIntegrations: React.FC = () => {
                         <PlatformName>{platform.display_name}</PlatformName>
                         <PlatformStatus $connected={isConnected}>
                           {isConnected ? (
-                            <><FaCheck /> Connected via Google</>
+                            <>
+                              <FaCheck size={10} /> Connected via Google SSO
+                            </>
+                          ) : login?.last_error ? (
+                            <>
+                              <FaTimes size={10} /> {login.last_error}
+                            </>
                           ) : (
-                            <>Uses Google Account</>
+                            'Click to select'
                           )}
                         </PlatformStatus>
                       </PlatformInfo>
@@ -988,7 +1488,6 @@ const BrowserIntegrations: React.FC = () => {
                           onChange={() => togglePlatform(platform.platform_name)}
                         />
                       )}
-                      {isConnected && <FaCheck style={{ color: '#10B981' }} />}
                     </PlatformItem>
                   );
                 })}
@@ -999,6 +1498,7 @@ const BrowserIntegrations: React.FC = () => {
                   onClick={handleConnectPlatforms}
                   disabled={loginStatus === 'connecting'}
                   $loading={loginStatus === 'connecting'}
+                  style={{ marginTop: 20 }}
                 >
                   {loginStatus === 'connecting' ? (
                     <>
