@@ -2745,49 +2745,99 @@ const AdminDashboard: React.FC = () => {
       <Card>
         <CardHeader>
           <h3>System Health</h3>
+          {healthStatus.lastCheck && <span style={{ fontSize: '12px', color: '#9ca3af' }}>Last check: {healthStatus.lastCheck.toLocaleTimeString()}</span>}
         </CardHeader>
         <div style={{ padding: '16px' }}>
           <HealthGrid>
-            <HealthCard $status="ok">
+            <HealthCard $status={healthStatus.supabaseDb}>
               <div className="indicator" />
               <div className="info">
-                <div className="name">Supabase</div>
-                <div className="detail">Operational</div>
+                <div className="name">Supabase Database</div>
+                <div className="detail">PostgreSQL · {healthStatus.supabaseDb === 'ok' ? 'Operational' : healthStatus.supabaseDb === 'checking' ? 'Checking...' : 'Error'}</div>
               </div>
             </HealthCard>
-            <HealthCard $status="ok">
+            <HealthCard $status={healthStatus.supabaseAuth}>
+              <div className="indicator" />
+              <div className="info">
+                <div className="name">Supabase Auth</div>
+                <div className="detail">Google OAuth · {healthStatus.supabaseAuth === 'ok' ? 'Working' : healthStatus.supabaseAuth === 'checking' ? 'Checking...' : 'Error'}</div>
+              </div>
+            </HealthCard>
+            <HealthCard $status={healthStatus.flyioFrontend}>
               <div className="indicator" />
               <div className="info">
                 <div className="name">Fly.io Frontend</div>
-                <div className="detail">Operational</div>
+                <div className="detail">liftlio.com · {healthStatus.flyioFrontend === 'ok' ? 'Online' : healthStatus.flyioFrontend === 'checking' ? 'Checking...' : 'Offline'}</div>
               </div>
             </HealthCard>
-            <HealthCard $status="ok">
+            <HealthCard $status={healthStatus.vpsBrowser}>
               <div className="indicator" />
               <div className="info">
                 <div className="name">VPS Browser Agent</div>
-                <div className="detail">173.249.22.2 · Online</div>
+                <div className="detail">173.249.22.2 · {healthStatus.vpsBrowser === 'ok' ? 'Running' : healthStatus.vpsBrowser === 'checking' ? 'Checking...' : healthStatus.vpsBrowser === 'unknown' ? 'Unknown (CORS)' : 'Offline'}</div>
               </div>
             </HealthCard>
-            <HealthCard $status={stats.activeContainers > 0 ? 'ok' : 'warning'}>
+            <HealthCard $status={healthStatus.dockerContainers}>
               <div className="indicator" />
               <div className="info">
-                <div className="name">Containers</div>
+                <div className="name">Docker Containers</div>
                 <div className="detail">{stats.activeContainers} running</div>
               </div>
             </HealthCard>
-            <HealthCard $status="warning">
-              <div className="indicator" />
-              <div className="info">
-                <div className="name">Google Login</div>
-                <div className="detail">Offline · Needs auth</div>
-              </div>
-            </HealthCard>
-            <HealthCard $status="ok">
+            <HealthCard $status={healthStatus.analyticsServer}>
               <div className="indicator" />
               <div className="info">
                 <div className="name">Analytics Server</div>
-                <div className="detail">track.liftlio.com · OK</div>
+                <div className="detail">track.liftlio.com · {healthStatus.analyticsServer === 'ok' ? 'OK' : healthStatus.analyticsServer === 'checking' ? 'Checking...' : healthStatus.analyticsServer === 'unknown' ? 'Unknown (CORS)' : 'Error'}</div>
+              </div>
+            </HealthCard>
+            <HealthCard $status={healthStatus.edgeFunctions}>
+              <div className="indicator" />
+              <div className="info">
+                <div className="name">Edge Functions</div>
+                <div className="detail">{healthStatus.edgeFunctions === 'ok' ? '26 functions · OK' : healthStatus.edgeFunctions === 'checking' ? 'Checking...' : 'Error'}</div>
+              </div>
+            </HealthCard>
+            <HealthCard $status={healthStatus.orchestrator}>
+              <div className="indicator" />
+              <div className="info">
+                <div className="name">Browser Orchestrator</div>
+                <div className="detail">:8080 · {healthStatus.orchestrator === 'ok' ? 'Running' : healthStatus.orchestrator === 'checking' ? 'Checking...' : healthStatus.orchestrator === 'unknown' ? 'Unknown (CORS)' : 'Offline'}</div>
+              </div>
+            </HealthCard>
+            <HealthCard $status={healthStatus.videoQualifier}>
+              <div className="indicator" />
+              <div className="info">
+                <div className="name">Video Qualifier</div>
+                <div className="detail">:8001 · {healthStatus.videoQualifier === 'ok' ? 'Running' : healthStatus.videoQualifier === 'checking' ? 'Checking...' : healthStatus.videoQualifier === 'unknown' ? 'Unknown (CORS)' : 'Offline'}</div>
+              </div>
+            </HealthCard>
+            <HealthCard $status={healthStatus.transcricao}>
+              <div className="indicator" />
+              <div className="info">
+                <div className="name">Transcricao Service</div>
+                <div className="detail">:8081 · {healthStatus.transcricao === 'ok' ? 'Running' : healthStatus.transcricao === 'checking' ? 'Checking...' : healthStatus.transcricao === 'unknown' ? 'Unknown (CORS)' : 'Offline'}</div>
+              </div>
+            </HealthCard>
+            <HealthCard $status={healthStatus.youtubeSearch}>
+              <div className="indicator" />
+              <div className="info">
+                <div className="name">YouTube Search</div>
+                <div className="detail">:8000 · {healthStatus.youtubeSearch === 'ok' ? 'Running' : healthStatus.youtubeSearch === 'checking' ? 'Checking...' : healthStatus.youtubeSearch === 'unknown' ? 'Unknown (CORS)' : 'Offline'}</div>
+              </div>
+            </HealthCard>
+            <HealthCard $status={healthStatus.mcpGmail}>
+              <div className="indicator" />
+              <div className="info">
+                <div className="name">MCP Gmail</div>
+                <div className="detail">:3000 · {healthStatus.mcpGmail === 'ok' ? 'Running' : healthStatus.mcpGmail === 'checking' ? 'Checking...' : healthStatus.mcpGmail === 'unknown' ? 'Unknown (CORS)' : 'Offline'}</div>
+              </div>
+            </HealthCard>
+            <HealthCard $status={healthStatus.tokenRefresher}>
+              <div className="indicator" />
+              <div className="info">
+                <div className="name">Token Refresher</div>
+                <div className="detail">Internal · {healthStatus.tokenRefresher === 'ok' ? 'Running' : healthStatus.tokenRefresher === 'checking' ? 'Checking...' : healthStatus.tokenRefresher === 'unknown' ? 'Unknown' : 'Offline'}</div>
               </div>
             </HealthCard>
           </HealthGrid>
