@@ -2844,14 +2844,14 @@ const AdminDashboard: React.FC = () => {
               <tr key={sub.id}>
                 <td>
                   <UserCell>
-                    <Avatar>{(sub.customer_id || 'U')[0].toUpperCase()}</Avatar>
+                    <Avatar>{(sub.customer_id && sub.customer_id.length > 0 ? sub.customer_id[0] : 'U').toUpperCase()}</Avatar>
                     {sub.customer_id || 'Unknown'}
                   </UserCell>
                 </td>
                 <td>{sub.plan_name || 'N/A'}</td>
-                <td>${sub.base_amount}/mo</td>
+                <td>${((sub.base_amount ?? 0) / 100).toFixed(2)}/mo</td>
                 <td>
-                  <StatusBadge $status={sub.status}>{sub.status}</StatusBadge>
+                  <StatusBadge $status={sub.status || 'unknown'}>{sub.status || 'Unknown'}</StatusBadge>
                 </td>
                 <td>{formatDate(sub.next_billing_date)}</td>
                 <td>
