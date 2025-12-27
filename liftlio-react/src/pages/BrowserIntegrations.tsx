@@ -827,129 +827,60 @@ const BrowserIntegrations: React.FC = () => {
       });
   };
 
-  // Handle Google login
+  // Handle Google login - NEW: Uses SQL Function for background execution
+  // Login continues even if user leaves the page!
   const handleGoogleLogin = async () => {
     if (!currentProject?.id || !email || !password) return;
 
-    // Initialize steps
+    // Initialize steps for UI feedback
     setAgentSteps([
-      { id: 'save', label: 'Saving credentials...', status: 'active' },
-      { id: 'check', label: 'Checking login status', status: 'pending' },
-      { id: 'login', label: 'Logging into Google', status: 'pending' },
-      { id: 'youtube', label: 'Verifying YouTube access', status: 'pending' },
+      { id: 'dispatch', label: 'Starting login in background...', status: 'active' },
+      { id: 'agent', label: 'Browser agent executing login', status: 'pending' },
+      { id: 'youtube', label: 'Connecting YouTube via SSO', status: 'pending' },
     ]);
 
     setLoginStatus('connecting');
     setStatusMessage('');
 
     try {
-      // 1. Save credentials to database
-      const { error: saveError } = await supabase
-        .from('browser_logins')
-        .upsert({
-          projeto_id: currentProject.id,
-          platform_name: 'google',
-          login_email: email,
-          login_password: password,
-          uses_google_sso: false,
-          is_connected: false,
-          is_active: true,
-        }, {
-          onConflict: 'projeto_id,platform_name,login_email',
-        })
-        .select()
-        .single();
+      console.log('[BrowserIntegrations] Calling browser_execute_login RPC...');
 
-      if (saveError) throw saveError;
-      updateStep('save', 'completed');
-      updateStep('check', 'active');
-
-      // 2. Get platform prompts
-      const googlePlatform = platforms.find(p => p.platform_name === 'google');
-      if (!googlePlatform) throw new Error('Google platform not configured');
-
-      // 3. First check if already logged in
-      const checkPrompt = googlePlatform.check_logged_prompt;
-      const checkResult = await sendTask(checkPrompt);
-      console.log('[BrowserIntegrations] Check result:', checkResult);
-
-      if (checkResult.includes('ALREADY_LOGGED')) {
-        updateStep('check', 'completed');
-        updateStep('login', 'completed');
-        updateStep('youtube', 'completed');
-        await updateLoginStatus('google', true);
-        await saveYoutubeLogin();
-        setLoginStatus('success');
-        setStatusMessage('Already logged in to Google & YouTube!');
-        await loadLogins();
-        return;
-      }
-
-      updateStep('check', 'completed');
-      updateStep('login', 'active');
-
-      // 4. Not logged in, execute login
-      const loginPrompt = fillPromptTemplate(googlePlatform.login_prompt, {
-        email,
-        password,
+      // Call SQL Function (fire-and-forget) - returns immediately
+      // The login continues in background via Edge Function -> Agent
+      const { data, error } = await supabase.rpc('browser_execute_login', {
+        p_project_id: currentProject.id,
+        p_platform_name: 'google',
+        p_email: email,
+        p_password: password
       });
 
-      const loginResult = await sendTask(loginPrompt);
-      console.log('[BrowserIntegrations] Login result:', loginResult);
+      console.log('[BrowserIntegrations] RPC result:', data, error);
 
-      // 5. Handle response - parse GOOGLE:SUCCESS|YOUTUBE:SUCCESS format
-      if (loginResult.includes('GOOGLE:SUCCESS') && loginResult.includes('YOUTUBE:SUCCESS')) {
-        updateStep('login', 'completed');
-        updateStep('youtube', 'completed');
-        await updateLoginStatus('google', true);
-        await saveYoutubeLogin();
-        setLoginStatus('success');
-        setStatusMessage('Connected to Google & YouTube!');
-      } else if (loginResult.includes('LOGIN_SUCCESS') || loginResult.includes('GOOGLE:SUCCESS')) {
-        updateStep('login', 'completed');
-        updateStep('youtube', 'active');
-        await updateLoginStatus('google', true);
-        await saveYoutubeLogin();
-        updateStep('youtube', 'completed');
-        setLoginStatus('success');
-        setStatusMessage('Connected to Google & YouTube!');
-      } else if (loginResult.includes('WAITING_PHONE')) {
-        updateStep('login', 'active');
-        setLoginStatus('2fa_phone');
-        setStatusMessage('Check your phone and approve the login request');
-        startPolling2FA();
-        return;
-      } else if (loginResult.includes('WAITING_CODE')) {
-        updateStep('login', 'active');
-        setLoginStatus('2fa_code');
-        setStatusMessage('Enter the verification code sent to your email or phone');
-        return;
-      } else if (loginResult.includes('INVALID_CREDENTIALS')) {
-        updateStep('login', 'error');
-        setLoginStatus('error');
-        setStatusMessage('Invalid email or password');
-      } else if (loginResult.includes('CAPTCHA_FAILED')) {
-        updateStep('login', 'error');
-        setLoginStatus('error');
-        setStatusMessage('Could not solve CAPTCHA. Please try again later.');
-      } else if (loginResult.includes('ACCOUNT_LOCKED')) {
-        updateStep('login', 'error');
-        setLoginStatus('error');
-        setStatusMessage('Account is locked. Please recover your account.');
-      } else if (loginResult.includes('ERROR:')) {
-        updateStep('login', 'error');
-        const errorMsg = loginResult.split('ERROR:')[1]?.trim() || 'Unknown error';
-        setLoginStatus('error');
-        setStatusMessage(errorMsg);
-      } else {
-        updateStep('login', 'error');
-        setLoginStatus('error');
-        setStatusMessage('Unexpected response from agent');
+      if (error) {
+        throw new Error(error.message);
       }
 
-      await loadLogins();
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to start login');
+      }
+
+      // Login dispatched to background - update UI
+      updateStep('dispatch', 'completed');
+      updateStep('agent', 'active');
+
+      setStatusMessage('Login started in background. You can leave this page - UI will update automatically when complete.');
+
+      // Note: The UI will automatically update via Realtime subscription
+      // when browser_logins.is_connected changes to true
+      // See useEffect with 'postgres_changes' subscription above
+
+      console.log('[BrowserIntegrations] Login dispatched. Task ID:', data.task_id);
+
     } catch (error: any) {
       console.error('[BrowserIntegrations] Login error:', error);
+      setAgentSteps(prev => prev.map(step =>
+        step.id === 'dispatch' ? { ...step, status: 'error' as const } : step
+      ));
       setLoginStatus('error');
       setStatusMessage(error.message || 'Connection failed');
     }

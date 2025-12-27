@@ -1,17 +1,19 @@
 # CONTINUAR: Sistema Browser Integrations
 
-> **Ultima atualizacao:** 2025-12-25 19:20
+> **Ultima atualizacao:** 2025-12-25 21:30
 > **Branch:** `feature/browser-integrations`
-> **Status:** FUNCIONAL - Testes passando
+> **Status:** NOVO - Sistema Background implementado (SQL+Edge)
 
 ---
 
 ## RESUMO RAPIDO
 
-O sistema de login via browser esta **100% funcional**:
+O sistema de login via browser agora funciona em **BACKGROUND**:
 - Login Google com 2FA funcionando
+- **NOVO:** Usuario pode SAIR da pagina - login continua
+- **NOVO:** SQL Function `browser_execute_login` (fire-and-forget)
+- **NOVO:** Edge Function `browser-login-executor` (isolada)
 - Realtime implementado (UI atualiza automaticamente)
-- Dados salvos no Supabase
 
 **Para continuar, cole isso na nova sessao:**
 ```
@@ -20,7 +22,50 @@ Leia o arquivo .claude/CONTINUE_BROWSER_INTEGRATIONS.md e continue de onde param
 
 ---
 
-## O QUE FOI FEITO (25/12/2025)
+## IMPLEMENTACAO BACKGROUND (25/12/2025 21:30)
+
+### Arquitetura Nova
+
+```
+Frontend → supabase.rpc('browser_execute_login')
+              ↓
+         SQL Function (fire-and-forget)
+              ↓ net.http_post
+         Edge Function browser-login-executor
+              ↓
+         Agente VPS (browser_mcp_url do projeto)
+              ↓
+         Agente atualiza browser_tasks automaticamente
+              ↓
+         Edge Function atualiza browser_logins.is_connected
+              ↓
+         Realtime notifica frontend
+              ↓
+         UI atualiza AUTOMATICAMENTE
+```
+
+### Arquivos Criados
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `functions_backup/SQL_Functions/14_Browser/browser_execute_login.sql` | SQL Function fire-and-forget |
+| `functions_backup/Edge_Functions/browser-login-executor.ts` | Edge Function isolada |
+| `functions_backup/SQL_Functions/14_Browser/README.md` | Documentacao |
+
+### Deploy Realizado
+
+- SQL Function: `browser_execute_login` deployada via migration
+- Edge Function: `browser-login-executor` deployada (ID: faf1c06e-dfe7-468d-b56a-8156d89582d6)
+
+### Mudanca no Frontend
+
+`BrowserIntegrations.tsx` linha 830-887:
+- **Antes:** Chamava VPS direto via `sendTask()` - BLOQUEANTE
+- **Depois:** Chama `supabase.rpc('browser_execute_login', {...})` - BACKGROUND
+
+---
+
+## O QUE FOI FEITO ANTERIORMENTE (25/12/2025)
 
 ### Testes Completados
 | Teste | Status | Observacoes |

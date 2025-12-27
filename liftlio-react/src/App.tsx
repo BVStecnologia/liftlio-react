@@ -37,6 +37,7 @@ const ProjectCreationPage = lazy(() => import('./pages/ProjectCreationPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const LiftlioBrowser = lazy(() => import('./pages/LiftlioBrowser'));
 const BrowserIntegrations = lazy(() => import('./pages/BrowserIntegrations'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 // About, Privacy, Terms agora são servidas como HTML estático da pasta public
 const Security = lazy(() => import('./pages/Security'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
@@ -334,6 +335,11 @@ const AppContent: React.FC = () => {
           <Route path="/liftlio-analytics" element={
             <Suspense fallback={null}>
               <LiftlioAnalytics />
+            </Suspense>
+          } />
+          <Route path="/admin" element={
+            <Suspense fallback={null}>
+              <AdminDashboard />
             </Suspense>
           } />
           <Route path="/trends" element={
