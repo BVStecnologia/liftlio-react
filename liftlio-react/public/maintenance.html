@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liftlio - Under Maintenance</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #0a0a0b 0%, #1a1a2e 50%, #0a0a0b 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      text-align: center;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 30px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #8b5cf6, #a855f7, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 1.25rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    .maintenance-icon {
+      width: 120px;
+      height: 120px;
+      margin: 30px auto;
+      position: relative;
+    }
+
+    .gear {
+      fill: #8b5cf6;
+      animation: rotate 4s linear infinite;
+      transform-origin: center;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .message-box {
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 30px;
+    }
+
+    .message {
+      font-size: 1.1rem;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.7;
+    }
+
+    .eta {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(139, 92, 246, 0.2);
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .eta strong {
+      color: #a855f7;
+    }
+
+    .contact {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .contact a {
+      color: #8b5cf6;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .contact a:hover {
+      color: #a855f7;
+      text-decoration: underline;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(139, 92, 246, 0.2);
+      border-radius: 2px;
+      margin: 30px 0;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 60%;
+      background: linear-gradient(90deg, #8b5cf6, #a855f7);
+      border-radius: 2px;
+      animation: progress 2s ease-in-out infinite;
+    }
+
+    @keyframes progress {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(200%); }
+    }
+
+    footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 1.8rem; }
+      .subtitle { font-size: 1rem; }
+      .message { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="/logo192.png" alt="Liftlio" class="logo">
+
+    <h1>We'll Be Right Back</h1>
+    <p class="subtitle">Our system is currently undergoing scheduled maintenance</p>
+
+    <div class="maintenance-icon">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path class="gear" d="M50,20 L55,25 L60,22 L62,28 L68,27 L68,33 L74,34 L72,40 L78,43 L74,48 L79,53 L73,56 L76,62 L70,63 L71,69 L65,68 L64,74 L58,71 L55,76 L50,72 L45,76 L42,71 L36,74 L35,68 L29,69 L30,63 L24,62 L27,56 L21,53 L26,48 L22,43 L28,40 L26,34 L32,33 L32,27 L38,28 L40,22 L45,25 Z M50,35 A15,15 0 1,0 50,65 A15,15 0 1,0 50,35"/>
+      </svg>
+    </div>
+
+    <div class="progress-bar">
+      <div class="progress-fill"></div>
+    </div>
+
+    <div class="message-box">
+      <p class="message" id="maintenance-message">
+        We are currently performing scheduled maintenance to improve your experience.
+        Please check back soon.
+      </p>
+      <p class="eta" id="maintenance-eta" style="display: none;">
+        Estimated completion: <strong id="eta-time">--</strong>
+      </p>
+    </div>
+
+    <p class="contact">
+      Need help? Contact us at <a href="mailto:support@liftlio.com">support@liftlio.com</a>
+    </p>
+
+    <footer>
+      &copy; 2025 Liftlio. All rights reserved.
+    </footer>
+  </div>
+
+  <script>
+    // Check if there's custom maintenance info in URL params or localStorage
+    (function() {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      // Check for custom message
+      const customMessage = urlParams.get('message');
+      if (customMessage) {
+        document.getElementById('maintenance-message').textContent = decodeURIComponent(customMessage);
+      }
+
+      // Check for ETA
+      const eta = urlParams.get('eta');
+      if (eta) {
+        const etaElement = document.getElementById('maintenance-eta');
+        const etaTime = document.getElementById('eta-time');
+        etaElement.style.display = 'block';
+
+        // Format the date if it's a valid ISO date
+        try {
+          const date = new Date(eta);
+          if (!isNaN(date.getTime())) {
+            etaTime.textContent = date.toLocaleString();
+          } else {
+            etaTime.textContent = eta;
+          }
+        } catch {
+          etaTime.textContent = eta;
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
