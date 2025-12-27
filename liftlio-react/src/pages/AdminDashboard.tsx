@@ -3334,6 +3334,13 @@ const AdminDashboard: React.FC = () => {
           </FormGroup>
         </SettingsBody>
         <SaveBar>
+          <Button 
+            $variant="ghost" 
+            onClick={() => window.open('/maintenance.html', '_blank')}
+            style={{ marginRight: '12px' }}
+          >
+            Preview Page
+          </Button>
           <Button $variant="primary" onClick={saveMaintenanceConfig} disabled={savingSettings}>
             {savingSettings ? 'Saving...' : 'Save Maintenance Settings'}
           </Button>
