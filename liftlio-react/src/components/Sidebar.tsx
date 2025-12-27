@@ -9,6 +9,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { isAdminUser } from './AdminGate';
 import { useRealtime } from '../context/RealtimeProvider';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
@@ -1528,7 +1529,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
   };
   
   // Navigation items with translations
-  const navItems = [
+  const allNavItems = [
     { path: '/dashboard', label: t('nav.overview'), icon: 'FaHome' },
     { path: '/analytics', label: 'Analytics', icon: 'FaChartLine' },
     { path: '/mentions', label: t('nav.mentions'), icon: 'FaComments' },
@@ -1536,9 +1537,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isCollapsed:
     { path: '/settings', label: t('nav.settings'), icon: 'FaCog' },
     { path: '/billing', label: 'Billing', icon: 'FaCreditCard' },
     { path: '/integrations', label: t('nav.integrations'), icon: 'FaPlug' },
-    { path: '/computer', label: 'Computer', icon: 'FaDesktop' },
+    { path: '/computer', label: 'Computer', icon: 'FaDesktop', adminOnly: true },
     { path: '/browser-integrations', label: 'Browser Integrations', icon: 'FaGlobe' }
   ];
+
+  // Filter out admin-only items for non-admin users
+  const navItems = allNavItems.filter(item =>
+    !item.adminOnly || isAdminUser(user?.email)
+  );
 
   // AI Assistant action item (mobile only)
   const aiAssistantItem = {

@@ -1,37 +1,49 @@
 import React, { useState } from 'react';
 import { useDiscoveredVideos } from '../hooks/useDiscoveredVideos';
+import { useAgentActivity } from '../hooks/useAgentActivity';
 import RecentDiscoveredVideos from './RecentDiscoveredVideos';
 
 interface DiscoveredVideosSectionProps {
   projectId?: string | number;
   itemsPerPage?: number;
+  showAgentActivity?: boolean; // Toggle to show agent activity data
 }
 
 /**
  * Component that fetches and displays discovered videos for a project
  * Uses the useDiscoveredVideos hook and passes data to the RecentDiscoveredVideos component
+ * When showAgentActivity is true, uses useAgentActivity hook for richer data
  */
-const DiscoveredVideosSection: React.FC<DiscoveredVideosSectionProps> = ({ 
+const DiscoveredVideosSection: React.FC<DiscoveredVideosSectionProps> = ({
   projectId,
-  itemsPerPage = 10
+  itemsPerPage = 10,
+  showAgentActivity = true // Default to showing agent activity
 }) => {
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
-  
-  // Use the hook to fetch data
-  const { 
-    videos, 
-    loading, 
-    error, 
-    totalCount, 
-    totalPages, 
-    hasNextPage, 
-    hasPrevPage 
-  } = useDiscoveredVideos(projectId, {
+
+  // Use agent activity hook when enabled (includes browser agent data)
+  const agentActivityResult = useAgentActivity(showAgentActivity ? projectId : undefined, {
     page: currentPage,
     itemsPerPage,
-    // Other options can be added here as needed
   });
+
+  // Fallback to regular discovered videos hook
+  const discoveredVideosResult = useDiscoveredVideos(!showAgentActivity ? projectId : undefined, {
+    page: currentPage,
+    itemsPerPage,
+  });
+
+  // Choose which data source to use
+  const {
+    videos,
+    loading,
+    error,
+    totalCount,
+    totalPages,
+    hasNextPage,
+    hasPrevPage
+  } = showAgentActivity ? agentActivityResult : discoveredVideosResult;
 
   // If there's an error, log it
   if (error) {

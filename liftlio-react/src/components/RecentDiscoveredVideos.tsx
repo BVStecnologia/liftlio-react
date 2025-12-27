@@ -10,6 +10,7 @@ import * as BiIcons from 'react-icons/bi';
 import { IconComponent } from '../utils/IconHelper';
 import Modal from './Modal';
 import { useMonitoredChannels } from '../hooks/useMonitoredChannels';
+import AgentActivityTimeline, { AgentActivityData } from './AgentActivityTimeline';
 
 // Interface to define the data structure of recently discovered videos
 interface DiscoveredVideo {
@@ -29,6 +30,8 @@ interface DiscoveredVideo {
   position_comment: number;
   total_comments: number;
   projected_views: number;
+  sistema_tipo?: 'direct' | 'reply'; // Sistema 1 (direct) or Sistema 2 (reply)
+  agentActivity?: AgentActivityData; // Agent Browser activity data
 }
 
 // Props for the component
@@ -1645,6 +1648,16 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
                 </MetricItem>
               </MetricsRow>
               
+              {/* Agent Activity Timeline - shown when agent data available */}
+              {video.agentActivity && (
+                <div style={{ marginBottom: '12px' }}>
+                  <AgentActivityTimeline
+                    activity={video.agentActivity}
+                    variant="compact"
+                  />
+                </div>
+              )}
+
               <EngagementSection>
                 <EngagementHeader>
                   <EngagementTitle>
@@ -1653,17 +1666,17 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
                   <EngagementLabel>
                   </EngagementLabel>
                 </EngagementHeader>
-                
+
                 <EngagementMessage>
                   {highlightProductMention(video.engagement_message)}
                 </EngagementMessage>
-                
+
                 <PositionIndicator>
                   <CommentPosition>
                     <IconComponent icon={FaIcons.FaSort} />
                     #{video.position_comment} of {video.total_comments}
                   </CommentPosition>
-                  
+
                   <ProjectedViews>
                     <IconComponent icon={FaIcons.FaChartLine} />
                     Projected: {video.projected_views.toLocaleString()} views
@@ -1771,7 +1784,17 @@ const RecentDiscoveredVideos: React.FC<RecentDiscoveredVideosProps> = ({
                   <DetailMetricLabel>Relevance</DetailMetricLabel>
                 </DetailMetricCard>
               </DetailMetricsGrid>
-              
+
+              {/* Agent Activity Timeline - Full view in modal */}
+              {selectedVideo.agentActivity && (
+                <div style={{ marginBottom: '24px' }}>
+                  <AgentActivityTimeline
+                    activity={selectedVideo.agentActivity}
+                    variant="full"
+                  />
+                </div>
+              )}
+
               <DetailEngagementSection>
                 <DetailEngagementTitle>
                   Comment

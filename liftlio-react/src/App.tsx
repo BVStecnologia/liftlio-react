@@ -51,6 +51,7 @@ const SubscriptionWarningBanner = lazy(() => import('./components/SubscriptionWa
 const ProcessingWrapper = lazy(() => import('./components/ProcessingWrapperSimplified'));
 // const UrlDataTest = lazy(() => import('./components/UrlDataTest')); // Removido - componente de teste
 const SubscriptionGate = lazy(() => import('./components/SubscriptionGate'));
+const AdminGate = lazy(() => import('./components/AdminGate'));
 const FloatingAgent = lazy(() => import('./components/FloatingAgent'));
 
 const AppContainer = styled.div`
@@ -990,8 +991,8 @@ const ProtectedLayout = ({
                 <Route path="/settings" element={<SubscriptionGate><Settings /></SubscriptionGate>} />
                 <Route path="/billing" element={<SubscriptionGate><Billing /></SubscriptionGate>} />
                 <Route path="/integrations" element={<SubscriptionGate><Integrations /></SubscriptionGate>} />
-                <Route path="/computer" element={<SubscriptionGate><LiftlioBrowser /></SubscriptionGate>} />
-                <Route path="/computer-dev" element={<LiftlioBrowser />} />
+                <Route path="/computer" element={<AdminGate><SubscriptionGate><LiftlioBrowser /></SubscriptionGate></AdminGate>} />
+                <Route path="/computer-dev" element={<AdminGate><LiftlioBrowser /></AdminGate>} />
                 <Route path="/browser-integrations" element={<SubscriptionGate><BrowserIntegrations /></SubscriptionGate>} />
                 {/* <Route path="/url-test" element={<SubscriptionGate><UrlDataTest /></SubscriptionGate>} /> */}
                 {/* Removed duplicate trends and analytics routes - they are defined as public routes */}
