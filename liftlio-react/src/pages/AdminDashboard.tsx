@@ -2878,7 +2878,7 @@ const AdminDashboard: React.FC = () => {
       <KPIGrid>
         <KPICard>
           <div className="label">Total Revenue</div>
-          <div className="value green">${payments.reduce((sum, p) => sum + (p.amount || 0), 0)}</div>
+          <div className="value green">${(payments.reduce((sum, p) => sum + (p.amount || 0), 0) / 100).toFixed(2)}</div>
         </KPICard>
         <KPICard>
           <div className="label">Successful</div>
@@ -2914,7 +2914,7 @@ const AdminDashboard: React.FC = () => {
               <tr key={payment.id}>
                 <td>{formatDate(payment.created_at)}</td>
                 <td>{payment.subscription_id || 'N/A'}</td>
-                <td>${payment.amount?.toFixed(2) || '0.00'}</td>
+                <td>${((payment.amount ?? 0) / 100).toFixed(2)}</td>
                 <td>
                   <StatusBadge $status={payment.status}>{payment.status}</StatusBadge>
                 </td>
