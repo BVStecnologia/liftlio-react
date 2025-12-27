@@ -5,6 +5,54 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 
 // ==========================================
+// VNC PROXY HELPERS (avoid Mixed Content on HTTPS)
+// ==========================================
+const IS_HTTPS = typeof window !== 'undefined' && window.location.protocol === 'https:';
+const VPS_IP = '173.249.22.2';
+
+// Extract port from VNC URL (e.g., "173.249.22.2:16117" -> 16117)
+const extractVncPort = (vncUrl: string | null): number | null => {
+  if (!vncUrl) return null;
+  const match = vncUrl.match(/:([0-9]+)/);
+  return match ? parseInt(match[1], 10) : null;
+};
+
+// Get VNC iframe URL (uses nginx proxy in production to avoid Mixed Content)
+const getAdminVncUrl = (vncUrl: string | null): string | null => {
+  if (!vncUrl) return null;
+
+  const port = extractVncPort(vncUrl);
+  if (!port) return null;
+
+  // Build params for noVNC WebSocket connection
+  const params = new URLSearchParams({
+    autoconnect: 'true',
+    resize: 'scale',
+    reconnect: 'true',
+    reconnect_delay: '1000',
+    view_only: 'false',
+    _cb: String(Date.now())
+  });
+
+  if (IS_HTTPS) {
+    // Production: Use nginx proxy for VNC WebSocket
+    // noVNC connects via wss://liftlio.com:443/vnc-proxy/{port}/websockify
+    params.set('host', window.location.hostname);
+    params.set('port', '443');
+    params.set('path', `vnc-proxy/${port}/websockify`);
+    params.set('encrypt', 'true');
+    return `/vnc-proxy/${port}/vnc.html?${params.toString()}`;
+  } else {
+    // Localhost: Direct connection
+    params.set('host', VPS_IP);
+    params.set('port', String(port));
+    params.set('path', 'websockify');
+    params.set('encrypt', 'false');
+    return `http://${VPS_IP}:${port}/vnc.html?${params.toString()}`;
+  }
+};
+
+// ==========================================
 // TYPES
 // ==========================================
 
@@ -91,12 +139,24 @@ interface BrowserContainer {
 }
 
 interface BrowserTask {
-  id: number;
+  id: string;
   project_id: number;
   task: string;
+  task_type: string | null;
   status: string;
-  result: string | null;
+  priority: number | null;
+  response: Record<string, unknown> | null;
+  error_message: string | null;
+  iterations_used: number | null;
+  actions_taken: Array<Record<string, unknown>> | null;
+  started_at: string | null;
+  completed_at: string | null;
+  container_port: number | null;
   created_at: string;
+  updated_at: string | null;
+  created_by: string | null;
+  behavior_used: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
 }
 
 interface BrowserLogin {
@@ -125,6 +185,7 @@ interface BrowserPrompt {
   check_logged_prompt: string;
   twofa_prompt: string | null;
   logout_prompt: string | null;
+  comment_prompt: string | null;
 }
 
 interface ActivityItem {
@@ -136,7 +197,21 @@ interface ActivityItem {
   context?: string;
 }
 
-type ViewType = 'overview' | 'users' | 'projects' | 'subscriptions' | 'payments' | 'containers' | 'tasks' | 'logins' | 'health' | 'settings' | 'user-detail' | 'project-detail';
+type ViewType = 'overview' | 'users' | 'projects' | 'subscriptions' | 'payments' | 'containers' | 'tasks' | 'logins' | 'health' | 'settings' | 'user-detail' | 'project-detail' | 'waitlist';
+
+interface WaitlistEntry {
+  id: number;
+  name: string;
+  email: string;
+  website_url: string | null;
+  discovery_source: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  position_in_queue: number;
+  created_at: string;
+  updated_at: string;
+  notes: string | null;
+  invitation_sent_at: string | null;
+}
 
 interface MaintenanceConfig {
   enabled: boolean;
@@ -155,6 +230,8 @@ interface BrowserPlatform {
   twofa_phone_prompt: string | null;
   twofa_code_prompt: string | null;
   logout_prompt: string | null;
+  comment_prompt: string | null;
+  reply_prompt: string | null;
   icon_name: string | null;
   brand_color: string | null;
   supports_google_sso: boolean;
@@ -186,7 +263,7 @@ const Container = styled.div`
 
 const Sidebar = styled.aside`
   width: 240px;
-  background: ${props => props.theme.name === 'dark' ? '#0f0f14' : '#ffffff'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.primary : '#ffffff'};
   border-right: 1px solid ${props => props.theme.colors.border.primary};
   padding: 20px 0;
   position: fixed;
@@ -284,7 +361,7 @@ const Header = styled.header`
   align-items: center;
   justify-content: space-between;
   padding: 16px 32px;
-  background: ${props => props.theme.name === 'dark' ? '#0f0f14' : '#ffffff'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.primary : '#ffffff'};
   border-bottom: 1px solid ${props => props.theme.colors.border.primary};
   position: sticky;
   top: 0;
@@ -335,7 +412,7 @@ const SearchDropdown = styled.div`
   left: 0;
   right: 0;
   margin-top: 4px;
-  background: ${props => props.theme.name === 'dark' ? '#1a1a24' : '#ffffff'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : '#ffffff'};
   border: 1px solid ${props => props.theme.colors.border.primary};
   border-radius: 8px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
@@ -431,21 +508,21 @@ const PageHeader = styled.div`
 
 const KPIGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
   margin-bottom: 32px;
 
-  @media (max-width: 1200px) {
+  @media (max-width: 768px) {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 480px) {
     grid-template-columns: 1fr;
   }
 `;
 
 const KPICard = styled.div`
-  background: ${props => props.theme.name === 'dark' ? '#15151e' : '#ffffff'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : '#ffffff'};
   border: 1px solid ${props => props.theme.colors.border.primary};
   border-radius: 12px;
   padding: 20px;
@@ -484,7 +561,7 @@ const StatsRow = styled.div`
 `;
 
 const StatItem = styled.div`
-  background: ${props => props.theme.name === 'dark' ? '#15151e' : '#ffffff'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : '#ffffff'};
   border: 1px solid ${props => props.theme.colors.border.primary};
   border-radius: 8px;
   padding: 16px 24px;
@@ -517,7 +594,7 @@ const Grid = styled.div`
 `;
 
 const Card = styled.div`
-  background: ${props => props.theme.name === 'dark' ? '#15151e' : '#ffffff'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : '#ffffff'};
   border: 1px solid ${props => props.theme.colors.border.primary};
   border-radius: 12px;
   overflow: hidden;
@@ -561,7 +638,7 @@ const Table = styled.table`
     font-weight: 600;
     color: ${props => props.theme.colors.text.muted};
     text-transform: uppercase;
-    background: ${props => props.theme.name === 'dark' ? '#0f0f14' : '#f8f9fa'};
+    background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.primary : '#f8f9fa'};
   }
 
   td {
@@ -682,7 +759,7 @@ const ActionMenuDropdown = styled.div<{ $open: boolean; $openUp?: boolean }>`
   ${props => props.$openUp ? 'bottom: 100%;' : 'top: 100%;'}
   right: 0;
   ${props => props.$openUp ? 'margin-bottom: 4px;' : 'margin-top: 4px;'}
-  background: ${props => props.theme.name === 'dark' ? '#1a1a24' : '#ffffff'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : '#ffffff'};
   border: 1px solid ${props => props.theme.colors.border.primary};
   border-radius: 8px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
@@ -737,7 +814,7 @@ const ProjectModalOverlay = styled.div<{ $open: boolean }>`
 `;
 
 const ProjectModalContent = styled.div`
-  background: ${props => props.theme.name === 'dark' ? '#15151e' : '#ffffff'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : '#ffffff'};
   border: 1px solid ${props => props.theme.colors.border.primary};
   border-radius: 16px;
   width: 100%;
@@ -828,7 +905,7 @@ const DetailGrid = styled.div`
 `;
 
 const DetailItem = styled.div`
-  background: ${props => props.theme.name === 'dark' ? '#0f0f14' : '#f8f9fa'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.primary : '#f8f9fa'};
   border-radius: 8px;
   padding: 12px;
 
@@ -856,7 +933,7 @@ const DetailItemFull = styled(DetailItem)`
 `;
 
 const DetailTextArea = styled.div`
-  background: ${props => props.theme.name === 'dark' ? '#0f0f14' : '#f8f9fa'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.primary : '#f8f9fa'};
   border-radius: 8px;
   padding: 14px;
   grid-column: 1 / -1;
@@ -880,7 +957,7 @@ const DetailTextArea = styled.div`
 `;
 
 const DetailLink = styled.div`
-  background: ${props => props.theme.name === 'dark' ? '#0f0f14' : '#f8f9fa'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.primary : '#f8f9fa'};
   border-radius: 8px;
   padding: 14px;
   grid-column: 1 / -1;
@@ -945,7 +1022,7 @@ const NegativeKeywordTag = styled(KeywordTag)`
 `;
 
 const BrowserSection = styled.div`
-  background: ${props => props.theme.name === 'dark' ? '#0f0f14' : '#f8f9fa'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.primary : '#f8f9fa'};
   border-radius: 8px;
   padding: 14px;
   grid-column: 1 / -1;
@@ -978,7 +1055,7 @@ const BrowserSection = styled.div`
   }
 
   .browser-item {
-    background: ${props => props.theme.name === 'dark' ? '#15151e' : '#fff'};
+    background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : '#fff'};
     border-radius: 6px;
     padding: 10px 12px;
     border: 1px solid ${props => props.theme.colors.border.primary};
@@ -1081,7 +1158,7 @@ const HealthGrid = styled.div`
 `;
 
 const HealthCard = styled.div<{ $status: 'ok' | 'warning' | 'error' | 'checking' | 'unknown' }>`
-  background: ${props => props.theme.name === 'dark' ? '#15151e' : '#ffffff'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : '#ffffff'};
   border: 1px solid ${props => props.theme.colors.border.primary};
   border-radius: 8px;
   padding: 16px;
@@ -1242,7 +1319,7 @@ const InfoGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
-  background: ${props => props.theme.name === 'dark' ? '#15151e' : '#ffffff'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : '#ffffff'};
   border: 1px solid ${props => props.theme.colors.border.primary};
   border-radius: 12px;
   padding: 20px;
@@ -1290,7 +1367,7 @@ const Modal = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: ${props => props.theme.name === 'dark' ? '#1a1a24' : '#ffffff'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : '#ffffff'};
   border-radius: 12px;
   width: 100%;
   max-width: 500px;
@@ -1372,7 +1449,7 @@ const FormGroup = styled.div`
 `;
 
 const PromptEditor = styled.div`
-  background: ${props => props.theme.name === 'dark' ? '#15151e' : '#ffffff'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : '#ffffff'};
   border: 1px solid ${props => props.theme.colors.border.primary};
   border-radius: 12px;
   overflow: hidden;
@@ -1402,7 +1479,7 @@ const PromptContent = styled.div`
 `;
 
 const SettingsSection = styled.div`
-  background: ${props => props.theme.name === 'dark' ? '#15151e' : '#ffffff'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : '#ffffff'};
   border: 1px solid ${props => props.theme.colors.border.primary};
   border-radius: 12px;
   margin-bottom: 24px;
@@ -1509,7 +1586,7 @@ const ToggleRow = styled.div`
 `;
 
 const PromptCard = styled.div<{ $expanded?: boolean }>`
-  background: ${props => props.theme.name === 'dark' ? '#0f0f14' : '#f8f9fa'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.primary : '#f8f9fa'};
   border: 1px solid ${props => props.theme.colors.border.primary};
   border-radius: 8px;
   margin-bottom: 12px;
@@ -1587,7 +1664,7 @@ const PromptField = styled.div`
   textarea {
     width: 100%;
     padding: 12px;
-    background: ${props => props.theme.name === 'dark' ? '#15151e' : '#ffffff'};
+    background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.secondary : '#ffffff'};
     border: 1px solid ${props => props.theme.colors.border.primary};
     border-radius: 6px;
     color: ${props => props.theme.colors.text.primary};
@@ -1610,7 +1687,7 @@ const SaveBar = styled.div`
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 20px;
-  background: ${props => props.theme.name === 'dark' ? '#0f0f14' : '#f8f9fa'};
+  background: ${props => props.theme.name === 'dark' ? props.theme.colors.bg.primary : '#f8f9fa'};
   border-top: 1px solid ${props => props.theme.colors.border.primary};
 `;
 
@@ -1785,6 +1862,7 @@ const AdminDashboard: React.FC = () => {
   const [containers, setContainers] = useState<BrowserContainer[]>([]);
   const [tasks, setTasks] = useState<BrowserTask[]>([]);
   const [logins, setLogins] = useState<BrowserLogin[]>([]);
+  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [prompts, setPrompts] = useState<BrowserPrompt[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1799,6 +1877,25 @@ const AdminDashboard: React.FC = () => {
   const [editingPrompt, setEditingPrompt] = useState<PlatformPrompt | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
   const [expandedPlatforms, setExpandedPlatforms] = useState<number[]>([]);
+  const [expandedTasks, setExpandedTasks] = useState<string[]>([]);
+
+  // Task filters and pagination
+  const [tasksFilterProject, setTasksFilterProject] = useState<number | null>(null);
+  const [tasksFilterUser, setTasksFilterUser] = useState<string | null>(null);
+  const [tasksPage, setTasksPage] = useState(1);
+  const [tasksRowsPerPage, setTasksRowsPerPage] = useState(20);
+  const [tasksTotal, setTasksTotal] = useState(0);
+  const [tasksLoading, setTasksLoading] = useState(false);
+  const [uniqueProjectIds, setUniqueProjectIds] = useState<number[]>([]);
+  const [uniqueTaskUsers, setUniqueTaskUsers] = useState<string[]>([]);
+
+  // Admin Browser Viewer state
+  const [selectedViewerContainer, setSelectedViewerContainer] = useState<BrowserContainer | null>(null);
+  const [adminTaskInput, setAdminTaskInput] = useState('');
+  const [adminTaskSending, setAdminTaskSending] = useState(false);
+  const [isTaskInputFocused, setIsTaskInputFocused] = useState(false);
+  const [viewerProjectTasks, setViewerProjectTasks] = useState<BrowserTask[]>([]);
+  const [loadingViewerTasks, setLoadingViewerTasks] = useState(false);
 
   // Project action menu state
   const [openActionMenu, setOpenActionMenu] = useState<number | null>(null);
@@ -1846,6 +1943,7 @@ const AdminDashboard: React.FC = () => {
     youtubeSearch: 'ok' | 'error' | 'checking' | 'unknown';
     mcpGmail: 'ok' | 'error' | 'checking' | 'unknown';
     tokenRefresher: 'ok' | 'error' | 'checking' | 'unknown';
+    claudeApi: 'ok' | 'error' | 'checking' | 'unknown';
     lastCheck: Date | null;
   }>({
     supabaseDb: 'checking',
@@ -1861,8 +1959,21 @@ const AdminDashboard: React.FC = () => {
     youtubeSearch: 'checking',
     mcpGmail: 'checking',
     tokenRefresher: 'checking',
+    claudeApi: 'checking',
     lastCheck: null,
   });
+
+  // Health alerts state
+  interface HealthAlert {
+    id: string;
+    severity: 'critical' | 'warning' | 'info';
+    service: string;
+    title: string;
+    message: string;
+    timestamp: string;
+    actionRequired?: string;
+  }
+  const [healthAlerts, setHealthAlerts] = useState<HealthAlert[]>([]);
 
   // Fetch data
   useEffect(() => {
@@ -1897,16 +2008,36 @@ const AdminDashboard: React.FC = () => {
           .select('id, "Project name", browser_container_id, browser_mcp_url, browser_vnc_url, browser_session_status')
           .not('browser_container_id', 'is', null);
 
-        // Fetch browser tasks
-        const { data: tasksData } = await supabase
+        // Fetch browser tasks - initial load with pagination
+        const { data: tasksData, count: tasksCount } = await supabase
           .from('browser_tasks')
-          .select('*')
+          .select('*', { count: 'exact' })
           .order('created_at', { ascending: false })
-          .limit(200);
+          .range(0, 19); // First 20 items
+
+        // Fetch unique project IDs for filter dropdown
+        const { data: projectIdsData } = await supabase
+          .from('browser_tasks')
+          .select('project_id')
+          .order('project_id');
+        const uniqueProjects = Array.from(new Set((projectIdsData || []).map(p => p.project_id)));
+
+        // Fetch unique users (created_by) for filter dropdown
+        const { data: taskUsersData } = await supabase
+          .from('browser_tasks')
+          .select('created_by')
+          .not('created_by', 'is', null);
+        const uniqueUsers = Array.from(new Set((taskUsersData || []).map(u => u.created_by).filter(Boolean))) as string[];
 
         // Fetch browser logins
         const { data: loginsData } = await supabase
           .from('browser_logins')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        // Fetch waitlist
+        const { data: waitlistData } = await supabase
+          .from('waitlist')
           .select('*')
           .order('created_at', { ascending: false });
 
@@ -2030,7 +2161,11 @@ const AdminDashboard: React.FC = () => {
         }));
         setContainers(mappedContainers);
         setTasks(tasksData || []);
+        setTasksTotal(tasksCount || 0);
+        setUniqueProjectIds(uniqueProjects);
+        setUniqueTaskUsers(uniqueUsers);
         setLogins(loginsData || []);
+        setWaitlist(waitlistData || []);
         setPrompts(promptsData || []);
         setPlatformPrompts(promptsData || []);
         setActivity(recentActivity.slice(0, 5));
@@ -2070,8 +2205,167 @@ const AdminDashboard: React.FC = () => {
     fetchData();
   }, []);
 
+  // Realtime subscription for browser_tasks
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-tasks-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'browser_tasks'
+        },
+        (payload) => {
+          console.log('[Realtime] Task change:', payload.eventType, payload.new);
 
-  // Health check function
+          if (payload.eventType === 'INSERT') {
+            setTasks(prev => [payload.new as BrowserTask, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setTasks(prev => prev.map(t =>
+              t.id === (payload.new as BrowserTask).id ? payload.new as BrowserTask : t
+            ));
+          } else if (payload.eventType === 'DELETE') {
+            setTasks(prev => prev.filter(t => t.id !== (payload.old as BrowserTask).id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Fetch tasks with filters and pagination
+  const fetchTasks = useCallback(async () => {
+    setTasksLoading(true);
+    try {
+      let query = supabase
+        .from('browser_tasks')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false });
+
+      // Apply filters
+      if (tasksFilterProject !== null) {
+        query = query.eq('project_id', tasksFilterProject);
+      }
+      if (tasksFilterUser) {
+        query = query.eq('created_by', tasksFilterUser);
+      }
+
+      // Apply pagination
+      const from = (tasksPage - 1) * tasksRowsPerPage;
+      const to = from + tasksRowsPerPage - 1;
+      query = query.range(from, to);
+
+      const { data, count } = await query;
+      setTasks(data || []);
+      setTasksTotal(count || 0);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    } finally {
+      setTasksLoading(false);
+    }
+  }, [tasksFilterProject, tasksFilterUser, tasksPage, tasksRowsPerPage]);
+
+  // Refetch tasks when filters or pagination change
+  useEffect(() => {
+    // Skip initial load (handled by fetchData)
+    if (loading) return;
+    fetchTasks();
+  }, [fetchTasks, loading]);
+
+  // Admin Browser Viewer - fetch tasks for selected project
+  const fetchViewerProjectTasks = useCallback(async (projectId: number) => {
+    setLoadingViewerTasks(true);
+    try {
+      const { data } = await supabase
+        .from('browser_tasks')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      setViewerProjectTasks(data || []);
+    } catch (error) {
+      console.error('Error fetching project tasks:', error);
+    } finally {
+      setLoadingViewerTasks(false);
+    }
+  }, []);
+
+  // Admin Browser Viewer - select container to view
+  const handleViewContainer = useCallback((container: BrowserContainer) => {
+    setSelectedViewerContainer(container);
+    setAdminTaskInput('');
+    fetchViewerProjectTasks(container.project_id);
+  }, [fetchViewerProjectTasks]);
+
+  // Admin Browser Viewer - send task to agent
+  const sendAdminTask = useCallback(async () => {
+    if (!selectedViewerContainer || !adminTaskInput.trim()) return;
+
+    setAdminTaskSending(true);
+    try {
+      // Get the MCP URL from the container
+      const mcpUrl = selectedViewerContainer.mcp_url;
+      if (!mcpUrl) {
+        alert('Container does not have MCP URL configured');
+        return;
+      }
+
+      // Create task in database first
+      const { data: taskData, error: insertError } = await supabase
+        .from('browser_tasks')
+        .insert({
+          project_id: selectedViewerContainer.project_id,
+          task: adminTaskInput,
+          task_type: 'admin',
+          status: 'pending',
+          created_by: user?.email || 'admin'
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Error creating task:', insertError);
+        alert('Failed to create task');
+        return;
+      }
+
+      // Send task to agent via Edge Function (to avoid CORS)
+      const { data: proxyData, error: proxyError } = await supabase.functions.invoke('browser-proxy', {
+        body: {
+          action: 'send-task',
+          projectId: selectedViewerContainer.project_id,
+          task: adminTaskInput,
+          taskId: taskData.id
+        }
+      });
+
+      if (proxyError) {
+        console.error('Error sending task to agent:', proxyError);
+        // Update task status to failed
+        await supabase
+          .from('browser_tasks')
+          .update({ status: 'failed', error_message: proxyError.message })
+          .eq('id', taskData.id);
+      } else {
+        console.log('Task sent successfully:', proxyData);
+      }
+
+      // Clear input and refresh tasks
+      setAdminTaskInput('');
+      fetchViewerProjectTasks(selectedViewerContainer.project_id);
+    } catch (error) {
+      console.error('Error sending admin task:', error);
+      alert('Failed to send task to agent');
+    } finally {
+      setAdminTaskSending(false);
+    }
+  }, [selectedViewerContainer, adminTaskInput, user?.email, fetchViewerProjectTasks]);
+
+  // Health check function - uses Edge Function for VPS services (no CORS issues!)
   const checkHealth = useCallback(async () => {
     // 1. Supabase DB - simple query
     try {
@@ -2090,96 +2384,71 @@ const AdminDashboard: React.FC = () => {
       dockerContainers: stats.activeContainers > 0 ? 'ok' : stats.activeContainers === 0 ? 'warning' : 'error'
     }));
 
-    // 4. VPS Browser Agent - no-cors fetch
+    // 4-11. VPS Services - use Edge Function (server-to-server, no CORS!)
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      await fetch('http://173.249.22.2:10100/health', { signal: controller.signal, mode: 'no-cors' });
-      clearTimeout(timeoutId);
-      setHealthStatus(prev => ({ ...prev, vpsBrowser: 'ok' }));
-    } catch {
-      setHealthStatus(prev => ({ ...prev, vpsBrowser: 'unknown' }));
+      const { data, error } = await supabase.functions.invoke('health-checker');
+
+      if (error) {
+        console.error('[Health Check] Edge Function error:', error);
+        // Set all VPS services to unknown on error
+        setHealthStatus(prev => ({
+          ...prev,
+          vpsBrowser: 'unknown',
+          analyticsServer: 'unknown',
+          orchestrator: 'unknown',
+          videoQualifier: 'unknown',
+          transcricao: 'unknown',
+          youtubeSearch: 'unknown',
+          mcpGmail: 'unknown',
+          claudeApi: 'unknown',
+          edgeFunctions: 'error',
+        }));
+      } else if (data?.status) {
+        const status = data.status;
+        console.log('[Health Check] VPS services status:', status);
+        setHealthStatus(prev => ({
+          ...prev,
+          vpsBrowser: status.vpsBrowser || 'unknown',
+          analyticsServer: status.analyticsServer || 'unknown',
+          orchestrator: status.orchestrator || 'unknown',
+          videoQualifier: status.videoQualifier || 'unknown',
+          transcricao: status.transcricao || 'unknown',
+          youtubeSearch: status.youtubeSearch || 'unknown',
+          mcpGmail: status.mcpGmail || 'unknown',
+          claudeApi: status.claudeApi || 'unknown',
+          edgeFunctions: 'ok', // Edge Function worked!
+        }));
+
+        // Process alerts if any
+        if (data.alerts && Array.isArray(data.alerts)) {
+          console.log('[Health Check] Alerts received:', data.alerts);
+          setHealthAlerts(data.alerts);
+        } else {
+          setHealthAlerts([]);
+        }
+      }
+    } catch (err) {
+      console.error('[Health Check] Exception calling Edge Function:', err);
+      setHealthStatus(prev => ({
+        ...prev,
+        vpsBrowser: 'unknown',
+        analyticsServer: 'unknown',
+        orchestrator: 'unknown',
+        videoQualifier: 'unknown',
+        transcricao: 'unknown',
+        youtubeSearch: 'unknown',
+        mcpGmail: 'unknown',
+        claudeApi: 'unknown',
+        edgeFunctions: 'error',
+      }));
     }
 
-    // 5. Analytics Server - no-cors fetch
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      await fetch('https://track.liftlio.com', { signal: controller.signal, mode: 'no-cors' });
-      clearTimeout(timeoutId);
-      setHealthStatus(prev => ({ ...prev, analyticsServer: 'ok' }));
-    } catch {
-      setHealthStatus(prev => ({ ...prev, analyticsServer: 'unknown' }));
-    }
-
-    // 6. Edge Functions - if Supabase DB works, Edge Functions are available
-    // (actual function calls require specific params, so we infer from DB status)
-    setHealthStatus(prev => ({ 
-      ...prev, 
-      edgeFunctions: prev.supabaseDb === 'ok' ? 'ok' : 'error' 
-    }));
-
-    // 7. Browser Orchestrator
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      await fetch('http://173.249.22.2:8080/health', { signal: controller.signal, mode: 'no-cors' });
-      clearTimeout(timeoutId);
-      setHealthStatus(prev => ({ ...prev, orchestrator: 'ok' }));
-    } catch {
-      setHealthStatus(prev => ({ ...prev, orchestrator: 'unknown' }));
-    }
-
-    // 8. Video Qualifier
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      await fetch('http://173.249.22.2:8001/health', { signal: controller.signal, mode: 'no-cors' });
-      clearTimeout(timeoutId);
-      setHealthStatus(prev => ({ ...prev, videoQualifier: 'ok' }));
-    } catch {
-      setHealthStatus(prev => ({ ...prev, videoQualifier: 'unknown' }));
-    }
-
-    // 9. Transcricao Service
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      await fetch('http://173.249.22.2:8081/health', { signal: controller.signal, mode: 'no-cors' });
-      clearTimeout(timeoutId);
-      setHealthStatus(prev => ({ ...prev, transcricao: 'ok' }));
-    } catch {
-      setHealthStatus(prev => ({ ...prev, transcricao: 'unknown' }));
-    }
-
-    // 10. YouTube Search
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      await fetch('http://173.249.22.2:8000/health', { signal: controller.signal, mode: 'no-cors' });
-      clearTimeout(timeoutId);
-      setHealthStatus(prev => ({ ...prev, youtubeSearch: 'ok' }));
-    } catch {
-      setHealthStatus(prev => ({ ...prev, youtubeSearch: 'unknown' }));
-    }
-
-    // 11. MCP Gmail
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      await fetch('http://173.249.22.2:3000/health', { signal: controller.signal, mode: 'no-cors' });
-      clearTimeout(timeoutId);
-      setHealthStatus(prev => ({ ...prev, mcpGmail: 'ok' }));
-    } catch {
-      setHealthStatus(prev => ({ ...prev, mcpGmail: 'unknown' }));
-    }
-
-    // 12. Token Refresher (inferred from VPS status - no public port)
+    // 12. Token Refresher (inferred from VPS Browser status)
     setHealthStatus(prev => ({
       ...prev,
-      tokenRefresher: prev.vpsBrowser === 'ok' ? 'ok' : 'unknown'
+      tokenRefresher: prev.vpsBrowser === 'ok' ? 'ok' : 'unknown',
+      lastCheck: new Date()
     }));
-    setHealthStatus(prev => ({ ...prev, lastCheck: new Date() }));
   }, [user, stats.activeContainers]);
 
   // Run health checks on mount and every 60 seconds
@@ -2509,6 +2778,11 @@ const AdminDashboard: React.FC = () => {
           Projects
           <Badge>{stats.activeProjects}</Badge>
         </NavItem>
+        <NavItem $active={currentView === 'waitlist'} onClick={() => setCurrentView('waitlist')}>
+          <Icons.Clock />
+          Waitlist
+          <Badge>{waitlist.filter(w => w.status === 'pending').length}</Badge>
+        </NavItem>
       </NavSection>
 
       <NavSection>
@@ -2822,8 +3096,8 @@ const AdminDashboard: React.FC = () => {
             <HealthCard $status={healthStatus.youtubeSearch}>
               <div className="indicator" />
               <div className="info">
-                <div className="name">YouTube Search</div>
-                <div className="detail">:8000 · {healthStatus.youtubeSearch === 'ok' ? 'Running' : healthStatus.youtubeSearch === 'checking' ? 'Checking...' : healthStatus.youtubeSearch === 'unknown' ? 'Unknown (CORS)' : 'Offline'}</div>
+                <div className="name">YouTube Transcription</div>
+                <div className="detail">transcricao.liftlio.com · {healthStatus.youtubeSearch === 'ok' ? 'Running' : healthStatus.youtubeSearch === 'checking' ? 'Checking...' : healthStatus.youtubeSearch === 'unknown' ? 'Unknown (CORS)' : 'Offline'}</div>
               </div>
             </HealthCard>
             <HealthCard $status={healthStatus.mcpGmail}>
@@ -2979,6 +3253,212 @@ const AdminDashboard: React.FC = () => {
     </Content>
   );
 
+  // Handle task deletion
+  const deleteTask = async (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row expansion
+    if (!window.confirm('Delete this task?')) return;
+
+    const { error } = await supabase
+      .from('browser_tasks')
+      .delete()
+      .eq('id', taskId);
+
+    if (!error) {
+      setTasks(prev => prev.filter(t => t.id !== taskId));
+    }
+  };
+
+  // Handle waitlist status update
+  const updateWaitlistStatus = async (id: number, status: 'approved' | 'rejected') => {
+    const { error } = await supabase
+      .from('waitlist')
+      .update({
+        status,
+        updated_at: new Date().toISOString(),
+        invitation_sent_at: status === 'approved' ? new Date().toISOString() : null
+      })
+      .eq('id', id);
+
+    if (!error) {
+      setWaitlist(prev => prev.map(w =>
+        w.id === id ? { ...w, status, updated_at: new Date().toISOString() } : w
+      ));
+    }
+  };
+
+  // Render waitlist
+  const renderWaitlist = () => (
+    <Content>
+      <PageHeader>
+        <h1>Waitlist</h1>
+        <p>Manage users waiting for access</p>
+      </PageHeader>
+
+      <KPIGrid>
+        <KPICard>
+          <div className="label">Total Signups</div>
+          <div className="value">{waitlist.length}</div>
+        </KPICard>
+        <KPICard>
+          <div className="label">Pending</div>
+          <div className="value" style={{ color: '#f59e0b' }}>{waitlist.filter(w => w.status === 'pending').length}</div>
+        </KPICard>
+        <KPICard>
+          <div className="label">Approved</div>
+          <div className="value green">{waitlist.filter(w => w.status === 'approved').length}</div>
+        </KPICard>
+        <KPICard>
+          <div className="label">Rejected</div>
+          <div className="value red">{waitlist.filter(w => w.status === 'rejected').length}</div>
+        </KPICard>
+      </KPIGrid>
+
+      {/* Pending Section - Highlighted */}
+      {waitlist.filter(w => w.status === 'pending').length > 0 && (
+        <Card style={{ marginBottom: '16px', border: '1px solid #f59e0b' }}>
+          <CardHeader style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
+            <h3 style={{ color: '#f59e0b' }}>⏳ Pending Approval ({waitlist.filter(w => w.status === 'pending').length})</h3>
+          </CardHeader>
+          <Table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Website</th>
+                <th>Source</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {waitlist.filter(w => w.status === 'pending').map(entry => (
+                <tr key={entry.id}>
+                  <td style={{ fontWeight: 600, color: '#f59e0b' }}>#{entry.position_in_queue}</td>
+                  <td>
+                    <UserCell>
+                      <Avatar style={{ background: '#f59e0b' }}>{entry.name ? entry.name[0].toUpperCase() : 'U'}</Avatar>
+                      {entry.name}
+                    </UserCell>
+                  </td>
+                  <td style={{ fontFamily: 'monospace', fontSize: '13px' }}>{entry.email}</td>
+                  <td>
+                    {entry.website_url ? (
+                      <a href={entry.website_url} target="_blank" rel="noopener noreferrer"
+                         style={{ color: '#8b5cf6', textDecoration: 'none' }}>
+                        {entry.website_url.replace(/^https?:\/\//, '').slice(0, 25)}
+                      </a>
+                    ) : '-'}
+                  </td>
+                  <td>{entry.discovery_source || '-'}</td>
+                  <td>{formatDate(entry.created_at)}</td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <Button
+                        $variant="primary"
+                        onClick={() => updateWaitlistStatus(entry.id, 'approved')}
+                        style={{ padding: '6px 12px', fontSize: '12px' }}
+                      >
+                        ✓ Approve
+                      </Button>
+                      <Button
+                        $variant="ghost"
+                        onClick={() => updateWaitlistStatus(entry.id, 'rejected')}
+                        style={{ color: '#ef4444', padding: '6px 12px', fontSize: '12px' }}
+                      >
+                        ✗ Reject
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <h3>All Waitlist Entries</h3>
+          <span style={{ fontSize: '12px', color: theme.colors.text.muted }}>{waitlist.length} total</span>
+        </CardHeader>
+        <Table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Website</th>
+              <th>Source</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {waitlist.map(entry => (
+              <tr key={entry.id}>
+                <td style={{ fontWeight: 600, color: theme.colors.text.muted }}>#{entry.position_in_queue}</td>
+                <td>
+                  <UserCell>
+                    <Avatar>{entry.name ? entry.name[0].toUpperCase() : 'U'}</Avatar>
+                    {entry.name}
+                  </UserCell>
+                </td>
+                <td style={{ fontFamily: 'monospace', fontSize: '13px' }}>{entry.email}</td>
+                <td>
+                  {entry.website_url ? (
+                    <a href={entry.website_url} target="_blank" rel="noopener noreferrer"
+                       style={{ color: '#8b5cf6', textDecoration: 'none' }}>
+                      {entry.website_url.replace(/^https?:\/\//, '').slice(0, 25)}...
+                    </a>
+                  ) : '-'}
+                </td>
+                <td>{entry.discovery_source || '-'}</td>
+                <td>{formatDate(entry.created_at)}</td>
+                <td>
+                  <StatusBadge $status={entry.status}>{entry.status}</StatusBadge>
+                </td>
+                <td>
+                  {entry.status === 'pending' && (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <Button
+                        $variant="ghost"
+                        onClick={() => updateWaitlistStatus(entry.id, 'approved')}
+                        style={{ color: '#10b981', padding: '4px 8px', fontSize: '12px' }}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        $variant="ghost"
+                        onClick={() => updateWaitlistStatus(entry.id, 'rejected')}
+                        style={{ color: '#ef4444', padding: '4px 8px', fontSize: '12px' }}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  )}
+                  {entry.status !== 'pending' && (
+                    <span style={{ color: theme.colors.text.muted, fontSize: '12px' }}>
+                      {entry.status === 'approved' ? '✓ Invited' : '✗ Rejected'}
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {waitlist.length === 0 && (
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: theme.colors.text.muted }}>
+                  No waitlist entries yet
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </Table>
+      </Card>
+    </Content>
+  );
+
   // Render project detail
   const renderProjectDetail = () => {
     if (!selectedProject) return null;
@@ -3009,7 +3489,7 @@ const AdminDashboard: React.FC = () => {
           <div className="actions">
             {container && (
               <>
-                <Button $variant="primary" onClick={() => window.open(`http://${container.vnc_url}/vnc.html`, '_blank')}>
+                <Button $variant="primary" onClick={() => { const url = getAdminVncUrl(container.vnc_url); if (url) window.open(url, '_blank'); }}>
                   Open VNC
                 </Button>
                 <Button $variant="ghost">Restart</Button>
@@ -3046,7 +3526,7 @@ const AdminDashboard: React.FC = () => {
             <InfoItem>
               <div className="label">VNC URL</div>
               <div className="value">
-                <a href={`http://${container.vnc_url}/vnc.html`} target="_blank" rel="noopener noreferrer">
+                <a href={getAdminVncUrl(container.vnc_url) || "#"} target="_blank" rel="noopener noreferrer">
                   {container.vnc_url}
                 </a>
               </div>
@@ -3179,8 +3659,8 @@ const AdminDashboard: React.FC = () => {
                     <td>
                       <StatusBadge $status={task.status}>{task.status}</StatusBadge>
                     </td>
-                    <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: theme.colors.text.muted }}>
-                      {task.result || 'N/A'}
+                    <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: task.error_message ? '#ef4444' : theme.colors.text.muted }}>
+                      {task.error_message || (task.response ? 'Success' : 'N/A')}
                     </td>
                   </tr>
                 ))}
@@ -3256,7 +3736,9 @@ const AdminDashboard: React.FC = () => {
           check_logged_prompt: prompt.check_logged_prompt,
           logout_prompt: prompt.logout_prompt,
           twofa_phone_prompt: prompt.twofa_phone_prompt,
-          twofa_code_prompt: prompt.twofa_code_prompt
+          twofa_code_prompt: prompt.twofa_code_prompt,
+          comment_prompt: prompt.comment_prompt,
+          reply_prompt: prompt.reply_prompt
         })
         .eq('id', prompt.id);
 
@@ -3428,7 +3910,9 @@ const AdminDashboard: React.FC = () => {
                         {prompt.login_prompt ? '✓ Login' : '○ Login'} ·{' '}
                         {prompt.check_logged_prompt ? '✓ Check' : '○ Check'} ·{' '}
                         {prompt.logout_prompt ? '✓ Logout' : '○ Logout'} ·{' '}
-                        {prompt.twofa_phone_prompt ? '✓ 2FA' : '○ 2FA'}
+                        {prompt.twofa_phone_prompt ? '✓ 2FA' : '○ 2FA'} ·{' '}
+                        {prompt.comment_prompt ? '✓ Comment' : '○ Comment'} ·{' '}
+                        {prompt.reply_prompt ? '✓ Reply' : '○ Reply'}
                       </div>
                     </div>
                   </div>
@@ -3487,6 +3971,26 @@ const AdminDashboard: React.FC = () => {
                         value={prompt.twofa_code_prompt || ''}
                         onChange={(e) => updatePrompt(prompt.id, 'twofa_code_prompt', e.target.value)}
                         placeholder="Instructions for handling code 2FA..."
+                      />
+                    </PromptField>
+
+                    <PromptField>
+                      <label>Comment Prompt (YouTube - Sistema 1)</label>
+                      <textarea
+                        value={prompt.comment_prompt || ''}
+                        onChange={(e) => updatePrompt(prompt.id, 'comment_prompt', e.target.value)}
+                        placeholder="Instructions for posting direct comments on YouTube videos..."
+                        rows={8}
+                      />
+                    </PromptField>
+
+                    <PromptField>
+                      <label>Reply Prompt (YouTube - Sistema 2)</label>
+                      <textarea
+                        value={prompt.reply_prompt || ''}
+                        onChange={(e) => updatePrompt(prompt.id, 'reply_prompt', e.target.value)}
+                        placeholder="Instructions for replying to comments on YouTube (watch video, like comment, then reply)..."
+                        rows={8}
                       />
                     </PromptField>
 
@@ -4167,6 +4671,7 @@ const AdminDashboard: React.FC = () => {
         {currentView === 'overview' && renderOverview()}
         {currentView === 'subscriptions' && renderSubscriptions()}
         {currentView === 'payments' && renderPayments()}
+        {currentView === 'waitlist' && renderWaitlist()}
         {currentView === 'project-detail' && renderProjectDetail()}
         {currentView === 'users' && (
           <Content>
@@ -4380,39 +4885,293 @@ const AdminDashboard: React.FC = () => {
           <Content>
             <PageHeader>
               <h1>Browser Containers</h1>
-              <p>Docker containers running browser automation</p>
+              <p>Docker containers running browser automation • Click "View Browser" to debug</p>
             </PageHeader>
+
+            {/* Admin Browser Viewer */}
+            {selectedViewerContainer && (
+              <Card style={{ marginBottom: '24px', border: '2px solid #8b5cf6' }}>
+                <CardHeader style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '20px' }}>🖥️</span>
+                    <div>
+                      <h3 style={{ margin: 0 }}>Browser Viewer - {selectedViewerContainer.project_name || `Project #${selectedViewerContainer.project_id}`}</h3>
+                      <span style={{ fontSize: '12px', color: theme.colors.text.muted }}>
+                        Container: {selectedViewerContainer.container_name} • Status: {selectedViewerContainer.status}
+                      </span>
+                    </div>
+                  </div>
+                  <Button $variant="ghost" onClick={() => setSelectedViewerContainer(null)} style={{ color: '#ef4444' }}>
+                    ✕ Close
+                  </Button>
+                </CardHeader>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '16px', padding: '16px' }}>
+                  {/* VNC Viewer */}
+                  <div>
+                    <div style={{ fontSize: '12px', color: theme.colors.text.muted, marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>Live Browser View (VNC)</span>
+                      <Button
+                        $variant="ghost"
+                        onClick={() => { const url = getAdminVncUrl(selectedViewerContainer.vnc_url); if (url) window.open(url, '_blank'); }}
+                        style={{ fontSize: '11px', padding: '4px 8px' }}
+                      >
+                        Open in New Tab ↗
+                      </Button>
+                    </div>
+                    {getAdminVncUrl(selectedViewerContainer.vnc_url) ? (
+                      <div style={{ position: 'relative', width: '100%', height: '500px' }}>
+                        <iframe
+                          src={getAdminVncUrl(selectedViewerContainer.vnc_url) || ''}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            border: `1px solid ${theme.colors.border}`,
+                            borderRadius: '8px',
+                            background: '#1a1a2e'
+                          }}
+                          tabIndex={-1}
+                          title={`VNC Viewer - Project ${selectedViewerContainer.project_id}`}
+                        />
+                        {isTaskInputFocused && (
+                          <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'transparent',
+                            zIndex: 10
+                          }} />
+                        )}
+                      </div>
+                    ) : (
+                      <div style={{
+                        width: '100%',
+                        height: '500px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: theme.colors.bg.secondary,
+                        borderRadius: '8px',
+                        color: theme.colors.text.muted
+                      }}>
+                        No VNC URL configured for this container
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Task Panel */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {/* Send Task */}
+                    <div>
+                      <div style={{ fontSize: '12px', color: theme.colors.text.muted, marginBottom: '8px' }}>
+                        Send Task to Agent
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <textarea
+                          value={adminTaskInput}
+                          onChange={(e) => setAdminTaskInput(e.target.value)}
+                          onFocus={() => setIsTaskInputFocused(true)}
+                          onBlur={() => setIsTaskInputFocused(false)}
+                          placeholder="Enter task for the browser agent..."
+                          style={{
+                            width: '100%',
+                            height: '80px',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            border: `1px solid ${theme.colors.border}`,
+                            background: theme.colors.bg.secondary,
+                            color: theme.colors.text.primary,
+                            fontSize: '13px',
+                            resize: 'none'
+                          }}
+                        />
+                        <Button
+                          $variant="primary"
+                          onClick={sendAdminTask}
+                          disabled={!adminTaskInput.trim() || adminTaskSending}
+                          style={{ width: '100%' }}
+                        >
+                          {adminTaskSending ? 'Sending...' : '▶ Send Task'}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div>
+                      <div style={{ fontSize: '12px', color: theme.colors.text.muted, marginBottom: '8px' }}>
+                        Quick Actions
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        <Button $variant="ghost" onClick={() => setAdminTaskInput('Take a screenshot')} style={{ fontSize: '11px', padding: '4px 8px' }}>
+                          📸 Screenshot
+                        </Button>
+                        <Button $variant="ghost" onClick={() => setAdminTaskInput('Go to google.com')} style={{ fontSize: '11px', padding: '4px 8px' }}>
+                          🌐 Google
+                        </Button>
+                        <Button $variant="ghost" onClick={() => setAdminTaskInput('Scroll down the page')} style={{ fontSize: '11px', padding: '4px 8px' }}>
+                          ⬇️ Scroll
+                        </Button>
+                        <Button $variant="ghost" onClick={() => setAdminTaskInput('Click on the first result')} style={{ fontSize: '11px', padding: '4px 8px' }}>
+                          👆 Click
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Recent Tasks */}
+                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                      <div style={{ fontSize: '12px', color: theme.colors.text.muted, marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span>Recent Tasks ({viewerProjectTasks.length})</span>
+                        {loadingViewerTasks && <span style={{ fontSize: '10px' }}>Loading...</span>}
+                      </div>
+                      <div style={{
+                        maxHeight: '250px',
+                        overflowY: 'auto',
+                        background: theme.colors.bg.secondary,
+                        borderRadius: '8px',
+                        padding: '8px'
+                      }}>
+                        {viewerProjectTasks.length === 0 ? (
+                          <div style={{ textAlign: 'center', padding: '16px', color: theme.colors.text.muted, fontSize: '12px' }}>
+                            No tasks for this project
+                          </div>
+                        ) : (
+                          viewerProjectTasks.map(task => (
+                            <div
+                              key={task.id}
+                              style={{
+                                padding: '8px',
+                                borderBottom: `1px solid ${theme.colors.border}`,
+                                fontSize: '11px'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                <StatusBadge $status={task.status} style={{ fontSize: '10px', padding: '2px 6px' }}>
+                                  {task.status}
+                                </StatusBadge>
+                                <span style={{ color: theme.colors.text.muted }}>{formatRelativeTime(task.created_at)}</span>
+                              </div>
+                              <div style={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                color: theme.colors.text.secondary
+                              }}>
+                                {task.task}
+                              </div>
+                              {task.error_message && (
+                                <div style={{ marginTop: '4px', color: '#ef4444', fontSize: '10px' }}>
+                                  Error: {task.error_message.substring(0, 50)}...
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Containers Table */}
             <Card>
+              <CardHeader>
+                <h3>All Containers ({containers.length})</h3>
+                {selectedViewerContainer && (
+                  <span style={{ fontSize: '12px', color: '#8b5cf6' }}>
+                    Viewing: {selectedViewerContainer.project_name || `Project #${selectedViewerContainer.project_id}`}
+                  </span>
+                )}
+              </CardHeader>
               <Table>
                 <thead>
                   <tr>
-                    <th>Container</th>
                     <th>Project</th>
+                    <th>Container</th>
                     <th>Status</th>
                     <th>MCP URL</th>
+                    <th>VNC URL</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {containers.map(c => (
-                    <tr key={c.id}>
-                      <td>{c.container_name}</td>
-                      <td>#{c.project_id}</td>
+                    <tr
+                      key={c.id}
+                      style={{
+                        background: selectedViewerContainer?.id === c.id ? 'rgba(139, 92, 246, 0.1)' : undefined,
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => handleViewContainer(c)}
+                    >
                       <td>
-                        <StatusBadge $status={c.status}>{c.status}</StatusBadge>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Avatar $color="#8b5cf6">{c.project_name?.[0]?.toUpperCase() || '#'}</Avatar>
+                          <div>
+                            <div style={{ fontWeight: 500 }}>{c.project_name || `Project #${c.project_id}`}</div>
+                            <div style={{ fontSize: '11px', color: theme.colors.text.muted }}>ID: {c.project_id}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{c.container_name || 'N/A'}</td>
+                      <td>
+                        <StatusBadge $status={c.status === 'active' || c.status === 'running' ? 'active' : c.status}>
+                          {c.status || 'inactive'}
+                        </StatusBadge>
                       </td>
                       <td>
-                        <a href={`http://${c.mcp_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#8b5cf6' }}>
-                          {c.mcp_url}
-                        </a>
+                        {c.mcp_url ? (
+                          <a
+                            href={`http://${c.mcp_url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: '#8b5cf6', fontSize: '12px' }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {c.mcp_url}
+                          </a>
+                        ) : (
+                          <span style={{ color: theme.colors.text.muted, fontSize: '12px' }}>Not configured</span>
+                        )}
                       </td>
                       <td>
-                        <Button $variant="primary" onClick={() => window.open(`http://${c.vnc_url}/vnc.html`, '_blank')}>
-                          VNC
-                        </Button>
+                        {c.vnc_url ? (
+                          <span style={{ fontSize: '12px', color: theme.colors.text.secondary }}>{c.vnc_url}</span>
+                        ) : (
+                          <span style={{ color: theme.colors.text.muted, fontSize: '12px' }}>Not configured</span>
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <Button
+                            $variant={selectedViewerContainer?.id === c.id ? "primary" : "ghost"}
+                            onClick={(e) => { e.stopPropagation(); handleViewContainer(c); }}
+                            style={{ fontSize: '12px', padding: '6px 12px' }}
+                          >
+                            {selectedViewerContainer?.id === c.id ? '✓ Viewing' : '👁️ View'}
+                          </Button>
+                          {c.vnc_url && (
+                            <Button
+                              $variant="ghost"
+                              onClick={(e) => { e.stopPropagation(); const url = getAdminVncUrl(c.vnc_url); if (url) window.open(url, '_blank'); }}
+                              style={{ fontSize: '12px', padding: '6px 12px' }}
+                            >
+                              ↗ VNC
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
+                  {containers.length === 0 && (
+                    <tr>
+                      <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: theme.colors.text.muted }}>
+                        No containers found. Containers are created when users access the Browser page.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </Table>
             </Card>
@@ -4421,34 +5180,355 @@ const AdminDashboard: React.FC = () => {
         {currentView === 'tasks' && (
           <Content>
             <PageHeader>
-              <h1>Browser Tasks</h1>
-              <p>All automation tasks</p>
+              <div>
+                <h1>Browser Tasks</h1>
+                <p>All automation tasks • <span style={{ color: '#10b981' }}>● Live</span></p>
+              </div>
             </PageHeader>
+
+            <KPIGrid>
+              <KPICard>
+                <div className="label">Total Tasks</div>
+                <div className="value">{tasksTotal}</div>
+              </KPICard>
+              <KPICard>
+                <div className="label">Pending</div>
+                <div className="value" style={{ color: '#f59e0b' }}>{tasks.filter(t => t.status === 'pending').length}</div>
+              </KPICard>
+              <KPICard>
+                <div className="label">Running</div>
+                <div className="value" style={{ color: '#3b82f6' }}>{tasks.filter(t => t.status === 'running' || t.status === 'in_progress').length}</div>
+              </KPICard>
+              <KPICard>
+                <div className="label">Completed</div>
+                <div className="value green">{tasks.filter(t => t.status === 'completed').length}</div>
+              </KPICard>
+              <KPICard>
+                <div className="label">Failed</div>
+                <div className="value red">{tasks.filter(t => t.status === 'failed' || t.status === 'error').length}</div>
+              </KPICard>
+            </KPIGrid>
+
+            {/* Filters */}
+            <Card style={{ marginBottom: '16px' }}>
+              <CardHeader>
+                <h3>Filters</h3>
+                {(tasksFilterProject !== null || tasksFilterUser) && (
+                  <Button
+                    $variant="ghost"
+                    onClick={() => {
+                      setTasksFilterProject(null);
+                      setTasksFilterUser(null);
+                      setTasksPage(1);
+                    }}
+                    style={{ fontSize: '12px' }}
+                  >
+                    Clear Filters
+                  </Button>
+                )}
+              </CardHeader>
+              <div style={{ padding: '16px', display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '12px', color: theme.colors.text.muted }}>Project ID</label>
+                  <select
+                    value={tasksFilterProject ?? ''}
+                    onChange={(e) => {
+                      setTasksFilterProject(e.target.value ? Number(e.target.value) : null);
+                      setTasksPage(1);
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: `1px solid ${theme.colors.border}`,
+                      background: theme.colors.bg.secondary,
+                      color: theme.colors.text.primary,
+                      fontSize: '13px',
+                      minWidth: '120px'
+                    }}
+                  >
+                    <option value="">All Projects</option>
+                    {uniqueProjectIds.map(id => (
+                      <option key={id} value={id}>#{id}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '12px', color: theme.colors.text.muted }}>Created By</label>
+                  <select
+                    value={tasksFilterUser ?? ''}
+                    onChange={(e) => {
+                      setTasksFilterUser(e.target.value || null);
+                      setTasksPage(1);
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: `1px solid ${theme.colors.border}`,
+                      background: theme.colors.bg.secondary,
+                      color: theme.colors.text.primary,
+                      fontSize: '13px',
+                      minWidth: '150px'
+                    }}
+                  >
+                    <option value="">All Users</option>
+                    {uniqueTaskUsers.map(user => (
+                      <option key={user} value={user}>{user}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '12px', color: theme.colors.text.muted }}>Rows per page</label>
+                  <select
+                    value={tasksRowsPerPage}
+                    onChange={(e) => {
+                      setTasksRowsPerPage(Number(e.target.value));
+                      setTasksPage(1);
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: `1px solid ${theme.colors.border}`,
+                      background: theme.colors.bg.secondary,
+                      color: theme.colors.text.primary,
+                      fontSize: '13px',
+                      minWidth: '80px'
+                    }}
+                  >
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
+              </div>
+            </Card>
+
             <Card>
+              <CardHeader>
+                <h3>All Tasks {tasksLoading && <span style={{ fontSize: '12px', color: theme.colors.text.muted }}>(Loading...)</span>}</h3>
+                <span style={{ fontSize: '12px', color: theme.colors.text.muted }}>
+                  Showing {((tasksPage - 1) * tasksRowsPerPage) + 1}-{Math.min(tasksPage * tasksRowsPerPage, tasksTotal)} of {tasksTotal}
+                </span>
+              </CardHeader>
               <Table>
                 <thead>
                   <tr>
+                    <th style={{ width: '40px' }}></th>
                     <th>Date</th>
                     <th>Project</th>
+                    <th>Type</th>
                     <th>Task</th>
+                    <th>Iterations</th>
+                    <th>Duration</th>
                     <th>Status</th>
+                    <th style={{ width: '60px' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {tasks.slice(0, 50).map(t => (
-                    <tr key={t.id}>
-                      <td>{formatDate(t.created_at)}</td>
-                      <td>#{t.project_id}</td>
-                      <td style={{ maxWidth: '400px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {t.task}
-                      </td>
-                      <td>
-                        <StatusBadge $status={t.status}>{t.status}</StatusBadge>
+                  {tasks.map(t => {
+                    const isExpanded = expandedTasks.includes(t.id);
+                    const duration = t.started_at && t.completed_at
+                      ? Math.round((new Date(t.completed_at).getTime() - new Date(t.started_at).getTime()) / 1000)
+                      : t.started_at
+                        ? Math.round((Date.now() - new Date(t.started_at).getTime()) / 1000)
+                        : null;
+
+                    return (
+                      <React.Fragment key={t.id}>
+                        <tr
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => setExpandedTasks(prev =>
+                            prev.includes(t.id) ? prev.filter(id => id !== t.id) : [...prev, t.id]
+                          )}
+                        >
+                          <td style={{ textAlign: 'center' }}>
+                            <span style={{
+                              display: 'inline-block',
+                              transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                              transition: 'transform 0.2s'
+                            }}>
+                              ▶
+                            </span>
+                          </td>
+                          <td style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>{formatRelativeTime(t.created_at)}</td>
+                          <td>#{t.project_id}</td>
+                          <td>
+                            <span style={{
+                              fontSize: '11px',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              background: 'rgba(139, 92, 246, 0.1)',
+                              color: '#8b5cf6'
+                            }}>
+                              {t.task_type || 'general'}
+                            </span>
+                          </td>
+                          <td style={{ maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {t.task}
+                          </td>
+                          <td style={{ textAlign: 'center' }}>{t.iterations_used || '-'}</td>
+                          <td style={{ fontSize: '12px', color: theme.colors.text.muted }}>
+                            {duration !== null ? `${duration}s` : '-'}
+                          </td>
+                          <td>
+                            <StatusBadge $status={t.status}>{t.status}</StatusBadge>
+                          </td>
+                          <td>
+                            <Button
+                              $variant="ghost"
+                              onClick={(e) => deleteTask(t.id, e)}
+                              style={{ padding: '4px 8px', color: '#ef4444' }}
+                              title="Delete task"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                              </svg>
+                            </Button>
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr>
+                            <td colSpan={9} style={{ padding: 0, background: theme.colors.bg.primary }}>
+                              <div style={{ padding: '16px 24px', borderLeft: '3px solid #8b5cf6' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                                  <div>
+                                    <div style={{ fontSize: '11px', color: theme.colors.text.muted, marginBottom: '4px' }}>Task ID</div>
+                                    <div style={{ fontSize: '12px', fontFamily: 'monospace' }}>{t.id}</div>
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: '11px', color: theme.colors.text.muted, marginBottom: '4px' }}>Container Port</div>
+                                    <div style={{ fontSize: '12px' }}>{t.container_port || 'N/A'}</div>
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: '11px', color: theme.colors.text.muted, marginBottom: '4px' }}>Started At</div>
+                                    <div style={{ fontSize: '12px' }}>{t.started_at ? formatDate(t.started_at) : 'Not started'}</div>
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: '11px', color: theme.colors.text.muted, marginBottom: '4px' }}>Completed At</div>
+                                    <div style={{ fontSize: '12px' }}>{t.completed_at ? formatDate(t.completed_at) : 'Not completed'}</div>
+                                  </div>
+                                </div>
+
+                                {t.error_message && (
+                                  <div style={{ marginBottom: '16px' }}>
+                                    <div style={{ fontSize: '11px', color: '#ef4444', marginBottom: '4px' }}>Error Message</div>
+                                    <div style={{
+                                      fontSize: '12px',
+                                      padding: '8px',
+                                      background: 'rgba(239, 68, 68, 0.1)',
+                                      borderRadius: '4px',
+                                      color: '#ef4444',
+                                      fontFamily: 'monospace',
+                                      whiteSpace: 'pre-wrap',
+                                      wordBreak: 'break-word'
+                                    }}>
+                                      {t.error_message}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {t.response && (
+                                  <div style={{ marginBottom: '16px' }}>
+                                    <div style={{ fontSize: '11px', color: theme.colors.text.muted, marginBottom: '4px' }}>Response</div>
+                                    <div style={{
+                                      fontSize: '11px',
+                                      padding: '8px',
+                                      background: theme.colors.bg.secondary,
+                                      borderRadius: '4px',
+                                      fontFamily: 'monospace',
+                                      maxHeight: '200px',
+                                      overflow: 'auto',
+                                      whiteSpace: 'pre-wrap',
+                                      wordBreak: 'break-word'
+                                    }}>
+                                      {JSON.stringify(t.response, null, 2)}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {t.actions_taken && t.actions_taken.length > 0 && (
+                                  <div style={{ marginBottom: '16px' }}>
+                                    <div style={{ fontSize: '11px', color: theme.colors.text.muted, marginBottom: '4px' }}>
+                                      Actions Taken ({t.actions_taken.length})
+                                    </div>
+                                    <div style={{
+                                      fontSize: '11px',
+                                      padding: '8px',
+                                      background: theme.colors.bg.secondary,
+                                      borderRadius: '4px',
+                                      fontFamily: 'monospace',
+                                      maxHeight: '150px',
+                                      overflow: 'auto',
+                                      whiteSpace: 'pre-wrap'
+                                    }}>
+                                      {JSON.stringify(t.actions_taken, null, 2)}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {t.metadata && (
+                                  <div>
+                                    <div style={{ fontSize: '11px', color: theme.colors.text.muted, marginBottom: '4px' }}>Metadata</div>
+                                    <div style={{
+                                      fontSize: '11px',
+                                      padding: '8px',
+                                      background: theme.colors.bg.secondary,
+                                      borderRadius: '4px',
+                                      fontFamily: 'monospace',
+                                      maxHeight: '100px',
+                                      overflow: 'auto',
+                                      whiteSpace: 'pre-wrap'
+                                    }}>
+                                      {JSON.stringify(t.metadata, null, 2)}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                  {tasks.length === 0 && (
+                    <tr>
+                      <td colSpan={9} style={{ textAlign: 'center', padding: '40px', color: theme.colors.text.muted }}>
+                        No tasks yet
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </Table>
+              {/* Pagination Controls */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '16px',
+                borderTop: `1px solid ${theme.colors.border}`
+              }}>
+                <span style={{ fontSize: '13px', color: theme.colors.text.muted }}>
+                  Page {tasksPage} of {Math.ceil(tasksTotal / tasksRowsPerPage) || 1}
+                </span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button
+                    $variant="ghost"
+                    onClick={() => setTasksPage(prev => Math.max(1, prev - 1))}
+                    disabled={tasksPage <= 1}
+                    style={{ padding: '6px 12px', fontSize: '13px' }}
+                  >
+                    ← Previous
+                  </Button>
+                  <Button
+                    $variant="ghost"
+                    onClick={() => setTasksPage(prev => prev + 1)}
+                    disabled={tasksPage >= Math.ceil(tasksTotal / tasksRowsPerPage)}
+                    style={{ padding: '6px 12px', fontSize: '13px' }}
+                  >
+                    Next →
+                  </Button>
+                </div>
+              </div>
             </Card>
           </Content>
         )}
@@ -4645,8 +5725,8 @@ const AdminDashboard: React.FC = () => {
                 <HealthCard $status={healthStatus.youtubeSearch}>
                   <div className="indicator" />
                   <div className="info">
-                    <div className="name">YouTube Search</div>
-                    <div className="detail">:8000 · {healthStatus.youtubeSearch === 'ok' ? 'Running' : healthStatus.youtubeSearch === 'checking' ? 'Checking...' : healthStatus.youtubeSearch === 'unknown' ? 'Unknown (CORS)' : 'Offline'}</div>
+                    <div className="name">YouTube Transcription</div>
+                    <div className="detail">transcricao.liftlio.com · {healthStatus.youtubeSearch === 'ok' ? 'Running' : healthStatus.youtubeSearch === 'checking' ? 'Checking...' : healthStatus.youtubeSearch === 'unknown' ? 'Unknown (CORS)' : 'Offline'}</div>
                   </div>
                 </HealthCard>
                 <HealthCard $status={healthStatus.mcpGmail}>
@@ -4663,7 +5743,97 @@ const AdminDashboard: React.FC = () => {
                     <div className="detail">Internal · {healthStatus.tokenRefresher === 'ok' ? 'Running' : healthStatus.tokenRefresher === 'checking' ? 'Checking...' : healthStatus.tokenRefresher === 'unknown' ? 'Unknown' : 'Offline'}</div>
                   </div>
                 </HealthCard>
+                <HealthCard $status={healthStatus.claudeApi}>
+                  <div className="indicator" />
+                  <div className="info">
+                    <div className="name">Claude API (Max)</div>
+                    <div className="detail">:10200 · {healthStatus.claudeApi === 'ok' ? 'Running' : healthStatus.claudeApi === 'checking' ? 'Checking...' : healthStatus.claudeApi === 'unknown' ? 'Unknown (CORS)' : 'Offline'}</div>
+                  </div>
+                </HealthCard>
               </HealthGrid>
+            )}
+
+            {/* Alerts Section */}
+            {healthAlerts.length > 0 && (
+              <div style={{ marginTop: '24px' }}>
+                <h3 style={{
+                  color: '#f87171',
+                  marginBottom: '16px',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                  Active Alerts ({healthAlerts.length})
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {healthAlerts.map((alert) => (
+                    <div
+                      key={alert.id}
+                      style={{
+                        background: alert.severity === 'critical' ? 'rgba(239, 68, 68, 0.1)' :
+                                   alert.severity === 'warning' ? 'rgba(251, 191, 36, 0.1)' :
+                                   'rgba(59, 130, 246, 0.1)',
+                        border: `1px solid ${alert.severity === 'critical' ? 'rgba(239, 68, 68, 0.3)' :
+                                             alert.severity === 'warning' ? 'rgba(251, 191, 36, 0.3)' :
+                                             'rgba(59, 130, 246, 0.3)'}`,
+                        borderRadius: '8px',
+                        padding: '16px',
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: '8px'
+                      }}>
+                        <div style={{
+                          fontWeight: 600,
+                          color: alert.severity === 'critical' ? '#f87171' :
+                                 alert.severity === 'warning' ? '#fbbf24' : '#60a5fa',
+                          fontSize: '14px'
+                        }}>
+                          {alert.title}
+                        </div>
+                        <div style={{
+                          fontSize: '11px',
+                          color: '#9ca3af',
+                          textTransform: 'uppercase',
+                          padding: '2px 6px',
+                          background: 'rgba(0,0,0,0.2)',
+                          borderRadius: '4px'
+                        }}>
+                          {alert.service}
+                        </div>
+                      </div>
+                      <div style={{ color: '#d1d5db', fontSize: '13px', marginBottom: '8px' }}>
+                        {alert.message}
+                      </div>
+                      {alert.actionRequired && (
+                        <div style={{
+                          fontSize: '12px',
+                          color: '#a78bfa',
+                          background: 'rgba(139, 92, 246, 0.1)',
+                          padding: '8px 10px',
+                          borderRadius: '4px',
+                          marginTop: '8px'
+                        }}>
+                          <strong>Action Required:</strong> {alert.actionRequired}
+                        </div>
+                      )}
+                      <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '8px' }}>
+                        {new Date(alert.timestamp).toLocaleString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </Content>
         )}

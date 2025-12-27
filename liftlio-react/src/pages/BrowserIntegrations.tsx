@@ -89,7 +89,7 @@ interface BrowserLogin {
   is_active: boolean;
 }
 
-type LoginStatus = 'idle' | 'connecting' | '2fa_phone' | '2fa_code' | 'success' | 'error' | 'disconnecting';
+type LoginStatus = 'idle' | 'connecting' | '2fa_phone' | '2fa_sms' | '2fa_authenticator' | '2fa_code' | '2fa_security_key' | 'verifying' | 'submitting_code' | 'success' | 'error' | 'disconnecting';
 
 interface AgentStep {
   id: string;
@@ -657,6 +657,7 @@ const BrowserIntegrations: React.FC = () => {
               setLogins(prev => prev.map(login =>
                 login.id === newRecord.id ? newRecord : login
               ));
+
               // If login became connected, update status
               if (newRecord.is_connected && !oldRecord?.is_connected) {
                 console.log('[Realtime] Login connected:', newRecord.platform_name);
@@ -671,6 +672,48 @@ const BrowserIntegrations: React.FC = () => {
                 } else {
                   setStatusMessage(`${newRecord.platform_name} connected!`);
                 }
+              }
+              // Detect 2FA requirement
+              else if (newRecord.has_2fa && !oldRecord?.has_2fa) {
+                console.log('[Realtime] 2FA detected:', newRecord.twofa_type);
+                switch (newRecord.twofa_type) {
+                  case 'phone':
+                    setLoginStatus('2fa_phone');
+                    setStatusMessage('Approve on your phone, then click "Verify"');
+                    break;
+                  case 'sms':
+                    setLoginStatus('2fa_sms');
+                    setStatusMessage('Enter the SMS code sent to your phone');
+                    break;
+                  case 'authenticator':
+                    setLoginStatus('2fa_authenticator');
+                    setStatusMessage('Enter the code from your Authenticator app');
+                    break;
+                  case 'security_key':
+                    setLoginStatus('2fa_security_key');
+                    setStatusMessage('Security key not supported. Please use another method.');
+                    break;
+                  default:
+                    setLoginStatus('2fa_code');
+                    setStatusMessage('Enter the verification code');
+                }
+              }
+              // Detect login error
+              else if (newRecord.last_error && !oldRecord?.last_error) {
+                console.log('[Realtime] Login error detected:', newRecord.last_error);
+                setLoginStatus('error');
+                setStatusMessage(newRecord.last_error);
+                // Update steps to show error
+                setAgentSteps(prev => prev.map((step, index) => ({
+                  ...step,
+                  status: index === prev.length - 1 ? 'error' as const : step.status
+                })));
+              }
+              // Detect disconnection
+              else if (!newRecord.is_connected && oldRecord?.is_connected) {
+                console.log('[Realtime] Login disconnected:', newRecord.platform_name);
+                setLoginStatus('idle');
+                setStatusMessage('');
               }
               break;
 
@@ -729,7 +772,56 @@ const BrowserIntegrations: React.FC = () => {
       .eq('projeto_id', currentProject.id)
       .eq('is_active', true);
 
-    if (data) setLogins(data);
+    if (data) {
+      setLogins(data);
+
+      // Check if any login is in a pending state and update UI accordingly
+      // This handles the case when user leaves and comes back to the page
+      const googleLogin = data.find(l => l.platform_name === 'google');
+      if (googleLogin) {
+        // Check for 2FA waiting state
+        if (googleLogin.has_2fa && !googleLogin.is_connected) {
+          console.log('[BrowserIntegrations] Detected pending 2FA state:', googleLogin.twofa_type);
+          switch (googleLogin.twofa_type) {
+            case 'phone':
+              setLoginStatus('2fa_phone');
+              setStatusMessage('Approve on your phone, then click "Verify"');
+              break;
+            case 'sms':
+              setLoginStatus('2fa_sms');
+              setStatusMessage('Enter the SMS code sent to your phone');
+              break;
+            case 'authenticator':
+              setLoginStatus('2fa_authenticator');
+              setStatusMessage('Enter the code from your Authenticator app');
+              break;
+            case 'code':
+              setLoginStatus('2fa_code');
+              setStatusMessage('Enter the verification code');
+              break;
+            case 'security_key':
+              setLoginStatus('2fa_security_key');
+              setStatusMessage('Security key not supported. Please use another method.');
+              break;
+            default:
+              setLoginStatus('2fa_code');
+              setStatusMessage('Enter the verification code');
+          }
+        }
+        // Check for error state
+        else if (googleLogin.last_error && !googleLogin.is_connected) {
+          console.log('[BrowserIntegrations] Detected pending error state:', googleLogin.last_error);
+          setLoginStatus('error');
+          setStatusMessage(googleLogin.last_error);
+        }
+        // Check for connected state
+        else if (googleLogin.is_connected) {
+          console.log('[BrowserIntegrations] Detected connected state');
+          setLoginStatus('success');
+          setStatusMessage('Connected successfully!');
+        }
+      }
+    }
   };
 
   // Check if Google is connected
@@ -886,6 +978,60 @@ const BrowserIntegrations: React.FC = () => {
     }
   };
 
+  // Verify login after user approved 2FA on phone
+  const handleVerifyLogin = async () => {
+    if (!currentProject?.id) return;
+
+    setLoginStatus('verifying');
+    setStatusMessage('Verifying login...');
+
+    try {
+      const { data, error } = await supabase.rpc('browser_verify_login', {
+        p_project_id: currentProject.id,
+        p_platform_name: 'google'
+      });
+
+      if (error) throw new Error(error.message);
+      if (!data?.success) throw new Error(data?.error || 'Verification failed');
+
+      setStatusMessage('Verification in progress...');
+      // UI will update via Realtime when login status changes
+
+    } catch (error: any) {
+      console.error('[BrowserIntegrations] Verify error:', error);
+      setLoginStatus('error');
+      setStatusMessage(error.message || 'Verification failed');
+    }
+  };
+
+  // Submit 2FA code (SMS or Authenticator)
+  const handleSubmitCode = async () => {
+    if (!currentProject?.id || !twoFACode.trim()) return;
+
+    setLoginStatus('submitting_code');
+    setStatusMessage('Submitting code...');
+
+    try {
+      const { data, error } = await supabase.rpc('browser_submit_2fa_code', {
+        p_project_id: currentProject.id,
+        p_platform_name: 'google',
+        p_code: twoFACode.trim()
+      });
+
+      if (error) throw new Error(error.message);
+      if (!data?.success) throw new Error(data?.error || 'Code submission failed');
+
+      setStatusMessage('Code submitted, verifying...');
+      setTwoFACode(''); // Clear code input
+      // UI will update via Realtime when login status changes
+
+    } catch (error: any) {
+      console.error('[BrowserIntegrations] Submit code error:', error);
+      setLoginStatus('error');
+      setStatusMessage(error.message || 'Code submission failed');
+    }
+  };
+
   // Handle disconnect
   const handleDisconnect = async () => {
     if (!currentProject?.id || !isGoogleConnected) return;
@@ -1012,49 +1158,6 @@ const BrowserIntegrations: React.FC = () => {
     };
 
     setTimeout(poll, 5000);
-  };
-
-  // Submit 2FA code
-  const handleSubmit2FACode = async () => {
-    if (!twoFACode || twoFACode.length !== 6) return;
-
-    setLoginStatus('connecting');
-    setStatusMessage('Verifying code...');
-
-    try {
-      const googlePlatform = platforms.find(p => p.platform_name === 'google');
-      if (!googlePlatform?.twofa_code_prompt) return;
-
-      const prompt = fillPromptTemplate(googlePlatform.twofa_code_prompt, {
-        code: twoFACode,
-      });
-
-      const result = await sendTask(prompt);
-
-      if (result.includes('LOGIN_SUCCESS') || result.includes('GOOGLE:SUCCESS')) {
-        updateStep('login', 'completed');
-        updateStep('youtube', 'active');
-        await updateLoginStatus('google', true);
-        await saveYoutubeLogin();
-        updateStep('youtube', 'completed');
-        setLoginStatus('success');
-        setStatusMessage('Connected to Google & YouTube!');
-      } else if (result.includes('INVALID_CODE')) {
-        setLoginStatus('2fa_code');
-        setStatusMessage('Invalid code. Please try again.');
-      } else {
-        updateStep('login', 'error');
-        setLoginStatus('error');
-        setStatusMessage('Verification failed');
-      }
-
-      await loadLogins();
-    } catch (error: any) {
-      setLoginStatus('error');
-      setStatusMessage(error.message || 'Verification failed');
-    }
-
-    setTwoFACode('');
   };
 
   // Connect other platforms using Google SSO
@@ -1226,8 +1329,8 @@ const BrowserIntegrations: React.FC = () => {
             </>
           ) : (
             <>
-              {/* Login Form */}
-              {loginStatus !== '2fa_phone' && loginStatus !== '2fa_code' && (
+              {/* Login Form - hide during 2FA */}
+              {!['2fa_phone', '2fa_sms', '2fa_authenticator', '2fa_code', '2fa_security_key', 'verifying', 'submitting_code'].includes(loginStatus) && (
                 <>
                   <FormGroup>
                     <FormLabel>
@@ -1300,7 +1403,7 @@ const BrowserIntegrations: React.FC = () => {
                 </>
               )}
 
-              {/* 2FA Phone Waiting */}
+              {/* 2FA Phone Waiting - with Verify button */}
               {loginStatus === '2fa_phone' && (
                 <PhoneWaitingContainer>
                   <PhoneIcon>
@@ -1310,41 +1413,82 @@ const BrowserIntegrations: React.FC = () => {
                   <PhoneSubtext>
                     Open the Google app on your phone and tap Yes to approve
                   </PhoneSubtext>
-                  <StatusMessage $type="info" style={{ marginTop: 20 }}>
-                    <FaSpinner className="spin" />
-                    Waiting for approval... This may take up to 2 minutes
-                  </StatusMessage>
+                  <PrimaryButton
+                    onClick={handleVerifyLogin}
+                    style={{ maxWidth: 200, margin: '20px auto 0' }}
+                  >
+                    I Approved - Verify
+                  </PrimaryButton>
                 </PhoneWaitingContainer>
               )}
 
-              {/* 2FA Code Input */}
-              {loginStatus === '2fa_code' && (
+              {/* 2FA Verifying */}
+              {loginStatus === 'verifying' && (
+                <PhoneWaitingContainer>
+                  <PhoneIcon>
+                    <FaSpinner className="spin" />
+                  </PhoneIcon>
+                  <PhoneText>Verifying login...</PhoneText>
+                  <PhoneSubtext>Please wait while we check your login status</PhoneSubtext>
+                </PhoneWaitingContainer>
+              )}
+
+              {/* 2FA Code Input (SMS, Authenticator, or generic) */}
+              {(loginStatus === '2fa_sms' || loginStatus === '2fa_authenticator' || loginStatus === '2fa_code' || loginStatus === 'submitting_code') && (
                 <div style={{ textAlign: 'center' }}>
-                  <PhoneText>Enter verification code</PhoneText>
+                  <PhoneIcon>
+                    <FaEnvelope />
+                  </PhoneIcon>
+                  <PhoneText>
+                    {loginStatus === '2fa_sms' ? 'Enter SMS Code' :
+                     loginStatus === '2fa_authenticator' ? 'Enter Authenticator Code' :
+                     'Enter Verification Code'}
+                  </PhoneText>
                   <PhoneSubtext>
-                    Check your email or phone for the 6-digit code
+                    {loginStatus === '2fa_sms' ? 'Check your phone for the SMS code' :
+                     loginStatus === '2fa_authenticator' ? 'Open your authenticator app for the code' :
+                     'Enter the verification code sent to you'}
                   </PhoneSubtext>
                   <TwoFAInput
                     type="text"
-                    maxLength={6}
-                    placeholder="000000"
+                    maxLength={8}
+                    placeholder="Enter code"
                     value={twoFACode}
-                    onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, ''))}
+                    onChange={(e) => setTwoFACode(e.target.value.replace(/[^0-9]/g, ''))}
+                    autoFocus
                   />
                   <PrimaryButton
-                    onClick={handleSubmit2FACode}
-                    disabled={twoFACode.length !== 6}
+                    onClick={handleSubmitCode}
+                    disabled={twoFACode.length < 4 || loginStatus === 'submitting_code'}
+                    $loading={loginStatus === 'submitting_code'}
                     style={{ maxWidth: 200, margin: '0 auto' }}
                   >
-                    Verify Code
+                    {loginStatus === 'submitting_code' ? (
+                      <><FaSpinner className="spin" /> Submitting...</>
+                    ) : (
+                      'Submit Code'
+                    )}
                   </PrimaryButton>
                 </div>
+              )}
+
+              {/* 2FA Security Key - Not Supported */}
+              {loginStatus === '2fa_security_key' && (
+                <PhoneWaitingContainer>
+                  <PhoneIcon style={{ color: '#ef4444' }}>
+                    <FaLock />
+                  </PhoneIcon>
+                  <PhoneText>Security Key Required</PhoneText>
+                  <PhoneSubtext>
+                    Security keys are not supported. Please use a different 2FA method in your Google account settings.
+                  </PhoneSubtext>
+                </PhoneWaitingContainer>
               )}
             </>
           )}
 
-          {/* Status Messages */}
-          {statusMessage && loginStatus !== 'connecting' && loginStatus !== '2fa_phone' && (
+          {/* Status Messages - hide during 2FA states */}
+          {statusMessage && !['connecting', '2fa_phone', '2fa_sms', '2fa_authenticator', '2fa_code', '2fa_security_key', 'verifying', 'submitting_code'].includes(loginStatus) && (
             <StatusMessage
               $type={
                 loginStatus === 'success' ? 'success' :

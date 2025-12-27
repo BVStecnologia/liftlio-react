@@ -50,15 +50,15 @@ BEGIN
         );
     END IF;
 
-    -- 2. Buscar prompt de reply do browser_platforms
-    SELECT comment_prompt INTO v_reply_prompt
+    -- 2. Buscar reply_prompt do browser_platforms (plataforma youtube)
+    SELECT reply_prompt INTO v_reply_prompt
     FROM browser_platforms
-    WHERE platform_name = 'youtube_reply' AND is_active = true;
+    WHERE platform_name = 'youtube' AND is_active = true;
 
     IF v_reply_prompt IS NULL THEN
         RETURN jsonb_build_object(
             'success', false,
-            'error', 'Prompt youtube_reply não encontrado em browser_platforms'
+            'error', 'reply_prompt não encontrado para plataforma youtube'
         );
     END IF;
 

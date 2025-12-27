@@ -1,0 +1,42 @@
+# =============================================================================
+# LIFTLIO CLAUDE CODE API - Docker Compose
+# =============================================================================
+# Lightweight Claude Code container
+# =============================================================================
+
+version: '3.8'
+
+services:
+  claude-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: liftlio-claude-api
+    restart: unless-stopped
+    ports:
+      - "10200:10100"  # Using 10200 to not conflict with browser agent
+    volumes:
+      # Mount credentials as read-only at /credentials
+      # Entrypoint copies to /home/claude/.claude/ with proper permissions
+      - claude-credentials:/credentials:ro
+    environment:
+      - PORT=10100
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+volumes:
+  # External volume - shared with browser agent
+  claude-credentials:
+    external: true

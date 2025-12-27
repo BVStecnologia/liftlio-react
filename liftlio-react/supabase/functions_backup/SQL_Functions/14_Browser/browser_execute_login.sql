@@ -40,7 +40,12 @@ BEGIN
     DO UPDATE SET
         login_password = EXCLUDED.login_password,
         updated_at = now(),
-        is_active = true
+        is_active = true,
+        -- Clear previous error/2FA states when starting new login
+        last_error = NULL,
+        last_error_at = NULL,
+        has_2fa = false,
+        twofa_type = NULL
     RETURNING id INTO v_login_id;
 
     -- 2. Criar task em browser_tasks (agente vai atualizar status)
