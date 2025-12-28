@@ -76,7 +76,7 @@
 
 DROP FUNCTION IF EXISTS process_engagement_comments_with_claude(INTEGER, INTEGER);
 
-CREATE OR REPLACE FUNCTION public.process_engagement_comments_with_claude(p_project_id integer, p_limit integer DEFAULT 10)
+CREATE OR REPLACE FUNCTION public.process_engagement_comments_with_claude(p_project_id integer, p_limit integer DEFAULT 10, p_video_id bigint DEFAULT NULL)
  RETURNS jsonb
  LANGUAGE plpgsql
 AS $function$

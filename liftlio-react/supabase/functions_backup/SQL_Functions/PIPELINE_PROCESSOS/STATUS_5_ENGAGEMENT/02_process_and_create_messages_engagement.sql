@@ -23,9 +23,9 @@
 --             Detecta objetos de erro {"error": "..."} e retorna mensagem clara
 -- =============================================
 
-DROP FUNCTION IF EXISTS public.process_and_create_messages_engagement(integer);
+DROP FUNCTION IF EXISTS public.process_and_create_messages_engagement(integer, bigint);
 
-CREATE OR REPLACE FUNCTION public.process_and_create_messages_engagement(p_project_id integer)
+CREATE OR REPLACE FUNCTION public.process_and_create_messages_engagement(p_project_id integer, p_video_id bigint DEFAULT NULL)
  RETURNS TABLE(message_id bigint, cp_id text, status text)
  LANGUAGE plpgsql
 AS $function$
@@ -46,7 +46,7 @@ BEGIN
     RAISE NOTICE 'Iniciando processamento para projeto % em %', p_project_id, v_start_time;
 
     -- Obter o resultado com os novos campos
-    SELECT process_engagement_comments_with_claude(p_project_id) INTO v_raw_result;
+    SELECT process_engagement_comments_with_claude(p_project_id, 10, p_video_id) INTO v_raw_result;
     RAISE NOTICE 'Dados obtidos do Claude em % segundos', EXTRACT(EPOCH FROM (clock_timestamp() - v_start_time));
 
     -- Se não há resultado, retornar

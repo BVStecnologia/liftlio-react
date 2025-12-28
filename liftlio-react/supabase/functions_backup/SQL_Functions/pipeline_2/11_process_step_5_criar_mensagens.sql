@@ -2,6 +2,7 @@
 -- Função: process_step_5_criar_mensagens
 -- Descrição: Step 5 - Cria mensagens orientadas com Claude AI
 -- Criado: 2025-11-14
+-- Atualizado: 2025-12-28 - FIX: Passa v_video_db_id para processar APENAS o vídeo correto
 -- =============================================
 
 DROP FUNCTION IF EXISTS process_step_5_criar_mensagens(TEXT);
@@ -62,7 +63,7 @@ BEGIN
         -- Processar criação de mensagens
         -- A função retorna TABLE(message_id, cp_id, status)
         FOR v_messages_result IN
-            SELECT * FROM process_and_create_messages_engagement(v_project_id::INTEGER)
+            SELECT * FROM process_and_create_messages_engagement(v_project_id::INTEGER, v_video_db_id)
         LOOP
             -- Contar mensagens criadas
             IF v_messages_result.message_id IS NOT NULL THEN
