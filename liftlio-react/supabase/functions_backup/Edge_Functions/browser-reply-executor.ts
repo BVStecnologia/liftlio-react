@@ -1,16 +1,25 @@
 // =============================================
 // Edge Function: browser-reply-executor
 // Descrição: Executa reply via Browser Agent (Sistema 2)
+// Versão: 3 - Fire-and-forget pattern
 // Criado: 2025-12-27
+// Atualizado: 2025-12-28 - Fire-and-forget + passa taskId
 //
-// FLUXO:
+// FLUXO v3 (Fire-and-forget):
 // 1. Recebe task_id, project_id, video_id, reply_text, etc.
-// 2. Chama Browser Agent com prompt humanizado
-// 3. Quando agente completa, atualiza:
-//    - browser_tasks.response
-//    - Settings messages posts.status = 'posted'
-//    - Mensagens.respondido = true
-//    - customers.Mentions-- (se tipo='produto')
+// 2. Marca browser_tasks como 'running'
+// 3. Dispara requisição para Browser Agent SEM ESPERAR resposta
+// 4. Retorna imediatamente para evitar timeout (60s)
+// 5. Browser Agent atualiza Supabase quando termina (callback)
+//
+// IMPORTANTE:
+// - Edge Function tem timeout de 60s
+// - Tasks humanizadas levam 4-5 minutos
+// - Por isso usamos fire-and-forget
+// - Browser Agent é responsável por atualizar:
+//   - browser_tasks.status/response
+//   - Settings messages posts.status = 'posted'
+//   - Mensagens.respondido = true
 // =============================================
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -70,104 +79,42 @@ Deno.serve(async (req) => {
       })
       .eq('id', task_id)
 
-    // Call Browser Agent
+    // Call Browser Agent - FIRE AND FORGET!
+    // Não esperamos a resposta pois task humanizada leva 4-5 min
+    // Browser Agent vai atualizar Supabase quando terminar
     const agentUrl = `${browser_url}/agent/task`
-    console.log(`[browser-reply-executor] Calling agent at ${agentUrl}`)
+    console.log(`[browser-reply-executor] Fire-and-forget call to ${agentUrl}`)
 
-    const agentResponse = await fetch(agentUrl, {
+    // Fire-and-forget: don't await, let it run in background
+    fetch(agentUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        task: reply_prompt
+        task: reply_prompt,
+        taskId: task_id,  // Browser Agent will use this to update Supabase
+        metadata: {
+          settings_post_id: settings_post_id,
+          mensagem_id: mensagem_id,
+          project_id: project_id,
+          tipo_resposta: tipo_resposta
+        }
       })
+    }).catch(err => {
+      // Log error but don't fail - fire and forget
+      console.error(`[browser-reply-executor] Fire-and-forget error (ignored):`, err.message)
     })
 
-    const agentResult = await agentResponse.json()
-    console.log(`[browser-reply-executor] Agent response:`, JSON.stringify(agentResult).substring(0, 500))
+    console.log(`[browser-reply-executor] Task dispatched, returning immediately (fire-and-forget)`)
 
-    // Determine success based on response
-    const resultText = agentResult.result || agentResult.response || ''
-    const isSuccess = resultText.includes('REPLY:SUCCESS') ||
-                      resultText.includes('SUCCESS') ||
-                      (agentResult.success === true)
-    const likeSuccess = !resultText.includes('LIKE:FAILED')
-
-    // Update browser_tasks with result
-    await supabase
-      .from('browser_tasks')
-      .update({
-        status: isSuccess ? 'completed' : 'failed',
-        completed_at: new Date().toISOString(),
-        response: {
-          success: isSuccess,
-          like_success: likeSuccess,
-          result: resultText,
-          agent_response: agentResult
-        }
-      })
-      .eq('id', task_id)
-
-    if (isSuccess) {
-      console.log(`[browser-reply-executor] Reply successful, updating tables...`)
-
-      // 1. Update Settings messages posts
-      await supabase
-        .from('Settings messages posts')
-        .update({
-          status: 'posted',
-          postado: new Date().toISOString()
-        })
-        .eq('id', settings_post_id)
-
-      // 2. Update Mensagens
-      await supabase
-        .from('Mensagens')
-        .update({
-          respondido: true
-          // Note: youtube_comment_id não é retornado pelo browser agent
-          // pois ele não tem acesso ao ID interno do YouTube
-        })
-        .eq('id', mensagem_id)
-
-      // 3. Decrement Mentions (only for tipo='produto')
-      if (tipo_resposta === 'produto') {
-        // Get user_id from project
-        const { data: project } = await supabase
-          .from('Projeto')
-          .select('User id')
-          .eq('id', project_id)
-          .single()
-
-        if (project && project['User id']) {
-          await supabase.rpc('decrement_mentions', {
-            p_user_id: project['User id']
-          })
-          console.log(`[browser-reply-executor] Mentions decremented for project ${project_id}`)
-        }
-      }
-
-      console.log(`[browser-reply-executor] All updates completed successfully`)
-    } else {
-      console.log(`[browser-reply-executor] Reply failed: ${resultText}`)
-
-      // Update Settings messages posts with failure
-      await supabase
-        .from('Settings messages posts')
-        .update({
-          status: 'failed',
-          postado: new Date().toISOString()
-        })
-        .eq('id', settings_post_id)
-    }
-
+    // Return immediately - Browser Agent will update DB when done
     return new Response(
       JSON.stringify({
-        success: isSuccess,
+        success: true,
         task_id,
-        message: isSuccess ? 'Reply posted successfully' : 'Reply failed',
-        result: resultText
+        message: 'Task dispatched to Browser Agent (fire-and-forget)',
+        note: 'Browser Agent will update database when task completes'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

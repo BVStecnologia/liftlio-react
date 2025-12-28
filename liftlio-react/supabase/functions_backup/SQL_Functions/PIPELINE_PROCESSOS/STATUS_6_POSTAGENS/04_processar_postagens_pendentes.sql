@@ -1,10 +1,13 @@
 -- =============================================
 -- Função: processar_postagens_pendentes
 -- Tipo: Processor (executa postagens agendadas)
+-- Versão: 2.0 - Limita a 1 tarefa Browser Agent por vez
+-- Atualizado: 2025-12-28
 --
 -- Descrição:
 --   Processa postagens pendentes que chegaram na hora agendada.
---   AGORA USA BROWSER AGENT em vez de API do YouTube.
+--   USA BROWSER AGENT em vez de API do YouTube.
+--   LIMITA A 1 TAREFA POR VEZ para evitar conflitos.
 --
 -- Entrada:
 --   projeto_id_param BIGINT - ID do projeto (opcional, NULL = todos)
@@ -18,29 +21,21 @@
 --
 -- IMPORTANTE:
 --   - Fire-and-forget: marca como 'processing', não espera resposta
---   - Edge Function browser-reply-executor atualiza para 'posted' quando completa
---   - "sucessos" = tasks criadas com sucesso (não significa postado ainda)
---
--- Criado: Data desconhecida
--- Atualizado: 2025-10-21 - Adicionado decremento de Mentions
--- Atualizado: 2025-01-14 - FIX CRÍTICO: Decrementar Mentions apenas para tipo produto
--- Atualizado: 2025-12-27 - MIGRAÇÃO PARA BROWSER AGENT (não usa mais API YouTube)
+--   - Browser Agent atualiza status quando termina via callback
+--   - Limita a 1 tarefa por vez para evitar conflitos
 -- =============================================
 
--- Remover versões anteriores
-DROP FUNCTION IF EXISTS public.processar_postagens_pendentes(INT);
-DROP FUNCTION IF EXISTS public.processar_postagens_pendentes();
-DROP FUNCTION IF EXISTS public.processar_postagens_pendentes(BIGINT);
+DROP FUNCTION IF EXISTS processar_postagens_pendentes(bigint);
 
-CREATE OR REPLACE FUNCTION public.processar_postagens_pendentes(projeto_id_param bigint DEFAULT NULL::bigint)
+CREATE OR REPLACE FUNCTION processar_postagens_pendentes(projeto_id_param bigint DEFAULT NULL)
 RETURNS TABLE(total_processados integer, sucessos integer, falhas integer, status_mensagem text)
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path TO 'public'
 AS $function$
 DECLARE
     v_total_processados integer := 0;
-    v_sucessos integer := 0;  -- Tasks enviadas para Browser Agent
+    v_sucessos integer := 0;
     v_falhas integer := 0;
     v_status_mensagem text := '';
     v_registro RECORD;
@@ -49,11 +44,26 @@ DECLARE
     v_fuso_horario_projeto text;
     v_resposta jsonb;
     v_video_youtube_id text;
-    v_limite_processamento integer := 10;  -- Menor que antes (browser é mais lento)
+    v_limite_processamento integer := 1;  -- LIMITE A 1 TAREFA POR VEZ!
     v_contador integer := 0;
     v_current_time_local timestamp;
+    v_running_tasks integer := 0;
 BEGIN
-    -- Verificar projetos a processar (um específico ou todos)
+    -- Verificar se já existe tarefa running no browser_tasks para este projeto
+    IF projeto_id_param IS NOT NULL THEN
+        SELECT COUNT(*) INTO v_running_tasks
+        FROM browser_tasks
+        WHERE project_id = projeto_id_param
+          AND status IN ('running', 'pending')
+          AND created_at > NOW() - INTERVAL '30 minutes';
+
+        IF v_running_tasks > 0 THEN
+            v_status_mensagem := format('Browser Agent: Já existe %s tarefa(s) em execução, aguardando...', v_running_tasks);
+            RETURN QUERY SELECT 0, 0, 0, v_status_mensagem;
+            RETURN;
+        END IF;
+    END IF;
+
     FOR v_registro IN (
         SELECT
             smp.id as settings_post_id,
@@ -62,7 +72,7 @@ BEGIN
             smp."Comentarios_Principal" as comentario_id,
             m.mensagem as texto_mensagem,
             m.tipo_resposta,
-            m.video as video_id,  -- ID interno do vídeo
+            m.video as video_id,
             cp.id_do_comentario as parent_comment_id,
             p.fuso_horario
         FROM "Settings messages posts" smp
@@ -74,12 +84,11 @@ BEGIN
             AND smp.proxima_postagem <= CURRENT_TIMESTAMP
             AND smp.status = 'pending'
         ORDER BY smp.proxima_postagem
-        LIMIT v_limite_processamento
+        LIMIT v_limite_processamento  -- APENAS 1 TAREFA
     ) LOOP
         v_fuso_horario_projeto := COALESCE(v_registro.fuso_horario, 'UTC');
         v_current_time_local := CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AT TIME ZONE v_fuso_horario_projeto;
 
-        -- Verificar se o projeto está ativo E tem browser configurado
         SELECT
             "Youtube Active" AND integracao_valida,
             browser_mcp_url IS NOT NULL
@@ -87,11 +96,9 @@ BEGIN
         FROM "Projeto"
         WHERE id = v_registro.projeto_id;
 
-        -- Log
         RAISE NOTICE '[Browser Agent] Processando postagem ID=% do projeto ID=%',
                    v_registro.settings_post_id, v_registro.projeto_id;
 
-        -- Se o projeto não estiver ativo, marcar como falha
         IF NOT v_projeto_ativo THEN
             UPDATE "Settings messages posts"
             SET status = 'failed',
@@ -104,7 +111,6 @@ BEGIN
             CONTINUE;
         END IF;
 
-        -- Se não tem browser configurado, marcar como falha
         IF NOT v_has_browser THEN
             UPDATE "Settings messages posts"
             SET status = 'failed',
@@ -117,7 +123,6 @@ BEGIN
             CONTINUE;
         END IF;
 
-        -- Buscar YouTube video ID
         SELECT v."VIDEO" INTO v_video_youtube_id
         FROM "Videos" v
         WHERE v.id = v_registro.video_id;
@@ -134,12 +139,10 @@ BEGIN
             CONTINUE;
         END IF;
 
-        -- Marcar como 'processing' (Browser Agent vai executar)
         UPDATE "Settings messages posts"
         SET status = 'processing'
         WHERE id = v_registro.settings_post_id;
 
-        -- Enviar para Browser Agent (fire-and-forget)
         BEGIN
             RAISE NOTICE '[Browser Agent] Enviando task: video=%, comment=%, texto=%',
                          v_video_youtube_id, v_registro.parent_comment_id,
@@ -159,7 +162,6 @@ BEGIN
                 v_sucessos := v_sucessos + 1;
                 RAISE NOTICE '[Browser Agent] Task criada: %', v_resposta->>'task_id';
             ELSE
-                -- Falha ao criar task - reverter para pending
                 UPDATE "Settings messages posts"
                 SET status = 'pending'
                 WHERE id = v_registro.settings_post_id;
@@ -169,7 +171,6 @@ BEGIN
             END IF;
 
         EXCEPTION WHEN OTHERS THEN
-            -- Erro - reverter para pending
             UPDATE "Settings messages posts"
             SET status = 'pending'
             WHERE id = v_registro.settings_post_id;
@@ -181,23 +182,15 @@ BEGIN
         v_total_processados := v_total_processados + 1;
         v_contador := v_contador + 1;
 
-        -- Delay entre tasks (browser é mais lento que API)
-        PERFORM pg_sleep(0.3);
-
-        EXIT WHEN v_contador >= v_limite_processamento;
+        -- Apenas 1 tarefa por vez, não precisa de pg_sleep nem loop
+        EXIT;
     END LOOP;
 
-    -- Preparar mensagem de status
     v_status_mensagem := format(
-        'Browser Agent: %s tasks enviadas, %s falhas (total: %s)',
+        'Browser Agent: %s task(s) enviada(s), %s falha(s) (total: %s)',
         v_sucessos, v_falhas, v_total_processados
     );
 
     RETURN QUERY SELECT v_total_processados, v_sucessos, v_falhas, v_status_mensagem;
 END;
 $function$;
-
-COMMENT ON FUNCTION processar_postagens_pendentes IS
-'Processa postagens via Browser Agent (fire-and-forget).
-Marca como processing e Edge Function atualiza para posted quando completa.
-Comportamento humanizado: assiste vídeo em 2x, curte comentário, responde.';

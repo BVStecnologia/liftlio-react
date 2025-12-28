@@ -252,6 +252,73 @@ async function updateTaskInSupabase(taskId, result) {
 }
 
 /**
+ * Update Settings messages posts in Supabase when task completes
+ */
+async function updateSettingsPostInSupabase(settingsPostId, success, resultText) {
+  if (!SUPABASE_URL || !SUPABASE_KEY || !settingsPostId) {
+    console.log('[TASK] Supabase not configured or settingsPostId not provided, skipping update');
+    return false;
+  }
+
+  try {
+    const axios = require('axios');
+    await axios.patch(
+      `${SUPABASE_URL}/rest/v1/Settings%20messages%20posts?id=eq.${settingsPostId}`,
+      {
+        status: success ? 'posted' : 'failed',
+        postado: new Date().toISOString()
+      },
+      {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        }
+      }
+    );
+    console.log(`[TASK] Updated Settings messages posts ${settingsPostId}: ${success ? 'posted' : 'failed'}`);
+    return true;
+  } catch (err) {
+    console.error(`[TASK] Error updating Settings messages posts: ${err.message}`);
+    return false;
+  }
+}
+
+/**
+ * Update Mensagens in Supabase when reply is successful
+ */
+async function updateMensagemInSupabase(mensagemId, success) {
+  if (!SUPABASE_URL || !SUPABASE_KEY || !mensagemId) {
+    console.log('[TASK] Supabase not configured or mensagemId not provided, skipping update');
+    return false;
+  }
+
+  try {
+    const axios = require('axios');
+    await axios.patch(
+      `${SUPABASE_URL}/rest/v1/Mensagens?id=eq.${mensagemId}`,
+      {
+        respondido: success
+      },
+      {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        }
+      }
+    );
+    console.log(`[TASK] Updated Mensagens ${mensagemId}: respondido=${success}`);
+    return true;
+  } catch (err) {
+    console.error(`[TASK] Error updating Mensagens: ${err.message}`);
+    return false;
+  }
+}
+
+/**
  * Get current session from Chrome via CDP
  */
 async function getCurrentSession() {
@@ -2090,7 +2157,7 @@ app.post('/containers/:projectId/heartbeat', (req, res) => {
  * Now ensures Google session is valid before executing
  */
 app.post('/agent/task', async (req, res) => {
-  const { task, maxIterations, projectId, taskId, continueSession } = req.body;
+  const { task, maxIterations, projectId, taskId, continueSession, metadata } = req.body;
 
   if (!task) {
     return res.status(400).json({ error: 'task is required' });
@@ -2135,17 +2202,37 @@ app.post('/agent/task', async (req, res) => {
       }
     }
 
+    // Determine success based on response content
+    const responseText = claudeResponse || '';
+    const isSuccess = responseText.includes('REPLY:SUCCESS') ||
+                      responseText.includes('SUCCESS') ||
+                      responseText.includes('reply was posted') ||
+                      responseText.includes('Reply posted');
+
     // Update browser_tasks if taskId was provided (from CRON)
     if (taskId) {
       await updateTaskInSupabase(taskId, {
-        success: true,
+        success: isSuccess,
         result: claudeResponse,
         duration: result.duration
       });
     }
 
+    // Update Settings messages posts and Mensagens if metadata was provided
+    if (metadata) {
+      const { settings_post_id, mensagem_id } = metadata;
+
+      if (settings_post_id) {
+        await updateSettingsPostInSupabase(settings_post_id, isSuccess, claudeResponse);
+      }
+
+      if (mensagem_id && isSuccess) {
+        await updateMensagemInSupabase(mensagem_id, true);
+      }
+    }
+
     res.json({
-      success: true,
+      success: isSuccess,
       projectId: projectId || PROJECT_ID,
       sessionStatus,
       result: claudeResponse,  // Frontend expects 'result' field with Claude's response
@@ -2164,6 +2251,11 @@ app.post('/agent/task', async (req, res) => {
         result: null,
         error: error.message
       });
+    }
+
+    // Update Settings messages posts with failure if metadata was provided
+    if (metadata && metadata.settings_post_id) {
+      await updateSettingsPostInSupabase(metadata.settings_post_id, false, error.message);
     }
 
     res.status(500).json({ success: false, error: error.message });
