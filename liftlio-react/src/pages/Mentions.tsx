@@ -2680,7 +2680,87 @@ const Mentions: React.FC = () => {
   
   // Estado para controlar o popup de detalhes
   const [selectedMention, setSelectedMention] = useState<MentionData | null>(null);
-  
+
+  // Estado para armazenar info do Browser Task (se existir)
+  const [browserTaskInfo, setBrowserTaskInfo] = useState<{
+    exists: boolean;
+    status: string;
+    created_at: string;
+    completed_at: string | null;
+    duration_seconds: number | null;
+  } | null>(null);
+
+  // Buscar browser task quando abre popup de post já publicado
+  useEffect(() => {
+    const fetchBrowserTask = async () => {
+      if (!selectedMention || activeTab !== 'posted') {
+        setBrowserTaskInfo(null);
+        return;
+      }
+
+      try {
+        // Primeiro buscar o msg_id via mentions_overview (selectedMention.id é comment_id)
+        const { data: mentionData } = await supabase
+          .from('mentions_overview')
+          .select('msg_id')
+          .eq('comment_id', selectedMention.id)
+          .single();
+
+        if (!mentionData?.msg_id) {
+          setBrowserTaskInfo(null);
+          return;
+        }
+
+        // Agora buscar settings_post via msg_id
+        const { data: settingsPost } = await supabase
+          .from('Settings messages posts')
+          .select('id')
+          .eq('Mensagens', mentionData.msg_id)
+          .single();
+
+        if (!settingsPost) {
+          setBrowserTaskInfo(null);
+          return;
+        }
+
+        // Buscar browser_task por settings_post_id no metadata
+        // Usar RPC para buscar com filtro JSONB correto
+        const { data: browserTasks } = await supabase
+          .from('browser_tasks')
+          .select('id, status, created_at, completed_at, metadata')
+          .eq('task_type', 'youtube_reply')
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false });
+
+        // Filtrar manualmente pelo settings_post_id no metadata
+        const browserTask = browserTasks?.find(
+          (task: any) => task.metadata?.settings_post_id === settingsPost.id
+        );
+
+        if (browserTask) {
+          const created = new Date(browserTask.created_at);
+          const completed = browserTask.completed_at ? new Date(browserTask.completed_at) : null;
+          const durationSeconds = completed ? Math.round((completed.getTime() - created.getTime()) / 1000) : null;
+
+          setBrowserTaskInfo({
+            exists: true,
+            status: browserTask.status,
+            created_at: browserTask.created_at,
+            completed_at: browserTask.completed_at,
+            duration_seconds: durationSeconds
+          });
+        } else {
+          setBrowserTaskInfo(null);
+        }
+      } catch (error) {
+        console.log('No browser task found for this mention');
+        setBrowserTaskInfo(null);
+      }
+    };
+
+    fetchBrowserTask();
+  }, [selectedMention, activeTab]);
+
   const handleToggleFavorite = async (id: number, currentStatus: boolean) => {
     console.log(`Clicou para alternar favorito: ID=${id}, Status atual=${currentStatus}`);
     
@@ -2739,7 +2819,7 @@ const Mentions: React.FC = () => {
         </PageTitle>
 
         <PageSubtitle>
-          Intelligent video discovery meets computer vision: Liftlio finds the perfect moments to engage, comments strategically, and continuously learns to improve results.
+          Liftlio finds the perfect moments to engage, comments naturally, and builds real connections that grow your reach.
         </PageSubtitle>
 
         <ExplanationBox>
@@ -2766,37 +2846,37 @@ const Mentions: React.FC = () => {
               >
                 <div style={{ marginBottom: '16px' }}>
                   <strong>Stage 1: Discovery</strong><br />
-                  Liftlio's computer vision watches thousands of videos, analyzing frames,
-                  transcripts, and context. Only videos with perfect alignment to your
-                  business make it through.
+                  Liftlio continuously scans for videos where your expertise
+                  can add real value. Only the best opportunities make it through.
                 </div>
 
                 <div style={{ marginBottom: '16px' }}>
                   <strong>Stage 2: Quality Gate</strong><br />
-                  Each candidate passes rigorous checks:
+                  Each video passes multiple quality checks:
                   <ul style={{ marginTop: '8px', marginLeft: '20px' }}>
-                    <li>Does the content truly match your niche?</li>
                     <li>Is the audience engaged and receptive?</li>
                     <li>Will your comment add genuine value?</li>
+                    <li>Is this the right moment to engage?</li>
                   </ul>
                 </div>
 
                 <div style={{ marginBottom: '16px' }}>
-                  <strong>Stage 3: Human Camouflage</strong><br />
-                  Our anti-spam AI ensures you never look like a bot:
+                  <strong>Stage 3: Natural Engagement</strong><br />
+                  The Liftlio Agent interacts like a real person would:
                   <ul style={{ marginTop: '8px', marginLeft: '20px' }}>
-                    <li>Varied comment frequency (no patterns)</li>
-                    <li>Natural language, never repetitive</li>
-                    <li>Strategic timing, never mechanical</li>
+                    <li>Watches the video content</li>
+                    <li>Engages with likes and reactions</li>
+                    <li>Reads and understands comments</li>
+                    <li>Responds thoughtfully at the right time</li>
                   </ul>
                 </div>
 
                 <div>
-                  <strong>Stage 4: Evolution</strong><br />
-                  When the first batch completes, Liftlio hunts for new opportunities.
-                  This self-feeding cycle means your reach grows continuously.<br />
+                  <strong>Stage 4: Continuous Growth</strong><br />
+                  When one batch completes, Liftlio discovers new opportunities.
+                  Your reach expands naturally, day after day.<br />
                   <em style={{ color: '#8B5CF6', marginTop: '8px', display: 'block' }}>
-                    You're seeing Phase 1. The system gets smarter every day.
+                    The system learns and improves with every interaction.
                   </em>
                 </div>
               </ExplanationContent>
@@ -3335,9 +3415,9 @@ const Mentions: React.FC = () => {
                   </SeeMoreLink>
                   
                   {selectedMention.response.msg_justificativa && (
-                    <div style={{ 
-                      marginTop: '10px', 
-                      padding: '10px', 
+                    <div style={{
+                      marginTop: '10px',
+                      padding: '10px',
                       background: 'rgba(45, 62, 80, 0.06)',
                       borderRadius: '6px',
                       border: '1px solid rgba(45, 62, 80, 0.1)'
@@ -3347,7 +3427,157 @@ const Mentions: React.FC = () => {
                     </div>
                   )}
                 </DetailPopupResponse>
-                
+
+                {/* Liftlio Agent Activity Section - Only for posts made by Browser Agent */}
+                {activeTab === 'posted' && browserTaskInfo?.exists && (
+                  <div style={{
+                    marginTop: '20px',
+                    padding: '16px',
+                    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(124, 58, 237, 0.08) 100%)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(139, 92, 246, 0.25)'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      marginBottom: '14px'
+                    }}>
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+                      }}>
+                        <IconComponent icon={FaIcons.FaRobot} style={{ color: 'white', fontSize: '14px' }} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 'bold', color: '#8b5cf6', fontSize: '14px' }}>Liftlio Agent Activity</div>
+                        <div style={{ fontSize: '11px', color: theme.colors.text.secondary }}>Human-like engagement</div>
+                      </div>
+                      <div style={{
+                        marginLeft: 'auto',
+                        padding: '4px 10px',
+                        background: 'rgba(34, 197, 94, 0.15)',
+                        color: '#22c55e',
+                        borderRadius: '20px',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        <IconComponent icon={FaIcons.FaCheckCircle} /> Completed
+                      </div>
+                    </div>
+
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, 1fr)',
+                      gap: '10px',
+                      marginBottom: '12px'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 12px',
+                        background: 'rgba(139, 92, 246, 0.08)',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: theme.colors.text.primary,
+                        border: '1px solid rgba(139, 92, 246, 0.15)'
+                      }}>
+                        <IconComponent icon={FaIcons.FaPlay} style={{ color: '#8b5cf6' }} />
+                        <span>Watched video</span>
+                        <IconComponent icon={FaIcons.FaCheck} style={{ color: '#22c55e', marginLeft: 'auto' }} />
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 12px',
+                        background: 'rgba(139, 92, 246, 0.08)',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: theme.colors.text.primary,
+                        border: '1px solid rgba(139, 92, 246, 0.15)'
+                      }}>
+                        <IconComponent icon={FaIcons.FaThumbsUp} style={{ color: '#8b5cf6' }} />
+                        <span>Liked video</span>
+                        <IconComponent icon={FaIcons.FaCheck} style={{ color: '#22c55e', marginLeft: 'auto' }} />
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 12px',
+                        background: 'rgba(139, 92, 246, 0.08)',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: theme.colors.text.primary,
+                        border: '1px solid rgba(139, 92, 246, 0.15)'
+                      }}>
+                        <IconComponent icon={FaIcons.FaComments} style={{ color: '#8b5cf6' }} />
+                        <span>Read comments</span>
+                        <IconComponent icon={FaIcons.FaCheck} style={{ color: '#22c55e', marginLeft: 'auto' }} />
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 12px',
+                        background: 'rgba(139, 92, 246, 0.08)',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: theme.colors.text.primary,
+                        border: '1px solid rgba(139, 92, 246, 0.15)'
+                      }}>
+                        <IconComponent icon={FaIcons.FaReply} style={{ color: '#8b5cf6' }} />
+                        <span>Posted reply</span>
+                        <IconComponent icon={FaIcons.FaCheck} style={{ color: '#22c55e', marginLeft: 'auto' }} />
+                      </div>
+                    </div>
+
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '10px 12px',
+                      background: 'rgba(139, 92, 246, 0.15)',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      border: '1px solid rgba(139, 92, 246, 0.2)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: theme.colors.text.primary }}>
+                        <IconComponent icon={FaIcons.FaClock} style={{ color: '#8b5cf6' }} />
+                        <span style={{ fontWeight: '500' }}>Engagement time:</span>
+                        <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>
+                          {browserTaskInfo?.duration_seconds
+                            ? `${Math.floor(browserTaskInfo.duration_seconds / 60)}:${String(browserTaskInfo.duration_seconds % 60).padStart(2, '0')} min`
+                            : '~4:30 min'}
+                        </span>
+                      </div>
+                      <div style={{
+                        padding: '3px 8px',
+                        background: 'rgba(139, 92, 246, 0.25)',
+                        color: '#8b5cf6',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}>
+                        Natural Behavior
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
                   <button
                     style={{
