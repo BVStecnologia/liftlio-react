@@ -1,34 +1,60 @@
 -- =============================================
--- Função: obter_comentarios_postados_por_projeto
--- Descrição: Obtém comentários postados de monitoramento de um projeto
+-- FunÃ§Ã£o: obter_comentarios_postados_por_projeto
+-- DescriÃ§Ã£o: ObtÃ©m comentÃ¡rios postados de monitoramento de um projeto
+--            INCLUI Sistema 1 (direto) e Sistema 2 (Browser Agent replies)
 -- Criado: 2025-01-24
--- Atualizado: Função com paginação e filtros para comentários
+-- Atualizado: 2025-12-30 - REMOVIDO filtro Sistema 1, agora inclui TODOS
 -- =============================================
 
-CREATE OR REPLACE FUNCTION public.obter_comentarios_postados_por_projeto(id_projeto bigint, pagina_atual integer DEFAULT 1, itens_por_pagina integer DEFAULT 10, filtro_respondido boolean DEFAULT NULL::boolean, filtro_mensagem text DEFAULT NULL::text, filtro_video_id bigint DEFAULT NULL::bigint)
- RETURNS TABLE(mensagem_id bigint, mensagem_texto text, mensagem_data timestamp with time zone, mensagem_respondido boolean, video_id bigint, video_youtube_id text, video_titulo text, video_visualizacoes bigint, video_likes bigint, video_comentarios bigint, relevance_score double precision, content_category text, canal_id bigint, canal_nome text, canal_youtube_id text, canal_inscritos integer, canal_visualizacoes bigint, total_registros bigint)
- LANGUAGE plpgsql
+CREATE OR REPLACE FUNCTION public.obter_comentarios_postados_por_projeto(
+    id_projeto bigint,
+    pagina_atual integer DEFAULT 1,
+    itens_por_pagina integer DEFAULT 10,
+    filtro_respondido boolean DEFAULT NULL::boolean,
+    filtro_mensagem text DEFAULT NULL::text,
+    filtro_video_id bigint DEFAULT NULL::bigint
+)
+RETURNS TABLE(
+    mensagem_id bigint,
+    mensagem_texto text,
+    mensagem_data timestamp with time zone,
+    mensagem_respondido boolean,
+    video_id bigint,
+    video_youtube_id text,
+    video_titulo text,
+    video_visualizacoes bigint,
+    video_likes bigint,
+    video_comentarios bigint,
+    relevance_score double precision,
+    content_category text,
+    canal_id bigint,
+    canal_nome text,
+    canal_youtube_id text,
+    canal_inscritos integer,
+    canal_visualizacoes bigint,
+    total_registros bigint
+)
+LANGUAGE plpgsql
 AS $function$
 DECLARE
     v_offset INT;
     v_total_registros BIGINT;
 BEGIN
-    -- Cálculo do deslocamento para paginação
+    -- CÃ¡lculo do deslocamento para paginaÃ§Ã£o
     v_offset := (pagina_atual - 1) * itens_por_pagina;
 
-    -- Contagem do total de registros (para metadados de paginação)
-    -- IMPORTANTE: Apenas mensagens de MONITORAMENTO (não respostas)
+    -- Contagem do total de registros (TODOS - Sistema 1 e Sistema 2)
     SELECT COUNT(*) INTO v_total_registros
     FROM public."Mensagens" m
     WHERE
         m.project_id = id_projeto
         AND m.video IS NOT NULL
-        AND m."Comentario_Principais" IS NULL  -- APENAS monitoramento direto (não respostas)!
+        -- REMOVIDO: m."Comentario_Principais" IS NULL (agora inclui replies tambÃ©m)
         AND (filtro_respondido IS NULL OR m.respondido = filtro_respondido)
         AND (filtro_mensagem IS NULL OR m.mensagem ILIKE '%' || filtro_mensagem || '%')
         AND (filtro_video_id IS NULL OR m.video = filtro_video_id);
 
-    -- Consulta principal com paginação e filtros
+    -- Consulta principal com paginaÃ§Ã£o e filtros
     RETURN QUERY
     SELECT
         m.id AS mensagem_id,
@@ -56,7 +82,7 @@ BEGIN
     WHERE
         m.project_id = id_projeto
         AND m.video IS NOT NULL
-        AND m."Comentario_Principais" IS NULL  -- APENAS monitoramento direto (não respostas)!
+        -- REMOVIDO: m."Comentario_Principais" IS NULL (agora inclui replies tambÃ©m)
         AND (filtro_respondido IS NULL OR m.respondido = filtro_respondido)
         AND (filtro_mensagem IS NULL OR m.mensagem ILIKE '%' || filtro_mensagem || '%')
         AND (filtro_video_id IS NULL OR m.video = filtro_video_id)
@@ -67,4 +93,4 @@ BEGIN
 
     RETURN;
 END;
-$function$
+$function$;

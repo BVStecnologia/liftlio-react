@@ -1,13 +1,14 @@
 -- =============================================
 -- Função: processar_postagens_pendentes
 -- Tipo: Processor (executa postagens agendadas)
--- Versão: 2.0 - Limita a 1 tarefa Browser Agent por vez
--- Atualizado: 2025-12-28
+-- Versão: 3.1 - HARD LIMIT diário usando UTC
+-- Atualizado: 2025-12-30
 --
 -- Descrição:
 --   Processa postagens pendentes que chegaram na hora agendada.
 --   USA BROWSER AGENT em vez de API do YouTube.
 --   LIMITA A 1 TAREFA POR VEZ para evitar conflitos.
+--   ⚠️ HARD LIMIT: Para de processar quando limite diário é atingido!
 --
 -- Entrada:
 --   projeto_id_param BIGINT - ID do projeto (opcional, NULL = todos)
@@ -23,6 +24,7 @@
 --   - Fire-and-forget: marca como 'processing', não espera resposta
 --   - Browser Agent atualiza status quando termina via callback
 --   - Limita a 1 tarefa por vez para evitar conflitos
+--   - HARD LIMIT: Verifica Postagem_dia antes de processar (UTC)!
 -- =============================================
 
 DROP FUNCTION IF EXISTS processar_postagens_pendentes(bigint);
@@ -44,12 +46,47 @@ DECLARE
     v_fuso_horario_projeto text;
     v_resposta jsonb;
     v_video_youtube_id text;
-    v_limite_processamento integer := 1;  -- LIMITE A 1 TAREFA POR VEZ!
+    v_limite_processamento integer := 1;
     v_contador integer := 0;
     v_current_time_local timestamp;
     v_running_tasks integer := 0;
+    v_limite_diario integer;
+    v_postados_hoje integer;
 BEGIN
-    -- Verificar se já existe tarefa running no browser_tasks para este projeto
+    -- =========================================
+    -- HARD LIMIT: Verificar limite diário ANTES de processar (usando UTC)
+    -- =========================================
+    IF projeto_id_param IS NOT NULL THEN
+        SELECT COALESCE(p."Postagem_dia"::integer, 10)
+        INTO v_limite_diario
+        FROM "Projeto" p
+        WHERE p.id = projeto_id_param;
+
+        -- Contar posts postados hoje (UTC date)
+        SELECT COUNT(*)
+        INTO v_postados_hoje
+        FROM "Settings messages posts" smp
+        WHERE smp."Projeto" = projeto_id_param
+          AND smp.status = 'posted'
+          AND smp.postado::date = CURRENT_DATE;
+
+        IF v_postados_hoje >= v_limite_diario THEN
+            v_status_mensagem := format(
+                'HARD LIMIT: Limite diario atingido! %s/%s posts ja realizados hoje (UTC). Processamento pausado.',
+                v_postados_hoje, v_limite_diario
+            );
+            RAISE NOTICE '%', v_status_mensagem;
+            RETURN QUERY SELECT 0, 0, 0, v_status_mensagem;
+            RETURN;
+        END IF;
+
+        RAISE NOTICE '[Limite Diario] Projeto %: %/% posts hoje (UTC)',
+                     projeto_id_param, v_postados_hoje, v_limite_diario;
+    END IF;
+
+    -- =========================================
+    -- Verificar se já existe tarefa running no browser_tasks
+    -- =========================================
     IF projeto_id_param IS NOT NULL THEN
         SELECT COUNT(*) INTO v_running_tasks
         FROM browser_tasks
@@ -58,7 +95,7 @@ BEGIN
           AND created_at > NOW() - INTERVAL '30 minutes';
 
         IF v_running_tasks > 0 THEN
-            v_status_mensagem := format('Browser Agent: Já existe %s tarefa(s) em execução, aguardando...', v_running_tasks);
+            v_status_mensagem := format('Browser Agent: Ja existe %s tarefa(s) em execucao, aguardando...', v_running_tasks);
             RETURN QUERY SELECT 0, 0, 0, v_status_mensagem;
             RETURN;
         END IF;
@@ -84,7 +121,7 @@ BEGIN
             AND smp.proxima_postagem <= CURRENT_TIMESTAMP
             AND smp.status = 'pending'
         ORDER BY smp.proxima_postagem
-        LIMIT v_limite_processamento  -- APENAS 1 TAREFA
+        LIMIT v_limite_processamento
     ) LOOP
         v_fuso_horario_projeto := COALESCE(v_registro.fuso_horario, 'UTC');
         v_current_time_local := CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AT TIME ZONE v_fuso_horario_projeto;
@@ -107,7 +144,7 @@ BEGIN
 
             v_falhas := v_falhas + 1;
             v_total_processados := v_total_processados + 1;
-            RAISE NOTICE 'Projeto % inativo ou sem integração válida', v_registro.projeto_id;
+            RAISE NOTICE 'Projeto % inativo ou sem integracao valida', v_registro.projeto_id;
             CONTINUE;
         END IF;
 
@@ -135,7 +172,7 @@ BEGIN
 
             v_falhas := v_falhas + 1;
             v_total_processados := v_total_processados + 1;
-            RAISE NOTICE 'Video ID não encontrado para mensagem %', v_registro.mensagem_id;
+            RAISE NOTICE 'Video ID nao encontrado para mensagem %', v_registro.mensagem_id;
             CONTINUE;
         END IF;
 
@@ -182,7 +219,7 @@ BEGIN
         v_total_processados := v_total_processados + 1;
         v_contador := v_contador + 1;
 
-        -- Apenas 1 tarefa por vez, não precisa de pg_sleep nem loop
+        -- Apenas 1 tarefa por vez
         EXIT;
     END LOOP;
 

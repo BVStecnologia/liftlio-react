@@ -1,10 +1,10 @@
 -- =============================================
 -- Função: obter_discovered_videos_com_agent_activity
--- Descrição: Retorna vídeos descobertos COM dados de atividade do agente Browser
+-- Descrição: Retorna vídeos descobertos de MONITORAMENTO DE CANAIS
 --            APENAS Sistema 1 (Comentario_Principais IS NULL)
--- Inclui checklist de ações humanizadas, duração
+--            com dados de atividade do agente Browser
 -- Criado: 2025-12-27
--- Atualizado: 2025-12-27 - Filtrar apenas Sistema 1
+-- Atualizado: 2025-12-30 - Mantém filtro Sistema 1 (monitoramento apenas)
 -- =============================================
 
 DROP FUNCTION IF EXISTS obter_discovered_videos_com_agent_activity(bigint, int, int);
@@ -50,14 +50,14 @@ DECLARE
 BEGIN
     v_offset := (p_pagina - 1) * p_itens_por_pagina;
 
-    -- Contar total de registros (APENAS Sistema 1 - sem Comentario_Principais)
+    -- Contar total (APENAS Sistema 1 - Monitoramento de Canais)
     SELECT COUNT(*)
     INTO v_total
     FROM "Mensagens" m
     JOIN "Videos" v ON m.video = v.id
     WHERE m.project_id = p_projeto_id
-    AND m."Comentario_Principais" IS NULL  -- APENAS SISTEMA 1
-    AND m.respondido = true;
+      AND m."Comentario_Principais" IS NULL  -- APENAS SISTEMA 1
+      AND m.respondido = true;
 
     RETURN QUERY
     SELECT
@@ -76,8 +76,7 @@ BEGIN
         c.id as canal_id,
         c."Nome" as canal_nome,
         c.channel_id as canal_youtube_id,
-        'direct'::text as sistema_tipo,  -- Sempre direct (Sistema 1)
-        -- Agent Activity (pode ser NULL para vídeos antigos)
+        'direct'::text as sistema_tipo,
         bt.id as agent_task_id,
         bt.task_type as agent_task_type,
         bt.status as agent_status,
@@ -93,8 +92,8 @@ BEGIN
     LEFT JOIN browser_tasks bt ON (bt.metadata->>'mensagem_id')::bigint = m.id
         AND bt.task_type IN ('youtube_comment', 'youtube_reply')
     WHERE m.project_id = p_projeto_id
-    AND m."Comentario_Principais" IS NULL  -- APENAS SISTEMA 1
-    AND m.respondido = true
+      AND m."Comentario_Principais" IS NULL  -- APENAS SISTEMA 1
+      AND m.respondido = true
     ORDER BY m.created_at DESC
     LIMIT p_itens_por_pagina
     OFFSET v_offset;
