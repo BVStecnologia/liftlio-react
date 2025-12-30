@@ -1,0 +1,88 @@
+# =============================================================================
+# Token Refresher v3 - Docker Compose
+# =============================================================================
+#
+# Arquitetura: 2 Sub-containers
+#   1. FERRAMENTA - Claude Code CLI + Browser + VNC + API
+#   2. AGENTE - Controlador com API KEY (a ser criado depois)
+#
+# IMPORTANTE: Criar FERRAMENTA primeiro!
+# So criar AGENTE quando FERRAMENTA estiver gerando tokens.
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # SUB-CONTAINER 1: FERRAMENTA
+  # Claude Code CLI + Chromium + VNC + API Express
+  # ===========================================================================
+  ferramenta:
+    build:
+      context: ./ferramenta
+      dockerfile: Dockerfile
+    container_name: token-ferramenta
+    restart: unless-stopped
+    volumes:
+      # Volume compartilhado para tokens
+      - claude-credentials:/opt/claude-credentials
+      # Perfil do browser (sessao Max salva)
+      - browser-profile:/home/browseruser/.config
+      # Credenciais do Claude CLI
+      - claude-cli:/home/browseruser/.claude
+    ports:
+      - "5901:5901"   # VNC (acesso remoto)
+      - "3001:3001"   # API HTTP
+      - "6080:6080"   # noVNC (acesso web)
+    networks:
+      - token-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    environment:
+      - DISPLAY=:1
+      - HOME=/home/browseruser
+
+  # ===========================================================================
+  # SUB-CONTAINER 2: AGENTE (descomentar depois que FERRAMENTA funcionar)
+  # ===========================================================================
+  # agente:
+  #   build:
+  #     context: ./agente
+  #     dockerfile: Dockerfile
+  #   container_name: token-agente
+  #   restart: unless-stopped
+  #   depends_on:
+  #     ferramenta:
+  #       condition: service_healthy
+  #   environment:
+  #     - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+  #     - TOOL_URL=http://ferramenta:3001
+  #     - CHECK_INTERVAL_MINUTES=30
+  #     - CREDS_FILE=/opt/claude-credentials/.credentials.json
+  #   volumes:
+  #     - claude-credentials:/opt/claude-credentials
+  #   networks:
+  #     - token-network
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  # Token OAuth compartilhado entre containers
+  claude-credentials:
+    name: claude-credentials-v3
+  # Perfil do browser (cookies, sessao)
+  browser-profile:
+    name: browser-profile-v3
+  # Credenciais do Claude CLI
+  claude-cli:
+    name: claude-cli-v3
+
+# =============================================================================
+# Network
+# =============================================================================
+networks:
+  token-network:
+    name: token-network-v3
