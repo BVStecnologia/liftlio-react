@@ -1,6 +1,6 @@
 # SQL Functions - Liftlio
 
-**Última atualização**: 2025-11-25
+**Última atualização**: 2025-12-30 (Browser Agent docs)
 **Status**: Pipeline 2 em produção (Pipeline 1 desativado)
 
 ---
@@ -554,3 +554,55 @@ SELECT * FROM "Videos" WHERE id = 1;  -- OK, funciona!
 DROP FUNCTION IF EXISTS get_video_data(bigint);
 CREATE OR REPLACE FUNCTION get_video_data(p_id bigint)...
 ```
+---
+
+## 🤖 Browser Agent - Postagens Humanizadas (30/12/2025)
+
+O Browser Agent executa postagens no YouTube de forma humanizada para evitar detecção de automação.
+
+### Tabelas Principais
+
+| Tabela | Descrição |
+|--------|-----------|
+| `browser_platforms` | Prompts GLOBAIS por plataforma (youtube, google, reddit) |
+| `browser_tasks` | Histórico de tasks enviadas ao Browser Agent |
+
+### Prompts Globais
+
+```sql
+SELECT platform_name, LENGTH(comment_prompt), LENGTH(reply_prompt) FROM browser_platforms;
+-- youtube: comment_prompt=4613 chars, reply_prompt=3840 chars
+```
+
+### Sistema 1: Respostas (reply_prompt) - 4-6 min
+Fluxo: Navegar ao vídeo → Fechar ads → Assistir 2x (60-90s) → Curtir vídeo → Scroll até comentários → Encontrar comentário alvo → Curtir → Reply → Digitar naturalmente → Postar
+
+### Sistema 2: Comentários Iniciais (comment_prompt) - 7-10 min
+Fluxo HUMANIZADO (atualizado 30/12/2025):
+1. Navegar ao vídeo alvo
+2. **Fechar ads/popups**
+3. **Ir ao canal** (clicar no nome do canal)
+4. **Assistir 1-2 vídeos** diferentes do canal
+5. **Curtir** esses vídeos (mostra interesse genuíno)
+6. Voltar ao vídeo alvo
+7. Fechar novos ads
+8. Assistir em 2x por ~2 minutos
+9. Curtir o vídeo
+10. Scroll até comentários
+11. **Ler alguns comentários** (hover, scroll lento)
+12. **Curtir 1-2 comentários**
+13. Digitar naturalmente (char por char, delays 50-200ms)
+14. Postar e verificar
+
+### Funções SQL Relacionadas
+
+- `browser_reply_to_comment()` - Cria task de resposta (Sistema 1)
+- `processar_postagens_pendentes()` - Processa via Browser Agent (1 task por vez)
+
+### Edge Function
+
+- `browser-reply-executor` - Fire-and-forget (evita timeout de 60s do Edge)
+
+### Pasta de Documentação
+
+Ver: `14_Browser/README_BROWSER_AGENT.md` para documentação completa.

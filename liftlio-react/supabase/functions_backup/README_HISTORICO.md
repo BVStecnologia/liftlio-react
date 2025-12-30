@@ -139,3 +139,35 @@ Este diretório representa **meses de desenvolvimento intenso** (jan-out/2025) e
 **Última atualização**: 12/10/2025
 **Mantido por**: Valdair / BVS Tecnologia / Claude Code
 **Status**: 🔒 **READONLY - Backup Histórico Apenas**
+
+---
+
+## 🤖 Browser Agent (Adicionado 30/12/2025)
+
+Nova pasta adicionada com documentação do sistema de postagens humanizadas:
+
+```
+functions_backup/
+└── SQL_Functions/
+    └── 14_Browser/                    # Browser Agent (postagens humanizadas)
+        ├── README_BROWSER_AGENT.md    # Documentação completa do sistema
+        ├── browser_reply_to_comment.sql         # Função SQL (Sistema 1 - Respostas)
+        ├── browser_youtube_reply_prompt_v2.sql  # Prompt de reply (3840 chars)
+        └── browser_youtube_comment_prompt_v2.sql # Prompt de comment (4613 chars)
+```
+
+### O que é o Browser Agent?
+
+Sistema que executa postagens no YouTube usando Claude + Playwright de forma humanizada:
+- **Sistema 1 (Respostas)**: Responde a comentários existentes via `reply_prompt`
+- **Sistema 2 (Comentários)**: Posta comentários iniciais via `comment_prompt`
+
+### Tabelas no Supabase
+
+- `browser_platforms` - Prompts globais por plataforma
+- `browser_tasks` - Histórico de execuções
+
+### Métricas 30/12/2025
+
+- Sistema 2 (Comentários): 6/6 tasks = 100% sucesso
+- Prompt `comment_prompt` atualizado de 676 para 4613 chars (comportamento humanizado)
