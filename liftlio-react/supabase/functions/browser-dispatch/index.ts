@@ -360,6 +360,15 @@ async function handleTaskCallback(supabase: any, task: any, agentResult: any): P
   const metadata = task.metadata || {};
 
   if (task.task_type === 'youtube_comment') {
+    // v16: Check for permanent errors FIRST
+    const hasPermanentError =
+      resultText.includes('VIDEO_NOT_FOUND') ||
+      resultText.includes('VIDEO_UNAVAILABLE') ||
+      resultText.includes('não está mais disponível') ||
+      resultText.includes('does not exist') ||
+      resultText.includes('COMMENTS_DISABLED') ||
+      resultText.includes('LOGIN_REQUIRED');
+
     if (resultText.includes('DISCONNECTED')) {
       await supabase
         .from('browser_logins')
@@ -370,6 +379,10 @@ async function handleTaskCallback(supabase: any, task: any, agentResult: any): P
         })
         .eq('projeto_id', task.project_id)
         .eq('platform_name', 'youtube');
+    }
+    else if (hasPermanentError) {
+      console.log(`[Callback] Comment FAILED for task ${task.id} - permanent error detected`);
+      // Don't mark as respondido - video/comments unavailable
     }
     else if (isCommentSuccessful(resultText, agentResult.success)) {
       console.log(`[Callback] Comment posted successfully for task ${task.id}`);
