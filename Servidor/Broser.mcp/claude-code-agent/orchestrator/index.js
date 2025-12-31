@@ -37,9 +37,28 @@ const SESSION_TIMEOUT_MINUTES = parseInt(process.env.SESSION_TIMEOUT_MINUTES || 
 
 // Variaveis passadas para containers
 const CAPMONSTER_API_KEY = process.env.CAPMONSTER_API_KEY || '';
-const PROXY_URL = process.env.PROXY_URL || '';
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
+
+// DataImpulse Proxy Configuration
+const DATAIMPULSE_LOGIN = process.env.DATAIMPULSE_LOGIN || '';
+const DATAIMPULSE_PASSWORD = process.env.DATAIMPULSE_PASSWORD || '';
+const DATAIMPULSE_HOST = process.env.DATAIMPULSE_HOST || 'gw.dataimpulse.com';
+const DATAIMPULSE_STICKY_BASE_PORT = parseInt(process.env.DATAIMPULSE_STICKY_BASE_PORT || '10000');
+
+/**
+ * Gera URL de proxy DataImpulse com IP sticky por projeto
+ * Cada projeto recebe uma porta unica = BASE_PORT + (projectId % 1000)
+ * Isso garante que o mesmo projeto sempre use o mesmo IP residencial
+ */
+function getProxyUrlForProject(projectId) {
+  if (!DATAIMPULSE_LOGIN || !DATAIMPULSE_PASSWORD) {
+    return ''; // Sem proxy configurado
+  }
+  const portOffset = parseInt(projectId) % 1000;
+  const stickyPort = DATAIMPULSE_STICKY_BASE_PORT + portOffset;
+  return `http://${DATAIMPULSE_LOGIN}:${DATAIMPULSE_PASSWORD}@${DATAIMPULSE_HOST}:${stickyPort}`;
+}
 
 // Supabase client (para crons)
 const supabase = SUPABASE_URL && SUPABASE_KEY
@@ -238,7 +257,7 @@ app.post('/containers', async (req, res) => {
         `PORT=10100`,
         `PROJECT_ID=${projectId}`,
         `CAPMONSTER_API_KEY=${CAPMONSTER_API_KEY}`,
-        `PROXY_URL=${PROXY_URL}`,
+        `PROXY_URL=${getProxyUrlForProject(projectId)}`,
         `SUPABASE_URL=${SUPABASE_URL}`,
         `SUPABASE_KEY=${SUPABASE_KEY}`,
         `VNC_TIMEOUT_MINUTES=60`,
@@ -653,7 +672,7 @@ async function createContainerForProject(projectId) {
         `PORT=10100`,
         `PROJECT_ID=${projectId}`,
         `CAPMONSTER_API_KEY=${CAPMONSTER_API_KEY}`,
-        `PROXY_URL=${PROXY_URL}`,
+        `PROXY_URL=${getProxyUrlForProject(projectId)}`,
         `SUPABASE_URL=${SUPABASE_URL}`,
         `SUPABASE_KEY=${SUPABASE_KEY}`,
         `VNC_TIMEOUT_MINUTES=60`,
@@ -840,7 +859,7 @@ async function processPendingTasks() {
           task: task.task,
           taskId: task.id  // Container usa isso para atualizar Supabase
         },
-        { timeout: 300000 } // 5 min timeout
+        { timeout: 1800000 } // 30 min timeout for humanized tasks
       );
 
       // Atualizar lastActivity
@@ -874,7 +893,6 @@ async function processPendingTasks() {
 /**
  * Para containers inativos ha mais de 5 minutos
  * Usa docker stop (nao remove) - preserva volumes
- * IMPORTANTE: NAO para se houver tarefa em andamento!
  */
 async function autoStopInactiveContainers() {
   const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutos
@@ -887,29 +905,6 @@ async function autoStopInactiveContainers() {
     const idleTime = now - lastActivity;
 
     if (idleTime > IDLE_TIMEOUT_MS) {
-      // VERIFICAR SE HA TAREFA EM ANDAMENTO ANTES DE PARAR!
-      if (supabase) {
-        try {
-          const { data: runningTasks } = await supabase
-            .from('browser_tasks')
-            .select('id')
-            .eq('project_id', projectId)
-            .eq('status', 'running')
-            .limit(1);
-
-          if (runningTasks && runningTasks.length > 0) {
-            log(`[CRON3] Container ${projectId} tem tarefa em andamento, NAO parar!`);
-            // Atualizar lastActivity para evitar verificacoes repetidas
-            session.lastActivity = new Date();
-            continue; // Pular para proximo container
-          }
-        } catch (checkErr) {
-          log(`[CRON3] Erro ao verificar tarefas: ${checkErr.message}`);
-          // Em caso de erro, NAO parar o container (seguranca)
-          continue;
-        }
-      }
-
       const idleMinutes = Math.round(idleTime / 1000 / 60);
       log(`[CRON3] Container ${projectId} inativo ha ${idleMinutes} min, parando...`);
 

@@ -83,31 +83,45 @@ services:
       - browser-network
 
   # ===========================================================================
-  # TOKEN REFRESHER - Mantém credenciais OAuth válidas
+  # INTELLIGENT TOKEN REFRESHER - Renovação automática completa
   # ===========================================================================
-  token-refresher:
-    image: python:3.11-slim
-    container_name: claude-token-refresher
+  # Usa API Key (nunca expira) + Playwright + Gmail para renovar tokens OAuth
+  # Quando refresh_token expira, faz login completo automaticamente
+  # ===========================================================================
+  intelligent-token-refresher:
+    build:
+      context: ./intelligent-token-refresher
+      dockerfile: Dockerfile
+    container_name: claude-intelligent-refresher
     restart: unless-stopped
     volumes:
       - claude-credentials:/opt/claude/credentials
-      - ./refresh_token.py:/app/refresh.py:ro
     environment:
+      # Config
       - CREDS_FILE=/opt/claude/credentials/.credentials.json
-      - DAEMON_MODE=true
-      - REFRESH_INTERVAL_HOURS=6
-    command: |
-      sh -c "
-        pip install --quiet requests &&
-        python /app/refresh.py
-      "
+      - CHECK_INTERVAL_MINUTES=30
+      # Claude.ai credentials (para login browser)
+      - CLAUDE_AI_EMAIL=liftliome@gmail.com
+      - GMAIL_PASSWORD=${GMAIL_PASSWORD:-Y3jA3yW@0}
+      # CapMonster para resolver Cloudflare
+      - CAPMONSTER_API_KEY=${CAPMONSTER_API_KEY:-}
+      # Proxy DataImpulse (opcional, para evitar detecção)
+      - DATAIMPULSE_HOST=${DATAIMPULSE_HOST:-}
+      - DATAIMPULSE_LOGIN=${DATAIMPULSE_LOGIN:-}
+      - DATAIMPULSE_PASSWORD=${DATAIMPULSE_PASSWORD:-}
+      - DATAIMPULSE_STICKY_BASE_PORT=${DATAIMPULSE_STICKY_BASE_PORT:-10000}
     networks:
       - browser-network
     healthcheck:
-      test: ["CMD", "python", "-c", "import os; exit(0 if os.path.exists('/opt/claude/credentials/.credentials.json') else 1)"]
+      test: ["CMD", "node", "-e", "require('fs').existsSync('/opt/claude/credentials/.credentials.json') ? process.exit(0) : process.exit(1)"]
       interval: 60s
       timeout: 10s
       retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 # =============================================================================
 # VOLUMES

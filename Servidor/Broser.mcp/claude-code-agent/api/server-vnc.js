@@ -697,6 +697,138 @@ async function restoreSessionToChrome(sessionData) {
   }
 }
 
+
+// =============================================================================
+// PROXY AUTO-RECOVERY SYSTEM (v1.0 - 2025-12-31)
+// =============================================================================
+
+/**
+ * Verificar saúde do proxy local (porta 8888)
+ * Retorna true se proxy está funcionando, false caso contrário
+ */
+async function checkProxyHealth() {
+  return new Promise((resolve) => {
+    const http = require('http');
+    const startTime = Date.now();
+
+    const req = http.request({
+      host: '127.0.0.1',
+      port: 8888,
+      method: 'CONNECT',
+      path: 'www.google.com:443',
+      timeout: 10000
+    });
+
+    req.on('connect', (res, socket) => {
+      const elapsed = Date.now() - startTime;
+      console.log(`[PROXY-CHECK] OK (${elapsed}ms)`);
+      socket.destroy();
+      resolve(true);
+    });
+
+    req.on('error', (err) => {
+      console.log(`[PROXY-CHECK] FAILED: ${err.message}`);
+      resolve(false);
+    });
+
+    req.on('timeout', () => {
+      console.log('[PROXY-CHECK] TIMEOUT (10s)');
+      req.destroy();
+      resolve(false);
+    });
+
+    req.end();
+  });
+}
+
+/**
+ * Execute task com auto-recovery de proxy
+ * Detecta erros de proxy/tunnel e retenta automaticamente
+ *
+ * @param {string} task - Task para executar
+ * @param {object} options - Opções (fastMode, etc)
+ * @returns {object} - Resultado da execução
+ */
+async function executeTaskWithAutoRecovery(task, options = {}) {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY_MS = 10000; // 10 segundos entre tentativas
+
+  // Padrões de erro que indicam problema de proxy/tunnel
+  const PROXY_ERROR_PATTERNS = [
+    'ERR_TUNNEL_CONNECTION_FAILED',
+    'ERR_PROXY_CONNECTION_FAILED',
+    'ERR_CONNECTION_REFUSED',
+    'ERR_CONNECTION_RESET',
+    'ERR_CONNECTION_TIMED_OUT',
+    'ECONNREFUSED',
+    'ETIMEDOUT',
+    'ECONNRESET',
+    '502 Bad Gateway',
+    '504 Gateway Timeout',
+    'net::ERR_TUNNEL',
+    'net::ERR_PROXY'
+  ];
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      console.log(`\n[AUTO-RECOVERY] ========== Tentativa ${attempt}/${MAX_RETRIES} ==========`);
+
+      // Verificar saúde do proxy antes de executar
+      const proxyOk = await checkProxyHealth();
+
+      if (!proxyOk) {
+        if (attempt < MAX_RETRIES) {
+          console.log(`[AUTO-RECOVERY] Proxy indisponível, aguardando ${RETRY_DELAY_MS/1000}s...`);
+          await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+          continue; // Próxima tentativa
+        } else {
+          console.log('[AUTO-RECOVERY] Proxy indisponível após todas tentativas, executando mesmo assim...');
+        }
+      }
+
+      // Executar task normalmente
+      const result = await executeTask(task, options);
+
+      // Verificar se output contém erro de proxy
+      const outputStr = JSON.stringify(result.output || '') + (result.stderr || '');
+      const isProxyError = PROXY_ERROR_PATTERNS.some(pattern =>
+        outputStr.toUpperCase().includes(pattern.toUpperCase())
+      );
+
+      if (isProxyError && attempt < MAX_RETRIES) {
+        console.log(`[AUTO-RECOVERY] Erro de proxy detectado no output, aguardando ${RETRY_DELAY_MS/1000}s...`);
+        await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+        continue; // Próxima tentativa
+      }
+
+      // Sucesso ou erro não-relacionado a proxy
+      if (attempt > 1) {
+        console.log(`[AUTO-RECOVERY] Task completada após ${attempt} tentativa(s)`);
+      }
+
+      return result;
+
+    } catch (error) {
+      const errorStr = error.message || '';
+      const isProxyError = PROXY_ERROR_PATTERNS.some(pattern =>
+        errorStr.toUpperCase().includes(pattern.toUpperCase())
+      );
+
+      if (isProxyError && attempt < MAX_RETRIES) {
+        console.log(`[AUTO-RECOVERY] Erro de proxy na execução, aguardando ${RETRY_DELAY_MS/1000}s...`);
+        await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+        continue; // Próxima tentativa
+      }
+
+      // Re-throw se não for erro de proxy ou esgotamos tentativas
+      throw error;
+    }
+  }
+
+  // Não deveria chegar aqui, mas por segurança
+  throw new Error('[AUTO-RECOVERY] Falha após todas as tentativas');
+}
+
 /**
  * Wait for Chrome CDP to be ready
  */
@@ -2177,7 +2309,7 @@ app.post('/agent/task', async (req, res) => {
     const sessionStatus = await ensureSessionBeforeTask();
     console.log('[TASK] Session status before task:', JSON.stringify(sessionStatus));
 
-    const result = await executeTask(task, { maxIterations: maxIterations || 30, continueSession: continueSession || false });
+    const result = await executeTaskWithAutoRecovery(task, { maxIterations: maxIterations || 30, continueSession: continueSession || false });
 
     // Save session after task completes
     const postTaskSession = await getCurrentSession();
@@ -2316,7 +2448,7 @@ app.post('/agent/task-fast', async (req, res) => {
     const sessionStatus = await ensureSessionBeforeTask();
     console.log('[TASK-FAST] Session status before task:', JSON.stringify(sessionStatus));
 
-    const result = await executeTask(task, { maxIterations: 15 });
+    const result = await executeTaskWithAutoRecovery(task, { maxIterations: 15 });
 
     // Save session after task completes
     const postTaskSession = await getCurrentSession();
