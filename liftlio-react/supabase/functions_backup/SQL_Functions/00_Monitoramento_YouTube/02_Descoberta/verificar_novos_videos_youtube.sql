@@ -1,9 +1,12 @@
 -- =============================================
--- Função: verificar_novos_videos_youtube (v2.1 - DISCOVERY + videos_scanreados_2)
+-- Função: verificar_novos_videos_youtube (v2.2 - DISCOVERY + videos_scanreados_2)
 -- Descrição: APENAS descobre vídeos novos e marca em videos_para_scann
 -- NÃO chama Python (evita timeout)
 -- Criado: 2025-01-23
 -- Atualizado: 2025-10-24 22:24 UTC - FIX: Deduplicação completa em videos_para_scann
+-- Atualizado: 2025-12-28 15:06 UTC - FIX 1: Adicionado videos_para_scann no SELECT (bug crítico)
+--                                  - FIX 2: Renomeado alias "video_id" para "vid" (ambiguidade)
+--                                  - ADD: Verificação de YouTube conectado no Browser Agent
 -- Features:
 --   - Processamento em lotes (padrão 15 canais)
 --   - Anti-spam via can_comment_on_channel
@@ -37,7 +40,8 @@ DECLARE
     v_mentions_disponiveis INTEGER;
     v_existing_ids TEXT[];  -- IDs já existentes em videos_para_scann
     v_all_ids TEXT[];       -- Todos IDs (existentes + novos)
-    v_unique_ids TEXT[];    -- IDs deduplica dos
+    v_unique_ids TEXT[];    -- IDs deduplicados
+    v_youtube_conectado BOOLEAN;  -- Verifica se YouTube está conectado no Browser Agent
 BEGIN
     -- Conta total de canais a serem processados
     SELECT COUNT(*) INTO total_canais
@@ -51,7 +55,8 @@ BEGIN
     RAISE NOTICE '🔍 [DISCOVERY ONLY] Iniciando descoberta - % canais em lotes de %', total_canais, lote_tamanho;
 
     FOR canal_record IN
-        SELECT c.id, c.channel_id, c.videos_scanreados, c.videos_scanreados_2, c."processar", p.id as projeto_id
+        -- ⭐ FIX 1 (2025-12-28): Adicionado videos_para_scann no SELECT
+        SELECT c.id, c.channel_id, c.videos_scanreados, c.videos_scanreados_2, c."processar", c.videos_para_scann, p.id as projeto_id
         FROM "Canais do youtube" c
         JOIN "Projeto" p ON c."Projeto" = p.id
         WHERE p."Youtube Active" = true
@@ -63,6 +68,22 @@ BEGIN
     LOOP
         BEGIN
             processados := processados + 1;
+
+            -- ⭐ ADD (2025-12-28): Verificar se YouTube está conectado no Browser Agent
+            SELECT bl.is_connected INTO v_youtube_conectado
+            FROM browser_logins bl
+            WHERE bl.projeto_id = canal_record.projeto_id
+              AND bl.platform_name = 'youtube'
+              AND bl.is_active = true;
+
+            IF v_youtube_conectado IS NULL OR v_youtube_conectado = false THEN
+                RAISE NOTICE 'Canal ID % pulado - YouTube não conectado no Browser Agent (projeto %)',
+                    canal_record.id, canal_record.projeto_id;
+                UPDATE "Canais do youtube"
+                SET last_canal_check = CURRENT_TIMESTAMP
+                WHERE id = canal_record.id;
+                CONTINUE;
+            END IF;
 
             -- ⭐ VERIFICAR MENTIONS DISPONÍVEIS
             SELECT COALESCE(c."Mentions", 0)
@@ -167,10 +188,11 @@ BEGIN
                 v_all_ids := array_cat(v_existing_ids, videos_novos_array);
 
                 -- 3. Remover duplicatas e vazios
-                SELECT array_agg(DISTINCT video_id ORDER BY video_id)
+                -- ⭐ FIX 2 (2025-12-28): Renomeado "video_id" para "vid" para evitar ambiguidade
+                SELECT array_agg(DISTINCT vid ORDER BY vid)
                 INTO v_unique_ids
-                FROM unnest(v_all_ids) AS video_id
-                WHERE length(trim(video_id)) > 0;
+                FROM unnest(v_all_ids) AS vid
+                WHERE length(trim(vid)) > 0;
 
                 -- 4. Atualizar ambos campos com lista deduplicada
                 UPDATE "Canais do youtube"

@@ -481,8 +481,8 @@ app.post('/track', async (req, res) => {
     // Log de sucesso
     console.log(`[EVENT TRACKED] ID: ${data}, Type: ${event_type}, Source: ${trafficSource}`);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       event_id: data,
       message: 'Event tracked successfully',
       traffic_source: trafficSource

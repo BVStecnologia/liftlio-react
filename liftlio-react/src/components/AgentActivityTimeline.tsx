@@ -402,7 +402,7 @@ const AgentActivityTimeline: React.FC<AgentActivityTimelineProps> = ({
             <AgentIcon>
               <IconComponent icon={RiIcons.RiRobotLine} />
             </AgentIcon>
-            <HeaderTitle $variant={variant}>Agent Activity</HeaderTitle>
+            <HeaderTitle $variant={variant}>Liftlio</HeaderTitle>
           </HeaderLeft>
         </Header>
         <NoActivityMessage>
@@ -429,21 +429,12 @@ const AgentActivityTimeline: React.FC<AgentActivityTimelineProps> = ({
           <AgentIcon>
             <IconComponent icon={RiIcons.RiRobotLine} />
           </AgentIcon>
-          <HeaderTitle $variant={variant}>Liftlio Agent</HeaderTitle>
-        </HeaderLeft>
-
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-          {activity.durationSeconds && (
-            <DurationBadge>
-              <IconComponent icon={IoIcons.IoTimeOutline} />
-              {formatDuration(activity.durationSeconds)}
-            </DurationBadge>
-          )}
+          <HeaderTitle $variant={variant}>Liftlio</HeaderTitle>
           <StatusBadge $success={activity.success ?? false}>
             <IconComponent icon={activity.success ? FaIcons.FaCheckCircle : FaIcons.FaTimesCircle} />
-            {activity.success ? 'Success' : 'Failed'}
+            {activity.success ? 'commented' : 'failed'}
           </StatusBadge>
-        </div>
+        </HeaderLeft>
       </Header>
 
       <TimelineContainer $variant={variant}>

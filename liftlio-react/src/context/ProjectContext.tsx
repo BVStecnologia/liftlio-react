@@ -60,7 +60,7 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
   const isOnboarding = onboardingStep < 4; // Quando onboardingStep < 4, estamos em modo onboarding
   const subscriptionRef = useRef<any>(null);
   const isTransitioning = useRef<boolean>(false); // Flag para pausar verificações durante transição
-  const intervalRef = useRef<NodeJS.Timeout | null>(null); // Ref para o intervalo de verificação
+  // intervalRef removido - agora usa apenas Realtime
   
   useEffect(() => {
     // 🔥 OTIMIZADO: Carregar projeto marcado como index automaticamente
@@ -142,31 +142,9 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
       // Verificar fuso horário e atualizar se necessário (sem await para não bloquear)
       checkAndUpdateTimezone(currentProject);
 
-      // Limpar intervalo anterior se existir
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-
-      // Verificar novamente a cada 5 segundos para projetos em processamento
-      // ⚡ OTIMIZAÇÃO: Só rodar se NÃO estiver em transição
-      intervalRef.current = setInterval(() => {
-        if (currentProject?.id && !isTransitioning.current) {
-          const status = parseInt(String(currentProject.status || '6'), 10);
-          // Só verificar se está em processamento (status <= 6)
-          if (status <= 6) {
-            checkProjectProcessingState(currentProject.id);
-          }
-        }
-      }, 5000);
-
-      // Limpar o intervalo quando o componente for desmontado ou o projeto mudar
-      return () => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-      };
+      // ⚡ REMOVIDO: Polling de 5 segundos
+      // Agora usa apenas Realtime para receber updates de status
+      // O Realtime já está configurado em setupRealtimeSubscription()
     }
   }, [currentProject?.id]); // Mudado para depender apenas do ID
   

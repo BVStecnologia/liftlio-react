@@ -12,41 +12,19 @@ import { useProject } from '../context/ProjectContext';
 import { useLanguage } from '../context/LanguageContext';
 import { HiPencil } from 'react-icons/hi';
 import { useDashboardTheme } from '../styles/dashboardTheme';
+import { formatDateLocale } from '../utils/dateUtils';
 // Recharts imports removidos pois os gráficos foram removidos
 
-// Função utilitária para formatar datas
-const formatDate = (dateString: string | null, isComment: boolean = false) => {
+// Função utilitária para formatar datas (usando parseUTCTimestamp para timezone correto)
+const formatDate = (dateString: string | null, _isComment: boolean = false) => {
   if (!dateString) return '';
-  
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return dateString; // Se não conseguir converter, retorna a string original
-    }
-    
-    if (isComment) {
-      // Formato para comentários: "dd/mm/yyyy HH:MM"
-      return date.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } else {
-      // Formato para respostas: "dd/mm/yyyy HH:MM"
-      return date.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    }
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return dateString || '';
-  }
+  return formatDateLocale(dateString, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }, 'pt-BR');
 };
 
 // Função utilitária para decodificar HTML entities (&#39; → ', &quot; → ", etc)

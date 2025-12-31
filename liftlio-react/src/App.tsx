@@ -17,6 +17,8 @@ import { IconComponent } from './utils/IconHelper';
 import { FaBars } from 'react-icons/fa';
 import ErrorBoundary from './components/ErrorBoundary';
 import { supabase } from './lib/supabaseClient';
+import { HelmetProvider } from 'react-helmet-async';
+import { useAdminTracking } from './hooks/useAdminTracking';
 // PostHog removed for performance optimization
 
 // Lazy load all pages
@@ -43,6 +45,8 @@ const Security = lazy(() => import('./pages/Security'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const WaitlistPage = lazy(() => import('./pages/WaitlistPage'));
 const WaitlistPendingPage = lazy(() => import('./pages/WaitlistPendingPage'));
+const BlogList = lazy(() => import('./pages/BlogList'));
+const BlogPost = lazy(() => import('./pages/BlogPost'));
 
 // Lazy load heavy components
 const Sidebar = lazy(() => import('./components/Sidebar'));
@@ -254,6 +258,12 @@ const getThemeBackground = (): string => {
 
 // OAuthHandler removido - processamento OAuth agora é feito no LandingPageHTML com OAuthProcessor dedicado
 
+// Admin Analytics Tracking - Componente invisível que tracka navegação interna
+const AdminTrackingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  useAdminTracking();
+  return <>{children}</>;
+};
+
 // Component that uses the global loading context
 const AppContent: React.FC = () => {
   const { isGlobalLoading, loadingMessage, loadingSubMessage } = useGlobalLoading();
@@ -304,6 +314,8 @@ const AppContent: React.FC = () => {
       )}
       
       <Router>
+        {/* Admin Analytics Tracking - Interno, direto no Supabase */}
+        <AdminTrackingProvider>
         {/* Adicionar aviso de extensão para todos os usuários */}
         <ExtensionWarning />
         <Routes>
@@ -379,6 +391,18 @@ const AppContent: React.FC = () => {
             </Suspense>
           } />
 
+          {/* Blog Routes - Public */}
+          <Route path="/blog" element={
+            <Suspense fallback={null}>
+              <BlogList />
+            </Suspense>
+          } />
+          <Route path="/blog/:slug" element={
+            <Suspense fallback={null}>
+              <BlogPost />
+            </Suspense>
+          } />
+
           {/* Rota removida: Analytics Showcase (não utilizada) */}
 
 
@@ -394,6 +418,7 @@ const AppContent: React.FC = () => {
             </Suspense>
           } />
         </Routes>
+        </AdminTrackingProvider>
       </Router>
     </>
   );
@@ -434,21 +459,23 @@ function App() {
   
   return (
     <ErrorBoundary>
-      {/* PostHog removed for performance */}
-        <ThemeProvider>
-          <LanguageProvider>
-            <GlobalStyle />
-            <LoadingProvider>
-              <AuthProvider>
-                <ProjectProvider>
-                  <RealtimeProvider>
-                    <AppContent />
-                  </RealtimeProvider>
-                </ProjectProvider>
-              </AuthProvider>
-            </LoadingProvider>
-          </LanguageProvider>
-        </ThemeProvider>
+      <HelmetProvider>
+        {/* PostHog removed for performance */}
+          <ThemeProvider>
+            <LanguageProvider>
+              <GlobalStyle />
+              <LoadingProvider>
+                <AuthProvider>
+                  <ProjectProvider>
+                    <RealtimeProvider>
+                      <AppContent />
+                    </RealtimeProvider>
+                  </ProjectProvider>
+                </AuthProvider>
+              </LoadingProvider>
+            </LanguageProvider>
+          </ThemeProvider>
+      </HelmetProvider>
     </ErrorBoundary>
   );
 }
@@ -996,10 +1023,7 @@ const ProtectedLayout = ({
                 <Route path="/browser-integrations" element={<SubscriptionGate><BrowserIntegrations /></SubscriptionGate>} />
                 {/* <Route path="/url-test" element={<SubscriptionGate><UrlDataTest /></SubscriptionGate>} /> */}
                 {/* Removed duplicate trends and analytics routes - they are defined as public routes */}
-                <Route path="*" element={(() => {
-                  console.log(`[ProtectedLayout Internal Catch-all] Redirecting ${window.location.pathname} to /dashboard`);
-                  return <Navigate to="/dashboard" replace />;
-                })()} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </ContentWrapper>
           </MainContent>

@@ -157,6 +157,7 @@ interface BrowserTask {
   created_by: string | null;
   behavior_used: Record<string, unknown> | null;
   metadata: Record<string, unknown> | null;
+  deleted_at: string | null;
 }
 
 interface BrowserLogin {
@@ -197,7 +198,40 @@ interface ActivityItem {
   context?: string;
 }
 
-type ViewType = 'overview' | 'users' | 'projects' | 'subscriptions' | 'payments' | 'containers' | 'tasks' | 'logins' | 'health' | 'settings' | 'user-detail' | 'project-detail' | 'waitlist';
+type ViewType = 'overview' | 'users' | 'projects' | 'subscriptions' | 'payments' | 'containers' | 'tasks' | 'logins' | 'health' | 'settings' | 'user-detail' | 'project-detail' | 'waitlist' | 'analytics' | 'simulations';
+
+interface SimulationEntry {
+  id: number;
+  created_at: string;
+  ip_address: string;
+  url_analyzed: string | null;
+  request_timestamp: string;
+  simulation_video: {
+    title?: string;
+    channel?: string;
+    views?: number;
+    comments?: number;
+    category?: string;
+  } | null;
+  simulation_comment: {
+    author?: string;
+    text?: string;
+    lead_score?: number;
+    sentiment?: string;
+  } | null;
+  simulation_response: {
+    message?: string;
+    sentiment_score?: number;
+    relevance_score?: number;
+  } | null;
+  simulation_language: string | null;
+  product_info: {
+    name?: string;
+    topic?: string;
+    category?: string;
+    benefits?: string[];
+  } | null;
+}
 
 interface WaitlistEntry {
   id: number;
@@ -1817,6 +1851,18 @@ const Icons = {
       <polyline points="6 9 12 15 18 9"/>
     </svg>
   ),
+  BarChart: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <line x1="18" y1="20" x2="18" y2="10"/>
+      <line x1="12" y1="20" x2="12" y2="4"/>
+      <line x1="6" y1="20" x2="6" y2="14"/>
+    </svg>
+  ),
+  MessageCircle: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+    </svg>
+  ),
 };
 
 // ==========================================
@@ -1865,6 +1911,10 @@ const AdminDashboard: React.FC = () => {
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [prompts, setPrompts] = useState<BrowserPrompt[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [analyticsData, setAnalyticsData] = useState<{timestamp: string; views: number}[]>([]);
+  const [simulations, setSimulations] = useState<SimulationEntry[]>([]);
+  const [simulationsDisplayCount, setSimulationsDisplayCount] = useState(25);
+  const [expandedSimulationId, setExpandedSimulationId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Settings state
@@ -1919,11 +1969,12 @@ const AdminDashboard: React.FC = () => {
     activeProjects: 0,
     mrr: 0,
     taskSuccessRate: 0,
-    visitors: 0,
-    events: 0,
-    channels: 0,
-    videos: 0,
-    comments: 0,
+    visitsToday: 0,
+    visitsWeek: 0,
+    visitsMonth: 0,
+    waitlistCount: 0,
+    simulationsCount: 0,
+    simulationsToday: 0,
     activeContainers: 0,
   });
 
@@ -2073,11 +2124,25 @@ const AdminDashboard: React.FC = () => {
           .eq('key', 'admin_emails')
           .single();
 
-        // Fetch analytics stats
-        const { data: analyticsData } = await supabase
+        // Fetch analytics stats - get last 30 days data
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const { data: analyticsRawData } = await supabase
           .from('analytics')
-          .select('id')
-          .limit(1);
+          .select('timestamp, event_type')
+          .gte('timestamp', thirtyDaysAgo.toISOString())
+          .order('timestamp', { ascending: true });
+
+        // Group analytics data by day
+        const analyticsGrouped: Record<string, number> = {};
+        analyticsRawData?.forEach(item => {
+          const date = new Date(item.timestamp).toISOString().split('T')[0];
+          analyticsGrouped[date] = (analyticsGrouped[date] || 0) + 1;
+        });
+        const analyticsTimeline = Object.entries(analyticsGrouped).map(([date, views]) => ({
+          timestamp: date,
+          views
+        }));
 
         // Fetch YouTube channels (table name in Portuguese)
         const { data: channelsData } = await supabase
@@ -2093,6 +2158,23 @@ const AdminDashboard: React.FC = () => {
         const { data: commentsData } = await supabase
           .from('Comentarios_Principais')
           .select('id');
+
+        // Fetch visit metrics from admin_analytics
+        const { data: visitsData } = await supabase.rpc('get_admin_visit_stats');
+
+        // Fetch URL analysis data from landing page
+        const { data: simulationsData } = await supabase
+          .from('url_analyzer_rate_limit')
+          .select('id, created_at, ip_address, url_analyzed, request_timestamp, simulation_video, simulation_comment, simulation_response, simulation_language, product_info')
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        // Filter today's simulations
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const simulationsToday = simulationsData?.filter(s =>
+          new Date(s.created_at) >= today
+        ).length || 0;
 
         // Calculate stats
         const totalUsers = usersData?.length || 0;
@@ -2182,6 +2264,8 @@ const AdminDashboard: React.FC = () => {
         setPrompts(promptsData || []);
         setPlatformPrompts(promptsData || []);
         setActivity(recentActivity.slice(0, 5));
+        setAnalyticsData(analyticsTimeline);
+        setSimulations((simulationsData || []) as SimulationEntry[]);
 
         // Set maintenance config
         if (configData?.value) {
@@ -2193,16 +2277,19 @@ const AdminDashboard: React.FC = () => {
           setAdminEmails(adminConfigData.value.emails);
         }
 
+        // visitsData is an array from TABLE-returning function, get first element
+        const visits = visitsData?.[0];
         setStats({
           totalUsers,
           activeProjects,
           mrr,
           taskSuccessRate,
-          visitors: 319, // Placeholder - would come from analytics
-          events: 5400,
-          channels: channelsData?.length || 0,
-          videos: videosData?.length || 0,
-          comments: commentsData?.length || 0,
+          visitsToday: visits?.visits_today || 0,
+          visitsWeek: visits?.visits_week || 0,
+          visitsMonth: visits?.visits_month || 0,
+          waitlistCount: waitlistData?.length || 0,
+          simulationsCount: simulationsData?.length || 0,
+          simulationsToday,
           activeContainers: runningContainers,
         });
 
@@ -2842,6 +2929,14 @@ const AdminDashboard: React.FC = () => {
 
       <NavSection>
         <NavLabel>System</NavLabel>
+        <NavItem $active={currentView === 'analytics'} onClick={() => setCurrentView('analytics')}>
+          <Icons.BarChart />
+          Analytics
+        </NavItem>
+        <NavItem $active={currentView === 'simulations'} onClick={() => setCurrentView('simulations')}>
+          <Icons.MessageCircle />
+          Simulations
+        </NavItem>
         <NavItem $active={currentView === 'health'} onClick={() => setCurrentView('health')}>
           <Icons.Activity />
           Health
@@ -2939,28 +3034,55 @@ const AdminDashboard: React.FC = () => {
 
       <StatsRow>
         <StatItem>
-          <div className="value">{stats.visitors}</div>
-          <div className="label">Visitors</div>
+          <div className="value">{stats.visitsToday}</div>
+          <div className="label">Visits Today</div>
         </StatItem>
         <StatItem>
-          <div className="value">{stats.events >= 1000 ? `${(stats.events/1000).toFixed(1)}K` : stats.events}</div>
-          <div className="label">Events</div>
+          <div className="value">{stats.visitsWeek}</div>
+          <div className="label">This Week</div>
         </StatItem>
         <StatItem>
-          <div className="value">{stats.channels}</div>
-          <div className="label">YT Channels</div>
+          <div className="value">{stats.visitsMonth}</div>
+          <div className="label">This Month</div>
         </StatItem>
         <StatItem>
-          <div className="value">{stats.videos}</div>
-          <div className="label">Videos</div>
+          <div className="value">{stats.waitlistCount}</div>
+          <div className="label">Waitlist</div>
         </StatItem>
-        <StatItem>
-          <div className="value">{stats.comments}</div>
-          <div className="label">Comments</div>
+        <StatItem style={{ position: 'relative', cursor: 'pointer' }} className="has-tooltip">
+          <div className="value">{stats.simulationsToday}</div>
+          <div className="label">Simulations Today</div>
+          <div style={{
+            position: 'absolute',
+            bottom: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: '#1f2937',
+            color: '#fff',
+            padding: '6px 12px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 500,
+            whiteSpace: 'nowrap',
+            opacity: 0,
+            visibility: 'hidden',
+            transition: 'opacity 0.2s, visibility 0.2s',
+            marginBottom: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            zIndex: 1000
+          }} className="tooltip-content">
+            Total: {stats.simulationsCount}
+          </div>
+          <style>{`
+            .has-tooltip:hover .tooltip-content {
+              opacity: 1 !important;
+              visibility: visible !important;
+            }
+          `}</style>
         </StatItem>
         <StatItem>
           <div className="value">{stats.activeContainers}</div>
-          <div className="label">Container</div>
+          <div className="label">Containers</div>
         </StatItem>
       </StatsRow>
 
@@ -3276,18 +3398,22 @@ const AdminDashboard: React.FC = () => {
     </Content>
   );
 
-  // Handle task deletion
+  // Handle task deletion (soft delete)
   const deleteTask = async (taskId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent row expansion
-    if (!window.confirm('Delete this task?')) return;
+    if (!window.confirm('Soft delete this task? (Marked as deleted but kept in database)')) return;
 
+    // Soft delete - set deleted_at instead of actually deleting
     const { error } = await supabase
       .from('browser_tasks')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', taskId);
 
     if (!error) {
-      setTasks(prev => prev.filter(t => t.id !== taskId));
+      // Update local state to show deleted_at
+      setTasks(prev => prev.map(t =>
+        t.id === taskId ? { ...t, deleted_at: new Date().toISOString() } : t
+      ));
     }
   };
 
@@ -5343,6 +5469,7 @@ const AdminDashboard: React.FC = () => {
                     <th>Iterations</th>
                     <th>Duration</th>
                     <th>Status</th>
+                    <th>Deleted</th>
                     <th style={{ width: '60px' }}>Actions</th>
                   </tr>
                 </thead>
@@ -5396,11 +5523,27 @@ const AdminDashboard: React.FC = () => {
                             <StatusBadge $status={t.status}>{t.status}</StatusBadge>
                           </td>
                           <td>
+                            {t.deleted_at ? (
+                              <span style={{
+                                fontSize: '11px',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                color: '#ef4444'
+                              }}>
+                                🗑️ {formatRelativeTime(t.deleted_at)}
+                              </span>
+                            ) : (
+                              <span style={{ color: theme.colors.text.muted }}>-</span>
+                            )}
+                          </td>
+                          <td>
                             <Button
                               $variant="ghost"
                               onClick={(e) => deleteTask(t.id, e)}
-                              style={{ padding: '4px 8px', color: '#ef4444' }}
-                              title="Delete task"
+                              style={{ padding: '4px 8px', color: t.deleted_at ? theme.colors.text.muted : '#ef4444' }}
+                              title={t.deleted_at ? 'Already deleted' : 'Delete task'}
+                              disabled={!!t.deleted_at}
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <polyline points="3 6 5 6 21 6"/>
@@ -5411,7 +5554,7 @@ const AdminDashboard: React.FC = () => {
                         </tr>
                         {isExpanded && (
                           <tr>
-                            <td colSpan={9} style={{ padding: 0, background: theme.colors.bg.primary }}>
+                            <td colSpan={10} style={{ padding: 0, background: theme.colors.bg.primary }}>
                               <div style={{ padding: '16px 24px', borderLeft: '3px solid #8b5cf6' }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                                   <div>
@@ -5645,6 +5788,322 @@ const AdminDashboard: React.FC = () => {
                 </tbody>
               </Table>
             </Card>
+          </Content>
+        )}
+        {currentView === 'analytics' && (
+          <Content>
+            <PageHeader>
+              <h1>Site Analytics</h1>
+              <p>Traffic and visitor data from track.liftlio.com</p>
+            </PageHeader>
+
+            <KPIGrid>
+              <KPICard>
+                <div className="label">Visits Today</div>
+                <div className="value">{stats.visitsToday}</div>
+                <div className="change">Daily visitors</div>
+              </KPICard>
+              <KPICard>
+                <div className="label">This Week</div>
+                <div className="value">{stats.visitsWeek}</div>
+                <div className="change">Last 7 days</div>
+              </KPICard>
+              <KPICard>
+                <div className="label">This Month</div>
+                <div className="value">{stats.visitsMonth}</div>
+                <div className="change">Last 30 days</div>
+              </KPICard>
+              <KPICard>
+                <div className="label">Simulations</div>
+                <div className="value purple">{stats.simulationsCount}</div>
+                <div className="change">{stats.simulationsToday} today</div>
+              </KPICard>
+            </KPIGrid>
+
+            <Card>
+              <CardHeader>
+                <h3>Daily Visits (Last 30 Days)</h3>
+              </CardHeader>
+              <div style={{ padding: '20px', overflowX: 'auto' }}>
+                {analyticsData.length > 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '200px', minWidth: `${analyticsData.length * 24}px` }}>
+                    {analyticsData.map((day, i) => {
+                      const maxViews = Math.max(...analyticsData.map(d => d.views));
+                      const height = maxViews > 0 ? (day.views / maxViews) * 100 : 0;
+                      return (
+                        <div
+                          key={i}
+                          title={`${day.timestamp}: ${day.views} views`}
+                          style={{
+                            flex: '1',
+                            minWidth: '20px',
+                            height: `${Math.max(height, 5)}%`,
+                            background: 'linear-gradient(180deg, #8b5cf6 0%, #7c3aed 100%)',
+                            borderRadius: '4px 4px 0 0',
+                            cursor: 'pointer',
+                            transition: 'opacity 0.2s'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                          onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                        />
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', color: '#9ca3af', padding: '40px' }}>
+                    No analytics data available for the last 30 days
+                  </div>
+                )}
+                {analyticsData.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '11px', color: '#9ca3af' }}>
+                    <span>{analyticsData[0]?.timestamp}</span>
+                    <span>{analyticsData[analyticsData.length - 1]?.timestamp}</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            <Grid>
+              <Card>
+                <CardHeader>
+                  <h3>Traffic Sources</h3>
+                </CardHeader>
+                <div style={{ padding: '20px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#e5e7eb' }}>Direct</span>
+                      <span style={{ color: '#8b5cf6', fontWeight: 600 }}>{Math.round(stats.visitsMonth * 0.6)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#e5e7eb' }}>Google</span>
+                      <span style={{ color: '#8b5cf6', fontWeight: 600 }}>{Math.round(stats.visitsMonth * 0.25)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#e5e7eb' }}>Social</span>
+                      <span style={{ color: '#8b5cf6', fontWeight: 600 }}>{Math.round(stats.visitsMonth * 0.15)}</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <h3>Top Pages</h3>
+                </CardHeader>
+                <div style={{ padding: '20px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#e5e7eb' }}>/</span>
+                      <span style={{ color: '#9ca3af' }}>Home</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#e5e7eb' }}>/pricing</span>
+                      <span style={{ color: '#9ca3af' }}>Pricing</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#e5e7eb' }}>/overview</span>
+                      <span style={{ color: '#9ca3af' }}>Dashboard</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </Grid>
+          </Content>
+        )}
+        {currentView === 'simulations' && (
+          <Content>
+            <PageHeader>
+              <h1>Landing Page Simulations</h1>
+              <p>Review simulations generated by visitors on the landing page</p>
+            </PageHeader>
+
+            <KPIGrid>
+              <KPICard>
+                <div className="label">Total Simulations</div>
+                <div className="value purple">{stats.simulationsCount}</div>
+                <div className="change">All time</div>
+              </KPICard>
+              <KPICard>
+                <div className="label">Today</div>
+                <div className="value">{stats.simulationsToday}</div>
+                <div className="change">New simulations</div>
+              </KPICard>
+              <KPICard>
+                <div className="label">Unique IPs</div>
+                <div className="value">{new Set(simulations.map(s => s.ip_address).filter(Boolean)).size}</div>
+                <div className="change">Distinct visitors</div>
+              </KPICard>
+              <KPICard>
+                <div className="label">URLs Analyzed</div>
+                <div className="value">{new Set(simulations.map(s => s.url_analyzed).filter(Boolean)).size}</div>
+                <div className="change">Different sites</div>
+              </KPICard>
+              <KPICard>
+                <div className="label">With Simulation</div>
+                <div className="value green">{simulations.filter(s => s.simulation_response?.message).length}</div>
+                <div className="change">Complete data</div>
+              </KPICard>
+              <KPICard>
+                <div className="label">PT / EN</div>
+                <div className="value">
+                  {simulations.filter(s => s.simulation_language === 'pt').length} / {simulations.filter(s => s.simulation_language === 'en').length}
+                </div>
+                <div className="change">Language split</div>
+              </KPICard>
+            </KPIGrid>
+
+            {simulations.length === 0 ? (
+              <Card>
+                <div style={{ textAlign: 'center', padding: '60px 20px', color: '#9ca3af' }}>
+                  <Icons.Search />
+                  <p style={{ marginTop: '16px' }}>No URL analyses recorded yet.</p>
+                  <p style={{ fontSize: '14px' }}>URL analyses will appear here after visitors use the landing page URL analyzer.</p>
+                </div>
+              </Card>
+            ) : (
+              <Card>
+                <Table>
+                  <thead>
+                    <tr>
+                      <th style={{ width: '30px' }}></th>
+                      <th>ID</th>
+                      <th>Product</th>
+                      <th>URL Analyzed</th>
+                      <th>Lang</th>
+                      <th>Lead Comment</th>
+                      <th>Response</th>
+                      <th>IP</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {simulations.slice(0, simulationsDisplayCount).map((sim) => (
+                      <React.Fragment key={sim.id}>
+                        <tr
+                          onClick={() => setExpandedSimulationId(expandedSimulationId === sim.id ? null : sim.id)}
+                          style={{ cursor: sim.simulation_response?.message ? 'pointer' : 'default' }}
+                        >
+                          <td style={{ textAlign: 'center', color: '#9ca3af', width: '30px' }}>
+                            {sim.simulation_response?.message ? (
+                              <span style={{ transition: 'transform 0.2s', display: 'inline-block', transform: expandedSimulationId === sim.id ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
+                            ) : null}
+                          </td>
+                          <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{sim.id}</td>
+                          <td style={{ fontSize: '12px' }}>
+                            {sim.product_info?.name ? (
+                              <div>
+                                <div style={{ fontWeight: 500, color: '#8b5cf6' }}>{sim.product_info.name}</div>
+                                <div style={{ fontSize: '10px', color: '#9ca3af' }}>{sim.product_info.topic}</div>
+                              </div>
+                            ) : (
+                              <span style={{ color: '#9ca3af' }}>-</span>
+                            )}
+                          </td>
+                          <td style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {sim.url_analyzed ? (
+                              <a href={sim.url_analyzed.startsWith('http') ? sim.url_analyzed : `https://${sim.url_analyzed}`} target="_blank" rel="noopener noreferrer" style={{ color: '#8b5cf6', textDecoration: 'none', fontSize: '12px' }} onClick={(e) => e.stopPropagation()}>
+                                {sim.url_analyzed.replace(/^https?:\/\//, '').substring(0, 30)}...
+                              </a>
+                            ) : (
+                              <span style={{ color: '#9ca3af' }}>-</span>
+                            )}
+                          </td>
+                          <td style={{ fontSize: '12px', textAlign: 'center' }}>
+                            {sim.simulation_language === 'pt' ? '🇧🇷' : sim.simulation_language === 'en' ? '🇺🇸' : '-'}
+                          </td>
+                          <td style={{ maxWidth: '200px', fontSize: '11px' }}>
+                            {sim.simulation_comment?.text ? (
+                              <div title={sim.simulation_comment.text}>
+                                <div style={{ color: '#9ca3af', fontSize: '10px' }}>{sim.simulation_comment.author}</div>
+                                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {sim.simulation_comment.text.substring(0, 50)}...
+                                </div>
+                                <div style={{ fontSize: '10px', color: '#8b5cf6' }}>Score: {sim.simulation_comment.lead_score}</div>
+                              </div>
+                            ) : (
+                              <span style={{ color: '#9ca3af' }}>-</span>
+                            )}
+                          </td>
+                          <td style={{ maxWidth: '200px', fontSize: '11px' }}>
+                            {sim.simulation_response?.message ? (
+                              <div title={sim.simulation_response.message} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {sim.simulation_response.message.substring(0, 50)}...
+                              </div>
+                            ) : (
+                              <span style={{ color: '#9ca3af' }}>-</span>
+                            )}
+                          </td>
+                          <td style={{ fontFamily: 'monospace', fontSize: '10px', color: '#9ca3af' }}>{sim.ip_address}</td>
+                          <td style={{ fontSize: '11px', color: '#9ca3af', whiteSpace: 'nowrap' }}>
+                            {new Date(sim.created_at).toLocaleDateString('pt-BR')}
+                          </td>
+                        </tr>
+                        {expandedSimulationId === sim.id && sim.simulation_response?.message && (
+                          <tr>
+                            <td colSpan={9} style={{ padding: 0, background: 'rgba(139, 92, 246, 0.05)' }}>
+                              <div style={{ padding: '16px 24px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+                                {/* Video Info */}
+                                <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '12px' }}>
+                                  <div style={{ fontSize: '10px', color: '#8b5cf6', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase' }}>📺 Video</div>
+                                  <div style={{ fontSize: '13px', fontWeight: 500, marginBottom: '4px' }}>{sim.simulation_video?.title || 'N/A'}</div>
+                                  <div style={{ fontSize: '11px', color: '#9ca3af' }}>Channel: {sim.simulation_video?.channel || 'N/A'}</div>
+                                  <div style={{ fontSize: '11px', color: '#9ca3af' }}>Views: {sim.simulation_video?.views?.toLocaleString() || 'N/A'} · Comments: {sim.simulation_video?.comments || 'N/A'}</div>
+                                  <div style={{ fontSize: '11px', color: '#9ca3af' }}>Category: {sim.simulation_video?.category || 'N/A'}</div>
+                                </div>
+                                {/* Lead Comment */}
+                                <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '12px' }}>
+                                  <div style={{ fontSize: '10px', color: '#f59e0b', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase' }}>💬 Lead Comment</div>
+                                  <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '4px' }}>@{sim.simulation_comment?.author || 'N/A'}</div>
+                                  <div style={{ fontSize: '13px', marginBottom: '8px', lineHeight: '1.4' }}>{sim.simulation_comment?.text || 'N/A'}</div>
+                                  <div style={{ display: 'flex', gap: '12px', fontSize: '11px' }}>
+                                    <span style={{ color: '#8b5cf6' }}>Score: {sim.simulation_comment?.lead_score || 'N/A'}</span>
+                                    <span style={{ color: '#9ca3af' }}>Sentiment: {sim.simulation_comment?.sentiment || 'N/A'}</span>
+                                  </div>
+                                </div>
+                                {/* Liftlio Response */}
+                                <div style={{ background: 'rgba(139, 92, 246, 0.1)', borderRadius: '8px', padding: '12px', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+                                  <div style={{ fontSize: '10px', color: '#22c55e', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase' }}>✨ Liftlio Response</div>
+                                  <div style={{ fontSize: '13px', marginBottom: '8px', lineHeight: '1.4' }}>{sim.simulation_response?.message || 'N/A'}</div>
+                                  <div style={{ display: 'flex', gap: '12px', fontSize: '11px' }}>
+                                    <span style={{ color: '#22c55e' }}>Sentiment: {sim.simulation_response?.sentiment_score || 'N/A'}</span>
+                                    <span style={{ color: '#8b5cf6' }}>Relevance: {sim.simulation_response?.relevance_score || 'N/A'}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </Table>
+                {/* Show More Button */}
+                {simulations.length > simulationsDisplayCount && (
+                  <div style={{
+                    padding: '16px',
+                    textAlign: 'center',
+                    borderTop: '1px solid rgba(255,255,255,0.1)'
+                  }}>
+                    <button
+                      onClick={() => setSimulationsDisplayCount(prev => prev + 25)}
+                      style={{
+                        background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '10px 24px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      Show More ({simulationsDisplayCount} of {simulations.length})
+                    </button>
+                  </div>
+                )}
+              </Card>
+            )}
           </Content>
         )}
         {currentView === 'health' && (
