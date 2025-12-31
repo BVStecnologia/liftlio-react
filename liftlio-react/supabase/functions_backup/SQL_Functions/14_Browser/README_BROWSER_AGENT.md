@@ -2,19 +2,20 @@
 
 **Atualizado**: 2025-12-31
 **Status**: Produção Ativa
-**Versão**: v17 (PERMANENT ERROR DETECTION)
+**Versão**: v18 (FAILED TASK HANDLING)
 
 ---
 
-## 🏗️ Arquitetura de Callbacks (v17)
+## 🏗️ Arquitetura de Callbacks (v18)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ TRIGGER SQL (update_settings_post_on_task_complete v4):        │
+│ TRIGGER SQL (update_settings_post_on_task_complete v5):        │
+│   → Handles BOTH 'completed' AND 'failed' task statuses        │
+│   → When task fails, immediately marks SMP as 'failed'         │
 │   → Updates Settings messages posts.status (youtube_reply ONLY)│
 │   → Updates Mensagens.respondido (youtube_reply ONLY)          │
-│   → SINGLE SOURCE OF TRUTH for youtube_reply post status       │
-│   → v4: Added task_type conditional for Reddit future-proofing │
+│   → v5: Prevents SMP stuck in 'processing' forever             │
 │                                                                 │
 │ EDGE FUNCTION (browser-dispatch v17):                          │
 │   → Updates browser_logins (UNIQUE)                            │
@@ -25,10 +26,11 @@
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**IMPORTANT v17**:
-- Trigger SQL only processes `youtube_reply` tasks (future-proof for Reddit)
+**IMPORTANT v18**:
+- **v5**: Trigger now handles BOTH `completed` AND `failed` task statuses
+- When Browser Agent times out (error_max_turns), SMP is immediately marked as `failed`
+- Prevents SMP from getting stuck in `processing` forever
 - Edge Function handles `youtube_comment` with permanent error detection
-- Prevents false positives where deleted videos were marked as posted
 
 ---
 
@@ -179,9 +181,11 @@ Processa postagens agendadas via Browser Agent:
 - Limita a 1 task por vez
 - Fire-and-forget: não espera resposta
 
-### `update_settings_post_on_task_complete()` (Trigger v4)
-Trigger que atualiza status quando task completa:
-- **v4**: Só processa `task_type = 'youtube_reply'`
+### `update_settings_post_on_task_complete()` (Trigger v5)
+Trigger que atualiza status quando task completa OU falha:
+- **v5**: Processa AMBOS `completed` e `failed` status
+- Quando task falha (error_max_turns, timeout), marca SMP como `failed` imediatamente
+- Previne SMP travado em `processing` eternamente
 - Atualiza SMP.status para 'posted' ou 'failed'
 - Atualiza Mensagens.respondido para true
 - Detecta padrões de falha (ERROR, COMMENT_NOT_FOUND, etc.)
@@ -243,7 +247,14 @@ SELECT pg_get_functiondef(oid) FROM pg_proc WHERE proname = 'browser_reply_to_co
 
 ## ⚠️ Known Issues & Quirks
 
-### 1. Agent retorna `success: false` quando comentário já existe
+### 1. SMP stuck em 'processing' (RESOLVIDO em v18)
+**Problema**: Quando Browser Agent falhava (timeout, error_max_turns), o SMP ficava travado em `processing` para sempre.
+
+**Causa**: Trigger v4 só processava `status = 'completed'`, ignorando tasks com `status = 'failed'`.
+
+**Solução v18**: Trigger v5 agora processa AMBOS `completed` e `failed`. Quando task falha, imediatamente marca SMP como `failed`.
+
+### 2. Agent retorna `success: false` quando comentário já existe
 **Comportamento**: Quando o Browser Agent tenta postar um comentário que já foi postado anteriormente, ele:
 - Navega ao vídeo
 - Tenta postar
@@ -254,7 +265,7 @@ SELECT pg_get_functiondef(oid) FROM pg_proc WHERE proname = 'browser_reply_to_co
 
 **Workaround**: O sistema de callbacks verifica o `result` text, não apenas o `success` boolean. Se o result contém padrões de sucesso ("há 0 segundo", "COMMENT_POSTED"), considera como sucesso.
 
-### 2. Vídeos deletados marcados como `respondido = true`
+### 3. Vídeos deletados marcados como `respondido = true`
 **Problema** (RESOLVIDO em v17): Tasks de `youtube_comment` marcavam `respondido = true` mesmo quando o vídeo foi deletado (VIDEO_NOT_FOUND).
 
 **Causa**: O callback não verificava erros permanentes antes de marcar como respondido.
@@ -329,6 +340,13 @@ WHERE platform_name = 'youtube';
 ---
 
 ## 📝 Changelog
+
+### 31/12/2025 - v18 (FAILED TASK HANDLING)
+- **ADDED** Trigger v5 now handles BOTH `completed` AND `failed` task statuses
+- **FIXED** SMP getting stuck in `processing` when Browser Agent times out (error_max_turns)
+- **FIXED** SMP 67897 that was stuck in `processing` - now correctly marked as `failed`
+- **VERIFIED** Reply for mensagem 29814 was NOT posted on YouTube (confirmed via browser)
+- **IMPROVED** Immediate failure handling - no more orphaned `processing` records
 
 ### 31/12/2025 - v17 (PERMANENT ERROR DETECTION)
 - **ADDED** `hasPermanentError` check in browser-dispatch for youtube_comment tasks
