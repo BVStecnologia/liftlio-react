@@ -1017,7 +1017,7 @@ const ProtectedLayout = ({
                 <Route path="/mentions" element={<SubscriptionGate><ProcessingWrapper><Mentions /></ProcessingWrapper></SubscriptionGate>} />
                 <Route path="/settings" element={<SubscriptionGate><Settings /></SubscriptionGate>} />
                 <Route path="/billing" element={<SubscriptionGate><Billing /></SubscriptionGate>} />
-                <Route path="/integrations" element={<SubscriptionGate><Integrations /></SubscriptionGate>} />
+                <Route path="/integrations" element={<Navigate to="/browser-integrations" replace />} />
                 <Route path="/computer" element={<AdminGate><SubscriptionGate><LiftlioBrowser /></SubscriptionGate></AdminGate>} />
                 <Route path="/computer-dev" element={<AdminGate><LiftlioBrowser /></AdminGate>} />
                 <Route path="/browser-integrations" element={<SubscriptionGate><BrowserIntegrations /></SubscriptionGate>} />
