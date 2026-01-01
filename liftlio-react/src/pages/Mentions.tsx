@@ -12,12 +12,20 @@ import { useProject } from '../context/ProjectContext';
 import { useLanguage } from '../context/LanguageContext';
 import { HiPencil } from 'react-icons/hi';
 import { useDashboardTheme } from '../styles/dashboardTheme';
-import { formatDateLocale } from '../utils/dateUtils';
+import { formatDateLocale, isToday, parseUTCTimestamp } from '../utils/dateUtils';
 // Recharts imports removidos pois os gráficos foram removidos
 
 // Função utilitária para formatar datas (usando parseUTCTimestamp para timezone correto)
+// Mostra "Today, HH:MM" para postagens de hoje
 const formatDate = (dateString: string | null, _isComment: boolean = false) => {
   if (!dateString) return '';
+  if (isToday(dateString)) {
+    const d = parseUTCTimestamp(dateString);
+    if (!d) return '';
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `Today, ${hours}:${minutes}`;
+  }
   return formatDateLocale(dateString, {
     day: '2-digit',
     month: '2-digit',
@@ -26,7 +34,6 @@ const formatDate = (dateString: string | null, _isComment: boolean = false) => {
     minute: '2-digit'
   }, 'pt-BR');
 };
-
 // Função utilitária para decodificar HTML entities (&#39; → ', &quot; → ", etc)
 // E converter tags HTML (<br> → quebra de linha)
 const decodeHtmlEntities = (text: string): string => {
