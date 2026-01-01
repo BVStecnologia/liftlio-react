@@ -111,6 +111,7 @@ type ChatState =
   | 'waiting_2fa_phone'
   | 'waiting_2fa_code'
   | 'verifying'
+  | 'verifying_2fa'
   | 'platform_success'
   | 'asking_next_platform'
   | 'connecting_sso_platform'
@@ -532,6 +533,7 @@ const BrowserIntegrations: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [currentPlatformIndex, setCurrentPlatformIndex] = useState(0);
+  const [currentSSOPlatform, setCurrentSSOPlatform] = useState<string | null>(null);
 
   // Helper: Generate unique ID
   const generateId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -755,7 +757,7 @@ const BrowserIntegrations: React.FC = () => {
       }
     } else {
       await agentTyping(`${platformName} connected successfully!`, { type: 'success' });
-      await checkNextPlatform();
+      await checkNextPlatform(platformName);
     }
   };
 
@@ -802,7 +804,7 @@ const BrowserIntegrations: React.FC = () => {
     );
   };
 
-  const checkNextPlatform = async () => {
+  const checkNextPlatform = async (justConnected?: string) => {
     const ssoPlatforms = platforms.filter(p =>
       p.supports_google_sso &&
       p.platform_name !== 'google' &&
@@ -810,7 +812,11 @@ const BrowserIntegrations: React.FC = () => {
       p.is_active
     );
 
+    // Include justConnected in the connected list (state might be stale)
     const connectedPlatforms = logins.filter(l => l.is_connected).map(l => l.platform_name);
+    if (justConnected && !connectedPlatforms.includes(justConnected)) {
+      connectedPlatforms.push(justConnected);
+    }
     const pendingPlatforms = ssoPlatforms.filter(p => !connectedPlatforms.includes(p.platform_name));
 
     if (pendingPlatforms.length > 0) {
@@ -1044,7 +1050,37 @@ const BrowserIntegrations: React.FC = () => {
         });
 
       // Execute login
+      setCurrentSSOPlatform(platformName);
       const result = await sendTask(platform.login_prompt);
+
+      // Detect 2FA type from agent response
+      const lowerResult = result.toLowerCase();
+
+      // Check for number matching 2FA (e.g., "tap 42", "toque em 42", "number 42")
+      const numberMatch = result.match(/(?:tap|toque|número|number|digite|enter|select|escolha)\s*(?:em|on|o)?\s*(\d{1,3})/i);
+      const matchingNumber = numberMatch ? numberMatch[1] : null;
+
+      // Check for code entry 2FA (SMS, authenticator)
+      const needsCode = lowerResult.includes('enter code') ||
+        lowerResult.includes('digite o código') ||
+        lowerResult.includes('verification code') ||
+        lowerResult.includes('código de verificação') ||
+        lowerResult.includes('sms code') ||
+        lowerResult.includes('authenticator') ||
+        lowerResult.includes('6-digit') ||
+        lowerResult.includes('6 digit');
+
+      // Check for phone approval 2FA (tap yes, approve)
+      const needsPhoneApproval = lowerResult.includes('2fa') ||
+        lowerResult.includes('verificação') ||
+        lowerResult.includes('verification') ||
+        lowerResult.includes('approve') ||
+        lowerResult.includes('notification') ||
+        lowerResult.includes('notificação') ||
+        lowerResult.includes('confirm') ||
+        lowerResult.includes('two-step') ||
+        lowerResult.includes('tap yes') ||
+        lowerResult.includes('toque sim');
 
       if (result.includes('LOGIN_SUCCESS') || result.includes('ALREADY_LOGGED')) {
         await supabase
@@ -1057,11 +1093,96 @@ const BrowserIntegrations: React.FC = () => {
           .eq('platform_name', platformName)
           .eq('is_active', true);
 
+        setCurrentSSOPlatform(null);
         handleLoginSuccess(platformName);
+      } else if (matchingNumber) {
+        // Number matching 2FA - show the number to tap
+        await supabase
+          .from('browser_logins')
+          .update({ has_2fa: true })
+          .eq('projeto_id', currentProject.id)
+          .eq('platform_name', platformName)
+          .eq('is_active', true);
+
+        setChatState('waiting_2fa_phone');
+        await agentTyping(`Google is asking for verification. On your phone, tap the number **${matchingNumber}**`, { type: 'phone_wait' });
+        await agentTyping('Click below after tapping the number:', {
+          type: 'buttons',
+          buttons: [{ label: `I tapped ${matchingNumber}`, action: 'verify_sso_2fa', primary: true }]
+        });
+      } else if (needsCode) {
+        // Code entry 2FA - show code input
+        await supabase
+          .from('browser_logins')
+          .update({ has_2fa: true, twofa_type: 'code' })
+          .eq('projeto_id', currentProject.id)
+          .eq('platform_name', platformName)
+          .eq('is_active', true);
+
+        setChatState('waiting_2fa_code');
+        await agentTyping('Google is asking for a verification code. Please enter the code from your SMS or Authenticator app:');
+      } else if (needsPhoneApproval) {
+        // Phone tap 2FA - just approve
+        await supabase
+          .from('browser_logins')
+          .update({ has_2fa: true })
+          .eq('projeto_id', currentProject.id)
+          .eq('platform_name', platformName)
+          .eq('is_active', true);
+
+        setChatState('waiting_2fa_phone');
+        await agentTyping(`Google sent a security notification to your phone. Tap "Yes" to approve the sign-in for ${platformName}.`, { type: 'phone_wait' });
+        await agentTyping('Click below when you have approved:', {
+          type: 'buttons',
+          buttons: [{ label: 'I approved on my phone', action: 'verify_sso_2fa', primary: true }]
+        });
       } else {
-        throw new Error('Connection failed');
+        setCurrentSSOPlatform(null);
+        throw new Error(result || 'Connection failed');
       }
     } catch (error: any) {
+      handleLoginError(error.message);
+    }
+  };
+
+  // Verify SSO 2FA (after user approves on phone)
+  const handleVerifySSOLogin = async () => {
+    if (!currentProject?.id || !currentSSOPlatform) return;
+
+    setChatState('verifying_2fa');
+    await agentTyping('Checking if you approved...', { type: 'loading' });
+
+    try {
+      const platform = platforms.find(p => p.platform_name === currentSSOPlatform);
+      if (!platform) throw new Error('Platform not found');
+
+      // Re-execute login to continue after 2FA approval
+      const result = await sendTask(platform.login_prompt);
+
+      if (result.includes('LOGIN_SUCCESS') || result.includes('ALREADY_LOGGED')) {
+        await supabase
+          .from('browser_logins')
+          .update({
+            is_connected: true,
+            connected_at: new Date().toISOString(),
+          })
+          .eq('projeto_id', currentProject.id)
+          .eq('platform_name', currentSSOPlatform)
+          .eq('is_active', true);
+
+        const platformName = currentSSOPlatform;
+        setCurrentSSOPlatform(null);
+        handleLoginSuccess(platformName);
+      } else {
+        // Still waiting or failed
+        await agentTyping("It seems the approval wasn't completed yet. Please check your phone and approve the Google notification.", { type: 'phone_wait' });
+        await agentTyping('Click below when done:', {
+          type: 'buttons',
+          buttons: [{ label: 'I approved on my phone', action: 'verify_sso_2fa', primary: true }]
+        });
+      }
+    } catch (error: any) {
+      setCurrentSSOPlatform(null);
       handleLoginError(error.message);
     }
   };
@@ -1076,6 +1197,10 @@ const BrowserIntegrations: React.FC = () => {
 
       case 'verify_2fa':
         handleVerifyLogin();
+        break;
+
+      case 'verify_sso_2fa':
+        handleVerifySSOLogin();
         break;
 
       case 'next_platform':
@@ -1311,3 +1436,4 @@ const BrowserIntegrations: React.FC = () => {
 };
 
 export default BrowserIntegrations;
+
