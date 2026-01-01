@@ -1,8 +1,8 @@
 # 🤖 Browser Agent - Sistema de Postagens Humanizadas
 
-**Atualizado**: 2025-12-31
+**Atualizado**: 2026-01-01
 **Status**: Produção Ativa
-**Versão**: v18 (FAILED TASK HANDLING)
+**Versão**: v18.1 (TEXT-BASED SUCCESS DETECTION)
 
 ---
 
@@ -340,6 +340,14 @@ WHERE platform_name = 'youtube';
 ---
 
 ## 📝 Changelog
+
+### 01/01/2026 - v18.1 (TEXT-BASED SUCCESS DETECTION)
+- **CRITICAL FIX** browser-dispatch now uses TEXT-BASED success detection
+- **FIXED** False negatives where agent returns `success=false` but task completed correctly
+- **ADDED** `determineActualSuccess()` function that analyzes result text
+- **REMOVED** Early return `if (!success) return false` in `isReplySuccessful()` and `isCommentSuccessful()`
+- **ADDED** `actualSuccess` field in response JSON for debugging
+- **EXAMPLE**: Task `f4f60d51` had "successfully posted" + "há 0 segundo" but was marked failed - now fixed
 
 ### 31/12/2025 - v18 (FAILED TASK HANDLING)
 - **ADDED** Trigger v5 now handles BOTH `completed` AND `failed` task statuses

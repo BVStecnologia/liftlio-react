@@ -645,6 +645,13 @@ $$;
 
 ## 📝 CHANGELOG PRINCIPAL
 
+### 2026-01-01 - Fix get_project_metrics v3
+- ✅ Refatorada função `get_project_metrics` para usar tabela Videos
+- ✅ Corrigido bug "Today: 70" que contava vídeos antigos sem analyzed_at
+- ✅ Agora conta vídeos created_at = hoje (correto)
+- ✅ Atualizado label frontend: "Posts analyzed today" → "Approved today"
+- ✅ Campos novos do sistema: videos_scanreados_2, videos_para_scann, executed
+
 ### 2025-09-30 - Reorganização v2.0
 - ✅ Criada estrutura de 6 subpastas temáticas
 - ✅ Movidas 28 funções SQL para categorias apropriadas

@@ -282,6 +282,28 @@ LIMIT 50;
 
 ---
 
-**Última atualização:** 2025-10-20
-**Versão do sistema:** Liftlio v2.0
+## 📊 Função get_project_metrics (V3 - 2026-01-01)
+
+A função `get_project_metrics` foi **refatorada** para usar a tabela `Videos` ao invés do campo JSONB `videos_scanreados`:
+
+**Motivo:** O campo `videos_scanreados` JSONB antigo não é mais atualizado pelo sistema novo. O sistema atual usa:
+- `videos_scanreados_2` - IDs descobertos (comma-separated)
+- `videos_para_scann` - Fila para análise
+- `executed` - IDs já processados
+- Tabela `Videos` - Vídeos aprovados com `monitored = true`
+
+**Métricas atualizadas:**
+| Card | Antes (V2) | Agora (V3) |
+|------|------------|------------|
+| Channels | Todos canais | Canais ativos (filtro anti-spam) |
+| Analyzed | videos_scanreados JSONB | Videos tabela (monitored=true) |
+| Approved | APPROVED + mensagem | High/Medium + mensagem |
+| Today | analyzed_at >= hoje (bugado) | created_at = hoje (correto) |
+
+**Frontend:** Label alterado de "Posts analyzed today" → "Approved today"
+
+---
+
+**Última atualização:** 2026-01-01
+**Versão do sistema:** Liftlio v2.1
 **Documentação completa:** `/supabase/functions_backup/SQL_Functions/00_Monitoramento_YouTube/`

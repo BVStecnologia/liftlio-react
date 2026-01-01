@@ -3,15 +3,17 @@
 -- Tipo: Funcao BASE (nao faz INSERT)
 --
 -- Descricao:
---   Gera comentario EGO-FIRST para video do YouTube usando Strategy #4.
---   ZERO mencao a produto/servico - foco 100% em ego boost + pergunta estrategica.
---   Pergunta e construida para ABRIR espaco para reply mencionar produto naturalmente.
+--   Gera comentario HYBRID para video do YouTube usando Strategy #5.
+--   Mencao a produto e OPCIONAL - apenas quando naturalmente relevante.
+--   Foco em ego boost + pergunta estrategica com FLEXIBILIDADE para mencionar produto.
 --
--- Estrategia (Comment Pair - Part 1):
+-- Estrategia #5 HYBRID (Comment Pair - Part 1):
 --   1. Analisa transcricao para identificar pain point que produto resolve
 --   2. Cria ego boost sobre esse ponto especifico (com timestamp)
 --   3. Faz pergunta sobre como creator LIDA/ABORDA esse desafio
---   4. Adiciona variabilidade (tom casual 6-9/10, imperfeicoes naturais)
+--   4. OPCIONAL: Se video fala diretamente sobre tema relacionado ao produto,
+--      pode mencionar o produto de forma NATURAL (como compartilhar uma dica pessoal)
+--   5. Adiciona variabilidade (tom casual 6-9/10, imperfeicoes naturais)
 --
 -- Archetypes Psicologicos (escolhido dinamicamente):
 --   - RECOGNITION: Elogia clareza + pergunta sobre dificuldades comuns
@@ -25,7 +27,7 @@
 --
 -- Saida:
 --   JSONB contendo:
---   - comment: texto do comentario (EGO + PERGUNTA, zero produto)
+--   - comment: texto do comentario (EGO + PERGUNTA, produto opcional)
 --   - justificativa: explicacao do raciocinio usado
 --   - youtube_video_id: ID do video no YouTube
 --   - debug_info: informacoes de debug de cada etapa
@@ -40,6 +42,7 @@
 -- Atualizado: 2025-01-12 - REDESIGN: Strategy #4 (ego-first, zero produto, pergunta estrategica)
 -- Atualizado: 2025-01-17 - Anti-spam improvements: removed business triggers, casual language
 -- Atualizado: 2025-01-20 - Anti-repetition system (60 dias, trigrams, padroes deletados)
+-- Atualizado: 2026-01-01 - STRATEGY #5 HYBRID: Optional product mention when naturally relevant
 -- =============================================
 
 DROP FUNCTION IF EXISTS create_initial_video_comment_with_claude(INTEGER, INTEGER);
@@ -69,9 +72,9 @@ DECLARE
     v_imperfection_type TEXT;
     v_use_emoji BOOLEAN;
 
-    -- 🆕 Anti-repetição (60 dias)
+    -- Anti-repetição (60 dias)
     v_forbidden_patterns TEXT;
-    -- 🆕 Anti-repetição de aberturas (primeiras 5 palavras)
+    -- Anti-repetição de aberturas (primeiras 5 palavras)
     v_forbidden_openings TEXT;
 BEGIN
     -- Registrar início da execução
@@ -100,7 +103,7 @@ BEGIN
     );
 
     -- =============================================
-    -- 🆕 ANTI-REPETIÇÃO: Detectar padrões deletados (60 dias)
+    -- ANTI-REPETIÇÃO: Detectar padrões deletados (60 dias)
     -- =============================================
     WITH message_words AS (
         SELECT
@@ -141,7 +144,7 @@ BEGIN
 
     -- Obter a transcricao do video
     -- =============================================
-    -- 🆕 ANTI-REPETIÇÃO: Detectar padrões de abertura (últimas 20 mensagens)
+    -- ANTI-REPETIÇÃO: Detectar padrões de abertura (últimas 20 mensagens)
     -- =============================================
     WITH recent_openings AS (
         SELECT
@@ -263,13 +266,13 @@ BEGIN
         v_user_liked_examples := 'Sem exemplos disponíveis';
     END;
 
-    -- Criar o prompt MELHORADO (Strategy #4: Ego-First + Anti-Spam)
+    -- Criar o prompt STRATEGY #5 HYBRID (Ego-First + Optional Product Mention)
     BEGIN
         v_prompt := format(
-            '🎯 STRATEGY #4: EGO-FIRST COMMENT (Zero Product Mention)
+            '🎯 STRATEGY #5 HYBRID: EGO-FIRST COMMENT (Natural Product Mention When Relevant)
 
 You are creating the FIRST comment in a two-part engagement strategy.
-This comment will later be replied to with a second comment that mentions the product.
+This comment CAN include a natural product mention IF the video content is directly related.
 
 ═══════════════════════════════════════════════════════════════
 
@@ -278,12 +281,13 @@ Title: %s
 Category: %s
 Tags: %s
 
-📝 TRANSCRIPT (analyze for pain points):
+📝 TRANSCRIPT (analyze for pain points AND product relevance):
 %s
 
-🛠️ PRODUCT/SERVICE CONTEXT (DO NOT MENTION - Use only to guide question strategy):
+🛠️ PRODUCT/SERVICE CONTEXT:
+Product Name: %s
 What it does: %s
-This helps you identify pain points in the video that the product solves.
+Keywords: %s
 
 💡 APPROVED EXAMPLES (tone/style reference only):
 %s
@@ -308,17 +312,41 @@ CRÍTICO: Escolha uma estrutura de abertura COMPLETAMENTE DIFERENTE!
 
 1️⃣ ANALYZE TRANSCRIPT:
    - Identify ONE pain point, challenge, or workflow issue mentioned
-   - This should be something the product helps solve (but DON''T mention it!)
    - Find a REAL timestamp from the transcript where this is discussed
    - CRITICAL: Use ONLY timestamps that actually appear in the transcript provided
    - DO NOT invent or guess timestamps - extract them from the transcript text
 
-2️⃣ CREATE EGO-FIRST COMMENT:
-   Structure: [Ego Boost] + [Casual Question]
+2️⃣ PRODUCT MENTION DECISION:
+
+   ✅ MENTION product when:
+   - Video talks about content creation, marketing, AI, automation, or topics DIRECTLY related to what product does
+   - You can create a GENUINE connection between video content and your experience with product
+   - The mention feels like sharing a personal tip, NOT promotion
+   - Example: Video about "finding engagement opportunities" → natural to mention a tool that helps with that
+
+   ❌ DON''T mention product when:
+   - No clear connection to video content
+   - Would seem forced or promotional
+   - Video is about unrelated topics
+   - Mentioning would feel like an ad
+
+   📝 GOOD product mention examples:
+   "That point at 12:45 about [topic] hit home. I used to struggle with this before finding [PRODUCT] - it handles exactly that."
+   "The way you explained [topic] at 8:30 makes sense. Been using [PRODUCT] for this lately and it''s kind of wild how much easier it got."
+   "This breakdown at 15:20 is exactly what I needed. [PRODUCT] helped me automate this part, curious if you''ve tried something similar?"
+
+   ❌ BAD product mention examples:
+   "Great video! By the way, you should check out [PRODUCT]!"
+   "Nice content. [PRODUCT] is the best tool for this."
+   "You should use [PRODUCT] for this problem."
+
+3️⃣ CREATE COMMENT:
+   Structure: [Ego Boost] + [Optional Product Experience] + [Casual Question]
 
    Sentence 1: Ego boost about that specific point (with timestamp)
-   Sentence 2: Casual question about creator''s experience/approach
-   
+   Sentence 2-3: IF relevant - share your experience with product as a personal tip
+   Final: Casual question about creator''s experience/approach
+
    ⚠️ ANTI-SPAM RULES (CRITICAL):
    NEVER use these business/sales terms:
    - scale, scaling, scaled
@@ -329,13 +357,13 @@ CRÍTICO: Escolha uma estrutura de abertura COMPLETAMENTE DIFERENTE!
    - track, tracking
    - prove, proof, results
    - Numbers + nouns (50+ clients, 1000+ entries, 100 accounts, etc.)
-   
+
    ALWAYS use personal/experiential language:
    - "How do you...", "When did you...", "What helped you..."
    - "Have you tried...", "Did you find...", "Would you..."
    - Focus on creator''s EXPERIENCE, not business metrics
 
-3️⃣ ARCHETYPE SELECTION (choose one dynamically):
+4️⃣ ARCHETYPE SELECTION (choose one dynamically):
 
    🏆 RECOGNITION (best for educational/tutorial videos):
    "This breakdown at 12:45 really clarified things. Do most people miss that detail?"
@@ -361,39 +389,37 @@ CRÍTICO: Escolha uma estrutura de abertura COMPLETAMENTE DIFERENTE!
 
 ✅ RULES:
 1. Language: %s
-2. ZERO product/service mentions (critical!)
-3. MUST include timestamp that EXISTS in the transcript (format: 12:45, 8:30, etc.)
-   → Extract it directly from the transcript text, DO NOT invent timestamps
-4. MUST reference specific detail from transcript (quote, term, concept mentioned)
-5. Question should be CASUAL and EXPERIENTIAL (not business-focused)
-6. 2 sentences maximum
-7. Natural, casual YouTube tone
-8. No greetings, no clichés, no @mentions
-9. Go straight to the point
-10. Sound like a regular viewer, not a consultant/marketer
+2. Product mention is OPTIONAL - only if naturally relevant
+3. If mentioning product, make it feel like sharing a personal tip
+4. MUST include timestamp that EXISTS in the transcript (format: 12:45, 8:30, etc.)
+5. MUST reference specific detail from transcript (quote, term, concept mentioned)
+6. Question should be CASUAL and EXPERIENTIAL (not business-focused)
+7. 2-3 sentences maximum (3 if including product mention)
+8. Natural, casual YouTube tone
+9. No greetings, no clichés, no @mentions
+10. Go straight to the point
+11. Sound like a regular viewer sharing experience, not a marketer
 
 ❌ BAD EXAMPLES (avoid these patterns):
 "Great video! What tools do you use?" (generic, obvious setup)
 "How do you handle this when you scale to 1000+ entries?" (business language + numbers)
-"What''s your ROI on this approach?" (sales terminology)
-"How do you prove this to clients?" (business context)
+"Check out [PRODUCT] for this!" (promotional)
+"You should try [PRODUCT]" (pushy)
 
-✅ GOOD EXAMPLES (follow these patterns):
+✅ GOOD EXAMPLES WITHOUT PRODUCT (when not relevant):
 "That point at 12:45 about manual work hit different. How did you used to handle this?"
 (specific timestamp, casual tone, experiential question)
 
-"The way you explained that at 8:30 makes so much sense. When did you figure this out?"
-(timestamp, personal question about their journey)
-
-"Never thought about it from that angle at 15:20. Have you always done it this way?"
-(timestamp, curiosity about their experience)
+✅ GOOD EXAMPLES WITH PRODUCT (when relevant):
+"The way you explained finding engagement at 8:30 makes so much sense. Been using [PRODUCT] for this lately - kind of wild how much time it saves. When did you figure out your approach?"
+(timestamp, personal experience sharing, natural product mention, experiential question)
 
 ═══════════════════════════════════════════════════════════════
 
 RETURN JSON (only this, no extra text):
 {
-  "comment": "Your ego-first comment here",
-  "justificativa": "I identified pain point X at timestamp Y, chose [archetype] because..."
+  "comment": "Your comment here (with or without product mention)",
+  "justificativa": "I identified pain point X at timestamp Y, chose [archetype] because... Product mention: [included/not included] because [reason]"
 }
 
 CRITICAL: Start response with { and end with }. No markdown, no code blocks, no extra text.',
@@ -401,10 +427,12 @@ CRITICAL: Start response with { and end with }. No markdown, no code blocks, no 
             v_video_data->>'content_category',
             v_video_data->>'video_tags',
             COALESCE(v_transcript, 'Transcrição não disponível'),
+            COALESCE(v_product_name, 'Product'),
             v_project_description,
+            COALESCE(v_project_keywords, ''),
             COALESCE(v_user_liked_examples, 'Sem exemplos disponíveis'),
             COALESCE(v_user_special_instructions, 'Sem instruções específicas'),
-            COALESCE(replace(v_forbidden_patterns, '%', '%%'), 'Nenhum padrão deletado ainda'), -- 🆕 Anti-repetição
+            COALESCE(replace(v_forbidden_patterns, '%', '%%'), 'Nenhum padrão deletado ainda'), -- Anti-repetição
             COALESCE(v_forbidden_openings, 'Nenhum padrão de abertura detectado ainda'),
             v_tone_variance,
             v_target_word_count,
@@ -419,7 +447,7 @@ CRITICAL: Start response with { and end with }. No markdown, no code blocks, no 
         RAISE;
     END;
 
-    -- Chamada Claude com SYSTEM MESSAGE MELHORADO (Anti-Spam)
+    -- Chamada Claude com SYSTEM MESSAGE HYBRID (Anti-Spam + Optional Product)
     BEGIN
         v_debug_info := v_debug_info || jsonb_build_object('step', 'before_claude_call', 'timestamp', clock_timestamp());
 
@@ -427,25 +455,34 @@ CRITICAL: Start response with { and end with }. No markdown, no code blocks, no 
             v_prompt,
             format('You are an expert at creating authentic, casual YouTube comments that avoid spam detection.
 
-STRATEGY: Comment Pair System (Part 1 of 2)
-- This is the FIRST comment (ego boost + casual question)
-- A SECOND comment (reply) will mention the product later
-- Your comment must sound like a REGULAR VIEWER, not a marketer
+STRATEGY #5 HYBRID: Comment with Optional Natural Product Mention
+- This comment CAN include a product mention IF the video content is directly related
+- Your comment must sound like a REGULAR VIEWER sharing personal experience
+- Product mentions should feel like helpful tips, NOT promotion
 
 CORE OBJECTIVES:
 1. Make creator feel SEEN and RESPECTED (ego trigger)
 2. Ask EXPERIENTIAL question (about their journey/experience)
 3. Use REAL timestamp from transcript + specific detail to prove you watched
    → CRITICAL: Extract timestamp directly from transcript, do NOT invent
-4. Zero promotional tone - 100%% authentic community member
-5. Avoid ALL business/sales language that triggers spam filters
+4. OPTIONAL: If video content relates to product, mention it naturally as personal experience
+5. Zero promotional tone - 100%% authentic community member sharing experience
+6. Avoid ALL business/sales language that triggers spam filters
+
+PRODUCT MENTION DECISION TREE:
+✅ Video about content creation, marketing, AI, automation? → Consider mentioning
+✅ Can connect video topic to product genuinely? → Consider mentioning
+✅ Would mentioning feel like sharing a personal tip? → Mention it!
+❌ No clear connection? → Skip product mention
+❌ Would feel forced or promotional? → Skip product mention
 
 SPAM FILTER AVOIDANCE (CRITICAL):
 YouTube filters comments via API more aggressively. NEVER use:
 ❌ Business terms: scale, optimize, ROI, metrics, clients, agencies, tracking
 ❌ Numbers + nouns: "50+ clients", "1000+ entries", "100 accounts"
 ❌ Sales language: prove, results, performance, conversion
-✅ Use instead: Personal questions about their experience/journey
+❌ Promotional: "check out", "you should try", "best tool"
+✅ Use instead: Personal experience sharing ("been using X for this", "X helped me with")
 
 ARCHETYPE SELECTION:
 - Recognition: Educational content → compliment clarity + ask about common mistakes
@@ -455,20 +492,21 @@ ARCHETYPE SELECTION:
 
 CRITICAL RULES:
 - Language: %s
-- ZERO product mentions (this is part 1!)
+- Product mention is OPTIONAL (only when naturally relevant)
+- If mentioning product: sound like sharing a personal tip, not promoting
 - ZERO business terminology
 - Timestamp required (from transcript)
-- 2 sentences max
+- 2-3 sentences max
 - Casual, imperfect tone (like real person)
 - Experiential questions only ("How did you...", "When did...", "Have you...")
 
-TONE: Sound like someone who genuinely watched and found value, asking about
-the creator''s personal experience - NOT a marketer doing outreach.
+TONE: Sound like someone who genuinely watched and found value, possibly sharing
+a personal experience with a tool that helped them - NOT a marketer doing outreach.
 
 JSON FORMAT (only this, no extra text):
 {
-  "comment": "Your ego-first comment here",
-  "justificativa": "I identified pain point X at Y timestamp, chose Z archetype because..."
+  "comment": "Your comment here",
+  "justificativa": "I identified pain point X at Y timestamp, chose Z archetype because... Product mention: [included/not included] because [reason]"
 }',
                    COALESCE(v_project_country, 'Português')),
             4000,
@@ -529,7 +567,8 @@ JSON FORMAT (only this, no extra text):
             'comment', (v_claude_response::jsonb)->>'comment',
             'justificativa', (v_claude_response::jsonb)->>'justificativa',
             'created_at', now(),
-            'has_special_instructions', v_user_special_instructions IS NOT NULL AND v_user_special_instructions != ''
+            'has_special_instructions', v_user_special_instructions IS NOT NULL AND v_user_special_instructions != '',
+            'strategy', 'HYBRID_5'
         ) INTO v_result;
 
         v_debug_info := v_debug_info || jsonb_build_object('step', 'result_creation', 'success', true);

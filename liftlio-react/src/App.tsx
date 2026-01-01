@@ -83,11 +83,11 @@ const MainContent = styled.main`
 
 const ContentWrapper = styled.div`
   padding: 20px;
-  
+
   @media (max-width: 768px) {
     padding: 16px 12px;
   }
-  
+
   @media (max-width: 480px) {
     padding: 12px 8px;
   }

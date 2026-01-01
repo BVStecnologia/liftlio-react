@@ -4803,7 +4803,7 @@ const YoutubeMonitoring: React.FC = () => {
                 color: 'rgba(255, 255, 255, 0.4)',
                 fontWeight: '400'
               }}>
-                Posts analyzed today
+                Approved today
               </div>
             </div>
           </div>
