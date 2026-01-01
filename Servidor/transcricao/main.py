@@ -1,4 +1,6 @@
 # main.py
+# Atualizado: 2026-01-01 - Corrigido para youtube-transcript-api v1.x
+# Mudanca: proxies= -> proxy_config=, .get_transcript() -> .fetch()
 import os
 import logging
 import time
@@ -10,13 +12,13 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Configuração do proxy DataImpulse
+# Configuracao do proxy DataImpulse
 PROXY_LOGIN = os.getenv("DATAIMPULSE_LOGIN", "")
 PROXY_PASSWORD = os.getenv("DATAIMPULSE_PASSWORD", "")
 PROXY_HOST = os.getenv("DATAIMPULSE_HOST", "gw.dataimpulse.com")
 PROXY_PORT = os.getenv("DATAIMPULSE_PORT", "10000")
 
-# Inicializar proxy config se credenciais estiverem disponíveis
+# Inicializar proxy config se credenciais estiverem disponiveis
 PROXY_CONFIG = None
 if PROXY_LOGIN and PROXY_PASSWORD:
     proxy_url = f"http://{PROXY_LOGIN}:{PROXY_PASSWORD}@{PROXY_HOST}:{PROXY_PORT}"
@@ -26,7 +28,17 @@ if PROXY_LOGIN and PROXY_PASSWORD:
     )
     logger.info(f"Proxy DataImpulse configurado: {PROXY_HOST}:{PROXY_PORT}")
 else:
-    logger.warning("Proxy DataImpulse não configurado - usando conexão direta")
+    logger.warning("Proxy DataImpulse nao configurado - usando conexao direta")
+
+# ============================================
+# YOUTUBE API INSTANCE (Nova forma v1.x)
+# ============================================
+if PROXY_CONFIG:
+    ytt_api = YouTubeTranscriptApi(proxy_config=PROXY_CONFIG)
+    logger.info("YouTubeTranscriptApi inicializado COM proxy")
+else:
+    ytt_api = YouTubeTranscriptApi()
+    logger.info("YouTubeTranscriptApi inicializado SEM proxy")
 
 # ============================================
 # Supabase Cache Configuration
@@ -43,66 +55,65 @@ try:
     if SUPABASE_URL and SUPABASE_SERVICE_KEY:
         supabase_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
         SUPABASE_ENABLED = True
-        logger.info(f"Supabase cache HABILITADO")
+        logger.info("Supabase cache HABILITADO")
     else:
-        logger.warning("Supabase cache DESABILITADO (credenciais não configuradas)")
+        logger.warning("Supabase cache DESABILITADO (credenciais nao configuradas)")
 except ImportError:
-    logger.warning("Supabase cache DESABILITADO (biblioteca supabase não instalada)")
+    logger.warning("Supabase cache DESABILITADO (biblioteca supabase nao instalada)")
 except Exception as e:
     logger.error(f"Erro ao inicializar Supabase (funcionando sem cache): {e}")
 
 def get_transcript_with_retry(video_id, max_retries=3):
+    """
+    Busca transcricao com retry usando nova API v1.x
+    Usa ytt_api.fetch() ao inves de YouTubeTranscriptApi.get_transcript()
+    """
     for attempt in range(max_retries):
         try:
+            # Tentativa 1: Buscar em PT ou EN diretamente
             try:
-                transcript = YouTubeTranscriptApi.get_transcript(
-                    video_id,
-                    languages=["pt", "en"],
-                    proxies=PROXY_CONFIG
-                )
-                logger.info(f"Transcrição obtida em PT/EN para {video_id}")
+                transcript = ytt_api.fetch(video_id, languages=["pt", "en"])
+                logger.info(f"Transcricao obtida em PT/EN para {video_id}")
                 return transcript
-            except:
+            except Exception as e:
+                logger.debug(f"Fallback para outros idiomas: {e}")
+
+            # Tentativa 2: Listar todos os idiomas disponiveis
+            try:
+                transcript_list = ytt_api.list(video_id)
+                available_languages = []
+
+                for t in transcript_list:
+                    available_languages.append(t.language_code)
+
+                    if t.language_code in ['pt', 'pt-BR', 'en', 'en-US']:
+                        try:
+                            result = t.fetch()
+                            logger.info(f"Transcricao obtida em {t.language_code}")
+                            return result
+                        except:
+                            continue
+
+                logger.info(f"Idiomas disponiveis: {available_languages}")
+
+                # Tentativa 3: Usar qualquer idioma disponivel
+                if available_languages:
+                    transcript = ytt_api.fetch(video_id, languages=[available_languages[0]])
+                    logger.info(f"Transcricao obtida em {available_languages[0]}")
+                    return transcript
+                else:
+                    raise Exception("Nenhum idioma disponivel")
+
+            except Exception as list_error:
+                logger.warning(f"Erro ao listar transcricoes: {str(list_error)}")
+
+                # Tentativa 4: Buscar sem especificar idioma
                 try:
-                    transcript_list = YouTubeTranscriptApi(proxies=PROXY_CONFIG).list_transcripts(video_id)
-                    available_languages = []
-
-                    for t in transcript_list:
-                        available_languages.append(t.language_code)
-
-                        if t.language_code in ['pt', 'pt-BR', 'en', 'en-US']:
-                            try:
-                                result = t.fetch()
-                                logger.info(f"Transcrição obtida em {t.language_code}")
-                                return result
-                            except:
-                                continue
-
-                    logger.info(f"Idiomas disponíveis: {available_languages}")
-
-                    if available_languages:
-                        transcript = YouTubeTranscriptApi.get_transcript(
-                            video_id,
-                            languages=[available_languages[0]],
-                            proxies=PROXY_CONFIG
-                        )
-                        logger.info(f"Transcrição obtida em {available_languages[0]}")
-                        return transcript
-                    else:
-                        raise Exception("Nenhum idioma disponível")
-
-                except Exception as list_error:
-                    logger.warning(f"Erro ao listar transcrições: {str(list_error)}")
-
-                    try:
-                        transcript = YouTubeTranscriptApi.get_transcript(
-                            video_id,
-                            proxies=PROXY_CONFIG
-                        )
-                        logger.info(f"Transcrição obtida (idioma padrão)")
-                        return transcript
-                    except:
-                        raise Exception("Nenhuma transcrição disponível")
+                    transcript = ytt_api.fetch(video_id)
+                    logger.info("Transcricao obtida (idioma padrao)")
+                    return transcript
+                except:
+                    raise Exception("Nenhuma transcricao disponivel")
 
         except Exception as e:
             logger.error(f"Tentativa {attempt + 1} falhou: {str(e)}")
@@ -144,7 +155,7 @@ def check_video_exists(video_id):
 
 def save_to_supabase(video_id, transcription, contem):
     if not SUPABASE_ENABLED:
-        logger.debug(f"Cache desabilitado")
+        logger.debug("Cache desabilitado")
         return None
 
     try:
@@ -167,42 +178,50 @@ def save_to_supabase(video_id, transcription, contem):
 
 def process_video(url):
     try:
-        logger.info(f"Iniciando processamento do vídeo: {url}")
+        logger.info(f"Iniciando processamento do video: {url}")
         video_id = url.split("v=")[1] if "v=" in url else url.split("/")[-1]
-        logger.info(f"ID do vídeo extraído: {video_id}")
+        logger.info(f"ID do video extraido: {video_id}")
 
         exists, existing_data = check_video_exists(video_id)
         if exists:
-            logger.info(f"Vídeo {video_id} retornado do CACHE")
+            logger.info(f"Video {video_id} retornado do CACHE")
             return {
                 "video_id": video_id,
                 "transcription": existing_data["trancription"],
                 "contem": existing_data["contem"],
-                "message": "Vídeo já processado anteriormente",
+                "message": "Video ja processado anteriormente",
                 "from_cache": True
             }
 
         try:
             transcript = get_transcript_with_retry(video_id)
-            logger.info(f"Transcrição obtida com sucesso para {video_id}")
+            logger.info(f"Transcricao obtida com sucesso para {video_id}")
 
             formatted_segments = []
             for segment in transcript:
-                timestamp = format_timestamp(segment["start"])
-                segment_text = segment["text"].strip()
+                # Nova API v1.x retorna objetos com atributos
+                if hasattr(segment, 'start'):
+                    start_time = segment.start
+                    text = segment.text
+                else:
+                    start_time = segment["start"]
+                    text = segment["text"]
+                timestamp = format_timestamp(start_time)
+                segment_text = text.strip()
                 formatted_segments.append(f"[{timestamp}] {segment_text}")
 
             full_text = "\n\n".join(formatted_segments)
-            final_text = f"""TRANSCRIÇÃO DO VÍDEO
+            sep = "=" * 50
+            final_text = f"""TRANSCRICAO DO VIDEO
 ID: {video_id}
-{"=" * 50}
+{sep}
 
 {full_text}
 
-{"=" * 50}"""
+{sep}"""
 
             save_to_supabase(video_id, final_text, True)
-            logger.info("Transcrição salva com sucesso")
+            logger.info("Transcricao salva com sucesso")
 
             return {
                 "video_id": video_id,
@@ -212,14 +231,14 @@ ID: {video_id}
             }
 
         except Exception as e:
-            logger.error(f"Erro ao processar transcrição: {str(e)}")
+            logger.error(f"Erro ao processar transcricao: {str(e)}")
             save_to_supabase(video_id, "", False)
             return {
                 "video_id": video_id,
                 "transcription": "",
                 "contem": False,
                 "error": str(e),
-                "message": "Nenhuma transcrição disponível em nenhum idioma",
+                "message": "Nenhuma transcricao disponivel em nenhum idioma",
                 "from_cache": False
             }
 

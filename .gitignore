@@ -36,4 +36,4 @@ Servidor/**/htmlcov/
 
 # Browser MCP (only in Agente.browser branch)
 Servidor/Broser.mcp/
-Servidor/transcricao/
+# Servidor/transcricao/ - Removido para versionamento (2026-01-01)
