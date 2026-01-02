@@ -82,7 +82,7 @@ function hasValidGoogleSession(cookies) {
     );
     if (missing.length > 0) {
       console.log(`[SESSION] Missing or expired cookies: ${missing.join(', ')}`);
-    }
+    // }
   }
 
   return hasAll;
@@ -107,8 +107,8 @@ async function ensureSessionBeforeTask() {
       } else {
         console.log('[SESSION] No saved session or invalid - login required');
         return { restored: false, loginRequired: true };
-      }
-    }
+      // }
+    // }
 
     console.log('[SESSION] Valid Google session already exists');
     return { restored: false, alreadyValid: true };
@@ -138,11 +138,11 @@ function startSessionWatchdog() {
         const saved = await saveSessionToSupabase(PROJECT_ID, session);
         if (saved) {
           console.log(`[WATCHDOG] Auto-saved ${session.cookies.length} cookies`);
-        }
-      }
+        // }
+      // }
     } catch (error) {
       console.error('[WATCHDOG] Auto-save failed:', error.message);
-    }
+    // }
   }, 60000); // 60 segundos
 }
 
@@ -163,14 +163,14 @@ async function fetchSessionFromSupabase(projectId) {
         headers: {
           'apikey': SUPABASE_KEY,
           'Authorization': `Bearer ${SUPABASE_KEY}`
-        }
-      }
+        // }
+      // }
     );
 
     if (response.data && response.data[0] && response.data[0].browser_session_data) {
       console.log('[SESSION] Found session data in Supabase');
       return response.data[0].browser_session_data;
-    }
+    // }
   } catch (error) {
     console.error('[SESSION] Error fetching from Supabase:', error.message);
   }
@@ -199,8 +199,8 @@ async function saveSessionToSupabase(projectId, sessionData) {
           'apikey': SUPABASE_KEY,
           'Authorization': `Bearer ${SUPABASE_KEY}`,
           'Content-Type': 'application/json'
-        }
-      }
+        // }
+      // }
     );
     console.log('[SESSION] Saved to Supabase successfully via RPC');
     return response.data === true;
@@ -240,8 +240,8 @@ async function updateTaskInSupabase(taskId, result) {
           'Authorization': `Bearer ${SUPABASE_KEY}`,
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal'
-        }
-      }
+        // }
+      // }
     );
     console.log(`[TASK] Updated browser_tasks ${taskId}: ${result.success ? 'completed' : 'failed'}`);
     return true;
@@ -274,8 +274,8 @@ async function updateSettingsPostInSupabase(settingsPostId, success, resultText)
           'Authorization': `Bearer ${SUPABASE_KEY}`,
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal'
-        }
-      }
+        // }
+      // }
     );
     console.log(`[TASK] Updated Settings messages posts ${settingsPostId}: ${success ? 'posted' : 'failed'}`);
     return true;
@@ -307,8 +307,8 @@ async function updateMensagemInSupabase(mensagemId, success) {
           'Authorization': `Bearer ${SUPABASE_KEY}`,
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal'
-        }
-      }
+        // }
+      // }
     );
     console.log(`[TASK] Updated Mensagens ${mensagemId}: respondido=${success}`);
     return true;
@@ -332,7 +332,7 @@ async function getCurrentSession() {
     if (!targets || targets.length === 0) {
       console.log('[SESSION] No Chrome targets found');
       return null;
-    }
+    // }
 
     // Find active page
     const page = targets.find(t => t.type === 'page') || targets[0];
@@ -341,7 +341,7 @@ async function getCurrentSession() {
     if (!wsUrl) {
       console.log('[SESSION] No WebSocket URL available');
       return null;
-    }
+    // }
 
     // Use CDP to get cookies
     const WebSocket = require('ws');
@@ -374,7 +374,7 @@ async function getCurrentSession() {
           };
           ws.close();
           resolve(sessionData);
-        }
+        // }
       });
 
       ws.on('error', (err) => {
@@ -405,7 +405,7 @@ async function exportStorageStateFile() {
     if (!sessionData || !sessionData.cookies || sessionData.cookies.length === 0) {
       console.log('[STORAGE-STATE] No cookies to export');
       return false;
-    }
+    // }
 
     // Convert CDP cookies to Playwright storage-state format
     const playwrightCookies = sessionData.cookies.map(cookie => ({
@@ -458,7 +458,7 @@ async function restoreSessionToChrome(sessionData) {
     if (!targets || targets.length === 0) {
       console.log('[SESSION] No Chrome targets found for restore');
       return false;
-    }
+    // }
 
     const page = targets.find(t => t.type === 'page') || targets[0];
     const wsUrl = page.webSocketDebuggerUrl;
@@ -466,7 +466,7 @@ async function restoreSessionToChrome(sessionData) {
     if (!wsUrl) {
       console.log('[SESSION] No WebSocket URL available');
       return false;
-    }
+    // }
 
     const ws = new WebSocket(wsUrl);
     const responses = new Map();
@@ -486,7 +486,7 @@ async function restoreSessionToChrome(sessionData) {
             else resolve(response.result || {});
           } else {
             setTimeout(checkResponse, 50);
-          }
+          // }
         };
 
         ws.send(JSON.stringify({ id, method, params }));
@@ -518,7 +518,7 @@ async function restoreSessionToChrome(sessionData) {
             existingCookies = existing.cookies || [];
           } catch (e) {
             console.log('[SESSION] Could not check existing cookies:', e.message);
-          }
+          // }
 
           const existingSID = existingCookies.some(c => c.name === 'SID' && c.domain.includes('google'));
           const existingHSID = existingCookies.some(c => c.name === 'HSID' && c.domain.includes('google'));
@@ -532,7 +532,7 @@ async function restoreSessionToChrome(sessionData) {
             ws.close();
             resolve(true);
             return;
-          }
+          // }
 
           console.log('[SESSION] No valid session in Chrome, proceeding with Supabase restore...');
           console.log(`[SESSION] Will restore ${sessionData.cookies.length} cookies from Supabase`);
@@ -544,7 +544,7 @@ async function restoreSessionToChrome(sessionData) {
             await new Promise(r => setTimeout(r, 3000));
           } catch (e) {
             console.log('[SESSION] Navigation warning:', e.message);
-          }
+          // }
 
           // Step 2: Clear cookies (only if we confirmed no valid session exists)
           console.log('[SESSION] Step 2/5: Clearing cookies for fresh restore...');
@@ -552,7 +552,7 @@ async function restoreSessionToChrome(sessionData) {
             await sendCommand('Network.clearBrowserCookies');
           } catch (e) {
             console.log('[SESSION] Clear warning:', e.message);
-          }
+          // }
 
           // Step 3: Prepare cookies + DUPLICATE .google.com.br to .google.com
           console.log('[SESSION] Step 3/5: Preparing cookies...');
@@ -594,7 +594,7 @@ async function restoreSessionToChrome(sessionData) {
             if (!addedKeys.has(key)) {
               cookiesToSet.push(baseCookie);
               addedKeys.add(key);
-            }
+            // }
 
             // CRITICAL: Duplicate .google.com.br critical cookies to .google.com
             if (cookie.domain === '.google.com.br' && criticalCookies.includes(cookie.name)) {
@@ -603,8 +603,8 @@ async function restoreSessionToChrome(sessionData) {
                 cookiesToSet.push({ ...baseCookie, domain: '.google.com' });
                 addedKeys.add(googleKey);
                 console.log(`[SESSION] Duplicated ${cookie.name} to .google.com`);
-              }
-            }
+              // }
+            // }
           });
 
           if (skippedCount > 0) console.log(`[SESSION] Skipped ${skippedCount} invalid domain cookies`);
@@ -625,11 +625,11 @@ async function restoreSessionToChrome(sessionData) {
               } catch (e) {
                 fail++;
                 if (fail <= 5) console.log(`[SESSION] Failed: ${cookie.name}@${cookie.domain}`);
-              }
+              // }
               await new Promise(r => setTimeout(r, 10));
-            }
+            // }
             console.log(`[SESSION] Individual: ${ok} ok, ${fail} failed`);
-          }
+          // }
 
           // Step 5: Verify
           console.log('[SESSION] Step 5/5: Verifying...');
@@ -645,7 +645,7 @@ async function restoreSessionToChrome(sessionData) {
             ws.close();
             resolve(false);
             return;
-          }
+          // }
 
           const setCookies = verification.cookies || [];
           const hasSID = setCookies.some(c => c.name === 'SID' && c.domain.includes('google'));
@@ -659,13 +659,13 @@ async function restoreSessionToChrome(sessionData) {
             ws.close();
             resolve(false);
             return;
-          }
+          // }
 
           const lastUrl = sessionData.lastUrl;
           if (lastUrl && lastUrl !== 'about:blank' && !lastUrl.startsWith('chrome://')) {
             console.log(`[SESSION] Navigating to: ${lastUrl}`);
             try { await sendCommand('Page.navigate', { url: lastUrl }); } catch (e) { }
-          }
+          // }
 
           console.log('[SESSION] Session restored and VERIFIED successfully');
           ws.close();
@@ -675,7 +675,7 @@ async function restoreSessionToChrome(sessionData) {
           console.error('[SESSION] Restore error:', error.message);
           ws.close();
           resolve(false);
-        }
+        // }
       });
 
       ws.on('error', (err) => {
@@ -783,8 +783,8 @@ async function executeTaskWithAutoRecovery(task, options = {}) {
           continue; // Próxima tentativa
         } else {
           console.log('[AUTO-RECOVERY] Proxy indisponível após todas tentativas, executando mesmo assim...');
-        }
-      }
+        // }
+      // }
 
       // Executar task normalmente
       const result = await executeTask(task, options);
@@ -799,12 +799,12 @@ async function executeTaskWithAutoRecovery(task, options = {}) {
         console.log(`[AUTO-RECOVERY] Erro de proxy detectado no output, aguardando ${RETRY_DELAY_MS/1000}s...`);
         await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
         continue; // Próxima tentativa
-      }
+      // }
 
       // Sucesso ou erro não-relacionado a proxy
       if (attempt > 1) {
         console.log(`[AUTO-RECOVERY] Task completada após ${attempt} tentativa(s)`);
-      }
+      // }
 
       return result;
 
@@ -818,11 +818,11 @@ async function executeTaskWithAutoRecovery(task, options = {}) {
         console.log(`[AUTO-RECOVERY] Erro de proxy na execução, aguardando ${RETRY_DELAY_MS/1000}s...`);
         await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
         continue; // Próxima tentativa
-      }
+      // }
 
       // Re-throw se não for erro de proxy ou esgotamos tentativas
       throw error;
-    }
+    // }
   }
 
   // Não deveria chegar aqui, mas por segurança
@@ -842,10 +842,10 @@ async function waitForChromeCDP(maxWaitMs = 30000) {
       if (response.status === 200) {
         console.log('[CDP] Chrome is ready');
         return true;
-      }
+      // }
     } catch (e) {
       // Not ready yet
-    }
+    // }
     await new Promise(r => setTimeout(r, 1000));
   }
 
@@ -897,7 +897,7 @@ This uses CapMonster to solve CAPTCHAs automatically and is much cheaper than vi
 Now proceed with the task:
 `;
       enhancedTask = captchaInstruction + task;
-    }
+    // }
 
     // Add auto-consent instruction for cookies/popups (ALWAYS)
     const autoConsentInstruction = `
@@ -942,7 +942,7 @@ If a popup blocks interaction, dismiss it first then proceed.
     if (storageExported && fs.existsSync(STORAGE_STATE_FILE)) {
       mcpArgs.push("--storage-state", STORAGE_STATE_FILE);
       console.log(`[PLAYWRIGHT FIX v4.6] Added --storage-state: ${STORAGE_STATE_FILE}`);
-    }
+    // }
     
     console.log(`[PLAYWRIGHT] CDP connection + storage-state injection`);
 
@@ -953,9 +953,9 @@ If a popup blocks interaction, dismiss it first then proceed.
           args: mcpArgs,
           env: {
             DISPLAY: ":99"
-          }
-        }
-      }
+          // }
+        // }
+      // }
     });
 
     // CRITICAL FIX: Use --append-system-prompt for auth instructions
@@ -969,14 +969,16 @@ If a popup blocks interaction, dismiss it first then proceed.
     if (options.continueSession && claudeSessionId) {
       cmd += ` --resume ${claudeSessionId}`;
       console.log(`[CLAUDE SESSION] Resuming session: ${claudeSessionId}`);
-    }
+    // }
 
     // Add the prompt (auth instructions now in system prompt above)
     cmd += ` -p '${escapedTask}'`;
 
-    if (options.maxIterations) {
-      cmd += ` --max-turns ${options.maxIterations}`;
-    }
+    // REMOVED 2026-01-02: --max-turns causes error_max_turns when tasks need more iterations
+    // Claude should run until completion without artificial limits
+    // if (options.maxIterations) {
+    //   cmd += ` --max-turns ${options.maxIterations}`;
+    // }
 
     console.log(`[CMD] ${cmd.substring(0, 150)}...`);
 
@@ -994,16 +996,17 @@ If a popup blocks interaction, dismiss it first then proceed.
       stdio: ['ignore', 'pipe', 'pipe']
     });
 
-    // Task timeout - kill process after 10 minutes to prevent stuck tasks
-    const TASK_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+    // Task timeout - increased to 60 minutes to allow long-running tasks
+    // UPDATED 2026-01-02: Changed from 10 min to 60 min to prevent premature termination
+    const TASK_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes (1 hour)
     const taskTimeout = setTimeout(() => {
-      console.log('[TASK TIMEOUT] Killing Claude process after 10 minutes');
+      console.log('[TASK TIMEOUT] Killing Claude process after 60 minutes');
       claude.kill('SIGTERM');
       setTimeout(() => {
         if (!claude.killed) {
           console.log('[TASK TIMEOUT] Force killing with SIGKILL');
           claude.kill('SIGKILL');
-        }
+        // }
       }, 5000);
     }, TASK_TIMEOUT_MS);
 
@@ -1037,10 +1040,10 @@ If a popup blocks interaction, dismiss it first then proceed.
         const jsonMatch = stdout.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           result = JSON.parse(jsonMatch[0]);
-        }
+        // }
       } catch (e) {
         // Not JSON
-      }
+      // }
 
       // Extract and store Claude sessionId for --resume functionality
       // Claude Code outputs session_id in JSON output or we can extract from logs
@@ -1056,11 +1059,11 @@ If a popup blocks interaction, dismiss it first then proceed.
             claudeSessionId = sessionMatch[1];
             claudeSessionLastUsed = new Date();
             console.log(`[CLAUDE SESSION] Extracted session ID from output: ${claudeSessionId}`);
-          }
-        }
+          // }
+        // }
       } catch (e) {
         console.log(`[CLAUDE SESSION] Could not extract session ID: ${e.message}`);
-      }
+      // }
 
       const taskResult = {
         success: code === 0,
@@ -1080,13 +1083,13 @@ If a popup blocks interaction, dismiss it first then proceed.
 
       if (taskHistory.length > 50) {
         taskHistory = taskHistory.slice(-50);
-      }
+      // }
 
       if (code === 0) {
         resolve(taskResult);
       } else {
         reject(new Error(`Task failed with exit code ${code}: ${stderr || stdout}`));
-      }
+      // }
     });
 
     claude.on('error', (err) => {
@@ -1131,8 +1134,8 @@ async function stopVnc(saveSession = true) {
       const sessionData = await getCurrentSession();
       if (sessionData) {
         await saveSessionToSupabase(PROJECT_ID, sessionData);
-      }
-    }
+      // }
+    // }
 
     await execAsync('supervisorctl stop novnc').catch(() => {});
     await execAsync('supervisorctl stop x11vnc').catch(() => {});
@@ -1163,8 +1166,8 @@ app.get('/vnc/status', async (req, res) => {
           active: vncInactivityTimer !== null,
           timeoutMinutes: VNC_TIMEOUT_MS / 60000,
           lastActivity: vncLastActivity?.toISOString() || null
-        }
-      }
+        // }
+      // }
     });
   } catch (error) {
     res.json({
@@ -1213,10 +1216,10 @@ app.post('/vnc/start', async (req, res) => {
                 lastUrl: sessionData.lastUrl
               };
               console.log(`[VNC] Session restored: ${sessionInfo.cookieCount} cookies, URL: ${sessionInfo.lastUrl}`);
-            }
-          }
-        }
-      }
+            // }
+          // }
+        // }
+      // }
 
       res.json({
         success: true,
@@ -1230,7 +1233,7 @@ app.post('/vnc/start', async (req, res) => {
       });
     } else {
       throw new Error('VNC services failed to start');
-    }
+    // }
   } catch (error) {
     console.error('[VNC] Failed to start:', error.message);
     res.status(500).json({ success: false, error: error.message });
@@ -1247,7 +1250,7 @@ app.post('/vnc/stop', async (req, res) => {
     if (vncInactivityTimer) {
       clearTimeout(vncInactivityTimer);
       vncInactivityTimer = null;
-    }
+    // }
     vncLastActivity = null;
 
     // Save session to Supabase before stopping
@@ -1264,9 +1267,9 @@ app.post('/vnc/stop', async (req, res) => {
             lastUrl: sessionData.lastUrl
           };
           console.log(`[VNC] Session saved: ${sessionInfo.cookieCount} cookies, URL: ${sessionInfo.lastUrl}`);
-        }
-      }
-    }
+        // }
+      // }
+    // }
 
     await stopVnc(false); // Pass false since we already saved above
 
@@ -1292,7 +1295,7 @@ app.post('/vnc/heartbeat', (req, res) => {
       vnc: {
         lastActivity: vncLastActivity?.toISOString(),
         timeoutMinutes: VNC_TIMEOUT_MS / 60000
-      }
+      // }
     });
   } else {
     res.json({ success: false, message: 'VNC not running' });
@@ -1362,11 +1365,11 @@ app.get('/session', async (req, res) => {
           cookieCount: sessionData.cookies?.length || 0,
           lastUrl: sessionData.lastUrl,
           savedAt: sessionData.savedAt
-        }
+        // }
       });
     } else {
       res.json({ success: false, message: 'No session available' });
-    }
+    // }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -1379,12 +1382,12 @@ app.post('/session/save', async (req, res) => {
   try {
     if (PROJECT_ID === 'default') {
       return res.status(400).json({ success: false, error: 'PROJECT_ID not configured' });
-    }
+    // }
 
     const sessionData = await getCurrentSession();
     if (!sessionData) {
       return res.status(500).json({ success: false, error: 'Could not get current session' });
-    }
+    // }
 
     const saved = await saveSessionToSupabase(PROJECT_ID, sessionData);
     if (saved) {
@@ -1394,11 +1397,11 @@ app.post('/session/save', async (req, res) => {
         session: {
           cookieCount: sessionData.cookies?.length || 0,
           lastUrl: sessionData.lastUrl
-        }
+        // }
       });
     } else {
       res.status(500).json({ success: false, error: 'Failed to save to Supabase' });
-    }
+    // }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -1411,12 +1414,12 @@ app.post('/session/restore', async (req, res) => {
   try {
     if (PROJECT_ID === 'default') {
       return res.status(400).json({ success: false, error: 'PROJECT_ID not configured' });
-    }
+    // }
 
     const sessionData = await fetchSessionFromSupabase(PROJECT_ID);
     if (!sessionData) {
       return res.json({ success: false, message: 'No session found in Supabase' });
-    }
+    // }
 
     const restored = await restoreSessionToChrome(sessionData);
     if (restored) {
@@ -1427,11 +1430,11 @@ app.post('/session/restore', async (req, res) => {
         session: {
           cookieCount: sessionData.cookies?.length || 0,
           lastUrl: sessionData.lastUrl
-        }
+        // }
       });
     } else {
       res.status(500).json({ success: false, error: 'Failed to restore session to Chrome' });
-    }
+    // }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -1450,14 +1453,14 @@ app.post('/session/clear', async (req, res) => {
 
     if (!targets || targets.length === 0) {
       return res.status(500).json({ success: false, error: 'No Chrome targets found' });
-    }
+    // }
 
     const page = targets.find(t => t.type === 'page') || targets[0];
     const wsUrl = page.webSocketDebuggerUrl;
 
     if (!wsUrl) {
       return res.status(500).json({ success: false, error: 'No WebSocket URL' });
-    }
+    // }
 
     const ws = new WebSocket(wsUrl);
 
@@ -1507,7 +1510,7 @@ app.post('/browser/init', async (req, res) => {
       };
     } catch (e) {
       console.log('[BROWSER] CDP not available yet:', e.message);
-    }
+    // }
 
     // Check VNC status
     let vncRunning = false;
@@ -1517,7 +1520,7 @@ app.post('/browser/init', async (req, res) => {
                    stdout.includes('novnc') && stdout.includes('RUNNING');
     } catch (e) {
       // VNC check failed
-    }
+    // }
 
     console.log(`[BROWSER] Initialize - CDP: ${cdpReady}, VNC: ${vncRunning}`);
 
@@ -1535,7 +1538,7 @@ app.post('/browser/init', async (req, res) => {
       session: {
         restored: sessionRestored,
         projectId: PROJECT_ID
-      }
+      // }
     });
   } catch (error) {
     console.error('[BROWSER] Initialize error:', error.message);
@@ -1560,7 +1563,7 @@ app.get('/cdp/status', async (req, res) => {
         browser: versionResponse.data.Browser || 'unknown',
         userAgent: versionResponse.data['User-Agent'] || 'unknown',
         targets: targetsResponse.data.length
-      }
+      // }
     });
   } catch (error) {
     res.json({
@@ -1569,7 +1572,7 @@ app.get('/cdp/status', async (req, res) => {
         available: false,
         port: CDP_PORT,
         error: error.message
-      }
+      // }
     });
   }
 });
@@ -1612,7 +1615,7 @@ async function takeScreenshotCDP() {
 
     if (!page?.webSocketDebuggerUrl) {
       throw new Error('No WebSocket URL available');
-    }
+    // }
 
     const ws = new WebSocket(page.webSocketDebuggerUrl);
 
@@ -1630,7 +1633,7 @@ async function takeScreenshotCDP() {
         if (response.id === 1 && response.result?.data) {
           ws.close();
           resolve(response.result.data);
-        }
+        // }
       });
 
       ws.on('error', (err) => {
@@ -1662,7 +1665,7 @@ async function clickAtCoordinates(x, y) {
 
     if (!page?.webSocketDebuggerUrl) {
       throw new Error('No WebSocket URL available');
-    }
+    // }
 
     const ws = new WebSocket(page.webSocketDebuggerUrl);
 
@@ -1725,7 +1728,7 @@ async function solveGoogleImageCaptcha(screenshotBase64) {
       type: 'ComplexImageTask',
       class: 'recaptcha',
       imageUrls: [`data:image/png;base64,${screenshotBase64}`]
-    }
+    // }
   });
 
   if (createResponse.data.errorId !== 0) {
@@ -1746,12 +1749,12 @@ async function solveGoogleImageCaptcha(screenshotBase64) {
 
     if (resultResponse.data.errorId !== 0) {
       throw new Error(`CapMonster error: ${resultResponse.data.errorCode}`);
-    }
+    // }
 
     if (resultResponse.data.status === 'ready') {
       console.log(`[CAPTCHA] Solved after ${attempt + 1} attempts`);
       return resultResponse.data.solution;
-    }
+    // }
 
     console.log(`[CAPTCHA] Processing... (${attempt + 1}/60)`);
   }
@@ -1802,7 +1805,7 @@ app.post('/captcha/solve', async (req, res) => {
         error: 'Insufficient CapMonster balance',
         balance
       });
-    }
+    // }
 
     // Take screenshot
     console.log('[CAPTCHA] Taking screenshot...');
@@ -1820,7 +1823,7 @@ app.post('/captcha/solve', async (req, res) => {
         console.log(`[CAPTCHA] Clicking at (${coord.x}, ${coord.y})`);
         await clickAtCoordinates(coord.x, coord.y);
         await new Promise(r => setTimeout(r, 300)); // Small delay between clicks
-      }
+      // }
 
       // Click verify/submit button (usually at bottom of CAPTCHA)
       await new Promise(r => setTimeout(r, 500));
@@ -1847,7 +1850,7 @@ app.post('/captcha/solve', async (req, res) => {
         error: 'Unknown solution format',
         solution
       });
-    }
+    // }
   } catch (error) {
     console.error('[CAPTCHA] Solve failed:', error.message);
     res.status(500).json({
@@ -1942,7 +1945,7 @@ function broadcastSSE(eventData) {
       client.write('data: ' + data + '\n\n');
     } catch (e) {
       sseClients.delete(client);
-    }
+    // }
   });
 }
 
@@ -1963,7 +1966,7 @@ async function typeTextCDP(text) {
 
     if (!page?.webSocketDebuggerUrl) {
       throw new Error('No WebSocket URL available');
-    }
+    // }
 
     const ws = new WebSocket(page.webSocketDebuggerUrl);
 
@@ -1982,7 +1985,7 @@ async function typeTextCDP(text) {
             params: { type: 'keyUp', text: char }
           }));
           await new Promise(r => setTimeout(r, 50)); // Delay between keys
-        }
+        // }
 
         setTimeout(() => {
           ws.close();
@@ -2019,7 +2022,7 @@ async function navigateCDP(url) {
 
     if (!page?.webSocketDebuggerUrl) {
       throw new Error('No WebSocket URL available');
-    }
+    // }
 
     const ws = new WebSocket(page.webSocketDebuggerUrl);
 
@@ -2039,7 +2042,7 @@ async function navigateCDP(url) {
             ws.close();
             resolve(true);
           }, 2000); // Wait for navigation
-        }
+        // }
       });
 
       ws.on('error', (err) => {
@@ -2071,7 +2074,7 @@ async function pressEnterCDP() {
 
     if (!page?.webSocketDebuggerUrl) {
       throw new Error('No WebSocket URL available');
-    }
+    // }
 
     const ws = new WebSocket(page.webSocketDebuggerUrl);
 
@@ -2224,7 +2227,7 @@ app.get('/health', async (req, res) => {
     session: {
       restored: sessionRestored,
       userDataDir: CHROME_USER_DATA_DIR
-    }
+    // }
   });
 });
 
@@ -2276,7 +2279,7 @@ app.post('/containers', (req, res) => {
       projectId: req.body.projectId || PROJECT_ID,
       status: 'running',
       mcpUrl: `http://localhost:${PORT}`
-    }
+    // }
   });
 });
 
@@ -2316,7 +2319,7 @@ app.post('/agent/task', async (req, res) => {
     if (postTaskSession?.cookies?.length > 5) {
       await saveSessionToSupabase(PROJECT_ID, postTaskSession);
       console.log('[TASK] Session saved after task completion');
-    }
+    // }
 
     currentTask = null;
 
@@ -2331,8 +2334,8 @@ app.post('/agent/task', async (req, res) => {
         claudeResponse = result.output;
       } else {
         claudeResponse = JSON.stringify(result.output);
-      }
-    }
+      // }
+    // }
 
     // Determine success based on response content
     const responseText = claudeResponse || '';
@@ -2348,7 +2351,7 @@ app.post('/agent/task', async (req, res) => {
         result: claudeResponse,
         duration: result.duration
       });
-    }
+    // }
 
     // Update Settings messages posts and Mensagens if metadata was provided
     if (metadata) {
@@ -2356,12 +2359,12 @@ app.post('/agent/task', async (req, res) => {
 
       if (settings_post_id) {
         await updateSettingsPostInSupabase(settings_post_id, isSuccess, claudeResponse);
-      }
+      // }
 
       if (mensagem_id && isSuccess) {
         await updateMensagemInSupabase(mensagem_id, true);
-      }
-    }
+      // }
+    // }
 
     res.json({
       success: isSuccess,
@@ -2383,12 +2386,12 @@ app.post('/agent/task', async (req, res) => {
         result: null,
         error: error.message
       });
-    }
+    // }
 
     // Update Settings messages posts with failure if metadata was provided
     if (metadata && metadata.settings_post_id) {
       await updateSettingsPostInSupabase(metadata.settings_post_id, false, error.message);
-    }
+    // }
 
     res.status(500).json({ success: false, error: error.message });
   }
@@ -2455,7 +2458,7 @@ app.post('/agent/task-fast', async (req, res) => {
     if (postTaskSession?.cookies?.length > 5) {
       await saveSessionToSupabase(PROJECT_ID, postTaskSession);
       console.log('[TASK-FAST] Session saved after task completion');
-    }
+    // }
 
     currentTask = null;
 
@@ -2470,8 +2473,8 @@ app.post('/agent/task-fast', async (req, res) => {
         claudeResponse = result.output;
       } else {
         claudeResponse = JSON.stringify(result.output);
-      }
-    }
+      // }
+    // }
 
     res.json({
       success: true,
