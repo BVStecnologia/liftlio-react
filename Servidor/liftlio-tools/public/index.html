@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liftlio Tools - Translator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      padding: 30px 0;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: #94a3b8;
+      font-size: 1rem;
+    }
+
+    .translator-box {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+    }
+
+    .input-section {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 768px) {
+      .input-section {
+        grid-template-columns: 1fr;
+      }
+      .swap-btn {
+        transform: rotate(90deg);
+        margin: 10px auto;
+      }
+    }
+
+    .text-area-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .text-area-wrapper label {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    textarea {
+      width: 100%;
+      height: 200px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      color: #fff;
+      font-size: 1rem;
+      resize: vertical;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #8b5cf6;
+    }
+
+    textarea::placeholder {
+      color: #64748b;
+    }
+
+    .swap-btn {
+      background: rgba(139, 92, 246, 0.2);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 32px;
+    }
+
+    .swap-btn:hover {
+      background: rgba(139, 92, 246, 0.4);
+      transform: scale(1.1);
+    }
+
+    .swap-btn svg {
+      width: 24px;
+      height: 24px;
+      fill: #a78bfa;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+    .status {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: #64748b;
+      min-height: 20px;
+    }
+
+    .status.loading {
+      color: #8b5cf6;
+    }
+
+    .status.success {
+      color: #22c55e;
+    }
+
+    .status.error {
+      color: #ef4444;
+    }
+
+    .shortcuts {
+      margin-top: 40px;
+      text-align: center;
+    }
+
+    .shortcuts h3 {
+      font-size: 0.9rem;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+
+    .shortcut-list {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .shortcut {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #94a3b8;
+      font-size: 0.85rem;
+    }
+
+    kbd {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(139, 92, 246, 0.3);
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: #a78bfa;
+      cursor: pointer;
+      font-size: 0.75rem;
+      opacity: 0;
+      transition: all 0.2s;
+    }
+
+    .text-area-wrapper:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .copy-btn:hover {
+      background: rgba(139, 92, 246, 0.5);
+    }
+
+    .text-area-container {
+      position: relative;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(139, 92, 246, 0.3);
+      border-top-color: #8b5cf6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #475569;
+      font-size: 0.8rem;
+    }
+
+    footer a {
+      color: #8b5cf6;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Liftlio Tools</h1>
+      <p>AI-powered translator using Claude Opus</p>
+    </header>
+
+    <div class="translator-box">
+      <div class="input-section">
+        <div class="text-area-wrapper">
+          <label>Input (Auto-detect language)</label>
+          <div class="text-area-container">
+            <textarea id="input" placeholder="Type or paste text to translate..."></textarea>
+          </div>
+        </div>
+
+        <button class="swap-btn" onclick="swapTexts()" title="Swap texts">
+          <svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>
+        </button>
+
+        <div class="text-area-wrapper">
+          <label>Translation</label>
+          <div class="text-area-container">
+            <textarea id="output" placeholder="Translation will appear here..." readonly></textarea>
+            <button class="copy-btn" onclick="copyOutput()">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="translateBtn" onclick="doTranslate()">
+          Translate
+        </button>
+        <button class="btn btn-secondary" onclick="clearAll()">
+          Clear
+        </button>
+      </div>
+
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="shortcuts">
+      <h3>Keyboard Shortcuts</h3>
+      <div class="shortcut-list">
+        <div class="shortcut"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> Translate</div>
+        <div class="shortcut"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd> Copy result</div>
+        <div class="shortcut"><kbd>Esc</kbd> Clear all</div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Powered by <a href="https://liftlio.com" target="_blank">Liftlio</a> & Claude Opus</p>
+    </footer>
+  </div>
+
+  <script>
+    const inputEl = document.getElementById('input');
+    const outputEl = document.getElementById('output');
+    const statusEl = document.getElementById('status');
+    const translateBtn = document.getElementById('translateBtn');
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Ctrl+Enter - Translate
+      if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        doTranslate();
+      }
+      // Ctrl+Shift+C - Copy output
+      if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        copyOutput();
+      }
+      // Escape - Clear
+      if (e.key === 'Escape') {
+        clearAll();
+      }
+    });
+
+    async function doTranslate() {
+      const text = inputEl.value.trim();
+      if (!text) {
+        setStatus('Please enter text to translate', 'error');
+        return;
+      }
+
+      setStatus('<span class="loading-spinner"></span>Translating with Claude Opus...', 'loading');
+      translateBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          outputEl.value = data.translation;
+          const costInfo = data.cost ? ` | Cost: $${data.cost.toFixed(4)}` : '';
+          setStatus(`Translated in ${(data.duration / 1000).toFixed(1)}s${costInfo}`, 'success');
+        } else {
+          setStatus(`Error: ${data.error}`, 'error');
+        }
+      } catch (error) {
+        setStatus(`Error: ${error.message}`, 'error');
+      } finally {
+        translateBtn.disabled = false;
+      }
+    }
+
+    function swapTexts() {
+      const temp = inputEl.value;
+      inputEl.value = outputEl.value;
+      outputEl.value = temp;
+      inputEl.focus();
+    }
+
+    function clearAll() {
+      inputEl.value = '';
+      outputEl.value = '';
+      setStatus('');
+      inputEl.focus();
+    }
+
+    function copyOutput() {
+      const text = outputEl.value;
+      if (!text) {
+        setStatus('Nothing to copy', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(text).then(() => {
+        setStatus('Copied to clipboard!', 'success');
+        setTimeout(() => setStatus(''), 2000);
+      });
+    }
+
+    function setStatus(message, type = '') {
+      statusEl.innerHTML = message;
+      statusEl.className = 'status ' + type;
+    }
+
+    // Focus input on load
+    inputEl.focus();
+  </script>
+</body>
+</html>
