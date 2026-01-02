@@ -32,6 +32,27 @@ Build authentic presence in AI/automation communities before promotional content
 
 ---
 
+## 2026-01-02 - Twitter/X Engagement Round
+
+### Twitter/X
+| Post Author | Topic | Reply Theme | Action |
+|-------------|-------|-------------|--------|
+| @AndrewBolis | Agentic AI vs Traditional LLM | Hybrid approach: LLM for intent + deterministic code for execution. Memory/feedback loops, state persistence | Like + Reply |
+| @mrjoyenxr0 | n8n + Claude integration | Error handling patterns: try/catch nodes, structured JSON output, fallback logic for agent resilience | Like + Reply |
+| @SHIVANIGERA5 | AI skills for 2026 | LLM evaluation as underrated skill. Offline eval sets, synthetic data for iteration, "vibes-testing" vs production-ready | Like + Reply |
+
+**Reply Themes:**
+- Agent architecture (LLM + deterministic code hybrid)
+- Error handling and resilience in AI workflows
+- Evaluation methodology (offline evals, synthetic data)
+
+**Metrics:**
+- Likes given: 3
+- Technical replies: 3
+- Self-promotion: 0 (engagement-first strategy)
+
+---
+
 ## Engagement Guidelines
 
 ### DO:

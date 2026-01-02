@@ -3,6 +3,7 @@ import styled, { keyframes, useTheme } from 'styled-components';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import BlogAdmin from '../components/admin/BlogAdmin';
 
 // ==========================================
 // VNC PROXY HELPERS (avoid Mixed Content on HTTPS)
@@ -198,7 +199,7 @@ interface ActivityItem {
   context?: string;
 }
 
-type ViewType = 'overview' | 'users' | 'projects' | 'subscriptions' | 'payments' | 'containers' | 'tasks' | 'logins' | 'health' | 'settings' | 'user-detail' | 'project-detail' | 'waitlist' | 'analytics' | 'simulations';
+type ViewType = 'overview' | 'users' | 'projects' | 'subscriptions' | 'payments' | 'containers' | 'tasks' | 'logins' | 'health' | 'settings' | 'user-detail' | 'project-detail' | 'waitlist' | 'analytics' | 'simulations' | 'blog';
 
 interface SimulationEntry {
   id: number;
@@ -1863,6 +1864,15 @@ const Icons = {
       <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
     </svg>
   ),
+  FileText: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+  ),
 };
 
 // ==========================================
@@ -2561,12 +2571,11 @@ const AdminDashboard: React.FC = () => {
     }
   }, [user, stats.activeContainers]);
 
-  // Run health checks on mount and every 60 seconds
+  // Run health checks only on mount (no polling - user refreshes manually)
   useEffect(() => {
     setTimeout(checkHealth, 1500); // Delay to show loading spinner
-    const interval = setInterval(checkHealth, 60000);
-    return () => clearInterval(interval);
-  }, [checkHealth]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty array = runs only once on mount
 
   // Restore selected user/project from URL params
   useEffect(() => {
@@ -2944,6 +2953,14 @@ const AdminDashboard: React.FC = () => {
         <NavItem $active={currentView === 'settings'} onClick={() => setCurrentView('settings')}>
           <Icons.Settings />
           Settings
+        </NavItem>
+      </NavSection>
+
+      <NavSection>
+        <NavLabel>Content</NavLabel>
+        <NavItem $active={currentView === 'blog'} onClick={() => setCurrentView('blog')}>
+          <Icons.FileText />
+          Blog
         </NavItem>
       </NavSection>
     </Sidebar>
@@ -6482,6 +6499,7 @@ const AdminDashboard: React.FC = () => {
           </Content>
         )}
         {currentView === 'settings' && renderSettings()}
+        {currentView === 'blog' && <BlogAdmin view="posts" />}
       </Main>
       {renderEditModal()}
       {renderLoginModal()}
