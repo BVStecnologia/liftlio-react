@@ -1181,6 +1181,15 @@ const DetailProjectedViews = styled.div`
   }
 `;
 
+// Helper function to check if date is today
+const isToday = (dateString: string): boolean => {
+  const date = new Date(dateString);
+  const now = new Date();
+  return date.getDate() === now.getDate() &&
+         date.getMonth() === now.getMonth() &&
+         date.getFullYear() === now.getFullYear();
+};
+
 // Function to format relative time
 const formatTimeAgo = (dateString: string): string => {
   const date = new Date(dateString);
@@ -1188,11 +1197,14 @@ const formatTimeAgo = (dateString: string): string => {
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
+  // Check if it is today
+  const today = isToday(dateString);
+
+  if (diffMins < 1) return today ? 'Today' : 'Just now';
+  if (diffMins < 60) return today ? `Today, ${diffMins}m ago` : `${diffMins}m ago`;
 
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return today ? `Today, ${diffHours}h ago` : `${diffHours}h ago`;
 
   const diffDays = Math.floor(diffHours / 24);
   return `${diffDays}d ago`;
