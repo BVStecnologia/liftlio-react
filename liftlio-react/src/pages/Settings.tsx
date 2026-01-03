@@ -1867,7 +1867,8 @@ const Settings: React.FC<{}> = () => {
     "País": '',
     user: '',
     "User id": '',
-    "Youtube Active": false
+    "Youtube Active": false,
+    daily_presence_active: false
   });
   
   // Parse keywords from string to array
@@ -1935,7 +1936,8 @@ const Settings: React.FC<{}> = () => {
             "País": data["País"] || '',
             user: data.user || '',
             "User id": data["User id"] || '',
-            "Youtube Active": data["Youtube Active"] || false
+            "Youtube Active": data["Youtube Active"] || false,
+            daily_presence_active: data.daily_presence_active || false
           };
           
           // Use the mapped data
@@ -2011,6 +2013,7 @@ const Settings: React.FC<{}> = () => {
     if (isFieldChanged(projectData.Keywords, originalData.Keywords)) return true;
     if (isFieldChanged(projectData["País"], originalData["País"])) return true;
     if (isFieldChanged(projectData["Youtube Active"], originalData["Youtube Active"])) return true;
+    if (isFieldChanged(projectData.daily_presence_active, originalData.daily_presence_active)) return true;
     
     // No changes detected
     return false;
@@ -2051,6 +2054,7 @@ const Settings: React.FC<{}> = () => {
     newChangedFields["Keywords"] = isFieldChanged(updatedData.Keywords, originalData.Keywords);
     newChangedFields["País"] = isFieldChanged(updatedData["País"], originalData["País"]);
     newChangedFields["Youtube Active"] = isFieldChanged(updatedData["Youtube Active"], originalData["Youtube Active"]);
+    newChangedFields["daily_presence_active"] = isFieldChanged(updatedData.daily_presence_active, originalData.daily_presence_active);
     
     console.log('Field changed:', field, 'New value:', value, 'Changed fields:', newChangedFields);
     
@@ -2100,7 +2104,8 @@ const Settings: React.FC<{}> = () => {
         "description service": projectData.description_service,
         "Keywords": projectData.Keywords,
         "País": projectData["País"],
-        "Youtube Active": projectData["Youtube Active"]
+        "Youtube Active": projectData["Youtube Active"],
+        daily_presence_active: projectData.daily_presence_active
       };
         
       console.log('Data to update:', updateData);
@@ -2143,7 +2148,8 @@ const Settings: React.FC<{}> = () => {
           "País": updatedData["País"] || '',
           user: updatedData.user || '',
           "User id": updatedData["User id"] || '',
-          "Youtube Active": updatedData["Youtube Active"] || false
+          "Youtube Active": updatedData["Youtube Active"] || false,
+          daily_presence_active: updatedData.daily_presence_active || false
         };
           
         // Store the updated data as our new reference point
@@ -2187,7 +2193,8 @@ const Settings: React.FC<{}> = () => {
       // Update local state
       const updatedData = {
         ...projectData,
-        "Youtube Active": false
+        "Youtube Active": false,
+    daily_presence_active: false
       };
       setProjectData(updatedData);
       setOriginalData(updatedData);
@@ -2483,6 +2490,42 @@ const Settings: React.FC<{}> = () => {
                   <div>{t('settings.selectProject')}</div>
                 )}
               </FormSection>
+
+              {/* Daily Presence Section */}
+              {projectData["Youtube Active"] && (
+                <FormSection>
+                  <SectionTitle>
+                    {renderIcon(FaYoutube)}
+                    Daily YouTube Presence
+                  </SectionTitle>
+
+                  <FormGroup>
+                    <ToggleContainer>
+                      <ToggleSwitch>
+                        <input
+                          type="checkbox"
+                          checked={projectData.daily_presence_active}
+                          onChange={(e) => {
+                            setProjectData(prev => ({
+                              ...prev,
+                              daily_presence_active: e.target.checked
+                            }));
+                          }}
+                        />
+                        <span />
+                      </ToggleSwitch>
+                      <ToggleLabel>
+                        Enable Daily Presence
+                      </ToggleLabel>
+                    </ToggleContainer>
+                    <div style={{ fontSize: '13px', color: theme.colors.text.secondary, marginTop: '8px', lineHeight: '1.5' }}>
+                      When enabled, Liftlio will automatically find and engage with relevant YouTube videos once per day.
+                      The AI will search for videos related to your product context, watch them, and leave helpful comments
+                      to build your brand presence and authority. No product mentions - just genuine value.
+                    </div>
+                  </FormGroup>
+                </FormSection>
+              )}
 
               {/* Project Status Zone */}
               <DangerZone style={{

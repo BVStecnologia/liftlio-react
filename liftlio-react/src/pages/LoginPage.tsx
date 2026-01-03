@@ -237,7 +237,7 @@ const LoadingContainer = styled.div`
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: white;
+  background-color: ${props => props.theme.colors.bg.primary};
 `
 
 const spin = keyframes`

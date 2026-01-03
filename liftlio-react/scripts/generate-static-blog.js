@@ -15,7 +15,7 @@ const SUPABASE_URL = 'https://suqjifkhmekcdflwowiw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1cWppZmtobWVrY2RmbHdvd2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY1MDkzNDQsImV4cCI6MjA0MjA4NTM0NH0.ajtUy21ib_z5O6jWaAYwZ78_D5Om_cWra5zFq-0X-3I';
 
 // Output directory
-const OUTPUT_DIR = path.join(__dirname, '..', 'build', 'blog');
+const OUTPUT_DIR = path.join(__dirname, '..', 'public', 'blog');
 
 /**
  * Make HTTP request to Supabase

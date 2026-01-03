@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import BlogAdmin from '../components/admin/BlogAdmin';
+import { parseUTCTimestamp, isToday, formatDate as formatDateUtil } from '../utils/dateUtils';
 
 // ==========================================
 // VNC PROXY HELPERS (avoid Mixed Content on HTTPS)
@@ -1986,6 +1987,8 @@ const AdminDashboard: React.FC = () => {
     simulationsCount: 0,
     simulationsToday: 0,
     activeContainers: 0,
+    topCountries: [] as {country: string; visits: number}[],
+    topCities: [] as {city: string; country: string; visits: number}[],
   });
 
 
@@ -2138,15 +2141,16 @@ const AdminDashboard: React.FC = () => {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         const { data: analyticsRawData } = await supabase
-          .from('analytics')
-          .select('timestamp, event_type')
-          .gte('timestamp', thirtyDaysAgo.toISOString())
-          .order('timestamp', { ascending: true });
+          .from('admin_analytics')
+          .select('created_at, event_type')
+          .eq('event_type', 'pageview')
+          .gte('created_at', thirtyDaysAgo.toISOString())
+          .order('created_at', { ascending: true });
 
         // Group analytics data by day
         const analyticsGrouped: Record<string, number> = {};
         analyticsRawData?.forEach(item => {
-          const date = new Date(item.timestamp).toISOString().split('T')[0];
+          const date = new Date(item.created_at).toISOString().split('T')[0];
           analyticsGrouped[date] = (analyticsGrouped[date] || 0) + 1;
         });
         const analyticsTimeline = Object.entries(analyticsGrouped).map(([date, views]) => ({
@@ -2171,6 +2175,8 @@ const AdminDashboard: React.FC = () => {
 
         // Fetch visit metrics from admin_analytics
         const { data: visitsData } = await supabase.rpc('get_admin_visit_stats');
+// Fetch location stats (countries and cities)
+        const { data: locationData } = await supabase.rpc('get_admin_location_stats');
 
         // Fetch URL analysis data from landing page
         const { data: simulationsData } = await supabase
@@ -2301,6 +2307,8 @@ const AdminDashboard: React.FC = () => {
           simulationsCount: simulationsData?.length || 0,
           simulationsToday,
           activeContainers: runningContainers,
+          topCountries: locationData?.[0]?.top_countries || [],
+          topCities: locationData?.[0]?.top_cities || [],
         });
 
       } catch (error) {
@@ -2603,6 +2611,20 @@ const AdminDashboard: React.FC = () => {
     };
   }, [searchQuery, users, projects]);
 
+  // Count tasks completed today using timezone-aware comparison
+  const todayTasksCount = useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return tasks.filter(t => {
+      // Only count completed tasks, use completed_at for date
+      if (t.status !== 'completed' || !t.completed_at) return false;
+      const taskDate = parseUTCTimestamp(t.completed_at);
+      if (!taskDate) return false;
+      const taskDay = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+      return taskDay.getTime() === today.getTime();
+    }).length;
+  }, [tasks]);
+
   // Format date
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return 'N/A';
@@ -2610,18 +2632,39 @@ const AdminDashboard: React.FC = () => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  // Format relative time
+  // Format relative time - uses parseUTCTimestamp for correct timezone handling
   const formatRelativeTime = (dateStr: string | null) => {
     if (!dateStr) return 'N/A';
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const date = parseUTCTimestamp(dateStr);
+    if (!date) return 'N/A';
 
-    if (diffDays === 0) return 'Today';
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dateDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diffDays = Math.floor((today.getTime() - dateDay.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      // Today - show time
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `Today ${hours}:${minutes}`;
+    }
     if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 30) return `${diffDays}d ago`;
-    return formatDate(dateStr);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    // Show date for older entries
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${day}/${month}`;
+  };
+
+  // Format task date - uses completed_at for completed tasks, created_at for pending
+  const formatTaskDate = (task: BrowserTask) => {
+    // For completed tasks, show when they finished (posted)
+    if (task.status === 'completed' && task.completed_at) {
+      return formatRelativeTime(task.completed_at);
+    }
+    // For other statuses, show created_at
+    return formatRelativeTime(task.created_at);
   };
 
   // Handle navigation
@@ -2927,7 +2970,7 @@ const AdminDashboard: React.FC = () => {
         <NavItem $active={currentView === 'tasks'} onClick={() => setCurrentView('tasks')}>
           <Icons.Zap />
           Tasks
-          <Badge>{tasks.length}</Badge>
+          <Badge title={`${todayTasksCount} today / ${tasksTotal} total`}>{todayTasksCount}</Badge>
         </NavItem>
         <NavItem $active={currentView === 'logins'} onClick={() => setCurrentView('logins')}>
           <Icons.Key />
@@ -5516,7 +5559,7 @@ const AdminDashboard: React.FC = () => {
                               ▶
                             </span>
                           </td>
-                          <td style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>{formatRelativeTime(t.created_at)}</td>
+                          <td style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>{formatTaskDate(t)}</td>
                           <td>#{t.project_id}</td>
                           <td>
                             <span style={{
@@ -5831,50 +5874,127 @@ const AdminDashboard: React.FC = () => {
                 <div className="change">Last 30 days</div>
               </KPICard>
               <KPICard>
-                <div className="label">Simulations</div>
-                <div className="value purple">{stats.simulationsCount}</div>
-                <div className="change">{stats.simulationsToday} today</div>
+                <div className="label">Simulations Today</div>
+                <div className="value purple">{stats.simulationsToday}</div>
+                <div className="change">{stats.simulationsCount} total</div>
               </KPICard>
             </KPIGrid>
 
             <Card>
               <CardHeader>
                 <h3>Daily Visits (Last 30 Days)</h3>
+                {analyticsData.length > 0 && (
+                  <span style={{ fontSize: '14px', color: '#9ca3af', fontWeight: 400 }}>
+                    Total: {analyticsData.reduce((sum, d) => sum + d.views, 0)} pageviews
+                  </span>
+                )}
               </CardHeader>
-              <div style={{ padding: '20px', overflowX: 'auto' }}>
-                {analyticsData.length > 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '200px', minWidth: `${analyticsData.length * 24}px` }}>
-                    {analyticsData.map((day, i) => {
-                      const maxViews = Math.max(...analyticsData.map(d => d.views));
-                      const height = maxViews > 0 ? (day.views / maxViews) * 100 : 0;
-                      return (
-                        <div
-                          key={i}
-                          title={`${day.timestamp}: ${day.views} views`}
-                          style={{
-                            flex: '1',
-                            minWidth: '20px',
-                            height: `${Math.max(height, 5)}%`,
-                            background: 'linear-gradient(180deg, #8b5cf6 0%, #7c3aed 100%)',
-                            borderRadius: '4px 4px 0 0',
-                            cursor: 'pointer',
-                            transition: 'opacity 0.2s'
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-                          onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-                        />
-                      );
-                    })}
-                  </div>
-                ) : (
+              <div style={{ padding: '20px 20px 12px 20px' }}>
+                {analyticsData.length > 0 ? (() => {
+                  const maxViews = Math.max(...analyticsData.map(d => d.views), 1);
+                  const chartWidth = 800;
+                  const chartHeight = 200;
+                  const padding = { top: 20, right: 20, bottom: 40, left: 50 };
+                  const innerWidth = chartWidth - padding.left - padding.right;
+                  const innerHeight = chartHeight - padding.top - padding.bottom;
+                  const xStep = innerWidth / (analyticsData.length - 1 || 1);
+
+                  const points = analyticsData.map((d, i) => ({
+                    x: padding.left + (i * xStep),
+                    y: padding.top + innerHeight - ((d.views / maxViews) * innerHeight),
+                    views: d.views,
+                    date: d.timestamp
+                  }));
+
+                  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+                  const areaPath = `${linePath} L ${points[points.length - 1].x} ${padding.top + innerHeight} L ${padding.left} ${padding.top + innerHeight} Z`;
+
+                  const formatDate = (dateStr: string) => {
+                    const d = new Date(dateStr);
+                    return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+                  };
+
+                  return (
+                    <div style={{ overflowX: 'auto' }}>
+                      <svg width={chartWidth} height={chartHeight} style={{ display: 'block', minWidth: chartWidth }}>
+                        <defs>
+                          <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.4" />
+                            <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.05" />
+                          </linearGradient>
+                        </defs>
+
+                        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+                          <g key={i}>
+                            <line
+                              x1={padding.left}
+                              y1={padding.top + innerHeight * (1 - ratio)}
+                              x2={chartWidth - padding.right}
+                              y2={padding.top + innerHeight * (1 - ratio)}
+                              stroke="#374151"
+                              strokeDasharray="4,4"
+                              strokeWidth="1"
+                            />
+                            <text
+                              x={padding.left - 10}
+                              y={padding.top + innerHeight * (1 - ratio) + 4}
+                              fill="#6b7280"
+                              fontSize="11"
+                              textAnchor="end"
+                            >
+                              {Math.round(maxViews * ratio)}
+                            </text>
+                          </g>
+                        ))}
+
+                        <path d={areaPath} fill="url(#areaGradient)" />
+                        <path d={linePath} fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+                        {points.map((p, i) => (
+                          <g key={i}>
+                            <circle
+                              cx={p.x}
+                              cy={p.y}
+                              r="4"
+                              fill="#1f2937"
+                              stroke="#8b5cf6"
+                              strokeWidth="2"
+                              style={{ cursor: 'pointer' }}
+                            >
+                              <title>{`${formatDate(p.date)}: ${p.views} views`}</title>
+                            </circle>
+                            {p.views > 0 && analyticsData.length <= 15 && (
+                              <text
+                                x={p.x}
+                                y={p.y - 10}
+                                fill="#9ca3af"
+                                fontSize="10"
+                                textAnchor="middle"
+                              >
+                                {p.views}
+                              </text>
+                            )}
+                          </g>
+                        ))}
+
+                        {points.filter((_, i) => i % Math.ceil(analyticsData.length / 7) === 0 || i === analyticsData.length - 1).map((p, i) => (
+                          <text
+                            key={i}
+                            x={p.x}
+                            y={chartHeight - 8}
+                            fill="#6b7280"
+                            fontSize="11"
+                            textAnchor="middle"
+                          >
+                            {formatDate(p.date)}
+                          </text>
+                        ))}
+                      </svg>
+                    </div>
+                  );
+                })() : (
                   <div style={{ textAlign: 'center', color: '#9ca3af', padding: '40px' }}>
                     No analytics data available for the last 30 days
-                  </div>
-                )}
-                {analyticsData.length > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '11px', color: '#9ca3af' }}>
-                    <span>{analyticsData[0]?.timestamp}</span>
-                    <span>{analyticsData[analyticsData.length - 1]?.timestamp}</span>
                   </div>
                 )}
               </div>
@@ -5925,6 +6045,47 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </Card>
             </Grid>
+<Grid>
+              <Card>
+                <CardHeader>
+                  <h3>Top Countries</h3>
+                </CardHeader>
+                <div style={{ padding: '20px' }}>
+                  {stats.topCountries && stats.topCountries.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {stats.topCountries.map((item: {country: string; visits: number}, i: number) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ color: '#e5e7eb' }}>{item.country}</span>
+                          <span style={{ color: '#8b5cf6', fontWeight: 600 }}>{item.visits}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ color: '#9ca3af', textAlign: 'center' }}>No data yet</div>
+                  )}
+                </div>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <h3>Top Cities</h3>
+                </CardHeader>
+                <div style={{ padding: '20px' }}>
+                  {stats.topCities && stats.topCities.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {stats.topCities.map((item: {city: string; country: string; visits: number}, i: number) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ color: '#e5e7eb' }}>{item.city}, {item.country}</span>
+                          <span style={{ color: '#8b5cf6', fontWeight: 600 }}>{item.visits}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ color: '#9ca3af', textAlign: 'center' }}>No data yet</div>
+                  )}
+                </div>
+              </Card>
+            </Grid>
           </Content>
         )}
         {currentView === 'simulations' && (
@@ -5937,7 +6098,7 @@ const AdminDashboard: React.FC = () => {
             <KPIGrid>
               <KPICard>
                 <div className="label">Total Simulations</div>
-                <div className="value purple">{stats.simulationsCount}</div>
+                <div className="value purple">{stats.simulationsToday}</div>
                 <div className="change">All time</div>
               </KPICard>
               <KPICard>

@@ -15,24 +15,30 @@ import { useDashboardTheme } from '../styles/dashboardTheme';
 import { formatDateLocale, isToday, parseUTCTimestamp } from '../utils/dateUtils';
 // Recharts imports removidos pois os gráficos foram removidos
 
-// Função utilitária para formatar datas (usando parseUTCTimestamp para timezone correto)
-// Mostra "Today, HH:MM" para postagens de hoje
+// Função utilitária para formatar datas
+// Converte UTC para hora local do usuário
+// Tanto scheduled quanto posted são armazenados em UTC no banco
 const formatDate = (dateString: string | null, _isComment: boolean = false) => {
   if (!dateString) return '';
+
+  // Converter timestamp UTC para hora local
+  const d = parseUTCTimestamp(dateString);
+  if (!d) return '';
+
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+
+  // Verificar se é hoje na hora local
   if (isToday(dateString)) {
-    const d = parseUTCTimestamp(dateString);
-    if (!d) return '';
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
     return `Today, ${hours}:${minutes}`;
   }
-  return formatDateLocale(dateString, {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }, 'pt-BR');
+
+  // Para outras datas, formatar como DD/MM/YYYY HH:MM
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
 };
 // Função utilitária para decodificar HTML entities (&#39; → ', &quot; → ", etc)
 // E converter tags HTML (<br> → quebra de linha)

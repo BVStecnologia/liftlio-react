@@ -577,15 +577,18 @@ const Icons = {
 // ==========================================
 
 interface BlogAdminProps {
-  view: 'posts' | 'categories' | 'comments' | 'analytics';
+  view?: 'posts' | 'categories' | 'comments' | 'analytics';
 }
 
 // ==========================================
 // MAIN COMPONENT
 // ==========================================
 
-const BlogAdmin: React.FC<BlogAdminProps> = ({ view }) => {
+const BlogAdmin: React.FC<BlogAdminProps> = ({ view: initialView = 'posts' }) => {
   const theme = useTheme();
+
+  // Internal view state
+  const [currentView, setCurrentView] = useState(initialView);
 
   // State
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -1151,16 +1154,65 @@ const BlogAdmin: React.FC<BlogAdminProps> = ({ view }) => {
   }
 
   // Show editor inline (replacing posts list) when open
-  if (isEditorOpen && view === 'posts') {
+  if (isEditorOpen && currentView === 'posts') {
     return renderEditor();
   }
 
   return (
     <>
-      {view === 'posts' && renderPosts()}
-      {view === 'categories' && renderCategories()}
-      {view === 'comments' && renderComments()}
-      {view === 'analytics' && renderAnalytics()}
+      {/* Tab Navigation */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid ' + theme.colors.border, paddingBottom: '12px' }}>
+        <button
+          onClick={() => setCurrentView('posts')}
+          style={{
+            padding: '8px 16px',
+            background: currentView === 'posts' ? theme.colors.primary : 'transparent',
+            color: currentView === 'posts' ? '#fff' : theme.colors.text.secondary,
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontWeight: 500,
+            transition: 'all 0.2s'
+          }}
+        >
+          Posts ({posts.length})
+        </button>
+        <button
+          onClick={() => setCurrentView('comments')}
+          style={{
+            padding: '8px 16px',
+            background: currentView === 'comments' ? theme.colors.primary : 'transparent',
+            color: currentView === 'comments' ? '#fff' : theme.colors.text.secondary,
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontWeight: 500,
+            transition: 'all 0.2s'
+          }}
+        >
+          Comments ({comments.length})
+        </button>
+        <button
+          onClick={() => setCurrentView('analytics')}
+          style={{
+            padding: '8px 16px',
+            background: currentView === 'analytics' ? theme.colors.primary : 'transparent',
+            color: currentView === 'analytics' ? '#fff' : theme.colors.text.secondary,
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontWeight: 500,
+            transition: 'all 0.2s'
+          }}
+        >
+          Analytics
+        </button>
+      </div>
+
+      {currentView === 'posts' && renderPosts()}
+      {currentView === 'categories' && renderCategories()}
+      {currentView === 'comments' && renderComments()}
+      {currentView === 'analytics' && renderAnalytics()}
     </>
   );
 };

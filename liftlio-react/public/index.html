@@ -248,13 +248,15 @@
 }
 
 /* Typography - Body styles controlled by GlobalStyle.ts */
-html, body {
+html, body, #root {
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Background and color controlled by GlobalStyle.ts (styled-components) for theme support */
+  /* Default dark background - prevents white flash before React loads */
+  background-color: #0f0a19;
+  color: #ffffff;
 }
 
 /* Hero Section - Above the fold */

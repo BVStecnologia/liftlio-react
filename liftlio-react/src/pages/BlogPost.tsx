@@ -822,21 +822,22 @@ const BlogPost: React.FC = () => {
           });
           if (related) setRelatedPosts(related);
 
-          // Fetch comments
-          const { data: commentsData } = await supabase
-            .from('blog_comments')
-            .select(`
-              *,
-              user:user_id (
-                email,
-                raw_user_meta_data->full_name,
-                raw_user_meta_data->avatar_url
-              )
-            `)
-            .eq('post_id', postData.id)
-            .is('parent_id', null)
-            .order('created_at', { ascending: false });
-          if (commentsData) setComments(commentsData);
+          // Fetch comments using RPC
+          const { data: commentsData } = await supabase.rpc('get_blog_comments', {
+            p_post_id: postData.id
+          });
+          if (commentsData) {
+            // Transform RPC response to match expected format
+            const formattedComments = commentsData.map((c: any) => ({
+              ...c,
+              user: {
+                email: c.user_email,
+                full_name: c.user_full_name,
+                avatar_url: c.user_avatar_url
+              }
+            }));
+            setComments(formattedComments);
+          }
 
           // Check if user liked
           if (user) {

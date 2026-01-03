@@ -617,8 +617,8 @@ const ProtectedLayout = ({
   }, [user, loading, onboardingReady, currentProject?.id, currentProject?.status, lastCheckedProjectId]); // ✅ currentProject?.id e status adicionado COM proteção anti-loop + debounce
 
   // VERIFICAÇÃO DE ROTAS PÚBLICAS - Calcular antes de usar
-  const publicRoutes = ['/trends', '/liftlio-analytics', '/about', '/privacy', '/terms', '/security'];
-  const isPublicRoute = publicRoutes.includes(location.pathname);
+  const publicRoutes = ['/trends', '/liftlio-analytics', '/about', '/privacy', '/terms', '/security', '/blog'];
+  const isPublicRoute = publicRoutes.includes(location.pathname) || location.pathname.startsWith('/blog');
 
   // Redirecionar para login se não autenticado (deve estar ANTES de qualquer return)
   useEffect(() => {

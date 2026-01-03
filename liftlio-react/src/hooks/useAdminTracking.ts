@@ -121,12 +121,12 @@ export const useAdminTracking = () => {
         p_device_type: getDeviceType(),
         p_browser: getBrowser(),
         p_country: geo.country,
+        p_city: geo.city,
         p_time_on_page: extraData?.timeOnPage as number || null,
         p_scroll_depth: extraData?.scrollDepth as number || null,
         p_click_target: extraData?.clickTarget as string || null,
         p_custom_data: {
           ...(extraData?.customData as Record<string, unknown> || {}),
-          city: geo.city,
           country_code: geo.countryCode
         }
       });
