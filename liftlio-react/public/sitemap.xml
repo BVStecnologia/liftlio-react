@@ -48,10 +48,17 @@
     <priority>0.6</priority>
   </url>
   
-  <!-- Blog -->
+  <!-- Blog Principal -->
+  <url>
+    <loc>https://liftlio.com/blog</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Blog WordPress (legacy) -->
   <url>
     <loc>https://blog.liftlio.com/</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>

@@ -6,6 +6,34 @@
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
+  <!-- NEW: Listicle - 7 Mistakes (High Traffic) -->
+  <url>
+    <loc>https://liftlio.com/blog/7-youtube-comment-marketing-mistakes</loc>
+    <lastmod>2026-01-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <!-- NEW: Comparison - Best Tools (High Conversion) -->
+  <url>
+    <loc>https://liftlio.com/blog/best-youtube-comment-marketing-tools-2026</loc>
+    <lastmod>2026-01-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <!-- NEW: Listicle - 11 Signs -->
+  <url>
+    <loc>https://liftlio.com/blog/signs-business-needs-smart-youtube-engagement</loc>
+    <lastmod>2026-01-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <!-- NEW: Objection Handling - Is it Spam? -->
+  <url>
+    <loc>https://liftlio.com/blog/is-youtube-comment-marketing-spam</loc>
+    <lastmod>2026-01-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
   <url>
     <loc>https://liftlio.com/blog/first-comment-marketing-youtube-strategy</loc>
     <lastmod>2026-01-02</lastmod>
@@ -13,7 +41,7 @@
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://liftlio.com/blog/ai-marketing-youtube-comments-ignored</loc>
+    <loc>https://liftlio.com/blog/youtube-comments-ignored-smart-brands-respond</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
@@ -43,7 +71,7 @@
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://liftlio.com/blog/pics-framework-ai-leads-youtube-comments</loc>
+    <loc>https://liftlio.com/blog/pics-framework-identify-leads-youtube-comments</loc>
     <lastmod>2025-12-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -55,7 +83,7 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://liftlio.com/blog?category=ai-insights</loc>
+    <loc>https://liftlio.com/blog?category=marketing-strategy</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -66,6 +94,11 @@
   </url>
   <url>
     <loc>https://liftlio.com/blog?category=marketing</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://liftlio.com/blog?category=youtube-tips</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
