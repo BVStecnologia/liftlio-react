@@ -4,6 +4,9 @@ COPY package*.json ./
 RUN npm install --legacy-peer-deps
 COPY . .
 
+# Cache bust: 2026-01-03 v3 - sitemap fix
+RUN echo "Build timestamp: $(date)"
+
 # Declare build arguments from fly.toml
 ARG REACT_APP_SUPABASE_URL
 ARG REACT_APP_SUPABASE_ANON_KEY
@@ -22,8 +25,8 @@ ENV REACT_APP_GOOGLE_CLIENT_SECRET=$REACT_APP_GOOGLE_CLIENT_SECRET
 
 RUN npm run build
 
-# Generate static blog pages for SEO (fetches from Supabase)
-RUN node scripts/generate-static-blog.js
+# NOTE: Static blog HTML generation removed - React SPA handles /blog routes dynamically
+# The generate-static-blog.js script was creating files that overrode React routing
 
 FROM nginx:alpine
 COPY --from=build /app/build /usr/share/nginx/html
