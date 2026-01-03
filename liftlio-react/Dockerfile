@@ -22,6 +22,9 @@ ENV REACT_APP_GOOGLE_CLIENT_SECRET=$REACT_APP_GOOGLE_CLIENT_SECRET
 
 RUN npm run build
 
+# Generate static blog pages for SEO (fetches from Supabase)
+RUN node scripts/generate-static-blog.js
+
 FROM nginx:alpine
 COPY --from=build /app/build /usr/share/nginx/html
 COPY --from=build /app/build/landing-page.html /usr/share/nginx/html/landing-page.html
