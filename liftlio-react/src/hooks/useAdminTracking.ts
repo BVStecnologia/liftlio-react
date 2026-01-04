@@ -149,7 +149,8 @@ export const useAdminTracking = () => {
         p_user_email: user?.email || null,
         p_device_type: getDeviceType(),
         p_browser: getBrowser(),
-        p_country: geo.country
+        p_country: geo.country,
+        p_city: geo.city
       });
     } catch (error) {
       console.debug('[AdminTracking] Presence error:', error);

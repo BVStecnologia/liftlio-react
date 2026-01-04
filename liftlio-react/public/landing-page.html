@@ -650,7 +650,10 @@ document.documentElement.setAttribute('data-lang','en');
                     <a href="#pricing" class="nav-link">
                         Pricing
                     </a>
-                    
+                    <a href="/blog" class="nav-link" onclick="navigateToPage('/blog'); return false;">
+                        Blog
+                    </a>
+
                     <div class="nav-buttons">
                         <button class="btn-icon" onclick="toggleTheme()" aria-label="Toggle theme">
                             <svg class="theme-icon-light" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -698,6 +701,9 @@ document.documentElement.setAttribute('data-lang','en');
             </a>
             <a href="#pricing" class="mobile-nav-link" onclick="toggleMobileMenu(false)">
                 Pricing
+            </a>
+            <a href="/blog" class="mobile-nav-link" onclick="toggleMobileMenu(false); navigateToPage('/blog'); return false;">
+                Blog
             </a>
         </nav>
         
@@ -1447,6 +1453,9 @@ document.documentElement.setAttribute('data-lang','en');
                         </a></li>
                         <li><a href="/contact" onclick="navigateToPage('/contact'); return false;">
                             Contact
+                        </a></li>
+                        <li><a href="/blog" onclick="navigateToPage('/blog'); return false;">
+                            Blog
                         </a></li>
                     </ul>
                 </div>

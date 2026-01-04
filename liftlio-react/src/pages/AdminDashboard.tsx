@@ -1992,6 +1992,25 @@ const AdminDashboard: React.FC = () => {
   });
 
 
+  
+  // Fetch online visitors every 5 seconds
+  useEffect(() => {
+    const fetchOnlineVisitors = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_online_visitors');
+        if (!error && data) {
+          setOnlineVisitors(data);
+        }
+      } catch (err) {
+        console.debug('[AdminDashboard] Online visitors fetch error:', err);
+      }
+    };
+
+    fetchOnlineVisitors();
+    const interval = setInterval(fetchOnlineVisitors, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Health check state
   const [healthStatus, setHealthStatus] = useState<{
     supabaseDb: 'ok' | 'error' | 'checking';
@@ -2051,6 +2070,20 @@ const AdminDashboard: React.FC = () => {
   const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
   const [errorLogsExpanded, setErrorLogsExpanded] = useState(false);
   const [errorLogsCopied, setErrorLogsCopied] = useState(false);
+  // Online visitors state (real-time)
+  interface OnlineVisitor {
+    visitor_id: string;
+    current_page: string;
+    country: string;
+    city: string;
+    device_type: string;
+    browser: string;
+    user_email: string | null;
+    seconds_ago: number;
+  }
+  const [onlineVisitors, setOnlineVisitors] = useState<OnlineVisitor[]>([]);
+
+
 
   // Fetch data
   useEffect(() => {
@@ -5879,6 +5912,46 @@ const AdminDashboard: React.FC = () => {
                 <div className="change">{stats.simulationsCount} total</div>
               </KPICard>
             </KPIGrid>
+
+
+            {/* Online Now - Real-time */}
+            <Card style={{ marginBottom: '24px' }}>
+              <CardHeader>
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', animation: 'pulse 2s infinite' }}></span>
+                  Online Now
+                </h3>
+                <span style={{ fontSize: '14px', color: '#9ca3af' }}>{onlineVisitors.length} visitor{onlineVisitors.length !== 1 ? 's' : ''}</span>
+              </CardHeader>
+              <div style={{ padding: '16px 20px' }}>
+                {onlineVisitors.length === 0 ? (
+                  <div style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center', padding: '20px' }}>
+                    No active visitors right now
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {onlineVisitors.slice(0, 10).map((v, i) => (
+                      <div key={v.visitor_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#1f2937', borderRadius: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: v.seconds_ago < 10 ? '#22c55e' : '#eab308' }}></span>
+                          <div>
+                            <div style={{ color: '#e5e7eb', fontSize: '13px', fontWeight: 500 }}>
+                              {v.current_page === '/' ? 'Home' : v.current_page}
+                            </div>
+                            <div style={{ color: '#6b7280', fontSize: '11px' }}>
+                              {v.country}{v.city && v.city !== 'Unknown' ? `, ${v.city}` : ''} • {v.device_type} • {v.browser}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ color: '#9ca3af', fontSize: '11px' }}>
+                          {v.seconds_ago < 5 ? 'now' : `${v.seconds_ago}s ago`}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Card>
 
             <Card>
               <CardHeader>

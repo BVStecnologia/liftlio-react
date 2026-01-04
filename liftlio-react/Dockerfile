@@ -4,7 +4,10 @@ COPY package*.json ./
 RUN npm install --legacy-peer-deps
 COPY . .
 
-# Cache bust: 2026-01-03 v3 - sitemap fix
+# Cache bust: 2026-01-04 v4 - online visitors
+
+# Increase Node memory for build
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN echo "Build timestamp: $(date)"
 
 # Declare build arguments from fly.toml

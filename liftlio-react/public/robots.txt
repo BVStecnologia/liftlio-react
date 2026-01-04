@@ -10,7 +10,6 @@ Disallow: /*?ref=
 # Sitemap locations
 Sitemap: https://liftlio.com/sitemap.xml
 Sitemap: https://liftlio.com/blog-sitemap.xml
-Sitemap: https://blog.liftlio.com/sitemap.xml
 
 # Crawl-delay for respectful crawling
 Crawl-delay: 1
