@@ -895,11 +895,32 @@ async function processPendingTasks() {
  * Usa docker stop (nao remove) - preserva volumes
  */
 async function autoStopInactiveContainers() {
-  const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutos
+  const IDLE_TIMEOUT_MS = 200 * 60 * 1000; // 200 minutos (suporta tasks longas)
   const now = Date.now();
 
   for (const [projectId, session] of sessions.entries()) {
     if (session.status !== 'running') continue;
+
+    // Verificar se há tasks ativas antes de parar
+    if (supabase) {
+      try {
+        const { data: activeTasks } = await supabase
+          .from('browser_tasks')
+          .select('id')
+          .eq('project_id', parseInt(projectId))
+          .in('status', ['pending', 'running'])
+          .is('deleted_at', null)
+          .limit(1);
+
+        if (activeTasks && activeTasks.length > 0) {
+          log(`[CRON3] Container ${projectId} tem tasks ativas, não parando`);
+          session.lastActivity = new Date().toISOString(); // Reset timer
+          continue;
+        }
+      } catch (checkErr) {
+        log(`[CRON3] Erro ao verificar tasks ativas: ${checkErr.message}`);
+      }
+    }
 
     const lastActivity = new Date(session.lastActivity).getTime();
     const idleTime = now - lastActivity;

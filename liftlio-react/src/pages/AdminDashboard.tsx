@@ -268,6 +268,7 @@ interface BrowserPlatform {
   logout_prompt: string | null;
   comment_prompt: string | null;
   reply_prompt: string | null;
+  presence_prompt: string | null;
   icon_name: string | null;
   brand_color: string | null;
   supports_google_sso: boolean;
@@ -3510,6 +3511,36 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  // Retry failed task - reset to pending
+  const retryTask = async (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row expansion
+
+    const { error } = await supabase
+      .from('browser_tasks')
+      .update({
+        status: 'pending',
+        started_at: null,
+        completed_at: null,
+        error_message: null,
+        retry_count: 0,
+        next_retry_at: null
+      })
+      .eq('id', taskId);
+
+    if (!error) {
+      // Update local state
+      setTasks(prev => prev.map(t =>
+        t.id === taskId ? {
+          ...t,
+          status: 'pending',
+          started_at: null,
+          completed_at: null,
+          error_message: null
+        } : t
+      ));
+    }
+  };
+
   // Handle waitlist status update
   const updateWaitlistStatus = async (id: number, status: 'approved' | 'rejected') => {
     const { error } = await supabase
@@ -3980,7 +4011,8 @@ const AdminDashboard: React.FC = () => {
           twofa_phone_prompt: prompt.twofa_phone_prompt,
           twofa_code_prompt: prompt.twofa_code_prompt,
           comment_prompt: prompt.comment_prompt,
-          reply_prompt: prompt.reply_prompt
+          reply_prompt: prompt.reply_prompt,
+          presence_prompt: prompt.presence_prompt
         })
         .eq('id', prompt.id);
 
@@ -4154,7 +4186,8 @@ const AdminDashboard: React.FC = () => {
                         {prompt.logout_prompt ? '✓ Logout' : '○ Logout'} ·{' '}
                         {prompt.twofa_phone_prompt ? '✓ 2FA' : '○ 2FA'} ·{' '}
                         {prompt.comment_prompt ? '✓ Comment' : '○ Comment'} ·{' '}
-                        {prompt.reply_prompt ? '✓ Reply' : '○ Reply'}
+                        {prompt.reply_prompt ? '✓ Reply' : '○ Reply'} ·{' '}
+                        {prompt.presence_prompt ? '✓ Presence' : '○ Presence'}
                       </div>
                     </div>
                   </div>
@@ -4232,6 +4265,16 @@ const AdminDashboard: React.FC = () => {
                         value={prompt.reply_prompt || ''}
                         onChange={(e) => updatePrompt(prompt.id, 'reply_prompt', e.target.value)}
                         placeholder="Instructions for replying to comments on YouTube (watch video, like comment, then reply)..."
+                        rows={8}
+                      />
+                    </PromptField>
+
+                    <PromptField>
+                      <label>Presence Prompt (YouTube - Daily Engagement)</label>
+                      <textarea
+                        value={prompt.presence_prompt || ''}
+                        onChange={(e) => updatePrompt(prompt.id, 'presence_prompt', e.target.value)}
+                        placeholder="Instructions for daily YouTube presence building (find video, watch, engage, comment)..."
                         rows={8}
                       />
                     </PromptField>
@@ -5630,7 +5673,20 @@ const AdminDashboard: React.FC = () => {
                               <span style={{ color: theme.colors.text.muted }}>-</span>
                             )}
                           </td>
-                          <td>
+                          <td style={{ display: 'flex', gap: '4px' }}>
+                            {(t.status === 'failed' || t.status === 'error') && !t.deleted_at && (
+                              <Button
+                                $variant="ghost"
+                                onClick={(e) => retryTask(t.id, e)}
+                                style={{ padding: '4px 8px', color: '#22c55e' }}
+                                title="Retry task (reset to pending)"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <polyline points="23 4 23 10 17 10"/>
+                                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                                </svg>
+                              </Button>
+                            )}
                             <Button
                               $variant="ghost"
                               onClick={(e) => deleteTask(t.id, e)}
