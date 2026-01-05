@@ -1,6 +1,34 @@
 # Liftlio Organic Growth Playbook
 
-**B2B SaaS Customer Acquisition Through Text-Based Community Engagement**
+**Customer Acquisition for SMBs & Ecommerce Through Community Engagement**
+
+---
+
+## ICP Atualizado (Janeiro 2026)
+
+**Target Principal:** Donos de ecommerce, lojas online, pequenos negocios
+**Por que:** Mercado 60x maior, nao vao construir solucao propria, precisam desesperadamente de leads
+
+Ver pesquisa completa: `/RESEARCH/ICP_ANALYSIS_2026-01.md`
+
+---
+
+## O Que o Liftlio Faz (Clarificacao)
+
+**NAO precisa ter canal YouTube proprio!**
+
+Liftlio faz **Comment Marketing em videos de TERCEIROS**:
+1. Monitora canais-chave do nicho do cliente
+2. Alerta quando video novo e postado para ser primeiro a comentar
+3. Encontra comentarios relevantes onde pode responder com valor
+4. Gera leads mencionando produto/servico nas respostas
+5. Captura trafego de videos populares
+
+**Exemplos para SMBs:**
+- Loja de fitness → comenta em videos de personal trainers
+- Pet shop online → comenta em videos de veterinarios
+- Loja de games → comenta em videos de streamers
+- Restaurante → comenta em videos de food bloggers
 
 ---
 
@@ -412,4 +440,32 @@ NAO precisa em:
 
 ---
 
-*Last Updated: 2026-01-05*
+## Novos Canais para SMB/Ecommerce (Adicionar)
+
+| Canal | Potencial | Comunidades |
+|-------|-----------|-------------|
+| Facebook Groups | ⭐⭐⭐⭐⭐ | Shopify Brasil, Ecommerce Brasil, Empreendedores Digitais |
+| Reddit | ⭐⭐⭐⭐ | r/ecommerce, r/shopify, r/smallbusiness |
+| TikTok | ⭐⭐⭐⭐⭐ | @empreendedores, videos sobre vendas online |
+| YouTube | ⭐⭐⭐⭐ | Videos "como vender online", "ecommerce 2026" |
+| Comunidades BR | ⭐⭐⭐⭐⭐ | Nuvemshop, VTEX, Tray |
+
+---
+
+## Novo Messaging para SMBs
+
+**Antigo (SaaS-focused):**
+> "Reduza seu CAC de $150 para $2 com comment marketing"
+
+**Novo (SMB-focused):**
+> "Seus clientes estao nos comentarios de YouTubers. Encontre-os primeiro."
+
+**Alternativas:**
+- "Transforme comentarios do YouTube em clientes"
+- "O influencer postou. Voce ja comentou?"
+- "Leads gratis de videos do YouTube"
+- "Seja o primeiro a responder quando o influencer postar"
+
+---
+
+*Last Updated: 2026-01-05 (Atualizado com ICP SMB)*
