@@ -207,6 +207,61 @@ Fonte: [First Page Sage](https://firstpagesage.com/reports/b2b-saas-customer-acq
 
 ---
 
+## ADICIONAL: Agencias de Marketing (ICP Secundario)
+
+### Por Que Agencias Sao Excelente ICP
+
+| Fator | Score | Razao |
+|-------|-------|-------|
+| Precisam de escala | ⭐⭐⭐⭐⭐ | Gerenciam 10-50+ clientes |
+| Pagam bem | ⭐⭐⭐⭐⭐ | $99-799/mes por ferramentas |
+| Dor REAL | ⭐⭐⭐⭐⭐ | Comment management e caro/lento |
+| Decisao rapida | ⭐⭐⭐⭐ | Dono/gerente decide |
+| Churn baixo | ⭐⭐⭐⭐ | Se funciona, ficam anos |
+| Vao construir? | ⭐⭐⭐⭐⭐ | NAO (nao sao devs) |
+
+### Custo Atual de Comment Management
+
+| Metodo | Custo Mensal | Clientes Atendidos |
+|--------|--------------|-------------------|
+| VA Offshore | $500-1,500 | 3-5 clientes |
+| VA US-Based | $1,200-2,500 | 3-5 clientes |
+| Agencia Full-Service | $2,000-10,000 | Por cliente |
+| Freelancer dedicado | $500-2,000 | Por cliente |
+
+Fonte: [Sprout Social](https://sproutsocial.com/insights/social-media-management-cost/)
+
+### Proposta de Valor para Agencias
+
+**Problema:**
+> "Community management affects time and resource allocation. Minimal engagement is less labor-intensive than daily interactions."
+
+**Solucao Liftlio:**
+> "Gerencie comentarios YouTube de 50 clientes pelo preco de 1 VA"
+
+| Solucao | Custo/mes | Clientes |
+|---------|-----------|----------|
+| 1 VA Offshore | $1,000 | 3-5 |
+| 1 VA US | $2,500 | 3-5 |
+| **Liftlio Scale** | **$199** | **Ilimitado** |
+
+### Messaging para Agencias
+
+- "50 clientes, 1 ferramenta, zero VAs"
+- "Comment marketing que escala com sua agencia"
+- "Pare de pagar VA para fazer o que IA faz melhor"
+
+### Canais para Alcançar Agencias
+
+| Canal | Potencial |
+|-------|-----------|
+| Facebook: Marketing Agency Groups | ⭐⭐⭐⭐⭐ |
+| LinkedIn: Agency owners | ⭐⭐⭐⭐⭐ |
+| Reddit: r/marketing, r/agency | ⭐⭐⭐⭐ |
+| Comunidades: DigitalMarketer, GrowthHackers | ⭐⭐⭐⭐ |
+
+---
+
 ## Fontes Completas
 
 1. [SNS Insider - Monitoring Tools Market](https://www.snsinsider.com/reports/monitoring-tools-market-8530)
