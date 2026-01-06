@@ -33,10 +33,15 @@ app.post('/api/translate', async (req, res) => {
       return res.status(400).json({ error: 'Text is required' });
     }
 
-    // Build translation prompt
+    // Build translation prompt - ultra strict to avoid AI commentary
     const prompt = targetLang
-      ? `Translate the following text to ${targetLang}. Return ONLY the translation, nothing else:\n\n${text}`
-      : `Detect the language of this text. If it's in English, translate to Portuguese (Brazil). If it's in Portuguese, translate to English. Return ONLY the translation, nothing else:\n\n${text}`;
+      ? `<system>You are a translation machine. Output ONLY the translated text. NEVER include introductions, explanations, comments, quotation marks around results, or phrases like "Here is the translation". Just the raw translated text.</system>
+
+Translate to ${targetLang}:
+${text}`
+      : `<system>You are a translation machine. Output ONLY the translated text. NEVER include introductions, explanations, comments, quotation marks around results, or phrases like "Here is the translation". Just the raw translated text. Detect language automatically: English->Portuguese(BR), Portuguese->English.</system>
+
+${text}`;
 
     console.log(`[TRANSLATE] Request: ${text.substring(0, 50)}... -> ${targetLang || 'auto'}`);
 

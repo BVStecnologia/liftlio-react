@@ -415,10 +415,37 @@
         setStatus('Nothing to copy', 'error');
         return;
       }
-      navigator.clipboard.writeText(text).then(() => {
+
+      // Try modern clipboard API first (requires HTTPS or localhost)
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+          setStatus('Copied to clipboard!', 'success');
+          setTimeout(() => setStatus(''), 2000);
+        }).catch(() => {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      textarea.style.top = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        document.execCommand('copy');
         setStatus('Copied to clipboard!', 'success');
         setTimeout(() => setStatus(''), 2000);
-      });
+      } catch (err) {
+        setStatus('Failed to copy - select and Ctrl+C manually', 'error');
+      }
+      document.body.removeChild(textarea);
     }
 
     function setStatus(message, type = '') {
