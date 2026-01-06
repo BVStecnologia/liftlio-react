@@ -19,6 +19,18 @@
 - **Server**: Cloudways (wordpress-1319296-5689133.cloudwaysapps.com)
 - **Acesso**: Via MCP WordPress tools
 
+### Liftlio Tools (Tradutor AI)
+- **Código-fonte**: `/Servidor/liftlio-tools/`
+- **Servidor Remoto**: 173.249.22.2 (VPS Linux)
+- **Container**: Docker `liftlio-tools`
+- **Porta**: 3500
+- **URL**: http://173.249.22.2:3500
+- **Função**: Tradutor AI usando Claude Opus via Supabase Edge Function
+- **Features**:
+  - Auto-detecta idioma (EN↔PT-BR)
+  - Copy com fallback para non-HTTPS
+  - Atalhos: Ctrl+Enter (traduzir), Ctrl+Shift+C (copiar), Esc (limpar)
+
 ## Deployment
 
 ### Frontend (Fly.io)
@@ -68,6 +80,23 @@ ssh root@173.249.22.2
 cd /opt/liftlio-analytics
 git pull
 docker-compose down && docker-compose up -d --build
+```
+
+## 🔧 Liftlio Tools (Tradutor)
+
+### Deploy de Mudanças
+```bash
+# 1. Copiar arquivos atualizados
+scp -i "C:/c/Users/User/.ssh/contabo_key_new" Servidor/liftlio-tools/server.js root@173.249.22.2:/opt/liftlio-tools/
+scp -i "C:/c/Users/User/.ssh/contabo_key_new" Servidor/liftlio-tools/public/index.html root@173.249.22.2:/opt/liftlio-tools/public/
+
+# 2. Rebuild container
+ssh -i "C:/c/Users/User/.ssh/contabo_key_new" root@173.249.22.2 "cd /opt/liftlio-tools && docker-compose down && docker-compose up -d --build"
+```
+
+### Verificar Status
+```bash
+ssh -i "C:/c/Users/User/.ssh/contabo_key_new" root@173.249.22.2 "docker ps --filter name=liftlio-tools"
 ```
 
 ## Variáveis de Ambiente
