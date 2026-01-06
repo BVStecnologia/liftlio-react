@@ -90,6 +90,10 @@ export interface BlogPost {
   reading_time_minutes: number;
   word_count: number;
 
+  // Daily tracking (for "+X today" display)
+  view_count_start_of_day?: number;
+  like_count_start_of_day?: number;
+
   // Features
   featured: boolean;
   allow_comments: boolean;
@@ -213,6 +217,8 @@ export interface BlogAdminStats {
   total_subscribers: number;
   posts_this_month: number;
   views_this_month: number;
+  views_today: number;
+  likes_today: number;
 }
 
 // =============================================

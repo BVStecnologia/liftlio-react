@@ -268,7 +268,6 @@ interface BrowserPlatform {
   logout_prompt: string | null;
   comment_prompt: string | null;
   reply_prompt: string | null;
-  presence_prompt: string | null;
   icon_name: string | null;
   brand_color: string | null;
   supports_google_sso: boolean;
@@ -2091,79 +2090,95 @@ const AdminDashboard: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Fetch ALL users from auth.users via RPC function
+        const { data: usersData } = await supabase
+          .rpc('get_all_users') as { data: { id: string; email: string; created_at: string; last_sign_in_at: string | null; avatar_url: string | null; full_name: string | null }[] | null };
+
+        // Fetch projects (table name is "Projeto" in Portuguese)
+        const { data: projectsData } = await supabase
+          .from('Projeto')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        // Fetch subscriptions
+        const { data: subsData } = await supabase
+          .from('subscriptions')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        // Fetch payments
+        const { data: paymentsData } = await supabase
+          .from('payments')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        // Fetch projects with browser containers (container info is in Projeto table)
+        const { data: containersData } = await supabase
+          .from('Projeto')
+          .select('id, "Project name", browser_container_id, browser_mcp_url, browser_vnc_url, browser_session_status')
+          .not('browser_container_id', 'is', null);
+
+        // Fetch browser tasks - initial load with pagination
+        const { data: tasksData, count: tasksCount } = await supabase
+          .from('browser_tasks')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .range(0, 19); // First 20 items
+
+        // Fetch unique project IDs for filter dropdown
+        const { data: projectIdsData } = await supabase
+          .from('browser_tasks')
+          .select('project_id')
+          .order('project_id');
+        const uniqueProjects = Array.from(new Set((projectIdsData || []).map(p => p.project_id)));
+
+        // Fetch unique users (created_by) for filter dropdown
+        const { data: taskUsersData } = await supabase
+          .from('browser_tasks')
+          .select('created_by')
+          .not('created_by', 'is', null);
+        const uniqueUsers = Array.from(new Set((taskUsersData || []).map(u => u.created_by).filter(Boolean))) as string[];
+
+        // Fetch browser logins
+        const { data: loginsData } = await supabase
+          .from('browser_logins')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        // Fetch waitlist
+        const { data: waitlistData } = await supabase
+          .from('waitlist')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        // Fetch browser prompts/platforms
+        const { data: promptsData } = await supabase
+          .from('browser_platforms')
+          .select('*');
+
+        // Fetch system config (maintenance mode)
+        const { data: configData } = await supabase
+          .from('system_config')
+          .select('*')
+          .eq('key', 'maintenance_mode')
+          .single();
+
+        // Fetch admin emails config
+        const { data: adminConfigData } = await supabase
+          .from('system_config')
+          .select('*')
+          .eq('key', 'admin_emails')
+          .single();
+
+        // Fetch analytics stats - get last 30 days data
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-        // ALL 20 queries in PARALLEL (was sequential - 2s+ delay!)
-        const [
-          usersRes,
-          projectsRes,
-          subsRes,
-          paymentsRes,
-          containersRes,
-          tasksRes,
-          projectIdsRes,
-          taskUsersRes,
-          loginsRes,
-          waitlistRes,
-          promptsRes,
-          configRes,
-          adminConfigRes,
-          analyticsRes,
-          channelsRes,
-          videosRes,
-          commentsRes,
-          visitsRes,
-          locationRes,
-          simulationsRes
-        ] = await Promise.all([
-          supabase.rpc('get_all_users'),
-          supabase.from('Projeto').select('*').order('created_at', { ascending: false }),
-          supabase.from('subscriptions').select('*').order('created_at', { ascending: false }),
-          supabase.from('payments').select('*').order('created_at', { ascending: false }),
-          supabase.from('Projeto').select('id, "Project name", browser_container_id, browser_mcp_url, browser_vnc_url, browser_session_status').not('browser_container_id', 'is', null),
-          supabase.from('browser_tasks').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(0, 19),
-          supabase.from('browser_tasks').select('project_id').order('project_id'),
-          supabase.from('browser_tasks').select('created_by').not('created_by', 'is', null),
-          supabase.from('browser_logins').select('*').order('created_at', { ascending: false }),
-          supabase.from('waitlist').select('*').order('created_at', { ascending: false }),
-          supabase.from('browser_platforms').select('*'),
-          supabase.from('system_config').select('*').eq('key', 'maintenance_mode').single(),
-          supabase.from('system_config').select('*').eq('key', 'admin_emails').single(),
-          supabase.from('admin_analytics').select('created_at, event_type').eq('event_type', 'pageview').gte('created_at', thirtyDaysAgo.toISOString()).order('created_at', { ascending: true }),
-          supabase.from('Canais do youtube').select('id'),
-          supabase.from('Videos').select('id'),
-          supabase.from('Comentarios_Principais').select('id'),
-          supabase.rpc('get_admin_visit_stats'),
-          supabase.rpc('get_admin_location_stats'),
-          supabase.from('url_analyzer_rate_limit').select('id, created_at, ip_address, url_analyzed, request_timestamp, simulation_video, simulation_comment, simulation_response, simulation_language, product_info').order('created_at', { ascending: false }).limit(100)
-        ]);
-
-        // Extract data from responses
-        const usersData = usersRes.data as { id: string; email: string; created_at: string; last_sign_in_at: string | null; avatar_url: string | null; full_name: string | null }[] | null;
-        const projectsData = projectsRes.data;
-        const subsData = subsRes.data;
-        const paymentsData = paymentsRes.data;
-        const containersData = containersRes.data;
-        const { data: tasksData, count: tasksCount } = tasksRes;
-        const projectIdsData = projectIdsRes.data;
-        const taskUsersData = taskUsersRes.data;
-        const loginsData = loginsRes.data;
-        const waitlistData = waitlistRes.data;
-        const promptsData = promptsRes.data;
-        const configData = configRes.data;
-        const adminConfigData = adminConfigRes.data;
-        const analyticsRawData = analyticsRes.data;
-        const channelsData = channelsRes.data;
-        const videosData = videosRes.data;
-        const commentsData = commentsRes.data;
-        const visitsData = visitsRes.data;
-        const locationData = locationRes.data;
-        const simulationsData = simulationsRes.data;
-
-        // Process unique values
-        const uniqueProjects = Array.from(new Set((projectIdsData || []).map(p => p.project_id)));
-        const uniqueUsers = Array.from(new Set((taskUsersData || []).map(u => u.created_by).filter(Boolean))) as string[];
+        const { data: analyticsRawData } = await supabase
+          .from('admin_analytics')
+          .select('created_at, event_type')
+          .eq('event_type', 'pageview')
+          .gte('created_at', thirtyDaysAgo.toISOString())
+          .order('created_at', { ascending: true });
 
         // Group analytics data by day
         const analyticsGrouped: Record<string, number> = {};
@@ -2175,6 +2190,33 @@ const AdminDashboard: React.FC = () => {
           timestamp: date,
           views
         }));
+
+        // Fetch YouTube channels (table name in Portuguese)
+        const { data: channelsData } = await supabase
+          .from('Canais do youtube')
+          .select('id');
+
+        // Fetch videos (table name in Portuguese)
+        const { data: videosData } = await supabase
+          .from('Videos')
+          .select('id');
+
+        // Fetch comments (table name in Portuguese)
+        const { data: commentsData } = await supabase
+          .from('Comentarios_Principais')
+          .select('id');
+
+        // Fetch visit metrics from admin_analytics
+        const { data: visitsData } = await supabase.rpc('get_admin_visit_stats');
+// Fetch location stats (countries and cities)
+        const { data: locationData } = await supabase.rpc('get_admin_location_stats');
+
+        // Fetch URL analysis data from landing page
+        const { data: simulationsData } = await supabase
+          .from('url_analyzer_rate_limit')
+          .select('id, created_at, ip_address, url_analyzed, request_timestamp, simulation_video, simulation_comment, simulation_response, simulation_language, product_info')
+          .order('created_at', { ascending: false })
+          .limit(100);
 
         // Filter today's simulations
         const today = new Date();
@@ -2305,6 +2347,8 @@ const AdminDashboard: React.FC = () => {
       } catch (error) {
         console.error('Error fetching admin data:', error);
       } finally {
+        // Minimum loading time of 1.5s for better UX
+        await new Promise(resolve => setTimeout(resolve, 1500));
         setLoading(false);
       }
     };
@@ -3466,36 +3510,6 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // Retry failed task - reset to pending
-  const retryTask = async (taskId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent row expansion
-
-    const { error } = await supabase
-      .from('browser_tasks')
-      .update({
-        status: 'pending',
-        started_at: null,
-        completed_at: null,
-        error_message: null,
-        retry_count: 0,
-        next_retry_at: null
-      })
-      .eq('id', taskId);
-
-    if (!error) {
-      // Update local state
-      setTasks(prev => prev.map(t =>
-        t.id === taskId ? {
-          ...t,
-          status: 'pending',
-          started_at: null,
-          completed_at: null,
-          error_message: null
-        } : t
-      ));
-    }
-  };
-
   // Handle waitlist status update
   const updateWaitlistStatus = async (id: number, status: 'approved' | 'rejected') => {
     const { error } = await supabase
@@ -3966,8 +3980,7 @@ const AdminDashboard: React.FC = () => {
           twofa_phone_prompt: prompt.twofa_phone_prompt,
           twofa_code_prompt: prompt.twofa_code_prompt,
           comment_prompt: prompt.comment_prompt,
-          reply_prompt: prompt.reply_prompt,
-          presence_prompt: prompt.presence_prompt
+          reply_prompt: prompt.reply_prompt
         })
         .eq('id', prompt.id);
 
@@ -4220,16 +4233,6 @@ const AdminDashboard: React.FC = () => {
                         value={prompt.reply_prompt || ''}
                         onChange={(e) => updatePrompt(prompt.id, 'reply_prompt', e.target.value)}
                         placeholder="Instructions for replying to comments on YouTube (watch video, like comment, then reply)..."
-                        rows={8}
-                      />
-                    </PromptField>
-
-                    <PromptField>
-                      <label>Presence Prompt (YouTube - Daily Engagement)</label>
-                      <textarea
-                        value={prompt.presence_prompt || ''}
-                        onChange={(e) => updatePrompt(prompt.id, 'presence_prompt', e.target.value)}
-                        placeholder="Instructions for daily YouTube presence building (find video, watch, engage, comment)..."
                         rows={8}
                       />
                     </PromptField>
@@ -5628,20 +5631,7 @@ const AdminDashboard: React.FC = () => {
                               <span style={{ color: theme.colors.text.muted }}>-</span>
                             )}
                           </td>
-                          <td style={{ display: 'flex', gap: '4px' }}>
-                            {(t.status === 'failed' || t.status === 'error') && !t.deleted_at && (
-                              <Button
-                                $variant="ghost"
-                                onClick={(e) => retryTask(t.id, e)}
-                                style={{ padding: '4px 8px', color: '#22c55e' }}
-                                title="Retry task (reset to pending)"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <polyline points="23 4 23 10 17 10"/>
-                                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-                                </svg>
-                              </Button>
-                            )}
+                          <td>
                             <Button
                               $variant="ghost"
                               onClick={(e) => deleteTask(t.id, e)}

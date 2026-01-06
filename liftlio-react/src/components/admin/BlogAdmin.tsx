@@ -246,6 +246,13 @@ const MetricCell = styled.div`
   }
 `;
 
+const TodayBadge = styled.span`
+  font-size: 10px;
+  color: #10b981;
+  font-weight: 500;
+  margin-left: 4px;
+`;
+
 const ActionMenu = styled.div`
   position: relative;
 `;
@@ -598,6 +605,10 @@ const BlogAdmin: React.FC<BlogAdminProps> = ({ view: initialView = 'posts' }) =>
   const [stats, setStats] = useState<BlogAdminStats | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Views/Likes today per post (calculated DIRECT from blog_views/blog_likes)
+  const [viewsTodayByPost, setViewsTodayByPost] = useState<Record<number, number>>({});
+  const [likesTodayByPost, setLikesTodayByPost] = useState<Record<number, number>>({});
+
   // Filter state
   const [statusFilter, setStatusFilter] = useState<'all' | BlogPostStatus>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -624,12 +635,18 @@ const BlogAdmin: React.FC<BlogAdminProps> = ({ view: initialView = 'posts' }) =>
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [postsRes, categoriesRes, tagsRes, commentsRes, statsRes] = await Promise.all([
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+      // ALL queries in parallel (was sequential before - slow!)
+      const [postsRes, categoriesRes, tagsRes, commentsRes, statsRes, viewsTodayRes, likesTodayRes] = await Promise.all([
         supabase.from('blog_posts').select('*').order('created_at', { ascending: false }),
         supabase.from('blog_categories').select('*').order('sort_order'),
         supabase.from('blog_tags').select('*').order('name'),
         supabase.from('blog_comments').select('*').order('created_at', { ascending: false }).limit(50),
         supabase.rpc('get_blog_admin_stats'),
+        // Views/likes today - only fetch post_id (minimal data)
+        supabase.from('blog_views').select('post_id').gte('created_at', today),
+        supabase.from('blog_likes').select('post_id').gte('created_at', today),
       ]);
 
       setPosts(postsRes.data || []);
@@ -639,6 +656,21 @@ const BlogAdmin: React.FC<BlogAdminProps> = ({ view: initialView = 'posts' }) =>
       if (statsRes.data && statsRes.data.length > 0) {
         setStats(statsRes.data[0]);
       }
+
+      // Count views per post (fast - just counting small objects)
+      const viewsMap: Record<number, number> = {};
+      (viewsTodayRes.data || []).forEach((v: { post_id: number }) => {
+        viewsMap[v.post_id] = (viewsMap[v.post_id] || 0) + 1;
+      });
+      setViewsTodayByPost(viewsMap);
+
+      // Count likes per post
+      const likesMap: Record<number, number> = {};
+      (likesTodayRes.data || []).forEach((l: { post_id: number }) => {
+        likesMap[l.post_id] = (likesMap[l.post_id] || 0) + 1;
+      });
+      setLikesTodayByPost(likesMap);
+
     } catch (error) {
       console.error('Error fetching blog data:', error);
     } finally {
@@ -756,10 +788,12 @@ const BlogAdmin: React.FC<BlogAdminProps> = ({ view: initialView = 'posts' }) =>
           <StatCard>
             <div className="label">Total Views</div>
             <div className="value">{stats.total_views?.toLocaleString() || 0}</div>
+            {(stats.views_today || 0) > 0 && <div className="change">+{stats.views_today} today</div>}
           </StatCard>
           <StatCard>
             <div className="label">Total Likes</div>
             <div className="value">{stats.total_likes?.toLocaleString() || 0}</div>
+            {(stats.likes_today || 0) > 0 && <div className="change">+{stats.likes_today} today</div>}
           </StatCard>
         </StatsGrid>
       )}
@@ -841,6 +875,9 @@ const BlogAdmin: React.FC<BlogAdminProps> = ({ view: initialView = 'posts' }) =>
                   <MetricCell>
                     <Icons.Eye />
                     {post.view_count?.toLocaleString() || 0}
+                    {(viewsTodayByPost[post.id] || 0) > 0 && (
+                      <TodayBadge>+{viewsTodayByPost[post.id]}</TodayBadge>
+                    )}
                   </MetricCell>
                 </Td>
                 <Td>
@@ -848,6 +885,9 @@ const BlogAdmin: React.FC<BlogAdminProps> = ({ view: initialView = 'posts' }) =>
                     <MetricCell>
                       <Icons.Heart />
                       {post.like_count || 0}
+                      {(likesTodayByPost[post.id] || 0) > 0 && (
+                        <TodayBadge>+{likesTodayByPost[post.id]}</TodayBadge>
+                      )}
                     </MetricCell>
                     <MetricCell>
                       <Icons.MessageCircle />

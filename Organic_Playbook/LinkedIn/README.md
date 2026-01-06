@@ -6,6 +6,19 @@
 
 ---
 
+## TARGET: US/ENGLISH AUDIENCE ONLY
+
+**CRITICAL: All LinkedIn engagement must be in ENGLISH targeting US audience.**
+
+- Comments: Write in English only
+- Target: US-based SaaS influencers and thought leaders
+- Skip: Portuguese/Brazilian posts (even if relevant)
+- Focus: Topics trending in US SaaS ecosystem
+
+**Why:** US market is the primary target. English content compounds globally.
+
+---
+
 ## Account Info
 
 - **Profile:** Valdair (personal founder account)

@@ -4,9 +4,26 @@
 
 ---
 
+## TARGET MARKET: US/ENGLISH (CRITICAL!)
+
+**ALL engagement must be in ENGLISH targeting US audience.**
+
+- Comments: English only
+- Target influencers: US-based SaaS thought leaders
+- Platforms: English-speaking communities
+- DO NOT engage with Brazilian/Portuguese content
+
+**Why US market:**
+- Larger addressable market
+- Higher willingness to pay
+- English content compounds globally
+- US SaaS ecosystem is more developed
+
+---
+
 ## ICP Atualizado (Janeiro 2026)
 
-**Target Principal:** Donos de ecommerce, lojas online, pequenos negocios
+**Target Principal:** US-based SMBs, ecommerce owners, small business owners
 **Por que:** Mercado 60x maior, nao vao construir solucao propria, precisam desesperadamente de leads
 
 Ver pesquisa completa: `/RESEARCH/ICP_ANALYSIS_2026-01.md`
@@ -440,15 +457,15 @@ NAO precisa em:
 
 ---
 
-## Novos Canais para SMB/Ecommerce (Adicionar)
+## Canais para SMB/Ecommerce (US MARKET)
 
-| Canal | Potencial | Comunidades |
-|-------|-----------|-------------|
-| Facebook Groups | ⭐⭐⭐⭐⭐ | Shopify Brasil, Ecommerce Brasil, Empreendedores Digitais |
-| Reddit | ⭐⭐⭐⭐ | r/ecommerce, r/shopify, r/smallbusiness |
-| TikTok | ⭐⭐⭐⭐⭐ | @empreendedores, videos sobre vendas online |
-| YouTube | ⭐⭐⭐⭐ | Videos "como vender online", "ecommerce 2026" |
-| Comunidades BR | ⭐⭐⭐⭐⭐ | Nuvemshop, VTEX, Tray |
+| Canal | Potencial | Comunidades (US/English) |
+|-------|-----------|--------------------------|
+| Facebook Groups | ⭐⭐⭐⭐⭐ | Shopify Entrepreneurs, Ecommerce Growth Hacks, SaaS Growth |
+| Reddit | ⭐⭐⭐⭐ | r/ecommerce, r/shopify, r/smallbusiness, r/SaaS, r/Entrepreneur |
+| LinkedIn | ⭐⭐⭐⭐⭐ | Jason Lemkin, Patrick Campbell, Rob Walling, Des Traynor |
+| Twitter/X | ⭐⭐⭐⭐ | SaaS founders, indie hackers, growth marketers |
+| IndieHackers | ⭐⭐⭐⭐⭐ | Bootstrapped founders, solo entrepreneurs |
 
 ---
 
