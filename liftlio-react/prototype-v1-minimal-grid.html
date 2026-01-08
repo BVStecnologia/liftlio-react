@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organic Playbook - Minimal Grid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0F0F0F;
+            color: #E4E4E7;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar - Exact Liftlio Dark Theme */
+        .sidebar {
+            width: 249px;
+            min-width: 249px;
+            height: 100vh;
+            background: #1A1A1A;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            overflow-y: auto;
+        }
+
+        .logo {
+            padding: 32px 24px;
+            margin-top: 12px;
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+            gap: 10px;
+            position: relative;
+        }
+
+        .logo::after {
+            content: '';
+            position: absolute;
+            width: 40%;
+            height: 1px;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+            opacity: 0.5;
+        }
+
+        .logo-text {
+            background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .beta-badge {
+            font-size: 0.4em;
+            font-weight: 600;
+            padding: 2px 6px;
+            background: rgba(99, 102, 241, 0.15);
+            color: #a78bfa;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            vertical-align: top;
+        }
+
+        .nav {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 0;
+            margin-top: 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 24px;
+            color: rgba(228, 228, 231, 0.6);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 400;
+            gap: 12px;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #E4E4E7;
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.08);
+            color: #E4E4E7;
+        }
+
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            opacity: 0.7;
+        }
+
+        .nav-item.active svg {
+            opacity: 1;
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            margin-top: auto;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            margin-left: 249px;
+            padding: 40px;
+            min-height: 100vh;
+            background: #0F0F0F;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 48px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #E4E4E7;
+        }
+
+        .date {
+            font-size: 14px;
+            color: rgba(228, 228, 231, 0.6);
+            font-weight: 400;
+        }
+
+        .summary {
+            display: flex;
+            gap: 32px;
+            margin-bottom: 48px;
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .summary-number {
+            font-size: 32px;
+            font-weight: 600;
+            color: #a855f7;
+        }
+
+        .summary-label {
+            font-size: 14px;
+            color: rgba(228, 228, 231, 0.6);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: #1A1A1A;
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card:hover {
+            background: #252525;
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .platform-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: #E4E4E7;
+        }
+
+        .cadence {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .cadence.daily {
+            background: rgba(139, 92, 246, 0.15);
+            color: #a78bfa;
+        }
+
+        .cadence.weekly {
+            background: rgba(34, 211, 238, 0.15);
+            color: #22d3ee;
+        }
+
+        .metrics {
+            display: flex;
+            gap: 24px;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #E4E4E7;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: rgba(228, 228, 231, 0.4);
+        }
+
+        .status {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.done {
+            background: #66BB6A;
+            box-shadow: 0 0 8px rgba(102, 187, 106, 0.4);
+        }
+
+        .status-dot.pending {
+            background: #FFB74D;
+        }
+
+        .status-dot.scheduled {
+            background: rgba(228, 228, 231, 0.3);
+        }
+
+        .status-text {
+            font-size: 13px;
+            color: rgba(228, 228, 231, 0.6);
+        }
+
+        .link-indicator {
+            margin-left: auto;
+            font-size: 12px;
+            color: #a78bfa;
+        }
+
+        .activity-section {
+            margin-top: 48px;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .activity-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #E4E4E7;
+            margin-bottom: 20px;
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 16px;
+            background: #1A1A1A;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .activity-time {
+            font-size: 13px;
+            color: rgba(228, 228, 231, 0.4);
+            min-width: 50px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .activity-platform {
+            font-size: 13px;
+            font-weight: 500;
+            color: #a78bfa;
+            min-width: 80px;
+        }
+
+        .activity-desc {
+            font-size: 13px;
+            color: rgba(228, 228, 231, 0.6);
+            flex: 1;
+        }
+
+        .activity-link {
+            font-size: 11px;
+            color: #22d3ee;
+            text-decoration: none;
+            opacity: 0.8;
+        }
+
+        .activity-link:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <span class="logo-text">Liftlio</span>
+            <span class="beta-badge">Beta</span>
+        </div>
+
+        <nav class="nav">
+            <a href="#" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Overview
+            </a>
+            <a href="#" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                Analytics
+            </a>
+            <a href="#" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                Mentions
+            </a>
+            <a href="#" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+                Monitoring
+            </a>
+            <a href="#" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                </svg>
+                Organic Playbook
+            </a>
+            <a href="#" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                Settings
+            </a>
+            <a href="#" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                </svg>
+                Billing
+            </a>
+            <a href="#" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                </svg>
+                Integrations
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-email">valdair3d@gmail.com</div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <header class="header">
+            <h1 class="title">Organic Playbook</h1>
+            <span class="date">January 6, 2026</span>
+        </header>
+
+        <div class="summary">
+            <div class="summary-item">
+                <span class="summary-number">8</span>
+                <span class="summary-label">posts today</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-number">4</span>
+                <span class="summary-label">links shared</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-number">4</span>
+                <span class="summary-label">platforms</span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Reddit -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="platform-name">Reddit</span>
+                    <span class="cadence daily">Daily</span>
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="metric-value">1</span>
+                        <span class="metric-label">post</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">1</span>
+                        <span class="metric-label">link</span>
+                    </div>
+                </div>
+                <div class="status">
+                    <span class="status-dot done"></span>
+                    <span class="status-text">r/SaaS - comment marketing</span>
+                    <span class="link-indicator">1 link</span>
+                </div>
+            </div>
+
+            <!-- LinkedIn -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="platform-name">LinkedIn</span>
+                    <span class="cadence daily">Daily</span>
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="metric-value">3</span>
+                        <span class="metric-label">comments</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">1</span>
+                        <span class="metric-label">link</span>
+                    </div>
+                </div>
+                <div class="status">
+                    <span class="status-dot done"></span>
+                    <span class="status-text">2 value + 1 with link</span>
+                    <span class="link-indicator">1 link</span>
+                </div>
+            </div>
+
+            <!-- Twitter/X -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="platform-name">Twitter/X</span>
+                    <span class="cadence daily">Daily</span>
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="metric-value">2</span>
+                        <span class="metric-label">replies</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">1</span>
+                        <span class="metric-label">link</span>
+                    </div>
+                </div>
+                <div class="status">
+                    <span class="status-dot done"></span>
+                    <span class="status-text">@BvsTecnologia</span>
+                    <span class="link-indicator">1 link</span>
+                </div>
+            </div>
+
+            <!-- Quora -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="platform-name">Quora</span>
+                    <span class="cadence daily">Daily</span>
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="metric-value">2</span>
+                        <span class="metric-label">answers</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">1</span>
+                        <span class="metric-label">link</span>
+                    </div>
+                </div>
+                <div class="status">
+                    <span class="status-dot done"></span>
+                    <span class="status-text">SaaS marketing strategies</span>
+                    <span class="link-indicator">1 link</span>
+                </div>
+            </div>
+
+            <!-- IndieHackers -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="platform-name">IndieHackers</span>
+                    <span class="cadence weekly">Weekly</span>
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="metric-value">1</span>
+                        <span class="metric-label">comment</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">0</span>
+                        <span class="metric-label">links</span>
+                    </div>
+                </div>
+                <div class="status">
+                    <span class="status-dot done"></span>
+                    <span class="status-text">Community discussion</span>
+                </div>
+            </div>
+
+            <!-- Product Hunt -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="platform-name">Product Hunt</span>
+                    <span class="cadence weekly">Weekly</span>
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="metric-value">0</span>
+                        <span class="metric-label">posts</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">0</span>
+                        <span class="metric-label">links</span>
+                    </div>
+                </div>
+                <div class="status">
+                    <span class="status-dot scheduled"></span>
+                    <span class="status-text">Next: Thursday</span>
+                </div>
+            </div>
+
+            <!-- Hacker News -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="platform-name">Hacker News</span>
+                    <span class="cadence weekly">Weekly</span>
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="metric-value">0</span>
+                        <span class="metric-label">posts</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">0</span>
+                        <span class="metric-label">links</span>
+                    </div>
+                </div>
+                <div class="status">
+                    <span class="status-dot scheduled"></span>
+                    <span class="status-text">Next: Friday</span>
+                </div>
+            </div>
+
+            <!-- Facebook Groups -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="platform-name">Facebook Groups</span>
+                    <span class="cadence weekly">Weekly</span>
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="metric-value">0</span>
+                        <span class="metric-label">posts</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">0</span>
+                        <span class="metric-label">links</span>
+                    </div>
+                </div>
+                <div class="status">
+                    <span class="status-dot pending"></span>
+                    <span class="status-text">Pending</span>
+                </div>
+            </div>
+        </div>
+
+        <section class="activity-section">
+            <h2 class="activity-title">Today's Activity</h2>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <span class="activity-time">15:00</span>
+                    <span class="activity-platform">Quora</span>
+                    <span class="activity-desc">Answer about SaaS marketing strategies</span>
+                    <a href="#" class="activity-link">comment-marketing</a>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-time">14:30</span>
+                    <span class="activity-platform">LinkedIn</span>
+                    <span class="activity-desc">Comment on Anveeg Sinha's post</span>
+                    <a href="#" class="activity-link">youtube-engagement</a>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-time">13:45</span>
+                    <span class="activity-platform">Reddit</span>
+                    <span class="activity-desc">Post on r/SaaS about customer acquisition</span>
+                    <a href="#" class="activity-link">comment-marketing</a>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-time">12:30</span>
+                    <span class="activity-platform">Twitter/X</span>
+                    <span class="activity-desc">Reply about first 10 users</span>
+                    <a href="#" class="activity-link">first-comment</a>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

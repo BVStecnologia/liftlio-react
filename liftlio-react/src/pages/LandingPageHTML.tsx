@@ -6,6 +6,14 @@ const LandingPageHTML: React.FC = () => {
   const [shouldRedirect, setShouldRedirect] = useState(false);
 
   useEffect(() => {
+    // CRITICAL: Only process if we're actually on the root path
+    // This prevents redirect loops when React Router incorrectly renders this component
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/' && currentPath !== '') {
+      console.log('[LandingPageHTML] Not on root path, skipping redirect. Current path:', currentPath);
+      return;
+    }
+
     // Verificar parâmetros OAuth imediatamente
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
