@@ -45,7 +45,8 @@ const Security = lazy(() => import('./pages/Security'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const WaitlistPage = lazy(() => import('./pages/WaitlistPage'));
 const WaitlistPendingPage = lazy(() => import('./pages/WaitlistPendingPage'));
-// Blog React removido - usar blog.liftlio.com (WordPress)
+const BlogList = lazy(() => import('./pages/BlogList'));
+const BlogPost = lazy(() => import('./pages/BlogPost'));
 
 // Lazy load heavy components
 const Sidebar = lazy(() => import('./components/Sidebar'));
@@ -390,7 +391,17 @@ const AppContent: React.FC = () => {
             </Suspense>
           } />
 
-          {/* Blog React removido - usar blog.liftlio.com (WordPress) */}
+          {/* Blog Routes - Public */}
+          <Route path="/blog" element={
+            <Suspense fallback={null}>
+              <BlogList />
+            </Suspense>
+          } />
+          <Route path="/blog/:slug" element={
+            <Suspense fallback={null}>
+              <BlogPost />
+            </Suspense>
+          } />
 
           {/* Rota removida: Analytics Showcase (não utilizada) */}
 
@@ -606,8 +617,8 @@ const ProtectedLayout = ({
   }, [user, loading, onboardingReady, currentProject?.id, currentProject?.status, lastCheckedProjectId]); // ✅ currentProject?.id e status adicionado COM proteção anti-loop + debounce
 
   // VERIFICAÇÃO DE ROTAS PÚBLICAS - Calcular antes de usar
-  const publicRoutes = ['/trends', '/liftlio-analytics', '/about', '/privacy', '/terms', '/security'];
-  const isPublicRoute = publicRoutes.includes(location.pathname);
+  const publicRoutes = ['/trends', '/liftlio-analytics', '/about', '/privacy', '/terms', '/security', '/blog'];
+  const isPublicRoute = publicRoutes.includes(location.pathname) || location.pathname.startsWith('/blog');
 
   // Redirecionar para login se não autenticado (deve estar ANTES de qualquer return)
   useEffect(() => {
