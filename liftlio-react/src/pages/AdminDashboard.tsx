@@ -1959,6 +1959,9 @@ const AdminDashboard: React.FC = () => {
   const [isTaskInputFocused, setIsTaskInputFocused] = useState(false);
   const [viewerProjectTasks, setViewerProjectTasks] = useState<BrowserTask[]>([]);
   const [loadingViewerTasks, setLoadingViewerTasks] = useState(false);
+  const [expandedViewerTaskId, setExpandedViewerTaskId] = useState<string | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<BrowserTask | null>(null);
+  const [deletingTask, setDeletingTask] = useState(false);
 
   // Project action menu state
   const [openActionMenu, setOpenActionMenu] = useState<number | null>(null);
@@ -2439,7 +2442,7 @@ const AdminDashboard: React.FC = () => {
         return;
       }
 
-      // Create task in database first
+      // Create task in database first with status 'running' (same as /computer page)
       // task_type must be one of: action, query, scrape, login, verify, 2fa_code, youtube_comment, youtube_reply, youtube_presence
       const { data: taskData, error: insertError } = await supabase
         .from('browser_tasks')
@@ -2447,7 +2450,7 @@ const AdminDashboard: React.FC = () => {
           project_id: selectedViewerContainer.project_id,
           task: adminTaskInput,
           task_type: 'action',
-          status: 'pending'
+          status: 'running'
         })
         .select()
         .single();
@@ -2458,25 +2461,42 @@ const AdminDashboard: React.FC = () => {
         return;
       }
 
-      // Send task to agent via Edge Function (to avoid CORS)
-      const { data: proxyData, error: proxyError } = await supabase.functions.invoke('browser-proxy', {
-        body: {
-          action: 'send-task',
-          projectId: selectedViewerContainer.project_id,
-          task: adminTaskInput,
-          taskId: taskData.id
-        }
-      });
+      // Send task to agent directly via fetch (same approach as /computer page)
+      // This avoids the broken browser-proxy Edge Function
+      const agentUrl = `${mcpUrl}/agent/task`;
+      console.log(`[Admin] Sending task to: ${agentUrl}`);
 
-      if (proxyError) {
-        console.error('Error sending task to agent:', proxyError);
+      try {
+        const agentResponse = await fetch(agentUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            task: adminTaskInput.trim() + '\n\n[IMPORTANT: When you complete this task, end your final response with the word SUCCESS]',
+            taskId: taskData.id,
+            projectId: selectedViewerContainer.project_id.toString(),
+            model: 'claude-haiku-4-5-20251001',
+            maxIterations: 50,
+            verbose: false
+          })
+        });
+
+        if (agentResponse.ok) {
+          console.log('Task sent successfully to agent');
+        } else {
+          console.error('Agent returned error:', agentResponse.status);
+          // Update task status to failed
+          await supabase
+            .from('browser_tasks')
+            .update({ status: 'failed', error_message: `Agent returned ${agentResponse.status}` })
+            .eq('id', taskData.id);
+        }
+      } catch (fetchError) {
+        console.error('Error sending task to agent:', fetchError);
         // Update task status to failed
         await supabase
           .from('browser_tasks')
-          .update({ status: 'failed', error_message: proxyError.message })
+          .update({ status: 'failed', error_message: String(fetchError) })
           .eq('id', taskData.id);
-      } else {
-        console.log('Task sent successfully:', proxyData);
       }
 
       // Clear input and refresh tasks
@@ -2488,7 +2508,41 @@ const AdminDashboard: React.FC = () => {
     } finally {
       setAdminTaskSending(false);
     }
-  }, [selectedViewerContainer, adminTaskInput, user?.email, fetchViewerProjectTasks]);
+  }, [selectedViewerContainer, adminTaskInput, fetchViewerProjectTasks]);
+
+  // Delete viewer task function (for Browser Containers modal)
+  const deleteViewerTask = useCallback(async (task: BrowserTask) => {
+    if (!task) return;
+
+    setDeletingTask(true);
+    try {
+      const { error } = await supabase
+        .from('browser_tasks')
+        .delete()
+        .eq('id', task.id);
+
+      if (error) {
+        console.error('Error deleting task:', error);
+        alert('Failed to delete task');
+        return;
+      }
+
+      // Remove from local state
+      setViewerProjectTasks(prev => prev.filter(t => t.id !== task.id));
+      setTaskToDelete(null);
+      setExpandedViewerTaskId(null);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      alert('Failed to delete task');
+    } finally {
+      setDeletingTask(false);
+    }
+  }, []);
+
+  // Check if any task is running for current container
+  const hasRunningTask = useMemo(() => {
+    return viewerProjectTasks.some(t => t.status === 'running');
+  }, [viewerProjectTasks]);
 
   // Health check function - uses Edge Function for VPS services (no CORS issues!)
   const checkHealth = useCallback(async () => {
@@ -2662,6 +2716,71 @@ const AdminDashboard: React.FC = () => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     return `${day}/${month}`;
+  };
+
+  // Format markdown text to React elements
+  const formatMarkdownText = (text: string) => {
+    if (!text) return null;
+
+    // Split by lines
+    const lines = text.split('\n');
+
+    return lines.map((line, idx) => {
+      let content: React.ReactNode = line;
+      let style: React.CSSProperties = {};
+
+      // Headers
+      if (line.startsWith('### ')) {
+        content = line.substring(4);
+        style = { fontWeight: 600, fontSize: '12px', color: '#a78bfa', marginTop: '8px', marginBottom: '4px' };
+      } else if (line.startsWith('## ')) {
+        content = line.substring(3);
+        style = { fontWeight: 700, fontSize: '13px', color: '#8b5cf6', marginTop: '10px', marginBottom: '4px' };
+      } else if (line.startsWith('# ')) {
+        content = line.substring(2);
+        style = { fontWeight: 800, fontSize: '14px', color: '#8b5cf6', marginTop: '12px', marginBottom: '6px' };
+      }
+      // Bullet points
+      else if (line.startsWith('- ') || line.startsWith('* ')) {
+        content = '• ' + line.substring(2);
+        style = { paddingLeft: '12px' };
+      }
+      // Numbered lists
+      else if (/^\d+\.\s/.test(line)) {
+        style = { paddingLeft: '8px' };
+      }
+      // Checkboxes
+      else if (line.includes('- [ ]')) {
+        content = line.replace('- [ ]', '☐');
+        style = { paddingLeft: '12px', color: '#9ca3af' };
+      } else if (line.includes('- [x]') || line.includes('- [X]')) {
+        content = line.replace(/- \[[xX]\]/, '☑');
+        style = { paddingLeft: '12px', color: '#22c55e' };
+      }
+
+      // Bold text **text** -> <strong>
+      if (typeof content === 'string' && content.includes('**')) {
+        const parts = content.split(/\*\*(.*?)\*\*/g);
+        content = parts.map((part, i) =>
+          i % 2 === 1 ? <strong key={i} style={{ color: '#e5e7eb' }}>{part}</strong> : part
+        );
+      }
+
+      // Code blocks `code`
+      if (typeof content === 'string' && content.includes('`')) {
+        const parts = content.split(/`(.*?)`/g);
+        content = parts.map((part, i) =>
+          i % 2 === 1 ? <code key={i} style={{ background: '#374151', padding: '1px 4px', borderRadius: '3px', fontSize: '10px' }}>{part}</code> : part
+        );
+      }
+
+      // Empty lines
+      if (line.trim() === '') {
+        return <div key={idx} style={{ height: '6px' }} />;
+      }
+
+      return <div key={idx} style={{ lineHeight: '1.5', ...style }}>{content}</div>;
+    });
   };
 
   // Format task date - uses completed_at for completed tasks, created_at for pending
@@ -5248,11 +5367,16 @@ const AdminDashboard: React.FC = () => {
                         <Button
                           $variant="primary"
                           onClick={sendAdminTask}
-                          disabled={!adminTaskInput.trim() || adminTaskSending}
+                          disabled={!adminTaskInput.trim() || adminTaskSending || hasRunningTask}
                           style={{ width: '100%' }}
                         >
-                          {adminTaskSending ? 'Sending...' : '▶ Send Task'}
+                          {adminTaskSending ? 'Sending...' : hasRunningTask ? '⏳ Task Running...' : '▶ Send Task'}
                         </Button>
+                        {hasRunningTask && (
+                          <div style={{ fontSize: '10px', color: '#f59e0b', textAlign: 'center', marginTop: '4px' }}>
+                            Wait for the current task to complete
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -5284,7 +5408,7 @@ const AdminDashboard: React.FC = () => {
                         {loadingViewerTasks && <span style={{ fontSize: '10px' }}>Loading...</span>}
                       </div>
                       <div style={{
-                        maxHeight: '250px',
+                        maxHeight: '400px',
                         overflowY: 'auto',
                         background: theme.colors.bg.secondary,
                         borderRadius: '8px',
@@ -5295,36 +5419,193 @@ const AdminDashboard: React.FC = () => {
                             No tasks for this project
                           </div>
                         ) : (
-                          viewerProjectTasks.map(task => (
-                            <div
-                              key={task.id}
-                              style={{
-                                padding: '8px',
-                                borderBottom: `1px solid ${theme.colors.border}`,
-                                fontSize: '11px'
-                              }}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                <StatusBadge $status={task.status} style={{ fontSize: '10px', padding: '2px 6px' }}>
-                                  {task.status}
-                                </StatusBadge>
-                                <span style={{ color: theme.colors.text.muted }}>{formatRelativeTime(task.created_at)}</span>
-                              </div>
-                              <div style={{
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                color: theme.colors.text.secondary
-                              }}>
-                                {task.task}
-                              </div>
-                              {task.error_message && (
-                                <div style={{ marginTop: '4px', color: '#ef4444', fontSize: '10px' }}>
-                                  Error: {task.error_message.substring(0, 50)}...
+                          viewerProjectTasks.map(task => {
+                            const isExpanded = expandedViewerTaskId === task.id;
+                            return (
+                              <div
+                                key={task.id}
+                                onClick={() => setExpandedViewerTaskId(isExpanded ? null : task.id)}
+                                style={{
+                                  padding: '8px',
+                                  borderBottom: `1px solid ${theme.colors.border}`,
+                                  fontSize: '11px',
+                                  cursor: 'pointer',
+                                  background: isExpanded ? 'rgba(139, 92, 246, 0.1)' : 'transparent',
+                                  borderRadius: isExpanded ? '6px' : '0',
+                                  marginBottom: isExpanded ? '4px' : '0',
+                                  transition: 'all 0.2s ease'
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span style={{ color: theme.colors.text.muted, fontSize: '10px' }}>{isExpanded ? '▼' : '▶'}</span>
+                                    <StatusBadge $status={task.status} style={{ fontSize: '10px', padding: '2px 6px' }}>
+                                      {task.status}
+                                    </StatusBadge>
+                                  </div>
+                                  <span style={{ color: theme.colors.text.muted }}>{formatRelativeTime(task.created_at)}</span>
                                 </div>
-                              )}
-                            </div>
-                          ))
+                                {/* Task summary - collapsed view */}
+                                {!isExpanded && (
+                                  <div style={{
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    color: theme.colors.text.secondary
+                                  }}>
+                                    {task.task?.split('\n')[0]?.substring(0, 60) || 'No task description'}...
+                                  </div>
+                                )}
+                                {!isExpanded && task.error_message && (
+                                  <div style={{ marginTop: '4px', color: '#ef4444', fontSize: '10px' }}>
+                                    Error: {task.error_message.substring(0, 50)}...
+                                  </div>
+                                )}
+
+                                {/* Expanded view with formatted content */}
+                                {isExpanded && (
+                                  <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${theme.colors.border}` }}>
+                                    {/* Task details with markdown formatting */}
+                                    <div style={{ marginBottom: '12px' }}>
+                                      <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        color: '#8b5cf6',
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        marginBottom: '6px'
+                                      }}>
+                                        <span>📋</span> Task Details
+                                      </div>
+                                      <div style={{
+                                        fontSize: '11px',
+                                        color: theme.colors.text.secondary,
+                                        maxHeight: '200px',
+                                        overflowY: 'auto',
+                                        background: 'rgba(139, 92, 246, 0.05)',
+                                        padding: '10px',
+                                        borderRadius: '6px',
+                                        border: '1px solid rgba(139, 92, 246, 0.2)'
+                                      }}>
+                                        {formatMarkdownText(task.task || '')}
+                                      </div>
+                                    </div>
+
+                                    {/* Error message */}
+                                    {task.error_message && (
+                                      <div style={{ marginBottom: '12px' }}>
+                                        <div style={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '6px',
+                                          color: '#ef4444',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          marginBottom: '6px'
+                                        }}>
+                                          <span>⚠️</span> Error Message
+                                        </div>
+                                        <div style={{
+                                          color: '#fca5a5',
+                                          fontSize: '11px',
+                                          maxHeight: '150px',
+                                          overflowY: 'auto',
+                                          background: 'rgba(239, 68, 68, 0.1)',
+                                          padding: '10px',
+                                          borderRadius: '6px',
+                                          border: '1px solid rgba(239, 68, 68, 0.2)'
+                                        }}>
+                                          {formatMarkdownText(task.error_message)}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Response */}
+                                    {task.response && (
+                                      <div style={{ marginBottom: '12px' }}>
+                                        <div style={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '6px',
+                                          color: '#22c55e',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          marginBottom: '6px'
+                                        }}>
+                                          <span>✅</span> Response
+                                        </div>
+                                        <div style={{
+                                          color: theme.colors.text.secondary,
+                                          fontSize: '11px',
+                                          maxHeight: '150px',
+                                          overflowY: 'auto',
+                                          background: 'rgba(34, 197, 94, 0.05)',
+                                          padding: '10px',
+                                          borderRadius: '6px',
+                                          border: '1px solid rgba(34, 197, 94, 0.2)',
+                                          fontFamily: 'monospace'
+                                        }}>
+                                          {typeof task.response === 'string'
+                                            ? formatMarkdownText(task.response)
+                                            : <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{JSON.stringify(task.response, null, 2)}</pre>
+                                          }
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Metadata footer */}
+                                    <div style={{
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      paddingTop: '8px',
+                                      borderTop: `1px dashed ${theme.colors.border}`
+                                    }}>
+                                      <div style={{
+                                        display: 'flex',
+                                        gap: '12px',
+                                        fontSize: '10px',
+                                        color: theme.colors.text.muted,
+                                        flexWrap: 'wrap'
+                                      }}>
+                                        <span>🔑 ID: {task.id.substring(0, 8)}...</span>
+                                        {(task as any).iterations && <span>🔄 Iterations: {(task as any).iterations}</span>}
+                                        {(task as any).duration_ms && <span>⏱️ Duration: {Math.round((task as any).duration_ms / 1000)}s</span>}
+                                      </div>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setTaskToDelete(task);
+                                        }}
+                                        style={{
+                                          background: 'rgba(239, 68, 68, 0.1)',
+                                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                                          color: '#ef4444',
+                                          padding: '4px 8px',
+                                          borderRadius: '4px',
+                                          fontSize: '10px',
+                                          cursor: 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '4px',
+                                          transition: 'all 0.2s'
+                                        }}
+                                        onMouseOver={(e) => {
+                                          e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                                        }}
+                                        onMouseOut={(e) => {
+                                          e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                                        }}
+                                      >
+                                        🗑️ Delete
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
                         )}
                       </div>
                     </div>
@@ -6956,6 +7237,100 @@ const AdminDashboard: React.FC = () => {
               </>
             )}
           </ProjectModalBody>
+        </ProjectModalContent>
+      </ProjectModalOverlay>
+
+      {/* Delete Task Confirmation Modal */}
+      <ProjectModalOverlay $open={taskToDelete !== null} onClick={() => setTaskToDelete(null)}>
+        <ProjectModalContent onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+          <div style={{ padding: '24px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: 'rgba(239, 68, 68, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px'
+              }}>
+                🗑️
+              </div>
+              <div>
+                <h3 style={{ margin: 0, color: theme.colors.text.primary, fontSize: '18px' }}>
+                  Delete Task?
+                </h3>
+                <p style={{ margin: '4px 0 0', color: theme.colors.text.muted, fontSize: '13px' }}>
+                  This action cannot be undone
+                </p>
+              </div>
+            </div>
+
+            {taskToDelete && (
+              <div style={{
+                background: theme.colors.bg.secondary,
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '20px',
+                border: `1px solid ${theme.colors.border}`
+              }}>
+                <div style={{ fontSize: '11px', color: theme.colors.text.muted, marginBottom: '4px' }}>
+                  Task Preview:
+                </div>
+                <div style={{
+                  fontSize: '12px',
+                  color: theme.colors.text.secondary,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical'
+                }}>
+                  {taskToDelete.task?.split('\n')[0]?.substring(0, 100) || 'No description'}
+                </div>
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  marginTop: '8px',
+                  fontSize: '10px'
+                }}>
+                  <StatusBadge $status={taskToDelete.status} style={{ fontSize: '10px', padding: '2px 6px' }}>
+                    {taskToDelete.status}
+                  </StatusBadge>
+                  <span style={{ color: theme.colors.text.muted }}>
+                    {formatRelativeTime(taskToDelete.created_at)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <Button
+                $variant="ghost"
+                onClick={() => setTaskToDelete(null)}
+                disabled={deletingTask}
+              >
+                Cancel
+              </Button>
+              <Button
+                $variant="primary"
+                onClick={() => taskToDelete && deleteViewerTask(taskToDelete)}
+                disabled={deletingTask}
+                style={{
+                  background: '#ef4444',
+                  borderColor: '#ef4444'
+                }}
+              >
+                {deletingTask ? 'Deleting...' : '🗑️ Delete Task'}
+              </Button>
+            </div>
+          </div>
         </ProjectModalContent>
       </ProjectModalOverlay>
     </Container>
