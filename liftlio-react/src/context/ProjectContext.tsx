@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, startTransition } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, startTransition, useCallback } from 'react';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
 
@@ -61,6 +61,10 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
   const subscriptionRef = useRef<any>(null);
   const isTransitioning = useRef<boolean>(false); // Flag para pausar verificações durante transição
   // intervalRef removido - agora usa apenas Realtime
+
+  // 🔧 FIX: Refs para evitar recriações desnecessárias causadas por TOKEN_REFRESHED
+  const subscriptionSetupForUserRef = useRef<string | null>(null); // Guarda o email do user para quem a subscription foi criada
+  const timezoneCheckedForProjectRef = useRef<string | number | null>(null); // Evita loop de timezone check
   
   useEffect(() => {
     // 🔥 OTIMIZADO: Carregar projeto marcado como index automaticamente
@@ -151,30 +155,41 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
   // Função para verificar e atualizar o fuso horário do projeto
   const checkAndUpdateTimezone = async (project: Project) => {
     try {
+      // 🔧 FIX: Evitar verificação repetida para o mesmo projeto
+      if (timezoneCheckedForProjectRef.current === project.id) {
+        return;
+      }
+
       // Obter o fuso horário atual do navegador
       const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      
+
       // Se o projeto não tem fuso horário definido ou é diferente do atual
       if (!project.fuso_horario || project.fuso_horario !== currentTimezone) {
         console.log(`Atualizando fuso horário do projeto ${project.id} de ${project.fuso_horario || 'não definido'} para ${currentTimezone}`);
-        
+
+        // Marcar como verificado ANTES de atualizar para evitar loop
+        timezoneCheckedForProjectRef.current = project.id;
+
         // Atualizar o fuso horário no Supabase
         const { error } = await supabase
           .from('Projeto')
           .update({ fuso_horario: currentTimezone })
           .eq('id', project.id);
-          
+
         if (error) {
           console.error("Erro ao atualizar fuso horário:", error);
         } else {
           console.log(`Fuso horário atualizado com sucesso para ${currentTimezone}`);
-          
+
           // Atualizar o estado local com o novo fuso horário
           setCurrentProject({
             ...project,
             fuso_horario: currentTimezone
           });
         }
+      } else {
+        // Timezone já está correto, marcar como verificado
+        timezoneCheckedForProjectRef.current = project.id;
       }
     } catch (error) {
       console.error("Erro ao verificar/atualizar fuso horário:", error);
@@ -654,11 +669,19 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
         return;
       }
 
+      // 🔧 FIX: Se já existe subscription ativa para este mesmo usuário, NÃO recriar
+      // Isso evita o loop causado por TOKEN_REFRESHED que muda a referência do user
+      if (subscriptionRef.current && subscriptionSetupForUserRef.current === user.email) {
+        console.log(`⚡ Subscription já ativa para ${user.email}, pulando recriação`);
+        return;
+      }
+
       // ⚡ OTIMIZAÇÃO: Cancelar subscription antiga ANTES de criar nova
       if (subscriptionRef.current) {
         console.log("⚡ Cancelando subscription antiga antes de criar nova");
         await subscriptionRef.current.unsubscribe();
         subscriptionRef.current = null;
+        subscriptionSetupForUserRef.current = null;
       }
 
       // Create a channel for Projeto table changes
@@ -766,6 +789,7 @@ export const ProjectProvider: React.FC<{children: React.ReactNode}> = ({ childre
 
       // Store subscription reference for cleanup
       subscriptionRef.current = subscription;
+      subscriptionSetupForUserRef.current = user.email; // 🔧 FIX: Marcar para qual usuário esta subscription foi criada
       console.log('[Real-time] 📡 Tentando estabelecer subscription no canal:', channelName);
     } catch (error) {
       console.error('Error setting up real-time subscription:', error);
