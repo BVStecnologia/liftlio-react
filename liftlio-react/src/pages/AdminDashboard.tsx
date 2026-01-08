@@ -1990,10 +1990,13 @@ const AdminDashboard: React.FC = () => {
     activeContainers: 0,
     topCountries: [] as {country: string; visits: number}[],
     topCities: [] as {city: string; country: string; visits: number}[],
+    trafficSources: [] as {source: string; visitor_count: number; percentage: number}[],
+    topPages: [] as {page_path: string; page_title: string; visitor_count: number; view_count: number}[],
   });
 
+  // Period selector for analytics (today, week, month)
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<'today' | 'week' | 'month'>('month');
 
-  
   // Fetch online visitors every 5 seconds
   useEffect(() => {
     const fetchOnlineVisitors = async () => {
@@ -2094,7 +2097,13 @@ const AdminDashboard: React.FC = () => {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+        // Detect user timezone for accurate "today" calculation
+        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+
         // ALL 20 queries in PARALLEL (was sequential - 2s+ delay!)
+        // Calculate period_days based on analyticsPeriod state
+        const periodDays = analyticsPeriod === 'today' ? 1 : analyticsPeriod === 'week' ? 7 : 30;
+
         const [
           usersRes,
           projectsRes,
@@ -2115,7 +2124,9 @@ const AdminDashboard: React.FC = () => {
           commentsRes,
           visitsRes,
           locationRes,
-          simulationsRes
+          simulationsRes,
+          trafficSourcesRes,
+          topPagesRes
         ] = await Promise.all([
           supabase.rpc('get_all_users'),
           supabase.from('Projeto').select('*').order('created_at', { ascending: false }),
@@ -2134,9 +2145,11 @@ const AdminDashboard: React.FC = () => {
           supabase.from('Canais do youtube').select('id'),
           supabase.from('Videos').select('id'),
           supabase.from('Comentarios_Principais').select('id'),
-          supabase.rpc('get_admin_visit_stats'),
-          supabase.rpc('get_admin_location_stats'),
-          supabase.from('url_analyzer_rate_limit').select('id, created_at, ip_address, url_analyzed, request_timestamp, simulation_video, simulation_comment, simulation_response, simulation_language, product_info').order('created_at', { ascending: false }).limit(100)
+          supabase.rpc('get_admin_visit_stats', { user_timezone: userTimezone }),
+          supabase.rpc('get_admin_location_stats_v2', { period_days: periodDays, user_timezone: userTimezone }),
+          supabase.from('url_analyzer_rate_limit').select('id, created_at, ip_address, url_analyzed, request_timestamp, simulation_video, simulation_comment, simulation_response, simulation_language, product_info').order('created_at', { ascending: false }).limit(100),
+          supabase.rpc('get_traffic_sources_by_period', { period_days: periodDays, user_timezone: userTimezone }),
+          supabase.rpc('get_top_pages_by_period', { period_days: periodDays, user_timezone: userTimezone, max_results: 10 })
         ]);
 
         // Extract data from responses
@@ -2160,6 +2173,8 @@ const AdminDashboard: React.FC = () => {
         const visitsData = visitsRes.data;
         const locationData = locationRes.data;
         const simulationsData = simulationsRes.data;
+        const trafficSourcesData = trafficSourcesRes.data as {source: string; visitor_count: number; percentage: number}[] | null;
+        const topPagesData = topPagesRes.data as {page_path: string; page_title: string; visitor_count: number; view_count: number}[] | null;
 
         // Process unique values
         const uniqueProjects = Array.from(new Set((projectIdsData || []).map(p => p.project_id)));
@@ -2300,6 +2315,8 @@ const AdminDashboard: React.FC = () => {
           activeContainers: runningContainers,
           topCountries: locationData?.[0]?.top_countries || [],
           topCities: locationData?.[0]?.top_cities || [],
+          trafficSources: trafficSourcesData || [],
+          topPages: topPagesData || [],
         });
 
       } catch (error) {
@@ -2310,7 +2327,7 @@ const AdminDashboard: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [analyticsPeriod]); // Re-fetch when period changes
 
   // Realtime subscription for browser_tasks
   useEffect(() => {
@@ -6084,26 +6101,52 @@ const AdminDashboard: React.FC = () => {
               </div>
             </Card>
 
+            {/* Period Selector */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', gap: '4px', background: '#1f2937', borderRadius: '6px', padding: '2px' }}>
+                {(['today', 'week', 'month'] as const).map(period => (
+                  <button
+                    key={period}
+                    onClick={() => setAnalyticsPeriod(period)}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '4px',
+                      border: 'none',
+                      background: analyticsPeriod === period ? '#8b5cf6' : 'transparent',
+                      color: analyticsPeriod === period ? '#fff' : '#9ca3af',
+                      fontSize: '13px',
+                      fontWeight: analyticsPeriod === period ? 600 : 400,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {period === 'today' ? 'Today' : period === 'week' ? '7 Days' : '30 Days'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <Grid>
               <Card>
                 <CardHeader>
                   <h3>Traffic Sources</h3>
                 </CardHeader>
                 <div style={{ padding: '20px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#e5e7eb' }}>Direct</span>
-                      <span style={{ color: '#8b5cf6', fontWeight: 600 }}>{Math.round(stats.visitsMonth * 0.6)}</span>
+                  {stats.trafficSources && stats.trafficSources.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {stats.trafficSources.map((item, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ color: '#e5e7eb' }}>{item.source}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ color: '#8b5cf6', fontWeight: 600 }}>{item.visitor_count}</span>
+                            <span style={{ color: '#6b7280', fontSize: '12px' }}>({item.percentage}%)</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#e5e7eb' }}>Google</span>
-                      <span style={{ color: '#8b5cf6', fontWeight: 600 }}>{Math.round(stats.visitsMonth * 0.25)}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#e5e7eb' }}>Social</span>
-                      <span style={{ color: '#8b5cf6', fontWeight: 600 }}>{Math.round(stats.visitsMonth * 0.15)}</span>
-                    </div>
-                  </div>
+                  ) : (
+                    <div style={{ color: '#9ca3af', textAlign: 'center' }}>No traffic data for this period</div>
+                  )}
                 </div>
               </Card>
 
@@ -6112,20 +6155,23 @@ const AdminDashboard: React.FC = () => {
                   <h3>Top Pages</h3>
                 </CardHeader>
                 <div style={{ padding: '20px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#e5e7eb' }}>/</span>
-                      <span style={{ color: '#9ca3af' }}>Home</span>
+                  {stats.topPages && stats.topPages.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {stats.topPages.map((item, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ color: '#e5e7eb', fontSize: '14px' }}>{item.page_path}</span>
+                            {item.page_title && (
+                              <span style={{ color: '#6b7280', fontSize: '11px' }}>{item.page_title}</span>
+                            )}
+                          </div>
+                          <span style={{ color: '#8b5cf6', fontWeight: 600 }}>{item.visitor_count}</span>
+                        </div>
+                      ))}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#e5e7eb' }}>/pricing</span>
-                      <span style={{ color: '#9ca3af' }}>Pricing</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#e5e7eb' }}>/overview</span>
-                      <span style={{ color: '#9ca3af' }}>Dashboard</span>
-                    </div>
-                  </div>
+                  ) : (
+                    <div style={{ color: '#9ca3af', textAlign: 'center' }}>No page data for this period</div>
+                  )}
                 </div>
               </Card>
             </Grid>
