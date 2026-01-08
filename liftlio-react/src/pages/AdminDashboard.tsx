@@ -3,7 +3,7 @@ import styled, { keyframes, useTheme } from 'styled-components';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import BlogAdmin from '../components/admin/BlogAdmin';
+// Blog React removido - usar blog.liftlio.com (WordPress)
 import { parseUTCTimestamp, isToday, formatDate as formatDateUtil } from '../utils/dateUtils';
 
 // ==========================================
@@ -6790,7 +6790,7 @@ const AdminDashboard: React.FC = () => {
           </Content>
         )}
         {currentView === 'settings' && renderSettings()}
-        {currentView === 'blog' && <BlogAdmin view="posts" />}
+        {/* Blog React removido - usar blog.liftlio.com (WordPress) */}
       </Main>
       {renderEditModal()}
       {renderLoginModal()}

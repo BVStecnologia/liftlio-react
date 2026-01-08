@@ -274,7 +274,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
             <h3>Company</h3>
             <FooterLinks>
               <li><a href="/about">About</a></li>
-              <li><a href="/blog">Blog</a></li>
+              <li><a href="https://blog.liftlio.com" target="_blank" rel="noopener noreferrer">Blog</a></li>
               <li><a href="/careers">Careers</a></li>
             </FooterLinks>
           </FooterColumn>
