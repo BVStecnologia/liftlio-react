@@ -27,13 +27,14 @@ const getAdminVncUrl = (vncUrl: string | null): string | null => {
   if (!port) return null;
 
   // Build params for noVNC WebSocket connection
+  // NOTA: Removido _cb (cache buster) que causava loop de reconexão
+  // a cada re-render do componente React
   const params = new URLSearchParams({
     autoconnect: 'true',
     resize: 'scale',
     reconnect: 'true',
     reconnect_delay: '1000',
-    view_only: 'false',
-    _cb: String(Date.now())
+    view_only: 'false'
   });
 
   if (IS_HTTPS) {
