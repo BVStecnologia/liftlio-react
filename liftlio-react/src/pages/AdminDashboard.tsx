@@ -2440,14 +2440,14 @@ const AdminDashboard: React.FC = () => {
       }
 
       // Create task in database first
+      // task_type must be one of: action, query, scrape, login, verify, 2fa_code, youtube_comment, youtube_reply, youtube_presence
       const { data: taskData, error: insertError } = await supabase
         .from('browser_tasks')
         .insert({
           project_id: selectedViewerContainer.project_id,
           task: adminTaskInput,
-          task_type: 'admin',
-          status: 'pending',
-          created_by: user?.email || 'admin'
+          task_type: 'action',
+          status: 'pending'
         })
         .select()
         .single();
