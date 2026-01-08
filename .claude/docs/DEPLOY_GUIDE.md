@@ -14,11 +14,6 @@
 - **URL Pública**: https://track.liftlio.com (via Cloudflare)
 - **⚠️ IMPORTANTE**: Alterações em `/Servidor/analytics/` precisam ser deployadas via SSH no servidor remoto!
 
-### WordPress/Blog
-- **URL**: https://blog.liftlio.com
-- **Server**: Cloudways (wordpress-1319296-5689133.cloudwaysapps.com)
-- **Acesso**: Via MCP WordPress tools
-
 ### Liftlio Tools (Tradutor AI)
 - **Código-fonte**: `/Servidor/liftlio-tools/`
 - **Servidor Remoto**: 173.249.22.2 (VPS Linux)

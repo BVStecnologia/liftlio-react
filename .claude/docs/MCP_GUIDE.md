@@ -82,8 +82,3 @@ await mcp__supabase__deploy_edge_function({
 
 6. **Atualizar documentação:** `/AGENTE_LIFTLIO/5_Documentacao/INDICE_COMPLETO.md`
 
-## Integração WordPress MCP
-- **URL**: `https://wordpress-1319296-5689133.cloudwaysapps.com/`
-- **Usuário**: MCP claude
-- **Blog**: `blog.liftlio.com`
-- Use ferramentas `mcp__wordpress__*` para todas operações

@@ -129,7 +129,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Analytics**: VPS 173.249.22.2 → https://track.liftlio.com
 
 ### Outros
-- **Blog**: https://blog.liftlio.com (Cloudways)
+- **Blog**: https://liftlio.com/blog (React App)
 - **LinkedIn**: `/LINKEDIN_CONTENT/` (system + strategy)
 
 ## 🤖 Agentes Especializados Supabase (Atualizado 26/01/2025)
