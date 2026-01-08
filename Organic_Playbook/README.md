@@ -4,6 +4,12 @@
 
 ---
 
+## Documentacao Relacionada
+
+- **[IMAGE_GENERATION.md](./IMAGE_GENERATION.md)** - Geracao de imagens para posts (Gemini, Pollinations, remocao de metadados)
+
+---
+
 ## TARGET MARKET: US/ENGLISH (CRITICAL!)
 
 **ALL engagement must be in ENGLISH targeting US audience.**
@@ -105,6 +111,31 @@ Se quiser se aprofundar, tem um artigo que detalha isso: [LINK]
 - Reddit: 17x ROAS para B2B SaaS
 - LinkedIn: 388% ROI medio
 - IndieHackers: 23.1% conversao (~7x melhor que Product Hunt)
+
+---
+
+## Metricas Acumuladas (Jan 2026)
+
+| Periodo | Posts | Plataformas | Value-Only | Com Link | Taxa Autenticidade |
+|---------|-------|-------------|------------|----------|-------------------|
+| 05-08 Jan | 100 | 6 | 70% | 30% | 99% |
+
+### O Que Estamos Provando
+
+1. **Consistencia multi-plataforma** funciona melhor que volume em uma so
+2. **70/30 Rule** evita parecer spam
+3. **FASE ZERO** (notificacoes primeiro) humaniza o engajamento
+4. **Organico acumula** - cada post e um ativo permanente
+
+### Visao: Liftlio SaaS
+
+Este playbook manual esta validando o produto:
+- Google Trends → Keywords relevantes
+- AI → Artigos otimizados
+- Distribuicao → Multi-plataforma automatica
+- Consistencia → Semanal garantida
+
+**Diferencial:** Enquanto ads somem quando para de pagar, conteudo organico acumula trafego passivo infinitamente.
 
 ---
 

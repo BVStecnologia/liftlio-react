@@ -18,37 +18,57 @@
 
 ### Geração de Imagens
 
-**Opção 1: Pollinations AI (GRATUITO - Recomendado)**
+**Opção 1: Google Gemini via Navegador (RECOMENDADO - Valdair tem plano)**
+```
+# Valdair tem plano Gemini Advanced - usar via browser automation!
+URL: https://gemini.google.com/
+
+Workflow:
+1. Navegar para gemini.google.com
+2. Login já está salvo (valdair3d@gmail.com)
+3. Digitar prompt de imagem
+4. Aguardar geração
+5. Baixar imagem gerada
+6. Salvar em: liftlio-react/generated-images/
+
+Vantagens:
+- Melhor qualidade que Pollinations
+- Sem limite de API
+- Imagens mais realistas e profissionais
+```
+
+**Opção 2: Pollinations AI (GRATUITO - Backup)**
 ```bash
-# 100% GRATUITO, sem API key necessária!
+# 100% GRATUITO, sem API key necessária
+# Usar quando Gemini não estiver disponível
 C:/Users/User/Desktop/Liftlio/.claude/scripts/pollinations-image.sh "prompt" "output_dir" "width" "height"
 
 # Exemplo:
 bash .claude/scripts/pollinations-image.sh "Purple tech dashboard with analytics graphs, dark theme, modern UI" "liftlio-react/generated-images" "1200" "675"
 
-# Tamanhos recomendados para Trello: 1200x675 (16:9)
-# Imagem salva em: liftlio-react/generated-images/
+# Tamanhos recomendados: 1200x675 (16:9)
 ```
 
-**Opção 2: GPT-Image-1 (Requer OpenAI billing)**
+**Opção 3: GPT-Image-1 (Requer OpenAI billing)**
 ```bash
 # Requer OPENAI_API_KEY com billing ativo
 /Users/valdair/Documents/Projetos/Liftlio/.claude/scripts/gpt-image-1.sh "prompt" "1536x1024" "high"
 
-# NOTA: GPT-Image-1 usa internamente dall-e-3 como modelo
 # Tamanhos válidos: 1024x1024, 1024x1536, 1536x1024
-# Qualidade: low, medium, high, auto
-```
-
-**Opção 3: Google Gemini (Requer billing para imagens)**
-```bash
-# API Key disponível em: .claude/secrets/gemini-api.env
-# NOTA: Geração de imagens requer billing no Google Cloud
-# Text generation funciona no free tier
-# Projeto: Liftlio-Images (207869528012)
 ```
 
 **Imagens salvas em:** `liftlio-react/generated-images/`
+
+### Remover Metadados (IMPORTANTE!)
+```python
+# Usar Python/PIL para remover metadados e evitar detecção de AI
+from PIL import Image
+
+img = Image.open('imagem_original.png')
+clean_img = Image.new(img.mode, img.size)
+clean_img.putdata(list(img.getdata()))
+clean_img.save('imagem_limpa.png', 'PNG')
+```
 
 ### Upload de Capas no Trello
 - **Via MCP Browser**: Login com Google (valdair3d@gmail.com) → Navegar ao card → Capa → Upload
@@ -59,10 +79,11 @@ bash .claude/scripts/pollinations-image.sh "Purple tech dashboard with analytics
 ### Criação de Card
 1. Criar card com título descritivo
 2. Adicionar descrição detalhada (markdown suportado)
-3. Gerar imagem com GPT-Image-1
-4. Usuário adiciona imagem como capa manualmente
-5. Atribuir labels relevantes
-6. Definir data de entrega (se aplicável)
+3. Gerar imagem com Gemini via navegador (RECOMENDADO) ou Pollinations (backup)
+4. Remover metadados da imagem (evita detecção de AI)
+5. Usuário adiciona imagem como capa manualmente
+6. Atribuir labels relevantes
+7. Definir data de entrega (se aplicável)
 
 ### Estados dos Cards
 - **Pendentes**: Tarefas a fazer
@@ -134,8 +155,9 @@ await mcp__trello__move_card_to_list({
 ## Best Practices
 1. **Clear title**: Use action verb + context (IN ENGLISH!)
 2. **Structured description**: Markdown with sections (Objective, Tasks, Refs) (IN ENGLISH!)
-3. **Always include image**: Use Pollinations (free) or GPT-Image-1 (paid) for visual impact
-4. **Descriptive labels**: Facilitate filtering and organization
-5. **Comments**: Update progress with emojis (✅ ❌ ⚠️) (IN ENGLISH!)
-6. **Useful attachments**: Links to Figma, docs, PRs
-7. **Cover upload**: Use MCP Browser to upload directly or inform user to do manually
+3. **Always include image**: Use Gemini via browser (RECOMENDADO) ou Pollinations (backup)
+4. **Remove metadata**: Usar Python/PIL para remover metadados (evita detecção AI)
+5. **Descriptive labels**: Facilitate filtering and organization
+6. **Comments**: Update progress with emojis (✅ ❌ ⚠️) (IN ENGLISH!)
+7. **Useful attachments**: Links to Figma, docs, PRs
+8. **Cover upload**: Use MCP Browser to upload directly or inform user to do manually
