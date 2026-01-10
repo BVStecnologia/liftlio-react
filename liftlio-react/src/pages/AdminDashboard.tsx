@@ -2145,7 +2145,7 @@ const AdminDashboard: React.FC = () => {
           supabase.from('browser_platforms').select('*'),
           supabase.from('system_config').select('*').eq('key', 'maintenance_mode').single(),
           supabase.from('system_config').select('*').eq('key', 'admin_emails').single(),
-          supabase.from('admin_analytics').select('created_at, event_type').eq('event_type', 'pageview').gte('created_at', thirtyDaysAgo.toISOString()).order('created_at', { ascending: true }),
+          supabase.rpc('get_unique_visitors_timeline', { period_days: periodDays, user_timezone: userTimezone }),
           supabase.from('Canais do youtube').select('id'),
           supabase.from('Videos').select('id'),
           supabase.from('Comentarios_Principais').select('id'),
@@ -2184,16 +2184,46 @@ const AdminDashboard: React.FC = () => {
         const uniqueProjects = Array.from(new Set((projectIdsData || []).map(p => p.project_id)));
         const uniqueUsers = Array.from(new Set((taskUsersData || []).map(u => u.created_by).filter(Boolean))) as string[];
 
-        // Group analytics data by day
+        // Process unique visitors data from RPC (already aggregated by the database)
         const analyticsGrouped: Record<string, number> = {};
-        analyticsRawData?.forEach(item => {
-          const date = new Date(item.created_at).toISOString().split('T')[0];
-          analyticsGrouped[date] = (analyticsGrouped[date] || 0) + 1;
+
+        if (periodDays === 1) {
+          // TODAY: Initialize 24 hours (00:00 to 23:00) with 0 visitors
+          for (let hour = 0; hour < 24; hour++) {
+            const hourStr = String(hour).padStart(2, '0') + ':00';
+            analyticsGrouped[hourStr] = 0;
+          }
+        } else {
+          // WEEK/MONTH: Initialize all days in period with 0 visitors
+          const formatLocalDate = (d: Date): string => {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+          };
+
+          for (let i = periodDays - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateStr = formatLocalDate(date);
+            analyticsGrouped[dateStr] = 0;
+          }
+        }
+
+        // Populate with data from RPC (already has unique visitors count)
+        analyticsRawData?.forEach((item: { dia: string; unique_visitors: number }) => {
+          if (analyticsGrouped.hasOwnProperty(item.dia)) {
+            analyticsGrouped[item.dia] = Number(item.unique_visitors);
+          }
         });
-        const analyticsTimeline = Object.entries(analyticsGrouped).map(([date, views]) => ({
-          timestamp: date,
-          views
-        }));
+
+        // Convert to array sorted by timestamp
+        const analyticsTimeline = Object.entries(analyticsGrouped)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([timestamp, views]) => ({
+            timestamp,
+            views
+          }));
 
         // Filter today's simulations
         const today = new Date();
@@ -6265,10 +6295,10 @@ const AdminDashboard: React.FC = () => {
 
             <Card>
               <CardHeader>
-                <h3>Daily Visits (Last 30 Days)</h3>
+                <h3>Unique Visitors (Last {analyticsPeriod === 'today' ? 'Day' : analyticsPeriod === 'week' ? '7 Days' : '30 Days'})</h3>
                 {analyticsData.length > 0 && (
                   <span style={{ fontSize: '14px', color: '#9ca3af', fontWeight: 400 }}>
-                    Total: {analyticsData.reduce((sum, d) => sum + d.views, 0)} pageviews
+                    Total: {analyticsData.reduce((sum, d) => sum + d.views, 0)} unique visitors
                   </span>
                 )}
               </CardHeader>
@@ -6293,7 +6323,14 @@ const AdminDashboard: React.FC = () => {
                   const areaPath = `${linePath} L ${points[points.length - 1].x} ${padding.top + innerHeight} L ${padding.left} ${padding.top + innerHeight} Z`;
 
                   const formatDate = (dateStr: string) => {
-                    const d = new Date(dateStr);
+                    // Check if it's an hour format (HH:00) or date format (YYYY-MM-DD)
+                    if (dateStr.includes(':')) {
+                      // Hour format - just return as is (e.g., "14:00")
+                      return dateStr;
+                    }
+                    // Parse YYYY-MM-DD as local date (not UTC) to avoid timezone shift
+                    const [year, month, day] = dateStr.split('-').map(Number);
+                    const d = new Date(year, month - 1, day);
                     return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
                   };
 
